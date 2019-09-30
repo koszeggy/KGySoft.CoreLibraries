@@ -74,41 +74,39 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
-            // For classes and static properties: Lambda expression (.NET Standard 2.0: also for structs, mutated content might be lost)
-#if !NETSTANDARD2_0
-            if (!declaringType.IsValueType || getterMethod.IsStatic)
-#endif           
-            {
-                //---by property expression---
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-
-                MemberExpression member = Expression.Property(
-                        getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        (PropertyInfo)MemberInfo);
-
-                LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
-                        Expression.Convert(member, Reflector.ObjectType), // object return type
-                        instanceParameter); // instance (object)
-                return lambda.Compile();
-
-                ////---by calling the getter method---
-                //ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-
-                //MethodCallExpression getterCall = Expression.Call(
-                //    Expression.Convert(instanceParameter, declaringType), // (TDeclaring)target
-                //    getterMethod); // getter
-
-                //LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
-                //    Expression.Convert(getterCall, Reflector.ObjectType), // object return type
-                //    instanceParameter);   // instance (object)
-                //return lambda.Compile();
-            }
-
 #if !NETSTANDARD2_0
             // for struct instance properties: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
-            return dm.CreateDelegate(typeof(PropertyGetter));
-#endif 
+            if (declaringType.IsValueType && !getterMethod.IsStatic)
+            {
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
+                return dm.CreateDelegate(typeof(PropertyGetter));
+            } 
+#endif
+
+            // For classes and static properties: Lambda expression (.NET Standard 2.0: also for structs, mutated content might be lost)
+            //---by property expression---
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+
+            MemberExpression member = Expression.Property(
+                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                (PropertyInfo)MemberInfo);
+
+            LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
+                Expression.Convert(member, Reflector.ObjectType), // object return type
+                instanceParameter); // instance (object)
+            return lambda.Compile();
+
+            ////---by calling the getter method---
+            //ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+
+            //MethodCallExpression getterCall = Expression.Call(
+            //    Expression.Convert(instanceParameter, declaringType), // (TDeclaring)target
+            //    getterMethod); // getter
+
+            //LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
+            //    Expression.Convert(getterCall, Reflector.ObjectType), // object return type
+            //    instanceParameter);   // instance (object)
+            //return lambda.Compile();
         }
 
         private protected override Delegate CreateSetter()
@@ -121,33 +119,33 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
-            // for classes and static properties: Lambda expression
-#if !NETSTANDARD2_0
-            if (!declaringType.IsValueType || setterMethod.IsStatic) 
-#endif
+            if (declaringType.IsValueType && !setterMethod.IsStatic)
             {
-                // Calling the setter method (works even in .NET 3.5, while Assign is available from .NET 4 only)
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-                ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
-                UnaryExpression castValue = Expression.Convert(valueParameter, property.PropertyType);
-
-                MethodCallExpression setterCall = Expression.Call(
-                        setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        setterMethod, // setter
-                        castValue); // original parameter: (TProp)value
-
-                LambdaExpression lambda = Expression.Lambda<PropertySetter>(
-                        setterCall, // no return type
-                        instanceParameter, // instance (object)
-                        valueParameter);
-                return lambda.Compile();
+#if NETSTANDARD2_0
+                throw new PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(property.Name, declaringType));
+#else
+                // for struct instance properties: Dynamic method
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
+                return dm.CreateDelegate(typeof(PropertySetter));
+#endif
             }
 
-#if !NETSTANDARD2_0
-            // for struct instance properties: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-            return dm.CreateDelegate(typeof(PropertySetter)); 
-#endif
+            // for classes and static properties: Lambda expression
+            // Calling the setter method (works even in .NET 3.5, while Assign is available from .NET 4 only)
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
+            UnaryExpression castValue = Expression.Convert(valueParameter, property.PropertyType);
+
+            MethodCallExpression setterCall = Expression.Call(
+                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                setterMethod, // setter
+                castValue); // original parameter: (TProp)value
+
+            LambdaExpression lambda = Expression.Lambda<PropertySetter>(
+                setterCall, // no return type
+                instanceParameter, // instance (object)
+                valueParameter);
+            return lambda.Compile();
         }
 
         #endregion

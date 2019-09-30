@@ -811,7 +811,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
 #endif
 
-            // these collections are not supported content recursively because they implement neither ICollection<T> nor IList
+            // these can be deserialized by initializer constructor only because they implement neither ICollection<T> nor IList or if they do, they are read-only
             referenceObjects = new IEnumerable[]
             {
                 // non-populatable

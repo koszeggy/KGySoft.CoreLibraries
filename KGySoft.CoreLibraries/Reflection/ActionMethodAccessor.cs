@@ -63,7 +63,7 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConfict, e);
+                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
             }
         }
 
@@ -74,7 +74,6 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateInvoker()
         {
             var methodBase = (MethodBase)MemberInfo;
-            bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
             Type declaringType = methodBase.DeclaringType;
             if (!methodBase.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
@@ -82,49 +81,56 @@ namespace KGySoft.Reflection
             if (method?.ReturnType.IsPointer == true)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
-            // for classes and static methods that have no ref parameters: Lambda expression
+#if NETSTANDARD2_0
+            if (method == null)
+                throw new InvalidOperationException(Res.InternalError($"Constructors cannot be invoked by {nameof(ActionMethodAccessor)} in .NET Standard 2.0"));
+#else
+            bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
+
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-#if !NETSTANDARD2_0
-            if (!hasRefParameters && (methodBase.IsStatic || !declaringType.IsValueType) && method != null) 
-#endif
+            if (hasRefParameters || (!methodBase.IsStatic && declaringType.IsValueType) || method == null)
             {
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-                ParameterExpression parametersParameter = Expression.Parameter(typeof(object[]), "parameters");
-                var methodParameters = new Expression[ParameterTypes.Length];
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                {
-                    //// This just avoids error when ref parameters are used but does not assign results back
-                    //Type parameterType = ParameterTypes[i];
-                    //if (parameterType.IsByRef)
-                    //    parameterType = parameterType.GetElementType();
-                    methodParameters[i] = Expression.Convert(Expression.ArrayIndex(parametersParameter, Expression.Constant(i)), ParameterTypes[i]);
-                }
+                // For struct instance methods, constructors or methods with ref/out parameters: Dynamic method
+                var options = methodBase is ConstructorInfo ? DynamicMethodOptions.TreatCtorAsMethod : DynamicMethodOptions.None;
+                if (hasRefParameters)
+                    options |= DynamicMethodOptions.HandleByRefParameters;
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(methodBase, options);
+                return dm.CreateDelegate(typeof(AnyAction));
+            }
+#endif
 
-                // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
-                MethodCallExpression methodToCall = Expression.Call(
-                        method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        method, // method info
-                        methodParameters); // parameters cast to target types
+            // For classes and static methods that have no ref parameters: Lambda expression
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
+            var methodParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                Type parameterType = ParameterTypes[i];
+#if NETSTANDARD2_0
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType();
 
-                LambdaExpression lambda = Expression.Lambda<AnyAction>(
-                        methodToCall, // no return type
-                        instanceParameter, // instance (object)
-                        parametersParameter);
-                return lambda.Compile();
+                // ReSharper disable once AssignNullToNotNullAttribute
+#endif
+                methodParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
             }
 
-#if !NETSTANDARD2_0
-            // for struct instance methods, constructors or methods with ref/out parameters: Dynamic method
-            var options = methodBase is ConstructorInfo ? DynamicMethodOptions.TreatCtorAsMethod : DynamicMethodOptions.None;
-            if (hasRefParameters)
-                options |= DynamicMethodOptions.HandleByRefParameters;
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(methodBase, options);
-            return dm.CreateDelegate(typeof(AnyAction)); 
-#endif
+            // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
+            MethodCallExpression methodToCall = Expression.Call(
+                method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                method, // method info
+                methodParameters); // parameters cast to target types
+
+            LambdaExpression lambda = Expression.Lambda<AnyAction>(
+                methodToCall, // no return type
+                instanceParameter, // instance (object)
+                argumentsParameter);
+            return lambda.Compile();
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

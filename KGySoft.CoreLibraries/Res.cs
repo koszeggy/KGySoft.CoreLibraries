@@ -362,7 +362,7 @@ namespace KGySoft
         /// - Use the SecurityRulesAttribute with SecurityRuleSet.Level1. This is the recommended solution.
         /// - Use the SecurityRulesAttribute with SkipVerificationInFullTrust = true. If used with SecurityRuleSet.Level2 this will not solve the problem from a partially trusted domain though.
         /// - Remove the AllowPartiallyTrustedCallersAttribute. This will not allow partially trusted callers to use your assembly though.</summary>
-        internal static string ReflectionSecuritySettingsConfict => Get("Reflection_SecuritySettingsConfict");
+        internal static string ReflectionSecuritySettingsConflict => Get("Reflection_SecuritySettingsConflict");
 
         #endregion
 
@@ -781,6 +781,15 @@ namespace KGySoft
 
         /// <summary>Pointer type '{0}' is not supported.</summary>
         internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetTypeName(false));
+
+        /// <summary>Setting read-only field '{0}' of type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetTypeName(false));
+
+        /// <summary>Setting instance field '{0}' of value type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetTypeName(false));
+
+        /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetTypeName(false));
 
         #endregion
 

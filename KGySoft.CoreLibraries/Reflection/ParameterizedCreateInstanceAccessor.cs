@@ -66,33 +66,40 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
-            bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
-
-            // for constructors that have no ref parameters: Lambda expression
-#if !NETSTANDARD2_0
-            if (!hasRefParameters) 
-#endif
-            {
-                ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
-                var ctorParameters = new Expression[ParameterTypes.Length];
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                    ctorParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
-
-                NewExpression construct = Expression.New(
-                    ctor, // constructor info
-                    ctorParameters); // arguments cast to target types
-
-                LambdaExpression lambda = Expression.Lambda<Ctor>(
-                    Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
-                    argumentsParameter);
-                return lambda.Compile();
-            }
 
 #if !NETSTANDARD2_0
             // for constructors with ref/out parameters: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.HandleByRefParameters);
-            return dm.CreateDelegate(typeof(Ctor)); 
+            if (ParameterTypes.Any(p => p.IsByRef))
+            {
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.HandleByRefParameters);
+                return dm.CreateDelegate(typeof(Ctor));
+            }
 #endif
+
+            // for constructors that have no ref parameters: Lambda expression
+            ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
+            var ctorParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                Type parameterType = ParameterTypes[i];
+#if NETSTANDARD2_0
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType();
+
+                // ReSharper disable once AssignNullToNotNullAttribute
+#endif
+                ctorParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
+            }
+
+            NewExpression construct = Expression.New(
+                ctor, // constructor info
+                ctorParameters); // arguments cast to target types
+
+            LambdaExpression lambda = Expression.Lambda<Ctor>(
+                Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
+                argumentsParameter);
+            return lambda.Compile();
         }
 
         #endregion

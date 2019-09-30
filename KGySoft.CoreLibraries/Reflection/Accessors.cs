@@ -461,6 +461,13 @@ namespace KGySoft.Reflection
                     throw new InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
                 return;
             }
+#if NETSTANDARD2_0
+            if (field.IsReadOnly || field.MemberInfo.DeclaringType?.IsValueType == true)
+            {
+                ((FieldInfo)field.MemberInfo).SetValue(obj, value);
+                return;
+            }
+#endif
 
             field.Set(obj, value);
         }
@@ -685,8 +692,13 @@ namespace KGySoft.Reflection
             if (instance is DictionaryEntry)
             {
                 Type type = instance.GetType();
+#if NETSTANDARD2_0
+                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Key)).MemberInfo).SetValue(instance, key);
+                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Value)).MemberInfo).SetValue(instance, value);
+#else
                 GetProperty(type, nameof(DictionaryEntry.Key)).Set(instance, key);
                 GetProperty(type, nameof(DictionaryEntry.Value)).Set(instance, value);
+#endif
                 return;
             }
 
@@ -727,8 +739,13 @@ namespace KGySoft.Reflection
             if (accessor == null)
                 return false;
 
+#if NETSTANDARD2_0
+            ((MethodBase)accessor.MemberInfo).Invoke(instance, ctorArgs);
+            return true;
+#else
             accessor.Invoke(instance, ctorArgs);
             return true;
+#endif
         }
 
         #endregion

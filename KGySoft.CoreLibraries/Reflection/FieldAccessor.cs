@@ -137,7 +137,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <remarks>
         /// <note>Even if this property returns <see langword="true"/>&#160;the <see cref="FieldAccessor"/>
-        /// is able to set the field.</note>
+        /// is able to set the field, except if the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is used,
+        /// which throws a <see cref="PlatformNotSupportedException"/> in that case.</note>
         /// </remarks>
         public bool IsReadOnly => ((FieldInfo)MemberInfo).IsInitOnly;
 
@@ -222,6 +223,10 @@ namespace KGySoft.Reflection
         /// Setting the field for the first time is slower than the <see cref="FieldInfo.SetValue(object,object)">System.Reflection.FieldInfo.SetValue</see>
         /// method but further calls are much faster.
         /// </note>
+        /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
+        /// if the field to set is read-only or is an instance member of a value type (<see langword="struct"/>).
+        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
         /// </remarks>
         public void Set(object instance, object value)
         {
@@ -231,7 +236,7 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConfict, e);
+                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
             }
         }
 
@@ -283,26 +288,26 @@ namespace KGySoft.Reflection
             if (field.FieldType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
 
-#if NETSTANDARD2_0
-            // DynamicMethod is not available in .NET Standard 2.0 so using expressions, which cannot be used for instance struct fields
-            //if (!declaringType.IsValueType || field.IsStatic)
-            {
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-                ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
-                UnaryExpression castValue = Expression.Convert(valueParameter, field.FieldType);
+#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
+            if (field.IsInitOnly)
+                throw new PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(field.Name, declaringType));
+            if (!field.IsStatic && declaringType.IsValueType)
+                throw new PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(field.Name, declaringType));
 
-                MemberExpression member = Expression.Field(
-                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                    field);
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
+            UnaryExpression castValue = Expression.Convert(valueParameter, field.FieldType);
 
-                BinaryExpression assign = Expression.Assign(member, castValue);
-                Expression<FieldSetter> lambda = Expression.Lambda<FieldSetter>(
-                    assign,
-                    instanceParameter, // instance (object)
-                    valueParameter);
-                return lambda.Compile();
-            }
+            MemberExpression member = Expression.Field(
+                field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                field);
 
+            BinaryExpression assign = Expression.Assign(member, castValue);
+            Expression<FieldSetter> lambda = Expression.Lambda<FieldSetter>(
+                assign,
+                instanceParameter, // instance (object)
+                valueParameter);
+            return lambda.Compile();
 #else
             // Expressions would not work for value types so using always dynamic methods
             DynamicMethod dm = new DynamicMethod(setterPrefix + field.Name, // setter method name
@@ -315,47 +320,13 @@ namespace KGySoft.Reflection
             if (!field.IsStatic)
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                // casting object instance to target type
-                if (declaringType.IsValueType)
-                {
-                    // Note: this is a tricky solution that cannot be made in C#:
-                    // We are just unboxing the value type without storing it in a typed local variable
-                    // This makes possible to preserve the modified content of a value type without using ref parameter
-                    il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
-
-                    // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder typedInstance = il.DeclareLocal(declaringType);
-                    //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
-                    //il.Emit(OpCodes.Unbox_Any, declaringType); // unboxing the instance
-                    //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, typedInstance);
-                }
-                else
-                {
-                    il.Emit(OpCodes.Castclass, declaringType);
-
-                    // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder typedInstance = il.DeclareLocal(declaringType);
-                    //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
-                    //il.Emit(OpCodes.Castclass, declaringType); // casting the instance
-                    //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, typedInstance);
-                }
+                il.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType); // casting object instance to target type
             }
 
-            // processing 1st argument: value parameter
-            il.Emit(OpCodes.Ldarg_1);
-
-            // casting object value to field type
-            il.Emit(field.FieldType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.FieldType);
-
-            // processing assignment
-            il.Emit(field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, field);
-
-            // returning without return value
-            il.Emit(OpCodes.Ret);
+            il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter
+            il.Emit(field.FieldType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.FieldType); // casting object value to field type
+            il.Emit(field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, field); // processing assignment
+            il.Emit(OpCodes.Ret); // returning without return value
 
             return (FieldSetter)dm.CreateDelegate(typeof(FieldSetter));
 #endif

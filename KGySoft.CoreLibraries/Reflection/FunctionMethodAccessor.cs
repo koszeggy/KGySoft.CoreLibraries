@@ -62,7 +62,7 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConfict, e);
+                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
             }
         }
 
@@ -76,40 +76,49 @@ namespace KGySoft.Reflection
             Type declaringType = method.DeclaringType;
             if (!method.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
             if (method.ReturnType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
-            // for classes and static methods that have no ref parameters: Lambda expression
-            // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
 #if !NETSTANDARD2_0
-            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType)) 
-#endif
+            bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
+
+            // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
+            if (hasRefParameters || (!method.IsStatic && declaringType.IsValueType))
             {
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "target");
-                ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
-                var methodParameters = new Expression[ParameterTypes.Length];
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                    methodParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
+                // for struct instance methods or methods with ref/out parameters: Dynamic method
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
+                return dm.CreateDelegate(typeof(AnyFunction));
+            } 
+#endif
 
-                // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
-                MethodCallExpression methodToCall = Expression.Call(
-                        method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        method, // method info
-                        methodParameters); // arguments cast to target types
+            // for classes and static methods that have no ref parameters: Lambda expression
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "target");
+            ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
+            var methodParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                Type parameterType = ParameterTypes[i];
+#if NETSTANDARD2_0
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType();
 
-                LambdaExpression lambda = Expression.Lambda<AnyFunction>(
-                        Expression.Convert(methodToCall, Reflector.ObjectType), // return type converted to object
-                        instanceParameter, // instance (object)
-                        argumentsParameter);
-                return lambda.Compile();
+                // ReSharper disable once AssignNullToNotNullAttribute
+#endif
+                methodParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
             }
 
-#if !NETSTANDARD2_0
-            // for struct instance methods or methods with ref/out parameters: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
-            return dm.CreateDelegate(typeof(AnyFunction)); 
-#endif
+            // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
+            MethodCallExpression methodToCall = Expression.Call(
+                method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                method, // method info
+                methodParameters); // arguments cast to target types
+
+            LambdaExpression lambda = Expression.Lambda<AnyFunction>(
+                Expression.Convert(methodToCall, Reflector.ObjectType), // return type converted to object
+                instanceParameter, // instance (object)
+                argumentsParameter);
+            return lambda.Compile();
         }
 
         #endregion

@@ -40,11 +40,19 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        internal static IEqualityComparer<T> EqualityComparer => equalityComparer
-            ?? (equalityComparer = typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default);
+        internal static IEqualityComparer<T> EqualityComparer => equalityComparer ??=
+#if NETSTANDARD2_0
+            EqualityComparer<T>.Default;
+#else
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
+#endif
 
-        internal static IComparer<T> Comparer => comparer
-            ?? (comparer = typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default);
+        internal static IComparer<T> Comparer => comparer ??=
+#if NETSTANDARD2_0
+            Comparer<T>.Default;
+#else
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
+#endif
 
         #endregion
     }

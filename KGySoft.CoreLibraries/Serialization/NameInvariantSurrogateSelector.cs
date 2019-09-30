@@ -199,7 +199,15 @@ namespace KGySoft.Serialization
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
                         throw new SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
-                    FieldAccessor.GetAccessor(fields[fieldIndex++]).Set(obj, entry.Value);
+                    FieldInfo field = fields[fieldIndex++];
+#if NETSTANDARD2_0
+                    if (field.IsInitOnly || !field.IsStatic && obj.GetType().IsValueType)
+                        field.SetValue(obj, entry.Value);
+                    else
+#endif
+                    {
+                        FieldAccessor.GetAccessor(field).Set(obj, entry.Value);
+                    }
                 }
                 // end of level found
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))

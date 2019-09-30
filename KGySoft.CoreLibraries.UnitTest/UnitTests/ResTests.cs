@@ -109,7 +109,8 @@ namespace KGySoft.CoreLibraries.UnitTests
                         || parameter is double d && value.ContainsAny(StringComparison.Ordinal, d.ToString("N2"), d.ToString("P2")) // double: percentage or number
                         || parameter is bool b && value.Contains(b ? Res.Yes : Res.No, StringComparison.Ordinal) // percentage format of float
                         || parameter is int n && value.Contains(n.ToString("N0"), StringComparison.Ordinal) // normal ToString checked above, number format checked here
-                        || parameter is long l && value.Contains(l.ToString("N0"), StringComparison.Ordinal), // normal ToString checked above, number format checked here
+                        || parameter is long l && value.Contains(l.ToString("N0"), StringComparison.Ordinal) // normal ToString checked above, number format checked here
+                        || parameter is Type t && value.Contains(t.GetTypeName(false)),
                         $"{nameof(Res)}.{method.Name} does not use parameter #{i}.");
                 }
 

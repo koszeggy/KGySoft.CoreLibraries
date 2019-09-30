@@ -205,6 +205,10 @@ namespace KGySoft.Reflection
         /// Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
         /// method but further calls are much faster.
         /// </note>
+        /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
+        /// if the property is an instance member of a value type (<see langword="struct"/>).
+        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
         public abstract void Set(object instance, object value, params object[] indexerParameters);
 
@@ -221,6 +225,10 @@ namespace KGySoft.Reflection
         /// Getting the property for the first time is slower than the <see cref="PropertyInfo.GetValue(object,object[])">System.Reflection.PropertyInfo.GetValue</see>
         /// method but further calls are much faster.
         /// </note>
+        /// <note type="caller">When using the .NET Standard 2.0 version of this method, and the getter of an instance property of a value type (<see langword="struct"/>) mutates the instance,
+        /// then the changes will not be applied to the <paramref name="instance"/> parameter.
+        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
         /// </remarks>
         public abstract object Get(object instance, params object[] indexerParameters);
 

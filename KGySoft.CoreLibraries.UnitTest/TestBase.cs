@@ -66,6 +66,32 @@ namespace KGySoft.CoreLibraries
 {
     public class TestBase
     {
+        #region Enumerations
+
+        protected enum TargetFramework
+        {
+            NetStandard20,
+            NetStandard21,
+            Other
+        }
+
+        #endregion
+
+        #region Properties
+
+        protected static TargetFramework TestedFramework =>
+#if NETCOREAPP
+            typeof(PublicResources).Assembly.GetReferencedAssemblies().FirstOrDefault(asm => asm.Name == "netstandard") is AssemblyName an
+                ? an.Version == new Version(2, 0, 0, 0) ? TargetFramework.NetStandard20
+                    : an.Version == new Version(2, 1, 0, 0) ? TargetFramework.NetStandard21
+                    : TargetFramework.Other
+                : TargetFramework.Other;
+#else
+            TargetFramework.Other;
+#endif
+
+        #endregion
+
         #region Methods
 
         #region Protected Methods
@@ -119,12 +145,26 @@ namespace KGySoft.CoreLibraries
         protected static bool MembersAndItemsEqual(object reference, object check)
             => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
-        protected static void Throws<T>(TestDelegate action, string expectedMessageContent = null)
+        protected static void Throws<T>(TestDelegate code, string expectedMessageContent = null)
             where T : Exception
         {
-            var e = Assert.Throws<T>(action);
+            var e = Assert.Throws<T>(code);
             Assert.IsInstanceOf(typeof(T), e);
             Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
+            Console.WriteLine($"Expected exception {typeof(T)} has been thrown.");
+        }
+
+        protected static bool ThrowsOnFramework<T>(TestDelegate code, params TargetFramework[] targets)
+            where T : Exception
+        {
+            if (TestedFramework.In(targets))
+            {
+                Throws<T>(code);
+                return true;
+            }
+
+            Assert.DoesNotThrow(code);
+            return false;
         }
 
         protected static void CheckTestingFramework()

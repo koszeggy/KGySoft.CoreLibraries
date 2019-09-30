@@ -31,7 +31,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Reflection
 {
     [TestFixture]
-    public class ReflectorTest
+    public class ReflectorTest : TestBase
     {
         #region Nested types
 
@@ -458,8 +458,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], test.IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], test.IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -493,8 +496,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], TestClass.StaticIntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
@@ -601,8 +607,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], test.IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -640,8 +649,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], TestClass.StaticIntProp);
+                Assert.AreNotEqual(args[2], parameters[2]); 
+            }
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
@@ -680,7 +692,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            if (TestedFramework != TargetFramework.NetStandard20)
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -743,8 +756,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]); 
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -778,8 +794,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
@@ -814,7 +833,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            if (TestedFramework != TargetFramework.NetStandard20)
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -887,8 +907,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]); 
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
@@ -927,8 +950,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
@@ -1072,9 +1098,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetAccessor(pi).Set(test, value);
-            result = PropertyAccessor.GetAccessor(pi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => PropertyAccessor.GetAccessor(pi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = PropertyAccessor.GetAccessor(pi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by PropertyInfo)...");
@@ -1138,9 +1167,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             test = new TestStruct(0);
             Console.Write("Property Accessor...");
             parameters = (object[])args.Clone();
-            PropertyAccessor.GetAccessor(pi).Set(test, value, parameters);
-            result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => PropertyAccessor.GetAccessor(pi).Set(test, value, parameters),
+                TargetFramework.NetStandard20))
+            {
+                result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by PropertyInfo)...");
@@ -1175,9 +1207,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetAccessor(fi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = FieldAccessor.GetAccessor(fi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1206,9 +1241,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetAccessor(fi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = FieldAccessor.GetAccessor(fi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1272,9 +1310,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetAccessor(fi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = FieldAccessor.GetAccessor(fi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1303,9 +1344,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetAccessor(fi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = FieldAccessor.GetAccessor(fi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1334,9 +1378,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetAccessor(fi).Get(test);
-            Assert.AreEqual(value, result);
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = FieldAccessor.GetAccessor(fi).Get(test);
+                Assert.AreEqual(value, result);
+            }
 
             test = new TestStruct(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1443,8 +1490,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
             result = (TestClass)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
-            Assert.AreEqual(args[0], result.IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], result.IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
@@ -1514,8 +1564,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
             result = (TestStruct)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
-            Assert.AreEqual(args[0], result.IntProp);
-            Assert.AreNotEqual(args[2], parameters[2]);
+            if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], result.IntProp);
+                Assert.AreNotEqual(args[2], parameters[2]); 
+            }
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();

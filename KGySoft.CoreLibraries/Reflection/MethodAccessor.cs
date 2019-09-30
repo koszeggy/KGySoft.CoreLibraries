@@ -92,7 +92,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the method invoker delegate.
         /// </summary>
-        private protected Delegate Invoker => invoker ?? (invoker = CreateInvoker());
+        private protected Delegate Invoker => invoker ??= CreateInvoker();
 
         #endregion
 
@@ -156,6 +156,12 @@ namespace KGySoft.Reflection
         /// Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
         /// method but further calls are much faster.
         /// </note>
+        /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
+        /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
+        /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
+        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
+        /// and to preserve changes the of mutated value type instances.</note>
         /// </remarks>
         public abstract object Invoke(object instance, params object[] parameters);
 

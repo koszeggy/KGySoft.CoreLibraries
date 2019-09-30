@@ -75,34 +75,32 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
-            // for classes: Lambda expression
-#if !NETSTANDARD2_0
-            if (!declaringType.IsValueType) 
-#endif
-            {
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-                ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
-                var getterParameters = new Expression[ParameterTypes.Length];
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                    getterParameters[i] = Expression.Convert(Expression.ArrayIndex(indexArgumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
-
-                MethodCallExpression getterCall = Expression.Call(
-                        Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        getterMethod, // getter
-                        getterParameters); // arguments cast to target types
-
-                LambdaExpression lambda = Expression.Lambda<IndexerGetter>(
-                        Expression.Convert(getterCall, Reflector.ObjectType), // object return type
-                        instanceParameter, // instance (object)
-                        indexArgumentsParameter); // index parameters (object[])
-                return lambda.Compile();
-            }
-
 #if !NETSTANDARD2_0
             // for structs: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.None);
-            return dm.CreateDelegate(typeof(IndexerGetter)); 
+            if (declaringType.IsValueType)
+            {
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.None);
+                return dm.CreateDelegate(typeof(IndexerGetter));
+            } 
 #endif
+
+            // for classes: Lambda expression
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
+            var getterParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+                getterParameters[i] = Expression.Convert(Expression.ArrayIndex(indexArgumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
+
+            MethodCallExpression getterCall = Expression.Call(
+                Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                getterMethod, // getter
+                getterParameters); // arguments cast to target types
+
+            LambdaExpression lambda = Expression.Lambda<IndexerGetter>(
+                Expression.Convert(getterCall, Reflector.ObjectType), // object return type
+                instanceParameter, // instance (object)
+                indexArgumentsParameter); // index parameters (object[])
+            return lambda.Compile();
         }
 
         private protected override Delegate CreateSetter()
@@ -115,41 +113,41 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
-            // for classes: Lambda expression
-#if !NETSTANDARD2_0
-            if (!declaringType.IsValueType) 
-#endif
+            if (declaringType.IsValueType)
             {
-                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-                ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
-                ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
-
-                // indexer parameters
-                var setterParameters = new Expression[ParameterTypes.Length + 1]; // +1: value to set after indices
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                    setterParameters[i] = Expression.Convert(Expression.ArrayIndex(indexArgumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
-
-                // value parameter is the last one
-                setterParameters[ParameterTypes.Length] = Expression.Convert(valueParameter, property.PropertyType);
-
-                MethodCallExpression setterCall = Expression.Call(
-                        Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                        setterMethod, // setter
-                        setterParameters); // arguments cast to target types + value as last argument cast to property type
-
-                LambdaExpression lambda = Expression.Lambda<IndexerSetter>(
-                        setterCall, // no return type
-                        instanceParameter, // instance (object)
-                        valueParameter, // value (object)
-                        indexArgumentsParameter); // index parameters (object[])
-                return lambda.Compile();
+#if NETSTANDARD2_0
+                throw new PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(property.Name, declaringType));
+#else
+                // for structs: Dynamic method
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
+                return dm.CreateDelegate(typeof(IndexerSetter));
+#endif
             }
 
-#if !NETSTANDARD2_0
-            // for structs: Dynamic method
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-            return dm.CreateDelegate(typeof(IndexerSetter)); 
-#endif
+            // for classes: Lambda expression
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
+            ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
+
+            // indexer parameters
+            var setterParameters = new Expression[ParameterTypes.Length + 1]; // +1: value to set after indices
+            for (int i = 0; i < ParameterTypes.Length; i++)
+                setterParameters[i] = Expression.Convert(Expression.ArrayIndex(indexArgumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
+
+            // value parameter is the last one
+            setterParameters[ParameterTypes.Length] = Expression.Convert(valueParameter, property.PropertyType);
+
+            MethodCallExpression setterCall = Expression.Call(
+                Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                setterMethod, // setter
+                setterParameters); // arguments cast to target types + value as last argument cast to property type
+
+            LambdaExpression lambda = Expression.Lambda<IndexerSetter>(
+                setterCall, // no return type
+                instanceParameter, // instance (object)
+                valueParameter, // value (object)
+                indexArgumentsParameter); // index parameters (object[])
+            return lambda.Compile();
         }
 
         #endregion

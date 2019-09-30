@@ -229,6 +229,13 @@ namespace KGySoft.Serialization
             // Field
             if (member is FieldInfo field)
             {
+#if NETSTANDARD2_0
+                if (field.IsInitOnly || obj.GetType().IsValueType)
+                {
+                    field.SetValue(obj, deserializedValue);
+                    return;
+                }
+#endif
                 FieldAccessor.GetAccessor(field).Set(obj, deserializedValue);
                 return;
             }
@@ -257,6 +264,13 @@ namespace KGySoft.Serialization
             }
 
             // Read-write property
+#if NETSTANDARD2_0
+            if (obj.GetType().IsValueType)
+            {
+                property.SetValue(obj, deserializedValue);
+                return;
+            }
+#endif
             PropertyAccessor.GetAccessor(property).Set(obj, deserializedValue);
         }
 
@@ -350,6 +364,13 @@ namespace KGySoft.Serialization
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                 {
                     FieldAccessor accessor = FieldAccessor.GetAccessor(field);
+#if NETSTANDARD2_0
+                    if (field.IsInitOnly || t.IsValueType)
+                    {
+                        field.SetValue(target, accessor.Get(source));
+                        continue;
+                    }
+#endif
                     accessor.Set(target, accessor.Get(source));
                 }
             }

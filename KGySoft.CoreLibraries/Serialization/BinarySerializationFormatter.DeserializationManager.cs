@@ -1030,6 +1030,14 @@ namespace KGySoft.Serialization
                     return;
                 }
 
+#if NETSTANDARD2_0
+                if (field.IsInitOnly || !field.IsStatic && obj.GetType().IsValueType)
+                {
+                    field.SetValue(obj, value);
+                    return;
+                }
+#endif
+
                 FieldAccessor.GetAccessor(field).Set(obj, value);
             }
 
