@@ -29,16 +29,15 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-#if !(NET35 || NET40 || NET45)
-using System.Runtime.InteropServices;
-# endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-using KGySoft.Reflection.WinApi;
+#if NETFRAMEWORK
+using KGySoft.Reflection.WinApi; 
+#endif
 
 #endregion
 

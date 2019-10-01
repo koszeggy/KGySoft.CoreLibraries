@@ -446,14 +446,14 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects.
         /// For non-string values the raw XML string value will be returned for resources from a .resx source and the result of the <see cref="Object.ToString">ToString</see> method
         /// for resources from a compiled source.</para>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
         /// will return a <see cref="MemoryStream"/> for any object.
         /// For values, which are neither <see cref="MemoryStream"/>, nor <see cref="Array">byte[]</see> instances these methods return a stream wrapper for the same string value
         /// that is returned by the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</para>

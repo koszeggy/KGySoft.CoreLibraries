@@ -38,6 +38,9 @@ namespace KGySoft.Reflection
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to create an instance just by enlisting the constructor parameters of a <see cref="Type"/> rather than specifying a <see cref="ConstructorInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">CreateInstance</see>
     /// methods in the <see cref="Reflector"/> class, which have some overloads for that purpose.</note>
+    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="CreateInstance">CreateInstance</see> does not return the ref/out parameters.
+    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+    /// <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">Reflector.CreateInstance</see> methods to invoke constructors with ref/out parameters without losing the returned parameter values.</note>
     /// </remarks>
     /// <example><code lang="C#"><![CDATA[
     /// using System;
@@ -106,7 +109,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance creator delegate.
         /// </summary>
-        private protected Delegate Initializer => initializer ?? (initializer = CreateInitializer());
+        private protected Delegate Initializer => initializer ??= CreateInitializer();
 
         #endregion
 

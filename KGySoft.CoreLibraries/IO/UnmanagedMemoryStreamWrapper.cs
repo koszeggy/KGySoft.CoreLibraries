@@ -45,13 +45,6 @@ namespace KGySoft.IO
             set => base.Capacity = value; // to throw the appropriate exception
         }
 
-        #endregion
-
-        #region Constructors
-
-        internal UnmanagedMemoryStreamWrapper(UnmanagedMemoryStream stream) : base(Reflector.EmptyArray<byte>(), false)
-            => unmanagedStream = stream;
-
         public override bool CanRead => unmanagedStream.CanRead;
         public override bool CanSeek => unmanagedStream.CanSeek;
         public override bool CanWrite => false;
@@ -62,6 +55,13 @@ namespace KGySoft.IO
             get => unmanagedStream.Position;
             set => unmanagedStream.Position = value;
         }
+
+        #endregion
+
+        #region Constructors
+
+        internal UnmanagedMemoryStreamWrapper(UnmanagedMemoryStream stream) : base(Reflector.EmptyArray<byte>(), false)
+            => unmanagedStream = stream;
 
         #endregion
 

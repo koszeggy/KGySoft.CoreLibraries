@@ -671,7 +671,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
         /// <remarks>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method on the <see cref="ResXDataNode"/> instance.
         /// <br/>See also the examples at the <strong>Remarks</strong> section of the <see cref="ResXResourceReader"/> class.</para>

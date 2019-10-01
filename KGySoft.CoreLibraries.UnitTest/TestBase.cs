@@ -169,6 +169,7 @@ namespace KGySoft.CoreLibraries
 
         protected static void CheckTestingFramework()
         {
+            Console.WriteLine($"Referenced runtime by KGySoft.CoreLibraries: {typeof(PublicResources).Assembly.GetReferencedAssemblies()[0]}");
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 2.0");

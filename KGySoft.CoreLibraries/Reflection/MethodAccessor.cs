@@ -36,6 +36,12 @@ namespace KGySoft.Reflection
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to invoke a method by name rather then by a <see cref="MethodInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">InvokeMethod</see>
     /// methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
+    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Invoke">Invoke</see> method does not return the ref/out parameters.
+    /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
+    /// then the changes will not be applied to the instance on which the method is invoked.
+    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+    /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
+    /// and to preserve changes the of the mutated value type instances.</note>
     /// </remarks>
     /// <example>
     /// <code lang="C#"><![CDATA[
@@ -161,7 +167,7 @@ namespace KGySoft.Reflection
         /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
-        /// and to preserve changes the of mutated value type instances.</note>
+        /// and to preserve changes the of the mutated value type instances.</note>
         /// </remarks>
         public abstract object Invoke(object instance, params object[] parameters);
 

@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if NETFRAMEWORK
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ASSEMBLY_INFO.cs
@@ -60,3 +61,4 @@ namespace KGySoft.Reflection.WinApi
         #endregion
     }
 }
+#endif

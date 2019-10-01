@@ -426,12 +426,12 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects. For non-string elements the raw XML string value will be returned.</para>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
         /// can be freed when calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>For examples see the documentation of the <see cref="ResXResourceSet"/> class.</para>
         /// </remarks>

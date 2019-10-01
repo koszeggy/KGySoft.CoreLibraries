@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if NETFRAMEWORK
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: IAssemblyCache.cs
@@ -49,3 +50,4 @@ namespace KGySoft.Reflection.WinApi
         #endregion
     }
 }
+#endif

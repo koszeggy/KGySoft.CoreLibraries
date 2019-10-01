@@ -38,6 +38,10 @@ namespace KGySoft.Reflection
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a property by name rather then by a <see cref="FieldInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetField">SetField</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetField">GetField</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>fieldName</c> parameter.</note>
+    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Set">Set</see> method throws a <see cref="PlatformNotSupportedException"/>
+    /// if the field to set is read-only or is an instance member of a value type (<see langword="struct"/>).
+    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
+    /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
     /// </remarks>
     /// <example><code lang="C#"><![CDATA[
     /// using System;
@@ -154,14 +158,14 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the field getter delegate.
         /// </summary>
-        private FieldGetter Getter => getter ?? (getter = CreateGetter());
+        private FieldGetter Getter => getter ??= CreateGetter();
 
         /// <summary>
         /// Gets the field setter delegate.
         /// </summary>
-        private FieldSetter Setter => setter ?? (setter = IsConstant 
+        private FieldSetter Setter => setter ??= IsConstant 
             ? throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name))
-            : CreateSetter());
+            : CreateSetter();
 
         #endregion
 
