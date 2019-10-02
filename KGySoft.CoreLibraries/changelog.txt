@@ -6,12 +6,15 @@
 ===============================================================================
 
 ~~~~~~~~~~~~~~~~~~~
-! v5.0.0 (alpha 1):
+! v5.0.0 (alpha 2):
 ~~~~~~~~~~~~~~~~~~~
 
 + Assembly changes:
 ===================
-+ Supporting .NET Core 2.0.
++ Targeting .NET Core 2.0.
++ Targeting .NET Core 3.0.
++ Targeting .NET Standard 2.0 (some Reflection API throw PlatformNotSupportedException).
++ Targeting .NET Standard 2.1
 
 ! KGySoft namespace
 ===================
