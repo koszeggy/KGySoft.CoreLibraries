@@ -13,8 +13,8 @@
 ===================
 + Targeting .NET Core 2.0.
 + Targeting .NET Core 3.0.
-+ Targeting .NET Standard 2.0 (some Reflection API throw PlatformNotSupportedException).
-+ Targeting .NET Standard 2.1
++ Targeting .NET Standard 2.0 (some Reflection APIs throw PlatformNotSupportedException - see the documentation).
++ Targeting .NET Standard 2.1.
 
 ! KGySoft namespace
 ===================
@@ -55,7 +55,7 @@
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the deserialization
     rather than the original one used for the serialization. If that info is needed you need to save it into the
-	custom serialized data.
+    custom serialized data.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
 - XmlSerializer: Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.

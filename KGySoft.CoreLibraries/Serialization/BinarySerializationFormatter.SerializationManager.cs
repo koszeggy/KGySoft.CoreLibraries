@@ -1237,7 +1237,7 @@ namespace KGySoft.Serialization
                         {
                             bw.Write(field.Name);
                             Type fieldType = field.FieldType;
-                            object fieldValue = FieldAccessor.GetAccessor(field).Get(data);
+                            object fieldValue = field.Get(data);
                             if (fieldValue != null && fieldType.IsEnum)
                                 fieldValue = Convert.ChangeType(fieldValue, Enum.GetUnderlyingType(fieldType), CultureInfo.InvariantCulture);
                             Write(bw, fieldValue, false);

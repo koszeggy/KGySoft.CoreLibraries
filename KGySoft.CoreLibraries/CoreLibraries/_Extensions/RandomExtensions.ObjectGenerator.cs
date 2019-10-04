@@ -1036,12 +1036,12 @@ namespace KGySoft.CoreLibraries
                         {
                             if (!TryGenerateObject(property.PropertyType, ref context, out object value))
                                 continue;
-                            PropertyAccessor.GetAccessor(property).Set(obj, value);
+                            property.Set(obj, value);
                             continue;
                         }
 
                         // collection of read-only property
-                        IEnumerable collection = (IEnumerable)PropertyAccessor.GetAccessor(property).Get(obj);
+                        IEnumerable collection = (IEnumerable)property.Get(obj);
                         if (collection == null)
                             continue;
 
@@ -1073,7 +1073,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (!TryGenerateObject(field.FieldType, ref context, out object value))
                             continue;
-                        FieldAccessor.GetAccessor(field).Set(obj, value);
+                        field.Set(obj, value);
                     }
                     catch (Exception e) when (!e.IsCritical())
                     {
@@ -1148,7 +1148,7 @@ namespace KGySoft.CoreLibraries
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
                 IDictionary dictionary = collection as IDictionary;
-                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers()[0]);
+                PropertyInfo genericIndexer = dictionary != null ? null : (PropertyInfo)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers()[0];
 
                 for (int i = 0; i < count; i++)
                 {

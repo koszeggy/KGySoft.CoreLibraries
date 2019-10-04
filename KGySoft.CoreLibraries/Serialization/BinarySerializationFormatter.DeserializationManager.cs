@@ -1030,15 +1030,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-#if NETSTANDARD2_0
-                if (field.IsInitOnly || !field.IsStatic && obj.GetType().IsValueType)
-                {
-                    field.SetValue(obj, value);
-                    return;
-                }
-#endif
-
-                FieldAccessor.GetAccessor(field).Set(obj, value);
+                field.Set(obj, value);
             }
 
             private void CheckReferences(SerializationInfo si)
@@ -1060,7 +1052,7 @@ namespace KGySoft.Serialization
                     return;
 
                 foreach (KeyValuePair<FieldInfo, object> usage in refUsages)
-                    FieldAccessor.GetAccessor(usage.Key).Set(usage.Value, realObject);
+                    usage.Key.Set(usage.Value, realObject);
 
                 objectReferences.Remove(objRef);
             }

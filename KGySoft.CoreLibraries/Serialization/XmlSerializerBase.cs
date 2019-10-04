@@ -272,7 +272,7 @@ namespace KGySoft.Serialization
                             // or is XmlSerializable
                             || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
                             // or the collection is not read-only (regardless of constructors)
-                            || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(PropertyAccessor.GetAccessor(p).Get(obj))))
+                            || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(p.Get(obj))))
 #if NET35
                     .Cast<MemberInfo>()
                     // ReSharper disable RedundantCast
@@ -347,9 +347,9 @@ namespace KGySoft.Serialization
                 defaultValue = memberType.IsValueType ? Activator.CreateInstance(memberType) : null;
             }
 
-            value = property != null 
-                ? PropertyAccessor.GetAccessor(property).Get(obj)
-                : FieldAccessor.GetAccessor(field).Get(obj);
+            value = property != null
+                ? property.Get(obj)
+                : field.Get(obj);
             return hasDefaultValue && Equals(value, defaultValue);
         }
 

@@ -445,7 +445,7 @@ namespace KGySoft.CoreLibraries
                     if (instance is Array) // checked just here because type can be a non-collection
                         return true;
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
-                    return !(bool)PropertyAccessor.GetAccessor(pi).Get(instance);
+                    return !(bool)pi.Get(instance);
                 }
             }
 

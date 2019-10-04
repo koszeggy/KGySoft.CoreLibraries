@@ -178,8 +178,8 @@ namespace KGySoft.Serialization
                         if (member != null)
                         {
                             object existingValue = members != null ? null : property != null
-                                ? PropertyAccessor.GetAccessor(property).Get(obj)
-                                : FieldAccessor.GetAccessor(field).Get(obj);
+                                ? property.Get(obj)
+                                : field.Get(obj);
                             if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(reader), out var result) && !TryDeserializeObject(itemType, reader, existingValue, out result))
                                 throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
 

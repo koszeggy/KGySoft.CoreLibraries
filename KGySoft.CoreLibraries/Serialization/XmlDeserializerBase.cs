@@ -104,14 +104,13 @@ namespace KGySoft.Serialization
             foreach (KeyValuePair<MemberInfo, object> member in members)
             {
                 var property = member.Key as PropertyInfo;
-                var propertyAccessor = property == null ? null : PropertyAccessor.GetAccessor(property);
                 var field = property != null ? null : member.Key as FieldInfo;
                 
 
                 // read-only property
                 if (property?.CanWrite == false)
                 {
-                    object existingValue = propertyAccessor.Get(result);
+                    object existingValue = property.Get(result);
                     if (property.PropertyType.IsValueType)
                     {
                         if (Equals(existingValue, member.Value))
@@ -135,12 +134,12 @@ namespace KGySoft.Serialization
                 // read-write property
                 if (property != null)
                 {
-                    propertyAccessor.Set(result, member.Value);
+                    property.Set(result, member.Value);
                     continue;
                 }
 
                 // field
-                FieldAccessor.GetAccessor(field).Set(result, member.Value);
+                field.Set(result, member.Value);
             }
 
             return result;
@@ -229,14 +228,7 @@ namespace KGySoft.Serialization
             // Field
             if (member is FieldInfo field)
             {
-#if NETSTANDARD2_0
-                if (field.IsInitOnly || obj.GetType().IsValueType)
-                {
-                    field.SetValue(obj, deserializedValue);
-                    return;
-                }
-#endif
-                FieldAccessor.GetAccessor(field).Set(obj, deserializedValue);
+                field.Set(obj, deserializedValue);
                 return;
             }
 
@@ -264,14 +256,7 @@ namespace KGySoft.Serialization
             }
 
             // Read-write property
-#if NETSTANDARD2_0
-            if (obj.GetType().IsValueType)
-            {
-                property.SetValue(obj, deserializedValue);
-                return;
-            }
-#endif
-            PropertyAccessor.GetAccessor(property).Set(obj, deserializedValue);
+            property.Set(obj, deserializedValue);
         }
 
         private protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
@@ -363,8 +348,9 @@ namespace KGySoft.Serialization
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                 {
+                    // not using the Get/Set extensions because then accessor would be retrieved two times
                     FieldAccessor accessor = FieldAccessor.GetAccessor(field);
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 // using the FieldInfo to set for value types
                     if (field.IsInitOnly || t.IsValueType)
                     {
                         field.SetValue(target, accessor.Get(source));

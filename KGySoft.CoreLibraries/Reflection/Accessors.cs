@@ -27,6 +27,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 #if !NETCOREAPP2_0
 using System.Text;
 #endif
@@ -746,6 +747,71 @@ namespace KGySoft.Reflection
             accessor.Invoke(instance, ctorArgs);
             return true;
 #endif
+        }
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static object Get(this FieldInfo field, object instance) => FieldAccessor.GetAccessor(field).Get(instance);
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static void Set(this FieldInfo field, object instance, object value)
+        {
+            Debug.Assert(!field.IsLiteral);
+#if NETSTANDARD2_0
+            if (field.IsInitOnly || !field.IsStatic && field.DeclaringType?.IsValueType == true)
+            {
+                field.SetValue(instance, value);
+                return;
+            }
+#endif
+
+            FieldAccessor.GetAccessor(field).Set(instance, value);
+        }
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static object Get(this PropertyInfo property, object instance)
+        {
+            Debug.Assert(property.CanRead);
+#if NETSTANDARD2_0
+            if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
+                return property.GetValue(instance);
+#endif
+            return PropertyAccessor.GetAccessor(property).Get(instance);
+        }
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
+        {
+            Debug.Assert(property.CanWrite);
+#if NETSTANDARD2_0
+            if (!property.GetSetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
+            {
+                property.SetValue(instance, value, indexerParams);
+                return;
+            }
+#endif
+
+            PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParams);
+        }
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal static object Invoke(this MethodInfo method, object instance, params object[] parameters)
+        {
+#if NETSTANDARD2_0
+            if (!method.IsStatic && method.DeclaringType?.IsValueType == true)
+                return method.Invoke(instance, parameters);
+#endif
+
+            return MethodAccessor.GetAccessor(method).Invoke(instance, parameters);
         }
 
         #endregion

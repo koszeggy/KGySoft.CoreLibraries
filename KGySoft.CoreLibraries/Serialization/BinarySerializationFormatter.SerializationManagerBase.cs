@@ -224,7 +224,7 @@ namespace KGySoft.Serialization
                 if (methods == null)
                     return;
                 foreach (MethodInfo method in methods)
-                    MethodAccessor.GetAccessor(method).Invoke(obj, Context);
+                    method.Invoke(obj, Context);
             }
 
             #endregion

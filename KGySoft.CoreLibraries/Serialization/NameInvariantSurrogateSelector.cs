@@ -130,7 +130,7 @@ namespace KGySoft.Serialization
             {
                 FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
-                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}", FieldAccessor.GetAccessor(fields[i]).Get(obj), fields[i].FieldType);
+                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}",  fields[i].Get(obj), fields[i].FieldType);
 
                 // marking end of level
                 info.AddValue("x" + level.ToString("X", NumberFormatInfo.InvariantInfo), null);
@@ -199,15 +199,7 @@ namespace KGySoft.Serialization
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
                         throw new SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
-                    FieldInfo field = fields[fieldIndex++];
-#if NETSTANDARD2_0
-                    if (field.IsInitOnly || !field.IsStatic && obj.GetType().IsValueType)
-                        field.SetValue(obj, entry.Value);
-                    else
-#endif
-                    {
-                        FieldAccessor.GetAccessor(field).Set(obj, entry.Value);
-                    }
+                    fields[fieldIndex++].Set(obj, entry.Value);
                 }
                 // end of level found
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))
