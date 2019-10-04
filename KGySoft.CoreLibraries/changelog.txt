@@ -11,6 +11,7 @@
 
 + Assembly changes:
 ===================
++ Targeting .NET Framework 4.7.2.
 + Targeting .NET Core 2.0.
 + Targeting .NET Core 3.0.
 + Targeting .NET Standard 2.0 (some Reflection APIs throw PlatformNotSupportedException - see the documentation).

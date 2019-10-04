@@ -173,7 +173,7 @@ namespace KGySoft.CoreLibraries
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 2.0");
-#elif NET40 || NET45
+#elif NET40 || NET45 || NET472
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
 #elif NETCOREAPP

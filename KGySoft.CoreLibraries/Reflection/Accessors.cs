@@ -386,9 +386,9 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-#if NET35 || NET40 || NET45
+#if NETFRAMEWORK
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif NETCOREAPP2_0 || NETCOREAPP3_0|| NETSTANDARD2_0 || NETSTANDARD2_1
+#else
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
         {
             get
@@ -404,8 +404,6 @@ namespace KGySoft.Reflection
                 return hasMemoryStream_InternalGetBuffer == true ? methodMemoryStream_InternalGetBuffer : null;
             }
         }
-#else
-#error .NET version is not set or not supported!
 #endif
 
         #endregion

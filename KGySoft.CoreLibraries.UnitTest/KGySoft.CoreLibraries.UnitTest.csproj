@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <!-- .NET Framework only references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net472'">
     <Reference Include="sysglobl" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>

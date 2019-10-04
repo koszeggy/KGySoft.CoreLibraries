@@ -1,8 +1,9 @@
-Thank you for installing KGy SOFT Core Libraries 5.0.0-alpha.2
+Thank you for installing KGy SOFT Core Libraries 5.0.0
 
 Main new features in this version:
+- Targeting .NET Framework 4.7.2 (additionally to 3.5, 4.0 and 4.5)
 - Targeting .NET Core 2.0 and .NET Core 3.0
-- Targeting .NET Standard 2.0 (some reflection API throw PlatformNotSupportedException) and .NET Standard 2.1
+- Targeting .NET Standard 2.0 (some reflection APIs throw PlatformNotSupportedException) and .NET Standard 2.1
 
 Release Notes: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt
 

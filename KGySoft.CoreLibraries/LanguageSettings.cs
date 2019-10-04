@@ -19,7 +19,7 @@
 using System;
 using System.Globalization;
 using System.Resources;
-#if NET40 || NET45
+#if NET40 || NET45 || NET472
 using System.Security; 
 #endif
 using System.Threading;
