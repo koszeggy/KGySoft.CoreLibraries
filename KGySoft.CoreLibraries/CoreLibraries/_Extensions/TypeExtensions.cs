@@ -63,6 +63,7 @@ namespace KGySoft.CoreLibraries
 
         private static IThreadSafeCacheAccessor<Type, int> sizeOfCache;
         private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type T2), Type> genericTypeCache;
+        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type T2), MethodInfo> genericMethodsCache;
         private static IThreadSafeCacheAccessor<Type, ConstructorInfo> defaultCtorCache;
 
         #endregion
@@ -562,6 +563,28 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type t1, Type t2 = null)
+        {
+            if (genericMethodsCache == null)
+                Interlocked.CompareExchange(ref genericMethodsCache, genericMethodsCache = new Cache<(MethodInfo, Type, Type), MethodInfo>(CreateGenericMethod).GetThreadSafeAccessor(), null);
+            return genericMethodsCache[(genMethodDef, t1, t2)];
+        }
+
+        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type[] args)
+        {
+            if (args == null)
+                throw new ArgumentNullException(nameof(args), Res.ArgumentNull);
+            switch (args.Length)
+            {
+                case 1:
+                    return GetGenericMethod(genMethodDef, args[0]);
+                case 2:
+                    return GetGenericMethod(genMethodDef, args[0], args[1]);
+                default:
+                    return genMethodDef.MakeGenericMethod(args);
+            }
+        }
+
         #endregion
 
         #region Private Methods
@@ -681,6 +704,8 @@ namespace KGySoft.CoreLibraries
         }
 
         private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key) => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
+
+        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type T2) key) => key.GenMethodDef.MakeGenericMethod(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
         #endregion
 

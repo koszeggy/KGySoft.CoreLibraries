@@ -156,7 +156,7 @@ namespace KGySoft.Reflection
             if (!methodsCollectionExtensions_AddRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
             {
                 // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor(addRangeExtensionMethod ?? (addRangeExtensionMethod = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))).MakeGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor(addRangeExtensionMethod ?? (addRangeExtensionMethod = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))).GetGenericMethod(genericArgument));
                 methodsCollectionExtensions_AddRange[genericArgument] = accessor;
             }
 
@@ -175,7 +175,7 @@ namespace KGySoft.Reflection
             if (!methodsListExtensions_InsertRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
             {
                 // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor(insertRangeExtensionMethod ?? (insertRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))).MakeGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor(insertRangeExtensionMethod ?? (insertRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))).GetGenericMethod(genericArgument));
                 methodsListExtensions_InsertRange[genericArgument] = accessor;
             }
 
@@ -190,7 +190,7 @@ namespace KGySoft.Reflection
             if (!methodsListExtensions_RemoveRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
             {
                 // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor(removeRangeExtensionMethod ?? (removeRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))).MakeGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor(removeRangeExtensionMethod ?? (removeRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))).GetGenericMethod(genericArgument));
                 methodsListExtensions_RemoveRange[genericArgument] = accessor;
             }
 
@@ -205,7 +205,7 @@ namespace KGySoft.Reflection
             if (!methodsListExtensions_ReplaceRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
             {
                 // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor(replaceRangeExtensionMethod ?? (replaceRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))).MakeGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor(replaceRangeExtensionMethod ?? (replaceRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))).GetGenericMethod(genericArgument));
                 methodsListExtensions_ReplaceRange[genericArgument] = accessor;
             }
 

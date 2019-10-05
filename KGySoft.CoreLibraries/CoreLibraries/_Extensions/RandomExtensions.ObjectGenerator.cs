@@ -348,7 +348,7 @@ namespace KGySoft.CoreLibraries
                             try
                             {
                                 if (t.GetGenericArguments().Length == genericArguments.Length && t.GetInterface(type.Name) != null)
-                                    result.Add(t.MakeGenericType(genericArguments));
+                                    result.Add(t.GetGenericType(genericArguments));
                             }
                             catch (AmbiguousMatchException) { }
                             catch (ArgumentException) { }
@@ -507,7 +507,7 @@ namespace KGySoft.CoreLibraries
                     il.Emit(OpCodes.Ldarg, i);
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
-                    il.Emit(OpCodes.Call, nextObjectGenMethod.MakeGenericMethod(parameterType));
+                    il.Emit(OpCodes.Call, nextObjectGenMethod.GetGenericMethod(parameterType));
 
                     // ReSharper disable once PossibleNullReferenceException
                     if (parameterType.IsValueType)
@@ -521,7 +521,7 @@ namespace KGySoft.CoreLibraries
                 {
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
-                    il.Emit(OpCodes.Call, nextObjectGenMethod.MakeGenericMethod(returnType));
+                    il.Emit(OpCodes.Call, nextObjectGenMethod.GetGenericMethod(returnType));
                 }
 
                 il.Emit(OpCodes.Ret);

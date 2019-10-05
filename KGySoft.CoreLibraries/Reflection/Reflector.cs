@@ -1136,7 +1136,7 @@ namespace KGySoft.Reflection
                     throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
                 try
                 {
-                    method = method.MakeGenericMethod(genericParameters);
+                    method = method.GetGenericMethod(genericParameters);
                 }
                 catch (Exception e)
                 {
@@ -1645,7 +1645,7 @@ namespace KGySoft.Reflection
                         }
                         try
                         {
-                            mi = mi.MakeGenericMethod(genericParameters);
+                            mi = mi.GetGenericMethod(genericParameters);
                             if (checkParams)
                                 methodParams = mi.GetParameters();
                         }
