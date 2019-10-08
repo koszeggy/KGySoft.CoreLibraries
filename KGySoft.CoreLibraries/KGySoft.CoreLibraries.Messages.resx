@@ -529,6 +529,9 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_ObjectHierarchyChangedFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
+  <data name="BinarySerialization_GenericMethodNotFoundFormat" xml:space="preserve">
+    <value>Generic method with signature "{0}" was not found in type "{1}".</value>
+  </data>
   <data name="BinarySerialization_NotSupportedFormat" xml:space="preserve">
     <value>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</value>
   </data>

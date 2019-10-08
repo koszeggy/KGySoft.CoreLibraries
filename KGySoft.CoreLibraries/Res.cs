@@ -512,6 +512,9 @@ namespace KGySoft
         /// <summary>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationObjectHierarchyChanged(Type type) => Get("BinarySerialization_ObjectHierarchyChangedFormat", type);
 
+        /// <summary>Generic method with signature "{0}" was not found in type "{1}".</summary>
+        internal static string BinarySerializationGenericMethodNotFound(string signature, Type type) => Get("BinarySerialization_GenericMethodNotFoundFormat", signature, type);
+
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type, field);
 

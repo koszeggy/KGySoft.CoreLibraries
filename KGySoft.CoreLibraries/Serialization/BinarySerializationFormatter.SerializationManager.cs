@@ -98,15 +98,9 @@ namespace KGySoft.Serialization
 
 
 #if !NET35
-            private Dictionary<string, int> AssemblyNameIndexCache
-            {
-                get
-                {
-                    return assemblyNameIndexCache ?? (assemblyNameIndexCache = new Dictionary<string, int>(1));
-                }
-            }
+            private Dictionary<string, int> AssemblyNameIndexCache => assemblyNameIndexCache ??= new Dictionary<string, int>(1);
 
-            private Dictionary<string, int> TypeNameIndexCache => typeNameIndexCache ?? (typeNameIndexCache = new Dictionary<string, int>(1));
+            private Dictionary<string, int> TypeNameIndexCache => typeNameIndexCache ??= new Dictionary<string, int>(1);
 
 #endif
 
@@ -297,25 +291,6 @@ namespace KGySoft.Serialization
                 bw.Write(section.Offset);
             }
 
-            private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
-            {
-                if (type.IsGenericTypeDefinition)
-                {
-                    bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
-                    return;
-                }
-
-                if (type.IsGenericParameter)
-                {
-                    bw.Write((byte)GenericTypeSpecifier.GenericParameter);
-                    Write7BitInt(bw, type.GenericParameterPosition);
-                    return;
-                }
-
-                if (type.IsGenericType)
-                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
-            }
-
             #endregion
 
             #region Instance Methods
@@ -387,6 +362,13 @@ namespace KGySoft.Serialization
                     bool isNullable = t.IsNullable();
                     if (isNullable)
                     {
+                        // the Nullable<> definition or open generic types are encoded recursively
+                        if (t.IsGenericTypeDefinition || t.ContainsGenericParameters)
+                        {
+                            result = DataTypes.RecursiveObjectGraph;
+                            return true;
+                        }
+
                         result = GetDataType(t.GetGenericArguments()[0]);
                         if (IsElementType(result) && IsPureType(result))
                         {
@@ -454,7 +436,7 @@ namespace KGySoft.Serialization
 
                     // supported collection
                     Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
-                        : t.IsGenericParameter ? t.DeclaringType
+                        : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType
                         : t;
 
                     // ReSharper disable once AssignNullToNotNullAttribute
@@ -1457,6 +1439,7 @@ namespace KGySoft.Serialization
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
                 bool isGenericParam = type.IsGenericParameter;
+                Debug.Assert(!isGenericParam || type.DeclaringMethod == null, "Generics method arguments should be written by WriteNewType");
 
                 Type typeDef = isTypeDef ? type
                     : isGeneric ? type.GetGenericTypeDefinition()
@@ -1546,7 +1529,7 @@ namespace KGySoft.Serialization
 
                 Type typeDef = isTypeDef ? type
                     : isGeneric ? type.GetGenericTypeDefinition()
-                    : isGenericParam ? type.DeclaringType
+                    : isGenericParam ? (type.DeclaringMethod != null ? typeof(GenericMethodDefinitionPlaceholder) : type.DeclaringType)
                     : null;
 
                 // For known assemblies a type index is requested first.
@@ -1576,7 +1559,7 @@ namespace KGySoft.Serialization
                 if (!typeDefWritten)
                 {
                     // ReSharper disable once AssignNullToNotNullAttribute - cannot be null for a type definition
-                    bw.Write(typeDef.FullName);
+                    bw.Write(typeDef == typeof(GenericMethodDefinitionPlaceholder) ? GenericMethodDefinitionPlaceholder.AliasName : typeDef.FullName);
                     AddToTypeCache(typeDef, binderAsmName, null);
                 }
 
@@ -1592,6 +1575,37 @@ namespace KGySoft.Serialization
                 foreach (Type genericArgument in type.GetGenericArguments())
                     WriteType(bw, genericArgument, allowOpenTypes);
                 AddToTypeCache(type, binderAsmName, null);
+            }
+
+            private void WriteGenericSpecifier(BinaryWriter bw, Type type)
+            {
+                if (type.IsGenericTypeDefinition)
+                {
+                    bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
+                    return;
+                }
+
+                if (type.IsGenericParameter)
+                {
+                    MethodBase declaringMethod = type.DeclaringMethod;
+                    if (declaringMethod == null)
+                    {
+                        // Generic type parameter
+                        bw.Write((byte)GenericTypeSpecifier.GenericParameter);
+                        Write7BitInt(bw, type.GenericParameterPosition);
+                        return;
+                    }
+
+                    // For generic method parameters no specifier is needed because the placeholder type has been written.
+                    // Instead, writing the declaring type, method signature and parameter index
+                    Type declaringType = type.DeclaringType;
+                    WriteType(bw, declaringType, true);
+                    bw.Write(declaringMethod.ToString());
+                    Write7BitInt(bw, type.GenericParameterPosition);
+                }
+
+                if (type.IsGenericType)
+                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
             }
 
 #if NET35

@@ -77,7 +77,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = false;
+        private const bool dumpDetails = true;
         private const bool dumpSerContent = false;
 
         #endregion
@@ -338,14 +338,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<>), // supported generic type definition
                 typeof(Dictionary<,>), // supported generic type definition
                 typeof(CustomGenericCollection<>), // custom generic type definition
+                typeof(Nullable<>), // known special type definition
+                typeof(KeyValuePair<,>), // supported special type definition
 
-                // Generic Parameters
+                // Generic Type Parameters
                 typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
 
                 // Open Constructed Generics
                 typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1]), // open constructed generic (KeyValuePair<int, TValue>)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1])), // open constructed generic (KeyValuePair<int, TValue>?)
+
+                // Generic Method Parameters
+                typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // unique generic method definition argument
+                typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // ambiguous generic method definition argument
             };
 
 #if !(NETCOREAPP2_0 || NETCOREAPP3_0) // Type is not serializable in .NET Core

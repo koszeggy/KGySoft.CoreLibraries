@@ -32,14 +32,31 @@ namespace KGySoft.Serialization
     {
         private abstract class SerializationManagerBase
         {
+            #region Nested Types
+
             #region Enumerations
 
             private protected enum GenericTypeSpecifier
             {
                 TypeDefinition,
                 ConstructedType,
-                GenericParameter
+                GenericParameter,
             }
+
+            #endregion
+
+            #region GenericMethodDefinitionPlaceholder struct
+
+            private protected struct GenericMethodDefinitionPlaceholder
+            {
+                #region Constants
+                
+                internal const string AliasName = "!"; 
+                
+                #endregion
+            } 
+            
+            #endregion
 
             #endregion
 
@@ -63,7 +80,7 @@ namespace KGySoft.Serialization
                 Reflector.Type,
                 Reflector.ArrayType,
                 Reflector.EnumType,
-                typeof(IBinarySerializable)
+                typeof(IBinarySerializable),
             };
 
             #endregion

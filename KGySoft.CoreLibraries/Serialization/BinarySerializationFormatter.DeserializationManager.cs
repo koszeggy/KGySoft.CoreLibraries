@@ -284,14 +284,20 @@ namespace KGySoft.Serialization
                 {
                     string typeName = br.ReadString();
                     Type type = null;
-                    if (Binder != null)
-                        type = Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, typeName);
-                    if (type == null)
-                        type = assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
-                    if (type == null)
-                        throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+                    if (typeName == GenericMethodDefinitionPlaceholder.AliasName)
+                        type = typeof(GenericMethodDefinitionPlaceholder);
+                    else
+                    {
+                        if (Binder != null)
+                            type = Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, typeName);
+                        if (type == null)
+                            type = assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
+                        if (type == null)
+                            throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+                    }
+
                     CachedTypes.Add(type);
-                    if (type.IsGenericTypeDefinition)
+                    if (type.IsGenericTypeDefinition || type == typeof(GenericMethodDefinitionPlaceholder))
                         type = HandleGenericTypeDef(br, type, allowOpenTypes);
 
                     return type;
@@ -300,7 +306,7 @@ namespace KGySoft.Serialization
                 // known index
                 Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
                 Type result = CachedTypes[index];
-                if (result.IsGenericTypeDefinition)
+                if (result.IsGenericTypeDefinition || result == typeof(GenericMethodDefinitionPlaceholder))
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
 
                 if (Binder == null)
@@ -1094,7 +1100,25 @@ namespace KGySoft.Serialization
 
             private Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes, bool addToCache = true)
             {
-                Type[] args = typeDef.GetGenericArguments();
+                Type[] args;
+
+                if (typeDef == typeof(GenericMethodDefinitionPlaceholder))
+                {
+                    Debug.Assert(allowOpenTypes, "Generic method definition arguments are expected with open types only.");
+                    Type declaringType = ReadType(br, true);
+                    string signature = br.ReadString();
+                    MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                        .FirstOrDefault(mi => mi.ToString() == signature);
+                    if (method == null)
+                        throw new SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
+                    int argIndex = Read7BitInt(br);
+                    args = method.GetGenericArguments();
+                    return argIndex < 0 || argIndex >= args.Length
+                        ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
+                        : args[argIndex];
+                }
+
+                args = typeDef.GetGenericArguments();
                 int len = args.Length;
                 Type result;
 
