@@ -2849,8 +2849,11 @@ namespace KGySoft.Reflection
 
             try
             {
-                // mscorlib type of fully qualified names
-                result = Type.GetType(typeName);
+                if (typeName[0] == '!')
+                    result = ResolveGenericTypeParameter(typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+                else
+                    // mscorlib type of fully qualified names
+                    result = Type.GetType(typeName);
             }
             catch (Exception e)
             {
@@ -3016,6 +3019,36 @@ namespace KGySoft.Reflection
             }
 
             return result;
+        }
+
+        private static Type ResolveGenericTypeParameter(string typeName, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
+        {
+            if (typeName.Length == 1)
+                return null;
+            bool isGenericMethodParam = typeName[1] == '!';
+            int begin = isGenericMethodParam ? 2 : 1;
+            int end = typeName.IndexOf(':');
+            if (end == -1)
+                return null;
+            string argName = typeName.Substring(begin, end - begin);
+            string signature = null;
+            if (isGenericMethodParam)
+            {
+                begin = end + 1;
+                end = typeName.IndexOf(':', begin);
+                if (end == -1)
+                    return null;
+                signature = typeName.Substring(begin, end - begin);
+            }
+
+            Type declaringType = ResolveType(typeName.Substring(end + 1), loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+
+            if (!isGenericMethodParam)
+                return declaringType.GetGenericArguments().FirstOrDefault(arg => arg.Name == argName);
+            
+            MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .FirstOrDefault(mi => mi.ToString() == signature);
+            return method?.GetGenericArguments().FirstOrDefault(arg => arg.Name == argName);
         }
 
         /// <summary>

@@ -26,6 +26,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -218,29 +219,81 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeTypes()
         {
-            Type[] referenceObjects =
-                {
-                    typeof(int),                                // mscorlib
-                    typeof(int).MakeByRefType(),                // mscorlib
-                    typeof(int).MakePointerType(),              // mscorlib
-                    typeof(List<int>),                          // mscorlib
-                    typeof(List<EmptyType>),                    // mixed
-                    typeof(IntList),                            // custom
-                    typeof(CustomGenericCollection<int>),       // mixed
-                    typeof(CustomGenericCollection<EmptyType>), // custom - EmptyType is stored differently when fully qualified
-                    typeof(List<>),                             // mscorlib, generic template
-                    typeof(int[]),                              // 1D zero based array
-                    typeof(int[,]),                             // multi-dim array
-                    typeof(int[][,]),                           // mixed jagged array
-                    Array.CreateInstance(typeof(int),new[]{3},new[]{-1}).GetType(), // nonzero based 1D array
-                    typeof(List<>).GetGenericArguments()[0]     // this can be only binary serialized
-                };
+            object[] referenceObjects =
+            {
+                // Simple types
+                typeof(int),
+                typeof(int?),
 
-            // binary for generic argument, recursive for chose recursion for the array
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+                typeof(int).MakeByRefType(),
+                typeof(int).MakePointerType(),
+                typeof(SystemSerializableClass),
+                typeof(SystemSerializableStruct?),
+                typeof(void),
 
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.BinarySerializationAsFallback, false);
+                // Arrays
+                typeof(int[]),
+                typeof(int[,]),
+                typeof(int).MakeArrayType(1), // int[*]
+                typeof(SystemSerializableClass[]), // custom array
+                typeof(Array), // unspecified array
+
+                // Pointers and References
+                typeof(int*),
+                typeof(int**),
+                typeof(void*),
+                typeof(void**),
+                typeof(int*[]),
+                typeof(int**[,]),
+                typeof(int*[][]),
+                typeof(int).MakeByRefType(), // int&
+                typeof(int*).MakeByRefType(), // int*&
+                typeof(int[]).MakePointerType(), // int[]* - actually not a valid type
+                typeof(int[]).MakePointerType().MakePointerType(), // int[]** - actually not a valid type
+                typeof(int[]).MakePointerType().MakePointerType().MakeByRefType(), // int[]**& - actually not a valid type
+
+                // Closed Constructed Generics
+                typeof(List<int>), // supported generic
+                typeof(CustomGenericCollection<SystemSerializableClass>), // custom generic
+                typeof(CustomGenericCollection<int>), // custom generic with supported parameter
+                typeof(List<SystemSerializableClass>), // supported generic with custom parameter
+                typeof(Dictionary<string, SystemSerializableClass>), // supported generic with mixed parameters
+                typeof(List<Array>),
+                typeof(List<int[]>),
+                typeof(List<Array[]>),
+
+                // Nullable collections
+                typeof(DictionaryEntry?),
+                typeof(KeyValuePair<int, string>?),
+                typeof(KeyValuePair<int, SystemSerializableClass>?), // supported generic with mixed parameters
+
+                // Generic Type Definitions
+                typeof(List<>), // supported generic type definition
+                typeof(Dictionary<,>), // supported generic type definition
+                typeof(CustomGenericCollection<>), // custom generic type definition
+                typeof(Nullable<>), // known special type definition
+                typeof(KeyValuePair<,>), // supported special type definition
+
+                // Generic Type Parameters
+                typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+
+                // Open Constructed Generics
+                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1]), // open constructed generic (KeyValuePair<int, TValue>)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1])), // open constructed generic (KeyValuePair<int, TValue>?)
+
+                // Generic Method Parameters
+                typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // unique generic method definition argument
+                typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // ambiguous generic method definition argument
+            };
+
+            // recursion for the array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false);
         }
 
         [Test]

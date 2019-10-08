@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -457,11 +458,12 @@ namespace KGySoft.CoreLibraries
         /// - If AQN is used, assembly name is appended only for non-mscorlib types
         /// - FullName contains AQN for generic parameters
         /// - ToString is OK for constructed generics without AQN but includes also type arguments for definitions, where rather FullName should be used.
+        /// - Provides parseable string for generic arguments (not compatible with Type.GetType).
         /// </remarks>
         internal static string GetTypeName(this Type type, bool useAqn)
         {
             var sb = new StringBuilder(128);
-            DoGetTypeName(type, sb, useAqn, false);
+            DumpTypeName(type, sb, useAqn, false);
             return sb.ToString();
         }
 
@@ -602,21 +604,15 @@ namespace KGySoft.CoreLibraries
             conversionsOfTarget[sourceType] = conversion;
         }
 
-        private static void DoGetTypeName(Type type, StringBuilder result, bool useAqn, bool isElementType)
+        private static void DumpTypeName(Type type, StringBuilder result, bool useAqn, bool isElementType)
         {
-            if (type.IsGenericTypeDefinition)
-            {
-                result.Append('!');
-                result.Append(type.Name);
-                result.Append(':');
-                DoGetTypeName(type.DeclaringType, result, useAqn, isElementType);
-                return;
-            }
-
+            // Generic parameter
+            if (type.IsGenericParameter)
+                DumpGenericParameterName(type, result, useAqn);
             // array
-            if (type.IsArray)
+            else if (type.IsArray)
             {
-                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                DumpTypeName(type.GetElementType(), result, useAqn, true);
                 int rank = type.GetArrayRank();
                 result.Append('[');
                 if (rank == 1 && !type.Name.EndsWith("[]", StringComparison.Ordinal))
@@ -628,22 +624,22 @@ namespace KGySoft.CoreLibraries
             // pointer
             else if (type.IsPointer)
             {
-                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                DumpTypeName(type.GetElementType(), result, useAqn, true);
                 result.Append('*');
             }
             // ByRef
             else if (type.IsByRef)
             {
-                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                DumpTypeName(type.GetElementType(), result, useAqn, true);
                 result.Append('&');
             }
             // non-generic type or generic type definition
             else if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
                 result.Append(type.FullName);
-            // generic type without aqn: ToString
-            else if (!useAqn)
+            // closed generic type without AQN: ToString
+            else if (!useAqn && !type.ContainsGenericParameters)
                 result.Append(type.ToString());
-            // generic type with aqn: appending assembly only for non-mscorlib types
+            // generic type with AQN: appending assembly only for non-mscorlib types
             else
             {
                 result.Append(type.GetGenericTypeDefinition().FullName);
@@ -655,7 +651,7 @@ namespace KGySoft.CoreLibraries
                     bool isMscorlibArg = genericArgument.Assembly == Reflector.SystemCoreLibrariesAssembly;
                     if (!isMscorlibArg)
                         result.Append('[');
-                    DoGetTypeName(genericArgument, result, true, false);
+                    DumpTypeName(genericArgument, result, useAqn, false);
                     if (!isMscorlibArg)
                         result.Append(']');
                     if (i < len - 1)
@@ -671,6 +667,23 @@ namespace KGySoft.CoreLibraries
                 result.Append(", ");
                 result.Append(type.Assembly.FullName);
             }
+        }
+
+        private static void DumpGenericParameterName(Type type, StringBuilder result, bool useAqn)
+        {
+            MethodBase declaringMethod = type.DeclaringMethod;
+            result.Append('!');
+            if (declaringMethod != null)
+                result.Append('!');
+            result.Append(type.Name);
+            if (declaringMethod != null)
+            {
+                result.Append(':');
+                result.Append(declaringMethod);
+            }
+
+            result.Append(':');
+            DumpTypeName(type.DeclaringType, result, useAqn, true);
         }
 
         private static int GetSize(Type type)

@@ -361,7 +361,7 @@ namespace KGySoft.Serialization
             Type type = obj.GetType();
 
             // a.) If type can be natively parsed, simple writing
-            if (type.CanBeParsedNatively() && !(obj is Type t && t.IsGenericParameter))
+            if (type.CanBeParsedNatively())
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
