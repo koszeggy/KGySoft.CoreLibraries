@@ -249,10 +249,7 @@ namespace KGySoft.Serialization
                 {
                     DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
-                    desc.DecodeType(br, this);
-                    return desc.Type.IsGenericTypeDefinition
-                        ? HandleGenericTypeDef(br, desc.Type, allowOpenTypes, false)
-                        : desc.Type;
+                    return desc.DecodeType(br, this, allowOpenTypes);
                 }
 
                 // new assembly: assembly and type are stored together
@@ -313,6 +310,65 @@ namespace KGySoft.Serialization
                     return result;
                 string fullName = result.FullName;
                 return fullName == null ? result : Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, fullName) ?? result;
+            }
+
+            internal Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes, bool addToCache = true)
+            {
+                Type[] args;
+
+                if (typeDef == typeof(GenericMethodDefinitionPlaceholder))
+                {
+                    Debug.Assert(allowOpenTypes, "Generic method definition arguments are expected with open types only.");
+                    Type declaringType = ReadType(br, true);
+                    string signature = br.ReadString();
+                    MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                        .FirstOrDefault(mi => mi.ToString() == signature);
+                    if (method == null)
+                        throw new SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
+                    int argIndex = Read7BitInt(br);
+                    args = method.GetGenericArguments();
+                    return argIndex < 0 || argIndex >= args.Length
+                        ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
+                        : args[argIndex];
+                }
+
+                args = typeDef.GetGenericArguments();
+                int len = args.Length;
+                Type result;
+
+                if (allowOpenTypes)
+                {
+                    switch ((GenericTypeSpecifier)br.ReadByte())
+                    {
+                        case GenericTypeSpecifier.TypeDefinition:
+                            return typeDef;
+                        case GenericTypeSpecifier.GenericParameter:
+                            {
+                                var index = Read7BitInt(br);
+                                if (index < 0 || index >= len)
+                                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                                result = typeDef.GetGenericArguments()[index];
+                                return result;
+                            }
+                        case GenericTypeSpecifier.ConstructedType:
+                            break;
+                        default:
+                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                    }
+                }
+
+                // reading arguments
+                for (int i = 0; i < len; i++)
+                    args[i] = ReadType(br, allowOpenTypes);
+
+                result = typeDef.GetGenericType(args);
+                if (addToCache)
+                    CachedTypes.Add(result);
+
+                if (Binder == null)
+                    return result;
+                string fullName = result.FullName;
+                return fullName == null ? result : Binder.BindToType(result.Assembly.FullName, fullName) ?? result;
             }
 
             internal void AddObjectToCache(object obj)
@@ -1096,65 +1152,6 @@ namespace KGySoft.Serialization
                 if (typeByNameCache == null)
                     typeByNameCache = new Dictionary<string, Type>();
                 typeByNameCache.Add(key, result);
-            }
-
-            private Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes, bool addToCache = true)
-            {
-                Type[] args;
-
-                if (typeDef == typeof(GenericMethodDefinitionPlaceholder))
-                {
-                    Debug.Assert(allowOpenTypes, "Generic method definition arguments are expected with open types only.");
-                    Type declaringType = ReadType(br, true);
-                    string signature = br.ReadString();
-                    MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                        .FirstOrDefault(mi => mi.ToString() == signature);
-                    if (method == null)
-                        throw new SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
-                    int argIndex = Read7BitInt(br);
-                    args = method.GetGenericArguments();
-                    return argIndex < 0 || argIndex >= args.Length
-                        ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
-                        : args[argIndex];
-                }
-
-                args = typeDef.GetGenericArguments();
-                int len = args.Length;
-                Type result;
-
-                if (allowOpenTypes)
-                {
-                    switch ((GenericTypeSpecifier)br.ReadByte())
-                    {
-                        case GenericTypeSpecifier.TypeDefinition:
-                            return typeDef;
-                        case GenericTypeSpecifier.GenericParameter:
-                        {
-                            var index = Read7BitInt(br);
-                            if (index < 0 || index >= len)
-                                throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                            result = typeDef.GetGenericArguments()[index];
-                            return result;
-                        }
-                        case GenericTypeSpecifier.ConstructedType:
-                            break;
-                        default:
-                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                    }
-                }
-
-                // reading arguments
-                for (int i = 0; i < len; i++)
-                    args[i] = ReadType(br, allowOpenTypes);
-
-                result = typeDef.GetGenericType(args);
-                if (addToCache)
-                    CachedTypes.Add(result);
-
-                if (Binder == null)
-                    return result;
-                string fullName = result.FullName;
-                return fullName == null ? result : Binder.BindToType(result.Assembly.FullName, fullName) ?? result;
             }
 
             /// <summary>

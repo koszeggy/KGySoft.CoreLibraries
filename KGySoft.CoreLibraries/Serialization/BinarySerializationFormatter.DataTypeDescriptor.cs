@@ -222,51 +222,60 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Decodes self and element types
             /// </summary>
-            internal Type DecodeType(BinaryReader br, DeserializationManager manager)
+            internal Type DecodeType(BinaryReader br, DeserializationManager manager, bool allowOpenTypes = false)
             {
-                // not a collection
+                
+                // Not a supported collection. Handling generics occurs in recursive ReadType if needed.
                 if (CollectionDataType == DataTypes.Null)
-                    return Type = GetElementType(ElementDataType, br, manager);
+                    return Type = GetElementType(ElementDataType, br, manager, allowOpenTypes);
+                
+                Type result;
 
                 // generic type definition
                 if (ElementDataType == DataTypes.GenericTypeDefinition)
-                    return Type = GetCollectionType(CollectionDataType);
-
-                // simple collection element or dictionary key
-                if (ElementDataType != DataTypes.Null)
-                    ElementType = GetElementType(ElementDataType, br, manager);
+                    result = GetCollectionType(CollectionDataType);
                 else
                 {
-                    ElementDescriptor.DecodeType(br, manager);
-                    ElementType = ElementDescriptor.Type;
+                    // simple collection element or dictionary key
+                    if (ElementDataType != DataTypes.Null)
+                        ElementType = GetElementType(ElementDataType, br, manager, allowOpenTypes);
+                    else
+                    {
+                        ElementDescriptor.DecodeType(br, manager, allowOpenTypes);
+                        ElementType = ElementDescriptor.Type;
+                    }
+
+                    // Dictionary TValue
+                    if (IsDictionary)
+                    {
+                        DictionaryValueDescriptor.DecodeType(br, manager, allowOpenTypes);
+                        DictionaryValueType = DictionaryValueDescriptor.Type;
+                    }
+
+                    if (IsArray)
+                    {
+                        // 0 means zero based 1D array
+                        byte rank = br.ReadByte();
+                        return Type = result = rank == 0
+                            ? ElementType.MakeArrayType()
+                            : ElementType.MakeArrayType(rank);
+                    }
+
+                    result = GetCollectionType(CollectionDataType);
+                    if (!result.ContainsGenericParameters)
+                        return Type = result;
+
+                    bool isNullable = result.IsNullable();
+                    Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
+                    result = typeDef.GetGenericArguments().Length == 1
+                        ? typeDef.GetGenericType(ElementType)
+                        : typeDef.GetGenericType(ElementType, DictionaryValueType);
+                    result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
-                // Dictionary TValue
-                if (IsDictionary)
-                {
-                    DictionaryValueDescriptor.DecodeType(br, manager);
-                    DictionaryValueType = DictionaryValueDescriptor.Type;
-                }
-
-                if (IsArray)
-                {
-                    // 0 means zero based 1D array
-                    byte rank = br.ReadByte();
-                    return Type = rank == 0
-                        ? ElementType.MakeArrayType()
-                        : ElementType.MakeArrayType(rank);
-                }
-
-                Type = GetCollectionType(CollectionDataType);
-                if (!Type.ContainsGenericParameters)
-                    return Type;
-
-                bool isNullable = Type.IsNullable();
-                Type typeDef = isNullable ? Type.GetGenericArguments()[0] : Type;
-                Type result = typeDef.GetGenericArguments().Length == 1
-                    ? typeDef.GetGenericType(ElementType)
-                    : typeDef.GetGenericType(ElementType, DictionaryValueType);
-                return Type = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
+                if (result.IsGenericTypeDefinition)
+                    result = manager.HandleGenericTypeDef(br, result, allowOpenTypes, false);
+                return Type = result;
             }
 
             internal bool AreAllElementsQualified(bool isTValue)
@@ -327,7 +336,7 @@ namespace KGySoft.Serialization
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-            private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager)
+            private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager, bool allowOpenTypes)
             {
                 switch (dataType)
                 {
@@ -393,20 +402,20 @@ namespace KGySoft.Serialization
                         return Reflector.RuntimeType;
 
                     case DataTypes.Pointer:
-                        return ElementDescriptor.DecodeType(br, manager).MakePointerType();
+                        return ElementDescriptor.DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:
-                        return ElementDescriptor.DecodeType(br, manager).MakeByRefType();
+                        return ElementDescriptor.DecodeType(br, manager, allowOpenTypes).MakeByRefType();
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
-                        return manager.ReadType(br);
+                        return manager.ReadType(br, allowOpenTypes);
 
                     default:
                         // nullable
                         if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
                         {
-                            Type underlyingType = GetElementType(dataType & ~DataTypes.Nullable, br, manager);
+                            Type underlyingType = GetElementType(dataType & ~DataTypes.Nullable, br, manager, allowOpenTypes);
                             return Reflector.NullableType.GetGenericType(underlyingType);
                         }
 

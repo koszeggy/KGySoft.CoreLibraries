@@ -721,7 +721,7 @@ namespace KGySoft.Serialization
                         Debug.Fail("Id of recursive object should be unknown on top level.");
                 }
 
-                WriteTypeNamesAndRanks(bw, type, dataType);
+                WriteTypeNamesAndRanks(bw, type, dataType, false);
                 WriteCollection(bw, collectionType, data);
             }
 
@@ -729,7 +729,7 @@ namespace KGySoft.Serialization
             /// Writes additional info after a [series of] DataType stream needed to completely describe an exact type.
             /// </summary>
             [SecurityCritical]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypes dataType)
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypes dataType, bool allowOpenTypes)
             {
                 Debug.Assert(IsElementType(dataType) || GetCollectionDataType(dataType) == dataType, $"Unexpected compound type: {dataType}");
 
@@ -739,13 +739,13 @@ namespace KGySoft.Serialization
                     if (dataType.In(DataTypes.Pointer, DataTypes.ByRef))
                     {
                         Type elementType = type.GetElementType();
-                        WriteTypeNamesAndRanks(bw, elementType, GetDataType(elementType));
+                        WriteTypeNamesAndRanks(bw, elementType, GetDataType(elementType), allowOpenTypes);
                         return;
                     }
 
                     if ((dataType & DataTypes.Nullable) != DataTypes.Null)
                         type = Nullable.GetUnderlyingType(type);
-                    WriteType(bw, type);
+                    WriteType(bw, type, allowOpenTypes);
                     return;
                 }
 
@@ -753,7 +753,10 @@ namespace KGySoft.Serialization
                 if (GetCollectionDataType(dataType) == DataTypes.Array)
                 {
                     Type elementType = type.GetElementType();
-                    WriteTypeNamesAndRanks(bw, elementType, GetDataType(elementType));
+
+                    // ReSharper disable once PossibleNullReferenceException - arrays have element types
+                    DataTypes elementDataType = elementType.IsGenericTypeDefinition || elementType.IsGenericParameter ? DataTypes.RecursiveObjectGraph : GetDataType(elementType);
+                    WriteTypeNamesAndRanks(bw, elementType, elementDataType, allowOpenTypes);
                     byte rank = (byte)type.GetArrayRank();
 
                     // 0-based generic array is differentiated from nonzero-based 1D array (matters if no instance is created so bounds are not queried)
@@ -767,7 +770,7 @@ namespace KGySoft.Serialization
                 if (type.IsGenericType)
                 {
                     foreach (Type genericArgument in type.GetGenericArguments())
-                        WriteTypeNamesAndRanks(bw, genericArgument, GetDataType(genericArgument));
+                        WriteTypeNamesAndRanks(bw, genericArgument, GetDataType(genericArgument), allowOpenTypes);
                 }
             }
 
@@ -830,6 +833,11 @@ namespace KGySoft.Serialization
             private CircularList<DataTypes> EncodeArray(Type type)
             {
                 Type elementType = type.GetElementType();
+                
+                // ReSharper disable once PossibleNullReferenceException - arrays have element types
+                if (elementType.IsGenericParameter || elementType.IsGenericTypeDefinition)
+                    return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+
                 DataTypes elementDataType = GetDataType(elementType);
 
                 if (IsElementType(elementDataType))
@@ -1424,7 +1432,15 @@ namespace KGySoft.Serialization
                 if (IsElementType(dataType))
                 {
                     if (!IsPureType(dataType))
-                        return false;
+                    {
+                        if (!indexWritten)
+                            return false;
+
+                        WriteDataType(bw, dataType);
+                        WriteType(bw, type, allowOpenTypes);
+                        return true;
+                    }
+
                     if (!indexWritten)
                         Write7BitInt(bw, InvariantAssemblyIndex);
                     WriteDataType(bw, dataType);
@@ -1451,7 +1467,7 @@ namespace KGySoft.Serialization
                 {
                     CircularList<DataTypes> encodedCollectionType = EncodeDataType(type, dataType);
                     encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
-                    WriteTypeNamesAndRanks(bw, type, dataType);
+                    WriteTypeNamesAndRanks(bw, type, dataType, allowOpenTypes);
                     return true;
                 }
 

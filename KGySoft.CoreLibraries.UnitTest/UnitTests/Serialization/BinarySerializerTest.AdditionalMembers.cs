@@ -26,7 +26,7 @@ using System.Text;
 
 using KGySoft.Reflection;
 using KGySoft.Serialization;
-
+using NUnit.Framework;
 using NUnit.Framework.Internal;
 
 #endregion
@@ -524,7 +524,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
                 if (dumpDetails && bsf != null)
                     br = new TestReader(ms, dumpDetails);
-                return br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                object result = br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                Assert.AreEqual(ms.Length, ms.Position, "Stream was not read until the end");
+                return result;
             }
         }
 
@@ -542,6 +544,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 for (int i = 0; i < length; i++)
                     result[i] = br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                Assert.AreEqual(ms.Length, ms.Position, "Stream was not read until the end");
                 return result;
             }
         }
