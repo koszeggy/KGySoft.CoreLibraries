@@ -606,8 +606,10 @@ namespace KGySoft.CoreLibraries
 
         private static void DumpTypeName(Type type, StringBuilder result, bool useAqn, bool isElementType)
         {
+            static bool ContainsGenericParameterElement(Type t) => t.IsGenericParameter || t.HasElementType && ContainsGenericParameterElement(t.GetElementType());
+
             // Generic parameter
-            if (type.IsGenericParameter)
+            if (ContainsGenericParameterElement(type))
                 DumpGenericParameterName(type, result, useAqn);
             // array
             else if (type.IsArray)
@@ -671,7 +673,10 @@ namespace KGySoft.CoreLibraries
 
         private static void DumpGenericParameterName(Type type, StringBuilder result, bool useAqn)
         {
-            MethodBase declaringMethod = type.DeclaringMethod;
+            static Type GetGenericParam(Type t) => t.HasElementType ? GetGenericParam(t.GetElementType()) : t;
+
+            Type genericParam = GetGenericParam(type);
+            MethodBase declaringMethod = genericParam.DeclaringMethod;
             result.Append('!');
             if (declaringMethod != null)
                 result.Append('!');
@@ -683,7 +688,7 @@ namespace KGySoft.CoreLibraries
             }
 
             result.Append(':');
-            DumpTypeName(type.DeclaringType, result, useAqn, true);
+            DumpTypeName(genericParam.DeclaringType, result, useAqn, true);
         }
 
         private static int GetSize(Type type)

@@ -125,6 +125,8 @@ namespace KGySoft.Reflection
         internal static readonly Assembly SystemCoreLibrariesAssembly = ObjectType.Assembly;
         internal static readonly Assembly KGySoftCoreLibrariesAssembly = typeof(Reflector).Assembly;
 
+        internal static readonly string SystemCoreLibrariesAssemblyName = SystemCoreLibrariesAssembly.FullName;
+
         #endregion
 
         #region Private Fields
@@ -2889,7 +2891,7 @@ namespace KGySoft.Reflection
             }
 
             // no assembly name is defined (generics: no assembly name for the main type itself)
-            // firsty we try to resolve the type in the calling assembly
+            // firstly we try to resolve the type in the calling assembly
             Assembly callingAssembly = Assembly.GetCallingAssembly();
             result = ResolveType(callingAssembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
             if (result == null)

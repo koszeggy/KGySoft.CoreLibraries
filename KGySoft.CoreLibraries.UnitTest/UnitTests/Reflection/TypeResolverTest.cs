@@ -55,39 +55,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.IsNotNull(Reflector.ResolveAssembly(asmName, true, true) != null);
         }
 
-        [Test]
-        public void TestGeneric()
+        [TestCase("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", typeof(Dictionary<string, Uri>))]
+        [TestCase("System.Collections.Generic.Dictionary`2[[System.String],[System.Uri]]", typeof(Dictionary<string, Uri>))]
+        [TestCase("System.Collections.Generic.Dictionary`2[System.String,System.Uri]", typeof(Dictionary<string, Uri>))]
+        [TestCase("System.Collections.Generic.List`1[System.Uri]", typeof(List<Uri>))]
+        [TestCase("System.Collections.Generic.List`1[[System.Uri]]", typeof(List<Uri>))]
+        [TestCase("System.Collections.Generic.List`1[[System.Uri, System]]", typeof(List<Uri>))]
+        [TestCase("System.Collections.Generic.List`1[System.Uri][]", typeof(List<Uri>[]))]
+        [TestCase("System.Collections.Generic.List`1[System.Uri[]]", typeof(List<Uri[]>))]
+        public void ResolveGenericTypesTest(string name, Type expectedType)
         {
-            string s = "System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]";
-            Type exp = typeof(Dictionary<string, Uri>);
-            Type result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
-
-            s = "System.Collections.Generic.Dictionary`2[[System.String],[System.Uri]]";
-            result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
-
-            s = "System.Collections.Generic.Dictionary`2[System.String,System.Uri]";
-            result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
-
-            s = "System.Collections.Generic.List`1[System.Uri]";
-            exp = typeof(List<Uri>);
-            result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
-
-            s = "System.Collections.Generic.List`1[[System.Uri]]";
-            result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
-
-            // partial asm name
-            s = "System.Collections.Generic.List`1[[System.Uri, System]]";
-            result = Reflector.ResolveType(s);
-            Assert.AreSame(exp, result);
+            Assert.AreSame(expectedType, Reflector.ResolveType(name));
         }
 
         [Test]
-        public void TestArrayTypes()
+        public void ResolveArrayTypesTest()
         {
             Type t = typeof(Uri[]);
             Type result = Reflector.ResolveType(t.ToString());
@@ -128,6 +110,83 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             t = Reflector.ResolveType(typeof(Queue<Uri[]>).ToString());
             Assert.AreSame(typeof(Queue<Uri[]>), t);
+        }
+
+        [TestCase("int")] // fail
+        [TestCase("System.Int32")] // int
+        [TestCase("System.Int32[]")] // int[]
+        [TestCase("System.Int32*")] // int*
+        [TestCase("System.Int32&")] // int&
+        [TestCase("System.Int32[ ] ")] // int[]
+        [TestCase("System.Int32[*]")] // int[*]
+        [TestCase("System.Int32[,]")] // int[,]
+        [TestCase("System.Int32[*,**]")] // int[,]
+        [TestCase("System.Int32[]*")] // int[]*
+        [TestCase("System.Int32[]**&")] // int[]**&
+        [TestCase("System.Int32[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // int[]
+        [TestCase("System.Int32[], mscorlib")] // int[]
+        [TestCase("System.Int32[,][]")] // int[][,]
+        [TestCase("System.Int32[][,]")] // int[,][]
+        [TestCase("System.Collections.Generic.List`1")] // List<>
+        [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // List<int>
+        [TestCase("System.Collections.Generic.List`1[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]")] // fail
+        [TestCase("System.Collections.Generic.List`1[[System.Int32]]")] // List<int>
+        [TestCase("System.Collections.Generic.List`1[ [ System.Int32] ] ")] // List<int>
+        [TestCase("System.Collections.Generic.List`1[System.Int32]")] // List<int>
+        [TestCase("System.Collections.Generic.List`1[System.Int32][]")] // List<int>[]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32]][]")] // List<int>[]
+        [TestCase("System.Collections.Generic.List`1[System.Int32[]]")] // List<int[]>
+        [TestCase("System.Collections.Generic.List`1[[System.Int32[]]]")] // List<int[]>
+        [TestCase("System.Collections.Generic.List`1[[System.Int32][]]")] // fail
+        [TestCase("System.Collections.Generic.List`1[System.Int32]&")] // List<int>&
+        [TestCase("System.Collections.Generic.List`1[System.Int32&]")] // fail: The type 'System.Int32&' may not be used as a type argument.
+        [TestCase("System.Collections.Generic.List`1[System.Int32*]")] // fail: The type 'System.Int32*' may not be used as a type argument.
+        [TestCase("System.Collections.Generic.Dictionary`2[System.Int32,System.String]")] // Dictionary<int, string>
+        [TestCase("System.Collections.Generic.Dictionary`2[ System.Int32, System.String]")] // Dictionary<int, string>
+        [TestCase("System.Collections.Generic.Dictionary`2[[System.Int32],[System.String]]")] // Dictionary<int, string>
+        [TestCase("System.Collections.Generic.Dictionary`2[ [ System.Int32] , [ System.String] ] ")] // Dictionary<int, string>
+        public void ResolveTests(string typeName)
+        {
+            Console.WriteLine($"Test case: {typeName}");
+            TypeResolver resolver = new TypeResolver(typeName, false);
+            Type type = null;
+            Exception exception = null;
+            try
+            {
+                type = resolver.Resolve();
+            }
+            catch (Exception e)
+            {
+                exception = e;
+            }
+
+            Console.WriteLine($"Resolved to: {type?.ToString() ?? exception?.Message ?? "<null>"}");
+            Console.WriteLine($"RootName: {resolver?.RootName ?? "<null>"}");
+            Console.WriteLine($"Name: {resolver.Name ?? "<null>"}");
+            Console.WriteLine($"FullName: {resolver.FullName ?? "<null>"}");
+            Console.WriteLine($"AssemblyQualifiedName: {resolver.AssemblyQualifiedName ?? "<null>"}");
+
+            // if type cannot be resolved, it is not resolvable by Type.GetType either
+            if (type == null)
+            {
+                if (exception == null)
+                    Assert.IsNull(Type.GetType(typeName));
+                else
+                    Assert.Throws(exception.GetType(), () => Type.GetType(typeName));
+                return;
+            }
+
+            // Name is always compatible
+            Assert.AreEqual(type.Name, resolver.Name);
+
+            if (type.ContainsGenericParameters)
+                return;
+
+            // Full name is the same as Type.ToString(), except for generic parameters, which return enough information for resolve
+            Assert.AreEqual(type.ToString(), resolver.FullName);
+
+            // Type.GetType is able to resolve by AssemblyQualifiedName
+            Assert.AreEqual(type, Type.GetType(resolver.AssemblyQualifiedName));
         }
 
         #endregion
