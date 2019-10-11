@@ -71,6 +71,11 @@ namespace KGySoft.Serialization
             internal Type Type { get; private set; }
 
             /// <summary>
+            /// The array rank if <see cref="IsArray"/> is <see langword="true"/>. Gets 0 for zero-based arrays.
+            /// </summary>
+            internal int Rank { get; private set; }
+
+            /// <summary>
             /// Type of elements in arrays and single-param generic types or TKey in dictionaries
             /// </summary>
             internal Type ElementType { get; private set; }
@@ -255,10 +260,10 @@ namespace KGySoft.Serialization
                     if (IsArray)
                     {
                         // 0 means zero based 1D array
-                        byte rank = br.ReadByte();
-                        return Type = result = rank == 0
+                        Rank = br.ReadByte();
+                        return Type = Rank == 0
                             ? ElementType.MakeArrayType()
-                            : ElementType.MakeArrayType(rank);
+                            : ElementType.MakeArrayType(Rank);
                     }
 
                     result = GetCollectionType(CollectionDataType);

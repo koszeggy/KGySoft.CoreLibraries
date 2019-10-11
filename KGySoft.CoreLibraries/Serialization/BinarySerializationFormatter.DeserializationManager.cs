@@ -413,7 +413,8 @@ namespace KGySoft.Serialization
                 int[] lowerBounds = new int[rank];
                 for (int i = 0; i < rank; i++)
                 {
-                    lowerBounds[i] = Read7BitInt(br);
+                    if (descriptor.Rank != 0)
+                        lowerBounds[i] = Read7BitInt(br);
                     lengths[i] = Read7BitInt(br);
                 }
 

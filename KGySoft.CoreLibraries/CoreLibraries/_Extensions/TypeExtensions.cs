@@ -581,6 +581,30 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        internal static Type GetRootType(this Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+
+            // ReSharper disable once PossibleNullReferenceException
+            while (type.HasElementType)
+                type = type.GetElementType();
+
+            return type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+        }
+
+        internal static bool IsZeroBasedArray(this Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+
+#if NET35 || NET40 || NET45 || NET472 || NETSTANDARD2_0
+            return type.IsArray && type.Name.EndsWith("[]", StringComparison.Ordinal);
+#else
+            return type.IsArray && !type.IsVariableBoundArray;
+#endif
+        }
+
         #endregion
 
         #region Private Methods
@@ -673,9 +697,7 @@ namespace KGySoft.CoreLibraries
 
         private static void DumpGenericParameterName(Type type, StringBuilder result, bool useAqn)
         {
-            static Type GetGenericParam(Type t) => t.HasElementType ? GetGenericParam(t.GetElementType()) : t;
-
-            Type genericParam = GetGenericParam(type);
+            Type genericParam = GetRootType(type);
             MethodBase declaringMethod = genericParam.DeclaringMethod;
             result.Append('!');
             if (declaringMethod != null)

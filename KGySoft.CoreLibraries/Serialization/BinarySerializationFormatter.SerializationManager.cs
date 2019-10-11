@@ -757,12 +757,8 @@ namespace KGySoft.Serialization
                     // ReSharper disable once PossibleNullReferenceException - arrays have element types
                     DataTypes elementDataType = elementType.IsGenericTypeDefinition || elementType.IsGenericParameter ? DataTypes.RecursiveObjectGraph : GetDataType(elementType);
                     WriteTypeNamesAndRanks(bw, elementType, elementDataType, allowOpenTypes);
-                    byte rank = (byte)type.GetArrayRank();
-
-                    // 0-based generic array is differentiated from nonzero-based 1D array (matters if no instance is created so bounds are not queried)
-                    if (rank == 1 && type.Name.EndsWith("[]", StringComparison.Ordinal)) // checking the IList<> interface does not work for pointer arrays
-                        rank = 0;
-                    bw.Write(rank);
+                    int rank = type.IsZeroBasedArray() ? 0 : type.GetArrayRank();
+                    bw.Write((byte)rank);
                     return;
                 }
 
@@ -926,15 +922,18 @@ namespace KGySoft.Serialization
                 if (collectionDataType == DataTypes.Array)
                 {
                     Array array = (Array)obj;
+                    Type type = obj.GetType();
+
                     // 1. Dimensions
                     for (int i = 0; i < array.Rank; i++)
                     {
-                        Write7BitInt(bw, array.GetLowerBound(i));
+                        if (i != 0 || !type.IsZeroBasedArray())
+                            Write7BitInt(bw, array.GetLowerBound(i));
                         Write7BitInt(bw, array.GetLength(i));
                     }
 
                     // 2. Write elements
-                    Type elementType = array.GetType().GetElementType();
+                    Type elementType = type.GetElementType();
                     // 2.a.) Primitive array
                     // ReSharper disable once PossibleNullReferenceException - it is an array
                     if (elementType.IsPrimitive)
