@@ -783,16 +783,16 @@ namespace KGySoft
         internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
 
         /// <summary>Pointer type '{0}' is not supported.</summary>
-        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetTypeName(false));
+        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.FullName));
 
         /// <summary>Setting read-only field '{0}' of type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetTypeName(false));
+        internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.FullName));
 
         /// <summary>Setting instance field '{0}' of value type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetTypeName(false));
+        internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.FullName));
 
         /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetTypeName(false));
+        internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.FullName));
 
         #endregion
 

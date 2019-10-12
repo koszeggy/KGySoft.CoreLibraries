@@ -20,14 +20,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -234,7 +231,8 @@ namespace KGySoft.CoreLibraries
 #if !NET35
         [SecuritySafeCritical]
 #endif
-        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification = "Intended. Method<MyType>() is more simple than Method(typeof(MyType))")]
+        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter",
+            Justification = "Intended. Method<T>() is more simple than Method(Type)")]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
             if (type == null)
@@ -296,6 +294,23 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void RegisterConversion(this Type sourceType, Type targetType, Conversion conversion)
             => DoRegisterConversion(sourceType, targetType, conversion);
+
+        /// <summary>
+        /// Gets the name of the <paramref name="type"/> of the specified <paramref name="kind"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="type">The type whose name is to be obtained.</param>
+        /// <param name="kind">The formatting kind for the name to be retrieved.</param>
+        /// <remarks>
+        /// <para>See the values of the <see cref="TypeNameKind"/>&#160;<see langword="enum"/>&#160;for the detailed differences
+        /// from <see cref="Type"/> members such as <see cref="MemberInfo.Name"/>, <see cref="Type.FullName"/> and <see cref="Type.AssemblyQualifiedName"/>.</para>
+        /// <para>Unlike the <see cref="Type"/> properties, the names produced by this method are never <see langword="null"/> for runtime types.</para>
+        /// <para>This method always provides parseable type names by using the <see cref="TypeNameKind.AssemblyQualifiedName"/> kind.
+        /// If the type contains generic arguments, then the result will be able to be parsed by
+        /// the <see cref="Reflector.ResolveType(string,bool,bool,bool)">Reflector.ResolveType</see> method.</para>
+        /// </remarks>
+        public static string GetName(this Type type, TypeNameKind kind)
+            => TypeResolver.GetName(type, kind);
 
         #endregion
 
@@ -412,7 +427,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets whether given instance of type type is a non read-only collection
+        /// Gets whether given instance of type is a non read-only collection
         /// either by generic or non-generic way.
         /// </summary>
         /// <param name="type">The type to test</param>
@@ -446,25 +461,6 @@ namespace KGySoft.CoreLibraries
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Gets the full name of the type with or without assembly name.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <param name="useAqn">If <see langword="true"/>, gets AssemblyQualifiedName, except for mscorlib types.</param>
-        /// <remarks>
-        /// Differences to FullName/AssemblyQualifiedName/ToString:
-        /// - If AQN is used, assembly name is appended only for non-mscorlib types
-        /// - FullName contains AQN for generic parameters
-        /// - ToString is OK for constructed generics without AQN but includes also type arguments for definitions, where rather FullName should be used.
-        /// - Provides parseable string for generic arguments (not compatible with Type.GetType).
-        /// </remarks>
-        internal static string GetTypeName(this Type type, bool useAqn)
-        {
-            var sb = new StringBuilder(128);
-            DumpTypeName(type, sb, useAqn, false);
-            return sb.ToString();
         }
 
         internal static bool CanBeDerived(this Type type)
@@ -581,27 +577,17 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        internal static Type GetRootType(this Type type)
-        {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-
-            // ReSharper disable once PossibleNullReferenceException
-            while (type.HasElementType)
-                type = type.GetElementType();
-
-            return type.IsGenericType ? type.GetGenericTypeDefinition() : type;
-        }
-
         internal static bool IsZeroBasedArray(this Type type)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-#if NET35 || NET40 || NET45 || NET472 || NETSTANDARD2_0
+#if NET35 || NET40 || NET45 || NET472
+            return type.IsSzArray();
+#elif NETSTANDARD2_0
             return type.IsArray && type.Name.EndsWith("[]", StringComparison.Ordinal);
 #else
-            return type.IsArray && !type.IsVariableBoundArray;
+            return type.IsSZArray;
 #endif
         }
 
@@ -626,91 +612,6 @@ namespace KGySoft.CoreLibraries
             }
 
             conversionsOfTarget[sourceType] = conversion;
-        }
-
-        private static void DumpTypeName(Type type, StringBuilder result, bool useAqn, bool isElementType)
-        {
-            static bool ContainsGenericParameterElement(Type t) => t.IsGenericParameter || t.HasElementType && ContainsGenericParameterElement(t.GetElementType());
-
-            // Generic parameter
-            if (ContainsGenericParameterElement(type))
-                DumpGenericParameterName(type, result, useAqn);
-            // array
-            else if (type.IsArray)
-            {
-                DumpTypeName(type.GetElementType(), result, useAqn, true);
-                int rank = type.GetArrayRank();
-                result.Append('[');
-                if (rank == 1 && !type.Name.EndsWith("[]", StringComparison.Ordinal))
-                    result.Append('*');
-                else if (rank > 1)
-                    result.Append(new string(',', rank - 1));
-                result.Append(']');
-            }
-            // pointer
-            else if (type.IsPointer)
-            {
-                DumpTypeName(type.GetElementType(), result, useAqn, true);
-                result.Append('*');
-            }
-            // ByRef
-            else if (type.IsByRef)
-            {
-                DumpTypeName(type.GetElementType(), result, useAqn, true);
-                result.Append('&');
-            }
-            // non-generic type or generic type definition
-            else if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
-                result.Append(type.FullName);
-            // closed generic type without AQN: ToString
-            else if (!useAqn && !type.ContainsGenericParameters)
-                result.Append(type.ToString());
-            // generic type with AQN: appending assembly only for non-mscorlib types
-            else
-            {
-                result.Append(type.GetGenericTypeDefinition().FullName);
-                result.Append('[');
-                int len = type.GetGenericArguments().Length;
-                for (int i = 0; i < len; i++)
-                {
-                    Type genericArgument = type.GetGenericArguments()[i];
-                    bool isMscorlibArg = genericArgument.Assembly == Reflector.SystemCoreLibrariesAssembly;
-                    if (!isMscorlibArg)
-                        result.Append('[');
-                    DumpTypeName(genericArgument, result, useAqn, false);
-                    if (!isMscorlibArg)
-                        result.Append(']');
-                    if (i < len - 1)
-                        result.Append(", ");
-                }
-
-                result.Append(']');
-            }
-
-            // appending assembly, except for element types, which will be appended on returning from recursion
-            if (useAqn && !isElementType && type.Assembly != Reflector.SystemCoreLibrariesAssembly)
-            {
-                result.Append(", ");
-                result.Append(type.Assembly.FullName);
-            }
-        }
-
-        private static void DumpGenericParameterName(Type type, StringBuilder result, bool useAqn)
-        {
-            Type genericParam = GetRootType(type);
-            MethodBase declaringMethod = genericParam.DeclaringMethod;
-            result.Append('!');
-            if (declaringMethod != null)
-                result.Append('!');
-            result.Append(type.Name);
-            if (declaringMethod != null)
-            {
-                result.Append(':');
-                result.Append(declaringMethod);
-            }
-
-            result.Append(':');
-            DumpTypeName(genericParam.DeclaringType, result, useAqn, true);
         }
 
         private static int GetSize(Type type)
@@ -746,9 +647,11 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
-        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key) => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
+        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key)
+            => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
-        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type T2) key) => key.GenMethodDef.MakeGenericMethod(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
+        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type T2) key)
+            => key.GenMethodDef.MakeGenericMethod(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
         #endregion
 

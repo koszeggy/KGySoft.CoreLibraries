@@ -330,7 +330,7 @@ namespace KGySoft.Serialization
                     // if can be trusted in all circumstances
                     if (IsTrustedCollection(ctx.Type)
                         // or recursive is requested
-                        || ((ctx.Visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                        || ((ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || ctx.Type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
@@ -338,13 +338,13 @@ namespace KGySoft.Serialization
                         return true;
                     }
 
-                    if (ctx.Visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                    if (ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
                         throw new SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
                     throw new SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
                 }
 
                 // 2.) recursive serialization, if enabled
-                if (IsRecursiveSerializationEnabled || ctx.Visibility == DesignerSerializationVisibility.Content
+                if (RecursiveSerializationAsFallback || ctx.Visibility == DesignerSerializationVisibility.Content
                     // or when it has public properties/fields only
                     || IsTrustedType(ctx.Type))
                 {
@@ -401,7 +401,7 @@ namespace KGySoft.Serialization
                 return;
 
             // e.) value type as binary only if enabled
-            if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[] data))
+            if (type.IsValueType && CompactSerializationOfStructures && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[] data))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
@@ -414,7 +414,7 @@ namespace KGySoft.Serialization
             }
 
             // f.) binary serialization: base64 format to XML
-            if (IsBinarySerializationEnabled && visibility != DesignerSerializationVisibility.Content)
+            if (BinarySerializationAsFallback && visibility != DesignerSerializationVisibility.Content)
             {
                 try
                 {

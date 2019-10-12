@@ -23,7 +23,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -35,9 +34,6 @@ using System.Text;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-#if NETFRAMEWORK
-using KGySoft.Reflection.WinApi; 
-#endif
 
 #endregion
 
@@ -132,9 +128,6 @@ namespace KGySoft.Reflection
         #region Private Fields
 
         private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
-        private static LockingDictionary<string, Assembly> assemblyCache;
-        private static LockingDictionary<string, Type> typeCacheByString;
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
         private static bool? canCreateUninitializedObject;
 
         #endregion
@@ -145,15 +138,6 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache
             => defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor());
-
-        private static LockingDictionary<string, Type> TypeCacheByString
-            => typeCacheByString ?? (typeCacheByString = new Cache<string, Type>(256).AsThreadSafe());
-
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
-            => typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>(64).AsThreadSafe()).GetThreadSafeAccessor(true)); // true because the inner creation is fast
-
-        private static LockingDictionary<string, Assembly> AssemblyCache
-            => assemblyCache ?? (assemblyCache = new Cache<string, Assembly>().AsThreadSafe());
 
         #endregion
 
@@ -2683,78 +2667,16 @@ namespace KGySoft.Reflection
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
         /// <param name="matchBySimpleName"><see langword="true"/>&#160;to ignore version, culture and public key token information differences.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to throw a <see cref="ReflectionException"/> if the assembly cannot be resolved;
+        /// <see langword="false"/>&#160;to return <see langword="null"/> in case of resolving errors. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="Assembly"/> instance with the loaded assembly.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
-        /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
-        /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
-        /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
-#if !NET35
-        [SecuritySafeCritical]
-#endif
-        public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
-        {
-            if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
-            if (assemblyName.Length == 0)
-                throw new ArgumentException(Res.ArgumentEmpty, nameof(assemblyName));
-
-            string key = (matchBySimpleName ? "-" : "+") + assemblyName;
-            if (AssemblyCache.TryGetValue(key, out Assembly result))
-                return result;
-
-            // 1.) Iterating through loaded assemblies, checking names
-            AssemblyName asmName = new AssemblyName(assemblyName);
-            string fullName = asmName.FullName;
-            string simpleName = asmName.Name;
-            foreach (Assembly asm in GetLoadedAssemblies())
-            {
-                // Simple match. As asmName is parsed, for fully qualified names this will work for sure.
-                if (asm.FullName == fullName)
-                {
-                    result = asm;
-                    break;
-                }
-
-                AssemblyName nameToCheck = asm.GetName();
-                if (nameToCheck.Name != simpleName)
-                    continue;
-
-                if (matchBySimpleName)
-                {
-                    result = asm;
-                    break;
-                }
-
-                Version version;
-                if ((version = asmName.Version) != null && nameToCheck.Version != version)
-                    continue;
-
-#if NET35 || NET40
-                if (asmName.CultureInfo != null && asmName.CultureInfo.Name != nameToCheck.CultureInfo.Name)
-                    continue;
-#else
-                if (asmName.CultureName != null && nameToCheck.CultureName != asmName.CultureName)
-                    continue;
-#endif
-                byte[] publicKeyTokenRef, publicKeyTokenCheck;
-                if ((publicKeyTokenRef = asmName.GetPublicKeyToken()) != null && (publicKeyTokenCheck = nameToCheck.GetPublicKeyToken()) != null
-                    && publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck))
-                    continue;
-
-                result = asm;
-                break;
-            }
-
-            // 2.) Trying to load the assembly
-            if (result == null && tryToLoad)
-                result = matchBySimpleName ? LoadAssemblyWithPartialName(asmName) : Assembly.Load(asmName);
-
-            if (result != null)
-                assemblyCache[key] = result;
-
-            return result;
-        }
+        /// <exception cref="ReflectionException"><paramref name="throwError"/> is <see langword="true"/>&#160;and the assembly cannot be resolved or loaded.
+        /// In case of load error the <see cref="Exception.InnerException"/> property is set.</exception>
+        public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName, bool throwError = false)
+            => AssemblyResolver.ResolveAssembly(assemblyName, throwError, tryToLoad, matchBySimpleName);
 
         /// <summary>
         /// Gets the already loaded assemblies in a transparent way of any frameworks.
@@ -2762,49 +2684,6 @@ namespace KGySoft.Reflection
         internal static Assembly[] GetLoadedAssemblies()
             // no caching because can change
             => AppDomain.CurrentDomain.GetAssemblies();
-
-        /// <summary>
-        /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
-        /// </summary>
-        /// <param name="assemblyName">Name of the assembly.</param>
-        [SecurityCritical]
-        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
-            Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
-        private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
-        {
-#if NETFRAMEWORK
-            // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = Fusion.GetGacPath(assemblyName.Name);
-            if (gacPath != null)
-                return Assembly.LoadFrom(gacPath); 
-#endif
-
-            Assembly result = null;
-
-            // 2. Non-GAC assembly: Trying to load the assembly with full name first.
-            try
-            {
-                result = Assembly.Load(assemblyName);
-                if (result != null)
-                    return result;
-            }
-            catch (IOException)
-            {
-                // if version is set, we have a second try
-                if (assemblyName.Version == null)
-                    throw;
-            }
-
-            // 3. Trying to load the assembly without version info
-            if (assemblyName.Version != null)
-            {
-                assemblyName = (AssemblyName)assemblyName.Clone();
-                assemblyName.Version = null;
-                result = Assembly.Load(assemblyName);
-            }
-
-            return result;
-        }
 
         #endregion
 
@@ -2815,8 +2694,15 @@ namespace KGySoft.Reflection
         /// When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
         /// <param name="typeName">The type name as a string representation with or without assembly name.</param>
-        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names; <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only.</param>
-        /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
+        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names;
+        /// <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>;
+        /// <see langword="false"/>&#160;to consider every provided information in assembly names. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to throw a <see cref="ReflectionException"/> if the type cannot be resolved;
+        /// <see langword="false"/>&#160;to return <see langword="null"/> in case of resolving errors. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assembly name is partially defined,
@@ -2840,218 +2726,35 @@ namespace KGySoft.Reflection
         /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String, System.Uri]", false, false);
         /// ]]></code>
         /// </example>
-        /// <exception cref="ReflectionException"><paramref name="typeName"/> cannot be parsed.</exception>
-        public static Type ResolveType(string typeName, bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false)
-        {
-            if (String.IsNullOrEmpty(typeName))
-                return null;
-
-            if (TypeCacheByString.TryGetValue(typeName, out Type result))
-                return result;
-
-            try
-            {
-                if (typeName[0] == '!')
-                    result = ResolveGenericTypeParameter(typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-                else
-                    // mscorlib type of fully qualified names
-                    result = Type.GetType(typeName);
-            }
-            catch (Exception e)
-            {
-                throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
-            }
-
-            if (result != null)
-            {
-                typeCacheByString[typeName] = result;
-                return result;
-            }
-
-            // no success: partial name or non-mscorlib type without assembly name
-            SplitTypeName(typeName, out string asmName, out typeName);
-
-            // (partial) assembly name is defined
-            if (asmName != null)
-            {
-                Assembly assembly;
-                try
-                {
-                    assembly = ResolveAssembly(asmName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-                }
-                catch (Exception e)
-                {
-                    throw new ReflectionException(Res.ReflectionCannotLoadAssembly(asmName), e);
-                }
-
-                if (assembly == null)
-                    return null;
-
-                return ResolveType(assembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-            }
-
-            // no assembly name is defined (generics: no assembly name for the main type itself)
-            // firstly we try to resolve the type in the calling assembly
-            Assembly callingAssembly = Assembly.GetCallingAssembly();
-            result = ResolveType(callingAssembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-            if (result == null)
-            {
-                foreach (Assembly assembly in GetLoadedAssemblies())
-                {
-                    if (assembly == callingAssembly)
-                        continue;
-
-                    result = ResolveType(assembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-                    if (result != null)
-                        break;
-                }
-            }
-
-            if (result != null)
-            {
-                typeCacheByString[typeName] = result;
-            }
-
-            return result;
-        }
+        /// <exception cref="ReflectionException"><paramref name="throwError"/> is <see langword="true"/>&#160;and <paramref name="typeName"/> cannot be parsed.</exception>
+        public static Type ResolveType(string typeName, bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false, bool throwError = false)
+            => TypeResolver.ResolveType(typeName, throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
 
         /// <summary>
-        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.
-        /// Type name can be generic.
+        /// Gets the <see cref="Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.
+        /// As the type is about to be resolved from the specified <paramref name="assembly"/>, assembly names are allowed to be specified in the generic arguments only.
         /// </summary>
         /// <param name="typeName">The type name as a string representation.</param>
         /// <param name="assembly">The assembly that contains the type to retrieve.</param>
+        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names;
+        /// <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>;
+        /// <see langword="false"/>&#160;to consider every provided information in assembly names. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to throw a <see cref="ReflectionException"/> if the type cannot be resolved;
+        /// <see langword="false"/>&#160;to return <see langword="null"/> in case of resolving errors. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para>The generic type parameters can contain assembly parts. However, if the main type definition contains an assembly part, then
-        /// an <see cref="ArgumentException"/> will be thrown. For such type names use <see cref="ResolveType(string,bool,bool)"/> overload instead.</para>
+        /// an <see cref="ArgumentException"/> will be thrown. For type names with assembly information use <see cref="ResolveType(string,bool,bool,bool)"/> overload instead.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="assembly"/> is <see langword="null"/>.</exception>
         /// <exception cref="ReflectionException"><paramref name="typeName"/> cannot be parsed.</exception>
         /// <exception cref="ArgumentException"><paramref name="typeName"/> contains assembly name part, which is allowed only in generic type parameters.</exception>
-        public static Type ResolveType(Assembly assembly, string typeName)
-        {
-            if (assembly == null)
-                throw new ArgumentNullException(nameof(assembly), Res.ArgumentNull);
-            if (String.IsNullOrEmpty(typeName))
-                return null;
-
-            int genericEnd = typeName.LastIndexOf(']');
-            int asmNamePos = typeName.IndexOf(',', genericEnd + 1);
-            if (asmNamePos >= 0)
-                throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
-
-            return ResolveType(assembly, typeName, false, false);
-        }
-
-        /// <summary>
-        /// Resolves the typeName in the specified assembly. loadPartiallyDefinedAssemblies and matchAssemblyByWeakName refer the possible assembly strings in generic arguments.
-        /// </summary>
-        private static Type ResolveType(Assembly assembly, string typeName, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
-        {
-            LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
-            if (cache.TryGetValue(typeName, out var result))
-                return result;
-
-            try
-            {
-                // Try 1: A type from specified assembly
-                result = assembly.GetType(typeName);
-
-                // Try 2: if result is still null we may check whether a generic type is tried to be created (like: System.Collections.Generic.List`1[System.Globalization.CultureInfo])
-                if (result == null)
-                {
-                    GetNameAndIndices(typeName, out string elementTypeName, out string[] genTypeParams, out int[] arrayRanks);
-                    if (genTypeParams != null || arrayRanks != null)
-                    {
-                        // this should have no assembly info in name
-                        result = ResolveType(assembly, elementTypeName, false, false);
-
-                        // processing generic parameters
-                        if (result != null && genTypeParams != null)
-                        {
-                            if (!result.IsGenericTypeDefinition)
-                                throw new ReflectionException(Res.ReflectionResolveNotAGenericType(elementTypeName, typeName));
-                            Type[] genArgs = result.GetGenericArguments();
-                            if (genArgs.Length != genTypeParams.Length)
-                                throw new ReflectionException(Res.ReflectionResolveTypeArgsLengthMismatch(typeName, genArgs.Length));
-                            Type[] typeGenParams = new Type[genTypeParams.Length];
-                            for (int i = 0; i < genTypeParams.Length; i++)
-                            {
-                                if ((typeGenParams[i] = ResolveType(genTypeParams[i], loadPartiallyDefinedAssemblies, matchAssemblyByWeakName)) == null)
-                                    throw new ReflectionException(Res.ReflectionCannotResolveTypeArg(elementTypeName, typeName));
-                            }
-
-                            result = result.GetGenericType(typeGenParams);
-                        }
-
-                        // processing ranks
-                        if (result != null && arrayRanks != null)
-                        {
-                            foreach (int rank in arrayRanks)
-                            {
-                                switch (rank)
-                                {
-                                    case 1:
-                                        // 1 dimensional zero-based array
-                                        result = result.MakeArrayType();
-                                        break;
-                                    case -1:
-                                        // 1 dimensional nonzero-based array
-                                        result = result.MakeArrayType(1);
-                                        break;
-                                    default:
-                                        // multidimensional array
-                                        result = result.MakeArrayType(rank);
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
-            }
-
-            if (result != null)
-            {
-                cache[typeName] = result;
-            }
-
-            return result;
-        }
-
-        private static Type ResolveGenericTypeParameter(string typeName, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
-        {
-            if (typeName.Length == 1)
-                return null;
-            bool isGenericMethodParam = typeName[1] == '!';
-            int begin = isGenericMethodParam ? 2 : 1;
-            int end = typeName.IndexOf(':');
-            if (end == -1)
-                return null;
-            string argName = typeName.Substring(begin, end - begin);
-            string signature = null;
-            if (isGenericMethodParam)
-            {
-                begin = end + 1;
-                end = typeName.IndexOf(':', begin);
-                if (end == -1)
-                    return null;
-                signature = typeName.Substring(begin, end - begin);
-            }
-
-            Type declaringType = ResolveType(typeName.Substring(end + 1), loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
-
-            if (!isGenericMethodParam)
-                return declaringType.GetGenericArguments().FirstOrDefault(arg => arg.Name == argName);
-            
-            MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
-                .FirstOrDefault(mi => mi.ToString() == signature);
-            return method?.GetGenericArguments().FirstOrDefault(arg => arg.Name == argName);
-        }
+        public static Type ResolveType(Assembly assembly, string typeName, bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false, bool throwError = false)
+            => TypeResolver.ResolveType(assembly, typeName, throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
 
         /// <summary>
         /// Splits possible assembly qualified name to assembly and type names.

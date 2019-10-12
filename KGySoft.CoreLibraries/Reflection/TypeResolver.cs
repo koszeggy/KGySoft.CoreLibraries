@@ -21,8 +21,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -40,6 +41,11 @@ namespace KGySoft.Reflection
 
         private enum State
         {
+            /// <summary>
+            /// Empty stack.
+            /// </summary>
+            None,
+
             /// <summary>
             /// A type name optionally with assembly name.
             /// </summary>
@@ -81,27 +87,24 @@ namespace KGySoft.Reflection
             Array,
 
             /// <summary>
+            /// ! at the beginning of FullNameOrAqn or TypeName
+            /// </summary>
+            GenericParameterName,
+
+            /// <summary>
+            /// !! at the beginning of FullNameOrAqn or TypeName
+            /// </summary>
+            GenericMethodParameterName,
+
+            /// <summary>
+            /// Signature of declaring method of generic parameter.
+            /// </summary>
+            MethodSignature,
+
+            /// <summary>
             /// Invalid state.
             /// </summary>
             Invalid
-        }
-
-        private enum TypeNameKind
-        {
-            /// <summary>
-            /// Type name without namespace and generic arguments but with array/pointer/ref modifiers
-            /// </summary>
-            Name,
-
-            /// <summary>
-            /// Full name without assembly information (similar to <see cref="Type.ToString"/>)
-            /// </summary>
-            FullName,
-
-            /// <summary>
-            /// Similar to <see cref="Type.AssemblyQualifiedName"/> but does not contain assembly information for core types.
-            /// </summary>
-            AssemblyQualifiedName,
         }
 
         #endregion
@@ -114,13 +117,19 @@ namespace KGySoft.Reflection
 
             public State Top
             {
-                get => Peek();
+                get => Count == 0 ? State.None : Peek();
                 set
                 {
                     Pop();
                     Push(value);
                 }
             }
+
+            #endregion
+
+            #region Methods
+
+            public override string ToString() => Top.ToString();
 
             #endregion
         }
@@ -131,71 +140,58 @@ namespace KGySoft.Reflection
 
         #region Constants
 
-        private const int Pointer = -1;
-        private const int ByRef = -2;
+        private const int pointer = -1;
+        private const int byRef = -2;
 
         #endregion
 
         #region Fields
 
-        private readonly List<int> modifiers = new List<int>();
+        #region Static Fields
+
+        private static LockingDictionary<string, Type> typeCacheByString;
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
+        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> typeNameCache;
+
+        #endregion
+
+        #region Instance Fields
+
+        private readonly CircularList<int> modifiers = new CircularList<int>();
         private readonly List<TypeResolver> genericArgs = new List<TypeResolver>();
 
-        private string name;
-        private string fullName;
-        private string assemblyQualifiedName;
+        private string rootName;
+        private string assemblyName;
+        private TypeResolver declaringType;
+        private string declaringMethod;
+
         private Type type;
+        private Assembly assembly;
+
+        #endregion
 
         #endregion
 
         #region Properties
 
-        internal string RootName { get; private set; }
+        private static LockingDictionary<string, Type> TypeCacheByString
+            => typeCacheByString ??= new Cache<string, Type>(256).AsThreadSafe();
 
-        internal string AssemblyName { get; private set; }
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
+            => typeCacheByAssembly ??= new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>(64).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
 
-        internal string Name => name ??= GetName(TypeNameKind.Name);
-
-        internal string FullName => fullName ??= GetName(TypeNameKind.FullName);
-
-        /// <summary>
-        /// Gets assembly qualified name of the type.
-        /// If this instance was initialized by string, then tries to perform a type resolve!
-        /// </summary>
-        internal string AssemblyQualifiedName
-        {
-            get
-            {
-                if (assemblyQualifiedName != null)
-                    return assemblyQualifiedName;
-
-                // If the instance was not initialized from Type, then performing the resolve and reinitializing
-                if (type == null)
-                {
-                    Resolve();
-
-                    // could not resolve, returning by the original information (Resolve sets it then)
-                    if (type == null)
-                        return assemblyQualifiedName;
-                }
-
-                // Reinitializing by real type information
-                RootName = null;
-                AssemblyName = null;
-                modifiers.Clear();
-                genericArgs.Clear();
-                Initialize(type.AssemblyQualifiedName, false);
-                return assemblyQualifiedName = GetName(TypeNameKind.AssemblyQualifiedName);
-            }
-        }
+        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> TypeNameCache
+            => typeNameCache ??= new Cache<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
 
         #endregion
 
         #region Constructors
 
-        #region Internal Constructors
+        private TypeResolver()
+        {
+        }
 
-        internal TypeResolver(string typeName, bool throwError)
+        private TypeResolver(string typeName, bool throwError)
         {
             if (typeName == null)
                 throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
@@ -203,52 +199,111 @@ namespace KGySoft.Reflection
             Initialize(typeName, throwError);
         }
 
-        #endregion
+        private TypeResolver(Type type) => Initialize(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
 
-        #region Private Constructors
-
-        private TypeResolver()
+        private TypeResolver(Assembly assembly, string typeName, bool throwError)
         {
-        }
+            if (typeName == null)
+                throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
 
-        #endregion
+            this.assembly = assembly;
+            assemblyName = assembly.FullName;
+            Initialize(typeName, throwError);
+        }
 
         #endregion
 
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
 
-        public override string ToString() => FullName ?? base.ToString();
+        internal static Type ResolveType(string typeName, bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
+        {
+            if (String.IsNullOrEmpty(typeName))
+                return null;
+
+            if (TypeCacheByString.TryGetValue(typeName, out Type result))
+                return result;
+
+            try
+            {
+                result = new TypeResolver(typeName, throwError).Resolve(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if (throwError)
+                    throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
+                return null;
+            }
+
+            if (result == null && throwError)
+                throw new ReflectionException(Res.ReflectionNotAType(typeName));
+
+            if (result != null)
+                typeCacheByString[typeName] = result;
+
+            return result;
+        }
+
+        internal static Type ResolveType(Assembly assembly, string typeName, bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
+        {
+            if (assembly == null)
+                throw new ArgumentNullException(nameof(assembly), Res.ArgumentNull);
+            if (String.IsNullOrEmpty(typeName))
+                return null;
+
+            LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
+            if (cache.TryGetValue(typeName, out var result))
+                return result;
+
+            int compoundNameEnd = typeName.LastIndexOf(']');
+            int asmNamePos = typeName.IndexOf(',', compoundNameEnd + 1);
+            if (asmNamePos >= 0)
+                throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
+
+            try
+            {
+                result = assembly.GetType(typeName) ?? new TypeResolver(assembly, typeName, throwError).Resolve(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if (throwError)
+                    throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
+                return null;
+            }
+
+            if (result == null && throwError)
+                throw new ReflectionException(Res.ReflectionNotAType(typeName));
+
+            if (result != null)
+                cache[typeName] = result;
+            return result;
+        }
+
+        internal static string GetName(Type type, TypeNameKind kind)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+            if (!Enum<TypeNameKind>.IsDefined(kind))
+                throw new ArgumentOutOfRangeException(nameof(kind), Res.EnumOutOfRange(kind));
+
+            LockingDictionary<TypeNameKind, string> cache = TypeNameCache[type];
+            if (cache.TryGetValue(kind, out string result))
+                return result;
+
+            result = new TypeResolver(type).GetName(kind);
+
+            cache[kind] = result;
+            return result;
+        }
 
         #endregion
 
-        #region Internal Methods
+        #region Instance Methods
 
-        internal Type Resolve(bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false)
-        {
-            if (type != null)
-                return type;
+        #region Public Methods
 
-            // RootName is null if parsing was unsuccessful. If AQN is not null while type is null, then a resolve already failed earlier.
-            if (RootName == null || assemblyQualifiedName != null)
-                return null;
-
-            string aqn = GetName(TypeNameKind.AssemblyQualifiedName);
-
-            // TODO: logic from Reflector.ResolveType
-            try
-            {
-                type = Type.GetType(aqn);
-            }
-            finally
-            {
-                if (type == null)
-                    assemblyQualifiedName = aqn;
-            }
-
-            return type;
-        }
+        public override string ToString() => GetName(TypeNameKind.AssemblyQualifiedNameForced) ?? base.ToString();
 
         #endregion
 
@@ -260,19 +315,61 @@ namespace KGySoft.Reflection
             {
                 var stack = new StateStack();
                 stack.Push(State.FullNameOrAqn);
-                Initialize(new StringBuilder(typeName.Length), sr, stack);
+                Parse(new StringBuilder(typeName.Length), sr, stack);
                 if (sr.Peek() == -1 && stack.Count <= 0)
                     return;
                 if (throwError)
                     throw new ArgumentException(Res.ArgumentInvalidString, nameof(typeName));
-                RootName = null;
-                AssemblyName = null;
+                rootName = null;
+                assemblyName = null;
+                assembly = null;
                 modifiers.Clear();
                 genericArgs.Clear();
+                declaringType = null;
+                declaringMethod = null;
             }
         }
 
-        private void Initialize(StringBuilder buf, StringReader sr, StateStack state)
+        private void Initialize(Type t)
+        {
+            type = t;
+            assembly = t.Assembly;
+            assemblyName = assembly.FullName;
+
+            // modifiers
+            // ReSharper disable once PossibleNullReferenceException
+            while (t.HasElementType)
+            {
+                if (t.IsArray)
+                    modifiers.AddFirst(t.IsZeroBasedArray() ? 0 : t.GetArrayRank());
+                else if (t.IsByRef)
+                    modifiers.AddFirst(byRef);
+                else if (t.IsPointer)
+                    modifiers.AddFirst(pointer);
+                t = t.GetElementType();
+            }
+
+            // generic arguments
+            if (t.IsGenericType && !t.IsGenericTypeDefinition) // same as: type.IsConstructedGenericType from .NET4
+            {
+                foreach (Type genericArgument in t.GetGenericArguments())
+                    genericArgs.Add(new TypeResolver(genericArgument));
+
+                t = t.GetGenericTypeDefinition();
+            }
+
+            // root type
+            bool isGenericParam = t.IsGenericParameter;
+            rootName = isGenericParam ? t.Name : t.FullName;
+            if (!isGenericParam)
+                return;
+
+            // generic parameter
+            declaringType = new TypeResolver(t.DeclaringType);
+            declaringMethod = t.DeclaringMethod?.ToString();
+        }
+
+        private void Parse(StringBuilder buf, StringReader sr, StateStack state)
         {
             int chr;
             int rank = 0;
@@ -284,7 +381,7 @@ namespace KGySoft.Reflection
                     case State.FullNameOrAqn:
                         if (c == ',') // assembly separator
                         {
-                            RootName = buf.ToString().Trim();
+                            rootName = buf.ToString().Trim();
                             buf.Clear();
                             state.Top = State.AssemblyName;
                             break;
@@ -292,7 +389,7 @@ namespace KGySoft.Reflection
 
                         if (c == ']') // end of current argument, returning from recursion
                         {
-                            RootName = buf.ToString().Trim();
+                            rootName = buf.ToString().Trim();
                             state.Top = State.AfterArgument;
                             return;
                         }
@@ -302,22 +399,22 @@ namespace KGySoft.Reflection
                     case State.TypeName:
                         if (c == ',') // Type name separator in generic: returning from recursion
                         {
-                            RootName = buf.ToString().Trim();
+                            rootName = buf.ToString().Trim();
                             state.Top = State.BeforeArgument;
                             return;
                         }
 
                         if (c == '[') // array or generic type arguments
                         {
-                            Debug.Assert(RootName == null);
-                            RootName = buf.ToString().Trim();
+                            Debug.Assert(rootName == null);
+                            rootName = buf.ToString().Trim();
                             state.Push(State.ArrayOrGeneric);
                             break;
                         }
 
                         if (c == ']') // end of generics, returning from recursion
                         {
-                            RootName = buf.ToString().Trim();
+                            rootName = buf.ToString().Trim();
                             state.Top = State.Modifiers;
                             return;
                         }
@@ -326,11 +423,20 @@ namespace KGySoft.Reflection
 
                         if (c.In('*', '&'))
                         {
-                            RootName = buf.ToString().Trim();
-                            modifiers.Add(c == '*' ? Pointer : ByRef);
+                            rootName = buf.ToString().Trim();
+                            modifiers.Add(c == '*' ? pointer : byRef);
                             state.Push(State.Modifiers);
                             break;
                         }
+
+                        if (c == '!' && buf.Length == 0) // generic parameter
+                        {
+                            state.Push(State.GenericParameterName);
+                            break;
+                        }
+
+                        if (buf.Length == 0 && Char.IsWhiteSpace(c))
+                            break;
 
                         buf.Append(c);
                         break;
@@ -338,7 +444,7 @@ namespace KGySoft.Reflection
                     case State.AssemblyName:
                         if (c == ']') // end of current argument, returning from recursion
                         {
-                            AssemblyName = buf.ToString().Trim();
+                            assemblyName = buf.ToString().Trim();
                             state.Top = State.AfterArgument;
                             return;
                         }
@@ -411,20 +517,32 @@ namespace KGySoft.Reflection
 
                         if (c == '*') // pointer
                         {
-                            modifiers.Add(Pointer);
+                            modifiers.Add(pointer);
                             break;
                         }
 
                         if (c == '*') // pointer
                         {
-                            modifiers.Add(Pointer);
+                            modifiers.Add(pointer);
                             break;
                         }
 
                         if (c == '&') // pointer
                         {
-                            modifiers.Add(ByRef);
+                            modifiers.Add(byRef);
                             break;
+                        }
+
+                        if (c == ':') // generic parameter identifier
+                        {
+                            state.Pop();
+                            Debug.Assert(state.Top.In(State.GenericParameterName, State.GenericMethodParameterName));
+                            if (state.Top == State.GenericParameterName)
+                                goto case State.GenericParameterName;
+                            if (state.Top == State.GenericMethodParameterName)
+                                goto case State.GenericMethodParameterName;
+                            state.Top = State.Invalid;
+                            return;
                         }
 
                         if (Char.IsWhiteSpace(c))
@@ -450,8 +568,13 @@ namespace KGySoft.Reflection
                         if (c == '*') // nonzero-based array
                         {
                             if (rank < 1)
+                            {
                                 rank = 1;
-                            break;
+                                break;
+                            }
+
+                            state.Top = State.Invalid;
+                            return;
                         }
 
                         if (Char.IsWhiteSpace(c))
@@ -475,7 +598,7 @@ namespace KGySoft.Reflection
                         {
                             arg = new TypeResolver();
                             state.Top = State.FullNameOrAqn;
-                            arg.Initialize(new StringBuilder(), sr, state);
+                            arg.Parse(new StringBuilder(), sr, state);
                             if (state.Top != State.AfterArgument)
                             {
                                 state.Top = State.Invalid;
@@ -489,7 +612,13 @@ namespace KGySoft.Reflection
                         // type name in generics: recursion
                         state.Top = State.TypeName;
                         arg = new TypeResolver();
-                        arg.Initialize(new StringBuilder(new String(c, 1)), sr, state);
+                        var sb = new StringBuilder();
+                        if (c == '!')
+                            state.Push(State.GenericParameterName);
+                        else
+                            sb.Append(c);
+
+                        arg.Parse(sb, sr, state);
                         if (!state.Top.In(State.Modifiers, State.BeforeArgument))
                         {
                             state.Top = State.Invalid;
@@ -518,6 +647,94 @@ namespace KGySoft.Reflection
                         state.Top = State.Invalid;
                         return;
 
+                    case State.GenericParameterName:
+                        if (c == '!' && buf.Length == 0)
+                        {
+                            state.Top = State.GenericMethodParameterName;
+                            break;
+                        }
+
+                        if (c == ':') // generic parameter declaring type
+                        {
+                            rootName = buf.ToString().Trim();
+
+                            //// - below same as in MethodSignature
+                            state.Pop();
+                            Debug.Assert(state.Top.In(State.FullNameOrAqn, State.TypeName));
+                            var def = new TypeResolver();
+                            def.Parse(new StringBuilder(), sr, state);
+                            if (!state.Top.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
+                            {
+                                state.Top = State.Invalid;
+                                return;
+                            }
+
+                            declaringType = def;
+                            assemblyName = def.assemblyName;
+                            return;
+                        }
+
+                        //// - below same as in GenericMethodParameterName
+
+                        if (c == '[')
+                        {
+                            rootName = buf.ToString().Trim();
+                            state.Push(State.Array);
+                            break;
+                        }
+
+                        if (c.In('*', '&'))
+                        {
+                            rootName = buf.ToString().Trim();
+                            modifiers.Add(c == '*' ? pointer : byRef);
+                            state.Push(State.Modifiers);
+                            break;
+                        }
+
+                        buf.Append(c);
+                        break;
+
+                    case State.GenericMethodParameterName:
+                        if (c == '!' && buf.Length == 0)
+                        {
+                            state.Top = State.Invalid;
+                            break;
+                        }
+
+                        if (c == ':') // generic method signature
+                        {
+                            rootName = buf.ToString().Trim();
+                            buf.Clear();
+                            state.Top = State.MethodSignature;
+                            break;
+                        }
+
+                        goto case State.GenericParameterName;
+
+                    case State.MethodSignature:
+                        if (c == ':')
+                        {
+                            declaringMethod = buf.ToString().Trim();
+
+                            //// - below same as in GenericParameterName
+                            state.Pop();
+                            Debug.Assert(state.Top.In(State.FullNameOrAqn, State.TypeName));
+                            var def = new TypeResolver();
+                            def.Parse(new StringBuilder(), sr, state);
+                            if (!state.Top.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
+                            {
+                                state.Top = State.Invalid;
+                                return;
+                            }
+
+                            declaringType = def;
+                            assemblyName = def.assemblyName;
+                            return;
+                        }
+
+                        buf.Append(c);
+                        break;
+
                     case State.Invalid:
                         return;
 
@@ -532,12 +749,12 @@ namespace KGySoft.Reflection
                 // simple type without assembly name
                 case State.FullNameOrAqn:
                 case State.TypeName:
-                    RootName = buf.ToString().Trim();
+                    rootName = buf.ToString().Trim();
                     state.Pop();
                     break;
 
                 case State.AssemblyName:
-                    AssemblyName = buf.ToString().Trim();
+                    assemblyName = buf.ToString().Trim();
                     state.Pop();
                     break;
 
@@ -553,7 +770,7 @@ namespace KGySoft.Reflection
 
         private string GetName(TypeNameKind kind)
         {
-            if (RootName == null)
+            if (rootName == null)
                 return null;
             var result = new StringBuilder();
             DumpName(result, kind);
@@ -562,11 +779,19 @@ namespace KGySoft.Reflection
 
         private void DumpName(StringBuilder sb, TypeNameKind kind)
         {
+            // Generic parameter indicator
+            if (kind != TypeNameKind.Name && declaringType != null)
+            {
+                sb.Append('!');
+                if (declaringMethod != null)
+                    sb.Append('!');
+            }
+
             // Base name
-            sb.Append(kind == TypeNameKind.Name ? RootName.Split('.').LastOrDefault() ?? String.Empty : RootName);
+            sb.Append(kind == TypeNameKind.Name ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
 
             // Generic arguments
-            if (kind != TypeNameKind.Name && genericArgs.Count > 0)
+            if (genericArgs.Count > 0)
             {
                 sb.Append('[');
                 for (int i = 0; i < genericArgs.Count; i++)
@@ -574,7 +799,8 @@ namespace KGySoft.Reflection
                     if (i > 0)
                         sb.Append(',');
                     TypeResolver arg = genericArgs[i];
-                    bool aqn = kind == TypeNameKind.AssemblyQualifiedName && arg.AssemblyName != null && arg.AssemblyName != Reflector.SystemCoreLibrariesAssemblyName;
+                    bool aqn = kind == TypeNameKind.AssemblyQualifiedNameForced
+                        || kind == TypeNameKind.AssemblyQualifiedName && arg.assemblyName != null && arg.assemblyName != Reflector.SystemCoreLibrariesAssemblyName;
                     if (aqn)
                         sb.Append('[');
                     arg.DumpName(sb, kind);
@@ -590,10 +816,10 @@ namespace KGySoft.Reflection
             {
                 switch (rank)
                 {
-                    case ByRef:
+                    case byRef:
                         sb.Append('&');
                         break;
-                    case Pointer:
+                    case pointer:
                         sb.Append('*');
                         break;
                     case 0:
@@ -610,13 +836,111 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (kind != TypeNameKind.AssemblyQualifiedName || AssemblyName == null || AssemblyName == Reflector.SystemCoreLibrariesAssemblyName)
-                return;
+            // Generic parameter identification
+            if (kind != TypeNameKind.Name && declaringType != null)
+            {
+                if (declaringMethod != null)
+                {
+                    sb.Append(':');
+                    sb.Append(declaringMethod);
+                }
+
+                sb.Append(':');
+                declaringType.DumpName(sb, kind);
+                return; // skipping assembly name because it is dumped with declaring type
+            }
 
             // Assembly name
+            if (assemblyName == null
+                || kind < TypeNameKind.AssemblyQualifiedName
+                || kind == TypeNameKind.AssemblyQualifiedName && assemblyName == Reflector.SystemCoreLibrariesAssemblyName)
+                return;
+
             sb.Append(", ");
-            sb.Append(AssemblyName);
+            sb.Append(assemblyName);
         }
+
+        private Type Resolve(bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
+        {
+            if (type != null)
+                return type;
+
+            // RootName is null if parsing was unsuccessful.
+            if (rootName == null)
+                return null;
+
+            // 1. Resolving assembly if needed
+            if (assembly == null && assemblyName != null)
+            {
+                assembly = AssemblyResolver.ResolveAssembly(assemblyName, throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+                if (assembly == null)
+                    return null;
+            }
+
+            // 2. Resolving root type
+            Type result = ResolveRootType(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+            if (result == null)
+                return null;
+
+            // 3. Applying generic arguments
+            if (genericArgs.Count > 0)
+            {
+                Debug.Assert(result.IsGenericTypeDefinition, "Root type is expected to be a generic type definition");
+                Type[] args = new Type[genericArgs.Count];
+                for (int i = 0; i < args.Length; i++)
+                {
+                    args[i] = genericArgs[i].Resolve(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+                    if (args[i] == null)
+                        return null;
+                }
+
+                result = result.GetGenericType(args);
+            }
+
+            // 4. Applying modifiers
+            foreach (int modifier in modifiers)
+            {
+                switch (modifier)
+                {
+                    case 0: // zero based array
+                        result = result.MakeArrayType();
+                        break;
+                    case byRef:
+                        result = result.MakeByRefType();
+                        break;
+                    case pointer:
+                        result = result.MakePointerType();
+                        break;
+                    default: // array rank
+                        result = result.MakeArrayType(modifier);
+                        break;
+                }
+            }
+
+            return type = result;
+        }
+
+        private Type ResolveRootType(bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
+        {
+            // Regular type
+            if (declaringType == null)
+                return assembly == null ? Type.GetType(rootName, throwError) : assembly.GetType(rootName, throwError);
+
+            // Generic parameter
+            Type t = declaringType.Resolve(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+            if (t == null)
+                return null;
+
+            // Generic type argument
+            if (declaringMethod == null)
+                return t.GetGenericArguments().FirstOrDefault(a => a.Name == rootName);
+
+            // Generic method argument
+            return t.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                .FirstOrDefault(m => m.ToString() == declaringMethod)?.GetGenericArguments().FirstOrDefault(a => a.Name == rootName);
+        }
+
+        #endregion
 
         #endregion
 

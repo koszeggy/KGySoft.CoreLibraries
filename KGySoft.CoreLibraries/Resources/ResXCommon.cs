@@ -141,7 +141,7 @@ namespace KGySoft.Resources
                 }
 
                 if (result == null)
-                    result = type.GetTypeName(true);
+                    result = type.GetName(TypeNameKind.AssemblyQualifiedName);
             }
 
             return result;

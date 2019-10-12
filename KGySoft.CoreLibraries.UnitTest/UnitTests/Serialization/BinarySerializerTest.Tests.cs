@@ -328,6 +328,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<Array>),
                 typeof(List<int[]>),
                 typeof(List<Array[]>),
+                typeof(List<int>).MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // List`1[System.Int32][]*[,]*&
 
                 // Nullable collections
                 typeof(DictionaryEntry?),
@@ -340,6 +341,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<>).MakeByRefType(), // List`1& - does not really make sense
                 typeof(List<>).MakePointerType(), // List`1* - not really valid
                 typeof(List<>).MakeArrayType().MakeByRefType(), // List`1[]& - does not really make sense
+                typeof(List<>).MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // List`1[]*[,]*&
                 typeof(Dictionary<,>), // supported generic type definition
                 typeof(CustomGenericCollection<>), // CustomGenericCollection`1, custom generic type definition
                 typeof(CustomGenericCollection<>).MakeArrayType(), // CustomGenericCollection`1[] - does not really make sense
@@ -357,6 +359,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<>).GetGenericArguments()[0].MakeByRefType(), // T&
                 typeof(List<>).GetGenericArguments()[0].MakePointerType(), // T*
                 typeof(List<>).GetGenericArguments()[0].MakeArrayType().MakeByRefType(), // T[]&
+                typeof(List<>).GetGenericArguments()[0].MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // T[]*[,]*&
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // T of custom generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0].MakeArrayType(), // T[]
 

@@ -145,11 +145,11 @@ namespace KGySoft.Serialization
             Assembly result;
             try
             {
-                result = Reflector.ResolveAssembly(name, true, true);
+                result = AssemblyResolver.ResolveAssembly(name, true, true, true);
             }
             catch (Exception e)
             {
-                throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), e);
+                throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), e.InnerException ?? e);
             }
 
             if (result == null)

@@ -708,6 +708,14 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region Type
+#if NETFRAMEWORK
+
+        internal static bool IsSzArray(this Type type) => (bool)GetPropertyValue(type, nameof(IsSzArray));
+
+#endif
+        #endregion
+
         #endregion
 
         #region Any Member

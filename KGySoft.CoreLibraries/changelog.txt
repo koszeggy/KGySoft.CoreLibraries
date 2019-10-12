@@ -35,17 +35,41 @@
   + New GetValueOrDefault overloads for IEnumerable<KeyValuePair<TKey, Tvalue>> instances to support also read-only
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
 	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
++ TypeExtensions class:
+  + New GetName extension method for formatting type names in a more consistent way than Type members.
++ New TypeNameKind enum: For the TypeExtensions.GetName method.
 + Range<T> struct:
   + New Deconstruct method.
   + New operators for converting from T, (T, T). Not available in .NET 3.5, .NET 4.0 and .NET 4.5 versions.
 
 - KGySoft.Diagnostics namespace:
 ================================
-- Profiler: Handling possible SecurityException from a partially trusted domain when determining executing directory
+- Profiler: Handling possible SecurityException from a partially trusted domain when determining executing directory.
+
+! KGySoft.Reflection namespace:
+===============================
+! Reflector class:
+  ! ResolveAssembly method:
+    + New throwError optional parameter (false by default)
+    ! Earlier the method returned null if the assembly could not be resolved and tryToLoad was false and
+      threw an exception on load errors. From now on an exception is always thrown on error if throwError is true
+      and the result is always null if throwError is false.
+    ! Instead of the earlier FileNotFoundException, FileLoadException and BadImageFormatException types
+      from now on a ReflectionException is thrown. If the exception is due to loading errors, then the
+      InnerException property is set.
+  ! ResolveType overloads:
+    + New throwError optional parameter (false by default)
+    + The former ResolveType(Assembly, string) overload also has loadPartiallyDefinedAssemblies and
+      matchAssemblyByWeakName arguments (optional). These are considered for assembly names in the generic arguments.
+    ! Earlier these methods could return null or throw an exception depending on the nature of the resolving error.
+      From now on an exception is always thrown on error if throwError is true and the result is always null
+      if throwError is false.
+    + Now supports also generic parameters and open constructed generics if they were dumped by TypeExtensions.GetName.
 
 - KGySoft.Resources namespace:
 ==============================
-- ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining executing directory
+- ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining
+  executing directory.
 
 ! KGySoft.Serialization namespace:
 ==============================

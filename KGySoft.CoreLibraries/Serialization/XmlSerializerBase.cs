@@ -126,9 +126,10 @@ namespace KGySoft.Serialization
         #region Private Protected Properties
 
         private protected XmlSerializationOptions Options { get; }
-        private protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
-        private protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
-        private protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+        private protected bool FullyQualifiedNames => (Options & XmlSerializationOptions.FullyQualifiedNames) != XmlSerializationOptions.None;
+        private protected bool BinarySerializationAsFallback => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
+        private protected bool RecursiveSerializationAsFallback => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
+        private protected bool CompactSerializationOfStructures => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
         private protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
         private protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
         private protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
@@ -374,7 +375,7 @@ namespace KGySoft.Serialization
             serObjects.Remove(obj);
         }
 
-        private protected string GetTypeString(Type type) => type.GetTypeName((Options & XmlSerializationOptions.FullyQualifiedNames) != XmlSerializationOptions.None);
+        private protected string GetTypeString(Type type) => type.GetName(FullyQualifiedNames ? TypeNameKind.AssemblyQualifiedName : TypeNameKind.FullName);
 
         private protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
         {

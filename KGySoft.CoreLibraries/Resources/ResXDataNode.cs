@@ -437,7 +437,7 @@ namespace KGySoft.Resources
                 // or full assembly part from the type
                 string strippedName = StripTypeName(aqn, true);
                 if (strippedName != aqn)
-                    t = typeResolver.GetType(strippedName) ?? typeResolver.GetType(StripTypeName(typeName, true));
+                    t = typeResolver.GetType(strippedName) ?? typeResolver.GetType(StripTypeName(typeName, false));
 
                 // Binder couldn't handle it, let the default loader take over.
                 return t;
@@ -1299,7 +1299,7 @@ namespace KGySoft.Resources
             Type type = cachedValue as Type;
             if (type != null)
             {
-                nodeInfo.ValueData = type.GetTypeName(true);
+                nodeInfo.ValueData = type.GetName(TypeNameKind.AssemblyQualifiedName);
                 return;
             }
 
