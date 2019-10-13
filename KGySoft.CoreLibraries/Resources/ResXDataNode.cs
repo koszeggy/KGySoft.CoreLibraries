@@ -312,85 +312,6 @@ namespace KGySoft.Resources
 
             #region Methods
 
-            #region Static Methods
-
-            private static string StripTypeName(string origTypeName, bool removeVersionOnly)
-            {
-                Reflector.SplitTypeName(origTypeName, out string asmName, out string typeName);
-                bool isGenericOrArray = typeName.IndexOf(']') > 0;
-                if (asmName == null && !isGenericOrArray)
-                    return origTypeName;
-
-                string rebuiltTypeName = typeName;
-                if (isGenericOrArray)
-                {
-                    Reflector.GetNameAndIndices(typeName, out string genericTypeName, out string[] genericTypeParams, out int[] arrayRanks);
-                    if (genericTypeParams != null)
-                        rebuiltTypeName = RebuildTypeName(genericTypeName, genericTypeParams, arrayRanks, removeVersionOnly);
-                }
-
-                // assembly part is included: removing it entirely or just the version part
-                if (asmName != null)
-                {
-                    var asmParts = asmName.Split(',').Select(s => s.Trim());
-
-                    // returning the type name only
-                    if (!removeVersionOnly)
-                        return rebuiltTypeName;
-
-                    // removing the assembly part only
-#if NET35
-                    rebuiltTypeName += ", " + String.Join(", ", asmParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)).ToArray());
-#else
-                    rebuiltTypeName += ", " + String.Join(", ", asmParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)));
-#endif
-
-                }
-
-                return rebuiltTypeName;
-            }
-
-            private static string RebuildTypeName(string genericTypeName, string[] genericTypeParams, int[] arrayRanks, bool removeVersionOnly)
-            {
-                StringBuilder result = new StringBuilder(genericTypeName + "[");
-                for (int i = 0; i < genericTypeParams.Length; i++)
-                {
-                    if (i != 0)
-                        result.Append(", ");
-
-                    result.Append('[');
-                    result.Append(StripTypeName(genericTypeParams[i], removeVersionOnly));
-                    result.Append(']');
-                }
-                result.Append(']');
-
-                if (arrayRanks != null)
-                {
-                    foreach (int rank in arrayRanks)
-                    {
-                        result.Append('[');
-                        switch (rank)
-                        {
-                            case -1:
-                                result.Append('*');
-                                break;
-                            case 1:
-                                break;
-                            default:
-                                result.Append(",".Repeat(rank - 1));
-                                break;
-                        }
-                        result.Append(']');
-                    }
-                }
-
-                return result.ToString();
-            }
-
-            #endregion
-
-            #region Instance Methods
-
 #if !NET35
             [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0",
                 Justification = "If serializedType is null the base will be called.")]
@@ -423,9 +344,7 @@ namespace KGySoft.Resources
             public override Type BindToType(string assemblyName, string typeName)
             {
                 if (typeResolver == null)
-                {
                     return null;
-                }
 
                 string aqn = typeName + ", " + assemblyName;
 
@@ -435,15 +354,20 @@ namespace KGySoft.Resources
 
                 // The original WinForms version fails for generic types. We do the same in a working way: we strip either the version
                 // or full assembly part from the type
-                string strippedName = StripTypeName(aqn, true);
+                string strippedName = TypeResolver.StripName(aqn, true);
                 if (strippedName != aqn)
-                    t = typeResolver.GetType(strippedName) ?? typeResolver.GetType(StripTypeName(typeName, false));
+                    t = typeResolver.GetType(strippedName);
 
-                // Binder couldn't handle it, let the default loader take over.
+                if (t != null)
+                    return t;
+
+                strippedName = TypeResolver.StripName(aqn, false);
+                if (strippedName != aqn)
+                    t = typeResolver.GetType(strippedName);
+
+                // If it is still null, then the binder couldn't handle it, letting the default loader take over.
                 return t;
             }
-
-            #endregion
 
             #endregion
         }

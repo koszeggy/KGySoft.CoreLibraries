@@ -143,6 +143,8 @@ namespace KGySoft.Reflection
         private const int pointer = -1;
         private const int byRef = -2;
 
+        private const TypeNameKind removeAssemblyVersions = (TypeNameKind)(-1);
+
         #endregion
 
         #region Fields
@@ -296,6 +298,9 @@ namespace KGySoft.Reflection
             cache[kind] = result;
             return result;
         }
+
+        internal static string StripName(string typeName, bool stripVersionOnly)
+            => new TypeResolver(typeName, false).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.FullName) ?? typeName;
 
         #endregion
 
@@ -800,7 +805,7 @@ namespace KGySoft.Reflection
                         sb.Append(',');
                     TypeResolver arg = genericArgs[i];
                     bool aqn = kind == TypeNameKind.AssemblyQualifiedNameForced
-                        || kind == TypeNameKind.AssemblyQualifiedName && arg.assemblyName != null && arg.assemblyName != Reflector.SystemCoreLibrariesAssemblyName;
+                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && !arg.assemblyName.In(null, Reflector.SystemCoreLibrariesAssemblyName);
                     if (aqn)
                         sb.Append('[');
                     arg.DumpName(sb, kind);
@@ -851,13 +856,23 @@ namespace KGySoft.Reflection
             }
 
             // Assembly name
-            if (assemblyName == null
-                || kind < TypeNameKind.AssemblyQualifiedName
-                || kind == TypeNameKind.AssemblyQualifiedName && assemblyName == Reflector.SystemCoreLibrariesAssemblyName)
+            if (!(kind == TypeNameKind.AssemblyQualifiedNameForced
+                || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && !assemblyName.In(null, Reflector.SystemCoreLibrariesAssemblyName)))
                 return;
 
             sb.Append(", ");
-            sb.Append(assemblyName);
+            string asmName = assemblyName;
+            if (kind == removeAssemblyVersions)
+            {
+                var an = new AssemblyName(asmName);
+                if (an.Version != null)
+                {
+                    an.Version = null;
+                    asmName = an.FullName;
+                }
+            }
+
+            sb.Append(asmName);
         }
 
         private Type Resolve(bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
@@ -924,7 +939,25 @@ namespace KGySoft.Reflection
         {
             // Regular type
             if (declaringType == null)
-                return assembly == null ? Type.GetType(rootName, throwError) : assembly.GetType(rootName, throwError);
+            {
+                if (assembly != null)
+                    return assembly.GetType(rootName, throwError);
+
+                // Not throwing an error from here because we will iterate the loaded assemblies if type cannot be resolved.
+                Type result = Type.GetType(rootName);
+                if (result != null)
+                    return result;
+
+                // Looking for the type in the loaded assemblies
+                foreach (Assembly asm in Reflector.GetLoadedAssemblies())
+                {
+                    result = asm.GetType(rootName);
+                    if (result != null)
+                        return result;
+                }
+
+                return throwError ? throw new ReflectionException(Res.ReflectionNotAType(rootName)) : default(Type);
+            }
 
             // Generic parameter
             Type t = declaringType.Resolve(throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
