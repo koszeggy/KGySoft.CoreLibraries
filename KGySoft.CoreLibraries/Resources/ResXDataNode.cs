@@ -229,7 +229,7 @@ namespace KGySoft.Resources
     /// </item>
     /// <item>There is no <strong>GetValue</strong> method with <see cref="AssemblyName">AssemblyName[]</see> argument. This overload ended up using the obsolete
     /// <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadWithPartialName</see> method. The weakly referenced assemblies however are handled automatically
-    /// by using <see cref="Reflector.ResolveType(string,bool,bool)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
+    /// by using <see cref="Reflector.ResolveType(string,bool,bool,bool)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
     /// <item>The <see cref="GetValue">GetValue</see> method has three parameters instead of one. But all of them are optional so if called from a regular C# code, the method is compatible with
     /// the <a href="https://msdn.microsoft.com/en-us/library/d54fztkz.aspx" target="_blank">System.Resources.ResXDataNode.GetValue(ITypeResolutionService)</a> method.</item>
     /// <item>There are no public constructors with <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> arguments. In the system version these <c>typeNameConverter</c> parameters are used exclusively by non-public methods, which are
