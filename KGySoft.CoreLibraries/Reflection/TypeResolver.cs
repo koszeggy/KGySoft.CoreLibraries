@@ -19,10 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
@@ -102,6 +104,11 @@ namespace KGySoft.Reflection
             MethodSignature,
 
             /// <summary>
+            /// Return from recursion.
+            /// </summary>
+            Return,
+
+            /// <summary>
             /// Invalid state.
             /// </summary>
             Invalid
@@ -109,15 +116,27 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region StateStack class
+        #region ParseContext struct
 
-        private sealed class StateStack : Stack<State>
+        private struct ParseContext : IDisposable
         {
+            #region Fields
+
+            private readonly TextReader reader;
+            private readonly Stack<State> stack; 
+            private readonly StringBuilder buf;
+
+            #endregion
+
             #region Properties
 
-            public State Top
+            internal bool Success => reader.Peek() == -1 && stack.Count == 0;
+
+            internal char Char { get; private set; }
+
+            internal State State
             {
-                get => Count == 0 ? State.None : Peek();
+                get => stack.Count == 0 ? State.None : stack.Peek();
                 set
                 {
                     Pop();
@@ -125,11 +144,72 @@ namespace KGySoft.Reflection
                 }
             }
 
+            internal int Rank { get; set; }
+
+            internal bool IsBufEmpty => buf.Length == 0;
+
+            internal bool IsWhiteSpace => Char.IsWhiteSpace(Char);
+
+            #endregion
+
+            #region Constructor
+
+            internal ParseContext(string name) : this()
+            {
+                reader = new StringReader(name);
+                stack = new Stack<State>();
+                buf = new StringBuilder(name.Length);
+            }
+
             #endregion
 
             #region Methods
 
-            public override string ToString() => Top.ToString();
+            #region Public Methods
+            
+            public void Dispose() => reader.Dispose();
+
+            public override string ToString() => Enum<State>.ToString(State);
+
+            #endregion
+
+            #region Internal Methods
+
+            internal void Push(State state)
+            {
+                stack.Push(state);
+                Rank = 0;
+            }
+
+            internal void Pop()
+            {
+                if (stack.Count > 0)
+                    stack.Pop();
+            }
+
+            internal bool Read()
+            {
+                int c = reader.Read();
+                if (c == -1)
+                {
+                    Char = default;
+                    return false;
+                }
+
+                Char = (char)c;
+                return true;
+            }
+
+            internal void AppendChar() => buf.Append(Char);
+
+            internal string GetBuf()
+            {
+                string result = buf.ToString().Trim();
+                buf.Clear();
+                return result;
+            }
+
+            #endregion
 
             #endregion
         }
@@ -316,30 +396,35 @@ namespace KGySoft.Reflection
 
         private void Initialize(string typeName, bool throwError)
         {
-            using (var sr = new StringReader(typeName))
+            // Cannot be put in using due to the ref parameter usage so using try-finally.
+            var context = new ParseContext(typeName);
+            try
             {
-                var stack = new StateStack();
-                stack.Push(State.FullNameOrAqn);
-                Parse(new StringBuilder(typeName.Length), sr, stack);
-                if (sr.Peek() == -1 && stack.Count <= 0)
+                context.Push(State.FullNameOrAqn);
+                Parse(ref context);
+                if (context.Success)
                     return;
                 if (throwError)
                     throw new ArgumentException(Res.ArgumentInvalidString, nameof(typeName));
-                rootName = null;
-                assemblyName = null;
-                assembly = null;
-                modifiers.Clear();
-                genericArgs.Clear();
-                declaringType = null;
-                declaringMethod = null;
             }
+            finally
+            {
+                context.Dispose();
+            }
+
+            // Initialization failed but throwError is false: clearing everything.
+            rootName = null;
+            assemblyName = null;
+            assembly = null;
+            modifiers.Clear();
+            genericArgs.Clear();
+            declaringType = null;
+            declaringMethod = null;
         }
 
         private void Initialize(Type t)
         {
             type = t;
-            assembly = t.Assembly;
-            assemblyName = assembly.FullName;
 
             // modifiers
             // ReSharper disable once PossibleNullReferenceException
@@ -367,405 +452,486 @@ namespace KGySoft.Reflection
             bool isGenericParam = t.IsGenericParameter;
             rootName = isGenericParam ? t.Name : t.FullName;
             if (!isGenericParam)
+            {
+                assembly = t.Assembly;
+                assemblyName = assembly.FullName;
                 return;
+            }
 
             // generic parameter
             declaringType = new TypeResolver(t.DeclaringType);
             declaringMethod = t.DeclaringMethod?.ToString();
         }
 
-        private void Parse(StringBuilder buf, StringReader sr, StateStack state)
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        private void Parse(ref ParseContext context)
         {
-            int chr;
-            int rank = 0;
-            while ((chr = sr.Read()) != -1)
+            #region Local Methods to Reduce Complexity
+
+            void ParseFullNameOrAqn(ref ParseContext ctx)
             {
-                var c = (char)chr;
-                switch (state.Top)
+                if (ctx.Char == ',') // assembly separator
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.State = State.AssemblyName;
+                    return;
+                }
+
+                if (ctx.Char == ']') // end of current argument, returning from recursion
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.State = State.AfterArgument;
+                    ctx.Push(State.Return);
+                    return;
+                }
+
+                // common part with TypeName
+                ParseFullNameOrAqnAndTypeNameCommon(ref ctx);
+            }
+
+            void ParseTypeName(ref ParseContext ctx)
+            {
+                if (ctx.Char == ',') // Type name separator in generic: returning from recursion
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.State = State.BeforeArgument;
+                    ctx.Push(State.Return);
+                    return;
+                }
+
+                if (ctx.Char == ']') // end of generics, returning from recursion
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.State = State.Modifiers;
+                    ctx.Push(State.Return);
+                    return;
+                }
+
+                // common part with FullNameOrAqn
+                ParseFullNameOrAqnAndTypeNameCommon(ref ctx);
+            }
+
+            void ParseFullNameOrAqnAndTypeNameCommon(ref ParseContext ctx)
+            {
+                if (ctx.Char == '[') // array or generic type arguments
+                {
+                    Debug.Assert(rootName == null);
+                    rootName = ctx.GetBuf();
+                    ctx.Push(State.ArrayOrGeneric);
+                    return;
+                }
+
+                if (ctx.Char.In('*', '&'))
+                {
+                    rootName = ctx.GetBuf();
+                    modifiers.Add(ctx.Char == '*' ? pointer : byRef);
+                    ctx.Push(State.Modifiers);
+                    return;
+                }
+
+                if (ctx.Char == '!' && ctx.IsBufEmpty) // generic parameter
+                {
+                    ctx.Push(State.GenericParameterName);
+                    return;
+                }
+
+                if (ctx.IsBufEmpty && ctx.IsWhiteSpace)
+                    return;
+
+                ctx.AppendChar();
+            }
+
+            void ParseAssemblyName(ref ParseContext ctx)
+            {
+                if (ctx.Char == ']') // end of current argument, returning from recursion
+                {
+                    assemblyName = ctx.GetBuf();
+                    ctx.State = State.AfterArgument;
+                    ctx.Push(State.Return);
+                    return;
+                }
+
+                ctx.AppendChar();
+            }
+
+            void ParseArrayOrGeneric(ref ParseContext ctx)
+            {
+                if (ctx.Char == ']') // Zero-based 1D array
+                {
+                    modifiers.Add(0);
+                    ctx.State = State.Modifiers;
+                    return;
+                }
+
+                if (ctx.Char == ',') // multidimensional array
+                {
+                    ctx.State = State.Array;
+                    ctx.Rank = 2;
+                    return;
+                }
+
+                if (ctx.Char == '*') // nonzero-based array
+                {
+                    ctx.State = State.Array;
+                    ctx.Rank = 1;
+                    return;
+                }
+
+                // Otherwise, in generic argument. Everything else is common with BeforeArgument
+                ParseBeforeArgument(ref ctx);
+            }
+
+            void ParseModifiers(ref ParseContext ctx)
+            {
+                if (ctx.Char == ',') // type or assembly separator
+                {
+                    ctx.Pop();
+
+                    // AQN: switching to assembly name part
+                    if (ctx.State == State.FullNameOrAqn)
+                    {
+                        ctx.State = State.AssemblyName;
+                        return;
+                    }
+
+                    // Type name separator in generic: returning from recursion
+                    if (ctx.State == State.TypeName)
+                    {
+                        ctx.State = State.BeforeArgument;
+                        ctx.Push(State.Return);
+                        return;
+                    }
+
+                    throw new InvalidOperationException(Res.InternalError($"Unexpected state: {ctx.State}"));
+                }
+
+                if (ctx.Char == '[') // array
+                {
+                    ctx.State = State.Array;
+                    return;
+                }
+
+                if (ctx.Char == ']') // end of generic type: returning from recursion
+                {
+                    ctx.Pop();
+                    ctx.State = ctx.State == State.FullNameOrAqn ? State.AfterArgument
+                        : ctx.State == State.TypeName ? State.Modifiers
+                        : State.Invalid;
+                    ctx.Push(State.Return);
+                    return;
+                }
+
+                if (ctx.Char == '*') // pointer
+                {
+                    modifiers.Add(pointer);
+                    return;
+                }
+
+                if (ctx.Char == '*') // pointer
+                {
+                    modifiers.Add(pointer);
+                    return;
+                }
+
+                if (ctx.Char == '&') // pointer
+                {
+                    modifiers.Add(byRef);
+                    return;
+                }
+
+                if (ctx.Char == ':') // generic parameter identifier
+                {
+                    ctx.Pop();
+                    Debug.Assert(ctx.State.In(State.GenericParameterName, State.GenericMethodParameterName));
+                    switch (ctx.State)
+                    {
+                        case State.GenericParameterName:
+                            ParseGenericParameterName(ref ctx);
+                            return;
+                        case State.GenericMethodParameterName:
+                            ParseGenericMethodParameterName(ref ctx);
+                            return;
+                        default:
+                            ctx.State = State.Invalid;
+                            return;
+                    }
+                }
+
+                if (ctx.IsWhiteSpace)
+                    return;
+
+                ctx.State = State.Invalid;
+            }
+
+            void ParseArray(ref ParseContext ctx)
+            {
+                if (ctx.Char == ']') // End of array
+                {
+                    modifiers.Add(ctx.Rank);
+                    ctx.State = State.Modifiers;
+                    return;
+                }
+
+                if (ctx.Char == ',') // array rank
+                {
+                    ctx.Rank = ctx.Rank < 2 ? 2 : ctx.Rank + 1;
+                    return;
+                }
+
+                if (ctx.Char == '*') // nonzero-based array
+                {
+                    if (ctx.Rank == 0)
+                    {
+                        ctx.Rank = 1;
+                        return;
+                    }
+
+                    ctx.State = State.Invalid;
+                    return;
+                }
+
+                if (ctx.IsWhiteSpace)
+                    return;
+
+                ctx.State = State.Invalid;
+            }
+
+            void ParseBeforeArgument(ref ParseContext ctx)
+            {
+                if (ctx.Char.In(']', ',', '*'))
+                {
+                    ctx.State = State.Invalid;
+                    return;
+                }
+
+                if (ctx.IsWhiteSpace)
+                    return;
+
+                TypeResolver arg;
+                if (ctx.Char == '[') // AQN in generic: recursion
+                {
+                    arg = new TypeResolver();
+                    ctx.State = State.FullNameOrAqn;
+                    arg.Parse(ref ctx);
+                    if (ctx.State != State.AfterArgument)
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
+                    genericArgs.Add(arg);
+                    return;
+                }
+
+                // type name in generics: recursion
+                ctx.State = State.TypeName;
+                arg = new TypeResolver();
+                if (ctx.Char == '!')
+                    ctx.Push(State.GenericParameterName);
+                else
+                    ctx.AppendChar();
+
+                arg.Parse(ref ctx);
+                if (!ctx.State.In(State.Modifiers, State.BeforeArgument))
+                {
+                    ctx.State = State.Invalid;
+                    return;
+                }
+
+                genericArgs.Add(arg);
+            }
+
+            void ParseAfterArgument(ref ParseContext ctx)
+            {
+                if (ctx.Char == ',') // next argument
+                {
+                    ctx.State = State.BeforeArgument;
+                    return;
+                }
+
+                if (ctx.Char == ']') // end of generic arguments
+                {
+                    ctx.State = State.Modifiers;
+                    return;
+                }
+
+                if (ctx.IsWhiteSpace)
+                    return;
+
+                ctx.State = State.Invalid;
+            }
+
+            void ParseGenericParameterName(ref ParseContext ctx)
+            {
+                if (ctx.Char == '!' && ctx.IsBufEmpty)
+                {
+                    ctx.State = State.GenericMethodParameterName;
+                    return;
+                }
+
+                if (ctx.Char == ':') // generic parameter declaring type
+                {
+                    if (rootName == null)
+                        rootName = ctx.GetBuf();
+                    ParseDeclaringType(ref ctx);
+                    return;
+                }
+
+                // Common part with GenericMethodParameterName
+                ParseGenericParameterNameCommon(ref ctx);
+            }
+
+            void ParseGenericMethodParameterName(ref ParseContext ctx)
+            {
+                if (ctx.Char == '!' && ctx.IsBufEmpty)
+                {
+                    ctx.State = State.Invalid;
+                    return;
+                }
+
+                if (ctx.Char == ':') // generic method signature
+                {
+                    if (rootName == null)
+                        rootName = ctx.GetBuf();
+                    ctx.State = State.MethodSignature;
+                    return;
+                }
+
+                // Common part with GenericParameterName
+                ParseGenericParameterNameCommon(ref ctx);
+            }
+
+            void ParseGenericParameterNameCommon(ref ParseContext ctx)
+            {
+                if (ctx.Char == '[') // array
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.Push(State.Array);
+                    return;
+                }
+
+                if (ctx.Char.In('*', '&')) // pointer/ByRef
+                {
+                    rootName = ctx.GetBuf();
+                    modifiers.Add(ctx.Char == '*' ? pointer : byRef);
+                    ctx.Push(State.Modifiers);
+                    return;
+                }
+
+                ctx.AppendChar();
+            }
+
+            void ParseDeclaringType(ref ParseContext ctx)
+            {
+                ctx.Pop();
+                Debug.Assert(ctx.State.In(State.FullNameOrAqn, State.TypeName));
+                var def = new TypeResolver();
+                def.Parse(ref ctx);
+                if (!ctx.State.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
+                {
+                    ctx.State = State.Invalid;
+                    return;
+                }
+
+                declaringType = def;
+                ctx.Push(State.Return);
+            }
+
+            void ParseMethodSignature(ref ParseContext ctx)
+            {
+                if (ctx.Char == ':')
+                {
+                    declaringMethod = ctx.GetBuf();
+                    ParseDeclaringType(ref ctx);
+                    return;
+                }
+
+                ctx.AppendChar();
+            }
+
+            #endregion
+
+            while (context.Read())
+            {
+                switch (context.State)
                 {
                     case State.FullNameOrAqn:
-                        if (c == ',') // assembly separator
-                        {
-                            rootName = buf.ToString().Trim();
-                            buf.Clear();
-                            state.Top = State.AssemblyName;
-                            break;
-                        }
-
-                        if (c == ']') // end of current argument, returning from recursion
-                        {
-                            rootName = buf.ToString().Trim();
-                            state.Top = State.AfterArgument;
-                            return;
-                        }
-
-                        goto case State.TypeName;
+                        ParseFullNameOrAqn(ref context);
+                        break;
 
                     case State.TypeName:
-                        if (c == ',') // Type name separator in generic: returning from recursion
-                        {
-                            rootName = buf.ToString().Trim();
-                            state.Top = State.BeforeArgument;
-                            return;
-                        }
-
-                        if (c == '[') // array or generic type arguments
-                        {
-                            Debug.Assert(rootName == null);
-                            rootName = buf.ToString().Trim();
-                            state.Push(State.ArrayOrGeneric);
-                            break;
-                        }
-
-                        if (c == ']') // end of generics, returning from recursion
-                        {
-                            rootName = buf.ToString().Trim();
-                            state.Top = State.Modifiers;
-                            return;
-                        }
-
-                        //// - common part with FullNameOrAqn
-
-                        if (c.In('*', '&'))
-                        {
-                            rootName = buf.ToString().Trim();
-                            modifiers.Add(c == '*' ? pointer : byRef);
-                            state.Push(State.Modifiers);
-                            break;
-                        }
-
-                        if (c == '!' && buf.Length == 0) // generic parameter
-                        {
-                            state.Push(State.GenericParameterName);
-                            break;
-                        }
-
-                        if (buf.Length == 0 && Char.IsWhiteSpace(c))
-                            break;
-
-                        buf.Append(c);
+                        ParseTypeName(ref context);
                         break;
 
                     case State.AssemblyName:
-                        if (c == ']') // end of current argument, returning from recursion
-                        {
-                            assemblyName = buf.ToString().Trim();
-                            state.Top = State.AfterArgument;
-                            return;
-                        }
-
-                        buf.Append(c);
+                        ParseAssemblyName(ref context);
                         break;
 
                     case State.ArrayOrGeneric:
-                        if (c == ']') // Zero-based 1D array
-                        {
-                            modifiers.Add(0);
-                            state.Top = State.Modifiers;
-                            break;
-                        }
-
-                        if (c == ',') // array rank
-                        {
-                            state.Top = State.Array;
-                            rank = 2;
-                            break;
-                        }
-
-                        if (c == '*') // nonzero-based array
-                        {
-                            state.Top = State.Array;
-                            rank = 1;
-                            break;
-                        }
-
-                        goto case State.BeforeArgument;
+                        ParseArrayOrGeneric(ref context);
+                        break;
 
                     case State.Modifiers:
-                        if (c == ',') // type or assembly separator
-                        {
-                            state.Pop();
-
-                            // AQN: switching to assembly name part
-                            if (state.Top == State.FullNameOrAqn)
-                            {
-                                buf.Clear();
-                                state.Top = State.AssemblyName;
-                                break;
-                            }
-
-                            // Type name separator in generic: returning from recursion
-                            if (state.Top == State.TypeName)
-                            {
-                                state.Top = State.BeforeArgument;
-                                return;
-                            }
-
-                            goto default; // unexpected state
-                        }
-
-                        if (c == '[') // array
-                        {
-                            rank = 0;
-                            state.Top = State.Array;
-                            break;
-                        }
-
-                        if (c == ']') // end of generic type: returning from recursion
-                        {
-                            state.Pop();
-                            state.Top = state.Top == State.FullNameOrAqn ? State.AfterArgument
-                                : state.Top == State.TypeName ? State.Modifiers
-                                : State.Invalid;
-                            return;
-                        }
-
-                        if (c == '*') // pointer
-                        {
-                            modifiers.Add(pointer);
-                            break;
-                        }
-
-                        if (c == '*') // pointer
-                        {
-                            modifiers.Add(pointer);
-                            break;
-                        }
-
-                        if (c == '&') // pointer
-                        {
-                            modifiers.Add(byRef);
-                            break;
-                        }
-
-                        if (c == ':') // generic parameter identifier
-                        {
-                            state.Pop();
-                            Debug.Assert(state.Top.In(State.GenericParameterName, State.GenericMethodParameterName));
-                            if (state.Top == State.GenericParameterName)
-                                goto case State.GenericParameterName;
-                            if (state.Top == State.GenericMethodParameterName)
-                                goto case State.GenericMethodParameterName;
-                            state.Top = State.Invalid;
-                            return;
-                        }
-
-                        if (Char.IsWhiteSpace(c))
-                            break;
-
-                        state.Top = State.Invalid;
-                        return;
+                        ParseModifiers(ref context);
+                        break;
 
                     case State.Array:
-                        if (c == ']') // End of array
-                        {
-                            modifiers.Add(rank);
-                            state.Top = State.Modifiers;
-                            break;
-                        }
-
-                        if (c == ',') // array rank
-                        {
-                            rank = rank < 2 ? 2 : rank + 1;
-                            break;
-                        }
-
-                        if (c == '*') // nonzero-based array
-                        {
-                            if (rank < 1)
-                            {
-                                rank = 1;
-                                break;
-                            }
-
-                            state.Top = State.Invalid;
-                            return;
-                        }
-
-                        if (Char.IsWhiteSpace(c))
-                            break;
-
-                        state.Top = State.Invalid;
-                        return;
+                        ParseArray(ref context);
+                        break;
 
                     case State.BeforeArgument:
-                        if (c.In(']', ',', '*'))
-                        {
-                            state.Top = State.Invalid;
-                            return;
-                        }
-
-                        if (Char.IsWhiteSpace(c))
-                            break;
-
-                        TypeResolver arg;
-                        if (c == '[') // AQN in generic: recursion
-                        {
-                            arg = new TypeResolver();
-                            state.Top = State.FullNameOrAqn;
-                            arg.Parse(new StringBuilder(), sr, state);
-                            if (state.Top != State.AfterArgument)
-                            {
-                                state.Top = State.Invalid;
-                                return;
-                            }
-
-                            genericArgs.Add(arg);
-                            break;
-                        }
-
-                        // type name in generics: recursion
-                        state.Top = State.TypeName;
-                        arg = new TypeResolver();
-                        var sb = new StringBuilder();
-                        if (c == '!')
-                            state.Push(State.GenericParameterName);
-                        else
-                            sb.Append(c);
-
-                        arg.Parse(sb, sr, state);
-                        if (!state.Top.In(State.Modifiers, State.BeforeArgument))
-                        {
-                            state.Top = State.Invalid;
-                            return;
-                        }
-
-                        genericArgs.Add(arg);
+                        ParseBeforeArgument(ref context);
                         break;
 
                     case State.AfterArgument:
-                        if (c == ',') // next argument
-                        {
-                            state.Top = State.BeforeArgument;
-                            break;
-                        }
-
-                        if (c == ']') // end of generic arguments
-                        {
-                            state.Top = State.Modifiers;
-                            break;
-                        }
-
-                        if (Char.IsWhiteSpace(c))
-                            break;
-
-                        state.Top = State.Invalid;
-                        return;
+                        ParseAfterArgument(ref context);
+                        break;
 
                     case State.GenericParameterName:
-                        if (c == '!' && buf.Length == 0)
-                        {
-                            state.Top = State.GenericMethodParameterName;
-                            break;
-                        }
-
-                        if (c == ':') // generic parameter declaring type
-                        {
-                            rootName = buf.ToString().Trim();
-
-                            //// - below same as in MethodSignature
-                            state.Pop();
-                            Debug.Assert(state.Top.In(State.FullNameOrAqn, State.TypeName));
-                            var def = new TypeResolver();
-                            def.Parse(new StringBuilder(), sr, state);
-                            if (!state.Top.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
-                            {
-                                state.Top = State.Invalid;
-                                return;
-                            }
-
-                            declaringType = def;
-                            assemblyName = def.assemblyName;
-                            return;
-                        }
-
-                        //// - below same as in GenericMethodParameterName
-
-                        if (c == '[')
-                        {
-                            rootName = buf.ToString().Trim();
-                            state.Push(State.Array);
-                            break;
-                        }
-
-                        if (c.In('*', '&'))
-                        {
-                            rootName = buf.ToString().Trim();
-                            modifiers.Add(c == '*' ? pointer : byRef);
-                            state.Push(State.Modifiers);
-                            break;
-                        }
-
-                        buf.Append(c);
+                        ParseGenericParameterName(ref context);
                         break;
 
                     case State.GenericMethodParameterName:
-                        if (c == '!' && buf.Length == 0)
-                        {
-                            state.Top = State.Invalid;
-                            break;
-                        }
-
-                        if (c == ':') // generic method signature
-                        {
-                            rootName = buf.ToString().Trim();
-                            buf.Clear();
-                            state.Top = State.MethodSignature;
-                            break;
-                        }
-
-                        goto case State.GenericParameterName;
+                        ParseGenericMethodParameterName(ref context);
+                        break;
 
                     case State.MethodSignature:
-                        if (c == ':')
-                        {
-                            declaringMethod = buf.ToString().Trim();
-
-                            //// - below same as in GenericParameterName
-                            state.Pop();
-                            Debug.Assert(state.Top.In(State.FullNameOrAqn, State.TypeName));
-                            var def = new TypeResolver();
-                            def.Parse(new StringBuilder(), sr, state);
-                            if (!state.Top.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
-                            {
-                                state.Top = State.Invalid;
-                                return;
-                            }
-
-                            declaringType = def;
-                            assemblyName = def.assemblyName;
-                            return;
-                        }
-
-                        buf.Append(c);
+                        ParseMethodSignature(ref context);
                         break;
 
                     case State.Invalid:
                         return;
 
                     default:
-                        throw new InvalidOperationException(Res.InternalError($"Unexpected state: {state.Top}"));
+                        throw new InvalidOperationException(Res.InternalError($"Unexpected state: {context.State}"));
+                }
+
+                if (context.State == State.Return)
+                {
+                    context.Pop();
+                    return;
                 }
             }
 
             // finishing initialization
-            switch (state.Top)
+            switch (context.State)
             {
                 // simple type without assembly name
                 case State.FullNameOrAqn:
                 case State.TypeName:
-                    rootName = buf.ToString().Trim();
-                    state.Pop();
+                    rootName = context.GetBuf();
+                    context.Pop();
                     break;
 
                 case State.AssemblyName:
-                    assemblyName = buf.ToString().Trim();
-                    state.Pop();
+                    assemblyName = context.GetBuf();
+                    context.Pop();
                     break;
 
                 case State.Modifiers:
-                    state.Pop(); // Modifiers
-                    state.Pop(); // FullName/TypeName
+                    context.Pop(); // Modifiers
+                    context.Pop(); // FullName/TypeName
                     break;
 
                 default:
@@ -782,22 +948,30 @@ namespace KGySoft.Reflection
             return result.ToString();
         }
 
-        private void DumpName(StringBuilder sb, TypeNameKind kind)
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        private void DumpName(StringBuilder result, TypeNameKind typeNameKind)
         {
-            // Generic parameter indicator
-            if (kind != TypeNameKind.Name && declaringType != null)
+            #region Local Methods to Reduce Complexity
+
+            void DumpGenericParameterIndicator(StringBuilder sb, TypeNameKind kind)
             {
+                if (kind == TypeNameKind.Name || declaringType == null)
+                    return;
+
                 sb.Append('!');
                 if (declaringMethod != null)
                     sb.Append('!');
             }
 
-            // Base name
-            sb.Append(kind == TypeNameKind.Name ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
+            void DumpBaseName(StringBuilder sb, TypeNameKind kind)
+                => sb.Append(kind == TypeNameKind.Name ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
 
-            // Generic arguments
-            if (genericArgs.Count > 0)
+            void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
             {
+                if (genericArgs.Count <= 0)
+                    return;
+
                 sb.Append('[');
                 for (int i = 0; i < genericArgs.Count; i++)
                 {
@@ -814,36 +988,40 @@ namespace KGySoft.Reflection
                 }
 
                 sb.Append(']');
+
             }
 
-            // Modifiers (array ranks, pointers, ByRef)
-            foreach (int rank in modifiers)
+            void DumpModifiers(StringBuilder sb)
             {
-                switch (rank)
+                foreach (int rank in modifiers)
                 {
-                    case byRef:
-                        sb.Append('&');
-                        break;
-                    case pointer:
-                        sb.Append('*');
-                        break;
-                    case 0:
-                        sb.Append("[]");
-                        break;
-                    case 1:
-                        sb.Append("[*]");
-                        break;
-                    default:
-                        sb.Append('[');
-                        sb.Append(',', rank - 1);
-                        sb.Append(']');
-                        break;
+                    switch (rank)
+                    {
+                        case byRef:
+                            sb.Append('&');
+                            break;
+                        case pointer:
+                            sb.Append('*');
+                            break;
+                        case 0:
+                            sb.Append("[]");
+                            break;
+                        case 1:
+                            sb.Append("[*]");
+                            break;
+                        default:
+                            sb.Append('[');
+                            sb.Append(',', rank - 1);
+                            sb.Append(']');
+                            break;
+                    }
                 }
             }
 
-            // Generic parameter identification
-            if (kind != TypeNameKind.Name && declaringType != null)
+            void DumpGenericParameter(StringBuilder sb, TypeNameKind kind)
             {
+                if (kind == TypeNameKind.Name || declaringType == null)
+                    return;
                 if (declaringMethod != null)
                 {
                     sb.Append(':');
@@ -852,27 +1030,51 @@ namespace KGySoft.Reflection
 
                 sb.Append(':');
                 declaringType.DumpName(sb, kind);
-                return; // skipping assembly name because it is dumped with declaring type
             }
+
+            void DumpAssemblyName(StringBuilder sb, TypeNameKind kind)
+            {
+                if (assemblyName == null
+                    || !(kind == TypeNameKind.AssemblyQualifiedNameForced
+                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && assemblyName != Reflector.SystemCoreLibrariesAssemblyName))
+                {
+                    return;
+                }
+
+                sb.Append(", ");
+                string asmName = assemblyName;
+                if (kind == removeAssemblyVersions)
+                {
+                    var an = new AssemblyName(asmName);
+                    if (an.Version != null)
+                    {
+                        an.Version = null;
+                        asmName = an.FullName;
+                    }
+                }
+
+                sb.Append(asmName);
+            }
+
+            #endregion
+
+            // Generic parameter indicator
+            DumpGenericParameterIndicator(result, typeNameKind);
+
+            // Base name
+            DumpBaseName(result, typeNameKind);
+
+            // Generic arguments
+            DumpGenericArguments(result, typeNameKind);
+
+            // Modifiers (array ranks, pointers, ByRef)
+            DumpModifiers(result);
+
+            // Generic parameter identification
+            DumpGenericParameter(result, typeNameKind);
 
             // Assembly name
-            if (!(kind == TypeNameKind.AssemblyQualifiedNameForced
-                || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && !assemblyName.In(null, Reflector.SystemCoreLibrariesAssemblyName)))
-                return;
-
-            sb.Append(", ");
-            string asmName = assemblyName;
-            if (kind == removeAssemblyVersions)
-            {
-                var an = new AssemblyName(asmName);
-                if (an.Version != null)
-                {
-                    an.Version = null;
-                    asmName = an.FullName;
-                }
-            }
-
-            sb.Append(asmName);
+            DumpAssemblyName(result, typeNameKind);
         }
 
         private Type Resolve(bool throwError, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
