@@ -979,7 +979,8 @@ namespace KGySoft.Reflection
                         sb.Append(',');
                     TypeResolver arg = genericArgs[i];
                     bool aqn = kind == TypeNameKind.AssemblyQualifiedNameForced
-                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && !arg.assemblyName.In(null, Reflector.SystemCoreLibrariesAssemblyName);
+                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
+                            && !(arg.assemblyName ?? arg.declaringType?.assemblyName).In(null, Reflector.SystemCoreLibrariesAssemblyName);
                     if (aqn)
                         sb.Append('[');
                     arg.DumpName(sb, kind);

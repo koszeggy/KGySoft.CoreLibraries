@@ -314,12 +314,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
-            //// recursion for the array
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            // recursion for the array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false);
         }
 
         [Test]
