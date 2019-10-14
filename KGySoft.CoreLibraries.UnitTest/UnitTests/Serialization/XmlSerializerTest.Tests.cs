@@ -880,15 +880,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
             };
 
-#if !NETCOREAPP2_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList  
-#else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but LinkedList
-                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but LinkedList
-                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
-#endif
 
             // these can be deserialized by initializer constructor only because they implement neither ICollection<T> nor IList or if they do, they are read-only
             referenceObjects = new IEnumerable[]
@@ -922,15 +915,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             };
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary  
-#else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
-                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentQueue/ConcurrentStack and ReadOnlyDictionary exists also in System.Private.CoreLib
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
-                | XmlSerializationOptions.FullyQualifiedNames, false); // an internal ConcurrentQueue/ConcurrentStack and ReadOnlyDictionary exists also in System.Private.CoreLib
-#endif
 
 #if !NET35
             // these collections are not supported recursively at all
@@ -942,13 +928,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
-#else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, randomContent: true);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, alsoAsContent: false);
-#endif
 #endif // !NET35
         }
 
@@ -1080,15 +1061,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
             };
 
-#if !NETCOREAPP2_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all  
-#else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // all
-                | XmlSerializationOptions.FullyQualifiedNames); // an internal Hashtable exists also in System.Private.CoreLib
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // all  
-                | XmlSerializationOptions.FullyQualifiedNames); // an internal Hashtable exists also in System.Private.CoreLib
-#endif
 
             // these collections cannot be populated but they have supported initializer constructor
             referenceObjects = new IEnumerable[]

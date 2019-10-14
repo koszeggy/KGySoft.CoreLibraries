@@ -235,6 +235,10 @@ namespace KGySoft.Reflection
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
         private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> typeNameCache;
 
+#if !NETFRAMEWORK
+        private static Assembly mscorlibAssembly;
+#endif
+
         #endregion
 
         #region Instance Fields
@@ -264,6 +268,10 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> TypeNameCache
             => typeNameCache ??= new Cache<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
+
+#if !NETFRAMEWORK
+        private static Assembly MscorlibAssembly => mscorlibAssembly ??= AssemblyResolver.ResolveAssembly("mscorlib", false, true, true);
+#endif
 
         #endregion
 
@@ -1143,11 +1151,26 @@ namespace KGySoft.Reflection
             // Regular type
             if (declaringType == null)
             {
+                Type result;
+
                 if (assembly != null)
-                    return assembly.GetType(rootName, throwError);
+                {
+                    result = assembly.GetType(rootName, throwError /* TODO: && !allowIgnoreAssembly */);
+                    if (result != null /* TODO: || !allowIgnoreAssembly */)
+                        return result;
+                }
+#if !NETFRAMEWORK // If there is no assembly defined we try to use the mscorlib.dll in the first place, which contains forwarded types on non-framework platforms.
+                else if (assemblyName == null)
+                {
+                    result = MscorlibAssembly?.GetType(rootName);
+                    if (result != null)
+                        return result;
+                } 
+#endif
 
                 // Not throwing an error from here because we will iterate the loaded assemblies if type cannot be resolved.
-                Type result = Type.GetType(rootName);
+                // Type.GetType is not redundant even if we tried mscorlib.dll above because it still can load core library types.
+                result = Type.GetType(rootName);
                 if (result != null)
                     return result;
 

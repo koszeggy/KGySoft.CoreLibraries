@@ -34,10 +34,10 @@ namespace KGySoft.CoreLibraries
         public Type GetType(string name, bool throwOnError)
         {
 #if NETCOREAPP
-            Reflector.SplitTypeName(name, out string assemblyName, out string typeName);
-            if (typeName == typeof(Bitmap).FullName)
+            var strippedName = TypeResolver.StripName(name, false);
+            if (strippedName == typeof(Bitmap).FullName)
                 return typeof(Bitmap);
-            if (typeName == typeof(Icon).FullName)
+            if (strippedName == typeof(Icon).FullName)
                 return typeof(Icon);
 #endif
 

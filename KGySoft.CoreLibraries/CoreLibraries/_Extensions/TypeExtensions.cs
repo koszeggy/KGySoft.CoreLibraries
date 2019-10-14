@@ -23,7 +23,11 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
+#if !NETSTANDARD2_0
+using System.Reflection.Emit; 
+#else
+using System.Runtime.InteropServices; 
+#endif
 using System.Security;
 using System.Threading;
 

@@ -114,10 +114,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Collections.Generic.Dictionary`2[ [ System.Int32] , [ System.String] ] ")] // Dictionary<int, string>
         [TestCase("System.Collections.Generic.Dictionary`2[[System.Int32],[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]")] // Dictionary<int, string>
         [TestCase("System.Collections.Generic.List`1+Enumerator[[System.Int32]]")] // List<int>.Enumerator
+        [TestCase("System.Collections.Hashtable, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // Hashtable
         public void ResolveSystemCompatibleTypes(string typeName)
         {
             Console.WriteLine($"Test case: {typeName}");
-            Type type = TypeResolver.ResolveType(typeName, false, false, true);
+            Type type = TypeResolver.ResolveType(typeName, false, true, true);
             Console.WriteLine($"Resolved to: {type?.GetName(TypeNameKind.FullName) ?? "<null>"}");
 
             if (type == null)

@@ -114,9 +114,9 @@ namespace KGySoft.Reflection
             {
                 try
                 {
-                    result = matchBySimpleName ? LoadAssemblyWithPartialName(asmName) : Assembly.Load(asmName);
+                    result = matchBySimpleName ? LoadAssemblyWithPartialName(asmName, throwError) : Assembly.Load(asmName);
                 }
-                catch (Exception e) when (!e.IsCritical())
+                catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
                 {
                     if (throwError)
                         throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName), e);
@@ -140,12 +140,26 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
-        /// <param name="assemblyName">Name of the assembly.</param>
         [SecurityCritical]
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
                 Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
-        private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
+        private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName, bool throwError)
         {
+            static Assembly TryLoad(AssemblyName asmName, out Exception error)
+            {
+                error = null;
+
+                try
+                {
+                    return Assembly.Load(asmName);
+                }
+                catch (IOException io) // including FileNotFoundException and FileLoadException
+                {
+                    error = io;
+                    return null;
+                }
+            }
+
 #if NETFRAMEWORK
             // 1. In case of a system assembly, returning it from the GAC
             string gacPath = Fusion.GetGacPath(assemblyName.Name);
@@ -153,30 +167,33 @@ namespace KGySoft.Reflection
                 return Assembly.LoadFrom(gacPath);
 #endif
 
-
             // 2. Non-GAC assembly: Trying to load the assembly with full name first.
-            try
-            {
-                Assembly result = Assembly.Load(assemblyName);
-                if (result != null)
-                    return result;
-            }
-            catch (IOException)
-            {
-                // if version is set, we have a second try
-                if (assemblyName.Version == null)
-                    throw;
-            }
+            Assembly result = TryLoad(assemblyName, out Exception e);
+            if (result != null)
+                return result;
 
             // 3. Trying to load the assembly without version info
             if (assemblyName.Version != null)
             {
-                assemblyName = (AssemblyName)assemblyName.Clone();
-                assemblyName.Version = null;
-                return Assembly.Load(assemblyName);
+                var strippedName = (AssemblyName)assemblyName.Clone();
+                strippedName.Version = null;
+                result = TryLoad(strippedName, out var _);
+                if (result != null)
+                    return result;
             }
 
-            return null;
+            // 4. Trying by simple name only (might not work on every platform)
+            if (assemblyName.FullName != assemblyName.Name)
+            {
+                var strippedName = new AssemblyName(assemblyName.Name);
+                result = TryLoad(strippedName, out var _);
+                if (result != null)
+                    return result;
+            }
+
+            if (!throwError)
+                return null;
+            throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
         }
 
         #endregion
