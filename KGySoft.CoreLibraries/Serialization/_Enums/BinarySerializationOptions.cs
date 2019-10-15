@@ -43,7 +43,7 @@ namespace KGySoft.Serialization
         /// Apart from primitive types, strings and arrays forces to serialize every type recursively. If <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set,
         /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
         /// <para>This flag is considered on serialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         ForceRecursiveSerializationOfSupportedTypes = 1,
 
@@ -55,7 +55,7 @@ namespace KGySoft.Serialization
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
         /// </note></para>
         /// <para>This flag is considered on serialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         [Obsolete("Now RecursiveSerializationAsFallback works also for structs. To serialize structs in a compact format if possible, use CompactSerializationOfStructures flag instead.")]
         ForcedSerializationValueTypesAsFallback = 1 << 1,
@@ -65,7 +65,7 @@ namespace KGySoft.Serialization
         /// <para>This flag is considered on serialization.
         /// <note>Unlike in case of <see cref="BinaryFormatter"/>, <see cref="BinarySerializationFormatter"/> does not check whether the deserialized object has <see cref="SerializableAttribute"/>.</note>
         /// </para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
         RecursiveSerializationAsFallback = 1 << 2,
 
@@ -73,14 +73,14 @@ namespace KGySoft.Serialization
         /// <para>If a type has methods decorated with <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>, <see cref="OnDeserializingAttribute"/> or <see cref="OnDeserializedAttribute"/>,
         /// or the type implements <see cref="IDeserializationCallback"/>, then these methods are called during the process. By setting this flag these methods can be ignored.</para>
         /// <para>This flag is considered both on serialization and deserialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreSerializationMethods = 1 << 3,
 
         /// <summary>
         /// <para>This flag ignores <see cref="IBinarySerializable"/> implementations.</para>
         /// <para>This flag is considered on serialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreIBinarySerializable = 1 << 4,
 
@@ -92,7 +92,7 @@ namespace KGySoft.Serialization
         /// <note>If you want to deserialize a type that was stored with strong assembly reference (without this flag) from a different version of an assembly,
         /// then use <see cref="WeakAssemblySerializationBinder"/> instead.</note></para>
         /// <para>This flag is considered on serialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         OmitAssemblyQualifiedNames = 1 << 5,
 
@@ -103,7 +103,7 @@ namespace KGySoft.Serialization
         /// <note type="caution">When this flag is enabled, an erroneous deserialization may silently succeed. When a field has
         /// been renamed or relocated into another base class,  use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead.</note></para>
         /// <para>This flag is considered on deserialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreObjectChanges = 1 << 6,
 
@@ -113,7 +113,7 @@ namespace KGySoft.Serialization
         /// <para>This flag ignores <see cref="ISerializable"/> implementations forcing to serialize a default object graph (unless an applicable surrogate is defined).</para>
         /// <para>This flag is considered both on serialization and deserialization.
         /// <note>Usually this flag must have the same value at serialization and deserialization; otherwise, the deserialization may fail.</note></para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreISerializable = 1 << 8,
 
@@ -121,7 +121,7 @@ namespace KGySoft.Serialization
         /// <para>This flag ignores <see cref="IObjectReference"/> implementations.
         /// <note>Using this flag may cause that the deserialized object or its elements will have the wrong type, or the deserialization will fail.</note></para>
         /// <para>This flag is considered on deserialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreIObjectReference = 1 << 9,
 
@@ -135,7 +135,7 @@ namespace KGySoft.Serialization
         /// This option affects only instances that have either no reference fields at all or have only string or array references, which are decorated by <see cref="MarshalAsAttribute"/> using
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
         /// </note>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 10,
 
@@ -143,7 +143,7 @@ namespace KGySoft.Serialization
         /// <para>If this flag is enabled while <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set, then the selector is tried to be used
         /// even for natively supported types.</para>
         /// <para>This flag is considered on serialization.</para>
-        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         TryUseSurrogateSelectorForAnyType = 1 << 11,
     }
