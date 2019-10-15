@@ -140,22 +140,11 @@ namespace KGySoft.Serialization
 #else
             if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
 #endif
+            {
                 return null;
-
-            Assembly result;
-            try
-            {
-                result = AssemblyResolver.ResolveAssembly(name, true, true, true);
-            }
-            catch (Exception e)
-            {
-                throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), e.InnerException ?? e);
             }
 
-            if (result == null)
-                throw new SerializationException(Res.ReflectionCannotLoadAssembly(name));
-
-            return result;
+            return AssemblyResolver.ResolveAssembly(name, ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch | ResolveAssemblyOptions.ThrowError);
         }
 
         #endregion

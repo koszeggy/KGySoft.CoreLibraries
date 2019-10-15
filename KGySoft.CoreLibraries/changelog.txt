@@ -48,15 +48,17 @@
 
 ! KGySoft.Reflection namespace:
 ===============================
++ New ResolveAssemblyOptions enum
++ New ResolveTypeOptions enum
 ! Reflector class:
-  ! ResolveAssembly method:
-    + New throwError optional parameter (false by default)
-    ! Earlier the method returned null if the assembly could not be resolved and tryToLoad was false and
-      threw an exception on load errors. From now on an exception is always thrown on error if throwError is true
-      and the result is always null if throwError is false.
-    ! Instead of the earlier FileNotFoundException, FileLoadException and BadImageFormatException types
-      from now on a ReflectionException is thrown. If the exception is due to loading errors, then the
-      InnerException property is set.
+  ! ResolveAssembly(string,bool,bool) method:
+    ! Earlier the method returned null if the assembly could not be resolved and tryToLoad was false, and
+      threw an exception on load errors. From now on this overload returns always null if the assembly
+      cannot be resolved. Use the other overloads with ResolveAssemblyOptions.ThrowOnError flag to throw an
+      ReflectionException on resolve errors.
+    ! This method is obsolete now in favor of the new overloads.
+  + New ResolveAssembly(string,ResolveAssemblyOptions) method
+  + New ResolveAssembly(AssemblyName,ResolveAssemblyOptions) method
   ! ResolveType overloads:
     + New throwError optional parameter (false by default)
     + The former ResolveType(Assembly, string) overload also has loadPartiallyDefinedAssemblies and

@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -50,100 +51,139 @@ namespace KGySoft.Reflection
 
         #region Methods
 
-        #region Public Methods
+        #region Internal Methods
 
-#if !NET35
-        [SecuritySafeCritical]
-#endif
-        internal static Assembly ResolveAssembly(string assemblyName, bool throwError, bool tryToLoad, bool matchBySimpleName)
+        internal static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
         {
             if (assemblyName == null)
                 throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
             if (assemblyName.Length == 0)
                 throw new ArgumentException(Res.ArgumentEmpty, nameof(assemblyName));
+            if (!options.AllFlagsDefined())
+                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
 
-            string key = (matchBySimpleName ? "-" : "+") + assemblyName;
-            if (AssemblyCache.TryGetValue(key, out Assembly result))
-                return result;
-
-            // 1.) Iterating through loaded assemblies, checking names
-            AssemblyName asmName = new AssemblyName(assemblyName);
-            string fullName = asmName.FullName;
-            string simpleName = asmName.Name;
-            foreach (Assembly asm in Reflector.GetLoadedAssemblies())
+            AssemblyName asmName;
+            try
             {
-                // Simple match. As asmName is parsed, for fully qualified names this will work for sure.
-                if (asm.FullName == fullName)
-                {
-                    result = asm;
-                    break;
-                }
-
-                AssemblyName nameToCheck = asm.GetName();
-                if (nameToCheck.Name != simpleName)
-                    continue;
-
-                if (matchBySimpleName)
-                {
-                    result = asm;
-                    break;
-                }
-
-                Version version;
-                if ((version = asmName.Version) != null && nameToCheck.Version != version)
-                    continue;
-
-#if NET35 || NET40
-                if (asmName.CultureInfo != null && asmName.CultureInfo.Name != nameToCheck.CultureInfo.Name)
-                    continue;
-#else
-                if (asmName.CultureName != null && nameToCheck.CultureName != asmName.CultureName)
-                    continue;
-#endif
-                byte[] publicKeyTokenRef, publicKeyTokenCheck;
-                if ((publicKeyTokenRef = asmName.GetPublicKeyToken()) != null && (publicKeyTokenCheck = nameToCheck.GetPublicKeyToken()) != null
-                    && publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck))
-                    continue;
-
-                result = asm;
-                break;
+                asmName = new AssemblyName(assemblyName);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    throw new ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), nameof(assemblyName), e);
+                return null;
             }
 
-            // 2.) Trying to load the assembly
-            if (result == null && tryToLoad)
-            {
-                try
-                {
-                    result = matchBySimpleName ? LoadAssemblyWithPartialName(asmName, throwError) : Assembly.Load(asmName);
-                }
-                catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
-                {
-                    if (throwError)
-                        throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName), e);
-                    return null;
-                }
-            }
+            return GetOrResolve(asmName, options);
+        }
 
-            if (result == null && throwError)
-                throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName));
-
-            if (result != null)
-                assemblyCache[key] = result;
-
-            return result;
+        internal static Assembly ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        {
+            if (assemblyName == null)
+                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+            if (!options.AllFlagsDefined())
+                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+            return GetOrResolve(assemblyName, options);
         }
 
         #endregion
 
         #region Private Methods
 
+        private static Assembly GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        {
+            string key = ((int)options).ToString(CultureInfo.InvariantCulture) + assemblyName.FullName;
+            if (AssemblyCache.TryGetValue(key, out Assembly result))
+                return result;
+
+            try
+            {
+                result = Resolve(assemblyName, options);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    throw new ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                return null;
+            }
+
+            if (result == null)
+            {
+                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    throw new ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                return null;
+            }
+
+            assemblyCache[key] = result;
+            return result;
+        }
+
+        private static Assembly Resolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        {
+            #region Local Methods
+
+            static bool IdentityMatches(AssemblyName refName, Assembly asm, ResolveAssemblyOptions o)
+            {
+                if (asm == null)
+                    return false;
+
+                AssemblyName toCheck = asm.GetName();
+
+                // Different name: skip
+                if (toCheck.Name != refName.Name)
+                    return false;
+
+                // Here name matches. In case of partial match we are done.
+                if ((o & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
+                    return true;
+
+                // Checking version, culture and public key token
+                Version version = refName.Version;
+                if (version != null && toCheck.Version != version)
+                    return false;
+
+                CultureInfo culture = refName.CultureInfo;
+                if (culture != null && toCheck.CultureInfo.Name != culture.Name)
+                    return false;
+
+                byte[] publicKeyTokenRef, publicKeyTokenCheck;
+                return (publicKeyTokenRef = refName.GetPublicKeyToken()) == null
+                    || (publicKeyTokenCheck = toCheck.GetPublicKeyToken()) == null
+                    || !publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
+            }
+
+            #endregion
+
+            // 1.) Iterating through loaded assemblies, checking names
+            string fullName = assemblyName.FullName;
+            foreach (Assembly asm in Reflector.GetLoadedAssemblies())
+            {
+                // Simple match. As fullName is via property, for fully qualified names this will work for sure.
+                if (asm.FullName == fullName)
+                    return asm;
+
+                // Otherwise, we check the provided information (we still can accept simple name if nothing else is provided)
+                if (IdentityMatches(assemblyName, asm, options))
+                    return asm;
+            }
+
+            if ((options & ResolveAssemblyOptions.TryToLoadAssembly) == ResolveAssemblyOptions.None)
+                return null;
+
+            // 2.) Trying to load the assembly
+            Assembly result = LoadAssembly(assemblyName, (options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None);
+            return result?.FullName == fullName || IdentityMatches(assemblyName, result, options) ? result : null;
+        }
+
         /// <summary>
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
-        [SecurityCritical]
+#if NETFRAMEWORK && !NET35
+        [SecuritySafeCritical]
+#endif
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
-                Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
-        private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName, bool throwError)
+            Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
+        private static Assembly LoadAssembly(AssemblyName assemblyName, bool throwError)
         {
             static Assembly TryLoad(AssemblyName asmName, out Exception error)
             {

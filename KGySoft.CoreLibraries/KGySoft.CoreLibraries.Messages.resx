@@ -550,6 +550,12 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_CannotLoadAssemblyFormat" xml:space="preserve">
     <value>Failed to load assembly by name: "{0}".</value>
   </data>
+  <data name="Reflection_CannotResolveAssemblyFormat" xml:space="preserve">
+    <value>Cannot resolve assembly: "{0}".</value>
+  </data>
+  <data name="Reflection_InvalidAssemblyNameFormat" xml:space="preserve">
+    <value>Assembly name is invalid: "{0}".</value>
+  </data>
   <data name="Reflection_PointerTypeNotSupportedFormat" xml:space="preserve">
     <value>Pointer type '{0}' is not supported.</value>
   </data>

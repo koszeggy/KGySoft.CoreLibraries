@@ -1098,7 +1098,7 @@ namespace KGySoft.Reflection
             // 1. Resolving assembly if needed
             if (assembly == null && assemblyName != null)
             {
-                assembly = AssemblyResolver.ResolveAssembly(assemblyName, throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+                assembly = Reflector.ResolveAssembly(assemblyName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
                 if (assembly == null)
                     return null;
             }

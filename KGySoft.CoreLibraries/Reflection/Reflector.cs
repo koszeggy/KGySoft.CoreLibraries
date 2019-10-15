@@ -2665,17 +2665,53 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
-        /// <param name="matchBySimpleName"><see langword="true"/>&#160;to ignore version, culture and public key token information differences.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to throw a <see cref="ReflectionException"/> if the assembly cannot be resolved;
-        /// <see langword="false"/>&#160;to return <see langword="null"/> in case of resolving errors. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly.</returns>
+        /// <param name="matchBySimpleName"><see langword="true"/>&#160;to ignore version, culture and public key token information differences;
+        /// <see langword="false"/>&#160;to allow only an exact match with the provided information.</param>
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// <paramref name="assemblyName"/> could not be resolved by the provided arguments.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
-        /// <exception cref="ReflectionException"><paramref name="throwError"/> is <see langword="true"/>&#160;and the assembly cannot be resolved or loaded.
-        /// In case of load error the <see cref="Exception.InnerException"/> property is set.</exception>
-        public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName, bool throwError = false)
-            => AssemblyResolver.ResolveAssembly(assemblyName, throwError, tryToLoad, matchBySimpleName);
+        [Obsolete("This overload is obsolete. Use the overloads with AssemblyResolveOptions instead.")]
+        public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
+            => AssemblyResolver.ResolveAssembly(assemblyName,
+                (tryToLoad ? ResolveAssemblyOptions.TryToLoadAssembly : ResolveAssemblyOptions.None)
+                | (matchBySimpleName ? ResolveAssemblyOptions.AllowPartialMatch : ResolveAssemblyOptions.None));
+
+        /// <summary>
+        /// Gets the <see cref="Assembly"/> with the specified <paramref name="assemblyName"/>.
+        /// </summary>
+        /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
+        /// <param name="options">The options for resolving the assembly. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveAssemblyOptions.TryToLoadAssembly"/>, <see cref="ResolveAssemblyOptions.AllowPartialMatch"/>.</param>
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// the <see cref="ResolveAssemblyOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="assemblyName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty
+        /// <br/>-or-
+        /// <bir/><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/>
+        /// and <paramref name="assemblyName"/> does not contain a valid assembly name.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="options"/> has an invalid value.</exception>
+        /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
+        /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
+        public static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
+            => AssemblyResolver.ResolveAssembly(assemblyName, options);
+
+        /// <summary>
+        /// Gets the <see cref="Assembly"/> with the specified <paramref name="assemblyName"/>.
+        /// </summary>
+        /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
+        /// <param name="options">The options for resolving the assembly. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveAssemblyOptions.TryToLoadAssembly"/>, <see cref="ResolveAssemblyOptions.AllowPartialMatch"/>.</param>
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// the <see cref="ResolveAssemblyOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="assemblyName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="options"/> has an invalid value.</exception>
+        /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
+        /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
+        public static Assembly ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
+            => AssemblyResolver.ResolveAssembly(assemblyName, options);
 
         /// <summary>
         /// Gets the already loaded assemblies in a transparent way of any frameworks.
@@ -2693,10 +2729,10 @@ namespace KGySoft.Reflection
         /// When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
         /// <param name="typeName">The type name as a string representation with or without assembly name.</param>
-        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names;
-        /// <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
-        /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>;
+        /// <param name="tryLoadAssemblies"><see langword="true"/>&#160;to try loading assemblies present in <paramref name="typeName"/> if they are not loaded already;
+        /// <see langword="false"/>&#160;to locate assemblies among the loaded ones only. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="allowUnmatchingIdentity"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>;
         /// <see langword="false"/>&#160;to consider every provided information in assembly names. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to throw a <see cref="ReflectionException"/> if the type cannot be resolved;
@@ -2704,30 +2740,38 @@ namespace KGySoft.Reflection
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
-        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assembly name is partially defined,
-        /// then the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <see langword="true"/>.</para>
+        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
+        /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by the <see cref="KGySoft.CoreLibraries.TypeExtensions.GetName">GetName</see>
+        /// extension method on <see cref="System.Type"/> instances.</para>
+        /// <note>If <paramref name="tryLoadAssemblies"/> is <see langword="true"/>&#160;and <paramref name="allowUnmatchingIdentity"/> is <see langword="false"/>&#160;(which
+        /// are the default values), then it can happen that the assembly of a different version will be loaded and the method returns <see langword="null"/>.</note>
         /// </remarks>
         /// <example>
         /// <code lang="C#"><![CDATA[
-        /// // mscorlib types are defined wihtout assembly, System.Uri is defined with fully qualified assembly name - it will be loaded if possible
-        /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", false, false);
+        /// // Here mscorlib types are defined without assembly, System.Uri is defined with fully qualified assembly name:
+        /// // it will be resolved only if the System.dll of the same version is already loaded.
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", false, false);
         /// 
-        /// // System.Uri will be resolved even if the loaded System.dll has different version
-        /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", false, true);
+        /// // If System.dll is already loaded, then System.Uri will be resolved even if the loaded System.dll has a different version.
+        /// // If System.dll is not loaded, then null will be returned.
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", false, true);
         /// 
-        /// // System.Uri is defined with partial assembly name - it will be resolved only when System.dll is already loaded
-        /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System]]", false, false);
+        /// // If System.dll is not loaded, then it will be tried to be loaded and it can have any version.
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", true, true);
+        /// 
+        /// // System.Uri is defined with partial assembly name - it will be resolved only if its assembly is already loaded.
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System]]", false, false);
         /// 
         /// // System.Uri is defined with partial assembly name, and we allow to load it with partial name, too
-        /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System]]", true, false);
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System]]", true, false);
         /// 
         /// // all types are defined without assembly names: Dictionary and String will be resolved from mscorlib, Uri will be resolved if there is a System.Uri in any loaded assembly.
-        /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String, System.Uri]", false, false);
+        /// var type = Reflector.ResolveType("System.Collections.Generic.Dictionary`2[System.String, System.Uri]", false, false);
         /// ]]></code>
         /// </example>
         /// <exception cref="ReflectionException"><paramref name="throwError"/> is <see langword="true"/>&#160;and <paramref name="typeName"/> cannot be parsed.</exception>
-        public static Type ResolveType(string typeName, bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false, bool throwError = false)
-            => TypeResolver.ResolveType(typeName, throwError, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+        public static Type ResolveType(string typeName, bool tryLoadAssemblies = true, bool allowUnmatchingIdentity = false, bool throwError = false)
+            => TypeResolver.ResolveType(typeName, throwError, tryLoadAssemblies, allowUnmatchingIdentity);
 
         /// <summary>
         /// Gets the <see cref="Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.

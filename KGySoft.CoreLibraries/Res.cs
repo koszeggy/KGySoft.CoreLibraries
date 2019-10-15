@@ -782,6 +782,12 @@ namespace KGySoft
         /// <summary>Failed to load assembly by name: "{0}".</summary>
         internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
 
+        /// <summary>Cannot resolve assembly: "{0}".</summary>
+        internal static string ReflectionCannotResolveAssembly(string name) => Get("Reflection_CannotResolveAssemblyFormat", name);
+
+        /// <summary>Assembly name is invalid: "{0}".</summary>
+        internal static string ReflectionInvalidAssemblyName(string name) => Get("Reflection_InvalidAssemblyNameFormat", name);
+
         /// <summary>Pointer type '{0}' is not supported.</summary>
         internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.FullName));
 
