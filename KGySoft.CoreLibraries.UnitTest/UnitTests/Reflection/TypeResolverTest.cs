@@ -118,7 +118,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void ResolveSystemCompatibleTypes(string typeName)
         {
             Console.WriteLine($"Test case: {typeName}");
-            Type type = TypeResolver.ResolveType(typeName, false, true, true);
+            Type type = Reflector.ResolveType(typeName);
             Console.WriteLine($"Resolved to: {type?.GetName(TypeNameKind.FullName) ?? "<null>"}");
 
             if (type == null)

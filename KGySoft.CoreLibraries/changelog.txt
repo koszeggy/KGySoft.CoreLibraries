@@ -35,6 +35,8 @@
   + New GetValueOrDefault overloads for IEnumerable<KeyValuePair<TKey, Tvalue>> instances to support also read-only
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
 	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
++ Enum<TEnum> class:
+  + New GetFlagsMask method
 + TypeExtensions class:
   + New GetName extension method for formatting type names in a more consistent way than Type members.
 + New TypeNameKind enum: For the TypeExtensions.GetName method.
@@ -52,21 +54,31 @@
 + New ResolveTypeOptions enum
 ! Reflector class:
   ! ResolveAssembly(string,bool,bool) method:
+    ! This method is obsolete now in favor of the new overloads.
     ! Earlier the method returned null if the assembly could not be resolved and tryToLoad was false, and
       threw an exception on load errors. From now on this overload returns always null if the assembly
-      cannot be resolved. Use the other overloads with ResolveAssemblyOptions.ThrowOnError flag to throw an
+      cannot be resolved. Use the other overloads with ResolveAssemblyOptions.ThrowError flag to throw a
       ReflectionException on resolve errors.
-    ! This method is obsolete now in favor of the new overloads.
   + New ResolveAssembly(string,ResolveAssemblyOptions) method
   + New ResolveAssembly(AssemblyName,ResolveAssemblyOptions) method
-  ! ResolveType overloads:
-    + New throwError optional parameter (false by default)
-    + The former ResolveType(Assembly, string) overload also has loadPartiallyDefinedAssemblies and
-      matchAssemblyByWeakName arguments (optional). These are considered for assembly names in the generic arguments.
-    ! Earlier these methods could return null or throw an exception depending on the nature of the resolving error.
-      From now on an exception is always thrown on error if throwError is true and the result is always null
-      if throwError is false.
-    + Now supports also generic parameters and open constructed generics if they were dumped by TypeExtensions.GetName.
+  ! ResolveType(string,bool,bool) method:
+    ! This method is obsolete now in favor of the new overloads.
+    ! The bool parameters have been renamed to reflect the current behavior better. The default values have
+      been adjusted to provide a better compatibility with the former behavior.
+    ! Earlier the method could return null or throw an exception depending on the nature of the resolving error.
+      From now on the result is always null if the type cannot be resolved. Use the other overloads with
+      ResolveTypeOptions.ThrowError flag to throw a ReflectionException on resolving errors.
+  ! ResolveType(Assembly,string) method:
+    + A new optional ResolveTypeOptions parameter have been added.
+    ! Earlier the method could return null or throw an exception depending on the nature of the resolving error.
+      From now on if the type cannot be resolved the result is always null if the options parameter does not contain
+      the ResolveTypeOptions.ThrowError flag (default behavior), or throws a ReflectionException if the options
+      parameter contains the ResolveTypeOptions.ThrowError flag.
+  + New ResolveType(string,ResolveTypeOptions) method. New main features:
+    + It can be controlled whether an exception should be thrown if type cannot be resolved.
+    + It can be controlled whether to use case insensitive resolving.
+    + Generic parameters and open constructed generics are supported if they were dumped by TypeExtensions.GetName.
+    + More consistent behavior for partial assembly matching.
 
 - KGySoft.Resources namespace:
 ==============================
