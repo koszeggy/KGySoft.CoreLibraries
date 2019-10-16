@@ -92,7 +92,7 @@ namespace KGySoft.Reflection
 
         private static Assembly GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
-            string key = ((int)options).ToString(CultureInfo.InvariantCulture) + assemblyName.FullName;
+            string key = ((int)(options & ~ResolveAssemblyOptions.ThrowError)).ToString(CultureInfo.InvariantCulture) + assemblyName.FullName;
             if (AssemblyCache.TryGetValue(key, out Assembly result))
                 return result;
 
@@ -171,7 +171,7 @@ namespace KGySoft.Reflection
                 return null;
 
             // 2.) Trying to load the assembly
-            Assembly result = LoadAssembly(assemblyName, (options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None);
+            Assembly result = LoadAssembly(assemblyName, options);
             return result?.FullName == fullName || IdentityMatches(assemblyName, result, options) ? result : null;
         }
 
@@ -183,7 +183,7 @@ namespace KGySoft.Reflection
 #endif
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
             Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
-        private static Assembly LoadAssembly(AssemblyName assemblyName, bool throwError)
+        private static Assembly LoadAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
             static Assembly TryLoad(AssemblyName asmName, out Exception error)
             {
@@ -201,13 +201,16 @@ namespace KGySoft.Reflection
             }
 
 #if NETFRAMEWORK
-            // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = Fusion.GetGacPath(assemblyName.Name);
-            if (gacPath != null)
-                return Assembly.LoadFrom(gacPath);
+            // 1. In case of a system assembly, returning it from the GAC (if version does not matter)
+            if ((options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
+            {
+                string gacPath = Fusion.GetGacPath(assemblyName.Name);
+                if (gacPath != null)
+                    return Assembly.LoadFrom(gacPath);
+            }
 #endif
 
-            // 2. Non-GAC assembly: Trying to load the assembly with full name first.
+            // 2. Trying to load the assembly with full name
             Assembly result = TryLoad(assemblyName, out Exception e);
             if (result != null)
                 return result;
@@ -231,7 +234,7 @@ namespace KGySoft.Reflection
                     return result;
             }
 
-            if (!throwError)
+            if ((options & ResolveAssemblyOptions.ThrowError) == ResolveAssemblyOptions.None)
                 return null;
             throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
         }
