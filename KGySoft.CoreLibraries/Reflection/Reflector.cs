@@ -2801,7 +2801,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.
         /// As the type is about to be resolved from the specified <paramref name="assembly"/>, assembly names are allowed to be specified in the generic arguments only.
-        /// <br/>See the <strong>Examples</strong> section for the <see cref="ResolveType(string,ResolveTypeOptions)"/> overload for details.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="ResolveType(string,ResolveTypeOptions)"/> overload for some examples.
         /// </summary>
         /// <param name="assembly">The assembly that contains the type to retrieve.</param>
         /// <param name="typeName">The type name as a string representation.</param>
