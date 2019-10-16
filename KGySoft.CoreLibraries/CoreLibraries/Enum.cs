@@ -235,7 +235,7 @@ namespace KGySoft.CoreLibraries
         private static string Zero => NumValueNamePairs.GetValueOrDefault(0UL, "0");
 
         private static ulong FlagsMask
-            => flagsMask ??= Values.Select(ToUInt64).Where(IsSingleFlag).Aggregate(0UL, (acc, value) => acc | value);
+            => flagsMask ??= Values.Select(ToUInt64).Where(IsSingleFlagCore).Aggregate(0UL, (acc, value) => acc | value);
 
         #endregion
 
@@ -386,7 +386,7 @@ namespace KGySoft.CoreLibraries
         public static bool IsSingleFlag(TEnum value)
         {
             ulong rawValue = ToUInt64(value);
-            return rawValue != 0 && (rawValue & (rawValue - 1)) == 0;
+            return rawValue != 0 && IsSingleFlagCore(rawValue);
         }
 
         /// <summary>
@@ -399,7 +399,7 @@ namespace KGySoft.CoreLibraries
         {
             if (value == 0L || value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
                 return false;
-            return (value & (value - 1)) == 0L;
+            return IsSingleFlagCore((ulong)value);
         }
 
         /// <summary>
@@ -413,7 +413,7 @@ namespace KGySoft.CoreLibraries
         {
             if (value == 0UL || value > max)
                 return false;
-            return (value & (value - 1)) == 0UL;
+            return IsSingleFlagCore(value);
         }
 
         /// <summary>
@@ -713,9 +713,20 @@ namespace KGySoft.CoreLibraries
             return lambda.Compile();
         }
 
+#if !NET35 || NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static bool AllFlagsDefinedCore(ulong flags)
             => flags == 0UL ? NumValueNamePairs.ContainsKey(0UL) : (FlagsMask & flags) == flags;
 
+#if !NET35 || NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static bool IsSingleFlagCore(ulong value) => (value & (value - 1UL)) == 0UL;
+
+#if !NET35 || NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (ToUInt64(value) & flags) == flags;
 
         private static bool TryParseNumber(string value, out ulong result)
