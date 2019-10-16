@@ -23,6 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using KGySoft.Collections;
@@ -90,6 +91,7 @@ namespace KGySoft.CoreLibraries
         private static Dictionary<string, TEnum> nameValuePairs;
         private static Dictionary<string, ulong> nameNumValuePairs;
         private static Dictionary<string, ulong> nameNumValuePairsIgnoreCase;
+        private static ulong? flagsMask;
         // ReSharper restore StaticMemberInGenericType
 
         #endregion
@@ -135,18 +137,7 @@ namespace KGySoft.CoreLibraries
 
                 lock (syncRoot)
                 {
-                    // ReSharper disable once JoinDeclarationAndInitializer - #if branches
-                    IEqualityComparer<TEnum> comparer;
-#if NET35
-                    comparer = EnumComparer<TEnum>.Comparer;
-#elif NET40 || NET45
-                    comparer = typeCode == TypeCode.Int32
-                        ? (IEqualityComparer<TEnum>)EqualityComparer<TEnum>.Default
-                        : EnumComparer<TEnum>.Comparer;
-#else
-                    comparer = EqualityComparer<TEnum>.Default;
-#endif
-                    result = new Dictionary<TEnum, string>(Names.Length, comparer);
+                    result = new Dictionary<TEnum, string>(Names.Length, ComparerHelper<TEnum>.EqualityComparer);
                     for (int i = 0; i < Values.Length; i++)
                     {
                         // avoiding duplicated keys (multiple names for the same value)
@@ -173,7 +164,7 @@ namespace KGySoft.CoreLibraries
                     result = new CircularSortedList<ulong, string>(Names.Length);
                     for (int i = 0; i < Values.Length; i++)
                     {
-                        ulong value = isSigned ? (ulong)values[i].ToInt64(null) & sizeMask : values[i].ToUInt64(null);
+                        ulong value = ToUInt64(values[i]);
 
                         // avoiding duplicated keys (multiple names for the same value)
                         if (!result.ContainsKey(value))
@@ -216,10 +207,7 @@ namespace KGySoft.CoreLibraries
                 {
                     result = new Dictionary<string, ulong>(Names.Length);
                     for (int i = 0; i < Values.Length; i++)
-                    {
-                        ulong value = isSigned ? (ulong)values[i].ToInt64(null) & sizeMask : values[i].ToUInt64(null);
-                        result.Add(names[i], value);
-                    }
+                        result.Add(names[i], ToUInt64(values[i]));
 
                     return nameNumValuePairs = result;
                 }
@@ -244,19 +232,10 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static string Zero
-        {
-            get
-            {
-                if (Names.Length == 0)
-                    return "0";
+        private static string Zero => NumValueNamePairs.GetValueOrDefault(0UL, "0");
 
-                if (NameNumValuePairs[names[0]] == 0UL)
-                    return names[0];
-
-                return "0";
-            }
-        }
+        private static ulong FlagsMask
+            => flagsMask ??= Values.Select(ToUInt64).Where(IsSingleFlag).Aggregate(0UL, (acc, value) => acc | value);
 
         #endregion
 
@@ -371,11 +350,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <see langword="false"/>.</returns>
-        public static bool HasFlag(TEnum value, TEnum flags)
-        {
-            ulong rawFlags = isSigned ? (ulong)flags.ToInt64(null) & sizeMask : flags.ToUInt64(null);
-            return HasFlagCore(value, rawFlags);
-        }
+        public static bool HasFlag(TEnum value, TEnum flags) => HasFlagCore(value, ToUInt64(flags));
 
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
@@ -410,7 +385,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag(TEnum value)
         {
-            ulong rawValue = isSigned ? (ulong)value.ToInt64(null) & sizeMask : value.ToUInt64(null);
+            ulong rawValue = ToUInt64(value);
             return rawValue != 0 && (rawValue & (rawValue - 1)) == 0;
         }
 
@@ -449,11 +424,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
-        public static bool AllFlagsDefined(TEnum flags)
-        {
-            ulong value = isSigned ? (ulong)flags.ToInt64(null) & sizeMask : flags.ToUInt64(null);
-            return AllFlagsDefinedCore(value);
-        }
+        public static bool AllFlagsDefined(TEnum flags) => AllFlagsDefinedCore(ToUInt64(flags));
 
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
@@ -639,7 +610,7 @@ namespace KGySoft.CoreLibraries
 
             // if single value is requested returning a number
             if ((format == EnumFormattingOptions.Auto && !isFlags) || format == EnumFormattingOptions.NonFlags)
-                return isSigned ? value.ToInt64(null).ToString(CultureInfo.InvariantCulture) : value.ToUInt64(null).ToString(CultureInfo.InvariantCulture);
+                return isSigned ? value.ToInt64(CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture) : value.ToUInt64(CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
 
             // returning as flags
             return FormatFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
@@ -679,7 +650,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static IEnumerable<TEnum> GetFlags(TEnum flags, bool onlyDefinedValues)
         {
-            ulong value = isSigned ? (ulong)flags.ToInt64(null) & sizeMask : flags.ToUInt64(null);
+            ulong value = ToUInt64(flags);
             if (value == 0UL)
                 yield break;
 
@@ -688,7 +659,7 @@ namespace KGySoft.CoreLibraries
                 ulong flag = 1UL << i;
                 if ((value & flag) != 0)
                 {
-                    if (!onlyDefinedValues || NumValueNamePairs.ContainsKey(flag))
+                    if (!onlyDefinedValues || (FlagsMask & flag) == flag)
                         yield return toEnum.Invoke(flag);
 
                     value &= ~flag;
@@ -697,6 +668,16 @@ namespace KGySoft.CoreLibraries
                 }
             }
         }
+
+        /// <summary>
+        /// Gets a <typeparamref name="TEnum"/> value where all defined single flag values are set. 
+        /// </summary>
+        /// <returns>A <typeparamref name="TEnum"/> value where all defined single flag values are set. </returns>
+        /// <remarks>
+        /// <para>Flag values are the ones whose binary representation contains only a single bit.</para>
+        /// <para>It is not checked whether <typeparamref name="TEnum"/> is really marked by <see cref="FlagsAttribute"/>.</para>
+        /// </remarks>
+        public static TEnum GetFlagsMask() => toEnum.Invoke(FlagsMask);
 
         /// <summary>
         /// Clears caches associated with <typeparamref name="TEnum"/> enumeration.
@@ -718,44 +699,24 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+#if !NET35 || NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+#endif
+        private static ulong ToUInt64(TEnum value)
+            => isSigned ? (ulong)value.ToInt64(CultureInfo.InvariantCulture) & sizeMask : value.ToUInt64(CultureInfo.InvariantCulture);
+
         private static Func<ulong, TEnum> GenerateToEnum()
         {
             // This could be in a static constructor but moved to an initializer method due to performance reasons (CA1810)
-            var valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
+            ParameterExpression valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
             var lambda = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression);
             return lambda.Compile();
         }
 
         private static bool AllFlagsDefinedCore(ulong flags)
-        {
-            if (flags == 0UL)
-                return NumValueNamePairs.ContainsKey(0UL);
+            => flags == 0UL ? NumValueNamePairs.ContainsKey(0UL) : (FlagsMask & flags) == flags;
 
-            for (int i = 0; i <= 63; i++)
-            {
-                ulong flag = 1UL << i;
-                if ((flags & flag) != 0UL)
-                {
-                    if (!NumValueNamePairs.ContainsKey(flag))
-                        return false;
-
-                    flags &= ~flag;
-                    if (flags == 0UL)
-                        break;
-                }
-            }
-
-            return true;
-        }
-
-        private static bool HasFlagCore(TEnum value, ulong flags)
-        {
-            if (flags == 0UL)
-                return true;
-
-            ulong rawValue = isSigned ? (ulong)value.ToInt64(null) & sizeMask : value.ToUInt64(null);
-            return (rawValue & flags) == flags;
-        }
+        private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (ToUInt64(value) & flags) == flags;
 
         private static bool TryParseNumber(string value, out ulong result)
         {
@@ -780,7 +741,7 @@ namespace KGySoft.CoreLibraries
 
         private static string FormatDistinctFlags(TEnum e, string separator)
         {
-            ulong value = isSigned ? (ulong)e.ToInt64(null) & sizeMask : e.ToUInt64(null);
+            ulong value = ToUInt64(e);
             if (value == 0UL)
                 return Zero;
 
@@ -815,7 +776,7 @@ namespace KGySoft.CoreLibraries
 
         private static string FormatFlags(TEnum e, string separator, bool allowNumberWithNames)
         {
-            ulong origNumValue = isSigned ? (ulong)e.ToInt64(null) & sizeMask : e.ToUInt64(null);
+            ulong origNumValue = ToUInt64(e);
             ulong value = origNumValue;
             if (value == 0UL)
                 return Zero;
