@@ -256,7 +256,7 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// uses them to load the assemblies in advance occasionally by calling the obsolete <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadPartial</see> method. However, this <see cref="ResXResourceReader"/>
-    /// implementation can handle finding and loading assemblies automatically. If an assembly needs to be loaded from a partial name, the <see cref="Reflector.ResolveAssembly">Reflector.ResolveAssembly</see> method is called, which does not use
+    /// implementation can handle finding and loading assemblies automatically. If an assembly needs to be loaded from a partial name, the <see cref="Reflector.ResolveAssembly(string,ResolveAssemblyOptions)">Reflector.ResolveAssembly</see> method is called, which does not use
     /// obsolete techniques. If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
     /// <item>This <see cref="ResXResourceReader"/> is a sealed class.</item>
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown

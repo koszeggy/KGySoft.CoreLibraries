@@ -2695,7 +2695,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
         /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
         /// <seealso cref="ResolveAssemblyOptions"/>
-        public static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
+        public static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
             => AssemblyResolver.ResolveAssembly(assemblyName, options);
 
         /// <summary>

@@ -227,9 +227,9 @@ namespace KGySoft.Resources
     /// Instead, you can read the original type information stored in the .resx file by <see cref="TypeName"/> and <see cref="AssemblyAliasValue"/> properties. Based on the
     /// retrieved information you can decide whether you really want to deserialize the object by the <see cref="GetValue">GetValue</see> method.
     /// </item>
-    /// <item>There is no <strong>GetValue</strong> method with <see cref="AssemblyName">AssemblyName[]</see> argument. This overload ended up using the obsolete
+    /// <item>There is no <strong>GetValue</strong> method with <see cref="AssemblyName">AssemblyName[]</see> argument. That overload ended up using the obsolete
     /// <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadWithPartialName</see> method. The weakly referenced assemblies however are handled automatically
-    /// by using <see cref="Reflector.ResolveType(string,bool,bool,bool)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
+    /// by using <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
     /// <item>The <see cref="GetValue">GetValue</see> method has three parameters instead of one. But all of them are optional so if called from a regular C# code, the method is compatible with
     /// the <a href="https://msdn.microsoft.com/en-us/library/d54fztkz.aspx" target="_blank">System.Resources.ResXDataNode.GetValue(ITypeResolutionService)</a> method.</item>
     /// <item>There are no public constructors with <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> arguments. In the system version these <c>typeNameConverter</c> parameters are used exclusively by non-public methods, which are
@@ -756,7 +756,7 @@ namespace KGySoft.Resources
                 result = typeResolver.GetType(assemblyQualifiedName, false);
 
             if (result == null)
-                result = Reflector.ResolveType(assemblyQualifiedName, true, true);
+                result = TypeResolver.ResolveType(assemblyQualifiedName, ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch);
 
             if (result == null)
                 return null;

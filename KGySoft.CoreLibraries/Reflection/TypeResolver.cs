@@ -762,7 +762,7 @@ namespace KGySoft.Reflection
                 genericArgs.Add(arg);
             }
 
-            void ParseAfterArgument(ref ParseContext ctx)
+            static void ParseAfterArgument(ref ParseContext ctx)
             {
                 if (ctx.Char == ',') // next argument
                 {

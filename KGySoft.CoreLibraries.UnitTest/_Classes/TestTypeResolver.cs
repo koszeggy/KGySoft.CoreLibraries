@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
                 return typeof(Icon);
 #endif
 
-            return Reflector.ResolveType(name, true, true);
+            return Reflector.ResolveType(name);
         }
 
         public Type GetType(string name) => GetType(name, false);

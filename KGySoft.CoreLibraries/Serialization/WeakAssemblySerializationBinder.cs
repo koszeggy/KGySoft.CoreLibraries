@@ -118,7 +118,7 @@ namespace KGySoft.Serialization
             Type result = (assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName))
                 // trying to omit assembly info of generic parameters, too
                 // may happen if this binder has not been not used for serialization or OmitAssemblyNameOnSerialize was not set
-                ?? Reflector.ResolveType(typeName, true, true);
+                ?? Reflector.ResolveType(typeName);
 
             if (result == null)
                 throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));

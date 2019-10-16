@@ -165,7 +165,7 @@ namespace KGySoft.Resources
             {
                 try
                 {
-                    Type type = Reflector.ResolveType(soapFormatterTypeName, true, true);
+                    Type type = Reflector.ResolveType(soapFormatterTypeName);
 
                     // no Reflector or Accessor is needed because this is a static instance so will be invoked once. In this case Reflector would be slower for that single run.
                     if (type != null)

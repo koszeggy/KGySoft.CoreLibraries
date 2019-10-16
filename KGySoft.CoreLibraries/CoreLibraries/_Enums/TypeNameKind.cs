@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Represents the full name of a <see cref="Type"/> along with namespace.
         /// <br/>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
-        /// the <see cref="Reflector.ResolveType(string,bool,bool,bool)">Reflector.ResolveType</see> method.
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.
         /// <para>
         /// Differences from <see cref="Type.FullName">Type.FullName</see>:
         /// <list type="bullet">
@@ -66,7 +66,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Represents the assembly qualified name of a <see cref="Type"/>. Assembly identity is dumped for non-core types only.
         /// <br/>If all needed assemblies are available, then the name can be successfully parsed by
-        /// the <see cref="Reflector.ResolveType(string,bool,bool,bool)">Reflector.ResolveType</see> method.
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.
         /// <br/>If the type does not contain generic parameter types, then the name can be parsed even by
         /// the <see cref="Type.GetType(string)">Type.GetType</see> method.
         /// <para>

@@ -66,13 +66,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #else
 #error .NET version is not supported
 #endif
-            if (Reflector.ResolveAssembly(asmName, false, true) != null)
+            if (Reflector.ResolveAssembly(asmName) != null)
             {
                 Assert.Inconclusive("Assembly {0} is already loaded, test is ignored. Try to run this test alone.", asmName);
                 return;
             }
 
-            Assert.IsNotNull(Reflector.ResolveAssembly(asmName, true, true) != null);
+            Assert.IsNotNull(Reflector.ResolveAssembly(asmName) != null);
         }
 
         [TestCase("int")] // fail
