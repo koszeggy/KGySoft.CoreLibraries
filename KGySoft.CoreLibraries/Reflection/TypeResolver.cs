@@ -24,6 +24,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using KGySoft.Collections;
@@ -299,7 +300,49 @@ namespace KGySoft.Reflection
             Initialize(typeName);
         }
 
-        private TypeResolver(Type type) => Initialize(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
+        private TypeResolver(Type type, bool useLegacyIdentity)
+        {
+            this.type = type ?? throw new ArgumentNullException(nameof(this.type), Res.ArgumentNull);
+
+            // modifiers
+            // ReSharper disable once PossibleNullReferenceException
+            while (type.HasElementType)
+            {
+                if (type.IsArray)
+                    modifiers.AddFirst(type.IsZeroBasedArray() ? 0 : type.GetArrayRank());
+                else if (type.IsByRef)
+                    modifiers.AddFirst(byRef);
+                else if (type.IsPointer)
+                    modifiers.AddFirst(pointer);
+                type = type.GetElementType();
+            }
+
+            // generic arguments
+            if (type.IsGenericType && !type.IsGenericTypeDefinition) // same as: type.IsConstructedGenericType from .NET4
+            {
+                foreach (Type genericArgument in type.GetGenericArguments())
+                    genericArgs.Add(new TypeResolver(genericArgument, useLegacyIdentity));
+
+                type = type.GetGenericTypeDefinition();
+            }
+
+            // root type
+            bool isGenericParam = type.IsGenericParameter;
+            rootName = isGenericParam ? type.Name : type.FullName;
+            if (!isGenericParam)
+            {
+                assembly = type.Assembly;
+                assemblyName = useLegacyIdentity
+                    ? (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute)) as TypeForwardedFromAttribute)?.AssemblyFullName ?? assembly.FullName
+                    : assembly.FullName;
+                return;
+            }
+
+            // generic parameter
+            declaringType = new TypeResolver(type.DeclaringType, useLegacyIdentity);
+            declaringMethod = type.DeclaringMethod?.ToString();
+
+        }
 
         #endregion
 
@@ -393,7 +436,25 @@ namespace KGySoft.Reflection
             if (cache.TryGetValue(kind, out string result))
                 return result;
 
-            result = new TypeResolver(type).GetName(kind);
+            TypeNameKind getNameKind;
+            bool useLegacyIdentity;
+            switch (kind)
+            {
+                case TypeNameKind.AssemblyQualifiedNameLegacyIdentity:
+                    getNameKind = TypeNameKind.AssemblyQualifiedName;
+                    useLegacyIdentity = true;
+                    break;
+                case TypeNameKind.ForcedAssemblyQualifiedNameLegacyIdentity:
+                    getNameKind = TypeNameKind.ForcedAssemblyQualifiedName;
+                    useLegacyIdentity = true;
+                    break;
+                default:
+                    getNameKind = kind;
+                    useLegacyIdentity = false;
+                    break;
+            }
+
+            result = new TypeResolver(type, useLegacyIdentity).GetName(getNameKind);
 
             cache[kind] = result;
             return result;
@@ -408,7 +469,7 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
-        public override string ToString() => GetName(TypeNameKind.AssemblyQualifiedNameForced) ?? base.ToString();
+        public override string ToString() => GetName(TypeNameKind.ForcedAssemblyQualifiedName) ?? base.ToString();
 
         #endregion
 
@@ -440,47 +501,6 @@ namespace KGySoft.Reflection
             genericArgs.Clear();
             declaringType = null;
             declaringMethod = null;
-        }
-
-        private void Initialize(Type t)
-        {
-            type = t;
-
-            // modifiers
-            // ReSharper disable once PossibleNullReferenceException
-            while (t.HasElementType)
-            {
-                if (t.IsArray)
-                    modifiers.AddFirst(t.IsZeroBasedArray() ? 0 : t.GetArrayRank());
-                else if (t.IsByRef)
-                    modifiers.AddFirst(byRef);
-                else if (t.IsPointer)
-                    modifiers.AddFirst(pointer);
-                t = t.GetElementType();
-            }
-
-            // generic arguments
-            if (t.IsGenericType && !t.IsGenericTypeDefinition) // same as: type.IsConstructedGenericType from .NET4
-            {
-                foreach (Type genericArgument in t.GetGenericArguments())
-                    genericArgs.Add(new TypeResolver(genericArgument));
-
-                t = t.GetGenericTypeDefinition();
-            }
-
-            // root type
-            bool isGenericParam = t.IsGenericParameter;
-            rootName = isGenericParam ? t.Name : t.FullName;
-            if (!isGenericParam)
-            {
-                assembly = t.Assembly;
-                assemblyName = assembly.FullName;
-                return;
-            }
-
-            // generic parameter
-            declaringType = new TypeResolver(t.DeclaringType);
-            declaringMethod = t.DeclaringMethod?.ToString();
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
@@ -984,7 +1004,7 @@ namespace KGySoft.Reflection
                     sb.Append('!');
             }
 
-            void DumpBaseName(StringBuilder sb, TypeNameKind kind)
+            void DumpRootName(StringBuilder sb, TypeNameKind kind)
                 => sb.Append(kind == TypeNameKind.Name ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
@@ -998,7 +1018,7 @@ namespace KGySoft.Reflection
                     if (i > 0)
                         sb.Append(',');
                     TypeResolver arg = genericArgs[i];
-                    bool aqn = kind == TypeNameKind.AssemblyQualifiedNameForced
+                    bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
                             && !(arg.assemblyName ?? arg.declaringType?.assemblyName).In(null, Reflector.SystemCoreLibrariesAssemblyName);
                     if (aqn)
@@ -1056,7 +1076,7 @@ namespace KGySoft.Reflection
             void DumpAssemblyName(StringBuilder sb, TypeNameKind kind)
             {
                 if (assemblyName == null
-                    || !(kind == TypeNameKind.AssemblyQualifiedNameForced
+                    || !(kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && assemblyName != Reflector.SystemCoreLibrariesAssemblyName))
                 {
                     return;
@@ -1082,8 +1102,8 @@ namespace KGySoft.Reflection
             // Generic parameter indicator
             DumpGenericParameterIndicator(result, typeNameKind);
 
-            // Base name
-            DumpBaseName(result, typeNameKind);
+            // Root name
+            DumpRootName(result, typeNameKind);
 
             // Generic arguments
             DumpGenericArguments(result, typeNameKind);
@@ -1110,8 +1130,11 @@ namespace KGySoft.Reflection
             // 1. Resolving assembly if needed
             if (assembly == null && assemblyName != null)
             {
-                assembly = AssemblyResolver.ResolveAssembly(assemblyName, (ResolveAssemblyOptions)options & Enum<ResolveAssemblyOptions>.GetFlagsMask());
-                if (assembly == null)
+                var resolveAssemblyOptions = (ResolveAssemblyOptions)options & Enum<ResolveAssemblyOptions>.GetFlagsMask();
+                if ((options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
+                    resolveAssemblyOptions &= ~ResolveAssemblyOptions.ThrowError;
+                assembly = AssemblyResolver.ResolveAssembly(assemblyName, resolveAssemblyOptions);
+                if (assembly == null && (options & ResolveTypeOptions.AllowIgnoreAssemblyName) == ResolveTypeOptions.None)
                     return null;
             }
 

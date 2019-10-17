@@ -18,6 +18,7 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using KGySoft.Reflection;
 
 #endregion
@@ -73,7 +74,7 @@ namespace KGySoft.CoreLibraries
         /// Differences from <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see>:
         /// <list type="bullet">
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> dumps assembly names even for core library types.
-        /// For a similar result use the <see cref="AssemblyQualifiedNameForced"/> option. This is not needed for <see cref="Type.GetType(string)">Type.GetType</see> though.</item>
+        /// For a similar result use the <see cref="ForcedAssemblyQualifiedName"/> option. This is not needed for <see cref="Type.GetType(string)">Type.GetType</see> though.</item>
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns <see langword="null"/> for generic parameter types.</item>
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns the name of the generic type definition only for constructed open generic types.</item>
         /// </list>
@@ -86,6 +87,19 @@ namespace KGySoft.CoreLibraries
         /// similarly to the <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> property. Otherwise, the same applies
         /// as for the <see cref="AssemblyQualifiedName"/> option.
         /// </summary>
-        AssemblyQualifiedNameForced,
+        ForcedAssemblyQualifiedName,
+
+        /// <summary>
+        /// Represents the assembly qualified name of a <see cref="Type"/> with the assembly from which the type has been forwarded.
+        /// Assembly identity is dumped for non-core types only.
+        /// If <see cref="TypeForwardedFromAttribute"/> is not defined for a type, then the result is the same as in case the <see cref="AssemblyQualifiedName"/>.
+        /// </summary>
+        AssemblyQualifiedNameLegacyIdentity,
+
+        /// <summary>
+        /// Represents the assembly qualified name of a <see cref="Type"/> with the assembly from which the type has been forwarded.
+        /// If <see cref="TypeForwardedFromAttribute"/> is not defined for a type, then the result is the same as in case the <see cref="ForcedAssemblyQualifiedName"/>.
+        /// </summary>
+        ForcedAssemblyQualifiedNameLegacyIdentity,
     }
 }

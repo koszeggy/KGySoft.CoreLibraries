@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Collections.ObjectModel;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
@@ -131,13 +131,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void DumpAndResolveTypesContainingGenericArguments(Type type)
         {
             string fullName = type.GetName(TypeNameKind.FullName);
-            string aqn = type.GetName(TypeNameKind.AssemblyQualifiedNameForced);
+            string aqn = type.GetName(TypeNameKind.ForcedAssemblyQualifiedName);
             Console.WriteLine($"Name: {type.GetName(TypeNameKind.Name)}");
             Console.WriteLine($"FullName: {fullName}");
             Console.WriteLine($"AssemblyQualifiedName: {aqn}");
 
             Assert.AreEqual(type, Reflector.ResolveType(aqn));
             Assert.AreEqual(type, Reflector.ResolveType(fullName));
+        }
+
+#if !NET35
+        [TestCase(typeof(ObservableCollection<int>))] // forwarded from WindowsBase
+#endif
+#if !NETFRAMEWORK
+        [TestCase(typeof(HashSet<int>))] // forwarded from System.Core
+#endif
+        public void LegacyIdentityTest(Type type)
+        {
+            string normalName = type.GetName(TypeNameKind.AssemblyQualifiedName);
+            string legacyName = type.GetName(TypeNameKind.AssemblyQualifiedNameLegacyIdentity);
+            Assert.AreNotEqual(normalName, legacyName);
+            Assert.AreEqual(Reflector.ResolveType(normalName), Reflector.ResolveType(legacyName));
         }
 
         #endregion
