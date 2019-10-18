@@ -11,11 +11,11 @@
 
 + Assembly changes:
 ===================
-+ Targeting .NET Framework 4.7.2.
-+ Targeting .NET Core 2.0.
-+ Targeting .NET Core 3.0.
-+ Targeting .NET Standard 2.0 (some Reflection APIs throw PlatformNotSupportedException - see the documentation).
-+ Targeting .NET Standard 2.1.
++ Targeting also .NET Framework 4.7.2.
++ Targeting also .NET Core 2.0.
++ Targeting also .NET Core 3.0.
++ Targeting also .NET Standard 2.0 (some Reflection APIs throw PlatformNotSupportedException - see the documentation).
++ Targeting also .NET Standard 2.1.
 
 ! KGySoft namespace
 ===================
@@ -79,14 +79,21 @@
     + It can be controlled whether to use case insensitive resolving.
     + Generic parameters and open constructed generics are supported if they were dumped by TypeExtensions.GetName.
     + More consistent behavior for partial assembly matching.
++ WeakAssemblySerializationBinder:
+  * OmitAssemblyNameOnSerialize property is available also in .NET 3.5.
+  + New IgnoreAssemblyNameOnResolve property: Makes possible to completely ignore the assembly information even if
+    it was not omitted on serialization.
 
-- KGySoft.Resources namespace:
+* KGySoft.Resources namespace:
 ==============================
 - ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining
   executing directory.
++ ResXResourceReader/ResXResourceWriter: Supporting every RuntimeType instance natively.
 
 ! KGySoft.Serialization namespace:
 ==============================
++ New ISerializationBinder interface: Contains the same members as the SerializationBinder class in .NET 4.0 and
+  later and allows for BinarySerializationFormatter to use the BindToName method in .NET 3.5 as well.
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   + Supporting runtime types natively. It was required for .NET Core, which cannot serialize Type instances.
@@ -97,7 +104,17 @@
     custom serialized data.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
-- XmlSerializer: Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
++ WeakAssemblySerializationBinder:
+  + Implements ISerializationBinder.
+  + The OmitAssemblyNameOnSerialize property is available also in .NET 3.5. A BinaryFormatter still ignores this
+    property in .NET 3.5 (though it does not affect functionality) but BinarySerializationFormatter is now able
+    to use that in all .NET versions.
+  + New IgnoreAssemblyNameOnResolve property: If assembly information is available on deserialization but the
+    type cannot be resolved from that assembly, then this property allows to resolve the type from any loaded
+    assemblies if possible.
+* XmlSerializer:
+  - Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
+  + Supporting every RuntimeType instance natively.
 
 
 ~~~~~~~~~

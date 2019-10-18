@@ -784,11 +784,13 @@ namespace KGySoft.Serialization
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="SerializationBinder"/> that performs type lookups.
+        /// Gets or sets the <see cref="SerializationBinder"/> that performs type conversions to and from <see cref="string">string</see>.
         /// </summary>
         /// <remarks>
-        /// In .NET 4.0 and above affects both serialization and deserialization. In .NET 3.5 setting this property
-        /// has no effect during serialization.
+        /// <para>If the associated binder implements the <see cref="ISerializationBinder"/> interface,
+        /// then their members are also called if the default <see cref="SerializationBinder"/> members do not return any result.</para>
+        /// <para>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
+        /// the <see cref="ISerializationBinder"/> interface.</para>
         /// </remarks>
         public SerializationBinder Binder { get; set; }
 

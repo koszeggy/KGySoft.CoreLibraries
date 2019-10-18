@@ -1098,12 +1098,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-#if !NET35
             // by WeakAssemblySerializationBinder, including serialization
-            title = "Serialization and Deserialization with WeakAssemblySerializationBinder";
+            title = "Serialization and Deserialization with WeakAssemblySerializationBinder, omitting assembly name";
             binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
-            SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder);
+
+            SystemSerializeObject(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
+            SystemSerializeObjects(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
@@ -1114,15 +1114,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // by TestSerializationBinder
             title = "Serialization and Deserialization with TestSerializationBinder";
             binder = new TestSerializationBinder();
+#if !NET35
             SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder);
+            SystemSerializeObjects(referenceObjects, title, binder: binder); 
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-#endif
         }
 
         [Test]

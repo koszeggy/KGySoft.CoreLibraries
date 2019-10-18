@@ -1149,40 +1149,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region TestSerializationBinder class
-
-#if !NET35
-        private class TestSerializationBinder : SerializationBinder
-        {
-            #region Methods
-
-            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
-            {
-                Assert.IsNotNull(serializedType.FullName);
-                assemblyName = "rev_" + new string(serializedType.Assembly.FullName.Reverse().ToArray());
-                typeName = "rev_" + new string(serializedType.FullName.Reverse().ToArray());
-            }
-
-            public override Type BindToType(string assemblyName, string typeName)
-            {
-                if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
-                    assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
-                if (typeName.StartsWith("rev_", StringComparison.Ordinal))
-                    typeName = new string(typeName.Substring(4).Reverse().ToArray());
-
-                Assembly assembly = assemblyName.Length == 0 ? null : Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
-                if (assembly == null && assemblyName.Length > 0)
-                    return null;
-
-                return assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
-            } 
-
-            #endregion
-        }
-#endif
-
-        #endregion
-
         #region TestSurrogateSelector class
 
         private class TestSurrogateSelector : ISurrogateSelector, ISerializationSurrogate

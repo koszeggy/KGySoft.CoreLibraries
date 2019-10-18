@@ -31,19 +31,16 @@ namespace KGySoft.Serialization
     /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can ignore version and token information
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
     /// </summary>
-    public sealed class WeakAssemblySerializationBinder : SerializationBinder
+    public sealed class WeakAssemblySerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Constants
 
-#if !NET35
         private const string omittedAssemblyName = "*";
-#endif
 
         #endregion
 
         #region Properties
 
-#if !NET35
         /// <summary>
         /// Gets or sets whether assembly name should be completely omitted on serialization.
         /// <br/>Default value: <see langword="false"/>.
@@ -52,7 +49,9 @@ namespace KGySoft.Serialization
         /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>This property is available only in .NET 4 and above.</note>
+        /// <note>In .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
+        /// value of this property. <see cref="BinarySerializationFormatter"/> is able to use the <see cref="WeakAssemblySerializationBinder"/>
+        /// as an <see cref="ISerializationBinder"/> implementation and consider the value of this property even in .NET 3.5.</note>
         /// <note>The value of this property is used only on serialization; however, it affects deserialization as well:
         /// when assembly name is omitted, deserialization will find the first matching type from any assembly.</note>
         /// <para>Using <see cref="BinarySerializationFormatter"/> with <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>
@@ -63,7 +62,18 @@ namespace KGySoft.Serialization
         /// assemblies have types with the same name the retrieved type cannot determined.</para>
         /// </remarks>
         public bool OmitAssemblyNameOnSerialize { get; set; }
-#endif
+
+        /// <summary>
+        /// Gets or sets whether an existing assembly name is allowed to be completely ignored on deserialization.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If the value of this property is <see langword="true"/>&#160;and the type cannot be resolved from an assembly on deserialization,
+        /// then the type is tried to be resolved from any loaded assemblies. The effect is similar as if the
+        /// <see cref="OmitAssemblyNameOnSerialize"/> property was used on serialization, except that the type is tried to be resolved
+        /// from the provided assembly in the first place.</para>
+        /// </remarks>
+        public bool IgnoreAssemblyNameOnResolve { get; set; } = true;
 
         #endregion
 
@@ -71,7 +81,6 @@ namespace KGySoft.Serialization
 
         #region Public Methods
 
-#if !NET35
         /// <summary>
         /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
         /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating, that the original
@@ -83,11 +92,19 @@ namespace KGySoft.Serialization
         /// <remarks>
         /// <note>This method is available only in .NET 4 and above.</note>
         /// </remarks>
-        public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
+#if !NET35
+        override
+#endif
+        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             if (serializedType == null)
                 throw new ArgumentNullException(nameof(serializedType), Res.ArgumentNull);
+#if NET35
+            assemblyName = null;
+            typeName = null;
+#else
             base.BindToName(serializedType, out assemblyName, out typeName);
+#endif
             if (OmitAssemblyNameOnSerialize)
             {
                 // mscorlib is handled natively so is not omitted
@@ -100,8 +117,6 @@ namespace KGySoft.Serialization
                     typeName = serializedType.ToString();
             }
         }
-#endif
-
 
         /// <summary>
         /// Retrieves a type by its <paramref name="assemblyName"/> and <paramref name="typeName"/>.
@@ -115,10 +130,10 @@ namespace KGySoft.Serialization
         public override Type BindToType(string assemblyName, string typeName)
         {
             Assembly assembly = GetAssembly(assemblyName);
-            Type result = (assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName))
-                // trying to omit assembly info of generic parameters, too
-                // may happen if this binder has not been not used for serialization or OmitAssemblyNameOnSerialize was not set
-                ?? Reflector.ResolveType(typeName);
+            var options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch;
+            if (IgnoreAssemblyNameOnResolve)
+                options |= ResolveTypeOptions.AllowIgnoreAssemblyName;
+            Type result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
                 throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
@@ -133,18 +148,15 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Resolves an assembly by string
         /// </summary>
-        private static Assembly GetAssembly(string name)
+        private Assembly GetAssembly(string name)
         {
-#if NET35
-            if (String.IsNullOrEmpty(name))
-#else
             if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
-#endif
-            {
                 return null;
-            }
 
-            return AssemblyResolver.ResolveAssembly(name, ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch | ResolveAssemblyOptions.ThrowError);
+            var options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch;
+            if (!IgnoreAssemblyNameOnResolve)
+                options |= ResolveAssemblyOptions.ThrowError;
+            return AssemblyResolver.ResolveAssembly(name, options);
         }
 
         #endregion

@@ -58,8 +58,8 @@ namespace KGySoft.Serialization
 
             #region Properties
 
-            private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null } });
-            private List<Assembly> CachedAssemblies => cachedAssemblies ?? (cachedAssemblies = new List<Assembly>(KnownAssemblies));
+            private Dictionary<int, object> IdCache => idCache ??= new Dictionary<int, object> { { 0, null } };
+            private List<Assembly> CachedAssemblies => cachedAssemblies ??= new List<Assembly>(KnownAssemblies);
 
             private List<Type> CachedTypes
             {
@@ -75,11 +75,9 @@ namespace KGySoft.Serialization
                 }
             }
 
-
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
             private int InvariantAssemblyIndex => CachedAssemblies.Count + 2;
-
             private int NewTypeIndex => CachedTypes.Count + 1;
 
             #endregion
@@ -280,18 +278,11 @@ namespace KGySoft.Serialization
                 if (index == NewTypeIndex)
                 {
                     string typeName = br.ReadString();
-                    Type type = null;
-                    if (typeName == GenericMethodDefinitionPlaceholder.AliasName)
-                        type = typeof(GenericMethodDefinitionPlaceholder);
-                    else
-                    {
-                        if (Binder != null)
-                            type = Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, typeName);
-                        if (type == null)
-                            type = assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
-                        if (type == null)
-                            throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
-                    }
+                    Type type = typeName == GenericMethodDefinitionPlaceholder.AliasName
+                        ? typeof(GenericMethodDefinitionPlaceholder)
+                        : ReadBoundType(assembly?.FullName, typeName)
+                            ?? (assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName))
+                            ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
                     CachedTypes.Add(type);
                     if (type.IsGenericTypeDefinition || type == typeof(GenericMethodDefinitionPlaceholder))
@@ -309,7 +300,7 @@ namespace KGySoft.Serialization
                 if (Binder == null)
                     return result;
                 string fullName = result.FullName;
-                return fullName == null ? result : Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, fullName) ?? result;
+                return fullName == null ? result : ReadBoundType(assembly?.FullName, fullName) ?? result;
             }
 
             internal Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes, bool addToCache = true)
@@ -368,7 +359,7 @@ namespace KGySoft.Serialization
                 if (Binder == null)
                     return result;
                 string fullName = result.FullName;
-                return fullName == null ? result : Binder.BindToType(result.Assembly.FullName, fullName) ?? result;
+                return fullName == null ? result : ReadBoundType(result.Assembly.FullName, fullName) ?? result;
             }
 
             internal void AddObjectToCache(object obj)
@@ -393,6 +384,9 @@ namespace KGySoft.Serialization
             #endregion
 
             #region Private Methods
+
+            private Type ReadBoundType(string assemblyName, string typeName)
+                => Binder?.BindToType(assemblyName ?? String.Empty, typeName);
 
             /// <summary>
             /// Creates and populates array
@@ -1129,14 +1123,11 @@ namespace KGySoft.Serialization
                 if (typeByNameCache != null && typeByNameCache.TryGetValue(key, out Type result))
                     return result;
 
-                if (Binder != null)
+                result = ReadBoundType(assemblyName, typeName);
+                if (result != null)
                 {
-                    result = Binder.BindToType(assemblyName, typeName);
-                    if (result != null)
-                    {
-                        AddTypeToCache(key, result);
-                        return result;
-                    }
+                    AddTypeToCache(key, result);
+                    return result;
                 }
 
                 Assembly assembly = GetAssembly(assemblyName);

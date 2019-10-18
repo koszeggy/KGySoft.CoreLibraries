@@ -55,11 +55,10 @@ namespace KGySoft.Serialization
 
             private Dictionary<Assembly, int> assemblyIndexCache;
             private Dictionary<Type, int> typeIndexCache;
-#if !NET35 // binders can map type to names only in .NET 4.0 and above
             private Dictionary<Type, (string AssemblyName, string TypeName)> binderCache;
             private Dictionary<string, int> assemblyNameIndexCache;
             private Dictionary<string, int> typeNameIndexCache;
-#endif
+
             private int idCounter;
             private Dictionary<object, int> idCacheByValue;
             private Dictionary<object, int> idCacheByRef;
@@ -96,42 +95,13 @@ namespace KGySoft.Serialization
                 }
             }
 
-
-#if !NET35
             private Dictionary<string, int> AssemblyNameIndexCache => assemblyNameIndexCache ??= new Dictionary<string, int>(1);
-
             private Dictionary<string, int> TypeNameIndexCache => typeNameIndexCache ??= new Dictionary<string, int>(1);
-
-#endif
-
-            private int AssemblyIndexCacheCount
-            {
-                get
-                {
-                    return (assemblyIndexCache?.Count ?? KnownAssemblies.Length)
-#if !NET35
-                        + (assemblyNameIndexCache?.Count ?? 0)
-#endif
-                        ;
-                }
-            }
-
+            private int AssemblyIndexCacheCount => (assemblyIndexCache?.Count ?? KnownAssemblies.Length) + (assemblyNameIndexCache?.Count ?? 0);
             private int OmitAssemblyIndex => AssemblyIndexCacheCount;
             private int NewAssemblyIndex => AssemblyIndexCacheCount + 1;
             private int InvariantAssemblyIndex => AssemblyIndexCacheCount + 2; // for natively supported types, which can be in any assembly in different frameworks
-
-            private int TypeIndexCacheCount
-            {
-                get
-                {
-                    return (typeIndexCache?.Count ?? KnownTypes.Length)
-#if !NET35
-                        + (typeNameIndexCache?.Count ?? 0)
-#endif
-                        ;
-                }
-            }
-
+            private int TypeIndexCacheCount => (typeIndexCache?.Count ?? KnownTypes.Length) + (typeNameIndexCache?.Count ?? 0);
             private int NewTypeIndex => TypeIndexCacheCount + 1;
 
             #endregion
@@ -149,15 +119,12 @@ namespace KGySoft.Serialization
 
             #region Static Methods
 
-#if !NET35
             private static string GetTypeNameIndexCacheKey(Type type, string binderAsmName, string binderTypeName)
                 => (binderAsmName ?? type.Assembly.FullName) + ":" + (binderTypeName ?? type.FullName);
-#endif
 
             private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
             private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
             private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
-
 
             private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
             private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
@@ -1347,15 +1314,10 @@ namespace KGySoft.Serialization
                 WriteNewType(bw, type, true, allowOpenTypes, binderAsmName, binderTypeName);
             }
 
-#if NET35
-            [SuppressMessage("Performance", "CA1822:MarkMembersAsStatic", Justification = "It cannot be static but in .NET 3.5 the method does nothing.")]
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
-#endif
             private void GetBoundNames(Type type, out string binderAsmName, out string binderTypeName)
             {
                 binderAsmName = null;
                 binderTypeName = null;
-#if !NET35
                 if (Binder == null || type.FullName == null)
                     return;
 
@@ -1369,35 +1331,24 @@ namespace KGySoft.Serialization
                     return;
                 }
 
+#if !NET35
                 Binder.BindToName(type, out binderAsmName, out binderTypeName);
+#endif
+                if (binderTypeName == null && Binder is ISerializationBinder binder)
+                    binder.BindToName(type, out binderAsmName, out binderTypeName);
+
                 binderCache.Add(type, (binderAsmName, binderTypeName));
-#endif
             }
 
-#if NET35
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")] 
-#endif
             private int GetAssemblyIndex(Type type, string binderAsmName)
-            {
-#if !NET35
-                if (binderAsmName != null)
-                    return AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
-#endif
-                return AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1);
-            }
+                => binderAsmName == null
+                    ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
+                    : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
 
-#if NET35
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "They are used except in .NET 3.5")]
-#endif
             private int GetTypeIndex(Type type, string binderAsmName, string binderTypeName)
-            {
-#if !NET35
-                if (Binder != null)
-                    return TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1);
-#endif
-
-                return TypeIndexCache.GetValueOrDefault(type, -1);
-            }
+                => Binder == null
+                    ? TypeIndexCache.GetValueOrDefault(type, -1)
+                    : TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1);
 
             /// <summary>
             /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
@@ -1491,12 +1442,8 @@ namespace KGySoft.Serialization
                 return true;
             }
 
-#if NET35
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
-#endif
             private void WriteNewAssembly(BinaryWriter bw, Type type, string binderAsmName)
             {
-#if !NET35
                 // by binder
                 if (binderAsmName != null)
                 {
@@ -1504,7 +1451,6 @@ namespace KGySoft.Serialization
                     AssemblyNameIndexCache.Add(binderAsmName, AssemblyIndexCacheCount);
                     return;
                 }
-#endif
 
                 bw.Write(type.Assembly.FullName);
                 AssemblyIndexCache.Add(type.Assembly, AssemblyIndexCacheCount);
@@ -1515,12 +1461,8 @@ namespace KGySoft.Serialization
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
-#if NET35
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
-#endif
             private void WriteNewType(BinaryWriter bw, Type type, bool knownAssembly, bool allowOpenTypes, string binderAsmName, string binderTypeName)
             {
-#if !NET35
                 // by binder
                 if (binderTypeName != null)
                 {
@@ -1533,7 +1475,6 @@ namespace KGySoft.Serialization
                     AddToTypeCache(type, binderAsmName, binderTypeName);
                     return;
                 }
-#endif
 
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
@@ -1623,12 +1564,8 @@ namespace KGySoft.Serialization
                     bw.Write((byte)GenericTypeSpecifier.ConstructedType);
             }
 
-#if NET35
-            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "They are used except in .NET 3.5")]
-#endif
             private void AddToTypeCache(Type type, string binderAsmName, string binderTypeName)
             {
-#if !NET35
                 // Even if current binder names are null we must use the string based cache if there is a binder
                 // to avoid possibly conflicting type names between the custom and default binding and among binder type names.
                 if (Binder != null)
@@ -1636,7 +1573,6 @@ namespace KGySoft.Serialization
                     TypeNameIndexCache.Add(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), TypeIndexCacheCount);
                     return;
                 }
-#endif
 
                 TypeIndexCache.Add(type, TypeIndexCacheCount);
             }
