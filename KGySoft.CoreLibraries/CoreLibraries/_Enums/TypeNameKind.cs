@@ -18,7 +18,6 @@
 
 using System;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using KGySoft.Reflection;
 
 #endregion
@@ -26,12 +25,13 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents a name formatting kind for the <see cref="TypeExtensions.GetName">TypeExtensions.GetName</see> method.
+    /// Represents name formatting options for the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.GetName">TypeExtensions.GetName</see> methods.
     /// </summary>
     public enum TypeNameKind
     {
         /// <summary>
-        /// Represents the name of a <see cref="Type"/> without namespace.
+        /// <para>Represents the short name of a <see cref="Type"/> without namespaces, eg.:
+        /// <br/><c>SomeType[String,SomeType]</c></para>
         /// <para>
         /// Differences from <see cref="MemberInfo.Name">Type.Name</see>:
         /// <list type="bullet">
@@ -39,20 +39,13 @@ namespace KGySoft.CoreLibraries
         /// </list>
         /// </para>
         /// </summary>
-        Name,
+        ShortName,
 
         /// <summary>
-        /// Represents the full name of a <see cref="Type"/> along with namespace.
-        /// <br/>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
-        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.
-        /// <para>
-        /// Differences from <see cref="Type.FullName">Type.FullName</see>:
-        /// <list type="bullet">
-        /// <item><see cref="Type.FullName">Type.FullName</see> dumps the assembly names for closed generic type names.</item>
-        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter types.</item>
-        /// <item><see cref="Type.FullName">Type.FullName</see> does not dump the generic arguments for constructed open generic types.</item>
-        /// </list>
-        /// </para>
+        /// <para>Represents the long name of a <see cref="Type"/> along with namespaces, eg.:
+        /// <br/><c>SomeNamespace.SomeType[System.String,SomeNamespace.SomeType]</c></para>
+        /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>
         /// Differences from <see cref="Type.ToString">Type.ToString</see>:
         /// <list type="bullet">
@@ -62,14 +55,46 @@ namespace KGySoft.CoreLibraries
         /// </list>
         /// </para>
         /// </summary>
+        LongName,
+
+        /// <summary>
+        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for generic arguments of non-core types, eg.:
+        /// <br/><c>SomeNamespace.SomeType[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
+        /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
+        /// <para>
+        /// Differences from <see cref="Type.FullName">Type.FullName</see>:
+        /// <list type="bullet">
+        /// <item><see cref="Type.FullName">Type.FullName</see> dumps the assembly names for every generic type argument.</item>
+        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.FullName">Type.FullName</see> does not dump the generic arguments for constructed open generic types.</item>
+        /// </list>
+        /// </para>
+        /// </summary>
         FullName,
 
         /// <summary>
-        /// Represents the assembly qualified name of a <see cref="Type"/>. Assembly identity is dumped for non-core types only.
-        /// <br/>If all needed assemblies are available, then the name can be successfully parsed by
-        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.
-        /// <br/>If the type does not contain generic parameter types, then the name can be parsed even by
-        /// the <see cref="Type.GetType(string)">Type.GetType</see> method.
+        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for all generic arguments, eg.:
+        /// <br/><c>SomeNamespace.SomeType[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
+        /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
+        /// <para>
+        /// Differences from <see cref="Type.FullName">Type.FullName</see>:
+        /// <list type="bullet">
+        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.FullName">Type.FullName</see> does not dump the generic arguments for constructed open generic types.</item>
+        /// </list>
+        /// </para>
+        /// </summary>
+        ForcedFullName,
+
+        /// <summary>
+        /// <para>Represents the assembly qualified name of a <see cref="Type"/> omitting assembly names for core types, eg.:
+        /// <br/><c>SomeNamespace.SomeType[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
+        /// <para>If all needed assemblies are available, then the name can be successfully parsed by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
+        /// <para>If the type does not contain generic parameter types, then the name can be parsed even by
+        /// the <see cref="Type.GetType(string)">Type.GetType</see> method.</para>
         /// <para>
         /// Differences from <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see>:
         /// <list type="bullet">
@@ -83,23 +108,20 @@ namespace KGySoft.CoreLibraries
         AssemblyQualifiedName,
 
         /// <summary>
-        /// Represents the assembly qualified name of a <see cref="Type"/>. Assembly identity is dumped even for core types,
-        /// similarly to the <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> property. Otherwise, the same applies
-        /// as for the <see cref="AssemblyQualifiedName"/> option.
+        /// <para>Represents the assembly qualified name of a <see cref="Type"/> forcing assembly names for core types, eg.:
+        /// <br/><c>SomeNamespace.SomeType[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
+        /// <para>If all needed assemblies are available, then the name can be successfully parsed by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
+        /// <para>If the type does not contain generic parameter types, then the name can be parsed even by
+        /// the <see cref="Type.GetType(string)">Type.GetType</see> method.</para>
+        /// <para>
+        /// Differences from <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see>:
+        /// <list type="bullet">
+        /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns the name of the generic type definition only for constructed open generic types.</item>
+        /// </list>
+        /// </para>
         /// </summary>
-        ForcedAssemblyQualifiedName,
-
-        /// <summary>
-        /// Represents the assembly qualified name of a <see cref="Type"/> with the assembly from which the type has been forwarded.
-        /// Assembly identity is dumped for non-core types only.
-        /// If <see cref="TypeForwardedFromAttribute"/> is not defined for a type, then the result is the same as in case the <see cref="AssemblyQualifiedName"/>.
-        /// </summary>
-        AssemblyQualifiedNameLegacyIdentity,
-
-        /// <summary>
-        /// Represents the assembly qualified name of a <see cref="Type"/> with the assembly from which the type has been forwarded.
-        /// If <see cref="TypeForwardedFromAttribute"/> is not defined for a type, then the result is the same as in case the <see cref="ForcedAssemblyQualifiedName"/>.
-        /// </summary>
-        ForcedAssemblyQualifiedNameLegacyIdentity,
+        ForcedAssemblyQualifiedName
     }
 }

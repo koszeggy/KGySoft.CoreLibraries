@@ -24,9 +24,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if !NET35
-using System.Runtime.CompilerServices; 
-#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -302,7 +299,7 @@ namespace KGySoft.Reflection
             Initialize(typeName);
         }
 
-        private TypeResolver(Type type, bool useLegacyIdentity)
+        private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
         {
             this.type = type ?? throw new ArgumentNullException(nameof(this.type), Res.ArgumentNull);
 
@@ -322,32 +319,29 @@ namespace KGySoft.Reflection
             // generic arguments
             if (type.IsGenericType && !type.IsGenericTypeDefinition) // same as: type.IsConstructedGenericType from .NET4
             {
+                TypeNameKind subKind = kind == TypeNameKind.FullName ? TypeNameKind.AssemblyQualifiedName
+                    : kind == TypeNameKind.ForcedFullName ? TypeNameKind.ForcedAssemblyQualifiedName
+                    : kind;
                 foreach (Type genericArgument in type.GetGenericArguments())
-                    genericArgs.Add(new TypeResolver(genericArgument, useLegacyIdentity));
+                    genericArgs.Add(new TypeResolver(genericArgument, subKind, assemblyNameResolver, typeNameResolver));
 
                 type = type.GetGenericTypeDefinition();
             }
 
             // root type
             bool isGenericParam = type.IsGenericParameter;
-            rootName = isGenericParam ? type.Name : type.FullName;
+            rootName = isGenericParam ? type.Name : typeNameResolver?.Invoke(type) ?? type.FullName;
             if (!isGenericParam)
             {
                 assembly = type.Assembly;
-#if NET35
-                assemblyName = assembly.FullName;
-#else
-                assemblyName = useLegacyIdentity
-                    ? (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute)) as TypeForwardedFromAttribute)?.AssemblyFullName ?? assembly.FullName
-                    : assembly.FullName;
-#endif
+                if (kind.In(TypeNameKind.AssemblyQualifiedName, TypeNameKind.ForcedAssemblyQualifiedName))
+                    assemblyName =  assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
                 return;
             }
 
             // generic parameter
-            declaringType = new TypeResolver(type.DeclaringType, useLegacyIdentity);
+            declaringType = new TypeResolver(type.DeclaringType, kind, assemblyNameResolver, typeNameResolver);
             declaringMethod = type.DeclaringMethod?.ToString();
-
         }
 
         #endregion
@@ -435,43 +429,31 @@ namespace KGySoft.Reflection
             return result;
         }
 
-        internal static string GetName(Type type, TypeNameKind kind)
+        internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (!Enum<TypeNameKind>.IsDefined(kind))
                 throw new ArgumentOutOfRangeException(nameof(kind), Res.EnumOutOfRange(kind));
 
+            var resolver = new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver);
+
+            // not caching if the result can be provided by delegates
+            if (assemblyNameResolver != null || typeNameResolver != null)
+                return resolver.GetName(kind);
+
             LockingDictionary<TypeNameKind, string> cache = TypeNameCache[type];
             if (cache.TryGetValue(kind, out string result))
                 return result;
 
-            TypeNameKind getNameKind;
-            bool useLegacyIdentity;
-            switch (kind)
-            {
-                case TypeNameKind.AssemblyQualifiedNameLegacyIdentity:
-                    getNameKind = TypeNameKind.AssemblyQualifiedName;
-                    useLegacyIdentity = true;
-                    break;
-                case TypeNameKind.ForcedAssemblyQualifiedNameLegacyIdentity:
-                    getNameKind = TypeNameKind.ForcedAssemblyQualifiedName;
-                    useLegacyIdentity = true;
-                    break;
-                default:
-                    getNameKind = kind;
-                    useLegacyIdentity = false;
-                    break;
-            }
-
-            result = new TypeResolver(type, useLegacyIdentity).GetName(getNameKind);
+            result = resolver.GetName(kind);
 
             cache[kind] = result;
             return result;
         }
 
         internal static string StripName(string typeName, bool stripVersionOnly)
-            => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.FullName) ?? typeName;
+            => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.LongName) ?? typeName;
 
         internal static void SplitName(string fullName, out string assemblyName, out string typeName)
         {
@@ -1032,7 +1014,7 @@ namespace KGySoft.Reflection
 
             void DumpGenericParameterIndicator(StringBuilder sb, TypeNameKind kind)
             {
-                if (kind == TypeNameKind.Name || declaringType == null)
+                if (kind == TypeNameKind.ShortName || declaringType == null)
                     return;
 
                 sb.Append('!');
@@ -1041,7 +1023,7 @@ namespace KGySoft.Reflection
             }
 
             void DumpRootName(StringBuilder sb, TypeNameKind kind)
-                => sb.Append(kind == TypeNameKind.Name ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
+                => sb.Append(kind == TypeNameKind.ShortName ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
             {
@@ -1097,7 +1079,7 @@ namespace KGySoft.Reflection
 
             void DumpGenericParameter(StringBuilder sb, TypeNameKind kind)
             {
-                if (kind == TypeNameKind.Name || declaringType == null)
+                if (kind == TypeNameKind.ShortName || declaringType == null)
                     return;
                 if (declaringMethod != null)
                 {

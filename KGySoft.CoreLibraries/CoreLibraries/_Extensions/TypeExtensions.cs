@@ -316,7 +316,23 @@ namespace KGySoft.CoreLibraries
         /// <seealso cref="TypeNameKind"/>
         /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>
         public static string GetName(this Type type, TypeNameKind kind)
-            => TypeResolver.GetName(type, kind);
+            => TypeResolver.GetName(type, kind, null, null);
+
+        /// <summary>
+        /// Gets the name of the <paramref name="type"/> of the specified <paramref name="kind"/> using custom callbacks
+        /// for resolving the assembly and type names.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="GetName(Type,TypeNameKind)"/> overload for details.
+        /// </summary>
+        /// <param name="type">The type whose name is to be obtained.</param>
+        /// <param name="kind">The formatting kind for the name to be retrieved. Determines the fallback names if the callbacks return <see langword="null"/>,
+        /// and whether the <paramref name="assemblyNameResolver"/> will be called.</param>
+        /// <param name="assemblyNameResolver">If not <see langword="null"/>, then will be called when the assembly identity of a type is requested.</param>
+        /// <param name="typeNameResolver">If not <see langword="null"/>, then will be called for each ultimate element type and generic type definitions from
+        /// which <paramref name="type"/> consists of.</param>
+        /// <seealso cref="TypeNameKind"/>
+        /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>
+        public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
+            => TypeResolver.GetName(type, kind, assemblyNameResolver, typeNameResolver);
 
         #endregion
 
@@ -595,6 +611,19 @@ namespace KGySoft.CoreLibraries
 #else
             return type.IsSZArray;
 #endif
+        }
+
+        internal static Type GetRootType(this Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+            
+            // ReSharper disable once PossibleNullReferenceException - false alarm, see condition
+            while (type.HasElementType)
+                type = type.GetElementType();
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+                type = type.GetGenericTypeDefinition();
+            return type;
         }
 
         #endregion
