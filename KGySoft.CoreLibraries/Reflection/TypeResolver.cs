@@ -24,7 +24,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+#if !NET35
+using System.Runtime.CompilerServices; 
+#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -207,7 +209,7 @@ namespace KGySoft.Reflection
             internal string GetBuf()
             {
                 string result = buf.ToString().Trim();
-                buf.Clear();
+                buf.Length = 0;
                 return result;
             }
 
@@ -273,7 +275,7 @@ namespace KGySoft.Reflection
             => typeNameCache ??= new Cache<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
 
 #if !NETFRAMEWORK
-        private static Assembly MscorlibAssembly => mscorlibAssembly ??= AssemblyResolver.ResolveAssembly("mscorlib", false, true, true);
+        private static Assembly MscorlibAssembly => mscorlibAssembly ??= AssemblyResolver.ResolveAssembly("mscorlib", ResolveAssemblyOptions.TryToLoadAssembly);
 #endif
 
         #endregion
@@ -332,9 +334,13 @@ namespace KGySoft.Reflection
             if (!isGenericParam)
             {
                 assembly = type.Assembly;
+#if NET35
+                assemblyName = assembly.FullName;
+#else
                 assemblyName = useLegacyIdentity
                     ? (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute)) as TypeForwardedFromAttribute)?.AssemblyFullName ?? assembly.FullName
                     : assembly.FullName;
+#endif
                 return;
             }
 
@@ -349,6 +355,8 @@ namespace KGySoft.Reflection
         #region Methods
 
         #region Static Methods
+
+        #region Internal Methods
 
         internal static Type ResolveType(string typeName, ResolveTypeOptions options)
         {
@@ -401,10 +409,12 @@ namespace KGySoft.Reflection
             if (cache.TryGetValue(key, out Type result))
                 return result;
 
-            int compoundNameEnd = typeName.LastIndexOf(']');
-            int asmNamePos = typeName.IndexOf(',', compoundNameEnd + 1);
-            if (asmNamePos >= 0)
-                throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
+            if (GetAssemblyNamePos(typeName) >= 0)
+            {
+                if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
+                    throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
+                return null;
+            }
 
             try
             {
@@ -462,6 +472,32 @@ namespace KGySoft.Reflection
 
         internal static string StripName(string typeName, bool stripVersionOnly)
             => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.FullName) ?? typeName;
+
+        internal static void SplitName(string fullName, out string assemblyName, out string typeName)
+        {
+            int pos = GetAssemblyNamePos(fullName);
+            if (pos < 0)
+            {
+                assemblyName = null;
+                typeName = fullName;
+                return;
+            }
+
+            assemblyName = fullName.Substring(pos + 1).Trim();
+            typeName = fullName.Substring(0, pos).Trim();
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private static int GetAssemblyNamePos(string typeName)
+        {
+            int compoundNameEnd = typeName.LastIndexOf(']');
+            return typeName.IndexOf(',', compoundNameEnd + 1);
+        }
+
+        #endregion
 
         #endregion
 

@@ -2794,7 +2794,7 @@ namespace KGySoft.Reflection
         /// ]]></code>
         /// </example>
         /// <seealso cref="ResolveTypeOptions"/>
-        /// <seealso cref="TypeExtensions.GetName">TypeExtensions.GetName</seealso>
+        /// <seealso cref="CoreLibraries.TypeExtensions.GetName">TypeExtensions.GetName</seealso>
         public static Type ResolveType(string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, options);
 
@@ -2813,12 +2813,12 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by
-        /// the <see cref="KGySoft.CoreLibraries.TypeExtensions.GetName">Type.GetName</see> extension method.</para>
+        /// the <see cref="CoreLibraries.TypeExtensions.GetName">Type.GetName</see> extension method.</para>
         /// <para>If the <see cref="ResolveTypeOptions.AllowIgnoreAssemblyName"/> flag is enabled in <paramref name="options"/>,
         /// then <paramref name="typeName"/> can be resolved not just from the provided <paramref name="assembly"/> but from any loaded assemblies.</para>
         /// </remarks>
         /// <seealso cref="ResolveTypeOptions"/>
-        /// <seealso cref="TypeExtensions.GetName">TypeExtensions.GetName</seealso>
+        /// <seealso cref="CoreLibraries.TypeExtensions.GetName">TypeExtensions.GetName</seealso>
         public static Type ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(assembly, typeName, options);
 
