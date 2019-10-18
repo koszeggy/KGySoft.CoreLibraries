@@ -1234,10 +1234,8 @@ namespace KGySoft.Resources
         private bool CanConvertNatively(bool compatibleFormat)
         {
             Type type = cachedValue.GetType();
-            return type.CanBeParsedNatively()
-                   && ((!compatibleFormat
-                        || !(type.In(typeof(DBNull), Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType)))
-                       && (type != Reflector.RuntimeType || !(((Type)cachedValue).IsGenericParameter)));
+            return type.CanBeParsedNatively() && (!compatibleFormat
+                || !type.In(typeof(DBNull), Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType));
         }
 
         private object NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)

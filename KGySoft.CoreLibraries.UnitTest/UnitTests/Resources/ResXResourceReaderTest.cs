@@ -133,12 +133,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void TestDataTypes()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            var reader = new ResXResourceReader(path, new TestTypeResolver())
+            var reader = new ResXResourceReader(path)
             {
                 AllowDuplicatedKeys = false,
                 BasePath = Path.GetDirectoryName(path)
             };
-            // Since no duplicates are allowed, this reads now the whole xml.
+
+            // Since no duplicates are not allowed, this reads now the whole xml.
             // BUG in WinForms version: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
             var enumerator = reader.GetEnumerator(); // this reads now the whole xml
             while (enumerator.MoveNext())
@@ -152,11 +153,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
 #if NETCOREAPP2_0
-                    if (e.InnerException is FileNotFoundException fe && fe.Message.Contains("System.Windows.Forms"))
+                    if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
                         continue;
 #endif
 #if NETCOREAPP2_0 || NETCOREAPP3_0
-                    if (e is SerializationException se && se.Message.Contains("Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable."))
+                    if (e is SerializationException io && io.Message.Contains("Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable."))
                         continue;
 #endif
                     throw;
