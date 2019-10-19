@@ -375,7 +375,7 @@ namespace KGySoft.Serialization
             serObjects.Remove(obj);
         }
 
-        private protected string GetTypeString(Type type) => type.GetName(FullyQualifiedNames ? TypeNameKind.AssemblyQualifiedName : TypeNameKind.FullName);
+        private protected string GetTypeString(Type type) => type.GetName(FullyQualifiedNames ? TypeNameKind.AssemblyQualifiedName : TypeNameKind.LongName);
 
         private protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
         {

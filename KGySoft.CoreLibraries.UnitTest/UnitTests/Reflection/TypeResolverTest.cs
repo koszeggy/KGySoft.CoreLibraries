@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
@@ -119,7 +118,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Console.WriteLine($"Test case: {typeName}");
             Type type = Reflector.ResolveType(typeName);
-            Console.WriteLine($"Resolved to: {type?.GetName(TypeNameKind.FullName) ?? "<null>"}");
+            Console.WriteLine($"Resolved to: {type?.GetName(TypeNameKind.LongName) ?? "<null>"}");
 
             if (type == null)
                 Assert.Catch<Exception>(() => Type.GetType(typeName, true));
@@ -130,9 +129,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCaseSource(nameof(sourceDumpAndResolveTypesContainingGenericArguments))]
         public void DumpAndResolveTypesContainingGenericArguments(Type type)
         {
-            string fullName = type.GetName(TypeNameKind.FullName);
+            string fullName = type.GetName(TypeNameKind.LongName);
             string aqn = type.GetName(TypeNameKind.ForcedAssemblyQualifiedName);
-            Console.WriteLine($"Name: {type.GetName(TypeNameKind.Name)}");
+            Console.WriteLine($"Name: {type.GetName(TypeNameKind.ShortName)}");
             Console.WriteLine($"FullName: {fullName}");
             Console.WriteLine($"AssemblyQualifiedName: {aqn}");
 
@@ -140,18 +139,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(type, Reflector.ResolveType(fullName));
         }
 
-#if !NET35
-        [TestCase(typeof(ObservableCollection<int>))] // forwarded from WindowsBase
-#endif
-#if !NETFRAMEWORK
-        [TestCase(typeof(HashSet<int>))] // forwarded from System.Core
-#endif
-        public void LegacyIdentityTest(Type type)
+        [Test]
+        public void GetTypeTest()
         {
-            string normalName = type.GetName(TypeNameKind.AssemblyQualifiedName);
-            string legacyName = type.GetName(TypeNameKind.AssemblyQualifiedNameLegacyIdentity);
-            Assert.AreNotEqual(normalName, legacyName);
-            Assert.AreEqual(Reflector.ResolveType(normalName), Reflector.ResolveType(legacyName));
+            throw new NotImplementedException("TODO");
+            //static Assembly AssemblyResolver(AssemblyName asmName)
+            //{
+            //    Console.WriteLine($"Resolving assembly: {asmName}");
+            //    return Reflector.ResolveAssembly(asmName);
+            //}
+
+            //static Type TypeResolver(Assembly asm, string name, bool _)
+            //{
+            //    Console.WriteLine($"Resolving type: {name}");
+            //    return Reflector.ResolveType(asm, name);
+            //}
+
+            //string toResolve = typeof(List<>).GetGenericArguments()[0].GetName(TypeNameKind.ForcedAssemblyQualifiedName);
+            //Console.WriteLine($"Case: {toResolve}");
+            //Console.WriteLine($"Resolved to: {Type.GetType(toResolve, AssemblyResolver, TypeResolver)}");
         }
 
         #endregion

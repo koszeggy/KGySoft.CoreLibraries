@@ -158,7 +158,7 @@ namespace KGySoft
         internal static string BinarySerializationValueTypeExpected => Get("BinarySerialization_ValueTypeExpected");
 
         /// <summary>Data length is too small.</summary>
-        internal static string BinarySerializationDataLenghtTooSmall => Get("BinarySerialization_DataLenghtTooSmall");
+        internal static string BinarySerializationDataLengthTooSmall => Get("BinarySerialization_DataLengthTooSmall");
 
         #endregion
 
@@ -382,6 +382,13 @@ namespace KGySoft
 
         /// <summary>Setting this property is invalid when UseLanguageSettings is true.</summary>
         internal static string ResourcesInvalidDrmPropertyChange => Get("Resources_InvalidDrmPropertyChange");
+
+        #endregion
+
+        #region Serialization (any ways)
+
+        /// <summary>Simple runtime element types or generic type definitions are expected.</summary>
+        internal static string SerializationRootTypeExpected => Get("Serialization_RootTypeExpected");
 
         #endregion
 
@@ -789,16 +796,16 @@ namespace KGySoft
         internal static string ReflectionInvalidAssemblyName(string name) => Get("Reflection_InvalidAssemblyNameFormat", name);
 
         /// <summary>Pointer type '{0}' is not supported.</summary>
-        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.FullName));
+        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Setting read-only field '{0}' of type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.FullName));
+        internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Setting instance field '{0}' of value type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.FullName));
+        internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
-        internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.FullName));
+        internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.LongName));
 
         #endregion
 

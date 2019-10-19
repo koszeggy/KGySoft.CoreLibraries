@@ -409,6 +409,9 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_SetPropertyTypeDescriptorNotSupported" xml:space="preserve">
     <value>Setting property via TypeDescriptor is not supported in this overload of SetProperty method.</value>
   </data>
+  <data name="Serialization_RootTypeExpected" xml:space="preserve">
+    <value>Simple runtime element types or generic type definitions are expected.</value>
+  </data>
   <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>
@@ -577,7 +580,7 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has a circular reference to itself.</value>
   </data>
-  <data name="BinarySerialization_DataLenghtTooSmall" xml:space="preserve">
+  <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>
   <data name="BinarySerialization_DeserializeUnexpectedId" xml:space="preserve">
