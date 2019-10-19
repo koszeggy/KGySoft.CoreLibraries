@@ -26,10 +26,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if NETFRAMEWORK
+using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+#if NETFRAMEWORK
+using System.Runtime.Serialization.Formatters.Binary; 
+#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -1089,31 +1092,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            // by WeakAssemblySerializationBinder
-            string title = "Deserialization with WeakAssemblySerializationBinder";
-            SerializationBinder binder = new WeakAssemblySerializationBinder();
-            SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-
-            // by WeakAssemblySerializationBinder, including serialization
-            title = "Serialization and Deserialization with WeakAssemblySerializationBinder, omitting assembly name";
-            binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
-
-            SystemSerializeObject(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
-            SystemSerializeObjects(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-
             // by TestSerializationBinder
-            title = "Serialization and Deserialization with TestSerializationBinder";
-            binder = new TestSerializationBinder();
+            string title = "Serialization and Deserialization with TestSerializationBinder";
+            SerializationBinder binder = new TestSerializationBinder();
 #if !NET35
             SystemSerializeObject(referenceObjects, title, binder: binder);
             SystemSerializeObjects(referenceObjects, title, binder: binder); 
@@ -1124,6 +1105,82 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+        }
+
+        [Test]
+        public void WeakAssemblySerializationBinderTest()
+        {
+            object[] referenceObjects =
+            {
+                1, // primitive type
+                new StringBuilder("1"), // natively supported by KGySoft only
+                new List<int> { 1 }, // generic, natively supported for KGySoft only, in mscorlib
+                new HashSet<int> { 1 }, // generic, natively supported for KGySoft only, in core
+                TestEnumByte.One, // non standard assembly
+                new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
+                new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+                new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
+
+                typeof(List<int>), // supported generic
+                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+
+                typeof(List<>), // supported generic type definition
+                typeof(Dictionary<,>), // supported generic type definition
+                typeof(CustomGenericCollection<>), // custom generic type definition
+
+                typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+
+                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+            };
+
+            // by WeakAssemblySerializationBinder
+            string title = "Deserialization with WeakAssemblySerializationBinder";
+            var binder = new WeakAssemblySerializationBinder();
+            SystemSerializeObject(referenceObjects, title, binder: binder);
+            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+
+            // by WeakAssemblySerializationBinder, including serialization
+            title = "Serialization and Deserialization with WeakAssemblySerializationBinder, omitting assembly name";
+            binder.OmitAssemblyNameOnSerialize = true;
+
+            SystemSerializeObject(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
+            SystemSerializeObjects(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+        }
+
+        [Test]
+        public void ForwardedTypesSerializationBinderTest()
+        {
+            object[] referenceObjects =
+            {
+                //// Types forwarded in .NET Standard/Core
+                //new Collection<int> { 1 }, // from mscorlib
+                //new ObservableCollection<int> { 1 }, // from WindowsBase/System
+                //new Collection<int>[] { new Collection<int>() }, // array of a type to be mapped
+                //new List<ObservableCollection<int>> { new ObservableCollection<int>() }, // the generic argument contains another forwarded type
+
+                typeof(Bitmap) // from System.Drawing but not in .NET Core 2.0
+            };
+
+            // by WeakAssemblySerializationBinder
+            string title = "Seserialization with Legacy Identity";
+            var binder = new ForwardedTypesSerializationBinder { WriteLegacyIdentity = true };
+            binder.AddType(typeof(Bitmap), new AssemblyName("System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));
+            //SystemSerializeObject(referenceObjects, title, binder: binder);
+            //SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
+
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
         }
 
         [Test]
@@ -1216,15 +1273,102 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             //SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable is not serializable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            ISurrogateSelector selector = new TestSurrogateSelector();
+            string title = nameof(TestSurrogateSelector);
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+        }
+
+        [Test]
+        public void NameInvariantSurrogateSelectorTest()
+        {
+            object[] referenceObjects =
+            {
+                // simple types
+                new object(),
+                DBNull.Value,
+                true,
+                (sbyte)1,
+                (byte)1,
+                (short)1,
+                (ushort)1,
+                (int)1,
+                (uint)1,
+                (long)1,
+                (ulong)1,
+                'a',
+                "alpha",
+                (float)1,
+                (double)1,
+                (decimal)1,
+                DateTime.UtcNow,
+                DateTime.Now,
+                new IntPtr(1),
+                new UIntPtr(1),
+                new Version(1, 2, 3, 4),
+                new Guid("ca761232ed4211cebacd00aa0057b223"),
+                new TimeSpan(1, 1, 1),
+                new DateTimeOffset(DateTime.Now),
+                new DateTimeOffset(DateTime.UtcNow),
+                new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
+                new Uri(@"x:\teszt"),
+                new DictionaryEntry(1, "alpha"),
+                new KeyValuePair<int, string>(1, "alpha"),
+                new BitArray(new[] { true, false, true }),
+                new StringBuilder("alpha"),
+#if !NETCOREAPP3_0 // works but Equals fails on the clone
+                typeof(int),
+#endif
+
+                TestEnumByte.Two,
+                new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
+
+                // dictionary with any object key and read-only collection value
+                new Dictionary<object, ReadOnlyCollection<int>> { { 1, new ReadOnlyCollection<int>(new[] { 1, 2 }) }, { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, null } },
+
+                // nested default recursion
+                new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null },
+                new CustomSerializedClass { Bool = false, Name = "gamma" },
+
+                new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
+                new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+
+                // nullable arrays
+                new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+                new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+
+                // lists with binary serializable elements
+                new List<BinarySerializableStruct> { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, default(BinarySerializableStruct) },
+                new List<BinarySerializableStruct?> { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, default(BinarySerializableStruct?) },
+                new List<BinarySerializableClass> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), null },
+                new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alpha"), null },
+                new List<IBinarySerializable> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), new BinarySerializableStruct { IntProp = 3, StringProp = "gamma" }, null },
+
+                // lists with default recursive elements
+                new List<SystemSerializableStruct> { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(SystemSerializableStruct) },
+                new List<SystemSerializableStruct?> { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(SystemSerializableStruct?) },
+                new List<SystemSerializableClass> { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" }, null },
+                new List<SystemSerializableSealedClass> { new SystemSerializableSealedClass { IntProp = 1, StringProp = "alpha" }, null },
+
+                // lists with custom recursive elements
+                new List<CustomSerializableStruct> { new CustomSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(CustomSerializableStruct) },
+                new List<CustomSerializableStruct?> { new CustomSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(CustomSerializableStruct?) },
+                new List<CustomSerializedClass> { new CustomSerializedClass { Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
+                new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
+
+                // collections with native support
+                new CircularList<int> { 1, 2, 3 },
+#if !NET35
+                new SortedSet<int> { 1, 2, 3 },
+#endif
+
+                new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
+            };
+
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
             string title = nameof(NameInvariantSurrogateSelector);
             //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // System.MemberAccessException: Cannot create an abstract class.
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
-
-            selector = new TestSurrogateSelector();
-            title = nameof(TestSurrogateSelector);
-            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }

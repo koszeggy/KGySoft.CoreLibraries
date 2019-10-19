@@ -1334,7 +1334,7 @@ namespace KGySoft.Serialization
 #if !NET35
                 Binder.BindToName(type, out binderAsmName, out binderTypeName);
 #endif
-                if (binderTypeName == null && Binder is ISerializationBinder binder)
+                if (binderAsmName == null && binderTypeName == null && Binder is ISerializationBinder binder)
                     binder.BindToName(type, out binderAsmName, out binderTypeName);
 
                 binderCache.Add(type, (binderAsmName, binderTypeName));

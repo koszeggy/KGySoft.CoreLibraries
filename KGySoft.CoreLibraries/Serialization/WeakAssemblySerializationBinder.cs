@@ -20,7 +20,7 @@ using System;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -83,14 +83,17 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
-        /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating, that the original
+        /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating that the original
         /// names should be used.
         /// </summary>
-        /// <param name="serializedType">The type of the object the formatter creates a new instance of.</param>
-        /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
-        /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
+        /// <param name="serializedType">The type of the object that is being serialized.</param>
+        /// <param name="assemblyName">If <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, then returns <c>*</c> to indicate an omitted assembly;
+        /// otherwise, returns <see langword="null"/>.</param>
+        /// <param name="typeName">If <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, then returns the full name of the type without assembly information;
+        /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
-        /// <note>This method is available only in .NET 4 and above.</note>
+        /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
+        /// serializer handles the <see cref="ISerializationBinder"/> interface or calls it directly.</note>
         /// </remarks>
 #if !NET35
         override
@@ -105,17 +108,17 @@ namespace KGySoft.Serialization
 #else
             base.BindToName(serializedType, out assemblyName, out typeName);
 #endif
-            if (OmitAssemblyNameOnSerialize)
-            {
-                // mscorlib is handled natively so is not omitted
-                // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
-                if (serializedType.Assembly != Reflector.SystemCoreLibrariesAssembly)
-                    assemblyName = omittedAssemblyName;
+            if (!OmitAssemblyNameOnSerialize)
+                return;
 
-                // generic type arguments contains assembly info as well so stripping name for generics
-                if (serializedType.IsGenericType && !serializedType.IsGenericTypeDefinition)
-                    typeName = serializedType.ToString();
-            }
+            // mscorlib is handled natively so is not omitted
+            // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
+            if (serializedType.Assembly != Reflector.SystemCoreLibrariesAssembly)
+                assemblyName = omittedAssemblyName;
+
+            // generic type arguments contains assembly info as well so stripping name for generics
+            if (serializedType.IsGenericType && !serializedType.IsGenericTypeDefinition)
+                typeName = serializedType.GetName(TypeNameKind.LongName);
         }
 
         /// <summary>

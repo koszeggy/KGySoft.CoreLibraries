@@ -276,7 +276,7 @@ namespace KGySoft.Serialization
             if (data == null)
                 throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
             if (data.Length < Marshal.SizeOf(type))
-                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
 
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
@@ -309,7 +309,7 @@ namespace KGySoft.Serialization
 
             int len = Marshal.SizeOf(type);
             if (data.Length < len)
-                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
             if (data.Length - offset < len || offset < 0)
                 throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 
@@ -345,7 +345,7 @@ namespace KGySoft.Serialization
 
             int len = Marshal.SizeOf(typeof(T)) * count;
             if (data.Length < len)
-                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
             if (data.Length - offset < len || offset < 0)
                 throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 

@@ -1180,7 +1180,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 if (type == null)
                 {
-                    throw new ArgumentNullException("type");
+                    throw new ArgumentNullException(nameof(type));
                 }
 
                 if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(typeof(string), typeof(UIntPtr)))
@@ -1207,9 +1207,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
             {
                 if (obj == null)
-                    throw new ArgumentNullException("obj");
+                    throw new ArgumentNullException(nameof(obj));
                 if (info == null)
-                    throw new ArgumentNullException("info");
+                    throw new ArgumentNullException(nameof(info));
 
                 Type type = obj.GetType();
 
@@ -1227,9 +1227,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
             {
                 if (obj == null)
-                    throw new ArgumentNullException("obj");
+                    throw new ArgumentNullException(nameof(obj));
                 if (info == null)
-                    throw new ArgumentNullException("info");
+                    throw new ArgumentNullException(nameof(info));
 
                 foreach (SerializationEntry entry in info)
                 {
