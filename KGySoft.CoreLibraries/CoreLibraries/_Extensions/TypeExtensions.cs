@@ -342,7 +342,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="type"/> can be parsed by the Parse methods in the <see cref="StringExtensions"/> class.
         /// </summary>
         internal static bool CanBeParsedNatively(this Type type)
-            => type.IsEnum || nativelyParsedTypes.Contains(type) || type == Reflector.RuntimeType;
+            => type.IsEnum || nativelyParsedTypes.Contains(type) || type.IsRuntimeType();
 
         internal static Type GetCollectionElementType(this Type type)
         {
@@ -625,6 +625,8 @@ namespace KGySoft.CoreLibraries
                 type = type.GetGenericTypeDefinition();
             return type;
         }
+
+        internal static bool IsRuntimeType(this Type type) => type?.GetType() == Reflector.RuntimeType;
 
         #endregion
 
