@@ -156,10 +156,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
                         continue;
 #endif
-#if NETCOREAPP2_0 || NETCOREAPP3_0
-                    if (e is SerializationException io && io.Message.Contains("Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable."))
-                        continue;
-#endif
                     throw;
                 }
             }

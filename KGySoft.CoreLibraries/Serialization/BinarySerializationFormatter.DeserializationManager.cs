@@ -386,7 +386,11 @@ namespace KGySoft.Serialization
             #region Private Methods
 
             private Type ReadBoundType(string assemblyName, string typeName)
-                => Binder?.BindToType(assemblyName ?? String.Empty, typeName);
+            {
+                if (Binder is ISerializationBinder binder)
+                    return binder.BindToType(assemblyName ?? String.Empty, typeName);
+                return Binder?.BindToType(assemblyName ?? String.Empty, typeName);
+            }
 
             /// <summary>
             /// Creates and populates array

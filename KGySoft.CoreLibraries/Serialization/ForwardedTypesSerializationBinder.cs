@@ -243,7 +243,7 @@ namespace KGySoft.Serialization
 
                 foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
                 {
-                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), assemblyName, true)))
+                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), assemblyName, false)))
                         return map.Key;
                 }
 

@@ -1331,11 +1331,12 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-#if !NET35
-                Binder.BindToName(type, out binderAsmName, out binderTypeName);
-#endif
-                if (binderAsmName == null && binderTypeName == null && Binder is ISerializationBinder binder)
+                if (Binder is ISerializationBinder binder)
                     binder.BindToName(type, out binderAsmName, out binderTypeName);
+#if !NET35
+                else
+                    Binder.BindToName(type, out binderAsmName, out binderTypeName);
+#endif
 
                 binderCache.Add(type, (binderAsmName, binderTypeName));
             }

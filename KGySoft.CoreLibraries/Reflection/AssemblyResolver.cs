@@ -113,7 +113,7 @@ namespace KGySoft.Reflection
             byte[] publicKeyTokenRef, publicKeyTokenCheck;
             return (publicKeyTokenRef = refName.GetPublicKeyToken()) == null
                 || (publicKeyTokenCheck = toCheck.GetPublicKeyToken()) == null
-                || !publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
+                || publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
         }
 
 #endregion

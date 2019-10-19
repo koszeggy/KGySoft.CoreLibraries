@@ -1161,26 +1161,35 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void ForwardedTypesSerializationBinderTest()
         {
-            object[] referenceObjects =
-            {
-                //// Types forwarded in .NET Standard/Core
-                //new Collection<int> { 1 }, // from mscorlib
-                //new ObservableCollection<int> { 1 }, // from WindowsBase/System
-                //new Collection<int>[] { new Collection<int>() }, // array of a type to be mapped
-                //new List<ObservableCollection<int>> { new ObservableCollection<int>() }, // the generic argument contains another forwarded type
-
-                typeof(Bitmap) // from System.Drawing but not in .NET Core 2.0
-            };
-
-            // by WeakAssemblySerializationBinder
-            string title = "Seserialization with Legacy Identity";
+            object testObject = TestEnumInt.Limit;
             var binder = new ForwardedTypesSerializationBinder { WriteLegacyIdentity = true };
-            binder.AddType(typeof(Bitmap), new AssemblyName("System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));
-            //SystemSerializeObject(referenceObjects, title, binder: binder);
-            //SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
+            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly, Version=1.2.3.4, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            byte[] oldAssemblyData = new BinarySerializationFormatter { Binder = binder }.Serialize(testObject);
+
+            // without a binder
+            Throws<SerializationException>(() => new BinarySerializationFormatter().Deserialize(oldAssemblyData));
+
+            // with a binder from the very specific assembly
+            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
+
+            // the binder does not have the correct assembly
+            binder = new ForwardedTypesSerializationBinder();
+            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeIrrelevantAssembly, Version=1.2.3.4, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
+            Throws<SerializationException>(() => new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
+
+            // the binder does not have the correct version
+            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
+            Throws<SerializationException>(() => new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
+
+            // from any assembly
+            binder.AddType(typeof(TestEnumInt)); // allow resolving from any assemblies
+            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
+
+            // only from specified assembly but allowing any version
+            binder = new ForwardedTypesSerializationBinder();
+            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly"));
+            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
         }
 
         [Test]
