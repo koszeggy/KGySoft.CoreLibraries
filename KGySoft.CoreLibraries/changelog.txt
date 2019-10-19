@@ -104,7 +104,10 @@
     custom serialized data.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
-+ WeakAssemblySerializationBinder:
++ New ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
+  using writing the legacy identity of a forwarded type. This makes possible to use the .NET Framework assembly
+  identities even in .NET Core and .NET Standard, for example.
+* WeakAssemblySerializationBinder:
   + Implements ISerializationBinder.
   + The OmitAssemblyNameOnSerialize property is available also in .NET 3.5. A BinaryFormatter still ignores this
     property in .NET 3.5 (though it does not affect functionality) but BinarySerializationFormatter is now able

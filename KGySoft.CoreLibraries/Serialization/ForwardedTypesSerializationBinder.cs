@@ -34,7 +34,7 @@ namespace KGySoft.Serialization
 {
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
-    /// <br/>See the <strong>Remarks</strong> section for details.
+    /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <remarks>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
@@ -50,6 +50,61 @@ namespace KGySoft.Serialization
     /// Add the type to be handled by the <see cref="AddType">AddType</see> method and specify at least one <see cref="AssemblyName"/>
     /// for each added <see cref="Type"/>.</para>
     /// </remarks>
+    /// <example>
+    /// <para>The following example demonstrates the usage of the <see cref="ForwardedTypesSerializationBinder"/> when types have to be deserialized from a stream,
+    /// which have been originally serialized by another version of the assembly.
+    /// <code lang="C#"><![CDATA[
+    /// var binder = new ForwardedTypesSerializationBinder();
+    ///
+    /// // MyType will be able to be deserialized if the assembly name in the
+    /// // serialization stream matches any of the enlisted ones.
+    /// binder.AddType(typeof(MyType),
+    ///     new AssemblyName("MyOldAssembly, Version=1.0.0.0"),
+    ///     new AssemblyName("MyOldAssembly, Version=1.2.0.0"),
+    ///     new AssemblyName("MyNewAssembly, Version=1.5.0.0"),
+    ///     new AssemblyName("MyNewAssembly, Version=2.0.0.0"));
+    ///
+    /// // MyOtherType will be able to be deserialized if it was serialized by any versions of MyAssembly.
+    /// binder.AddType(typeof(MyOtherType), new AssemblyName("MyAssembly"));
+    ///
+    /// // Any type of any assembly will be will be mapped to SomeOtherType if their full names match.
+    /// binder.AddType(typeof(SomeOtherType));
+    ///
+    /// // Multiple types can be enlisted without assembly identity
+    /// binder.AddTypes(typeof(MyType), typeof(MyOtherType), typeof(SomeOtherType));
+    ///
+    /// // Works also with the traditional BinaryFormatter!
+    /// IFormatter formatter = new BinarySerializationFormatter { Binder = binder };
+    /// object result = formatter.Deserialize(serializationStream);
+    /// ]]></code></para>
+    /// <note>The <see cref="WeakAssemblySerializationBinder"/> is also able to ignore assembly information but if there are two different
+    /// types of the same name in the same namespace, then the behavior of <see cref="WeakAssemblySerializationBinder"/> is not deterministic.</note>
+    /// <para>
+    /// The following example demonstrates how to control the serialized assembly name.
+    /// <code lang="C#"><![CDATA[
+    /// // Setting the WriteLegacyIdentity allows to use arbitrary custom indenity on serialization.
+    /// var binder = new ForwardedTypesSerializationBinder { WriteLegacyIdentity = true };
+    ///
+    /// // When serializing a MyType instance, it will be saved with the firstly specified identity
+    /// binder.AddType(typeof(MyType),
+    ///     new AssemblyName("MyOldAssembly, Version=1.0.0.0"),
+    ///     new AssemblyName("MyOldAssembly, Version=1.2.0.0"),
+    ///     new AssemblyName("MyNewAssembly, Version=1.5.0.0"),
+    ///     new AssemblyName("MyNewAssembly, Version=2.0.0.0"));
+    ///
+    /// // If WriteLegacyIdentity is true, types with TypeForwardedFromAttribute will be automatically written
+    /// // with their old identity stored in the TypeForwardedFromAttribute.AssemblyFullName property.
+    /// // List<T> has a TypeForwardedFromAttribute in .NET Core and Standard so it will be serialized with
+    /// // mscorlib assembly identity in every platform:
+    /// var obj = new List<MyType> { new MyType() };
+    /// 
+    /// // Works also with KGy SOFT BinarySerializationFormatter!
+    /// IFormatter formatter = new BinaryFormatter { Binder = binder };
+    /// formatter.Serialize(serializationStream, obj);
+    /// ]]></code>
+    /// </para>
+    /// </example>
+    /// <seealso cref="WeakAssemblySerializationBinder"/>
     public sealed class ForwardedTypesSerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Fields
