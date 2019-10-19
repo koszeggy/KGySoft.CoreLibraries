@@ -22,7 +22,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NETFRAMEWORK && !NET35
 using System.Security;
+#endif
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -36,22 +38,22 @@ namespace KGySoft.Reflection
 {
     internal static class AssemblyResolver
     {
-        #region Fields
+#region Fields
 
         private static LockingDictionary<string, Assembly> assemblyCache;
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         private static LockingDictionary<string, Assembly> AssemblyCache
             => assemblyCache ??= new Cache<string, Assembly>().AsThreadSafe();
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
-        #region Internal Methods
+#region Internal Methods
 
         internal static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
         {
@@ -86,9 +88,37 @@ namespace KGySoft.Reflection
             return GetOrResolve(assemblyName, options);
         }
 
-        #endregion
+        internal static bool IdentityMatches(AssemblyName refName, AssemblyName toCheck, bool allowPartialMatch)
+        {
+            if (toCheck == null)
+                return false;
 
-        #region Private Methods
+            // Different name: skip
+            if (toCheck.Name != refName.Name)
+                return false;
+
+            // Here name matches. In case of partial match we are done.
+            if (allowPartialMatch)
+                return true;
+
+            // Checking version, culture and public key token
+            Version version = refName.Version;
+            if (version != null && toCheck.Version != version)
+                return false;
+
+            CultureInfo culture = refName.CultureInfo;
+            if (culture != null && toCheck.CultureInfo.Name != culture.Name)
+                return false;
+
+            byte[] publicKeyTokenRef, publicKeyTokenCheck;
+            return (publicKeyTokenRef = refName.GetPublicKeyToken()) == null
+                || (publicKeyTokenCheck = toCheck.GetPublicKeyToken()) == null
+                || !publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
+        }
+
+#endregion
+
+#region Private Methods
 
         private static Assembly GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
@@ -120,41 +150,8 @@ namespace KGySoft.Reflection
 
         private static Assembly Resolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
-            #region Local Methods
-
-            static bool IdentityMatches(AssemblyName refName, Assembly asm, ResolveAssemblyOptions o)
-            {
-                if (asm == null)
-                    return false;
-
-                AssemblyName toCheck = asm.GetName();
-
-                // Different name: skip
-                if (toCheck.Name != refName.Name)
-                    return false;
-
-                // Here name matches. In case of partial match we are done.
-                if ((o & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
-                    return true;
-
-                // Checking version, culture and public key token
-                Version version = refName.Version;
-                if (version != null && toCheck.Version != version)
-                    return false;
-
-                CultureInfo culture = refName.CultureInfo;
-                if (culture != null && toCheck.CultureInfo.Name != culture.Name)
-                    return false;
-
-                byte[] publicKeyTokenRef, publicKeyTokenCheck;
-                return (publicKeyTokenRef = refName.GetPublicKeyToken()) == null
-                    || (publicKeyTokenCheck = toCheck.GetPublicKeyToken()) == null
-                    || !publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
-            }
-
-            #endregion
-
             // 1.) Iterating through loaded assemblies, checking names
+            bool allowPartialMatch = (options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None;
             string fullName = assemblyName.FullName;
             foreach (Assembly asm in Reflector.GetLoadedAssemblies())
             {
@@ -163,7 +160,7 @@ namespace KGySoft.Reflection
                     return asm;
 
                 // Otherwise, we check the provided information (we still can accept simple name if nothing else is provided)
-                if (IdentityMatches(assemblyName, asm, options))
+                if (IdentityMatches(assemblyName, asm.GetName(), allowPartialMatch))
                     return asm;
             }
 
@@ -172,7 +169,7 @@ namespace KGySoft.Reflection
 
             // 2.) Trying to load the assembly
             Assembly result = LoadAssembly(assemblyName, options);
-            return result?.FullName == fullName || IdentityMatches(assemblyName, result, options) ? result : null;
+            return result?.FullName == fullName || IdentityMatches(assemblyName, result?.GetName(), allowPartialMatch) ? result : null;
         }
 
         /// <summary>
@@ -239,8 +236,8 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }
