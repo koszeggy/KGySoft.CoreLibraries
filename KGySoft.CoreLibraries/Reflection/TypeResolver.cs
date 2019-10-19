@@ -352,23 +352,30 @@ namespace KGySoft.Reflection
 
         #region Internal Methods
 
-        internal static Type ResolveType(string typeName, ResolveTypeOptions options)
+        internal static Type ResolveType(string typeName, Func<AssemblyName, string, Type> typeResolver, ResolveTypeOptions options)
         {
             if (typeName == null)
                 throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
             if (!options.AllFlagsDefined())
                 throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
 
-            ResolveTypeOptions prefix = options & ~ResolveTypeOptions.ThrowError;
-            if ((prefix & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
-                prefix &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
-            string key = ((int)prefix).ToString(CultureInfo.InvariantCulture) + typeName;
-            if (TypeCacheByString.TryGetValue(key, out Type result))
-                return result;
+            string key = null;
+            Type result;
+
+            // Trying to use the cache but only if no resolver is specified
+            if (typeResolver == null)
+            {
+                ResolveTypeOptions prefix = options & ~ResolveTypeOptions.ThrowError;
+                if ((prefix & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
+                    prefix &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
+                key = ((int)prefix).ToString(CultureInfo.InvariantCulture) + typeName;
+                if (TypeCacheByString.TryGetValue(key, out result))
+                    return result;
+            }
 
             try
             {
-                result = new TypeResolver(typeName, options).Resolve();
+                result = new TypeResolver(typeName, options).Resolve(typeResolver);
             }
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
@@ -380,7 +387,7 @@ namespace KGySoft.Reflection
             if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
                 throw new ReflectionException(Res.ReflectionNotAType(typeName));
 
-            if (result != null)
+            if (key != null && result != null)
                 typeCacheByString[key] = result;
 
             return result;
@@ -412,7 +419,7 @@ namespace KGySoft.Reflection
 
             try
             {
-                result = assembly.GetType(typeName) ?? new TypeResolver(assembly, typeName, options).Resolve();
+                result = assembly.GetType(typeName) ?? new TypeResolver(assembly, typeName, options).Resolve(null);
             }
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
@@ -1136,7 +1143,7 @@ namespace KGySoft.Reflection
             DumpAssemblyName(result, typeNameKind);
         }
 
-        private Type Resolve()
+        private Type Resolve(Func<AssemblyName, string, Type> typeResolver)
         {
             if (type != null)
                 return type;
@@ -1145,30 +1152,19 @@ namespace KGySoft.Reflection
             if (rootName == null)
                 return null;
 
-            // 1. Resolving assembly if needed
-            if (assembly == null && assemblyName != null)
-            {
-                var resolveAssemblyOptions = (ResolveAssemblyOptions)options & Enum<ResolveAssemblyOptions>.GetFlagsMask();
-                if ((options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
-                    resolveAssemblyOptions &= ~ResolveAssemblyOptions.ThrowError;
-                assembly = AssemblyResolver.ResolveAssembly(assemblyName, resolveAssemblyOptions);
-                if (assembly == null && (options & ResolveTypeOptions.AllowIgnoreAssemblyName) == ResolveTypeOptions.None)
-                    return null;
-            }
-
-            // 2. Resolving root type
-            Type result = ResolveRootType();
+            // 1. Resolving root type
+            Type result = ResolveRootType(typeResolver);
             if (result == null)
                 return null;
 
-            // 3. Applying generic arguments
+            // 2. Applying generic arguments
             if (genericArgs.Count > 0)
             {
                 Debug.Assert(result.IsGenericTypeDefinition, "Root type is expected to be a generic type definition");
                 Type[] args = new Type[genericArgs.Count];
                 for (int i = 0; i < args.Length; i++)
                 {
-                    args[i] = genericArgs[i].Resolve();
+                    args[i] = genericArgs[i].Resolve(typeResolver);
                     if (args[i] == null)
                         return null;
                 }
@@ -1176,7 +1172,7 @@ namespace KGySoft.Reflection
                 result = result.GetGenericType(args);
             }
 
-            // 4. Applying modifiers
+            // 3. Applying modifiers
             foreach (int modifier in modifiers)
             {
                 switch (modifier)
@@ -1199,52 +1195,91 @@ namespace KGySoft.Reflection
             return type = result;
         }
 
-        private Type ResolveRootType()
+        private Type ResolveRootType(Func<AssemblyName, string, Type> typeResolver)
         {
+            if (declaringType != null)
+                return ResolveGenericParameter(typeResolver);
+
             bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
             bool allowIgnoreAssembly = (options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None;
             bool ignoreCase = (options & ResolveTypeOptions.IgnoreCase) != ResolveTypeOptions.None;
+            Type result;
 
-            // Regular type
-            if (declaringType == null)
+            // 1.) By resolver
+            if (typeResolver != null)
             {
-                Type result;
-
-                if (assembly != null)
+                AssemblyName asmName = null;
+                try
                 {
-                    result = assembly.GetType(rootName, throwError && !allowIgnoreAssembly, ignoreCase);
-                    if (result != null || !allowIgnoreAssembly)
-                        return result;
+                    if (assemblyName != null)
+                        asmName = new AssemblyName(assemblyName);
                 }
-#if !NETFRAMEWORK // If there is no assembly defined we try to use the mscorlib.dll in the first place, which contains forwarded types on non-framework platforms.
-                else if (assemblyName == null)
+                catch (Exception e) when (!e.IsCritical())
                 {
-                    // We are not throwing an exception from here because on failure we try all assemblies
-                    result = MscorlibAssembly?.GetType(rootName, false, ignoreCase);
-                    if (result != null)
-                        return result;
-                } 
-#endif
+                    // If we cannot create even the AssemblyName, then we cannot query the custom resolver.
+                    // This is OK, we don't want to support wrong names, which could break parsing.
+                    // And this is the symmetric logic with GetName's assemblyNameResolver.
+                    if (throwError)
+                        throw new ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), e);
 
-                // Not throwing an error from here because we will iterate the loaded assemblies if type cannot be resolved.
-                // Type.GetType is not redundant even if we tried mscorlib.dll above because it still can load core library types.
-                result = Type.GetType(rootName, false, ignoreCase);
+                    // In this case we don't use fallback logic because we couldn't call the delegate.
+                    return null;
+                }
+
+                result = typeResolver.Invoke(asmName, rootName);
                 if (result != null)
                     return result;
-
-                // Looking for the type in the loaded assemblies
-                foreach (Assembly asm in Reflector.GetLoadedAssemblies())
-                {
-                    result = asm.GetType(rootName, false, ignoreCase);
-                    if (result != null)
-                        return result;
-                }
-
-                return throwError ? throw new ReflectionException(Res.ReflectionNotAType(rootName)) : default(Type);
             }
 
-            // Generic parameter
-            Type t = declaringType.Resolve();
+            // 2. Resolving assembly if needed
+            if (assembly == null && assemblyName != null)
+            {
+                var resolveAssemblyOptions = (ResolveAssemblyOptions)options & Enum<ResolveAssemblyOptions>.GetFlagsMask();
+                if ((options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
+                    resolveAssemblyOptions &= ~ResolveAssemblyOptions.ThrowError;
+                assembly = AssemblyResolver.ResolveAssembly(assemblyName, resolveAssemblyOptions);
+                if (assembly == null && (options & ResolveTypeOptions.AllowIgnoreAssemblyName) == ResolveTypeOptions.None)
+                    return null;
+            }
+
+            // 3/a. Resolving the type from a specific assembly
+            if (assembly != null)
+            {
+                result = assembly.GetType(rootName, throwError && !allowIgnoreAssembly, ignoreCase);
+                if (result != null || !allowIgnoreAssembly)
+                    return result;
+            }
+#if !NETFRAMEWORK // 3/b. If there is no assembly defined we try to use the mscorlib.dll in the first place, which contains forwarded types on non-framework platforms.
+            else if (assemblyName == null)
+            {
+                // We are not throwing an exception from here because on failure we try all assemblies
+                result = typeResolver?.Invoke(null, rootName) ?? MscorlibAssembly?.GetType(rootName, false, ignoreCase);
+                if (result != null)
+                    return result;
+            }
+#endif
+
+            // 3/c. Resolving the type from any assembly
+            // Type.GetType is not redundant even if we tried mscorlib.dll above because it still can load core library types.
+            result = Type.GetType(rootName, false, ignoreCase);
+            if (result != null)
+                return result;
+
+            // Looking for the type in the loaded assemblies
+            foreach (Assembly asm in Reflector.GetLoadedAssemblies())
+            {
+                result = asm.GetType(rootName, false, ignoreCase);
+                if (result != null)
+                    return result;
+            }
+
+            return throwError ? throw new ReflectionException(Res.ReflectionNotAType(rootName)) : default(Type);
+        }
+
+        private Type ResolveGenericParameter(Func<AssemblyName, string, Type> typeResolver)
+        {
+            // Declaring Type
+            Type t = declaringType.Resolve(typeResolver);
             if (t == null)
                 return null;
 

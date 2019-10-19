@@ -756,7 +756,7 @@ namespace KGySoft.Resources
                 result = typeResolver.GetType(assemblyQualifiedName, false);
 
             if (result == null)
-                result = TypeResolver.ResolveType(assemblyQualifiedName, ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch);
+                result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch);
 
             if (result == null)
                 return null;
