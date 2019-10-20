@@ -120,7 +120,7 @@ namespace KGySoft.Serialization
             #region Static Methods
 
             private static string GetTypeNameIndexCacheKey(Type type, string binderAsmName, string binderTypeName)
-                => (binderAsmName ?? type.Assembly.FullName) + ":" + (binderTypeName ?? type.FullName);
+                => (binderAsmName ?? type.Assembly.FullName) + ":" + (binderTypeName ?? type.GetName(TypeNameKind.LongName));
 
             private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
             private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
@@ -256,6 +256,26 @@ namespace KGySoft.Serialization
             {
                 bw.Write(section.Mask);
                 bw.Write(section.Offset);
+            }
+
+            private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
+            {
+                if (type.IsGenericTypeDefinition)
+                {
+                    bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
+                    return;
+                }
+
+                if (type.IsGenericParameter)
+                {
+                    Debug.Assert(type.DeclaringMethod == null, "Generic method parameters are handled separately");
+                    bw.Write((byte)GenericTypeSpecifier.GenericParameter);
+                    Write7BitInt(bw, type.GenericParameterPosition);
+                    return;
+                }
+
+                if (type.IsGenericType)
+                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
             }
 
             #endregion
@@ -1273,53 +1293,51 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
-                Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
 
-                GetBoundNames(type, out string binderAsmName, out string binderTypeName);
-                if (binderTypeName == null && binderAsmName == null && TryWriteTypeByDataType(bw, type, allowOpenTypes))
+                // 1.) Trying to encode supported types by DataTypes. Binder is not queried for supported types.
+                if (TryWriteTypeByDataType(bw, type, allowOpenTypes))
                     return;
 
-                int index = GetAssemblyIndex(type, binderAsmName);
+                // 2.) Checking if type is already known. Binder is queried for root types only.
+                GetBoundNames(type, out string binderAsmName, out string binderTypeName);
+                int index = GetTypeIndex(type, binderAsmName, binderTypeName);
 
-                // known assembly
-                if (index != -1)
-                    Write7BitInt(bw, index);
-                // new assembly
-                else
-                {
-                    // storing assembly and type name together and return
-                    if (OmitAssemblyQualifiedNames)
-                        Write7BitInt(bw, OmitAssemblyIndex);
-                    else
-                    {
-                        Write7BitInt(bw, NewAssemblyIndex);
-                        WriteNewAssembly(bw, type, binderAsmName);
-                        WriteNewType(bw, type, false, allowOpenTypes, binderAsmName, binderTypeName);
-                        return;
-                    }
-                }
-
-                index = GetTypeIndex(type, binderAsmName, binderTypeName);
-
-                // known type
+                // The requested type (including constructed ones and parameters) is already known
                 if (index != -1)
                 {
+                    int assemblyIndex = GetAssemblyIndex(type, binderAsmName);
+                    Debug.Assert(assemblyIndex != -1, "Assembly index should be known for a known type");
+                    Write7BitInt(bw, assemblyIndex);
                     Write7BitInt(bw, index);
                     if (allowOpenTypes && type.IsGenericTypeDefinition)
                         WriteGenericSpecifier(bw, type);
                     return;
                 }
 
-                // new type
-                WriteNewType(bw, type, true, allowOpenTypes, binderAsmName, binderTypeName);
+                // 3.) Special handling for generic method parameters
+                if (allowOpenTypes && type.IsGenericParameter && type.DeclaringMethod != null)
+                {
+                    WriteGenericMethodParameter(bw, type);
+                    return;
+                }
+
+                // 4.) Writing new type
+                WriteNewType(bw, type, allowOpenTypes, binderAsmName, binderTypeName);
             }
 
             private void GetBoundNames(Type type, out string binderAsmName, out string binderTypeName)
             {
+                Debug.Assert(!type.HasElementType, $"Arrays, pointers and ByRef types should be handled by {nameof(TryWriteTypeByDataType)}");
+
                 binderAsmName = null;
                 binderTypeName = null;
-                if (Binder == null || type.FullName == null)
+
+                // Constructed generics, generic parameters and known types and non-root types are never bound
+                if (Binder == null || type.IsConstructedGenericType() || TypeIndexCache.ContainsKey(type) || type.IsGenericParameter)
                     return;
+
+                Debug.Assert(type.FullName != null, "A root type is expected here");
 
                 if (binderCache == null)
                     binderCache = new Dictionary<Type, (string, string)>();
@@ -1342,14 +1360,17 @@ namespace KGySoft.Serialization
             }
 
             private int GetAssemblyIndex(Type type, string binderAsmName)
-                => binderAsmName == null
-                    ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
-                    : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
+                => OmitAssemblyQualifiedNames
+                    ? OmitAssemblyIndex
+                    : binderAsmName == null
+                        ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
+                        : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
 
             private int GetTypeIndex(Type type, string binderAsmName, string binderTypeName)
                 => Binder == null
                     ? TypeIndexCache.GetValueOrDefault(type, -1)
-                    : TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1);
+                    // even if we have a bound name we look for the type in the unbound cache so we can avoid storing the known types as new ones
+                    : TypeIndexCache.GetValueOrDefault(type, TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1));
 
             /// <summary>
             /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
@@ -1443,7 +1464,7 @@ namespace KGySoft.Serialization
                 return true;
             }
 
-            private void WriteNewAssembly(BinaryWriter bw, Type type, string binderAsmName)
+            private void WriteNewAssembly(BinaryWriter bw, Assembly assembly, string binderAsmName)
             {
                 // by binder
                 if (binderAsmName != null)
@@ -1453,8 +1474,8 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                bw.Write(type.Assembly.FullName);
-                AssemblyIndexCache.Add(type.Assembly, AssemblyIndexCacheCount);
+                bw.Write(assembly.FullName);
+                AssemblyIndexCache.Add(assembly, AssemblyIndexCacheCount);
             }
 
             /// <summary>
@@ -1462,40 +1483,43 @@ namespace KGySoft.Serialization
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
-            private void WriteNewType(BinaryWriter bw, Type type, bool knownAssembly, bool allowOpenTypes, string binderAsmName, string binderTypeName)
+            private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string binderAsmName, string binderTypeName)
             {
-                // by binder
-                if (binderTypeName != null)
-                {
-                    // For known assemblies a type index is requested first.
-                    if (knownAssembly)
-                        Write7BitInt(bw, NewTypeIndex);
-                    bw.Write(binderTypeName);
-                    if (allowOpenTypes && type.IsGenericTypeDefinition)
-                        WriteGenericSpecifier(bw, type);
-                    AddToTypeCache(type, binderAsmName, binderTypeName);
-                    return;
-                }
-
+                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+                Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
+                    : type.IsGenericParameter ? type.DeclaringType
+                    : type;
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
                 bool isGenericParam = type.IsGenericParameter;
+                Type typeDef = isGeneric || isGenericParam ? rootType : null;
+
+                // Actualizing bound names if needed
+                if (rootType != type)
+                    GetBoundNames(rootType, out binderAsmName, out binderTypeName);
+
+                // 1.) Writing assembly
+                int index = GetAssemblyIndex(rootType, binderAsmName);
+                bool knownAssembly = index != -1;
+
+                // known assembly
+                if (knownAssembly)
+                    Write7BitInt(bw, index);
+                // new assembly
+                else
+                {
+                    Write7BitInt(bw, NewAssemblyIndex);
+                    WriteNewAssembly(bw, rootType.Assembly, binderAsmName);
+                }
+
+                // 2.) For known assemblies a type index is also requested.
                 bool typeDefWritten = false;
-
-                Debug.Assert(allowOpenTypes || !isTypeDef && !isGenericParam, $"Unexpected type when open types are not allowed: {type}");
-
-                Type typeDef = isTypeDef ? type
-                    : isGeneric ? type.GetGenericTypeDefinition()
-                    : isGenericParam ? (type.DeclaringMethod != null ? typeof(GenericMethodDefinitionPlaceholder) : type.DeclaringType)
-                    : null;
-
-                // For known assemblies a type index is requested first.
                 if (knownAssembly)
                 {
                     // It can happen that the generic type definition is already known.
-                    int index;
-                    if (typeDef != null && (index = GetTypeIndex(typeDef, binderAsmName, null)) != -1)
+                    if (typeDef != null && (index = GetTypeIndex(typeDef, binderAsmName, binderTypeName)) != -1)
                     {
+                        Debug.Assert(type != rootType && !isTypeDef, $"If the generic type definition was the requested type and it was known, it should have been written in {nameof(WriteType)}");
                         Write7BitInt(bw, index);
                         typeDefWritten = true;
                     }
@@ -1503,66 +1527,55 @@ namespace KGySoft.Serialization
                         Write7BitInt(bw, NewTypeIndex);
                 }
 
-                // Regular type name
-                if (typeDef == null)
-                {
-                    // ReSharper disable once AssignNullToNotNullAttribute - cannot be null for a non-generic runtime type
-                    bw.Write(type.FullName);
-                    AddToTypeCache(type, binderAsmName, null);
-                    return;
-                }
-
-                // Generic type definition name
+                // 3.) Root type name of new type (unless type definition was known)
                 if (!typeDefWritten)
                 {
-                    // ReSharper disable once AssignNullToNotNullAttribute - cannot be null for a type definition
-                    bw.Write(typeDef == typeof(GenericMethodDefinitionPlaceholder) ? GenericMethodDefinitionPlaceholder.AliasName : typeDef.FullName);
-                    AddToTypeCache(typeDef, binderAsmName, null);
+                    bw.Write(binderTypeName ?? rootType.FullName);
+                    AddToTypeCache(rootType, binderAsmName, binderTypeName);
+
+                    // for non generics we are done
+                    if (typeDef == null)
+                        return;
                 }
 
-                // If open types are allowed in current context we write a specifier after the generic type definition
+                // 4.) If open types are allowed in current context we write a specifier after the generic type definition
                 if (allowOpenTypes)
                 {
                     WriteGenericSpecifier(bw, type);
-                    if (isTypeDef || isGenericParam)
+                    if (isTypeDef) // type definition is already cached
                         return;
                 }
 
-                // Constructed generic type: arguments (it still can contain generic parameters)
-                foreach (Type genericArgument in type.GetGenericArguments())
-                    WriteType(bw, genericArgument, allowOpenTypes);
-                AddToTypeCache(type, binderAsmName, null);
+                // 5.) Constructed generic type: arguments (it still can contain generic parameters)
+                if (isGeneric)
+                {
+                    Debug.Assert(!isTypeDef, "Type definition ");
+                    foreach (Type genericArgument in type.GetGenericArguments())
+                        WriteType(bw, genericArgument, allowOpenTypes);
+                }
+
+                // 6.) Adding the original complex type to cache (binder is not used here)
+                AddToTypeCache(type, null, null);
             }
 
-            private void WriteGenericSpecifier(BinaryWriter bw, Type type)
+            private void WriteGenericMethodParameter(BinaryWriter bw, Type type)
             {
-                if (type.IsGenericTypeDefinition)
-                {
-                    bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
-                    return;
-                }
+                Debug.Assert(type.IsGenericParameter && type.DeclaringMethod != null, "Generic method argument is expected here");
 
-                if (type.IsGenericParameter)
-                {
-                    MethodBase declaringMethod = type.DeclaringMethod;
-                    if (declaringMethod == null)
-                    {
-                        // Generic type parameter
-                        bw.Write((byte)GenericTypeSpecifier.GenericParameter);
-                        Write7BitInt(bw, type.GenericParameterPosition);
-                        return;
-                    }
+                // Writing a special placeholder indicating the generic method parameter because the declaring type
+                // of generic methods has nothing to do with the parameter so they cannot be encoded the same way as type parameters.
+                WriteType(bw, typeof(GenericMethodDefinitionPlaceholder), true);
 
-                    // For generic method parameters no specifier is needed because the placeholder type has been written.
-                    // Instead, writing the declaring type, method signature and parameter index
-                    Type declaringType = type.DeclaringType;
-                    WriteType(bw, declaringType, true);
-                    bw.Write(declaringMethod.ToString());
-                    Write7BitInt(bw, type.GenericParameterPosition);
-                }
+                // For generic method parameters no specifier is needed because the placeholder type has been written.
+                // Instead, writing the declaring type, method signature and parameter index
+                Type declaringType = type.DeclaringType;
+                WriteType(bw, declaringType, true);
 
-                if (type.IsGenericType)
-                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
+                // ReSharper disable once PossibleNullReferenceException - false alarm in release build, see assert above
+                bw.Write(type.DeclaringMethod.ToString());
+                Write7BitInt(bw, type.GenericParameterPosition);
+
+                AddToTypeCache(type, null, null);
             }
 
             private void AddToTypeCache(Type type, string binderAsmName, string binderTypeName)

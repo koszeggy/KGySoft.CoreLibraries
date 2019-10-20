@@ -163,7 +163,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             string fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
-                || type.IsGenericType && !type.IsGenericTypeDefinition
+                || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
                 throw new ArgumentException(Res.SerializationRootTypeExpected, nameof(type));
             Debug.Assert(type == type.GetRootType(), "Root type expected");
@@ -246,9 +246,11 @@ namespace KGySoft.Serialization
                 if (mapping.GetValueOrDefault(key.FullName)?.GetValueOrDefault(key).FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
                     return new AssemblyName(asmName);
 
+#if !NET35
                 // TypeForwardedFromAttribute is specified for the type
                 if (Attribute.GetCustomAttribute(key, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
-                    return new AssemblyName(attr.AssemblyFullName);
+                    return new AssemblyName(attr.AssemblyFullName); 
+#endif
 
                 // original name
                 return t.Assembly.GetName();

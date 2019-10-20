@@ -41,7 +41,9 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// <para>Apart from primitive types, strings and arrays forces to serialize every type recursively. If <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set,
-        /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).</para>
+        /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
+        /// <note>Even if this flag is enabled, non-serializable types will not serialized automatically. Use the <see cref="RecursiveSerializationAsFallback"/> to
+        /// enable serialization of such types.</note></para>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>

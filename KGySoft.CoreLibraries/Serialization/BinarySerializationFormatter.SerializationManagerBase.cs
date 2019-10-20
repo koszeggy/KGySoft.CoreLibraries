@@ -49,11 +49,6 @@ namespace KGySoft.Serialization
 
             private protected struct GenericMethodDefinitionPlaceholder
             {
-                #region Constants
-                
-                internal const string AliasName = "!"; 
-                
-                #endregion
             } 
             
             #endregion
@@ -66,21 +61,20 @@ namespace KGySoft.Serialization
 
             private protected static readonly Assembly[] KnownAssemblies =
             {
+                // Do not add more assemblies. We must stay consistent on different platforms.
                 Reflector.SystemCoreLibrariesAssembly,
-                Reflector.KGySoftCoreLibrariesAssembly,
-#if NETFRAMEWORK
-                typeof(Queue<>).Assembly, // System.dll
-                typeof(HashSet<>).Assembly // System.Core.dll
-#endif
+                Reflector.KGySoftCoreLibrariesAssembly
             };
 
             private protected static readonly Type[] KnownTypes =
             {
+                // Apart from natively supported types, these are always internally and are never passed to a binder.
                 Reflector.NullableType,
                 Reflector.Type,
                 Reflector.ArrayType,
                 Reflector.EnumType,
                 typeof(IBinarySerializable),
+                typeof(GenericMethodDefinitionPlaceholder)
             };
 
             #endregion

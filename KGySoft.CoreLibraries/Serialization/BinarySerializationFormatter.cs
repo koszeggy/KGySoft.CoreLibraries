@@ -102,7 +102,9 @@ namespace KGySoft.Serialization
     /// A custom serialization logic can be applied also by setting the <see cref="SurrogateSelector"/> property.<para>
     /// </para>Similarly to <see cref="BinaryFormatter"/>, <see cref="ISerializable"/> implementations are also supported, and they are considered only for types marked by the <see cref="SerializableAttribute"/>, unless
     /// the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option is enabled for the serialization.</para>
-    /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations.</para>
+    /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations.
+    /// <note type="tip">See the <strong>Remarks</strong> section if the <see cref="Binder"/> property for details about producing serialized data that is compatible with all .NET platforms.</note>
+    /// </para>
     /// <para>There are three ways to serialize/deserialize an object. To serialize into a byte array use the <see cref="Serialize">Serialize</see> method. Its result can be deserialized by the <see cref="Deserialize">Deserialize</see> method.
     /// Additionally, you can use the <see cref="SerializeToStream">SerializeToStream</see>/<see cref="DeserializeFromStream">DeserializeFromStream</see> methods to dump/read the result to and from a <see cref="Stream"/>, and the
     /// the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="DeserializeByReader">DeserializeByReader</see> methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for
@@ -785,12 +787,20 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// Gets or sets the <see cref="SerializationBinder"/> that performs type conversions to and from <see cref="string">string</see>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
-        /// <para>If the associated binder implements the <see cref="ISerializationBinder"/> interface,
-        /// then their members are also called if the default <see cref="SerializationBinder"/> members do not return any result.</para>
-        /// <para>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
-        /// the <see cref="ISerializationBinder"/> interface.</para>
+        /// <para>By default, the binder is not called for natively supported types.</para>
+        /// <para>If the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> flag is set in <see cref="Options"/>,
+        /// then the binder is called for the non-primitive natively supported types.</para>
+        /// <para>This formatter does not call the binder types that have element types, for constructed generic types and generic parameter types.
+        /// Instead, the binder is called only for the element types, the generic type definition and the generic arguments separately.</para>
+        /// <note>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
+        /// the <see cref="ISerializationBinder"/> interface.</note>
+        /// <note type="tip">To ensure emitting compatible assembly identities on different .NET platforms use the <see cref="ForwardedTypesSerializationBinder"/>
+        /// and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
+        /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
+        /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
         /// </remarks>
         public SerializationBinder Binder { get; set; }
 

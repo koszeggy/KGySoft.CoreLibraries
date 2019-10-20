@@ -912,7 +912,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 #if !(NET35 || NET40)
                 new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
                 #endif
-
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
@@ -928,7 +927,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+#if NETCOREAPP3_0
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, true); // randomContent: ConcurrentStack
+#else
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); 
+#endif
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
 #endif // !NET35
         }

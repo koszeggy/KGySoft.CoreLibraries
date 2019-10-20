@@ -377,7 +377,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 // Generic Method Parameters
                 typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // T of Array.Resize, unique generic method definition argument
-                //typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize, unique generic method definition argument - System and forced recursive serialization fails here
+                //typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize - System and forced recursive serialization fails here: T != T[]
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
@@ -1083,28 +1083,46 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+
+                typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // T of Array.Resize, unique generic method definition argument
             };
 
             // default
+#if !NETCOREAPP // types are not serializable in .NET Core
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+#endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             // by TestSerializationBinder
             string title = "Serialization and Deserialization with TestSerializationBinder";
             SerializationBinder binder = new TestSerializationBinder();
-#if !NET35
+#if !(NET35 || NETCOREAPP)
             SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder); 
+            SystemSerializeObjects(referenceObjects, title, binder: binder);
 #endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+#if NETCOREAPP
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+                | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
+                | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
+                title, true, binder); // safeCompare: the cloned runtime types are not equal
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+                | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
+                | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
+                title, true, binder); // safeCompare: the cloned runtime types are not equal
+#else
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+#endif
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
         }
 
         [Test]
@@ -1138,24 +1156,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // by WeakAssemblySerializationBinder
             string title = "Deserialization with WeakAssemblySerializationBinder";
             var binder = new WeakAssemblySerializationBinder();
+#if !NETCOREAPP // types are not serializable in .NET Core
             SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
+            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.  
+#endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
 
             // by WeakAssemblySerializationBinder, including serialization
             title = "Serialization and Deserialization with WeakAssemblySerializationBinder, omitting assembly name";
             binder.OmitAssemblyNameOnSerialize = true;
 
+#if !NETCOREAPP // types are not serializable in .NET Core
             SystemSerializeObject(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
             SystemSerializeObjects(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
+#endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+#if NETCOREAPP
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+                | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
+                | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
+                title, true, binder); // safeCompare: the cloned runtime types are not equal
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+                | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
+                | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
+                title, true, binder); // safeCompare: the cloned runtime types are not equal
+#else
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+#endif
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
         }
 
         [Test]
@@ -1539,6 +1575,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true));
         }
 
-        #endregion
+#endregion
     }
 }
