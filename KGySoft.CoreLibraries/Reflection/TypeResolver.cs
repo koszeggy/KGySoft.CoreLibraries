@@ -317,7 +317,7 @@ namespace KGySoft.Reflection
             }
 
             // generic arguments
-            if (type.IsGenericType && !type.IsGenericTypeDefinition) // same as: type.IsConstructedGenericType from .NET4
+            if (type.IsConstructedGenericType())
             {
                 TypeNameKind subKind = kind == TypeNameKind.FullName ? TypeNameKind.AssemblyQualifiedName
                     : kind == TypeNameKind.ForcedFullName ? TypeNameKind.ForcedAssemblyQualifiedName

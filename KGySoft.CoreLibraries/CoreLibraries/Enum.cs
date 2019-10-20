@@ -699,7 +699,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-#if !NET35 || NET40
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)] 
 #endif
         private static ulong ToUInt64(TEnum value)
@@ -713,18 +713,18 @@ namespace KGySoft.CoreLibraries
             return lambda.Compile();
         }
 
-#if !NET35 || NET40
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static bool AllFlagsDefinedCore(ulong flags)
             => flags == 0UL ? NumValueNamePairs.ContainsKey(0UL) : (FlagsMask & flags) == flags;
 
-#if !NET35 || NET40
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static bool IsSingleFlagCore(ulong value) => (value & (value - 1UL)) == 0UL;
 
-#if !NET35 || NET40
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (ToUInt64(value) & flags) == flags;

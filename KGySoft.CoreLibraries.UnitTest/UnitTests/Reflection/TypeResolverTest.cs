@@ -139,27 +139,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(type, Reflector.ResolveType(fullName));
         }
 
-        [Test]
-        public void GetTypeTest()
-        {
-            throw new NotImplementedException("TODO");
-            //static Assembly AssemblyResolver(AssemblyName asmName)
-            //{
-            //    Console.WriteLine($"Resolving assembly: {asmName}");
-            //    return Reflector.ResolveAssembly(asmName);
-            //}
-
-            //static Type TypeResolver(Assembly asm, string name, bool _)
-            //{
-            //    Console.WriteLine($"Resolving type: {name}");
-            //    return Reflector.ResolveType(asm, name);
-            //}
-
-            //string toResolve = typeof(List<>).GetGenericArguments()[0].GetName(TypeNameKind.ForcedAssemblyQualifiedName);
-            //Console.WriteLine($"Case: {toResolve}");
-            //Console.WriteLine($"Resolved to: {Type.GetType(toResolve, AssemblyResolver, TypeResolver)}");
-        }
-
         #endregion
     }
 }
