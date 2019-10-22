@@ -22,6 +22,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+#if NETFRAMEWORK
+using System.Runtime.Remoting;
+using System.Runtime.Remoting.Messaging;
+#endif
 using System.Runtime.Serialization;
 using KGySoft.Serialization;
 
@@ -166,20 +170,36 @@ namespace KGySoft.CoreLibraries
         /// <para>On the other hand, if <paramref name="ignoreCustomSerialization"/> is <see langword="true"/>, then it can happen that even singleton types will be deep cloned.
         /// The cloning is performed by the <see cref="BinarySerializationFormatter"/> class, which supports some singleton types natively (such as <see cref="Type"/> and <see cref="DBNull"/>),
         /// which will be always cloned correctly.</para>
+        /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
+        /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
+            ISurrogateSelector surrogate = null;
             var formatter = new BinarySerializationFormatter();
+#if NETFRAMEWORK
+            if (RemotingServices.IsTransparentProxy(obj))
+                surrogate = new RemotingSurrogateSelector();
+            else
+#endif
             if (ignoreCustomSerialization)
             {
-                formatter.Options |= BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.IgnoreIObjectReference;
-                formatter.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, IgnoreNonSerializedAttribute = true };
+                formatter.Options |= BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.IgnoreIObjectReference | BinarySerializationOptions.IgnoreIBinarySerializable;
+                surrogate = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, IgnoreNonSerializedAttribute = true };
             }
 
+            formatter.SurrogateSelector = surrogate;
             using (var stream = new MemoryStream())
             {
                 formatter.SerializeToStream(stream, obj);
                 stream.Position = 0L;
+#if NETFRAMEWORK
+                if (surrogate is RemotingSurrogateSelector)
+                    formatter.SurrogateSelector = null;
+#endif
                 return (T)formatter.DeserializeFromStream(stream);
             }
         }
