@@ -18,7 +18,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
+#if NETFRAMEWORK
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 # endif
@@ -32,14 +32,23 @@ using KGySoft.Reflection;
 namespace KGySoft.Serialization
 {
     /// <summary>
-    /// A wrapper class for serializing any kind of object, including the ones
-    /// that are not marked with <see cref="SerializableAttribute"/> or which are not supported by <see cref="BinaryFormatter"/>.
-    /// Can be useful when an object is needed to be serialized with <see cref="BinaryFormatter"/>.
+    /// Provides a wrapper class for serializing any kind of object, including the ones
+    /// that are not marked by the <see cref="SerializableAttribute"/>, or which are not supported by <see cref="BinaryFormatter"/>.
+    /// Can be useful when an object cannot be serialized by <see cref="BinarySerializationFormatter"/> so a <see cref="BinaryFormatter"/> must be used.
     /// When this object is deserialized, the clone of the wrapped original object is returned.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks><para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>
-    /// <para>This class supports serialization of remote objects, too.</para></remarks>
+    /// <para>In .NET Framework this class supports serialization of remote objects, too.</para>
+    /// <note type="warning">
+    /// <para>This class cannot guarantee that an object serialized in a framework can be deserialized in another one.
+    /// For such cases some text-based serialization might be better (see also the <see cref="XmlSerializer"/>).</para>
+    /// <para>In .NET Core the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
+    /// For such cases setting the <c>forceSerializationByFields</c> in the constructor can be a solution.</para>
+    /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para>
+    /// </note>
+    /// </remarks>
     [Serializable]
     public sealed class AnyObjectSerializerWrapper : ISerializable, IObjectReference
     {
@@ -47,7 +56,8 @@ namespace KGySoft.Serialization
 
         [NonSerialized]
         private readonly object obj;
-        private readonly bool useWeakBinding;
+        private readonly bool isWeak;
+        private readonly bool byFields;
 
         #endregion
 
@@ -60,12 +70,18 @@ namespace KGySoft.Serialization
         /// the provided object to be serialized.
         /// </summary>
         /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/>&#160;instances are supported, too.</param>
-        /// <param name="useWeakAssemblyBinding">When <see langword="true"/>, the assembly version of types does not need to match on deserialization.
-        /// This makes possible to deserialize objects stored in different version of the original assembly.</param>
-        public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding)
+        /// <param name="useWeakAssemblyBinding">When <see langword="true"/>, the assembly versions of types do not need to match on deserialization.
+        /// This makes possible to deserialize objects stored in different versions of the original assembly.</param>
+        /// <param name="forceSerializationByFields"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
+        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead performing a forced
+        /// field-based serialization. Can be useful for types whose <see cref="ISerializable"/> implementation throw a <see cref="PlatformNotSupportedException"/> on
+        /// .NET Core, for example; though it does not guarantee that the object will be deserializable on another platform. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
         {
             this.obj = obj;
-            useWeakBinding = useWeakAssemblyBinding;
+            isWeak = useWeakAssemblyBinding;
+            byFields = forceSerializationByFields;
         }
 
         #endregion
@@ -78,8 +94,10 @@ namespace KGySoft.Serialization
         {
             byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
-            if (info.GetBoolean("isWeak"))
+            if (info.GetBoolean(nameof(isWeak)))
                 serializer.Binder = new WeakAssemblySerializationBinder();
+            if (info.GetValueOrDefault<bool>(nameof(byFields)))
+                serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true };
             obj = serializer.Deserialize(rawData);
         }
 
@@ -95,12 +113,27 @@ namespace KGySoft.Serialization
         {
             if (info == null)
                 throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
-            info.AddValue("isWeak", useWeakBinding);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
+            ISurrogateSelector surrogate = null;
+#if NETFRAMEWORK
+            // ReSharper disable once LocalVariableHidesMember - intended, in non-Framework platforms the field is used.
+            bool byFields = this.byFields;
             if (RemotingServices.IsTransparentProxy(obj))
-                serializer.SurrogateSelector = new RemotingSurrogateSelector();
+            {
+                surrogate = new RemotingSurrogateSelector();
+                byFields = false;
+            }
+            else
 #endif
+            if (byFields)
+            {
+                serializer.Options |= BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.IgnoreIObjectReference | BinarySerializationOptions.IgnoreIBinarySerializable;
+                surrogate = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, IgnoreNonSerializedAttribute = true };
+            }
+
+            serializer.SurrogateSelector = surrogate;
+            info.AddValue(nameof(isWeak), isWeak);
+            info.AddValue(nameof(byFields), byFields);
             info.AddValue("data", serializer.Serialize(obj));
         }
 

@@ -629,17 +629,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // these types will be transformed to their wrapped representations
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
             object[] referenceObjects =
-                {
-                    // binary wrapper
-                    new AnyObjectSerializerWrapper("test", false),
+            {
+                // binary wrapper
+                new AnyObjectSerializerWrapper("test", false),
+                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false),
+                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false, true),
 
-#if !NETCOREAPP2_0 
-                    // legacy formats: KGy version converts these to self formats
-                    new System.Resources.ResXFileRef(path, "System.String"),
-                    new System.Resources.ResXDataNode("TestString", "string"),
-                    new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),  
+#if !NETCOREAPP2_0
+                // legacy formats: KGy version converts these to self formats
+                new System.Resources.ResXFileRef(path, "System.String"),
+                new System.Resources.ResXDataNode("TestString", "string"),
+                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
 #endif
-                };
+            };
 
             SystemSerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects);

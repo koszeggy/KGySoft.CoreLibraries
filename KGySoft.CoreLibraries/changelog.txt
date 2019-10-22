@@ -94,9 +94,7 @@
 + ResXResourceReader/ResXResourceWriter: Supporting every RuntimeType instance natively.
 
 ! KGySoft.Serialization namespace:
-==============================
-+ New ISerializationBinder interface: Contains the same members as the SerializationBinder class in .NET 4.0 and
-  later and allows for BinarySerializationFormatter to use the BindToName method in .NET 3.5 as well.
+==================================
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   ! The SerializationBinder that is set in the Binder property is not called for constructed generic types and
@@ -109,6 +107,10 @@
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
     deserialization rather than the original one used for the serialization. If that info is needed you need to save
     it into the custom serialized data.
++ AnyObjectSerializerWrapper class:
+  + New optional forceSerializationByFields parameter in constructor.
++ New ISerializationBinder interface: Contains the same members as the SerializationBinder class in .NET 4.0 and
+  later and allows for BinarySerializationFormatter to use the BindToName method in .NET 3.5 as well.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
 + New ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
