@@ -46,7 +46,7 @@ namespace KGySoft.Serialization
         {
             #region Fields
 
-            private List<Assembly> cachedAssemblies;
+            private List<(Assembly, string)> cachedAssemblies;
             private List<Type> cachedTypes;
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
@@ -59,7 +59,7 @@ namespace KGySoft.Serialization
             #region Properties
 
             private Dictionary<int, object> IdCache => idCache ??= new Dictionary<int, object> { { 0, null } };
-            private List<Assembly> CachedAssemblies => cachedAssemblies ??= new List<Assembly>(KnownAssemblies);
+            private List<(Assembly Assembly, string BoundName)> CachedAssemblies => cachedAssemblies ??= new List<(Assembly, string)>(KnownAssemblies.Select(a => (a, (string)null)));
 
             private List<Type> CachedTypes
             {
@@ -254,15 +254,17 @@ namespace KGySoft.Serialization
                 if (index == NewAssemblyIndex)
                 {
                     // assembly qualified name (GetType uses binder if set)
-                    Type type = GetType(br.ReadString(), br.ReadString());
-                    CachedAssemblies.Add(type.Assembly);
+                    string boundAssemblyName = br.ReadString();
+                    string boundTypeName = br.ReadString();
+                    Type type = GetType(boundAssemblyName, boundTypeName);
+                    CachedAssemblies.Add((type.Assembly, boundAssemblyName));
                     CachedTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
                         type = HandleGenericTypeDef(br, type, allowOpenTypes);
                     return type;
                 }
 
-                Assembly assembly = null;
+                (Assembly Assembly, string BoundName) assembly = default;
 
                 // type with assembly (if assembly is not omitted)
                 if (index != OmitAssemblyIndex)
@@ -278,8 +280,8 @@ namespace KGySoft.Serialization
                 if (index == NewTypeIndex)
                 {
                     string typeName = br.ReadString();
-                    Type type = ReadBoundType(assembly?.FullName, typeName)
-                            ?? (assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName))
+                    Type type = ReadBoundType(assembly.BoundName, typeName)
+                            ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
                             ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
                     CachedTypes.Add(type);
