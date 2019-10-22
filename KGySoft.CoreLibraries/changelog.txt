@@ -37,6 +37,9 @@
 	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
 + Enum<TEnum> class:
   + New GetFlagsMask method
++ ObjectExtensions class:
+  + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
+    the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
 + TypeExtensions class:
   + New GetName extension method for formatting type names in a more consistent way than Type members.
 + New TypeNameKind enum: For the TypeExtensions.GetName method.
@@ -113,7 +116,8 @@
   identities even in .NET Core and .NET Standard, for example.
 + New CustomSerializerSurrogateSelector class: Makes possible to customize the serialization and deserialization
   process both with the original BinaryFormatter and KGy SOFT BinarySerializationFormatter. Can be useful for
-  serializing non-serializable types or deserializing changed types even across different platforms.
+  serializing non-serializable types or deserializing changed types even across different platforms, eg.
+  .NET Framework and .NET Core.
 * WeakAssemblySerializationBinder:
   + Implements ISerializationBinder.
   + The OmitAssemblyNameOnSerialize property is available also in .NET 3.5. A BinaryFormatter still ignores this

@@ -64,10 +64,12 @@ namespace KGySoft.Serialization
     /// // deserializing a MemoryStream in .NET Core that was serialized in .NET Framework
     /// var formatter = new BinaryFormatter { SurrogateSelector = new CustomSerializerSurrogateSelector() };
     /// var memoryStream = (MemoryStream)formatter.Deserialize(streamSerializedInNetFramework); ]]></code></description></item>
-    /// <item><term>The original type implements <see cref="ISerializable"/></term><description>In .NET Core 2.x there are several types that still
+    /// <item><term>The original type implements <see cref="ISerializable"/></term><description>In .NET Core there are several types that still
     /// implement <see cref="ISerializable"/>, though their <see cref="ISerializable.GetObjectData">ISerializable.GetObjectData</see> method
-    /// throws a <see cref="PlatformNotSupportedException"/> (eg. <see cref="DBNull"/>, <see cref="Type"/>). In .NET Core 3.0 the <see cref="ISerializable"/>
-    /// implementation has also been removed. along with the <see cref="SerializableAttribute"/>. For such cases there are more possible solutions:
+    /// throws a <see cref="PlatformNotSupportedException"/> (eg. <see cref="DBNull"/>, <see cref="Type"/> and <see cref="Assembly"/> in .NET Core 2).
+    /// It still can change, for example, in .NET Core 3.0 <see cref="DBNull"/> is serializable again, <see cref="Assembly"/> remained the same and
+    /// from <see cref="Type"/> the <see cref="ISerializable"/> implementation has also been removed along with the <see cref="SerializableAttribute"/>.
+    /// For such cases there are more possible solutions:
     /// <list type="bullet">
     /// <item>In best cases it is enough to use the <see cref="BinarySerializationFormatter"/> both for serializing and deserializing without any surrogate selector.
     /// It natively supports <see cref="Type"/> instances in all platforms</item>

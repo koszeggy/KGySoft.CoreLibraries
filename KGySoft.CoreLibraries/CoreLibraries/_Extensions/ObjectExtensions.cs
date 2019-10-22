@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Runtime.Serialization;
 using KGySoft.Serialization;
 
 #endregion
@@ -146,15 +147,35 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Clones an object by deep cloning.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">Type of the object</typeparam>
         /// <param name="obj">The object to clone.</param>
+        /// <param name="ignoreCustomSerialization"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
+        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead performing a forced
+        /// field-based serialization. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
-        /// <remarks>This method clones types even without <see cref="SerializableAttribute"/>; however,
-        /// in such case it is not guaranteed that the result is functionally equivalent to the input object.</remarks>
-        public static T DeepClone<T>(this T obj)
+        /// <remarks>
+        /// <para>This method makes possible to clone objects even if their type is not marked by the <see cref="SerializableAttribute"/>; however,
+        /// in such case it is not guaranteed that the result is functionally equivalent to the input object.</para>
+        /// <note type="warning">In .NET Core there are some types that implement the <see cref="ISerializable"/> interface, though they are not serializable.
+        /// In such cases the cloning attempt typically throws a <see cref="PlatformNotSupportedException"/>. To clone such objects the <paramref name="ignoreCustomSerialization"/>
+        /// parameter should be <see langword="true"/>.</note>
+        /// <para>If <paramref name="ignoreCustomSerialization"/> is <see langword="false"/>, then it is not guaranteed that the object can be cloned in all circumstances (see the note above).</para>
+        /// <para>On the other hand, if <paramref name="ignoreCustomSerialization"/> is <see langword="true"/>, then it can happen that even singleton types will be deep cloned.
+        /// The cloning is performed by the <see cref="BinarySerializationFormatter"/> class, which supports some singleton types natively (such as <see cref="Type"/> and <see cref="DBNull"/>),
+        /// which will be always cloned correctly.</para>
+        /// </remarks>
+        public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             var formatter = new BinarySerializationFormatter();
+            if (ignoreCustomSerialization)
+            {
+                formatter.Options |= BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.IgnoreIObjectReference;
+                formatter.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, IgnoreNonSerializedAttribute = true };
+            }
+
             using (var stream = new MemoryStream())
             {
                 formatter.SerializeToStream(stream, obj);

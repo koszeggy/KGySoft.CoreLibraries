@@ -35,9 +35,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class ObjectExtensionsTest : TestBase
     {
-        #region Properties
+        #region Fields
 
-        private object[] DeepCloneTestSource { get; } =
+        private static object[] deepCloneTestSource =
         {
             // natively supported types
             null,
@@ -48,7 +48,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // custom serializable types
             new DataTable("table"),
 
-            // non serializable types
+            // non serializable
             new BitVector32(13),
 
             // not serializable in .NET Core
@@ -112,10 +112,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new List<char> { 'a', 'b', 'c' }, "abc");
         }
 
-        [TestCaseSource(nameof(DeepCloneTestSource))]
-        public void DeepCloneTest()
+        [TestCaseSource(nameof(deepCloneTestSource))]
+        public void DeepCloneTest(object obj)
         {
-            throw new NotImplementedException();
+            AssertDeepEquals(obj, obj.DeepClone());
+            AssertDeepEquals(obj, obj.DeepClone(true));
         }
 
         #endregion
