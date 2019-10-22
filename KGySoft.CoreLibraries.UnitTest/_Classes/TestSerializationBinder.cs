@@ -48,9 +48,11 @@ namespace KGySoft.CoreLibraries
 
         public override Type BindToType(string assemblyName, string typeName)
         {
-            if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
+            Assert.IsTrue(assemblyName.StartsWith("rev_", StringComparison.Ordinal));
+            Assert.IsTrue(typeName.StartsWith("rev_", StringComparison.Ordinal));
+            //if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
                 assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
-            if (typeName.StartsWith("rev_", StringComparison.Ordinal))
+            //if (typeName.StartsWith("rev_", StringComparison.Ordinal))
                 typeName = new string(typeName.Substring(4).Reverse().ToArray());
 
             Assembly assembly = assemblyName.Length == 0 ? null : Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);

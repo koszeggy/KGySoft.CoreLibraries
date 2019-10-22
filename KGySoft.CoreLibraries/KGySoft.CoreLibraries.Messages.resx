@@ -412,6 +412,9 @@ Hit rate: {8:P2}</value>
   <data name="Serialization_RootTypeExpected" xml:space="preserve">
     <value>Simple runtime element types or generic type definitions are expected.</value>
   </data>
+  <data name="Serialization_MissingFieldFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</value>
+  </data>
   <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>

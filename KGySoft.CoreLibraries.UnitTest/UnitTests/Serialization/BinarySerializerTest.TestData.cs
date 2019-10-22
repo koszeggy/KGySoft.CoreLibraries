@@ -398,9 +398,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public string Name { get; set; }
 
-            public SerializationEventsClass Parent { get { return parent; } }
+            public SerializationEventsClass Parent => parent;
 
-            public ICollection Children { get { return children; } }
+            public ICollection<SerializationEventsClass> Children => children;
 
             #endregion
 
@@ -449,10 +449,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     && children.SequenceEqual(other.children);
             }
 
-            public override string ToString()
-            {
-                return String.Format("{0} - {1}", Id, Name ?? "<null>");
-            }
+            public override string ToString() => $"{Id} - {Name ?? "<null>"}";
 
             #endregion
 
@@ -935,9 +932,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public string Name { get; set; }
 
-            public CircularReferenceClass Parent { get { return parent; } }
+            public CircularReferenceClass Parent => parent;
 
-            public Collection<CircularReferenceClass> Children { get { return children; } }
+            public Collection<CircularReferenceClass> Children => children;
 
             #endregion
 
@@ -972,7 +969,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override string ToString()
             {
-                return String.Format("{0} - {1}", Id, Name ?? "<null>");
+                return $"{Id} - {Name ?? "<null>"}";
             }
 
             #endregion
@@ -1164,35 +1161,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             #region Public Methods
 
             [SecurityCritical]
-            public void ChainSelector(ISurrogateSelector selector)
-            {
-                next = selector;
-            }
+            public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
             [SecurityCritical]
-            public ISurrogateSelector GetNextSelector()
-            {
-                return next;
-            }
+            public ISurrogateSelector GetNextSelector() => next;
 
             [SecurityCritical]
             public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
             {
                 if (type == null)
-                {
                     throw new ArgumentNullException(nameof(type));
-                }
 
-                if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(typeof(string), typeof(UIntPtr)))
+                if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && type != typeof(string))
                 {
                     selector = this;
                     return this;
                 }
 
                 if (next != null)
-                {
                     return next.GetSurrogate(type, context, out selector);
-                }
 
                 selector = null;
                 return null;
@@ -1217,9 +1204,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     FieldInfo[] fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(f => !f.IsNotSerialized).ToArray();
                     foreach (FieldInfo field in fields)
-                    {
                         info.AddValue(field.Name, Reflector.GetField(obj, field));
-                    }
                 }
             }
 
@@ -1232,9 +1217,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     throw new ArgumentNullException(nameof(info));
 
                 foreach (SerializationEntry entry in info)
-                {
                     Reflector.SetField(obj, entry.Name, entry.Value);
-                }
 
                 return obj;
             }
@@ -1271,14 +1254,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public string Str10
             {
-                get { return str10; }
-                set { str10 = value; }
+                get => str10;
+                set => str10 = value;
             }
 
             public byte[] Bytes3
             {
-                get { return bytes3; }
-                set { bytes3 = value; }
+                get => bytes3;
+                set => bytes3 = value;
             }
 
             #endregion

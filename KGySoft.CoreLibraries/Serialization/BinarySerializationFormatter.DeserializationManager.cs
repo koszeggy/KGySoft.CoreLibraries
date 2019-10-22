@@ -51,7 +51,7 @@ namespace KGySoft.Serialization
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
-            private Dictionary<object, List<KeyValuePair<FieldInfo, object>>> objectReferences;
+            private Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>> objectReferences;
             private List<IDeserializationCallback> deserializationRegObjects;
 
             #endregion
@@ -904,6 +904,7 @@ namespace KGySoft.Serialization
 
                 // reading original fields into si
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
+                var existingNames = new Dictionary<string, int>();
                 do
                 {
                     // reading fields of current level
@@ -911,6 +912,17 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < count; i++)
                     {
                         string name = br.ReadString();
+
+                        // conflicting names can occur if there are fields of the same name in the base class
+                        int usedCount = existingNames.GetValueOrDefault(name);
+                        if (usedCount == 0)
+                            existingNames[name] = 1;
+                        else
+                        {
+                            existingNames[name] = ++usedCount;
+                            name += usedCount.ToString(CultureInfo.InvariantCulture);
+                        }
+
                         object value = Read(br, false);
                         si.AddValue(name, value);
                     }
@@ -937,47 +949,28 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void ReadCustomObjectGraphAsDefault(BinaryReader br, object obj)
             {
-                int count = Read7BitInt(br);
-                Dictionary<string, object> elements = new Dictionary<string, object>(count);
+                // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
+                // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
+                Dictionary<string, FieldInfo> fields = BinarySerializer.GetFieldsWithUniqueNames(obj.GetType(), true);
 
-                // reading content into the dictionary
+                // Reading the custom content and trying to identify them as fields
+                int count = Read7BitInt(br);
                 for (int i = 0; i < count; i++)
                 {
                     string name = br.ReadString();
                     object value = Read(br, false);
                     if (!br.ReadBoolean())
+                        ReadType(br); // the change element type, which is ignored now
+
+                    if (fields.TryGetValue(name, out FieldInfo field))
                     {
-                        Type elementType = ReadType(br);
-                        if (value != null && value.GetType() != elementType)
-                            value = Convert.ChangeType(value, elementType, CultureInfo.InvariantCulture); // this is what FormatterConverter does as well on SerializationInfo.GetValue
+                        TrySetField(field, obj, value);
+                        continue;
                     }
 
-                    elements[name] = value;
+                    if (!IgnoreObjectChanges)
+                        throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
                 }
-
-                if (count == 0)
-                    return;
-
-                bool checkFields = !IgnoreObjectChanges;
-
-                // ReSharper disable once PossibleNullReferenceException - every type is derived from object here
-                // iterating through fields and setting found elements
-                for (Type t = obj.GetType(); t != Reflector.ObjectType; t = t.BaseType)
-                {
-                    FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
-                    foreach (FieldInfo field in fields)
-                    {
-                        if (elements.TryGetValue(field.Name, out object value))
-                        {
-                            TrySetField(field, obj, value);
-                            if (checkFields)
-                                elements.Remove(field.Name);
-                        }
-                    }
-                }
-
-                if (checkFields && elements.Count > 0)
-                    throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), elements.First().Key));
             }
 
             [SecurityCritical]
@@ -1074,7 +1067,7 @@ namespace KGySoft.Serialization
                 {
                     // the object reference cannot be set yet so storing the new usage of the reference to be set later.
                     if (objectReferences == null)
-                        objectReferences = new Dictionary<object, List<KeyValuePair<FieldInfo, object>>>(1, ReferenceEqualityComparer.Comparer);
+                        objectReferences = new Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>>(1, ReferenceEqualityComparer<IObjectReference>.Comparer);
 
                     if (!objectReferences.TryGetValue(objRef, out List<KeyValuePair<FieldInfo, object>> refUsages))
                     {

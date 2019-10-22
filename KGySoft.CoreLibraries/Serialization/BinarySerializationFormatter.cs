@@ -26,7 +26,9 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Security;
+#if !NET35
+using System.Security; 
+#endif
 using System.Text;
 
 using KGySoft.Collections;

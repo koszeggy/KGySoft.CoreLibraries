@@ -20,8 +20,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Data;
+using System.Globalization;
+using System.IO;
 using System.Linq;
-
+using System.Text;
 using NUnit.Framework;
 
 #endregion
@@ -31,6 +35,30 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class ObjectExtensionsTest : TestBase
     {
+        #region Properties
+
+        private object[] DeepCloneTestSource { get; } =
+        {
+            // natively supported types
+            null,
+            1,
+            typeof(int),
+            new List<int> { 1 },
+
+            // custom serializable types
+            new DataTable("table"),
+
+            // non serializable types
+            new BitVector32(13),
+
+            // not serializable in .NET Core
+            CultureInfo.GetCultureInfo("en-US"),
+            new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+            new MemoryStream(new byte[] { 1, 2, 3 })
+        };
+
+        #endregion
+
         #region Methods
 
         [Test]
@@ -39,7 +67,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             void Test<TTarget>(object source, TTarget expectedResult)
             {
                 TTarget actualResult = source.Convert<TTarget>();
-                AssertMembersAndItemsEqual(expectedResult, actualResult);
+                AssertDeepEquals(expectedResult, actualResult);
             }
 
             // IConvertible
@@ -47,7 +75,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(1, "1");
             Test(1.0, 1);
             Test("1", true); // Parse
-            Test(100.12, 'x'); // double -> long -> char
+            Test(100.12, 'd'); // double -> long -> char
             Test(13.45m, ConsoleColor.Magenta); // decimal -> long -> enum
 
             // Registered conversions
@@ -84,6 +112,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new List<char> { 'a', 'b', 'c' }, "abc");
         }
 
-#endregion
+        [TestCaseSource(nameof(DeepCloneTestSource))]
+        public void DeepCloneTest()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
     }
 }

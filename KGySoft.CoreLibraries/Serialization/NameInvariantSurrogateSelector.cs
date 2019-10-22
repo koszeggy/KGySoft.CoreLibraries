@@ -46,6 +46,9 @@ namespace KGySoft.Serialization
     /// Please note that this surrogate selector does not identify field names on deserialization so reordering members may corrupt or fail deserialization.
     /// </note>
     /// </remarks>
+    /// <seealso cref="WeakAssemblySerializationBinder" />
+    /// <seealso cref="CustomSerializerSurrogateSelector" />
+    /// <seealso cref="BinarySerializationFormatter" />
     public class NameInvariantSurrogateSelector : ISurrogateSelector, ISerializationSurrogate
     {
         #region Fields
@@ -86,7 +89,7 @@ namespace KGySoft.Serialization
         /// <param name="type">The <see cref="Type"/> of object that needs a surrogate.</param>
         /// <param name="context">The source or destination context for the current serialization.</param>
         /// <param name="selector">When this method returns, contains a <see cref="ISurrogateSelector"/> that holds a reference to the surrogate selector where the appropriate surrogate was found.</param>
-        /// <exception cref="T:System.Security.SecurityException">The caller does not have the required permission.</exception>
+        /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
         [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
@@ -94,7 +97,7 @@ namespace KGySoft.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (!type.IsPrimitive && type != Reflector.StringType && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) )
+            if (!type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) )
             {
                 selector = this;
                 return this;
@@ -105,7 +108,6 @@ namespace KGySoft.Serialization
 
             selector = null;
             return null;
-
         }
 
         #endregion

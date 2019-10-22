@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -428,6 +429,38 @@ namespace KGySoft.Serialization
         }
 
         internal static FieldInfo[] GetSerializableFields(Type t) => serializableFieldsCache[t];
+
+        internal static Dictionary<string, FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
+        {
+            var result = new Dictionary<string, (FieldInfo Field, int Count)>();
+
+            // ReSharper disable once PossibleNullReferenceException
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                FieldInfo[] fields = considerNonSerialized
+                    ? GetSerializableFields(t)
+                    : t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
+                foreach (FieldInfo field in fields)
+                {
+                    string name = field.Name;
+                    if (!result.TryGetValue(name, out var entry))
+                    {
+                        result[name] = (field, 1);
+                        continue;
+                    }
+
+                    entry.Count++;
+                    result[name] = entry;
+                    name += entry.Count.ToString(CultureInfo.InvariantCulture);
+                    result[name] = (field, 1);
+                }
+            }
+
+            return result.ToDictionary(e => e.Key, e => e.Value.Field);
+        }
+
 
         #endregion
 

@@ -97,9 +97,9 @@
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   ! The SerializationBinder that is set in the Binder property is not called for constructed generic types and
-    natively supported types anymore. Instead, it is called for the generic type definition and every element types
-    separately. To call the binder for supported non-primitive types use the new
-    ForceRecursiveSerializationOfSupportedTypes flag in the options.
+    natively supported types anymore. Instead, it is called for the generic type definition and the element types
+    separately. To call the binder for supported non-primitive types the ForceRecursiveSerializationOfSupportedTypes
+    flag can be enabled in the options.
   + Supporting runtime types natively. It was required for .NET Core/Standard that cannot serialize Type instances.
   * Improving performance.
 ! IBinarySerializable interface (behavioral change for implementations):
@@ -111,6 +111,9 @@
 + New ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
   using writing the legacy identity of a forwarded type. This makes possible to use the .NET Framework assembly
   identities even in .NET Core and .NET Standard, for example.
++ New CustomSerializerSurrogateSelector class: Makes possible to customize the serialization and deserialization
+  process both with the original BinaryFormatter and KGy SOFT BinarySerializationFormatter. Can be useful for
+  serializing non-serializable types or deserializing changed types even across different platforms.
 * WeakAssemblySerializationBinder:
   + Implements ISerializationBinder.
   + The OmitAssemblyNameOnSerialize property is available also in .NET 3.5. A BinaryFormatter still ignores this

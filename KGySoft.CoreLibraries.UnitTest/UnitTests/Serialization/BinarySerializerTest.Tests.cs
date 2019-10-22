@@ -1195,40 +1195,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         }
 
         [Test]
-        public void ForwardedTypesSerializationBinderTest()
-        {
-            object testObject = TestEnumInt.Limit;
-            var binder = new ForwardedTypesSerializationBinder { WriteLegacyIdentity = true };
-            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly, Version=1.2.3.4, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
-
-            byte[] oldAssemblyData = new BinarySerializationFormatter { Binder = binder }.Serialize(testObject);
-
-            // without a binder
-            Throws<SerializationException>(() => new BinarySerializationFormatter().Deserialize(oldAssemblyData));
-
-            // with a binder from the very specific assembly
-            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
-
-            // the binder does not have the correct assembly
-            binder = new ForwardedTypesSerializationBinder();
-            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeIrrelevantAssembly, Version=1.2.3.4, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
-            Throws<SerializationException>(() => new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
-
-            // the binder does not have the correct version
-            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b45eba277439ddfe"));
-            Throws<SerializationException>(() => new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
-
-            // from any assembly
-            binder.AddType(typeof(TestEnumInt)); // allow resolving from any assemblies
-            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
-
-            // only from specified assembly but allowing any version
-            binder = new ForwardedTypesSerializationBinder();
-            binder.AddType(typeof(TestEnumInt), new AssemblyName("SomeUnknownAssembly"));
-            Assert.AreEqual(testObject, new BinarySerializationFormatter { Binder = binder }.Deserialize(oldAssemblyData));
-        }
-
-        [Test]
         public void SerializationSurrogateTest()
         {
             object[] referenceObjects =
@@ -1416,6 +1382,53 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // System.MemberAccessException: Cannot create an abstract class.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+        }
+
+        [Test]
+        public void CustomSerializerSurrogateSelectorTest()
+        {
+            object[] referenceObjects =
+            {
+                // natively supported types
+                1,
+                "alpha",
+
+                // can be forced to use surrogate selector
+                new List<int> { 1 },
+                typeof(List<int>),
+                typeof(List<>),
+                typeof(List<>).GetGenericArguments()[0],
+
+                // custom serializable types
+                new CustomSerializedClass { Bool = true, Name = nameof(CustomSerializedClass) },
+                new SerializationEventsClass { Name = nameof(SerializationEventsClass), },
+
+                // non serializable types
+                new BitVector32(13),
+                new NonSerializableClass { IntProp = 13, StringProp = "alpha"}, 
+
+                // not serializable in .NET Core
+                new MemoryStream(new byte[] { 1, 2, 3 }),
+                new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+            };
+
+            var selector = new KGySoft.Serialization.CustomSerializerSurrogateSelector();
+            string title = "Default settings";
+            
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+
+            title = "Forcing field-based serialization";
+            selector.IgnoreISerializable = true;
+            selector.IgnoreNonSerializedAttribute = true;
+
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreSerializationMethods, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.TryUseSurrogateSelectorForAnyType,
+                title, surrogateSelector: selector, safeCompare:true); // safe: Types
         }
 
         [Test]

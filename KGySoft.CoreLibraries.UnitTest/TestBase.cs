@@ -97,8 +97,10 @@ namespace KGySoft.CoreLibraries
         #region Protected Methods
 
         /// <summary>
-        /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
+        /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth.
+        /// If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
         /// then comparing by public fields/properties is forced for non-primitive types also when Equals is overridden.
+        /// By default, Equals is called for types with overridden Equals.
         /// </summary>
         protected static void AssertDeepEquals(object reference, object check, bool forceEqualityByMembers = false)
         {
@@ -118,6 +120,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
+        /// If the root objects can be simple objects use the <see cref="AssertDeepEquals"/> instead.
         /// </summary>
         protected static void AssertMembersAndItemsEqual(object reference, object check)
         {
@@ -141,6 +144,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
+        /// If the root objects can be simple objects use the <see cref="CheckDeepEquals"/> instead.
         /// </summary>
         protected static bool MembersAndItemsEqual(object reference, object check)
             => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
@@ -235,8 +239,7 @@ namespace KGySoft.CoreLibraries
 
             Type typeRef = reference?.GetType();
             Type typeChk = check?.GetType();
-
-            if (!Check(typeRef != null && typeChk != null, $"{typeRef?.ToString() ?? "null"} compared to {typeChk?.ToString() ?? "null"}", errors))
+            if (!Check(typeRef != null && typeChk != null, $"'{reference ?? "<null>"}' compared to '{check ?? "<null>"}'", errors))
                 return false;
 
             if (typeRef == typeof(AnyObjectSerializerWrapper))

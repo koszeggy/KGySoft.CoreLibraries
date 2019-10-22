@@ -19,8 +19,8 @@
     <HtmlHelpName>KGySoft.CoreLibraries</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="bin\Release\net45\KGySoft.CoreLibraries.dll" />
-<DocumentationSource sourceFile="bin\Release\net45\KGySoft.CoreLibraries.xml" /></DocumentationSources>
+      <DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.dll" />
+<DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.xml" /></DocumentationSources>
     <HelpFileFormat>HtmlHelp1</HelpFileFormat>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>

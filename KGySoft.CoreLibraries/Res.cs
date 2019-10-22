@@ -870,6 +870,13 @@ namespace KGySoft
 
         #endregion
 
+        #region Serialization (any ways)
+
+        /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</summary>
+        internal static string SerializationMissingField(Type type, string field) => Get("Serialization_MissingFieldFormat", type, field);
+
+        #endregion
+
         #region StringExtensions
 
         /// <summary>The specified string '{0}' cannot be parsed as type {1}.</summary>
