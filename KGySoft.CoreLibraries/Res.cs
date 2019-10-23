@@ -875,6 +875,9 @@ namespace KGySoft
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</summary>
         internal static string SerializationMissingField(Type type, string field) => Get("Serialization_MissingFieldFormat", type, field);
 
+        /// <summary>Array of pointer type '{0}' is not supported.</summary>
+        internal static string SerializationPointerArrayTypeNotSupported(Type type) => Get("Serialization_PointerArrayTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
+
         #endregion
 
         #region StringExtensions

@@ -1204,7 +1204,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     FieldInfo[] fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(f => !f.IsNotSerialized).ToArray();
                     foreach (FieldInfo field in fields)
-                        info.AddValue(field.Name, Reflector.GetField(obj, field));
+                        info.AddValue(field.Name, field.Get(obj));
                 }
             }
 

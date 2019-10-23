@@ -224,6 +224,8 @@ namespace KGySoft.Serialization
                 }
 
                 // non-primitive type array or compact serialization is not enabled
+                if (elementType.IsPointer)
+                    throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
                 foreach (var item in array)
                 {
                     writer.WriteStartElement(XmlSerializer.ElementItem);

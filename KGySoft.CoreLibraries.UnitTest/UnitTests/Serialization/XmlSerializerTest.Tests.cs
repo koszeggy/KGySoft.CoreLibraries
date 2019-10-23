@@ -1185,6 +1185,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
 
+        [Test]
+        public unsafe void SerializePointers()
+        {
+            object[] referenceObjects =
+            {
+                // Pointer fields
+                new UnsafeStruct(),
+                new UnsafeStruct
+                {
+                    VoidPointer = (void*)new IntPtr(1),
+                    IntPointer = (int*)new IntPtr(1),
+                    PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
+                    PointerOfPointer = (void**)new IntPtr(1)
+                },
+            };
+
+            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: System.Void* cannot be serialized because it does not have a parameterless constructor.
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+
+            referenceObjects = new object[]
+            {
+                // Pointer Array
+                new int*[] { (int*)IntPtr.Zero },
+            };
+
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Array of pointer type 'System.Int32*[]' is not supported.");
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Array of pointer type 'System.Int32*[]' is not supported.");
+        }
+
         #endregion
     }
 }

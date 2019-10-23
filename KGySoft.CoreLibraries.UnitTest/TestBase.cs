@@ -422,11 +422,11 @@ namespace KGySoft.CoreLibraries
 
             // public fields
             foreach (FieldInfo field in typeRef.GetFields(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", field.Get(reference),  field.Get(check), false, errors, checkedObjects);
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
-                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
 
             // collection elements
             var collSrc = reference as IEnumerable;

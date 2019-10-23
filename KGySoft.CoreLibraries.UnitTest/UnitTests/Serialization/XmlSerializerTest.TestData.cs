@@ -1093,6 +1093,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region UnsafeStruct struct
+
+        public unsafe struct UnsafeStruct
+        {
+            #region Fields
+
+            public void* VoidPointer;
+            public int* IntPointer;
+
+            #endregion
+
+            #region Properties
+
+            public int*[] PointerArray { get; set; }
+            public void** PointerOfPointer { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #endregion

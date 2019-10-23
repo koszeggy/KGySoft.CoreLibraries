@@ -248,7 +248,9 @@ namespace KGySoft.Serialization
                 }
 
                 // non-primitive type array or compact serialization is not enabled
-                foreach (var item in array)
+                if (elementType.IsPointer)
+                    throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
+                foreach (object item in array)
                 {
                     XElement child = new XElement(XmlSerializer.ElementItem);
                     if (item != null)

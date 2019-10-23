@@ -201,6 +201,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region UnsafeStruct struct
+
+        [Serializable]
+        private unsafe struct UnsafeStruct
+        {
+            #region Fields
+
+            public void* VoidPointer;
+            public int* IntPointer;
+            public int*[] PointerArray;
+            public void** PointerOfPointer;
+
+            #endregion
+        }
+
+        #endregion
+
         #region ChangedClassOld class
 
         [Serializable]
@@ -259,6 +276,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             // normally serialized
             new List<int> { 1 },
+
+            // pointer fields
+            // new UnsafeStruct(), - CustomizationTest uses reflector
 
             // normal serializable class with serialization events and NonSerialized fields
             new SerializationEventsClass{ Name = "Parent" }.AddChild("Child").Parent, 

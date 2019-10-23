@@ -774,14 +774,27 @@ namespace KGySoft.Reflection
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal static object Get(this FieldInfo field, object instance) => FieldAccessor.GetAccessor(field).Get(instance);
+        internal static unsafe object Get(this FieldInfo field, object instance)
+        {
+            if (field.FieldType.IsPointer)
+                return new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)));
+
+            return FieldAccessor.GetAccessor(field).Get(instance);
+        }
 
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal static void Set(this FieldInfo field, object instance, object value)
+        internal static unsafe void Set(this FieldInfo field, object instance, object value)
         {
             Debug.Assert(!field.IsLiteral);
+
+            if (field.FieldType.IsPointer)
+            {
+                field.SetValue(instance, Pointer.Box(((IntPtr)value).ToPointer(), field.FieldType));
+                return;
+            }
+
 #if NETSTANDARD2_0
             if (field.IsInitOnly || !field.IsStatic && field.DeclaringType?.IsValueType == true)
             {
@@ -796,9 +809,13 @@ namespace KGySoft.Reflection
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal static object Get(this PropertyInfo property, object instance)
+        internal static unsafe object Get(this PropertyInfo property, object instance)
         {
             Debug.Assert(property.CanRead);
+
+            if (property.PropertyType.IsPointer)
+                return new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)));
+
 #if NETSTANDARD2_0
             if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
                 return property.GetValue(instance);
@@ -809,9 +826,16 @@ namespace KGySoft.Reflection
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal static void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
+        internal static unsafe void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
         {
             Debug.Assert(property.CanWrite);
+
+            if (property.PropertyType.IsPointer)
+            {
+                property.SetValue(instance, Pointer.Box(((IntPtr)value).ToPointer(), property.PropertyType), null);
+                return;
+            }
+
 #if NETSTANDARD2_0
             if (!property.GetSetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
             {

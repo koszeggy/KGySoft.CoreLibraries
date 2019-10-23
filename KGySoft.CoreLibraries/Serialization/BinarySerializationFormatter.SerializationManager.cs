@@ -936,6 +936,8 @@ namespace KGySoft.Serialization
                     }
 
                     // 2.b.) Complex array
+                    if (elementType.IsPointer)
+                        throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                     collectionTypeDescriptor.RemoveFirst();
                     WriteCollectionElements(bw, array, collectionTypeDescriptor, elementDataType, elementType);
                     return;

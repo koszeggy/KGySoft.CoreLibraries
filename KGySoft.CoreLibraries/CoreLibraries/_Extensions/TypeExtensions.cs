@@ -117,13 +117,19 @@ namespace KGySoft.CoreLibraries
             if (type == instanceType)
                 return true;
 
-            // When unboxing, enums are compatible with their underlying type
             // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType and type.GetElementType calls above
+            if (type.IsAssignableFrom(instanceType))
+                return true;
+
+            // When unboxing, enums are compatible with their underlying type
             if (value is Enum && type == Enum.GetUnderlyingType(instanceType) // eg. (int)objValueContainingEnum
                 || type.BaseType == Reflector.EnumType && instanceType == Enum.GetUnderlyingType(type)) // eg. (MyEnum)objValueContainingInt
                 return true;
 
-            return type.IsAssignableFrom(instanceType);
+            if (type.IsPointer)
+                return instanceType == Reflector.IntPtrType;
+
+            return false;
         }
 
         /// <summary>

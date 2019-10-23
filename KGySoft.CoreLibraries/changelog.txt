@@ -113,6 +113,7 @@
     separately. To call the binder for supported non-primitive types the ForceRecursiveSerializationOfSupportedTypes
     flag can be enabled in the options.
   + Supporting runtime types natively. It was required for .NET Core/Standard that cannot serialize Type instances.
+  + Supports serializing pointer fields.
   * Improving performance.
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the

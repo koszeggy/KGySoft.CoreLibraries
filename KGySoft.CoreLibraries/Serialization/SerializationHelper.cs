@@ -87,19 +87,7 @@ namespace KGySoft.Serialization
             for (Type t = target.GetType(); t != null; t = t.BaseType)
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                {
-                    // not using the Get/Set extensions because then accessor would be retrieved two times
-                    FieldAccessor accessor = FieldAccessor.GetAccessor(field);
-#if NETSTANDARD2_0 // using the FieldInfo to set for value types
-                    if (field.IsInitOnly || t.IsValueType)
-                    {
-                        field.SetValue(target, accessor.Get(source));
-                        continue;
-                    }
-#endif
-
-                    accessor.Set(target, accessor.Get(source));
-                }
+                    field.Set(target, field.Get(source));
             }
         }
 

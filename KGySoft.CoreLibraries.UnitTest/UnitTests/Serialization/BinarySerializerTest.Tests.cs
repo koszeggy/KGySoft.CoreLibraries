@@ -1278,6 +1278,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 #endif
 
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
+
+                // Pointer fields
+                // new UnsafeStruct(), - TestSurrogateSelector calls Reflector.SetField now
             };
 
             // default
@@ -1375,6 +1378,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 #endif
 
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
+
+                // Pointer fields
+                new UnsafeStruct(), 
             };
 
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
@@ -1407,9 +1413,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 // not serializable in .NET Core but otherwise they are compatible
                 new MemoryStream(new byte[] { 1, 2, 3 }),
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+
+                // pointer arrays
+                new UnsafeStruct(),
             };
 
-            var selector = new KGySoft.Serialization.CustomSerializerSurrogateSelector();
+            var selector = new CustomSerializerSurrogateSelector();
             string title = "Default settings";
             
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
@@ -1428,11 +1437,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             selector.IgnoreISerializable = true;
             selector.IgnoreNonSerializedAttribute = true;
 
-            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector, safeCompare: true);
 
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreSerializationMethods, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.TryUseSurrogateSelectorForAnyType,
-                title, surrogateSelector: selector, safeCompare:true); // safe: Types
+                title, surrogateSelector: selector, safeCompare: true); // safe: Types
         }
 
         [Test]
@@ -1551,7 +1560,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     VoidPointer = (void*)new IntPtr(1),
                     IntPointer = (int*)new IntPtr(1),
                     StructPointer = (Point*)new IntPtr(1),
-                    PointerArray = new int*[] { (int*)new IntPtr(1), null },
+                    PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
                     PointerOfPointer = (void**)new IntPtr(1)
                 },
             };
@@ -1559,24 +1568,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
 
-            // TODO
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None));
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             referenceObjects = new object[]
             {
-                // Pointer Arrays
-                new int*[0],
+                // Pointer Array
                 new int*[] { (int*)IntPtr.Zero },
-                new void*[] { (void*)IntPtr.Zero },
             };
 
-            //SystemSerializeObject(referenceObjects, safeCompare: true); // System.InvalidCastException: Unable to cast object of type 'System.Int32*[]' to type 'System.Object[]'.
+            //SystemSerializeObject(referenceObjects, safeCompare: true); // InvalidCastException: Unable to cast object of type 'System.Void*[]' to type 'System.Object[]'.
             //SystemSerializeObjects(referenceObjects, safeCompare: true);
 
-            // TODO
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None));
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), "Array of pointer type 'System.Int32*[]' is not supported.");
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), "Array of pointer type 'System.Int32*[]' is not supported.");
         }
 
         [TestCase(typeof(int), true)]

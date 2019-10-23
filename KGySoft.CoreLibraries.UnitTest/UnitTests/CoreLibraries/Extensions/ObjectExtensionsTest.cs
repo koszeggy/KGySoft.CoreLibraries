@@ -35,9 +35,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class ObjectExtensionsTest : TestBase
     {
+        #region Nested Types
+
+        #region UnsafeStruct struct
+
+        [Serializable]
+        private unsafe struct UnsafeStruct
+        {
+            #region Fields
+
+            public void* VoidPointer;
+            public int* IntPointer;
+            public int*[] PointerArray;
+            public void** PointerOfPointer;
+
+            #endregion
+        }
+
+        #endregion
+
+
+        #endregion
+
         #region Fields
 
-        private static object[] deepCloneTestSource =
+        private static unsafe object[] deepCloneTestSource =
         {
             // natively supported types
             null,
@@ -54,7 +76,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // not serializable in .NET Core
             CultureInfo.GetCultureInfo("en-US"),
             new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
-            new MemoryStream(new byte[] { 1, 2, 3 })
+            new MemoryStream(new byte[] { 1, 2, 3 }),
+
+            // pointer fields
+            new UnsafeStruct
+            {
+                VoidPointer = (void*)new IntPtr(1),
+                IntPointer = (int*)new IntPtr(1),
+                PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
+                PointerOfPointer = (void**)new IntPtr(1)
+            },
         };
 
         #endregion
@@ -117,6 +148,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             AssertDeepEquals(obj, obj.DeepClone());
             AssertDeepEquals(obj, obj.DeepClone(true));
+        }
+
+        [Test]
+        public void DeepCloneDelegateTest()
+        {
+            Func<int, string> del = i => i.ToString(CultureInfo.InvariantCulture);
+            var clone = del.DeepClone(true);
+
+            Assert.AreNotEqual(del, clone);
+            Assert.AreEqual(del.Invoke(1), clone.Invoke(1));
         }
 
         #endregion
