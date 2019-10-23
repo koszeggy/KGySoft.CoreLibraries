@@ -1387,7 +1387,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void CustomSerializerSurrogateSelectorTest()
         {
-            object[] referenceObjects =
+            var referenceObjects = new List<object>
             {
                 // natively supported types
                 1,
@@ -1395,9 +1395,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 // can be forced to use surrogate selector
                 new List<int> { 1 },
-                typeof(List<int>),
-                typeof(List<>),
-                typeof(List<>).GetGenericArguments()[0],
 
                 // custom serializable types
                 new CustomSerializedClass { Bool = true, Name = nameof(CustomSerializedClass) },
@@ -1407,7 +1404,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new BitVector32(13),
                 new NonSerializableClass { IntProp = 13, StringProp = "alpha"}, 
 
-                // not serializable in .NET Core
+                // not serializable in .NET Core but otherwise they are compatible
                 new MemoryStream(new byte[] { 1, 2, 3 }),
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
             };
@@ -1421,6 +1418,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
             title = "Forcing field-based serialization";
+            referenceObjects.AddRange(new object[]
+            {
+                // Type is not serializable in .NET Core but in .NET Core 2 it still implements ISerializable throwing PlatformNotSupportedException
+                typeof(List<int>),
+                typeof(List<>),
+                typeof(List<>).GetGenericArguments()[0],
+            });
             selector.IgnoreISerializable = true;
             selector.IgnoreNonSerializedAttribute = true;
 

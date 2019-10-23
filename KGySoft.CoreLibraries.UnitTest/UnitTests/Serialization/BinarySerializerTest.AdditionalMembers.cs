@@ -17,6 +17,8 @@
 #region Used Namespaces
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -490,11 +492,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private static byte[] SerializeObjects(object[] objects, IFormatter formatter)
+        private static byte[] SerializeObjects(ICollection<object> objects, IFormatter formatter)
         {
             using (MemoryStream ms = new MemoryStream())
             {
-                formatter.Serialize(ms, objects.Length);
+                formatter.Serialize(ms, objects.Count);
                 BinaryWriter bw = null;
                 BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
                 if (dumpDetails && bsf != null)
@@ -601,10 +603,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void SystemSerializeObjects(object[] referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void SystemSerializeObjects(ICollection<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
-                title = $"Items Count: {referenceObjects.Length}";
+                title = $"Items Count: {referenceObjects.Count}";
             Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -647,10 +649,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void KGySerializeObjects(ICollection<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
-                title = $"Items Count: {referenceObjects.Length}";
+                title = $"Items Count: {referenceObjects.Count}";
             Console.WriteLine($"------------------KGy SOFT BinarySerializer ({title} - {options})--------------------");
             BinarySerializationFormatter bsf = new BinarySerializationFormatter(options) { Binder = binder, SurrogateSelector = surrogateSelector };
             try

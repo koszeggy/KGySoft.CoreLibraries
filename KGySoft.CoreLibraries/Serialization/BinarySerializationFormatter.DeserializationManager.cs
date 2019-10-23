@@ -953,7 +953,7 @@ namespace KGySoft.Serialization
             {
                 // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
                 // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
-                Dictionary<string, FieldInfo> fields = BinarySerializer.GetFieldsWithUniqueNames(obj.GetType(), true);
+                Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), true);
 
                 // Reading the custom content and trying to identify them as fields
                 int count = Read7BitInt(br);
@@ -962,7 +962,7 @@ namespace KGySoft.Serialization
                     string name = br.ReadString();
                     object value = Read(br, false);
                     if (!br.ReadBoolean())
-                        ReadType(br); // the change element type, which is ignored now
+                        ReadType(br); // the changed element type, which is ignored now
 
                     if (fields.TryGetValue(name, out FieldInfo field))
                     {

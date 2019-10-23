@@ -201,6 +201,52 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region ChangedClassOld class
+
+        [Serializable]
+        private class ChangedClassOld
+        {
+            #region Fields
+
+            // ReSharper disable InconsistentNaming
+            internal int m_IntField;
+            internal string m_StringField;
+            // ReSharper restore InconsistentNaming
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ChangedClassNew class
+
+        [Serializable]
+        private class ChangedClassNew
+        {
+            #region Fields
+
+            internal int IntField;
+            internal string StringField;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region OldToNewBinder class
+
+        private class OldToNewBinder : SerializationBinder
+        {
+            #region Methods
+
+            public override Type BindToType(string assemblyName, string typeName)
+                => typeName == typeof(ChangedClassOld).FullName ? typeof(ChangedClassNew) : null;
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Fields
@@ -351,6 +397,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             DoTest(formatter, surrogate, obj, true, true, true);
             surrogate.IgnoreISerializable = true;
+            formatter.Options = BinarySerializationOptions.IgnoreSerializationMethods; // TextInfo.OnDeserialization in .NET Core
+            surrogate.IgnoreNonSerializedAttribute = true;
             DoTest(formatter, surrogate, obj, true, true, true);
         }
 
@@ -398,12 +446,41 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             surrogate.Deserializing += Deserializing;
             surrogate.SettingField += SettingField;
             var bf = new BinaryFormatter();
-            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType);
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType | BinarySerializationOptions.IgnoreSerializationMethods);
 
             DoTest(bf, surrogate, obj, false, true, true);
             DoTest(bsf, surrogate, obj, true, true, true);
         }
 
+        [Test]
+        public void UpdatingSerializationInfoTest()
+        {
+            #region Local Methods
+
+            static void Deserializing(object sender, DeserializingEventArgs e)
+            {
+                foreach (SerializationEntry entry in e.SerializationInfo)
+                {
+                    Assert.IsTrue(entry.Name.StartsWith("m_", StringComparison.Ordinal));
+                    e.SerializationInfo.ReplaceValue(entry.Name, entry.Name.Substring(2), entry.Value, entry.ObjectType);
+                }
+            }
+
+            #endregion
+
+            var objOld = new ChangedClassOld { m_IntField = 42, m_StringField = "alpha" };
+            var formatter = new BinarySerializationFormatter();
+            var rawDataOld = formatter.Serialize(objOld);
+
+            using var surrogate = new CustomSerializerSurrogateSelector();
+            surrogate.Deserializing += Deserializing;
+            formatter.SurrogateSelector = surrogate;
+            formatter.Binder = new OldToNewBinder();
+            var objNew = (ChangedClassNew)formatter.Deserialize(rawDataOld);
+
+            Assert.AreEqual(objOld.m_IntField, objNew.IntField);
+            Assert.AreEqual(objOld.m_StringField, objNew.StringField);
+        }
 
         #endregion
 

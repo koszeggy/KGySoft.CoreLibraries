@@ -27,7 +27,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+#if !(NET35 || NET40)
+using System.Runtime.CompilerServices; 
+#endif
+using System.Runtime.Serialization;
 #if !NETCOREAPP2_0
 using System.Text;
 #endif
@@ -450,6 +453,12 @@ namespace KGySoft.Reflection
             return field == null ? defaultValue : (T)field.Get(obj);
         }
 
+        private static T GetFieldValueOrDefault<T>(object obj, Func<T> defaultValueFactory)
+        {
+            var field = GetField(obj.GetType(), typeof(T), null);
+            return field == null ? defaultValueFactory.Invoke() : (T)field.Get(obj);
+        }
+
         private static void SetFieldValue(object obj, string fieldNamePattern, object value, bool throwIfMissing = true)
         {
             Type type = obj.GetType();
@@ -714,6 +723,13 @@ namespace KGySoft.Reflection
         internal static bool IsSzArray(this Type type) => (bool)GetPropertyValue(type, nameof(IsSzArray));
 
 #endif
+        #endregion
+
+        #region SerializationInfo
+
+        internal static IFormatterConverter GetConverter(this SerializationInfo info)
+            => GetFieldValueOrDefault<IFormatterConverter>(info, () => new FormatterConverter());
+
         #endregion
 
         #endregion

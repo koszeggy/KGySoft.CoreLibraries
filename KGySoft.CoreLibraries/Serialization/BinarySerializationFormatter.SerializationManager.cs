@@ -1198,7 +1198,7 @@ namespace KGySoft.Serialization
                 for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
                 {
                     // writing fields of current level
-                    FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
+                    FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
 
                     if (fields.Length != 0 || t == type)
                     {

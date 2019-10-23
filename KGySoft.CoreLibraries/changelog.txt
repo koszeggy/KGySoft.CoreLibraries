@@ -25,6 +25,7 @@
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
++ New TypeNameKind enum: For the TypeExtensions.GetName method.
 ! DictionaryExtensions class:
   ! GetValueOrDefault<TKey, TValue, TActualValue>: Caused a functional conflict in .NET Core so this method has been
     renamed to GetActualValueOrDefault. For compatibility reasons the overload for string-object dictionaries
@@ -42,7 +43,6 @@
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
 + TypeExtensions class:
   + New GetName extension method for formatting type names in a more consistent way than Type members.
-+ New TypeNameKind enum: For the TypeExtensions.GetName method.
 + Range<T> struct:
   + New Deconstruct method.
   + New operators for converting from T, (T, T). Not available in .NET 3.5, .NET 4.0 and .NET 4.5 versions.
@@ -53,8 +53,9 @@
 
 ! KGySoft.Reflection namespace:
 ===============================
-+ New ResolveAssemblyOptions enum
-+ New ResolveTypeOptions enum
++ New types:
+  + ResolveAssemblyOptions enum
+  + New ResolveTypeOptions enum
 ! Reflector class:
   ! ResolveAssembly(string,bool,bool) method:
     ! This method is obsolete now in favor of the new overloads.
@@ -95,6 +96,16 @@
 
 ! KGySoft.Serialization namespace:
 ==================================
++ New types:
+  + CustomSerializerSurrogateSelector class: Makes possible to customize the serialization and deserialization
+    process both with the original BinaryFormatter and KGy SOFT BinarySerializationFormatter. Can be useful for
+    serializing non-serializable types or deserializing changed types even across different platforms, eg.
+    .NET Framework and .NET Core.
+  + ISerializationBinder interface: Contains the same members as the SerializationBinder class in .NET 4.0 and
+    later and allows for BinarySerializationFormatter to use the BindToName method in .NET 3.5 as well.
+  + ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
+    using writing the legacy identity of a forwarded type. This makes possible to use the .NET Framework assembly
+    identities even in .NET Core and .NET Standard, for example.
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   ! The SerializationBinder that is set in the Binder property is not called for constructed generic types and
@@ -109,17 +120,8 @@
     it into the custom serialized data.
 + AnyObjectSerializerWrapper class:
   + New optional forceSerializationByFields parameter in constructor.
-+ New ISerializationBinder interface: Contains the same members as the SerializationBinder class in .NET 4.0 and
-  later and allows for BinarySerializationFormatter to use the BindToName method in .NET 3.5 as well.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
-+ New ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
-  using writing the legacy identity of a forwarded type. This makes possible to use the .NET Framework assembly
-  identities even in .NET Core and .NET Standard, for example.
-+ New CustomSerializerSurrogateSelector class: Makes possible to customize the serialization and deserialization
-  process both with the original BinaryFormatter and KGy SOFT BinarySerializationFormatter. Can be useful for
-  serializing non-serializable types or deserializing changed types even across different platforms, eg.
-  .NET Framework and .NET Core.
 * WeakAssemblySerializationBinder:
   + Implements ISerializationBinder.
   + The OmitAssemblyNameOnSerialize property is available also in .NET 3.5. A BinaryFormatter still ignores this

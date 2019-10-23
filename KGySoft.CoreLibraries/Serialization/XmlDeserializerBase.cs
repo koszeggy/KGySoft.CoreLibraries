@@ -127,7 +127,7 @@ namespace KGySoft.Serialization
                     if (existingValue.GetType() != member.Value.GetType())
                         throw new ArgumentException(Res.XmlSerializationPropertyTypeMismatch(collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
 
-                    CopyContent(existingValue, member.Value);
+                    CopyContent(member.Value, existingValue);
                     continue;
                 }
 
@@ -251,7 +251,7 @@ namespace KGySoft.Serialization
                 if (existingValue.GetType() != deserializedValue.GetType())
                     throw new ArgumentException(Res.XmlSerializationPropertyTypeMismatch(obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
 
-                CopyContent(existingValue, deserializedValue);
+                CopyContent(deserializedValue, existingValue);
                 return;
             }
 
@@ -313,7 +313,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
         /// </summary>
-        private static void CopyContent(object target, object source)
+        private static void CopyContent(object source, object target)
         {
             Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
 
@@ -344,22 +344,7 @@ namespace KGySoft.Serialization
             }
 
             // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
-            for (Type t = target.GetType(); t != null; t = t.BaseType)
-            {
-                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                {
-                    // not using the Get/Set extensions because then accessor would be retrieved two times
-                    FieldAccessor accessor = FieldAccessor.GetAccessor(field);
-#if NETSTANDARD2_0 // using the FieldInfo to set for value types
-                    if (field.IsInitOnly || t.IsValueType)
-                    {
-                        field.SetValue(target, accessor.Get(source));
-                        continue;
-                    }
-#endif
-                    accessor.Set(target, accessor.Get(source));
-                }
-            }
+            SerializationHelper.CopyFields(source, target);
         }
 
         #endregion

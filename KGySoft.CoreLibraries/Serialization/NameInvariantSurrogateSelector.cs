@@ -130,7 +130,7 @@ namespace KGySoft.Serialization
             // ReSharper disable once PossibleNullReferenceException - cannot be null die to the condition
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
             {
-                FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
+                FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
                     info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}",  fields[i].Get(obj), fields[i].FieldType);
 
@@ -184,7 +184,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
-            FieldInfo[] fields = BinarySerializer.GetSerializableFields(type);
+            FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
             level = 0;
             fieldIndex = 0;
             foreach (SerializationEntry entry in list.Values)
@@ -210,7 +210,7 @@ namespace KGySoft.Serialization
 
                     // ReSharper disable once PossibleNullReferenceException - see first line inside the loop
                     type = type.BaseType;
-                    fields = BinarySerializer.GetSerializableFields(type);
+                    fields = SerializationHelper.GetSerializableFields(type);
                     fieldIndex = 0;
                 }
                 else

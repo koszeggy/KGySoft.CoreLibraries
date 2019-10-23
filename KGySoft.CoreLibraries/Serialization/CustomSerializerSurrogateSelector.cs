@@ -97,9 +97,38 @@ namespace KGySoft.Serialization
     /// <see cref="SettingFieldEventArgs.Field"/> or do whatever custom processing and set the <see cref="HandledEventArgs.Handled"/> property
     /// to <see langword="true"/>&#160;to indicate that you processed the entry manually. If you can initialize the complete object by yourself
     /// based on the serialized <see cref="SerializationInfo"/>, then you can handle the <see cref="Deserializing"/> event and set
-    /// the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.</description></item>
-    /// <item><term>Basic case</term><description>The only difference is that the type in the new platform</description></item>
+    /// the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.
+    /// <code lang="C#"><![CDATA[
+    /// // deserializing a type, whose fields used to have "m_" prefix, which have been removed
+    /// var surrogate = new CustomSerializerSurrogateSelector();
+    /// surrogate.Deserializing += (sender, args) =>
+    /// {
+    ///     // manipulating data only if the current class is the one that changed
+    ///     if (!(args.Object is MyChangedClass))
+    ///         return;
+    ///
+    ///     // Replacing serialization entry names using the ReplaceValue extension method.
+    ///     // An alternative solution would be initializing args.Object by ourselves and
+    ///     // setting the args.Handled to true to prevent default deserialization logic.
+    ///     foreach (SerializationEntry entry in args.SerializationInfo)
+    ///     {
+    ///         if (entry.Name.StartsWith("m_"))
+    ///             args.SerializationInfo.ReplaceValue(entry.Name, 
+    ///                 entry.Name.Substring(2), entry.Value, entry.ObjectType);
+    ///     }
+    /// };
+    ///
+    /// var formatter = new BinaryFormatter // or a BinarySerializationFormatter
+    /// {
+    ///     SurrogateSelector = surrogate, // to remap field names as specified above
+    ///     Binder = new WeakAssemblySerializationBinder() // if assembly version changed, too
+    /// };
+    ///
+    /// return (MyChangedClass)formatter.Deserialize(streamContainingOldData);]]></code></description></item>
     /// </list></para>
+    /// <note type="tip">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
+    /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
+    /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// </remarks>
     /// <seealso cref="NameInvariantSurrogateSelector" />
     /// <seealso cref="BinarySerializationFormatter" />
@@ -340,7 +369,7 @@ namespace KGySoft.Serialization
             if (info.MemberCount == 0)
                 return;
 
-            Dictionary<string, FieldInfo> fields = BinarySerializer.GetFieldsWithUniqueNames(obj.GetType(), false);
+            Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
             foreach (SerializationEntry entry in info)
             {
                 var e = new SettingFieldEventArgs(obj, context, info, entry)
