@@ -36,6 +36,8 @@
   + New GetValueOrDefault overloads for IEnumerable<KeyValuePair<TKey, Tvalue>> instances to support also read-only
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
 	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
+  + New GetValueOrDefault overloads with Func<TValue> default value factory. These are useful if the default value
+    should be evaluated only if the key was not present in the dictionary.
 + Enum<TEnum> class:
   + New GetFlagsMask method
 + ObjectExtensions class:

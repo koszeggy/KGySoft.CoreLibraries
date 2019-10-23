@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default);
+            => GetValueOrDefault(dictionary, key, default(TValue));
 
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
@@ -62,6 +62,28 @@ namespace KGySoft.CoreLibraries
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
         }
+
+        /// <summary>
+        /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TValue> defaultValueFactory)
+        {
+            if (defaultValueFactory == null)
+                return dictionary.GetValueOrDefault(key, default(TValue));
+
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            return dictionary.TryGetValue(key, out TValue value) ? value : defaultValueFactory.Invoke();
+        }
 #endif
 
 #if !(NET35 || NET40)
@@ -75,7 +97,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default);
+            => GetValueOrDefault(dictionary, key, default(TValue));
 
         /// <summary>
         /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
@@ -113,6 +135,47 @@ namespace KGySoft.CoreLibraries
                 }
             }
         }
+
+        /// <summary>
+        /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, Func<TValue> defaultValueFactory)
+        {
+            if (defaultValueFactory == null)
+                return dictionary.GetValueOrDefault(key, default(TValue));
+
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            switch (dictionary)
+            {
+                case IDictionary<TKey, TValue> dict:
+                    return dict.TryGetValue(key, out TValue value) ? value : defaultValueFactory.Invoke();
+                case IReadOnlyDictionary<TKey, TValue> dict:
+                    return dict.TryGetValue(key, out value) ? value : defaultValueFactory.Invoke();
+                default:
+                    {
+                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                        {
+                            if (comparer.Equals(item.Key, key))
+                                return item.Value;
+                        }
+
+                        return defaultValueFactory.Invoke();
+                    }
+            }
+        }
 #endif
 
         /// <summary>
@@ -134,6 +197,31 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
 
             return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+        }
+
+        /// <summary>
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key.
+        /// In this method <paramref name="defaultValueFactory"/> can return an instance of a different type than <typeparamref name="TValue"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TActualValue> defaultValueFactory)
+            where TActualValue : TValue
+        {
+            if (defaultValueFactory == null)
+                return dictionary.GetActualValueOrDefault(key, default(TActualValue));
+
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
         }
 
 #if !(NET35 || NET40)
@@ -181,6 +269,56 @@ namespace KGySoft.CoreLibraries
                     }
             }
         }
+
+        /// <summary>
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key. Unlike in the <see cref="GetValueOrDefault{TKey,TValue}(IEnumerable{KeyValuePair{TKey,TValue}},TKey,Func{TValue})"/> overload,
+        /// here <paramref name="defaultValueFactory"/> can return an instance of a different type than <typeparamref name="TValue"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, Func<TActualValue> defaultValueFactory)
+            where TActualValue : TValue
+        {
+            if (defaultValueFactory == null)
+                return dictionary.GetActualValueOrDefault(key, default(TActualValue));
+
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            switch (dictionary)
+            {
+                case IDictionary<TKey, TValue> dict:
+                    {
+                        return dict.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+                    }
+                case IReadOnlyDictionary<TKey, TValue> dict:
+                    {
+                        return dict.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+                    }
+                default:
+                    {
+                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                        {
+                            // allowing multiple keys with different type of values
+                            if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                return actualValue;
+                        }
+
+                        return defaultValueFactory.Invoke();
+                    }
+            }
+        }
+
 #endif
 
         /// <summary>
@@ -237,6 +375,14 @@ namespace KGySoft.CoreLibraries
         /// 
         ///         // using nullable int actual type to get null if "Unknown" does not exist or is not an int
         ///         int? intOrNull = dict.GetValueOrDefault<int?>("Unknown");
+        ///
+        ///         // If obtaining a default value is an expensive operation you can use the delegate overloads.
+        ///         // The delegate is invoked only when the key was not found in the dictionary:
+        ///         intValue = dict.GetValueOrDefault("Unknown", () =>
+        ///         {
+        ///             Console.WriteLine("Default value factory was invoked");
+        ///             return -1;
+        ///         });
         /// 
         ///         Console.WriteLine($"{nameof(intValue)}: {intValue}; {nameof(intOrNull)}: {intOrNull}");
         ///     }
