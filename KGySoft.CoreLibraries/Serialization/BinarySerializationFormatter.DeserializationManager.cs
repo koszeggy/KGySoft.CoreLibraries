@@ -77,8 +77,8 @@ namespace KGySoft.Serialization
 
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
-            private int InvariantAssemblyIndex => CachedAssemblies.Count + 2;
             private int NewTypeIndex => CachedTypes.Count + 1;
+            private int EncodedTypeIndex => CachedTypes.Count + 2;
 
             #endregion
 
@@ -239,65 +239,66 @@ namespace KGySoft.Serialization
             /// </summary>
             internal Type ReadType(BinaryReader br, bool allowOpenTypes = false)
             {
-                // assembly index
+                // type index
                 int index = Read7BitInt(br);
 
                 // natively supported type
-                if (index == InvariantAssemblyIndex)
+                if (index == EncodedTypeIndex)
                 {
                     DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
                     return desc.DecodeType(br, this, allowOpenTypes);
                 }
 
-                // new assembly: assembly and type are stored together
+                Type result;
+
+                // known type
+                if (index != NewTypeIndex)
+                {
+                    Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
+                    result = CachedTypes[index];
+                    if (result.IsGenericTypeDefinition)
+                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
+                    else if (result == typeof(GenericMethodDefinitionPlaceholder))
+                        result = HandleGenericMethodParameter(br);
+                    return result;
+                }
+
+                // new type: assembly index
+                index = Read7BitInt(br);
+
+                // new assembly: assembly and type names are stored together
                 if (index == NewAssemblyIndex)
                 {
                     // assembly qualified name (GetType uses binder if set)
-                    string boundAssemblyName = br.ReadString();
-                    string boundTypeName = br.ReadString();
-                    Type type = GetType(boundAssemblyName, boundTypeName);
-                    CachedAssemblies.Add((type.Assembly, boundAssemblyName));
-                    CachedTypes.Add(type);
-                    if (type.IsGenericTypeDefinition)
-                        type = HandleGenericTypeDef(br, type, allowOpenTypes);
-                    return type;
+                    string storedAssemblyName = br.ReadString();
+                    string storedTypeName = br.ReadString();
+                    result = GetType(storedAssemblyName, storedTypeName);
+                    CachedAssemblies.Add((result.Assembly, storedAssemblyName));
+                    CachedTypes.Add(result);
+                    if (result.IsGenericTypeDefinition)
+                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
+                    return result;
                 }
 
                 (Assembly Assembly, string BoundName) assembly = default;
 
-                // type with assembly (if assembly is not omitted)
+                // type with known or omitted assembly
                 if (index != OmitAssemblyIndex)
                 {
                     Debug.Assert(index >= 0 && index < CachedAssemblies.Count, "Invalid assembly index");
                     assembly = CachedAssemblies[index];
                 }
 
-                // type index
-                index = Read7BitInt(br);
+                string typeName = br.ReadString();
+                result = ReadBoundType(assembly.BoundName, typeName)
+                    ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
+                    ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
-                // new type
-                if (index == NewTypeIndex)
-                {
-                    string typeName = br.ReadString();
-                    Type type = ReadBoundType(assembly.BoundName, typeName)
-                            ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
-                            ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
-
-                    CachedTypes.Add(type);
-                    if (type.IsGenericTypeDefinition)
-                        type = HandleGenericTypeDef(br, type, allowOpenTypes);
-
-                    return type;
-                }
-
-                // known index
-                Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
-                Type result = CachedTypes[index];
+                CachedTypes.Add(result);
                 if (result.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
-                else if (result == typeof(GenericMethodDefinitionPlaceholder))
-                    result = HandleGenericMethodParameter(br);
+
                 return result;
             }
 

@@ -100,9 +100,9 @@ namespace KGySoft.Serialization
             private int AssemblyIndexCacheCount => (assemblyIndexCache?.Count ?? KnownAssemblies.Length) + (assemblyNameIndexCache?.Count ?? 0);
             private int OmitAssemblyIndex => AssemblyIndexCacheCount;
             private int NewAssemblyIndex => AssemblyIndexCacheCount + 1;
-            private int InvariantAssemblyIndex => AssemblyIndexCacheCount + 2; // for natively supported types, which can be in any assembly in different frameworks
             private int TypeIndexCacheCount => (typeIndexCache?.Count ?? KnownTypes.Length) + (typeNameIndexCache?.Count ?? 0);
             private int NewTypeIndex => TypeIndexCacheCount + 1;
+            private int EncodedTypeIndex => TypeIndexCacheCount + 2;
 
             #endregion
 
@@ -1308,9 +1308,6 @@ namespace KGySoft.Serialization
                 // The requested type (including constructed ones and parameters) is already known
                 if (index != -1)
                 {
-                    int assemblyIndex = GetAssemblyIndex(type, binderAsmName);
-                    Debug.Assert(assemblyIndex != -1, "Assembly index should be known for a known type");
-                    Write7BitInt(bw, assemblyIndex);
                     Write7BitInt(bw, index);
                     if (allowOpenTypes && type.IsGenericTypeDefinition)
                         WriteGenericSpecifier(bw, type);
@@ -1368,11 +1365,11 @@ namespace KGySoft.Serialization
                         ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
                         : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
 
-            private int GetTypeIndex(Type type, string binderAsmName, string binderTypeName)
+            private int GetTypeIndex(Type type, string binderAsmName = null, string binderTypeName = null)
                 => Binder == null
                     ? TypeIndexCache.GetValueOrDefault(type, -1)
-                    // even if we have a bound name we look for the type in the unbound cache so we can avoid storing the known types as new ones
-                    : TypeIndexCache.GetValueOrDefault(type, TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1));
+                    // even if we have a bound name we look for the type in the unbound cache first so we can avoid storing the known types as new ones
+                    : TypeIndexCache.GetValueOrDefault(type, () => TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1));
 
             /// <summary>
             /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
@@ -1385,7 +1382,7 @@ namespace KGySoft.Serialization
                 {
                     if (!dt.In(DataTypes.Pointer, DataTypes.ByRef))
                         return false;
-                    Write7BitInt(bw, InvariantAssemblyIndex);
+                    Write7BitInt(bw, EncodedTypeIndex);
 
                     do
                     {
@@ -1416,13 +1413,13 @@ namespace KGySoft.Serialization
                     }
 
                     if (!indexWritten)
-                        Write7BitInt(bw, InvariantAssemblyIndex);
+                        Write7BitInt(bw, EncodedTypeIndex);
                     WriteDataType(bw, dataType);
                     return true;
                 }
 
                 if (!indexWritten)
-                    Write7BitInt(bw, InvariantAssemblyIndex);
+                    Write7BitInt(bw, EncodedTypeIndex);
 
                 Debug.Assert(IsCollectionType(dataType), $"Not a collection data type: {dataType}");
 
@@ -1500,38 +1497,38 @@ namespace KGySoft.Serialization
                 if (rootType != type)
                     GetBoundNames(rootType, out binderAsmName, out binderTypeName);
 
-                // 1.) Writing assembly
-                int index = GetAssemblyIndex(rootType, binderAsmName);
-                bool knownAssembly = index != -1;
+                // 1.) Type index
+                bool isNewType = false;
+                int index;
 
-                // known assembly
-                if (knownAssembly)
-                    Write7BitInt(bw, index);
-                // new assembly
+                // It can happen that the generic type definition is already known.
+                if (typeDef != null && (index = GetTypeIndex(typeDef, binderAsmName, binderTypeName)) != -1)
+                    Debug.Assert(type != rootType && !isTypeDef, $"If the generic type definition was the requested type and it was known, it should have been written in {nameof(WriteType)}");
                 else
                 {
-                    Write7BitInt(bw, NewAssemblyIndex);
-                    WriteNewAssembly(bw, rootType.Assembly, binderAsmName);
+                    index = NewTypeIndex;
+                    isNewType = true;
                 }
 
-                // 2.) For known assemblies a type index is also requested.
-                bool typeDefWritten = false;
-                if (knownAssembly)
+                Write7BitInt(bw, index);
+
+                // 2.) New type: Assembly index (and name for new ones)
+                if (isNewType)
                 {
-                    // It can happen that the generic type definition is already known.
-                    if (typeDef != null && (index = GetTypeIndex(typeDef, binderAsmName, binderTypeName)) != -1)
-                    {
-                        Debug.Assert(type != rootType && !isTypeDef, $"If the generic type definition was the requested type and it was known, it should have been written in {nameof(WriteType)}");
+                    index = GetAssemblyIndex(rootType, binderAsmName);
+
+                    // known assembly
+                    if (index != -1)
                         Write7BitInt(bw, index);
-                        typeDefWritten = true;
-                    }
+                    // new assembly: writing also the name
                     else
-                        Write7BitInt(bw, NewTypeIndex);
-                }
+                    {
+                        Write7BitInt(bw, NewAssemblyIndex);
+                        WriteNewAssembly(bw, rootType.Assembly, binderAsmName);
+                    }
 
-                // 3.) Root type name of new type (unless type definition was known)
-                if (!typeDefWritten)
-                {
+                    // 3.) Root type name of new type
+                    // ReSharper disable once AssignNullToNotNullAttribute - FullName is not null for the root type
                     bw.Write(binderTypeName ?? rootType.FullName);
                     AddToTypeCache(rootType, binderAsmName, binderTypeName);
 

@@ -26,7 +26,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if NETFRAMEWORK
-using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;

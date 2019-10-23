@@ -381,7 +381,7 @@ namespace KGySoft.Serialization
 
             // 31: reserved (though it would have the same value as the PureTypes mask)
 
-            // ..... impure types (their type cannot be they cannot be interpreted as a standalone value) .....
+            // ..... impure types (their type cannot be determined purely by a DataType) .....
             ImpureType = 1 << 5,
 
             // 32: Reserved (though it would have the same value as the ImpureType flag)
