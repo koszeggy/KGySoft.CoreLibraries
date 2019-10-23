@@ -30,6 +30,7 @@ namespace KGySoft.Serialization
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can ignore version and token information
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
+    /// <br/>See the also the <strong>Remarks</strong> section of the <see cref="ForwardedTypesSerializationBinder"/> for details and some examples.
     /// </summary>
     /// <seealso cref="ForwardedTypesSerializationBinder"/>
     public sealed class WeakAssemblySerializationBinder : SerializationBinder, ISerializationBinder

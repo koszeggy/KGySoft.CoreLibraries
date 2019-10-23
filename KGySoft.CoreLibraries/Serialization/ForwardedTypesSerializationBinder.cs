@@ -38,8 +38,8 @@ namespace KGySoft.Serialization
     /// </summary>
     /// <remarks>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
-    /// assemblies work automatically if at least a chunk version of the assembly exists on the current platform with the
-    /// appropriate <see cref="TypeForwardedToAttribute"/> attributes.</para>
+    /// assemblies work automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
+    /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
     /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, and no types are added to the binder, then
     /// types, which are decorated by the <see cref="TypeForwardedFromAttribute"/> attribute will be serialized by the old identity.
     /// For deserializing such types this binder is not needed to be set.</para>
@@ -103,6 +103,8 @@ namespace KGySoft.Serialization
     /// formatter.Serialize(serializationStream, obj);
     /// ]]></code>
     /// </para>
+    /// <note type="tip">If not only the assembly name but also the inner content of a type (ie. field names) changed, then you can use
+    /// the <see cref="CustomSerializerSurrogateSelector"/> class.</note>
     /// </example>
     /// <seealso cref="WeakAssemblySerializationBinder"/>
     public sealed class ForwardedTypesSerializationBinder : SerializationBinder, ISerializationBinder
