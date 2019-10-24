@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
-
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -45,14 +46,6 @@ namespace KGySoft.Serialization
 
             #endregion
 
-            #region GenericMethodDefinitionPlaceholder struct
-
-            private protected struct GenericMethodDefinitionPlaceholder
-            {
-            } 
-            
-            #endregion
-
             #endregion
 
             #region Fields
@@ -68,12 +61,16 @@ namespace KGySoft.Serialization
 
             private protected static readonly Type[] KnownTypes =
             {
-                // Apart from natively supported types, these are always internally and are never passed to a binder.
+                // Apart from natively supported types, these are always dumped by index and are never passed to a binder.
+                // Object is relevant when recursive serialization of known types is forced.
+                // Type/Array/Enum are abstract base types of supported types
+                // Nullable and the rest are treated in a special way
                 Reflector.NullableType,
+                Reflector.ObjectType,
                 Reflector.Type,
                 Reflector.ArrayType,
                 Reflector.EnumType,
-                typeof(IBinarySerializable),
+                typeof(Compressible<>),
                 typeof(GenericMethodDefinitionPlaceholder)
             };
 
@@ -220,6 +217,144 @@ namespace KGySoft.Serialization
                 DoGetSurrogate(type, out surrogate, out selector);
                 surrogates[type] = new KeyValuePair<ISerializationSurrogate, ISurrogateSelector>(surrogate, selector);
                 return surrogate != null;
+            }
+
+            /// <summary>
+            /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/>.
+            /// </summary>
+            [SecurityCritical]
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+            internal DataTypes GetDataType(Type type)
+            {
+                #region Local methods to reduce complexity
+
+                bool TryGetKnownDataType(Type t, out DataTypes result)
+                {
+                    // Primitive type
+                    if (primitiveTypes.TryGetValue(t, out result))
+                        return true;
+
+                    // Primitive nullable (must be before surrogate-support checks)
+                    bool isNullable = t.IsNullable();
+                    if (isNullable)
+                    {
+                        // the Nullable<> definition or open generic types are encoded recursively
+                        if (t.IsGenericTypeDefinition || t.ContainsGenericParameters)
+                        {
+                            result = DataTypes.RecursiveObjectGraph;
+                            return true;
+                        }
+
+                        result = GetDataType(t.GetGenericArguments()[0]);
+                        if (IsElementType(result) && IsPureType(result))
+                        {
+                            result |= DataTypes.Nullable;
+                            return true;
+                        }
+                    }
+
+                    // Non-primitive types that cannot be serialized recursively
+                    if (t.IsArray)
+                    {
+                        result = DataTypes.Array;
+                        return true;
+                    }
+
+                    if (t.IsPointer)
+                    {
+                        result = DataTypes.Pointer;
+                        return true;
+                    }
+
+                    if (t.IsByRef)
+                    {
+                        result = DataTypes.ByRef;
+                        return true;
+                    }
+
+                    // Recursion for any type (except primitives and array)
+                    if (ForceRecursiveSerializationOfSupportedTypes || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(t))
+                    {
+                        result = DataTypes.RecursiveObjectGraph;
+                        if (isNullable)
+                            result |= DataTypes.Nullable;
+                        return true;
+                    }
+
+                    // Non-primitive nullable
+                    if (isNullable)
+                    {
+                        // result is now the result of the recursive call
+                        switch (result)
+                        {
+                            case DataTypes.DictionaryEntry:
+                                result = DataTypes.DictionaryEntryNullable;
+                                return true;
+                            case DataTypes.KeyValuePair:
+                                result = DataTypes.KeyValuePairNullable;
+                                return true;
+                            default:
+                                result |= DataTypes.Nullable;
+                                return true;
+                        }
+                    }
+
+                    // Natively supported non-primitive type
+                    if (supportedNonPrimitiveElementTypes.TryGetValue(t, out result))
+                        return true;
+
+                    // enum
+                    if (t.IsEnum)
+                    {
+                        result = DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(t)];
+                        return true;
+                    }
+
+                    // supported collection
+                    Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
+                        : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType
+                        : t;
+
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    if (supportedCollections.TryGetValue(collType, out result))
+                        return true;
+
+                    return false;
+                }
+
+                DataTypes GetImpureDataType(Type t)
+                {
+                    // IBinarySerializable implementation
+                    if (!IgnoreIBinarySerializable && typeof(IBinarySerializable).IsAssignableFrom(t))
+                        return DataTypes.BinarySerializable;
+
+                    // Any struct if can be serialized
+                    if (CompactSerializationOfStructures && t.IsValueType && BinarySerializer.CanSerializeValueType(t, false))
+                        return DataTypes.RawStruct;
+
+                    // Recursive serialization
+                    if (RecursiveSerializationAsFallback || t.IsInterface || t.IsSerializable || CanUseSurrogate(t))
+                        return DataTypes.RecursiveObjectGraph;
+
+#pragma warning disable 618, 612
+                    // Any struct (obsolete but still supported as backward compatibility)
+                    if (ForcedSerializationValueTypesAsFallback && t.IsValueType)
+                        return DataTypes.RawStruct;
+#pragma warning restore 618, 612
+
+                    // It is alright for a collection element type. If no recursive serialization is allowed it will turn out for the items.
+                    return DataTypes.RecursiveObjectGraph;
+                }
+
+                #endregion
+
+                // a.) Well-known types or forced recursion
+                if (TryGetKnownDataType(type, out DataTypes dataType))
+                    return dataType;
+
+                // b.) Non-pure types
+                return GetImpureDataType(type);
             }
 
             #endregion

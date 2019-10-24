@@ -79,8 +79,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = false;
-        private const bool dumpSerContent = true;
+        private const bool dumpDetails = true;
+        private const bool dumpSerContent = false;
 
         #endregion
 

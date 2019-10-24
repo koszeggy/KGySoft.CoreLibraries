@@ -310,6 +310,8 @@ namespace KGySoft.Serialization
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
     {
+        #region Nested Types
+
         #region Enumerations
 
         /// <summary>
@@ -525,6 +527,35 @@ namespace KGySoft.Serialization
             CaseInsensitivity
         }
 
+        #endregion
+
+        #region Nested Structs
+
+        #region GenericMethodDefinitionPlaceholder struct
+
+        /// <summary>
+        /// An indicator type for generic method parameters.
+        /// </summary>
+        private struct GenericMethodDefinitionPlaceholder
+        {
+        }
+
+        #endregion
+
+        #region Compressible<T> struct
+
+        /// <summary>
+        /// A wrapper type for 7-bit encoded types if they are encoded by index rather than DataTypes.
+        /// </summary>
+        // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
+        private struct Compressible<T> where T : struct
+        {
+        }
+
+        #endregion
+
+        #endregion 
+        
         #endregion
 
         #region Fields
@@ -855,6 +886,16 @@ namespace KGySoft.Serialization
 
         #region Static Methods
 
+        private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
+        private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
+        private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
+        private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
+        private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
+        private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
+        private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
+        private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
+        private static bool CanContainReferenceToSelf(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable);
+
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
             uint v = (uint)value;
@@ -993,7 +1034,7 @@ namespace KGySoft.Serialization
             using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
             {
                 var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-                manager.WriteRoot(bw, data, true);
+                manager.WriteRoot(bw, data);
                 return result.ToArray();
             }
         }
@@ -1052,7 +1093,7 @@ namespace KGySoft.Serialization
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-            manager.WriteRoot(writer, data, true);
+            manager.WriteRoot(writer, data);
         }
 
         /// <summary>

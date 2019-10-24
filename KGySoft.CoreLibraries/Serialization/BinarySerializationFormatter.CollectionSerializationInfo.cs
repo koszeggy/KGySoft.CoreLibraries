@@ -37,7 +37,7 @@ namespace KGySoft.Serialization
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>
-        /// Static descriptor for collection types. Instance-specific descriptor is in <see cref="CollectionDescriptor"/>.
+        /// Static descriptor for collection types. Instance-specific descriptor is in <see cref="DataTypeDescriptor"/>.
         /// </summary>
         private sealed class CollectionSerializationInfo
         {
@@ -160,7 +160,7 @@ namespace KGySoft.Serialization
                     bool isDefaultComparer = comparer == null || IsDefaultComparer(collection, comparer);
                     bw.Write(isDefaultComparer);
                     if (!isDefaultComparer)
-                        manager.WriteNonRoot(bw, comparer, false);
+                        manager.WriteNonRoot(bw, comparer);
                 }
             }
 
@@ -168,7 +168,7 @@ namespace KGySoft.Serialization
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
             [SecurityCritical]
-            internal object InitializeCollection(BinaryReader br, bool addToCache, CollectionDescriptor descriptor, DeserializationManager manager, out int count)
+            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
             {
                 object result;
 
@@ -181,8 +181,8 @@ namespace KGySoft.Serialization
                     if (addToCache)
                         manager.AddObjectToCache(result);
 
-                    object key = manager.ReadElement(br, descriptor, false);
-                    object value = manager.ReadElement(br, descriptor, true);
+                    object key = manager.ReadElement(br, descriptor.ElementDescriptor);
+                    object value = manager.ReadElement(br, descriptor.ValueDescriptor);
                     Accessors.SetKeyValue(result, key, value);
 
                     count = 1;
@@ -213,7 +213,7 @@ namespace KGySoft.Serialization
                 // 5.) Comparer
                 object comparer = null;
                 if (HasAnyComparer && !br.ReadBoolean())
-                    comparer = manager.ReadNonRoot(br, false);
+                    comparer = manager.ReadNonRoot(br);
 
                 result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
                 if (id != 0)
@@ -222,7 +222,7 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            internal MethodAccessor GetAddMethod(CollectionDescriptor descriptor)
+            internal MethodAccessor GetAddMethod(DataTypeDescriptor descriptor)
             {
                 MethodAccessor GetAddMethodAccessor(Type type)
                 {
@@ -268,7 +268,7 @@ namespace KGySoft.Serialization
                 return false;
             }
 
-            private object CreateCollection(CollectionDescriptor descriptor, int capacity, bool isCaseInsensitive, object comparer)
+            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, object comparer)
             {
                 CreateInstanceAccessor ctor = GetInitializer(descriptor);
                 if (CtorArguments == null)
@@ -296,7 +296,7 @@ namespace KGySoft.Serialization
                 return ctor.CreateInstance(parameters);
             }
 
-            private CreateInstanceAccessor GetInitializer(CollectionDescriptor descriptor)
+            private CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)
             {
                 CreateInstanceAccessor GetCtorAccessor(Type type)
                 {
