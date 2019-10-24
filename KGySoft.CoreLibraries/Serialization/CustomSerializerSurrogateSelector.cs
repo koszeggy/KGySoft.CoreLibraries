@@ -124,7 +124,8 @@ namespace KGySoft.Serialization
     ///     Binder = new WeakAssemblySerializationBinder() // if assembly version changed, too
     /// };
     ///
-    /// return (MyChangedClass)formatter.Deserialize(streamContainingOldData);]]></code></description></item>
+    /// return (MyChangedClass)formatter.Deserialize(streamContainingOldData);]]></code>
+    /// <note type="tip">If the name of the type changed too, you can use the <see cref="CustomSerializationBinder"/> class.</note></description></item>
     /// </list></para>
     /// <note type="tip">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
     /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
