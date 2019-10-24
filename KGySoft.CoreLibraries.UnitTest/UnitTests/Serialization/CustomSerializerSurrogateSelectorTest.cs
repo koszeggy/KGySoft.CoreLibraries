@@ -250,20 +250,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region OldToNewBinder class
-
-        private class OldToNewBinder : SerializationBinder
-        {
-            #region Methods
-
-            public override Type BindToType(string assemblyName, string typeName)
-                => typeName == typeof(ChangedClassOld).FullName ? typeof(ChangedClassNew) : null;
-
-            #endregion
-        }
-
-        #endregion
-
         #endregion
 
         #region Fields
@@ -495,7 +481,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             using var surrogate = new CustomSerializerSurrogateSelector();
             surrogate.Deserializing += Deserializing;
             formatter.SurrogateSelector = surrogate;
-            formatter.Binder = new OldToNewBinder();
+            formatter.Binder = new CustomSerializationBinder
+            {
+                TypeResolver = (asmName, typeName) => typeName == typeof(ChangedClassOld).FullName ? typeof(ChangedClassNew) : null
+            };
             var objNew = (ChangedClassNew)formatter.Deserialize(rawDataOld);
 
             Assert.AreEqual(objOld.m_IntField, objNew.IntField);

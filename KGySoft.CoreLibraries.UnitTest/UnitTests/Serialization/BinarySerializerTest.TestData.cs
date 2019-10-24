@@ -753,9 +753,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region CustomGraphDefaultObjRef class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class CustomGraphDefaultObjRef : ISerializable
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -770,13 +768,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 info.AddValue("name", Name);
                 info.SetType(typeof(CustomGraphDefaultObjRefDeserializer));
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (!(obj is CustomGraphDefaultObjRef other))
-                    return false;
-                return Name == other.Name;
             }
 
             #endregion
@@ -1066,16 +1057,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region SelfReferencerEvil class
+        #region SelfReferencerIndirect class
 
         [Serializable]
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
-        private class SelfReferencerEvil : SelfReferencer
+        private class SelfReferencerIndirect : SelfReferencer
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Constructors
 
-            public SelfReferencerEvil(string name)
+            public SelfReferencerIndirect(string name)
                 : base(name)
             {
             }
@@ -1088,15 +1079,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 base.GetObjectData(info, context);
-                info.SetType(typeof(SelfReferencerEvilDeserializer));
+                info.SetType(typeof(SelfReferencerIndirectDeserializer));
             }
 
             public override bool Equals(object obj)
             {
-                if (obj == null || obj.GetType() != typeof(SelfReferencerEvil))
+                if (obj == null || obj.GetType() != typeof(SelfReferencerIndirect))
                     return false;
 
-                var other = (SelfReferencerEvil)obj;
+                var other = (SelfReferencerIndirect)obj;
                 return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
             }
 
@@ -1105,10 +1096,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region SelfReferencerEvilDeserializer class
+        #region SelfReferencerIndirectDeserializer class
 
         [Serializable]
-        private class SelfReferencerEvilDeserializer : IObjectReference, ISerializable
+        private class SelfReferencerIndirectDeserializer : IObjectReference, ISerializable
         {
             #region Fields
 
@@ -1119,7 +1110,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Constructors
 
-            protected SelfReferencerEvilDeserializer(SerializationInfo info, StreamingContext context)
+            protected SelfReferencerIndirectDeserializer(SerializationInfo info, StreamingContext context)
             {
                 name = info.GetString("name");
                 instance = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
@@ -1132,7 +1123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             [SecurityCritical]
             public object GetRealObject(StreamingContext context)
             {
-                return new SelfReferencerEvil(name);
+                return new SelfReferencerIndirect(name);
             }
 
             [SecurityCritical]
@@ -1142,6 +1133,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
 
             #endregion
+        }
+
+        #endregion
+
+        #region GetObjectDataSetsUnknownType class
+
+        [Serializable]
+        private class GetObjectDataSetsUnknownType : ISerializable
+        {
+            [SecurityCritical]
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                info.FullTypeName = nameof(GetObjectDataSetsUnknownType);
+            }
+        }
+
+        #endregion
+
+        #region GetObjectDataSetsInvalidType class
+
+        [Serializable]
+        private class GetObjectDataSetsInvalidType : ISerializable
+        {
+            [SecurityCritical]
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                info.SetType(typeof(List<>).GetGenericArguments()[0]);
+            }
         }
 
         #endregion

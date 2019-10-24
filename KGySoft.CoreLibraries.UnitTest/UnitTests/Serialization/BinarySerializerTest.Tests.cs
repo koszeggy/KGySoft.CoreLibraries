@@ -30,12 +30,12 @@ using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
 #if NETFRAMEWORK
-using System.Runtime.Serialization.Formatters.Binary; 
+using System.Runtime.Serialization.Formatters.Binary;
 #endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
-using System.Security.Policy; 
+using System.Security.Policy;
 #endif
 using System.Text;
 
@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region Constants
 
         private const bool dumpDetails = false;
-        private const bool dumpSerContent = false;
+        private const bool dumpSerContent = true;
 
         #endregion
 
@@ -833,8 +833,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null },
 
                 // collections of keyvalue pairs (as object and strongly typed as well)
-                new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
-                new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
+                new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Today), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Today, null }), new KeyValuePair<int, object>(5, null) },
+                new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Today), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Today, null }), new KeyValuePair<int, object>(5, null) },
 
                 new ReadOnlyCollection<int>(new int[] { 1, 2, 3 }),
                 new ReadOnlyCollection<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
@@ -1379,7 +1379,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
 
                 // Pointer fields
-                new UnsafeStruct(), 
+                new UnsafeStruct(),
             };
 
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
@@ -1419,9 +1419,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             var selector = new CustomSerializerSurrogateSelector();
             string title = "Default settings";
-            
+
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
-            
+
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
@@ -1514,7 +1514,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
-                new SelfReferencerEvil("evil"), // the IObjectReference references itself in custom serialization: should throw SerializationException
+                new SelfReferencerIndirect("evil"), // the IObjectReference references itself in custom serialization: should throw SerializationException
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1596,6 +1596,43 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true));
         }
 
-#endregion
+        [Test]
+        public void SerializeISerializableSetNonExistingType()
+        {
+            var obj = new GetObjectDataSetsUnknownType();
+            var binder = new CustomSerializationBinder
+            {
+                TypeResolver = (asmName, typeName) =>
+                {
+                    Console.WriteLine($"asmName={asmName ?? "null"}");
+                    Console.WriteLine($"typeName={typeName ?? "null"}");
+                    return null;
+                }
+            };
+
+            SystemSerializeObject(obj, binder: binder);
+            KGySerializeObject(obj, BinarySerializationOptions.None, binder: binder);
+        }
+
+        [Test]
+        public void SerializeGetObjectDataSetsInvalidType()
+        {
+            var obj = new GetObjectDataSetsInvalidType();
+            var binder = new CustomSerializationBinder
+            {
+                TypeResolver = (asmName, typeName) =>
+                {
+                    Console.WriteLine($"asmName={asmName ?? "null"}");
+                    Console.WriteLine($"typeName={typeName ?? "null"}");
+                    return null;
+                }
+            };
+
+            SystemSerializeObject(obj, binder: binder); // 
+            KGySerializeObject(obj, BinarySerializationOptions.None, binder: binder);
+        }
+
+
+        #endregion
     }
 }

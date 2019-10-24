@@ -114,6 +114,7 @@ namespace KGySoft.Serialization
     /// <note type="tip">A <see cref="SerializationBinder"/> can be used to deserialize types of unmatching assembly identity and to specify custom type-name mappings in both directions.
     /// For example, if you need to resolve types from different .NET platform targets, then you can use the <see cref="ForwardedTypesSerializationBinder"/>.
     /// The <see cref="WeakAssemblySerializationBinder"/> can also be general solution if you need to ignore the assembly version or the complete assembly identity on resolving a type.
+    /// If the name of the type has also been changed, then the <see cref="CustomSerializationBinder"/> can be used.
     /// See also the <strong>Remarks</strong> section of the <see cref="Binder"/> property for more details.</note>
     /// <note type="tip">An <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization. It can be used for types that cannot be handled anyway for some reason.
     /// For example, if you need to deserialize types, whose field names have been renamed you can use the <see cref="CustomSerializerSurrogateSelector"/>.
@@ -992,7 +993,7 @@ namespace KGySoft.Serialization
             using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
             {
                 var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-                manager.Write(bw, data, true);
+                manager.WriteRoot(bw, data, true);
                 return result.ToArray();
             }
         }
@@ -1051,7 +1052,7 @@ namespace KGySoft.Serialization
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-            manager.Write(writer, data, true);
+            manager.WriteRoot(writer, data, true);
         }
 
         /// <summary>

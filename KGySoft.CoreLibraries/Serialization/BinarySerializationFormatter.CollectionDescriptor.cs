@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: BinarySerializationFormatter.cs
+//  File: CollectionDescriptor.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -36,10 +36,10 @@ namespace KGySoft.Serialization
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>
-        /// Per instance descriptor of a decoded type. Used on deserialization for supported collections.
+        /// Per instance descriptor of a decoded collection type. Used on deserialization for supported collections.
         /// Static type information is in <see cref="CollectionSerializationInfo"/>.
         /// </summary>
-        private sealed class DataTypeDescriptor
+        private sealed class CollectionDescriptor
         {
             #region Fields
 
@@ -56,7 +56,7 @@ namespace KGySoft.Serialization
             #region Internal Properties
 
             internal DataTypes CollectionDataType { get; }
-            internal DataTypeDescriptor ParentDescriptor { get; }
+            internal CollectionDescriptor ParentDescriptor { get; }
             internal bool IsArray => CollectionDataType == DataTypes.Array;
             internal bool IsDictionary => isDictionary ?? (isDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary).Value;
 #if NET35
@@ -110,9 +110,9 @@ namespace KGySoft.Serialization
 
             private DataTypes ElementDataType { get; }
 
-            private DataTypeDescriptor ElementDescriptor { get; }
+            private CollectionDescriptor ElementDescriptor { get; }
 
-            private DataTypeDescriptor DictionaryValueDescriptor { get; }
+            private CollectionDescriptor DictionaryValueDescriptor { get; }
 
             #endregion
 
@@ -120,7 +120,7 @@ namespace KGySoft.Serialization
 
             #region Constructors
 
-            internal DataTypeDescriptor(DataTypeDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
+            internal CollectionDescriptor(CollectionDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
             {
                 ParentDescriptor = parentDescriptor;
                 CollectionDataType = dataType & DataTypes.CollectionTypes;
@@ -131,11 +131,11 @@ namespace KGySoft.Serialization
 
                 // recursion 1: Element type in collections, pointers and ByRef types
                 if (CollectionDataType != DataTypes.Null && ElementDataType == DataTypes.Null || ElementDataType.In(DataTypes.Pointer, DataTypes.ByRef))
-                    ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+                    ElementDescriptor = new CollectionDescriptor(this, ReadDataType(reader), reader);
 
                 // recursion 2: TValue in dictionaries
                 if (IsDictionary)
-                    DictionaryValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+                    DictionaryValueDescriptor = new CollectionDescriptor(this, ReadDataType(reader), reader);
             }
 
             #endregion
@@ -319,7 +319,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            internal DataTypeDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : DictionaryValueDescriptor;
+            internal CollectionDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : DictionaryValueDescriptor;
 
             /// <summary>
             /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here

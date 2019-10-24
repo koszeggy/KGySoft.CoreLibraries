@@ -155,13 +155,13 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             internal object Deserialize(BinaryReader br)
             {
-                object result = Read(br, true);
+                object result = ReadRoot(br, true);
                 DeserializationCallback();
                 return result;
             }
 
             [SecurityCritical]
-            internal object Read(BinaryReader br, bool isRoot)
+            internal object ReadRoot(BinaryReader br, bool isRoot)
             {
                 if (!isRoot && TryGetCachedObject(br, out object result))
                     return result;
@@ -192,7 +192,7 @@ namespace KGySoft.Serialization
                 }
 
                 // 3.) compound collection type
-                DataTypeDescriptor descriptor = new DataTypeDescriptor(null, dataType, br);
+                CollectionDescriptor descriptor = new CollectionDescriptor(null, dataType, br);
 
                 // on root level id is written after data type only when the collection can have recursion
                 if (isRoot && descriptor.CanHaveRecursion)
@@ -216,7 +216,62 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            internal object ReadElement(BinaryReader br, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            internal object ReadNonRoot(BinaryReader br, bool isRoot)
+            {
+                if (!isRoot && TryGetCachedObject(br, out object result))
+                    return result;
+
+                DataTypes dataType = ReadDataType(br);
+
+                // 1.) null value
+                if (dataType == DataTypes.Null)
+                    return null;
+
+                bool addToCache = !isRoot;
+
+                // 2.) other supported non-collection type
+                if ((dataType & DataTypes.CollectionTypes) == DataTypes.Null)
+                {
+                    // on root level id is written for IBinarySerializable and recursive objects (collections are checked below)
+                    if (isRoot && (dataType == DataTypes.BinarySerializable || dataType == DataTypes.RecursiveObjectGraph))
+                    {
+                        addToCache = true;
+                        if (TryGetCachedObject(br, out result))
+                        {
+                            Debug.Fail("Root level object is not expected in the cache");
+                            return result;
+                        }
+                    }
+
+                    return ReadObject(br, addToCache, dataType, null, false);
+                }
+
+                // 3.) compound collection type
+                CollectionDescriptor descriptor = new CollectionDescriptor(null, dataType, br);
+
+                // on root level id is written after data type only when the collection can have recursion
+                if (isRoot && descriptor.CanHaveRecursion)
+                {
+                    addToCache = true;
+                    if (TryGetCachedObject(br, out result))
+                    {
+                        Debug.Fail("Root level object is not expected in the cache");
+                        return result;
+                    }
+                }
+
+                descriptor.DecodeType(br, this);
+
+                // 3/a.) array
+                if (descriptor.IsArray)
+                    return CreateArray(br, addToCache, descriptor);
+
+                // 3/b.) non-array collection or key-value
+                return CreateCollection(br, addToCache, descriptor);
+            }
+
+            [SecurityCritical]
+            internal object ReadElement(BinaryReader br, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 DataTypes elementDataType = collectionDescriptor.GetElementDataType(isTValue);
 
@@ -224,7 +279,7 @@ namespace KGySoft.Serialization
                 if (elementDataType != DataTypes.Null)
                     return ReadObject(br, !collectionDescriptor.GetElementType(isTValue).IsValueType, elementDataType, collectionDescriptor, isTValue);
 
-                DataTypeDescriptor elementDescriptor = collectionDescriptor.GetElementDescriptor(isTValue);
+                CollectionDescriptor elementDescriptor = collectionDescriptor.GetElementDescriptor(isTValue);
                 // nested array
                 if (elementDescriptor.IsArray)
                     return CreateArray(br, true, elementDescriptor);
@@ -247,7 +302,7 @@ namespace KGySoft.Serialization
                 if (index == EncodedTypeIndex)
                 {
                     DataTypes dataType = ReadDataType(br);
-                    DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
+                    CollectionDescriptor desc = new CollectionDescriptor(null, dataType, br);
                     result = desc.DecodeType(br, this, allowOpenTypes);
                     CachedTypes.Add(result);
                     return result;
@@ -395,7 +450,7 @@ namespace KGySoft.Serialization
             /// Creates and populates array
             /// </summary>
             [SecurityCritical]
-            private object CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private object CreateArray(BinaryReader br, bool addToCache, CollectionDescriptor descriptor)
             {
                 // getting whether the current instance is in cache
                 if (descriptor.ParentDescriptor != null)
@@ -455,7 +510,7 @@ namespace KGySoft.Serialization
             /// Creates and populates a collection
             /// </summary>
             [SecurityCritical]
-            private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private object CreateCollection(BinaryReader br, bool addToCache, CollectionDescriptor descriptor)
             {
                 if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
                     throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
@@ -534,7 +589,7 @@ namespace KGySoft.Serialization
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
-            private object ReadObject(BinaryReader br, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            private object ReadObject(BinaryReader br, bool addToCache, DataTypes dataType, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 bool TryGetFromCache(out object cachedValue)
                 {
@@ -616,7 +671,7 @@ namespace KGySoft.Serialization
                             if (collectionDescriptor == null)
                                 return createdResult = new object();
                             // result is not set here - when caching is needed, will be done in the recursion
-                            return Read(br, false);
+                            return ReadNonRoot(br, false);
                         case DataTypes.Version:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadVersion(br);
                         case DataTypes.Guid:
@@ -654,7 +709,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private object ReadBinarySerializable(BinaryReader br, bool addToCache, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            private object ReadBinarySerializable(BinaryReader br, bool addToCache, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 // checking instance id
                 Type elementType = null;
@@ -710,11 +765,11 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private object ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            private object ReadObjectGraph(BinaryReader br, bool addToCache, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 // When element types may differ, reading element with data type
                 if (collectionDescriptor != null && collectionDescriptor.AreAllElementsQualified(isTValue))
-                    return Read(br, false);
+                    return ReadNonRoot(br, false);
 
                 // checking instance id
                 Type elementType = null;
@@ -827,7 +882,7 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < count; i++)
                     {
                         string name = br.ReadString();
-                        object value = Read(br, false);
+                        object value = ReadNonRoot(br, false);
 
                         FieldInfo field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                         if (field == null)
@@ -862,7 +917,7 @@ namespace KGySoft.Serialization
                         for (int i = 0; i < count; i++)
                         {
                             br.ReadString();
-                            Read(br, false);
+                            ReadNonRoot(br, false);
                         }
                     } while (br.ReadString().Length != 0);
                 }
@@ -879,7 +934,7 @@ namespace KGySoft.Serialization
                 for (int i = 0; i < count; i++)
                 {
                     string name = br.ReadString();
-                    object value = Read(br, false);
+                    object value = ReadNonRoot(br, false);
                     Type elementType = value?.GetType() ?? Reflector.ObjectType;
                     if (!br.ReadBoolean())
                         elementType = ReadType(br);
@@ -927,7 +982,7 @@ namespace KGySoft.Serialization
                             name += usedCount.ToString(CultureInfo.InvariantCulture);
                         }
 
-                        object value = Read(br, false);
+                        object value = ReadNonRoot(br, false);
                         si.AddValue(name, value);
                     }
 
@@ -962,7 +1017,7 @@ namespace KGySoft.Serialization
                 for (int i = 0; i < count; i++)
                 {
                     string name = br.ReadString();
-                    object value = Read(br, false);
+                    object value = ReadNonRoot(br, false);
                     if (!br.ReadBoolean())
                         ReadType(br); // the changed element type, which is ignored now
 
@@ -978,7 +1033,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private object ReadValueType(BinaryReader br, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            private object ReadValueType(BinaryReader br, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 Type structType = collectionDescriptor == null
                     ? ReadType(br)
@@ -990,7 +1045,7 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private object ReadEnum(BinaryReader br, DataTypes dataType, DataTypeDescriptor collectionDescriptor, bool isTValue)
+            private object ReadEnum(BinaryReader br, DataTypes dataType, CollectionDescriptor collectionDescriptor, bool isTValue)
             {
                 Type enumType = collectionDescriptor == null
                     ? ReadType(br)
