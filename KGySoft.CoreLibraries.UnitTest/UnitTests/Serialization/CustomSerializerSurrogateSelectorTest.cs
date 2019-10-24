@@ -261,16 +261,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             "alpha",
 
             // normally serialized
-            new List<int> { 1 },
+             new List<int> { 1 },
 
             // pointer fields
-            // new UnsafeStruct(), - CustomizationTest uses reflector
+            //new UnsafeStruct(), // - CustomizationTest uses reflector
 
             // normal serializable class with serialization events and NonSerialized fields
-            new SerializationEventsClass{ Name = "Parent" }.AddChild("Child").Parent, 
+            new SerializationEventsClass { Name = "Parent" }.AddChild("Child").Parent,
 
             // custom serializable class
-            new DataTable("tableName", "tableNamespace")
+            new DataTable("tableName", "tableNamespace"),
+
+            // contains primitive, optionally customizable, always recursive and self type
+            new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
         };
 
         #endregion
@@ -303,6 +306,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                     Console.WriteLine($"{ms.Length} bytes.");
 
+                    if (formatter is BinarySerializationFormatter bsf)
+                        bsf.Options &= ~BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes;
                     formatter.SurrogateSelector = deserialize ? surrogate : null;
                     ms.Position = 0L;
                     try
@@ -343,12 +348,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
+            DoTest(new BinaryFormatter(), surrogate, obj, false, true, false);
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, false);
-
-
-            //DoTest(new BinaryFormatter(), surrogate, obj, false, true, false);
-            //DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, false);
-            //DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, false, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, false, true);
         }
 
         [Test]

@@ -79,8 +79,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = false;
-        private const bool dumpSerContent = true;
+        private const bool dumpDetails = true;
+        private const bool dumpSerContent = false;
 
         #endregion
 
@@ -947,7 +947,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable> { { BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } } } } },
 #pragma warning restore CS0618 // Type or member is obsolete
 
-                // object list vith various elements
+                // object list with various elements
+                new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
                 new List<object> { 1, "alpha", new Version(13, 0), new SystemSerializableClass { IntProp = 2, StringProp = "beta" }, new object[] { new BinarySerializableClass { IntProp = 3, StringProp = "gamma" } } },
 
                 // dictionary with object key and value
@@ -1269,6 +1270,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new List<CustomSerializableStruct?> { new CustomSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(CustomSerializableStruct?) },
                 new List<CustomSerializedClass> { new CustomSerializedClass { Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
                 new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
+
+                // List containing primitive, optionally customizable, always recursive and self type
+                new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
 
                 // collections with native support
                 new CircularList<int> { 1, 2, 3 },

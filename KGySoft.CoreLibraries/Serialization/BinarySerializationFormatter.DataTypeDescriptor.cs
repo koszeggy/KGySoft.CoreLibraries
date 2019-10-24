@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: CollectionDescriptor.cs
+//  File: DataTypeDescriptor.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Serialization;
@@ -36,10 +37,10 @@ namespace KGySoft.Serialization
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>
-        /// Per instance descriptor of a decoded collection type. Used on deserialization for supported collections.
-        /// Static type information is in <see cref="CollectionSerializationInfo"/>.
+        /// Per instance descriptor of a DataTypes encoded type. Used on deserialization, mainly for supported collections.
+        /// Static generic type information is in <see cref="CollectionSerializationInfo"/>.
         /// </summary>
-        private sealed class CollectionDescriptor
+        private sealed class DataTypeDescriptor
         {
             #region Fields
 
@@ -49,14 +50,19 @@ namespace KGySoft.Serialization
 #endif
             private bool? isSingleElement;
 
+            private DataTypes dataType;
+
             #endregion
 
             #region Properties
 
             #region Internal Properties
 
-            internal DataTypes CollectionDataType { get; }
-            internal CollectionDescriptor ParentDescriptor { get; }
+            internal DataTypeDescriptor ParentDescriptor { get; }
+
+            internal DataTypes ElementDataType => GetElementDataType(dataType);
+            internal DataTypes CollectionDataType => GetCollectionDataType(dataType);
+            internal bool IsCollection => IsCollectionType(dataType);
             internal bool IsArray => CollectionDataType == DataTypes.Array;
             internal bool IsDictionary => isDictionary ?? (isDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary).Value;
 #if NET35
@@ -76,14 +82,16 @@ namespace KGySoft.Serialization
             internal int Rank { get; private set; }
 
             /// <summary>
-            /// Type of elements in arrays and single-param generic types or TKey in dictionaries
+            /// The element the element/key descriptor for single collections and dictionaries.
             /// </summary>
-            internal Type ElementType { get; private set; }
+            internal DataTypeDescriptor ElementDescriptor { get; private set; }
 
             /// <summary>
-            /// Type of TValue in dictionaries
+            /// The value descriptor for dictionaries.
             /// </summary>
-            internal Type DictionaryValueType { get; private set; }
+            internal DataTypeDescriptor ValueDescriptor { get; }
+
+            internal bool IsDictionaryValue => ParentDescriptor?.ValueDescriptor == this;
 
             internal bool CanHaveRecursion
             {
@@ -97,7 +105,7 @@ namespace KGySoft.Serialization
 
                     if (ElementDescriptor != null && ElementDescriptor.CanHaveRecursion)
                         return true;
-                    if (DictionaryValueDescriptor != null && DictionaryValueDescriptor.CanHaveRecursion)
+                    if (ValueDescriptor != null && ValueDescriptor.CanHaveRecursion)
                         return true;
 
                     return false;
@@ -106,37 +114,66 @@ namespace KGySoft.Serialization
 
             #endregion
 
-            #region Private Properties
-
-            private DataTypes ElementDataType { get; }
-
-            private CollectionDescriptor ElementDescriptor { get; }
-
-            private CollectionDescriptor DictionaryValueDescriptor { get; }
-
-            #endregion
-
             #endregion
 
             #region Constructors
 
-            internal CollectionDescriptor(CollectionDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
+            #region Internal Constructors
+           
+            /// <summary>
+            /// Initializing from stream by encoded <see cref="DataTypes"/>.
+            /// </summary>
+            internal DataTypeDescriptor(DataTypeDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
             {
                 ParentDescriptor = parentDescriptor;
-                CollectionDataType = dataType & DataTypes.CollectionTypes;
-                ElementDataType = dataType & ~DataTypes.CollectionTypes;
+                this.dataType = dataType;
 
                 if (ElementDataType == DataTypes.GenericTypeDefinition)
                     return;
 
                 // recursion 1: Element type in collections, pointers and ByRef types
+                // (In case of simple collections ElementDescriptor will be created on decode)
                 if (CollectionDataType != DataTypes.Null && ElementDataType == DataTypes.Null || ElementDataType.In(DataTypes.Pointer, DataTypes.ByRef))
-                    ElementDescriptor = new CollectionDescriptor(this, ReadDataType(reader), reader);
+                    ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
 
                 // recursion 2: TValue in dictionaries
                 if (IsDictionary)
-                    DictionaryValueDescriptor = new CollectionDescriptor(this, ReadDataType(reader), reader);
+                    ValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
             }
+
+            /// <summary>
+            /// Initializing from <see cref="Type"/> by ReadType. Here supported generics are also handled as recursive objects.
+            /// </summary>
+            internal DataTypeDescriptor(Type type, DeserializationManager manager)
+            {
+                if (type.IsConstructedGenericType())
+                {
+                    if (type.IsGenericTypeOf(typeof(Compressible<>)))
+                    {
+                        dataType = DataTypes.Store7BitEncoded;
+                        type = type.GetGenericArguments()[0];
+                    }
+                }
+
+                dataType |= manager.GetDataType(type);
+                if (dataType != DataTypes.Array && IsCollectionType(dataType))
+                    dataType = DataTypes.RecursiveObjectGraph;
+
+                Type = type;
+            }
+
+            #endregion
+
+            #region Private Constructors
+
+            private DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parentDescriptor = null)
+            {
+                ParentDescriptor = parentDescriptor;
+                dataType = elementDataType;
+                Type = type;
+            }
+
+            #endregion
 
             #endregion
 
@@ -176,7 +213,6 @@ namespace KGySoft.Serialization
                         return typeof(Stack);
                     case DataTypes.StringCollection:
                         return Reflector.StringCollectionType;
-
 
                     case DataTypes.Dictionary:
                         return Reflector.DictionaryGenType;
@@ -218,7 +254,7 @@ namespace KGySoft.Serialization
 
             #region Public Methods
 
-            public override string ToString() => DataTypeToString(ElementDataType | CollectionDataType);
+            public override string ToString() => DataTypeToString(dataType) + ": " + Type?.GetName(TypeNameKind.ShortName);
 
             #endregion
 
@@ -229,8 +265,7 @@ namespace KGySoft.Serialization
             /// </summary>
             internal Type DecodeType(BinaryReader br, DeserializationManager manager, bool allowOpenTypes = false)
             {
-                
-                // Not a supported collection. Handling generics occurs in recursive ReadType if needed.
+                // Simple or impure type. Handling generics occurs in recursive ReadType if needed.
                 if (CollectionDataType == DataTypes.Null)
                     return Type = GetElementType(ElementDataType, br, manager, allowOpenTypes);
                 
@@ -241,29 +276,25 @@ namespace KGySoft.Serialization
                     result = GetCollectionType(CollectionDataType);
                 else
                 {
-                    // simple collection element or dictionary key
+                    // simple collection element or dictionary key: Since in DataTypes the element is encoded together with the collection
+                    // the element type descriptor was not created in the constructor. We create it now.
                     if (ElementDataType != DataTypes.Null)
-                        ElementType = GetElementType(ElementDataType, br, manager, allowOpenTypes);
+                        ElementDescriptor = new DataTypeDescriptor(ElementDataType, GetElementType(ElementDataType, br, manager, allowOpenTypes), this);
+                    // complex element type: recursive decoding
                     else
-                    {
                         ElementDescriptor.DecodeType(br, manager, allowOpenTypes);
-                        ElementType = ElementDescriptor.Type;
-                    }
 
                     // Dictionary TValue
                     if (IsDictionary)
-                    {
-                        DictionaryValueDescriptor.DecodeType(br, manager, allowOpenTypes);
-                        DictionaryValueType = DictionaryValueDescriptor.Type;
-                    }
+                        ValueDescriptor.DecodeType(br, manager, allowOpenTypes);
 
                     if (IsArray)
                     {
                         // 0 means zero based 1D array
                         Rank = br.ReadByte();
                         return Type = Rank == 0
-                            ? ElementType.MakeArrayType()
-                            : ElementType.MakeArrayType(Rank);
+                            ? ElementDescriptor.Type.MakeArrayType()
+                            : ElementDescriptor.Type.MakeArrayType(Rank);
                     }
 
                     result = GetCollectionType(CollectionDataType);
@@ -273,22 +304,23 @@ namespace KGySoft.Serialization
                     bool isNullable = result.IsNullable();
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
                     result = typeDef.GetGenericArguments().Length == 1
-                        ? typeDef.GetGenericType(ElementType)
-                        : typeDef.GetGenericType(ElementType, DictionaryValueType);
+                        ? typeDef.GetGenericType(ElementDescriptor.Type)
+                        : typeDef.GetGenericType(ElementDescriptor.Type, ValueDescriptor.Type);
                     result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
                 if (result.IsGenericTypeDefinition)
-                    result = manager.HandleGenericTypeDef(br, result, allowOpenTypes, false);
+                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result, manager), allowOpenTypes, false).Type;
                 return Type = result;
             }
 
             internal bool AreAllElementsQualified(bool isTValue)
             {
-                Type elementType = GetElementType(isTValue);
+                throw new NotImplementedException(nameof(AreAllElementsQualified));
+                //Type elementType = GetElementType(isTValue);
 
-                // true if element type is interface or not sealed class, false if struct or sealed class
-                return elementType.CanBeDerived();
+                //// true if element type is interface or not sealed class, false if struct or sealed class
+                //return elementType.CanBeDerived();
             }
 
             /// <summary>
@@ -296,16 +328,11 @@ namespace KGySoft.Serialization
             /// </summary>
             internal Type GetElementType(bool isTValue)
             {
-                Type result = !isTValue ? ElementType : DictionaryValueType;
-                if ((GetElementDataType(isTValue) & DataTypes.Nullable) == DataTypes.Nullable)
-                    return Nullable.GetUnderlyingType(result);
-                return result;
-            }
-
-            internal DataTypes GetElementDataType(bool isTValue)
-            {
-                return !isTValue ? ElementDataType :
-                    DictionaryValueDescriptor.CollectionDataType != DataTypes.Null ? DataTypes.Null : DictionaryValueDescriptor.ElementDataType;
+                throw new NotImplementedException("TODO: delete");
+                //Type result = !isTValue ? ElementDescriptor.Type : ValueDescriptor.Type;
+                //if ((GetElementDataType(isTValue) & DataTypes.Nullable) == DataTypes.Nullable)
+                //    return Nullable.GetUnderlyingType(result);
+                //return result;
             }
 
             internal object GetAsReadOnly(object collection)
@@ -319,7 +346,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            internal CollectionDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : DictionaryValueDescriptor;
+            internal DataTypeDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : ValueDescriptor;
 
             /// <summary>
             /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here
@@ -343,7 +370,7 @@ namespace KGySoft.Serialization
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
             private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager, bool allowOpenTypes)
             {
-                switch (dataType)
+                switch (dataType & ~DataTypes.Store7BitEncoded)
                 {
                     case DataTypes.Bool:
                         return Reflector.BoolType;
@@ -414,7 +441,7 @@ namespace KGySoft.Serialization
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
-                        return manager.ReadType(br, allowOpenTypes);
+                        return manager.ReadType(br, allowOpenTypes).Type;
 
                     default:
                         // nullable
@@ -426,7 +453,7 @@ namespace KGySoft.Serialization
 
                         // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
-                            return manager.ReadType(br);
+                            return manager.ReadType(br).Type;
                         throw new InvalidOperationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
                 }
             }
