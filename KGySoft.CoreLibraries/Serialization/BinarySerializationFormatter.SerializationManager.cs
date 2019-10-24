@@ -1296,16 +1296,30 @@ namespace KGySoft.Serialization
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+                string binderAsmName = null;
+                string binderTypeName = null;
 
-                // 1.) Trying to encode supported types by DataTypes. Binder is not queried for supported types.
-                if (TryWriteTypeByDataType(bw, type, allowOpenTypes))
-                    return;
+                // 1.) Checking if type is already known without binder (because maybe it is an encoded supported type).
+                int index = GetTypeIndex(type);
 
-                // 2.) Checking if type is already known. Binder is queried for root types only.
-                GetBoundNames(type, out string binderAsmName, out string binderTypeName);
-                int index = GetTypeIndex(type, binderAsmName, binderTypeName);
+                if (index == -1)
+                {
+                    // 2.) Trying to encode supported types by DataTypes. Binder is not queried for supported types.
+                    if (TryWriteTypeByDataType(bw, type, allowOpenTypes))
+                    {
+                        AddToTypeCache(type);
+                        return;
+                    }
 
-                // The requested type (including constructed ones and parameters) is already known
+                    // 3.) Checking if type is already known. Binder is queried for root types only.
+                    if (Binder != null)
+                    {
+                        GetBoundNames(type, out binderAsmName, out binderTypeName);
+                        index = GetTypeIndex(type, binderAsmName, binderTypeName);
+                    }
+                }
+
+                // The requested type (including constructed ones and parameters) is known
                 if (index != -1)
                 {
                     Write7BitInt(bw, index);
@@ -1314,14 +1328,14 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // 3.) Special handling for generic method parameters
+                // 4.) Special handling for generic method parameters
                 if (allowOpenTypes && type.IsGenericParameter && type.DeclaringMethod != null)
                 {
                     WriteGenericMethodParameter(bw, type);
                     return;
                 }
 
-                // 4.) Writing new type
+                // 5.) Writing new type
                 WriteNewType(bw, type, allowOpenTypes, binderAsmName, binderTypeName);
             }
 
@@ -1382,6 +1396,7 @@ namespace KGySoft.Serialization
                 {
                     if (!dt.In(DataTypes.Pointer, DataTypes.ByRef))
                         return false;
+
                     Write7BitInt(bw, EncodedTypeIndex);
 
                     do
@@ -1414,6 +1429,7 @@ namespace KGySoft.Serialization
 
                     if (!indexWritten)
                         Write7BitInt(bw, EncodedTypeIndex);
+
                     WriteDataType(bw, dataType);
                     return true;
                 }
@@ -1554,7 +1570,7 @@ namespace KGySoft.Serialization
                 }
 
                 // 6.) Adding the original complex type to cache (binder is not used here)
-                AddToTypeCache(type, null, null);
+                AddToTypeCache(type);
             }
 
             private void WriteGenericMethodParameter(BinaryWriter bw, Type type)
@@ -1577,7 +1593,7 @@ namespace KGySoft.Serialization
                 AddToTypeCache(type, null, null);
             }
 
-            private void AddToTypeCache(Type type, string binderAsmName, string binderTypeName)
+            private void AddToTypeCache(Type type, string binderAsmName = null, string binderTypeName = null)
             {
                 // Even if current binder names are null we must use the string based cache if there is a binder
                 // to avoid possibly conflicting type names between the custom and default binding and among binder type names.

@@ -241,16 +241,17 @@ namespace KGySoft.Serialization
             {
                 // type index
                 int index = Read7BitInt(br);
+                Type result;
 
                 // natively supported type
                 if (index == EncodedTypeIndex)
                 {
                     DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
-                    return desc.DecodeType(br, this, allowOpenTypes);
+                    result = desc.DecodeType(br, this, allowOpenTypes);
+                    CachedTypes.Add(result);
+                    return result;
                 }
-
-                Type result;
 
                 // known type
                 if (index != NewTypeIndex)
