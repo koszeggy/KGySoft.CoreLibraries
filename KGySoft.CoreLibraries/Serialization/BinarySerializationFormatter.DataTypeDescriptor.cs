@@ -118,8 +118,6 @@ namespace KGySoft.Serialization
 
             #region Constructors
 
-            #region Internal Constructors
-           
             /// <summary>
             /// Initializing from stream by encoded <see cref="DataTypes"/>.
             /// </summary>
@@ -142,12 +140,58 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Initializing from <see cref="Type"/> by ReadType. Here supported generics are also handled as recursive objects.
+            /// Constructor for explicitly setting already known values.
             /// </summary>
-            internal DataTypeDescriptor(Type type, DeserializationManager manager)
+            internal DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parent)
             {
+                ParentDescriptor = parent;
+                dataType = elementDataType;
+                Type = type;
+            }
+
+            /// <summary>
+            /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
+            /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
+            /// </summary>
+            internal DataTypeDescriptor(Type type)
+            {
+                static DataTypes GetDataType(Type t)
+                {
+                    // Primitive type
+                    if (primitiveTypes.TryGetValue(t, out DataTypes result))
+                        return result;
+
+                    if (t.IsEnum)
+                        return DataTypes.Enum | GetDataType(Enum.GetUnderlyingType(t));
+
+                    return DataTypes.RecursiveObjectGraph;
+                }
+
                 if (type.IsConstructedGenericType())
                 {
+                    Type typeDef = type.GetGenericTypeDefinition();
+
+                    if (typeDef == typeof(RecursiveObjectGraph<>))
+                    {
+                        dataType = DataTypes.RecursiveObjectGraph;
+                        Type = type.GetGenericArguments()[0];
+                        return;
+                    }
+
+                    if (typeDef == typeof(RawStruct<>))
+                    {
+                        dataType = DataTypes.RawStruct;
+                        Type = type.GetGenericArguments()[0];
+                        return;
+                    }
+
+                    if (typeDef == typeof(BinarySerializable<>))
+                    {
+                        dataType = DataTypes.BinarySerializable;
+                        Type = type.GetGenericArguments()[0];
+                        return;
+                    }
+
                     if (type.IsGenericTypeOf(typeof(Compressible<>)))
                     {
                         dataType = DataTypes.Store7BitEncoded;
@@ -155,25 +199,9 @@ namespace KGySoft.Serialization
                     }
                 }
 
-                dataType |= manager.GetDataType(type);
-                if (dataType != DataTypes.Array && IsCollectionType(dataType))
-                    dataType = DataTypes.RecursiveObjectGraph;
-
+                dataType |= GetDataType(type);
                 Type = type;
             }
-
-            #endregion
-
-            #region Private Constructors
-
-            private DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parentDescriptor = null)
-            {
-                ParentDescriptor = parentDescriptor;
-                dataType = elementDataType;
-                Type = type;
-            }
-
-            #endregion
 
             #endregion
 
@@ -310,7 +338,7 @@ namespace KGySoft.Serialization
                 }
 
                 if (result.IsGenericTypeDefinition)
-                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result, manager), allowOpenTypes, false).Type;
+                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type;
                 return Type = result;
             }
 

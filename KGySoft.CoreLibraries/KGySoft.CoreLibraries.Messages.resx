@@ -610,6 +610,12 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
   </data>
+  <data name="BinarySerialization_BinarySerializationNotBinarySerializableFormat" xml:space="preserve">
+    <value>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</value>
+  </data>
+  <data name="BinarySerialization_BinarySerializationNotAValueTypeFormat" xml:space="preserve">
+    <value>Type '{0}' was serialized as a raw value type, though it is not struct now.</value>
+  </data>
   <data name="BinarySerialization_UnexpectedSerializationInfoElementFormat" xml:space="preserve">
     <value>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</value>
   </data>

@@ -424,6 +424,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
@@ -611,6 +614,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
@@ -622,6 +628,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array
                 new IBinarySerializable[][] { new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } }, null }, // IBinarySerializable array
                 new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, new NonSerializableStruct { IntProp = 2, Str10 = "beta", Bytes3 = new byte[] { 3, 2, 1 } } }, // array custom struct
+                new ValueType[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" }, new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } }, // elements with mixes serialization strategies
 
                 new ValueType[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" }, null, 1 },
                 new IConvertible[] { null, 1 },
@@ -1610,7 +1617,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     Console.WriteLine($"asmName={asmName ?? "null"}");
                     Console.WriteLine($"typeName={typeName ?? "null"}");
-                    return null;
+                    return typeof(GetObjectDataSetsUnknownType);
                 }
             };
 
@@ -1628,7 +1635,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     Console.WriteLine($"asmName={asmName ?? "null"}");
                     Console.WriteLine($"typeName={typeName ?? "null"}");
-                    return null;
+                    return typeof(GetObjectDataSetsInvalidType);
                 }
             };
 

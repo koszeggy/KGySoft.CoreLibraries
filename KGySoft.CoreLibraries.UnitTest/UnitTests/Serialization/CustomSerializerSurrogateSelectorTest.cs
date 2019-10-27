@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -250,6 +251,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region BinarySerializable class
+
+        [Serializable]
+        private class BinarySerializable : IBinarySerializable
+        {
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            #endregion
+
+            #region Methods
+
+            public byte[] Serialize(BinarySerializationOptions options) => BitConverter.GetBytes(IntProp);
+
+            public void Deserialize(BinarySerializationOptions options, byte[] serData) => IntProp = BitConverter.ToInt32(serData, 0);
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Fields
@@ -269,11 +292,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // normal serializable class with serialization events and NonSerialized fields
             new SerializationEventsClass { Name = "Parent" }.AddChild("Child").Parent,
 
-            // custom serializable class
+            // ISerializable class
             new DataTable("tableName", "tableNamespace"),
 
+            // IBinarySerializable
+            new BinarySerializable { IntProp = 42 },
+
+            // Compact serializable
+            new Point(1, 2),
+
             // contains primitive, optionally customizable, always recursive and self type
-            new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
+            new List<object>
+            {
+                1,
+                DateTime.Today,
+                ConsoleColor.Blue,
+                new BinarySerializable { IntProp = 42 },
+                new Point(1, 2),
+                new List<object> { 1 }
+            },
         };
 
         #endregion
@@ -282,10 +319,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Static Methods
 
-        private static void DoTest(IFormatter formatter, ISurrogateSelector surrogate, object obj, bool throwError, bool serialize, bool deserialize)
+        private static void DoTest(IFormatter formatter, ISurrogateSelector surrogate, object obj, bool throwError, bool forWriting, bool forReading)
         {
             Console.Write($"{obj} by {formatter.GetType().Name}: ");
-            formatter.SurrogateSelector = serialize ? surrogate : null;
+            formatter.SurrogateSelector = forWriting ? surrogate : null;
             TestExecutionContext.IsolatedContext context = throwError ? null : new TestExecutionContext.IsolatedContext();
 
             try
@@ -306,9 +343,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                     Console.WriteLine($"{ms.Length} bytes.");
 
-                    if (formatter is BinarySerializationFormatter bsf)
-                        bsf.Options &= ~BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes;
-                    formatter.SurrogateSelector = deserialize ? surrogate : null;
+                    formatter.SurrogateSelector = forReading ? surrogate : null;
                     ms.Position = 0L;
                     try
                     {
@@ -334,23 +369,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region Instance Methods
 
         [TestCaseSource(nameof(testCases))]
-        public void DeserializeDefaultSerializedObjects(object obj)
+        public void BaselineTestWithoutUsingSurrogate(object obj)
+        {
+            DoTest(new BinaryFormatter(), null, obj, false, false, false);
+            DoTest(new BinarySerializationFormatter(), null, obj, true, false, false);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), null, obj, true, false, false);
+        }
+
+        [TestCaseSource(nameof(testCases))]
+        public void ReadAndWriteWithSurrogate(object obj)
+        {
+            ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
+
+            DoTest(new BinaryFormatter(), surrogate, obj, false, true, true);
+            DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, true, true);
+        }
+
+
+        [TestCaseSource(nameof(testCases))]
+        public void ReadWithSurrogate(object obj)
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
             DoTest(new BinaryFormatter(), surrogate, obj, false, false, true);
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, false, true);
-            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, false, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
 
         [TestCaseSource(nameof(testCases))]
-        public void SerializeBySurrogateDeserializeWithoutSurrogate(object obj)
+        public void WriteWithSurrogate(object obj)
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
             DoTest(new BinaryFormatter(), surrogate, obj, false, true, false);
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, false);
-            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, false, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
 
         [Test]
@@ -414,7 +468,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         public void CustomizationTest(object obj)
         {
             #region Local Methods
-            
+
             static void Serializing(object sender, SerializingEventArgs e)
             {
                 var instance = (CustomSerializerSurrogateSelector)sender;
@@ -440,7 +494,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             static void SettingField(object sender, SettingFieldEventArgs e)
             {
                 Assert.IsFalse(e.Handled);
-                Assert.IsNull(e.Field); // due to the reversed names
+                Assert.IsTrue(e.Field == null || e.Field.Name.Reverse().Convert<string>() == e.Field.Name);
                 string name = e.Entry.Name.Reverse().Convert<string>();
                 Reflector.SetField(e.Object, name, e.Value);
                 e.Handled = true;
@@ -456,7 +510,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             var bf = new BinaryFormatter();
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType | BinarySerializationOptions.IgnoreSerializationMethods);
 
-            DoTest(bf, surrogate, obj, false, true, true);
+           // DoTest(bf, surrogate, obj, false, true, true);
             DoTest(bsf, surrogate, obj, true, true, true);
         }
 

@@ -348,6 +348,144 @@ namespace KGySoft.Serialization
 
             private void ThrowNotSupported(Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, Options));
 
+            /// <summary>
+            /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/>.
+            /// </summary>
+            [SecurityCritical]
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+            private DataTypes GetDataType(Type type)
+            {
+                #region Local methods to reduce complexity
+
+                bool TryGetKnownDataType(Type t, out DataTypes result)
+                {
+                    // Primitive type
+                    if (primitiveTypes.TryGetValue(t, out result))
+                        return true;
+
+                    // Primitive nullable (must be before surrogate-support checks)
+                    bool isNullable = t.IsNullable();
+                    if (isNullable)
+                    {
+                        // the Nullable<> definition or open generic types are encoded recursively
+                        if (t.IsGenericTypeDefinition || t.ContainsGenericParameters)
+                        {
+                            result = DataTypes.RecursiveObjectGraph;
+                            return true;
+                        }
+
+                        result = GetDataType(t.GetGenericArguments()[0]);
+                        if (IsElementType(result) && IsPureType(result))
+                        {
+                            result |= DataTypes.Nullable;
+                            return true;
+                        }
+                    }
+
+                    // Non-primitive types that cannot be serialized recursively
+                    if (t.IsArray)
+                    {
+                        result = DataTypes.Array;
+                        return true;
+                    }
+
+                    if (t.IsPointer)
+                    {
+                        result = DataTypes.Pointer;
+                        return true;
+                    }
+
+                    if (t.IsByRef)
+                    {
+                        result = DataTypes.ByRef;
+                        return true;
+                    }
+
+                    // Recursion for any type (except primitives and array)
+                    if (ForceRecursiveSerializationOfSupportedTypes || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(t))
+                    {
+                        result = DataTypes.RecursiveObjectGraph;
+                        if (isNullable)
+                            result |= DataTypes.Nullable;
+                        return true;
+                    }
+
+                    // Non-primitive nullable
+                    if (isNullable)
+                    {
+                        // result is now the result of the recursive call
+                        switch (result)
+                        {
+                            case DataTypes.DictionaryEntry:
+                                result = DataTypes.DictionaryEntryNullable;
+                                return true;
+                            case DataTypes.KeyValuePair:
+                                result = DataTypes.KeyValuePairNullable;
+                                return true;
+                            default:
+                                result |= DataTypes.Nullable;
+                                return true;
+                        }
+                    }
+
+                    // Natively supported non-primitive type
+                    if (supportedNonPrimitiveElementTypes.TryGetValue(t, out result))
+                        return true;
+
+                    // enum
+                    if (t.IsEnum)
+                    {
+                        result = DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(t)];
+                        return true;
+                    }
+
+                    // supported collection
+                    Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
+                        : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType
+                        : t;
+
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    if (supportedCollections.TryGetValue(collType, out result))
+                        return true;
+
+                    return false;
+                }
+
+                DataTypes GetImpureDataType(Type t)
+                {
+                    // IBinarySerializable implementation
+                    if (!IgnoreIBinarySerializable && typeof(IBinarySerializable).IsAssignableFrom(t))
+                        return DataTypes.BinarySerializable;
+
+                    // Any struct if can be serialized
+                    if (CompactSerializationOfStructures && t.IsValueType && BinarySerializer.CanSerializeValueType(t, false))
+                        return DataTypes.RawStruct;
+
+                    // Recursive serialization
+                    if (RecursiveSerializationAsFallback || t.IsInterface || t.IsSerializable || CanUseSurrogate(t))
+                        return DataTypes.RecursiveObjectGraph;
+
+#pragma warning disable 618, 612
+                    // Any struct (obsolete but still supported as backward compatibility)
+                    if (ForcedSerializationValueTypesAsFallback && t.IsValueType)
+                        return DataTypes.RawStruct;
+#pragma warning restore 618, 612
+
+                    // It is alright for a collection element type. If no recursive serialization is allowed it will turn out for the items.
+                    return DataTypes.RecursiveObjectGraph;
+                }
+
+                #endregion
+
+                // a.) Well-known types or forced recursion
+                if (TryGetKnownDataType(type, out DataTypes dataType))
+                    return dataType;
+
+                // b.) Non-pure types
+                return GetImpureDataType(type);
+            }
+
             [SecurityCritical]
             private void WriteSimpleObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
@@ -566,13 +704,13 @@ namespace KGySoft.Serialization
                 switch (GetUnderlyingSimpleType(dataType))
                 {
                     case DataTypes.BinarySerializable:
-                        WriteBinarySerializable(bw, (IBinarySerializable)obj, true);
+                        WriteBinarySerializable(bw, (IBinarySerializable)obj, true, true);
                         return;
                     case DataTypes.RawStruct:
-                        WriteValueType(bw, (ValueType)obj, true);
+                        WriteValueType(bw, (ValueType)obj, true, true);
                         return;
                     case DataTypes.RecursiveObjectGraph:
-                        WriteObjectGraph(bw, obj, true);
+                        WriteObjectGraph(bw, obj, true, true);
                         return;
 
                     // There is no ByRef instance and pointers cannot be cast to objects. These are supported as types only.
@@ -590,13 +728,13 @@ namespace KGySoft.Serialization
                 switch (GetUnderlyingSimpleType(dataType))
                 {
                     case DataTypes.BinarySerializable:
-                        WriteBinarySerializable(bw, (IBinarySerializable)obj, writeType);
+                        WriteBinarySerializable(bw, (IBinarySerializable)obj, writeType, false);
                         return;
                     case DataTypes.RawStruct:
-                        WriteValueType(bw, (ValueType)obj, writeType);
+                        WriteValueType(bw, (ValueType)obj, writeType, false);
                         return;
                     case DataTypes.RecursiveObjectGraph:
-                        WriteObjectGraph(bw, obj, writeType);
+                        WriteObjectGraph(bw, obj, writeType, false);
                         return;
 
                     // There is no ByRef instance and pointers cannot be cast to objects. These are supported as types only.
@@ -736,7 +874,7 @@ namespace KGySoft.Serialization
 
                     default:
                         Debug.Assert(IsElementType(dataType), $"Unexpected non-element type: {dataType}");
-                        return new CircularList<DataTypes> { dataType }; 
+                        return new CircularList<DataTypes> { dataType };
                 }
             }
 
@@ -744,7 +882,7 @@ namespace KGySoft.Serialization
             private CircularList<DataTypes> EncodeArray(Type type)
             {
                 Type elementType = type.GetElementType();
-                
+
                 // ReSharper disable once PossibleNullReferenceException - arrays have element types
                 if (elementType.IsGenericParameter || elementType.IsGenericTypeDefinition)
                     return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph };
@@ -1038,7 +1176,7 @@ namespace KGySoft.Serialization
 
                         // 2. Serialize
                         bool typeNeeded = collectionElementType.CanBeDerived();
-                        WriteBinarySerializable(bw, (IBinarySerializable)element, typeNeeded);
+                        WriteBinarySerializable(bw, (IBinarySerializable)element, typeNeeded, false);
                         return;
 
                     case DataTypes.RecursiveObjectGraph:
@@ -1057,12 +1195,12 @@ namespace KGySoft.Serialization
 
                         Debug.Assert(element != null, "When element is null, WriteId should return true");
 
-                        // 2. Serialize
-                        WriteObjectGraph(bw, element, false);
+                        // 2. Serialize (here element types are always the same due to the first check)
+                        WriteObjectGraph(bw, element, false, false);
                         return;
 
                     case DataTypes.RawStruct:
-                        WriteValueType(bw, (ValueType)element, false);
+                        WriteValueType(bw, (ValueType)element, false, false);
                         return;
 
                     // There is no ByRef instance and pointers cannot be cast to objects. These are supported as types only.
@@ -1074,7 +1212,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteObjectGraph(BinaryWriter bw, object data, bool writeType)
+            private void WriteObjectGraph(BinaryWriter bw, object data, bool writeType, bool isRoot)
             {
                 Debug.Assert(!(data is Array), "Arrays cannot be serialized as an object graph.");
 
@@ -1083,15 +1221,15 @@ namespace KGySoft.Serialization
 
                 Type type = data.GetType();
                 if (TryGetSurrogate(type, out ISerializationSurrogate surrogate, out var _) || (!IgnoreISerializable && data is ISerializable))
-                    WriteCustomObjectGraph(bw, data, surrogate, writeType);
+                    WriteCustomObjectGraph(bw, data, surrogate, writeType, isRoot);
                 else
-                    WriteDefaultObjectGraph(bw, data, writeType);
+                    WriteDefaultObjectGraph(bw, data, writeType, isRoot);
 
                 OnSerialized(data);
             }
 
             [SecurityCritical]
-            private void WriteDefaultObjectGraph(BinaryWriter bw, object data, bool writeType)
+            private void WriteDefaultObjectGraph(BinaryWriter bw, object data, bool writeType, bool isRoot)
             {
                 Type type = data.GetType();
                 Debug.Assert(!type.IsArray, "Array cannot be serialized as object graph");
@@ -1100,7 +1238,7 @@ namespace KGySoft.Serialization
 
                 // 1.) Writing type. For recursive objects this is the first occasion we can be sure it can be written because on custom serialization type name can be changed.
                 if (writeType)
-                    WriteType(bw, type);
+                    WriteType(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type));
 
                 // 2.) false for IsCustom object graph
                 bw.Write(false);
@@ -1138,7 +1276,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate surrogate, bool forcedType)
+            private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate surrogate, bool forcedType, bool isRoot)
             {
                 Type type = data.GetType();
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
@@ -1153,13 +1291,9 @@ namespace KGySoft.Serialization
                     ((ISerializable)data).GetObjectData(si, Context);
                 }
 
-                bool typeChanged = si.AssemblyName != type.Assembly.FullName || si.FullTypeName != type.FullName;
-                if (typeChanged)
-                    type = Type.GetType(si.FullTypeName + ", " + si.AssemblyName);
-
                 // 1/a.) If type must be written it precedes IsDefault field to follow general type pattern
                 if (forcedType)
-                    WriteType(bw, type);
+                    WriteTypeCustom(bw, type, si, isRoot);
 
                 // 2.) true for IsCustom object graph method
                 bw.Write(true);
@@ -1168,7 +1302,7 @@ namespace KGySoft.Serialization
                 // serialization we write the type anyway though because it can be changed by SerializationInfo. Not bothering with
                 // bool flags whether type has changed though because for known types just a 7-bit encoded id is written.
                 if (!forcedType)
-                    WriteType(bw, type);
+                    WriteTypeCustom(bw, type, si, isRoot);
 
                 // 3.) Serialization part.
                 Write7BitInt(bw, si.MemberCount);
@@ -1185,6 +1319,41 @@ namespace KGySoft.Serialization
                 }
             }
 
+            private void WriteTypeCustom(BinaryWriter bw, Type type, SerializationInfo si, bool isRoot)
+            {
+                Type typeToWrite = type;
+#if NET35
+                string explicitAsmName = si.AssemblyName;
+                string explicitTypeName = si.FullTypeName;
+                if (explicitAsmName != type.Assembly.FullName || explicitTypeName != type.FullName)
+                {
+                    // First of all we try to obtain the type if exists
+                    typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
+                        ? Reflector.ResolveType(explicitAsmName + "," + explicitTypeName, ResolveTypeOptions.None)
+                        : null;
+                }
+#else
+#error Implement this
+                    type = Type.GetType(si.FullTypeName + ", " + si.AssemblyName);
+#endif
+
+                // writing type normally
+                if (typeToWrite != null)
+                {
+                    WriteType(bw, isRoot ? typeToWrite : typeof(RecursiveObjectGraph<>).GetGenericType(typeToWrite));
+                    return;
+                }
+
+                // writing an unknown type by name
+                if (!isRoot)
+                {
+                    // trick: writing as a closed type before the actual type so on read it will create a RecursiveObjectGraph<explicitTypeName>
+                    WriteType(bw, typeof(RecursiveObjectGraph<>));
+                }
+
+                WriteTypeByName(bw, type, explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+            }
+
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializingAttribute));
 
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializedAttribute));
@@ -1197,7 +1366,8 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
-                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter) || type == typeof(RecursiveObjectGraph<>),
+                    $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 string binderAsmName = null;
                 string binderTypeName = null;
 
@@ -1281,11 +1451,11 @@ namespace KGySoft.Serialization
                         ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
                         : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
 
-            private int GetTypeIndex(Type type, string binderAsmName = null, string binderTypeName = null)
-                => Binder == null
+            private int GetTypeIndex(Type type, string boundAsmName = null, string boundTypeName = null)
+                => boundAsmName == null && boundTypeName == null
                     ? TypeIndexCache.GetValueOrDefault(type, -1)
                     // even if we have a bound name we look for the type in the unbound cache first so we can avoid storing the known types as new ones
-                    : TypeIndexCache.GetValueOrDefault(type, () => TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1));
+                    : TypeIndexCache.GetValueOrDefault(type, () => TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, boundAsmName, boundTypeName), -1));
 
             /// <summary>
             /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
@@ -1304,7 +1474,7 @@ namespace KGySoft.Serialization
                     do
                     {
                         WriteDataType(bw, dt);
-                        
+
                         // ReSharper disable once PossibleNullReferenceException - Pointers and ByRef types have element type
                         t = t.GetElementType();
                         dt = GetDataType(t);
@@ -1475,6 +1645,43 @@ namespace KGySoft.Serialization
                 AddToTypeCache(type);
             }
 
+            /// <summary>
+            /// Writes the type using explicit names. Occurs when <see cref="SerializationInfo"/> changes the type to an unknown one.
+            /// The Binder is not queried this time because there is no known type to query. Instead, we handle the names as bound type names.
+            /// </summary>
+            private void WriteTypeByName(BinaryWriter bw, Type origType, string explicitAsmName, string explicitTypeName)
+            {
+                // 1.) Checking if type is already known as bound name
+                int index = GetTypeIndex(origType, explicitAsmName, explicitTypeName);
+
+                // The requested type (including constructed ones and parameters) is known
+                if (index != -1)
+                {
+                    Write7BitInt(bw, index);
+                    return;
+                }
+
+                Write7BitInt(bw, NewTypeIndex);
+
+                // 2.) Assembly index
+                index = GetAssemblyIndex(origType, explicitAsmName);
+
+                // known assembly
+                if (index != -1)
+                    Write7BitInt(bw, index);
+                // new assembly: writing also the name
+                else
+                {
+                    Write7BitInt(bw, NewAssemblyIndex);
+                    WriteNewAssembly(bw, origType.Assembly, explicitAsmName);
+                }
+
+                // 3.) Type name
+                // ReSharper disable once AssignNullToNotNullAttribute - FullName is not null for the root type
+                bw.Write(explicitTypeName);
+                AddToTypeCache(origType, explicitAsmName, explicitTypeName);
+            }
+
             private void WriteGenericMethodParameter(BinaryWriter bw, Type type)
             {
                 Debug.Assert(type.IsGenericParameter && type.DeclaringMethod != null, "Generic method argument is expected here");
@@ -1499,7 +1706,7 @@ namespace KGySoft.Serialization
             {
                 // Even if current binder names are null we must use the string based cache if there is a binder
                 // to avoid possibly conflicting type names between the custom and default binding and among binder type names.
-                if (Binder != null)
+                if (binderAsmName != null || binderTypeName != null)
                 {
                     TypeNameIndexCache.Add(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), TypeIndexCacheCount);
                     return;
@@ -1567,10 +1774,16 @@ namespace KGySoft.Serialization
                 return false;
             }
 
-            private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, bool writeType)
+            private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, bool writeType, bool isRoot)
             {
                 if (writeType)
-                    WriteType(bw, instance.GetType());
+                {
+                    Type type = instance.GetType();
+                    if (!isRoot)
+                        type = typeof(BinarySerializable<>).GetGenericType(type);
+                    WriteType(bw, type);
+                }
+
                 OnSerializing(instance);
                 byte[] rawData = instance.Serialize(Options);
                 Write7BitInt(bw, rawData.Length);
@@ -1579,10 +1792,16 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteValueType(BinaryWriter bw, ValueType data, bool writeType)
+            private void WriteValueType(BinaryWriter bw, ValueType data, bool writeType, bool isRoot)
             {
                 if (writeType)
-                    WriteType(bw, data.GetType());
+                {
+                    Type type = data.GetType();
+                    if (!isRoot)
+                        type = typeof(RawStruct<>).GetGenericType(type);
+                    WriteType(bw, type);
+                }
+
                 OnSerializing(data);
                 byte[] rawData = BinarySerializer.SerializeValueType(data);
                 Write7BitInt(bw, rawData.Length);

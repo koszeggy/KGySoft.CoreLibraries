@@ -255,6 +255,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             private readonly bool log;
             private long pos;
+            private bool extendedDataType;
 
             #endregion
 
@@ -320,7 +321,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     var frames = new StackTrace().GetFrames();
                     string name = frames[1].GetMethod().Name;
                     if (name == "ReadDataType")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)result)}]";
+                    {
+                        int dataType = result;
+                        if (extendedDataType)
+                        {
+                            dataType <<= 8;
+                            extendedDataType = false;
+                        }
+                        else
+                            extendedDataType = (result & 127) != 0;
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", dataType)}]";
+                    }
                     Console.WriteLine($"byte: {result} ({valueStr}) - {GetStack()}");
                 }
                 return result;

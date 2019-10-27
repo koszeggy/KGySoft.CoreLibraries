@@ -363,8 +363,8 @@ namespace KGySoft.Serialization
             Uri = 18,
 
             // ReSharper disable once InconsistentNaming
-            DBNull = 19, // Non-serializable in .NET Core
-            Object = 20,
+            DBNull = 19, // Non-serializable in .NET Core 2
+            Object = 20, // Non sealed type. Can be any type as collection element.
 
             Decimal = 21,
 
@@ -403,7 +403,7 @@ namespace KGySoft.Serialization
 
             // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // For a serialized DataTypes indicates that high byte also is used
+            Extended = 1 << 7, // On serialization indicates that high byte also is used. Used also for technical types for special handling.
 
             // ===== HIGH BYTE =====
 
@@ -531,17 +531,6 @@ namespace KGySoft.Serialization
 
         #region Nested Structs
 
-        #region GenericMethodDefinitionPlaceholder struct
-
-        /// <summary>
-        /// An indicator type for generic method parameters.
-        /// </summary>
-        private struct GenericMethodDefinitionPlaceholder
-        {
-        }
-
-        #endregion
-
         #region Compressible<T> struct
 
         /// <summary>
@@ -549,6 +538,53 @@ namespace KGySoft.Serialization
         /// </summary>
         // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
         private struct Compressible<T> where T : struct
+        {
+        }
+
+        #endregion
+
+        #region BinarySerializable<T> struct
+
+        /// <summary>
+        /// A wrapper type for <see cref="IBinarySerializable"/> encoded types if they are not preceded by <see cref="DataTypes.BinarySerializable"/>.
+        /// </summary>
+        // ReSharper disable once UnusedTypeParameter - contains the actual type
+        private struct BinarySerializable<T> // where T : IBinarySerializable - not applied so a reasonable exception can be thrown if type has changed
+        {
+        }
+
+        #endregion
+
+        #region RawStruct<T> struct
+
+        /// <summary>
+        /// A wrapper type for raw-serialized structs if they are not preceded by <see cref="DataTypes.RawStruct"/>.
+        /// </summary>
+        // ReSharper disable once UnusedTypeParameter - contains the actual type
+        private struct RawStruct<T> // where T : struct - not applied so a reasonable exception can be thrown if type has changed
+        {
+        }
+
+        #endregion
+
+        #region RecursiveObjectGraph<T> struct
+
+        /// <summary>
+        /// A wrapper type for recursively saved types if they are not preceded by <see cref="DataTypes.RecursiveObjectGraph"/>.
+        /// </summary>
+        // ReSharper disable once UnusedTypeParameter - contains the actual type
+        private struct RecursiveObjectGraph<T>
+        {
+        }
+
+        #endregion
+
+        #region GenericMethodDefinitionPlaceholder struct
+
+        /// <summary>
+        /// An indicator type for generic method parameters.
+        /// </summary>
+        private struct GenericMethodDefinitionPlaceholder
         {
         }
 

@@ -176,9 +176,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region BinarySerializableClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class BinarySerializableClass : AbstractClass, IBinarySerializable
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -219,17 +217,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     IntProp = br.ReadInt32();
                     StringProp = br.ReadString();
                 }
-            }
-
-            /// <summary>
-            /// Overridden for the test equality check
-            /// </summary>
-            public override bool Equals(object obj)
-            {
-                if (!(obj is BinarySerializableClass))
-                    return base.Equals(obj);
-                BinarySerializableClass other = (BinarySerializableClass)obj;
-                return PublicField == other.PublicField && StringProp == other.StringProp && IntProp == other.IntProp;
             }
 
             #endregion
@@ -1142,11 +1129,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         private class GetObjectDataSetsUnknownType : ISerializable
         {
+            #region Constructors
+
+            public GetObjectDataSetsUnknownType()
+            {
+            }
+
+            private GetObjectDataSetsUnknownType(SerializationInfo si, StreamingContext ctx)
+            {
+            }
+
+            #endregion
+
+            #region Methods
+            
             [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.FullTypeName = nameof(GetObjectDataSetsUnknownType);
             }
+            
+            #endregion
         }
 
         #endregion
@@ -1156,11 +1159,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         private class GetObjectDataSetsInvalidType : ISerializable
         {
+            #region Constructors
+
+            public GetObjectDataSetsInvalidType()
+            {
+            }
+            private GetObjectDataSetsInvalidType(SerializationInfo si, StreamingContext ctx)
+            {
+            }
+
+            #endregion
+
+            #region Methods
+
             [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.SetType(typeof(List<>).GetGenericArguments()[0]);
             }
+
+            #endregion
         }
 
         #endregion

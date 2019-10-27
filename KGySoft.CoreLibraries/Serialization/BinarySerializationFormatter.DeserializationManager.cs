@@ -63,7 +63,7 @@ namespace KGySoft.Serialization
                 => cachedAssemblies ??= new List<(Assembly, string)>(KnownAssemblies.Select(a => (a, (string)null)));
 
             private List<DataTypeDescriptor> CachedTypes
-                => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t, this)));
+                => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(DataTypes.Extended, t, null)));
 
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
@@ -75,7 +75,13 @@ namespace KGySoft.Serialization
             #region Constructors
 
             internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
-                : base(context, options, binder, surrogateSelector)
+                : base(context,
+                    // Considering only deserialization flags. Other info must be read from the stream.
+                    options & (BinarySerializationOptions.IgnoreSerializationMethods 
+                        | BinarySerializationOptions.IgnoreObjectChanges 
+                        | BinarySerializationOptions.IgnoreISerializable 
+                        | BinarySerializationOptions.IgnoreIObjectReference),
+                    binder, surrogateSelector)
             {
             }
 
@@ -310,7 +316,7 @@ namespace KGySoft.Serialization
                     string storedAssemblyName = br.ReadString();
                     string storedTypeName = br.ReadString();
                     type = GetType(storedAssemblyName, storedTypeName);
-                    result = new DataTypeDescriptor(type, this);
+                    result = new DataTypeDescriptor(type);
                     CachedAssemblies.Add((type.Assembly, storedAssemblyName));
                     CachedTypes.Add(result);
                     if (type.IsGenericTypeDefinition)
@@ -332,7 +338,7 @@ namespace KGySoft.Serialization
                     ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
                     ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
-                result = new DataTypeDescriptor(type, this);
+                result = new DataTypeDescriptor(type);
                 CachedTypes.Add(result);
                 if (type.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
@@ -358,7 +364,7 @@ namespace KGySoft.Serialization
                                 var index = Read7BitInt(br);
                                 if (index < 0 || index >= len)
                                     throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                                result = new DataTypeDescriptor(typeDef.GetGenericArguments()[index], this);
+                                result = new DataTypeDescriptor(typeDef.GetGenericArguments()[index]);
                                 if (addToCache)
                                     CachedTypes.Add(result);
                                 return result;
@@ -374,7 +380,7 @@ namespace KGySoft.Serialization
                 for (int i = 0; i < len; i++)
                     args[i] = ReadType(br, allowOpenTypes).Type;
 
-                result = new DataTypeDescriptor(typeDef.GetGenericType(args), this);
+                result = new DataTypeDescriptor(typeDef.GetGenericType(args));
                 if (addToCache)
                     CachedTypes.Add(result);
 
@@ -393,7 +399,7 @@ namespace KGySoft.Serialization
                 Type[] args = method.GetGenericArguments();
                 DataTypeDescriptor result = argIndex < 0 || argIndex >= args.Length
                     ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
-                    : new DataTypeDescriptor(args[argIndex], this);
+                    : new DataTypeDescriptor(args[argIndex]);
 
                 CachedTypes.Add(result);
                 return result;
@@ -713,6 +719,8 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private object DoReadBinarySerializable(BinaryReader br, bool addToCache, Type type)
             {
+                if (!typeof(IBinarySerializable).IsAssignableFrom(type))
+                    throw new SerializationException(Res.BinarySerializationNotBinarySerializable(type));
                 byte[] serData = br.ReadBytes(Read7BitInt(br));
 
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
@@ -998,6 +1006,8 @@ namespace KGySoft.Serialization
             private object ReadValueType(BinaryReader br, DataTypeDescriptor descriptor)
             {
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
+                if (!structType.IsValueType)
+                    throw new SerializationException(Res.BinarySerializationNotAValueType(structType));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);

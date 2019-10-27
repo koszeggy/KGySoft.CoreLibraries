@@ -564,6 +564,12 @@ namespace KGySoft
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
 
+        /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
+        internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_BinarySerializationNotBinarySerializableFormat", type);
+
+        /// <summary>Type '{0}' was serialized as a raw value type, though it is not struct now.</summary>
+        internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_BinarySerializationNotAValueTypeFormat", type);
+
         #endregion
 
         #region Cache<TKey, TValue>
