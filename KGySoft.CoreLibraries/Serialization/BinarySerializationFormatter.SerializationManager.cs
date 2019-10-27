@@ -1322,19 +1322,21 @@ namespace KGySoft.Serialization
             private void WriteTypeCustom(BinaryWriter bw, Type type, SerializationInfo si, bool isRoot)
             {
                 Type typeToWrite = type;
-#if NET35
                 string explicitAsmName = si.AssemblyName;
                 string explicitTypeName = si.FullTypeName;
+#if NET35
                 if (explicitAsmName != type.Assembly.FullName || explicitTypeName != type.FullName)
                 {
                     // First of all we try to obtain the type if exists
                     typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
-                        ? Reflector.ResolveType(explicitAsmName + "," + explicitTypeName, ResolveTypeOptions.None)
+                        ? Reflector.ResolveType(explicitTypeName + "," + explicitAsmName, ResolveTypeOptions.None)
                         : null;
                 }
 #else
-#error Implement this
-                    type = Type.GetType(si.FullTypeName + ", " + si.AssemblyName);
+                if (si.ObjectType != type)
+                    typeToWrite = si.ObjectType?.FullName != null ? si.ObjectType : null;
+                else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
+                    typeToWrite = null;
 #endif
 
                 // writing type normally
@@ -1344,14 +1346,8 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // writing an unknown type by name
-                if (!isRoot)
-                {
-                    // trick: writing as a closed type before the actual type so on read it will create a RecursiveObjectGraph<explicitTypeName>
-                    WriteType(bw, typeof(RecursiveObjectGraph<>));
-                }
-
-                WriteTypeByName(bw, type, explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                // trick: writing a bound name for our original type
+                WriteTypeWithName(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
             }
 
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializingAttribute));
@@ -1649,7 +1645,7 @@ namespace KGySoft.Serialization
             /// Writes the type using explicit names. Occurs when <see cref="SerializationInfo"/> changes the type to an unknown one.
             /// The Binder is not queried this time because there is no known type to query. Instead, we handle the names as bound type names.
             /// </summary>
-            private void WriteTypeByName(BinaryWriter bw, Type origType, string explicitAsmName, string explicitTypeName)
+            private void WriteTypeWithName(BinaryWriter bw, Type origType, string explicitAsmName, string explicitTypeName)
             {
                 // 1.) Checking if type is already known as bound name
                 int index = GetTypeIndex(origType, explicitAsmName, explicitTypeName);

@@ -510,7 +510,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             var bf = new BinaryFormatter();
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType | BinarySerializationOptions.IgnoreSerializationMethods);
 
-           // DoTest(bf, surrogate, obj, false, true, true);
+            DoTest(bf, surrogate, obj, false, true, true);
             DoTest(bsf, surrogate, obj, true, true, true);
         }
 
