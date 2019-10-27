@@ -59,10 +59,39 @@ namespace KGySoft.Serialization
                 Reflector.KGySoftCoreLibrariesAssembly
             };
 
+            /// <summary>
+            /// These types are always dumped by index and are never passed to a binder.
+            /// </summary>
             private protected static readonly Type[] KnownTypes =
             {
-                // Apart from natively supported types, these are always dumped by index and are never passed to a binder.
                 Reflector.NullableType,
+                Reflector.ObjectType,
+
+                // These types are just added for sparing 1 byte when they are stored for the fist time.
+                // Other primitives (U/IntPtr are also protected from binder but they are stored as new type first)
+                Reflector.BoolType,
+                Reflector.SByteType,
+                Reflector.ByteType,
+                Reflector.ShortType,
+                Reflector.UShortType,
+                Reflector.IntType,
+                Reflector.UIntType,
+                Reflector.LongType,
+                Reflector.ULongType,
+                Reflector.FloatType,
+                Reflector.DoubleType,
+                Reflector.CharType,
+                Reflector.StringType,
+
+                // Also for sparing. Other compressible types are added for the first time
+                typeof(Compressible<short>),
+                typeof(Compressible<ushort>),
+                typeof(Compressible<int>),
+                typeof(Compressible<uint>),
+                typeof(Compressible<long>),
+                typeof(Compressible<ulong>),
+
+                // Technical helper types for special cases, must not be passed to binders
                 typeof(BinarySerializable<>),
                 typeof(RawStruct<>),
                 typeof(RecursiveObjectGraph<>),

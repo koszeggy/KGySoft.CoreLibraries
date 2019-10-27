@@ -403,7 +403,7 @@ namespace KGySoft.Serialization
 
             // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // On serialization indicates that high byte also is used. Used also for technical types for special handling.
+            Extended = 1 << 7, // On serialization indicates that high byte also is used.
 
             // ===== HIGH BYTE =====
 

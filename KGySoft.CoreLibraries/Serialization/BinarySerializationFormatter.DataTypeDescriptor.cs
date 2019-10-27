@@ -118,6 +118,8 @@ namespace KGySoft.Serialization
 
             #region Constructors
 
+            #region Internal Constructors
+
             /// <summary>
             /// Initializing from stream by encoded <see cref="DataTypes"/>.
             /// </summary>
@@ -140,16 +142,6 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Constructor for explicitly setting already known values.
-            /// </summary>
-            internal DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parent)
-            {
-                ParentDescriptor = parent;
-                dataType = elementDataType;
-                Type = type;
-            }
-
-            /// <summary>
             /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
             /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
             /// </summary>
@@ -163,6 +155,9 @@ namespace KGySoft.Serialization
 
                     if (t.IsEnum)
                         return DataTypes.Enum | GetDataType(Enum.GetUnderlyingType(t));
+
+                    if (t == Reflector.ObjectType)
+                        return DataTypes.Object;
 
                     return DataTypes.RecursiveObjectGraph;
                 }
@@ -202,6 +197,22 @@ namespace KGySoft.Serialization
                 dataType |= GetDataType(type);
                 Type = type;
             }
+
+            #endregion
+
+            #region Private Constructors
+
+            /// <summary>
+            /// Constructor for explicitly setting already known values.
+            /// </summary>
+            private DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parent)
+            {
+                ParentDescriptor = parent;
+                dataType = elementDataType;
+                Type = type;
+            }
+
+            #endregion
 
             #endregion
 
