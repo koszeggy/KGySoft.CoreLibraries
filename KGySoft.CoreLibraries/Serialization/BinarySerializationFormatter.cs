@@ -529,6 +529,97 @@ namespace KGySoft.Serialization
 
         #endregion
 
+        #region Nested Classes
+
+        private sealed class DataTypesEnumerator
+        {
+            #region Fields
+
+            private readonly IList<DataTypes> dataTypes;
+            private DataTypes current;
+            private int index;
+
+            #endregion
+
+            #region Properties
+
+            internal DataTypes CurrentSeparated => IsCollectionType(current) ? GetCollectionDataType(current) : GetElementDataType(current);
+
+            internal DataTypes Current => current;
+
+            #endregion
+
+            #region Constructors
+
+            internal DataTypesEnumerator(IList<DataTypes> source, bool moveFirst = false)
+            {
+                dataTypes = source;
+                if (moveFirst)
+                    MoveNext();
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override string ToString() => DataTypeToString(current);
+
+            #endregion
+
+            #region Internal Methods
+
+            internal bool MoveNext()
+            {
+                if (index < dataTypes.Count)
+                {
+                    current = dataTypes[index++];
+                    return true;
+                }
+
+                current = DataTypes.Null;
+                return false;
+            }
+
+            internal bool MoveNextExtracted()
+            {
+                if (current == DataTypes.Null && index >= dataTypes.Count)
+                    return false;
+
+                if (!IsCollectionType(current))
+                    return MoveNext();
+
+                current = GetElementDataType(current);
+                return current != DataTypes.Null || MoveNext();
+            }
+
+            internal DataTypesEnumerator Clone() =>
+                new DataTypesEnumerator(dataTypes)
+                {
+                    current = current,
+                    index = index
+                };
+
+            internal void Reset()
+            {
+                index = 0;
+                current = DataTypes.Null;
+            }
+
+            internal void MoveToFirst()
+            {
+                Reset();
+                MoveNext();
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
         #region Nested Structs
 
         #region Compressible<T> struct
@@ -927,10 +1018,13 @@ namespace KGySoft.Serialization
         private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
         private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
+        private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
         private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
         private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
+        private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
         private static bool CanContainReferenceToSelf(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable);
+        private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt.In(DataTypes.Pointer, DataTypes.ByRef);
 
         private static void Write7BitInt(BinaryWriter bw, int value)
         {

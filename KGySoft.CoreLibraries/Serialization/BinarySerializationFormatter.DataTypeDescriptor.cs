@@ -353,27 +353,6 @@ namespace KGySoft.Serialization
                 return Type = result;
             }
 
-            internal bool AreAllElementsQualified(bool isTValue)
-            {
-                throw new NotImplementedException(nameof(AreAllElementsQualified));
-                //Type elementType = GetElementType(isTValue);
-
-                //// true if element type is interface or not sealed class, false if struct or sealed class
-                //return elementType.CanBeDerived();
-            }
-
-            /// <summary>
-            /// Gets the element instance type to deserialize (never nullable)
-            /// </summary>
-            internal Type GetElementType(bool isTValue)
-            {
-                throw new NotImplementedException("TODO: delete");
-                //Type result = !isTValue ? ElementDescriptor.Type : ValueDescriptor.Type;
-                //if ((GetElementDataType(isTValue) & DataTypes.Nullable) == DataTypes.Nullable)
-                //    return Nullable.GetUnderlyingType(result);
-                //return result;
-            }
-
             internal object GetAsReadOnly(object collection)
             {
                 switch (CollectionDataType)
@@ -384,8 +363,6 @@ namespace KGySoft.Serialization
                         throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
                 }
             }
-
-            internal DataTypeDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : ValueDescriptor;
 
             /// <summary>
             /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here

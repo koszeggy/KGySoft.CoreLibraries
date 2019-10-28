@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = true;
+        private const bool dumpDetails = false;
         private const bool dumpSerContent = false;
 
         #endregion
@@ -778,7 +778,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
 #if NETCOREAPP2_0
-            // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
+             Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -954,7 +954,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable> { { BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } } } } },
 #pragma warning restore CS0618 // Type or member is obsolete
 
-                // object list with various elements
+                // List containing primitive, optionally customizable, always recursive and self type
                 new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
                 new List<object> { 1, "alpha", new Version(13, 0), new SystemSerializableClass { IntProp = 2, StringProp = "beta" }, new object[] { new BinarySerializableClass { IntProp = 3, StringProp = "gamma" } } },
 
@@ -988,7 +988,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             };
 
             SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
+            //SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1277,9 +1277,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new List<CustomSerializableStruct?> { new CustomSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(CustomSerializableStruct?) },
                 new List<CustomSerializedClass> { new CustomSerializedClass { Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
                 new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
-
-                // List containing primitive, optionally customizable, always recursive and self type
-                new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },
 
                 // collections with native support
                 new CircularList<int> { 1, 2, 3 },

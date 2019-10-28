@@ -95,7 +95,7 @@ namespace KGySoft.Serialization
             {
                 Type enumType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
                 DataTypes dataType = descriptor.ElementDataType;
-                bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
+                bool is7BitEncoded = IsCompressed(dataType);
                 switch (dataType & DataTypes.SimpleTypes)
                 {
                     case DataTypes.Int8:
@@ -221,6 +221,7 @@ namespace KGySoft.Serialization
                 descriptor.DecodeType(br, this);
                 if (descriptor.CanHaveRecursion)
                 {
+                    CachedTypes.Add(descriptor);
                     addToCache = true;
                     if (TryGetCachedObject(br, out var _))
                         throw new InvalidOperationException(Res.InternalError("Root level object is not expected in the cache"));
@@ -592,7 +593,7 @@ namespace KGySoft.Serialization
                 }
 
                 DataTypes dataType = dataTypeDescriptor.ElementDataType;
-                bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
+                bool is7BitEncoded = IsCompressed(dataType);
 
                 // nullable type
                 if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)

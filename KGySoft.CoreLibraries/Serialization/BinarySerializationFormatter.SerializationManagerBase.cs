@@ -18,11 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
-using KGySoft.CoreLibraries;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -68,7 +67,7 @@ namespace KGySoft.Serialization
                 Reflector.ObjectType,
 
                 // These types are just added for sparing 1 byte when they are stored for the fist time.
-                // Other primitives (U/IntPtr are also protected from binder but they are stored as new type first)
+                // Other primitives (U/IntPtr) are also protected from binder but they are stored as new type first
                 Reflector.BoolType,
                 Reflector.SByteType,
                 Reflector.ByteType,
@@ -201,13 +200,13 @@ namespace KGySoft.Serialization
 
             #region Instance Methods
 
-            #region Internal Methods
+            #region Private Protected Methods
 
             /// <summary>
             /// Gets if a type can use a surrogate
             /// </summary>
             [SecurityCritical]
-            internal bool CanUseSurrogate(Type type)
+            private protected bool CanUseSurrogate(Type type)
             {
                 if (surrogateSelector == null)
                     return false;
@@ -222,7 +221,7 @@ namespace KGySoft.Serialization
             /// Tries to get a surrogate for a type
             /// </summary>
             [SecurityCritical]
-            internal bool TryGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
+            private protected bool TryGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
             {
                 surrogate = null;
                 selector = null;
@@ -243,10 +242,6 @@ namespace KGySoft.Serialization
                 surrogates[type] = new KeyValuePair<ISerializationSurrogate, ISurrogateSelector>(surrogate, selector);
                 return surrogate != null;
             }
-
-            #endregion
-
-            #region Private Protected Methods
 
             private protected void ExecuteMethodsOfAttribute(object obj, Type attributeType)
             {
