@@ -53,6 +53,7 @@ namespace KGySoft.Serialization
             private Dictionary<int, object> idCache;
             private Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>> objectReferences;
             private List<IDeserializationCallback> deserializationRegObjects;
+            private Dictionary<Type, bool> isCustomSerializedCache;
 
             #endregion
 
@@ -767,14 +768,15 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private object DoReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                // a.) IsDefault flag
-                bool isCustomObjectGraph = br.ReadBoolean();
+                Type type = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
 
-                // b.) type was custom serialized and was not forced to be stored (eg. collection elements)
-                Type type = isCustomObjectGraph && descriptor.ParentDescriptor != null && !descriptor.Type.CanBeDerived()
-                    ? ReadType(br).Type
-                    : descriptor.Type;
-                type = Nullable.GetUnderlyingType(type) ?? type;
+                // a.) IsDefault flag
+                bool isCustomObjectGraph = IsCustomSerialized(br, type);
+
+                // b.) Types of custom serialized objects are always explicitly stored
+                bool isSealedElement = descriptor.ParentDescriptor != null && !descriptor.Type.CanBeDerived();
+                if (isCustomObjectGraph && isSealedElement)
+                    type = ReadType(br).Type;
 
                 // c.) Reading members
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
@@ -1001,6 +1003,18 @@ namespace KGySoft.Serialization
                     if (!IgnoreObjectChanges)
                         throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
                 }
+            }
+
+            private bool IsCustomSerialized(BinaryReader br, Type type)
+            {
+                bool result;
+                if (isCustomSerializedCache == null)
+                    isCustomSerializedCache = new Dictionary<Type, bool>();
+                else if (isCustomSerializedCache.TryGetValue(type, out result))
+                    return result;
+                result = br.ReadBoolean();
+                isCustomSerializedCache[type] = result;
+                return result;
             }
 
             [SecurityCritical]
