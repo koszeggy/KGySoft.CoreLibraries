@@ -40,6 +40,8 @@
     should be evaluated only if the key was not present in the dictionary.
 + Enum<TEnum> class:
   + New GetFlagsMask method
+- EnumerableExtensions class: Fixing non-generic TryAddRange/TryInsertRange/TryRemoveRange/TryReplaceRange if they
+  are called multiple times with generic collections of different generic argument types.
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
