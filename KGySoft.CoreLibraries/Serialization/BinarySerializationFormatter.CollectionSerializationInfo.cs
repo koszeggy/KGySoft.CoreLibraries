@@ -213,7 +213,7 @@ namespace KGySoft.Serialization
                 // 5.) Comparer
                 object comparer = null;
                 if (HasAnyComparer && !br.ReadBoolean())
-                    comparer = manager.ReadNonRoot(br);
+                    comparer = manager.ReadWithType(br);
 
                 result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
                 if (id != 0)

@@ -527,6 +527,16 @@ namespace KGySoft.Serialization
             CaseInsensitivity
         }
 
+        [Flags]
+        private enum TypeAttributes // : byte
+        {
+            None,
+
+            ValueType = 1,
+            Sealed = 1 << 1,
+            CustomSerialized = 1 << 2
+        }
+
         #endregion
 
         #region Nested Structs

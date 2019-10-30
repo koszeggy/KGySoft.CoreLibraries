@@ -196,7 +196,6 @@ namespace KGySoft.Serialization
             private int idCounter;
             private Dictionary<object, int> idCacheByValue;
             private Dictionary<object, int> idCacheByRef;
-            private HashSet<MemberInfo> isCustomSerializedStored;
 
             #endregion
 
@@ -449,31 +448,34 @@ namespace KGySoft.Serialization
             /// Here the type is encoded by index.
             /// </summary>>
             [SecurityCritical]
-            internal void WriteNonRoot(BinaryWriter bw, object obj, Type knownBaseType = null)
+            internal void WriteNonRoot(BinaryWriter bw, object obj, (DataTypes DataType, Type Type) knownBaseType = default)
             {
-                // a.) Existing object
-                if (WriteId(bw, obj, knownBaseType))
+                if (knownBaseType.Type != null && knownBaseType.DataType == DataTypes.RecursiveObjectGraph)
+                    MarkAttributes(bw, knownBaseType.Type, knownBaseType.DataType);
+
+                // Existing object
+                if (WriteId(bw, obj, knownBaseType.Type))
                     return;
 
                 Type type = obj.GetType();
                 DataTypes dataType = GetDataType(type); // here collection and element types are not combined yet
 
-                // b.) Pure simple types and enums
+                // Pure simple types and enums
                 if (IsPureSimpleType(dataType) || (dataType & DataTypes.Enum) != DataTypes.Null)
                 {
                     WriteSimpleObject(bw, obj, dataType, false);
                     return;
                 }
 
-                // c.) Supported collections
+                // Supported collections
                 if (IsCollectionType(dataType))
                 {
                     WriteNonRootCollection(bw, obj, dataType);
                     return;
                 }
 
-                // d.) Impure types
-                WriteImpureNonRootObject(bw, obj, dataType, knownBaseType);
+                // Impure types
+                WriteImpureNonRootObject(bw, obj, dataType, knownBaseType.Type);
             }
 
             #endregion
@@ -1122,12 +1124,13 @@ namespace KGySoft.Serialization
 
                 DataTypes dataType = collectionDataTypes.Current;
                 DataTypes collectionDataType = GetCollectionDataType(dataType);
+                Type type = obj.GetType();
+                Type elementType, dictionaryValueType;
 
                 // array
                 if (collectionDataType == DataTypes.Array)
                 {
                     Array array = (Array)obj;
-                    Type type = obj.GetType();
 
                     // 1. Dimensions
                     for (int i = 0; i < array.Rank; i++)
@@ -1138,7 +1141,7 @@ namespace KGySoft.Serialization
                     }
 
                     // 2. Write elements
-                    Type elementType = type.GetElementType();
+                    elementType = type.GetElementType();
                     // 2.a.) Primitive array
                     // ReSharper disable once PossibleNullReferenceException - it is an array
                     if (elementType.IsPrimitive)
@@ -1156,7 +1159,6 @@ namespace KGySoft.Serialization
                     // 2.b.) Complex array
                     if (elementType.IsPointer)
                         throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
-                    //collectionTypeDescriptor.RemoveFirst();
                     collectionDataTypes.MoveNextExtracted();
                     WriteCollectionElements(bw, array, collectionDataTypes, elementType);
                     return;
@@ -1165,9 +1167,10 @@ namespace KGySoft.Serialization
                 // other collections
                 CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
                 var enumerable = obj as IEnumerable;
-                IEnumerable collection = enumerable ?? new object[] { obj };
+               
                 // as object[] for DictionaryEntry and KeyValuePair
-
+                IEnumerable collection = enumerable ?? new[] { obj };
+                
                 // 1. Write specific properties
                 serInfo.WriteSpecificProperties(bw, collection, this);
 
@@ -1179,7 +1182,7 @@ namespace KGySoft.Serialization
                 // 3.a.) generic collection with single argument
                 if (serInfo.IsGenericCollection)
                 {
-                    Type elementType = collection.GetType().GetGenericArguments()[0];
+                    elementType = type.GetGenericArguments()[0];
                     collectionDataTypes.MoveNextExtracted();
                     WriteCollectionElements(bw, collection, collectionDataTypes, elementType);
                     return;
@@ -1188,14 +1191,14 @@ namespace KGySoft.Serialization
                 // 3.b.) generic dictionary
                 if (serInfo.IsGenericDictionary)
                 {
-                    Type[] argTypes = (enumerable ?? ((object[])collection)[0]).GetType().GetGenericArguments();
-                    Type keyType = argTypes[0];
-                    Type valueType = argTypes[1];
+                    Type[] argTypes = type.GetGenericArguments();
+                    elementType = argTypes[0];
+                    dictionaryValueType = argTypes[1];
 
                     DataTypesEnumerator valueCollectionDataTypes = GetDictionaryValueTypes(collectionDataTypes);
                     collectionDataTypes.MoveNextExtracted();
                     Debug.Assert(valueCollectionDataTypes.Current != DataTypes.Null, "Dictionary type description is invalid");
-                    WriteDictionaryElements(bw, collection, collectionDataTypes, valueCollectionDataTypes, keyType, valueType);
+                    WriteDictionaryElements(bw, collection, collectionDataTypes, valueCollectionDataTypes, elementType, dictionaryValueType);
                     return;
                 }
 
@@ -1203,7 +1206,8 @@ namespace KGySoft.Serialization
                 if (serInfo.IsNonGenericCollection)
                 {
                     collectionDataTypes.MoveNextExtracted();
-                    WriteCollectionElements(bw, collection, collectionDataTypes, null);
+                    elementType = collectionDataTypes.CurrentSeparated == DataTypes.String ? Reflector.StringType : Reflector.ObjectType;
+                    WriteCollectionElements(bw, collection, collectionDataTypes, elementType);
                     return;
                 }
 
@@ -1212,7 +1216,8 @@ namespace KGySoft.Serialization
                 {
                     DataTypesEnumerator valueCollectionDataTypes = GetDictionaryValueTypes(collectionDataTypes);
                     collectionDataTypes.MoveNextExtracted();
-                    WriteDictionaryElements(bw, collection, collectionDataTypes, valueCollectionDataTypes, null, null);
+                    elementType = dictionaryValueType = collectionDataTypes.CurrentSeparated == DataTypes.String ? Reflector.StringType : Reflector.ObjectType;
+                    WriteDictionaryElements(bw, collection, collectionDataTypes, valueCollectionDataTypes, elementType, dictionaryValueType);
                     return;
                 }
 
@@ -1241,7 +1246,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // Single KeyValuePair only: cannot be cast to a non-generic dictionary, Key and Value properties must be accessed by name
+                // If collection cannot be cast to non-generic IDictionary: Key and Value properties must be accessed by name
                 foreach (object element in collection)
                 {
                     WriteElement(bw, Accessors.GetPropertyValue(element, nameof(KeyValuePair<_, _>.Key)), keyCollectionDataTypes, collectionKeyType);
@@ -1271,10 +1276,9 @@ namespace KGySoft.Serialization
                 }
 
                 // As an element type, object means any type
-                // TODO: should be the same as WriteImpureElement: WriteNonRoot in both cases
                 if (elementDataType == DataTypes.Object)
                 {
-                    WriteNonRoot(bw, element, collectionElementType);
+                    WriteNonRoot(bw, element, (elementDataType, collectionElementType));
                     return;
                 }
 
@@ -1326,26 +1330,8 @@ namespace KGySoft.Serialization
                         return;
 
                     case DataTypes.RecursiveObjectGraph:
-
-                        WriteNonRoot(bw, element, collectionElementType);
+                        WriteNonRoot(bw, element, (elementDataType, collectionElementType));
                         return;
-                        //// When element types may differ, writing element as a completely new object (will have the same size).
-                        //// This prevents a lot of issues such as forced recursive serialization of primitives.
-                        //if (collectionElementType.CanBeDerived())
-                        //{
-                        //    WriteNonRoot(bw, element);
-                        //    return;
-                        //}
-
-                        //// 1. instance id for classes or when element is defined as interface in the collection (for nullables IsNotNull was already written in default case)
-                        //if (!collectionElementType.IsValueType && WriteId(bw, element))
-                        //    return;
-
-                        //Debug.Assert(element != null, "When element is null, WriteId should return true");
-
-                        //// 2. Serialize (here element types are always the same due to the first check)
-                        //WriteObjectGraphNonRoot(bw, element, false);
-                        //return;
 
                     case DataTypes.RawStruct:
                         WriteValueType(bw, (ValueType)element, false, false);
@@ -1445,8 +1431,9 @@ namespace KGySoft.Serialization
             private void WriteDefaultObjectGraphNonRoot(BinaryWriter bw, object data, Type knownBaseType)
             {
                 bool isRoot = false;
-                bool writeType = knownBaseType == null || knownBaseType.CanBeDerived();
                 Type type = data.GetType();
+                bool writeType = knownBaseType == null || knownBaseType.CanBeDerived();
+                
                 Debug.Assert(!type.IsArray, "Array cannot be serialized as object graph");
                 if (!(RecursiveSerializationAsFallback || type.IsSerializable || ForceRecursiveSerializationOfSupportedTypes && supportedNonPrimitiveElementTypes.ContainsKey(type)))
                     ThrowNotSupported(type);
@@ -1515,14 +1502,16 @@ namespace KGySoft.Serialization
                 {
                     // First of all we try to obtain the type if exists
                     typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
-                        ? Reflector.ResolveType(explicitTypeName + "," + explicitAsmName, ResolveTypeOptions.None)
+                        ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
                         : null;
                 }
 #else
                 if (si.ObjectType != type)
                     typeToWrite = si.ObjectType?.FullName != null ? si.ObjectType : null;
                 else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
-                    typeToWrite = null;
+                    typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
+                        ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
+                        : null;
 #endif
 
                 MemberInfo typeToCache = forcedType
@@ -1565,7 +1554,6 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteCustomObjectGraphNonRoot(BinaryWriter bw, object data, ISerializationSurrogate surrogate, Type knownBaseType)
             {
-                bool forcedType = knownBaseType == null || knownBaseType.CanBeDerived();
                 bool isRoot = false;
                 Type type = data.GetType();
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
@@ -1598,6 +1586,7 @@ namespace KGySoft.Serialization
                     typeToWrite = null;
 #endif
 
+                bool forcedType = knownBaseType == null || knownBaseType.CanBeDerived();
                 MemberInfo typeToCache = forcedType
                     ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName + ":" + si.FullTypeName)
                     : type;
@@ -1633,16 +1622,6 @@ namespace KGySoft.Serialization
                     // type (again, we don't bother with isDifferent flags, the type id is 1 byte for the first 127 types)
                     WriteType(bw, entry.ObjectType);
                 }
-            }
-
-            private void MarkCustomSerialized(BinaryWriter bw, MemberInfo type, bool isCustomSerialized)
-            {
-                if (isCustomSerializedStored == null)
-                    isCustomSerializedStored = new HashSet<MemberInfo>();
-                else if (isCustomSerializedStored.Contains(type))
-                    return;
-                bw.Write(isCustomSerialized);
-                isCustomSerializedStored.Add(type);
             }
 
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializingAttribute));
@@ -2133,6 +2112,50 @@ namespace KGySoft.Serialization
                 Write7BitInt(bw, rawData.Length);
                 bw.Write(rawData);
                 OnSerialized(data);
+            }
+
+            private void WriteTypeAttributes(BinaryWriter bw, MemberInfo type, TypeAttributes attributes)
+            {
+                bw.Write((byte)attributes);
+                TypeAttributesCache.Add(type, attributes);
+            }
+
+            private void MarkCustomSerialized(BinaryWriter bw, MemberInfo type, bool isCustomSerialized)
+            {
+                if (TypeAttributesCache.ContainsKey(type))
+                    return;
+
+                var attr = isCustomSerialized ? TypeAttributes.CustomSerialized : TypeAttributes.None;
+                if (type is Type t)
+                {
+                    if (t.IsValueType)
+                        attr |= TypeAttributes.ValueType;
+                    if (t.IsSealed)
+                        attr |= TypeAttributes.Sealed;
+                }
+
+                WriteTypeAttributes(bw, type, attr);
+            }
+
+            /// <summary>
+            /// Marks the type attributes in the stream.
+            /// This ensures a successful deserialization even if a type changed its sealed or class/struct attributes.
+            /// </summary>
+            private void MarkAttributes(BinaryWriter bw, Type elementType, DataTypes dataType)
+            {
+                if (dataType != DataTypes.RecursiveObjectGraph || TypeAttributesCache.ContainsKey(elementType))
+                    return;
+
+                var attr = !IgnoreISerializable && typeof(ISerializable).IsAssignableFrom(elementType) || CanUseSurrogate(elementType)
+                    ? TypeAttributes.CustomSerialized
+                    : TypeAttributes.None;
+
+                if (elementType.IsValueType)
+                    attr |= TypeAttributes.ValueType;
+                if (elementType.IsSealed)
+                    attr |= TypeAttributes.Sealed;
+
+                WriteTypeAttributes(bw, elementType, attr);
             }
 
             #endregion

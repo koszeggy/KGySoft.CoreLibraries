@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -85,6 +86,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     string name = frames[1].GetMethod().Name;
                     if (name == "WriteDataType")
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)value)}]";
+                    else if (name == "WriteTypeAttributes")
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(Enum<>).MakeGenericType(typeof(BinarySerializationFormatter).GetNestedType("TypeAttributes", BindingFlags.NonPublic)), "ToString", (int)value, " | ")}]";
                     Console.WriteLine($"byte: {value} ({valueStr}) - {GetStack()}");
                 }
                 base.Write(value);
@@ -332,6 +335,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                             extendedDataType = (result & 127) != 0;
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", dataType)}]";
                     }
+                    else if (name == "EnsureAttributes")
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(Enum<>).MakeGenericType(typeof(BinarySerializationFormatter).GetNestedType("TypeAttributes", BindingFlags.NonPublic)), "ToString", (int)result, " | ")}]";
+
                     Console.WriteLine($"byte: {result} ({valueStr}) - {GetStack()}");
                 }
                 return result;

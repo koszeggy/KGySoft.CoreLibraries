@@ -53,7 +53,6 @@ namespace KGySoft.Serialization
             private Dictionary<int, object> idCache;
             private Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>> objectReferences;
             private List<IDeserializationCallback> deserializationRegObjects;
-            private Dictionary<Type, bool> isCustomSerializedCache;
 
             #endregion
 
@@ -237,7 +236,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            internal object ReadNonRoot(BinaryReader br)
+            internal object ReadWithType(BinaryReader br, DataTypeDescriptor knownBaseType = null)
             {
                 // 1.) Cached object
                 if (TryGetCachedObject(br, out object result))
@@ -471,10 +470,11 @@ namespace KGySoft.Serialization
                 {
                     int length = Buffer.ByteLength(result);
                     Buffer.BlockCopy(br.ReadBytes(length), 0, result, 0, length);
+                    return result;
                 }
 
                 // 1D array
-                else if (lengths.Length == 1)
+                if (lengths.Length == 1)
                 {
                     int offset = lowerBounds[0];
                     for (int i = 0; i < result.Length; i++)
@@ -482,17 +482,16 @@ namespace KGySoft.Serialization
                         object value = ReadElement(br, descriptor.ElementDescriptor);
                         result.SetValue(value, i + offset);
                     }
+
+                    return result;
                 }
 
                 // multidimensional array
-                else
+                var arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                while (arrayIndexer.MoveNext())
                 {
-                    var arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
-                    while (arrayIndexer.MoveNext())
-                    {
-                        object value = ReadElement(br, descriptor.ElementDescriptor);
-                        result.SetValue(value, arrayIndexer.Current);
-                    }
+                    object value = ReadElement(br, descriptor.ElementDescriptor);
+                    result.SetValue(value, arrayIndexer.Current);
                 }
 
                 return result;
@@ -516,6 +515,7 @@ namespace KGySoft.Serialization
 
                 CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, out int count);
+
                 if (result is IEnumerable collection)
                 {
                     MethodAccessor addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
@@ -604,6 +604,9 @@ namespace KGySoft.Serialization
                         return null;
                 }
 
+                if (dataTypeDescriptor.ParentDescriptor != null && GetUnderlyingSimpleType(dataType) == DataTypes.RecursiveObjectGraph)
+                    EnsureAttributes(br, dataTypeDescriptor.Type);
+
                 object createdResult = null;
                 try
                 {
@@ -662,7 +665,7 @@ namespace KGySoft.Serialization
                             if (dataTypeDescriptor.ParentDescriptor == null)
                                 return createdResult = new object();
                             // result is not set here - when caching is needed, will be done in the recursion
-                            return ReadNonRoot(br);
+                            return ReadWithType(br, dataTypeDescriptor);
                         case DataTypes.Version:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadVersion(br);
                         case DataTypes.Guid:
@@ -749,7 +752,7 @@ namespace KGySoft.Serialization
             {
                 // When element types may differ, reading element with data type
                 if (descriptor.ParentDescriptor != null && descriptor.Type.CanBeDerived())
-                    return ReadNonRoot(br);
+                    return ReadWithType(br, descriptor);
 
                 // checking instance id
                 if (descriptor.ParentDescriptor != null && !descriptor.Type.IsValueType)
@@ -858,7 +861,7 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < count; i++)
                     {
                         string name = br.ReadString();
-                        object value = ReadNonRoot(br);
+                        object value = ReadWithType(br);
 
                         FieldInfo field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                         if (field == null)
@@ -893,7 +896,7 @@ namespace KGySoft.Serialization
                         for (int i = 0; i < count; i++)
                         {
                             br.ReadString();
-                            ReadNonRoot(br);
+                            ReadWithType(br);
                         }
                     } while (br.ReadString().Length != 0);
                 }
@@ -910,7 +913,7 @@ namespace KGySoft.Serialization
                 for (int i = 0; i < count; i++)
                 {
                     string name = br.ReadString();
-                    object value = ReadNonRoot(br);
+                    object value = ReadWithType(br);
                     Type elementType = ReadType(br).Type;
                     si.AddValue(name, value, elementType);
                 }
@@ -956,7 +959,7 @@ namespace KGySoft.Serialization
                             name += usedCount.ToString(CultureInfo.InvariantCulture);
                         }
 
-                        object value = ReadNonRoot(br);
+                        object value = ReadWithType(br);
                         si.AddValue(name, value);
                     }
 
@@ -991,7 +994,7 @@ namespace KGySoft.Serialization
                 for (int i = 0; i < count; i++)
                 {
                     string name = br.ReadString();
-                    object value = ReadNonRoot(br);
+                    object value = ReadWithType(br);
                     ReadType(br); // the element type, which is ignored now
 
                     if (fields.TryGetValue(name, out FieldInfo field))
@@ -1003,18 +1006,6 @@ namespace KGySoft.Serialization
                     if (!IgnoreObjectChanges)
                         throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
                 }
-            }
-
-            private bool IsCustomSerialized(BinaryReader br, Type type)
-            {
-                bool result;
-                if (isCustomSerializedCache == null)
-                    isCustomSerializedCache = new Dictionary<Type, bool>();
-                else if (isCustomSerializedCache.TryGetValue(type, out result))
-                    return result;
-                result = br.ReadBoolean();
-                isCustomSerializedCache[type] = result;
-                return result;
             }
 
             [SecurityCritical]
@@ -1185,6 +1176,21 @@ namespace KGySoft.Serialization
                 if (assemblyByNameCache == null)
                     assemblyByNameCache = new Dictionary<string, Assembly>(1);
                 assemblyByNameCache.Add(name, result);
+                return result;
+            }
+
+            private bool IsCustomSerialized(BinaryReader br, Type type)
+            {
+                var attr = EnsureAttributes(br, type);
+                return (attr & TypeAttributes.CustomSerialized) != TypeAttributes.None;
+            }
+
+            private TypeAttributes EnsureAttributes(BinaryReader br, MemberInfo type)
+            {
+                if (TypeAttributesCache.TryGetValue(type, out TypeAttributes result))
+                    return result;
+                result = (TypeAttributes)br.ReadByte();
+                TypeAttributesCache.Add(type, result);
                 return result;
             }
 

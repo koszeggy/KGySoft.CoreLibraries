@@ -74,13 +74,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Enumerable
-
-        private static MethodInfo reverseExtensionMethod;
-        private static IDictionary<Type, FunctionMethodAccessor> methodsEnumerable_Reverse;
-
-        #endregion
-
         #region ICollection<T>
 
         private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_IsReadOnly;
@@ -222,24 +215,6 @@ namespace KGySoft.Reflection
             return accessor;
         }
 
-
-        #endregion
-
-        #region Enumerable
-
-        private static MethodAccessor Enumerable_Reverse(Type genericArgument)
-        {
-            if (methodsEnumerable_Reverse == null)
-                Interlocked.CompareExchange(ref methodsEnumerable_Reverse, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
-            if (!methodsEnumerable_Reverse.TryGetValue(genericArgument, out FunctionMethodAccessor accessor))
-            {
-                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new FunctionMethodAccessor((reverseExtensionMethod ??= typeof(Enumerable).GetMethod(nameof(Enumerable.Reverse))).GetGenericMethod(genericArgument));
-                methodsEnumerable_Reverse[genericArgument] = accessor;
-            }
-
-            return accessor;
-        }
 
         #endregion
 
@@ -539,18 +514,6 @@ namespace KGySoft.Reflection
         internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection) => ListExtensions_InsertRange(genericArgument).Invoke(null, target, index, collection);
         internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count) => ListExtensions_RemoveRange(genericArgument).Invoke(null, collection, index, count);
         internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection) => ListExtensions_ReplaceRange(genericArgument).Invoke(null, target, index, count, collection);
-
-        #endregion
-
-        #region Enumerable
-
-        internal static IEnumerable Reverse(this IEnumerable source)
-        {
-            Type type = source.GetType();
-            if (!type.IsGenericType)
-                return Enumerable.Reverse(source.Cast<object>());
-            return (IEnumerable)Enumerable_Reverse(type.GetGenericArguments()[0]).Invoke(null, source);
-        }
 
         #endregion
 

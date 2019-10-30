@@ -114,6 +114,7 @@ namespace KGySoft.Serialization
 
             private readonly ISurrogateSelector surrogateSelector;
             private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>> surrogates;
+            private Dictionary<MemberInfo, TypeAttributes> typeAttributes;
 
             #endregion
 
@@ -136,6 +137,8 @@ namespace KGySoft.Serialization
             private protected bool IgnoreIObjectReference => (Options & BinarySerializationOptions.IgnoreIObjectReference) != BinarySerializationOptions.None;
             private protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
             private protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
+
+            private protected Dictionary<MemberInfo, TypeAttributes> TypeAttributesCache => typeAttributes ??= new Dictionary<MemberInfo, TypeAttributes>();
 
             #endregion
 
