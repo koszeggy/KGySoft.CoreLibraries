@@ -614,7 +614,10 @@ Hit rate: {8:P2}</value>
     <value>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</value>
   </data>
   <data name="BinarySerialization_BinarySerializationNotAValueTypeFormat" xml:space="preserve">
-    <value>Type '{0}' was serialized as a raw value type, though it is not struct now.</value>
+    <value>Type '{0}' was serialized as a raw value type, though it is not a value type now.</value>
+  </data>
+  <data name="BinarySerialization_NotAnEnumFormat" xml:space="preserve">
+    <value>Type '{0}' was serialized as an enum type though it is not an enum now.</value>
   </data>
   <data name="BinarySerialization_UnexpectedSerializationInfoElementFormat" xml:space="preserve">
     <value>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</value>

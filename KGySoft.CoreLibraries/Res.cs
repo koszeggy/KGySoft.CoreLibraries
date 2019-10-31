@@ -567,8 +567,11 @@ namespace KGySoft
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
         internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_BinarySerializationNotBinarySerializableFormat", type);
 
-        /// <summary>Type '{0}' was serialized as a raw value type, though it is not struct now.</summary>
+        /// <summary>Type '{0}' was serialized as a raw value type, though it is not a value type now.</summary>
         internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_BinarySerializationNotAValueTypeFormat", type);
+
+        /// <summary>Type '{0}' was serialized as an enum type though it is not an enum now.</summary>
+        internal static string BinarySerializationNotAnEnum(Type type) => Get("BinarySerialization_NotAnEnumFormat", type);
 
         #endregion
 

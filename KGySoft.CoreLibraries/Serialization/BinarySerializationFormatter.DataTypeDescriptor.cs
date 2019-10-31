@@ -59,7 +59,7 @@ namespace KGySoft.Serialization
             #region Internal Properties
 
             internal DataTypeDescriptor ParentDescriptor { get; }
-
+            internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
             internal DataTypes CollectionDataType => GetCollectionDataType(dataType);
             internal bool IsCollection => IsCollectionType(dataType);
@@ -145,56 +145,15 @@ namespace KGySoft.Serialization
             /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
             /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
             /// </summary>
-            internal DataTypeDescriptor(Type type)
+            internal DataTypeDescriptor(Type type, BinaryReader br, bool allowOpenTypes)
             {
-                static DataTypes GetDataType(Type t)
+                if (type.IsGenericTypeOf(typeof(Compressible<>)))
                 {
-                    // Primitive type
-                    if (primitiveTypes.TryGetValue(t, out DataTypes result))
-                        return result;
-
-                    if (t.IsEnum)
-                        return DataTypes.Enum | GetDataType(Enum.GetUnderlyingType(t));
-
-                    if (t == Reflector.ObjectType)
-                        return DataTypes.Object;
-
-                    return DataTypes.RecursiveObjectGraph;
+                    dataType = DataTypes.Store7BitEncoded;
+                    type = type.GetGenericArguments()[0];
                 }
 
-                if (type.IsConstructedGenericType())
-                {
-                    Type typeDef = type.GetGenericTypeDefinition();
-
-                    if (typeDef == typeof(RecursiveObjectGraph<>))
-                    {
-                        dataType = DataTypes.RecursiveObjectGraph;
-                        Type = type.GetGenericArguments()[0];
-                        return;
-                    }
-
-                    if (typeDef == typeof(RawStruct<>))
-                    {
-                        dataType = DataTypes.RawStruct;
-                        Type = type.GetGenericArguments()[0];
-                        return;
-                    }
-
-                    if (typeDef == typeof(BinarySerializable<>))
-                    {
-                        dataType = DataTypes.BinarySerializable;
-                        Type = type.GetGenericArguments()[0];
-                        return;
-                    }
-
-                    if (type.IsGenericTypeOf(typeof(Compressible<>)))
-                    {
-                        dataType = DataTypes.Store7BitEncoded;
-                        type = type.GetGenericArguments()[0];
-                    }
-                }
-
-                dataType |= GetDataType(type);
+                dataType |= primitiveTypes.GetValueOrDefault(type);
                 Type = type;
             }
 
@@ -349,7 +308,7 @@ namespace KGySoft.Serialization
                 }
 
                 if (result.IsGenericTypeDefinition)
-                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type;
+                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result, br, allowOpenTypes), allowOpenTypes, false).Type;
                 return Type = result;
             }
 
@@ -377,6 +336,38 @@ namespace KGySoft.Serialization
                     default:
                         return Type;
                 }
+            }
+
+            internal void ApplyAttributes(TypeAttributes attr)
+            {
+                Debug.Assert((dataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null, "Unset DataType expected");
+                if ((attr & TypeAttributes.RecursiveObjectGraph) != TypeAttributes.None)
+                {
+                    dataType = DataTypes.RecursiveObjectGraph;
+                    return;
+                }
+
+                if ((attr & TypeAttributes.Enum) != TypeAttributes.None)
+                {
+                    if (!Type.IsEnum)
+                        throw new SerializationException(Res.BinarySerializationNotAnEnum(Type));
+                    dataType |= DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(Type)];
+                    return;
+                }
+
+                if ((attr & TypeAttributes.BinarySerializable) != TypeAttributes.None)
+                {
+                    dataType = DataTypes.BinarySerializable;
+                    return;
+                }
+
+                if ((attr & TypeAttributes.RawStruct) != TypeAttributes.None)
+                {
+                    dataType = DataTypes.RawStruct;
+                    return;
+                }
+
+                Debug.Fail($"Unexpected attributes '{attr}' for type {Type}");
             }
 
             #endregion
@@ -457,7 +448,7 @@ namespace KGySoft.Serialization
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
-                        return manager.ReadType(br, allowOpenTypes).Type;
+                        return manager.ReadType(br, allowOpenTypes, false).Type;
 
                     default:
                         // nullable
@@ -468,9 +459,9 @@ namespace KGySoft.Serialization
                         }
 
                         // enum
-                        if ((dataType & DataTypes.Enum) == DataTypes.Enum)
-                            return manager.ReadType(br).Type;
-                        throw new InvalidOperationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
+                        if (IsEnum(dataType))
+                            return manager.ReadType(br, allowOpenTypes, false).Type;
+                        throw new SerializationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
                 }
             }
 

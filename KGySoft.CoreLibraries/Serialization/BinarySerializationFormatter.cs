@@ -527,6 +527,11 @@ namespace KGySoft.Serialization
             CaseInsensitivity
         }
 
+        /// <summary>
+        /// Contains some serialization-time attributes for non-primitive types.
+        /// This ensures that the deserializer can process a type (or at least throw a reasonable exception)
+        /// if it changed since serialization (eg. sealed vs non-sealed, serialization way, etc.)
+        /// </summary>
         [Flags]
         private enum TypeAttributes // : byte
         {
@@ -534,7 +539,12 @@ namespace KGySoft.Serialization
 
             ValueType = 1,
             Sealed = 1 << 1,
-            CustomSerialized = 1 << 2
+            Enum = 1 << 2,
+            RecursiveObjectGraph = 1 << 3,
+            CustomSerialized = 1 << 4,
+            BinarySerializable = 1 << 5,
+            RawStruct = 1 << 6,
+
         }
 
         #endregion
@@ -548,42 +558,6 @@ namespace KGySoft.Serialization
         /// </summary>
         // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
         private struct Compressible<T> where T : struct
-        {
-        }
-
-        #endregion
-
-        #region BinarySerializable<T> struct
-
-        /// <summary>
-        /// A wrapper type for <see cref="IBinarySerializable"/> encoded types if they are not preceded by <see cref="DataTypes.BinarySerializable"/>.
-        /// </summary>
-        // ReSharper disable once UnusedTypeParameter - contains the actual type
-        private struct BinarySerializable<T> // where T : IBinarySerializable - not applied so a reasonable exception can be thrown if type has changed
-        {
-        }
-
-        #endregion
-
-        #region RawStruct<T> struct
-
-        /// <summary>
-        /// A wrapper type for raw-serialized structs if they are not preceded by <see cref="DataTypes.RawStruct"/>.
-        /// </summary>
-        // ReSharper disable once UnusedTypeParameter - contains the actual type
-        private struct RawStruct<T> // where T : struct - not applied so a reasonable exception can be thrown if type has changed
-        {
-        }
-
-        #endregion
-
-        #region RecursiveObjectGraph<T> struct
-
-        /// <summary>
-        /// A wrapper type for recursively saved types if they are not preceded by <see cref="DataTypes.RecursiveObjectGraph"/>.
-        /// </summary>
-        // ReSharper disable once UnusedTypeParameter - contains the actual type
-        private struct RecursiveObjectGraph<T>
         {
         }
 
@@ -935,15 +909,17 @@ namespace KGySoft.Serialization
         private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
         private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
         private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
-        private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
+        private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypes) != DataTypes.Null;
+        private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
         private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
-        private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
         private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
+        private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
         private static bool CanContainReferenceToSelf(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable);
         private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt.In(DataTypes.Pointer, DataTypes.ByRef);
+        private static bool IsImpureType(DataTypes dt) => dt.In(DataTypes.RecursiveObjectGraph); // (dt & DataTypes.ImpureType) != DataTypes.Null;
 
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
@@ -980,7 +956,7 @@ namespace KGySoft.Serialization
             {
                 // Check for a corrupted stream. Max 4 * 7 bits are valid
                 if (shift == 35)
-                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
+                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
 
                 b = br.ReadByte();
 
@@ -1001,7 +977,7 @@ namespace KGySoft.Serialization
                 // Check for a corrupted stream. Max 9 * 7 bits are valid
                 if (shift == 70)
                 {
-                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
+                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
                 }
 
                 b = br.ReadByte();

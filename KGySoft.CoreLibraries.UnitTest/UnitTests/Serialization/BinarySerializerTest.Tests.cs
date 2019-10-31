@@ -281,6 +281,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
         }
 
         [Test]
@@ -559,6 +562,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
         }
 
         /// <summary>

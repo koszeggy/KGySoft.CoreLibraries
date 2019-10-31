@@ -426,9 +426,9 @@ namespace KGySoft.Serialization
                 DataTypes dataType = GetDataType(type); // here collection and element types are not combined yet
 
                 // b.) Pure simple types and enums
-                if (IsPureSimpleType(dataType) || (dataType & DataTypes.Enum) != DataTypes.Null)
+                if (IsPureSimpleType(dataType) || IsEnum(dataType))
                 {
-                    WriteSimpleObject(bw, obj, dataType, true);
+                    WriteSimpleObjectRoot(bw, obj, dataType);
                     return;
                 }
 
@@ -450,7 +450,8 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             internal void WriteNonRoot(BinaryWriter bw, object obj, (DataTypes DataType, Type Type) knownBaseType = default)
             {
-                if (knownBaseType.Type != null && knownBaseType.DataType == DataTypes.RecursiveObjectGraph)
+                // if we have an impure known collection element or field type we marks its properties
+                if (knownBaseType.Type != null && IsImpureType(knownBaseType.DataType)) // impure: ref/pointer cannot occur here
                     MarkAttributes(bw, knownBaseType.Type, knownBaseType.DataType);
 
                 // Existing object
@@ -461,9 +462,9 @@ namespace KGySoft.Serialization
                 DataTypes dataType = GetDataType(type); // here collection and element types are not combined yet
 
                 // Pure simple types and enums
-                if (IsPureSimpleType(dataType) || (dataType & DataTypes.Enum) != DataTypes.Null)
+                if (IsPureSimpleType(dataType) || IsEnum(dataType))
                 {
-                    WriteSimpleObject(bw, obj, dataType, false);
+                    WriteSimpleObjectNonRoot(bw, obj, dataType);
                     return;
                 }
 
@@ -475,7 +476,7 @@ namespace KGySoft.Serialization
                 }
 
                 // Impure types
-                WriteImpureNonRootObject(bw, obj, dataType, knownBaseType.Type);
+                WriteImpureNonRootObject(bw, obj, dataType, knownBaseType);
             }
 
             #endregion
@@ -623,32 +624,51 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteSimpleObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
+            private void WriteSimpleObjectRoot(BinaryWriter bw, object obj, DataTypes dataType)
             {
-                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WriteSimpleObject)}");
+                bool isRoot = true;
+                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WriteSimpleObjectRoot)}");
                 if (IsCompressible(dataType))
                 {
-                    WriteCompressible(bw, obj, dataType, isRoot);
+                    WriteCompressibleRoot(bw, obj, dataType);
                     return;
                 }
 
-                if (isRoot)
-                {
-                    WriteDataType(bw, dataType);
+                Type type = obj.GetType();
 
-                    // Enums are impure so they need an additional type
-                    if ((dataType & DataTypes.Enum) != DataTypes.Null)
-                        WriteType(bw, obj.GetType(), dataType);
-                }
-                else
-                    WriteType(bw, obj.GetType(), dataType);
+                WriteDataType(bw, dataType);
+
+                // Enums are impure so they need an additional type
+                if (IsEnum(dataType))
+                    WriteType(bw, type, dataType, false, false);
 
                 WritePureObject(bw, obj, GetUnderlyingSimpleType(dataType));
             }
 
             [SecurityCritical]
-            private void WriteCompressible(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
+            private void WriteSimpleObjectNonRoot(BinaryWriter bw, object obj, DataTypes dataType)
             {
+                bool isRoot = false;
+                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WriteSimpleObjectNonRoot)}");
+                if (IsCompressible(dataType))
+                {
+                    WriteCompressibleNonRoot(bw, obj, dataType);
+                    return;
+                }
+
+                Type type = obj.GetType();
+
+                WriteType(bw, type, dataType, false, false);
+                if (IsEnum(dataType))
+                    MarkAttributes(bw, type, DataTypes.Enum);
+
+                WritePureObject(bw, obj, GetUnderlyingSimpleType(dataType));
+            }
+
+            [SecurityCritical]
+            private void WriteCompressibleRoot(BinaryWriter bw, object obj, DataTypes dataType)
+            {
+                bool isRoot = true;
                 (int, ulong) GetSizeAndValue()
                 {
                     switch (GetUnderlyingSimpleType(dataType))
@@ -690,14 +710,85 @@ namespace KGySoft.Serialization
                     dataType |= DataTypes.Store7BitEncoded;
 
                 // At root level encoding by DataTypes
-                if (isRoot)
-                    WriteDataType(bw, dataType);
-                else if (compress)
-                    type = typeof(Compressible<>).GetGenericType(type);
+                WriteDataType(bw, dataType);
 
                 // If enum (impure type) or non-root level: encoding by type index
-                if (!isRoot || (dataType & DataTypes.Enum) != DataTypes.Null)
-                    WriteType(bw, type, dataType);
+                if (IsEnum(dataType))
+                    WriteType(bw, type, dataType, false, false);
+
+                // storing the value as 7-bit encoded int, which will be shorter
+                if (compress)
+                {
+                    Write7BitLong(bw, value);
+                    return;
+                }
+
+                switch (size)
+                {
+                    case 2:
+                        bw.Write((ushort)value);
+                        return;
+                    case 4:
+                        bw.Write((uint)value);
+                        return;
+                    case 8:
+                        bw.Write(value);
+                        return;
+                }
+            }
+
+
+            [SecurityCritical]
+            private void WriteCompressibleNonRoot(BinaryWriter bw, object obj, DataTypes dataType)
+            {
+                bool isRoot = false;
+                (int, ulong) GetSizeAndValue()
+                {
+                    switch (GetUnderlyingSimpleType(dataType))
+                    {
+                        case DataTypes.Int16:
+                            return (2, (ulong)(short)obj);
+                        case DataTypes.UInt16:
+                            return (2, (ushort)obj);
+                        case DataTypes.Int32:
+                            return (4, (ulong)(int)obj);
+                        case DataTypes.UInt32:
+                            return (4, (uint)obj);
+                        case DataTypes.Int64:
+                            return (8, (ulong)(long)obj);
+                        case DataTypes.UInt64:
+                            return (8, (ulong)obj);
+                        case DataTypes.Char:
+                            return (2, (char)obj);
+                        case DataTypes.Single:
+                            return (4, BitConverter.ToUInt32(BitConverter.GetBytes((float)obj), 0));
+                        case DataTypes.Double:
+                            return (8, (ulong)BitConverter.DoubleToInt64Bits((double)obj));
+                        case DataTypes.IntPtr:
+                            return (8, (ulong)(IntPtr)obj);
+                        case DataTypes.UIntPtr:
+                            return (8, (ulong)(UIntPtr)obj);
+                        default:
+                            throw new InvalidOperationException(Res.InternalError($"Unexpected compressible type: {dataType}"));
+                    }
+                }
+
+                (int size, ulong value) = GetSizeAndValue();
+                bool compress = size == 2 && value < (1UL << 7) // up to 7 bits
+                    || size == 4 && value < (1UL << 21) // up to 3*7 bits
+                    || size == 8 && value < (1UL << 49); // up to 7*7 bits
+
+                Type type = obj.GetType();
+                if (compress)
+                    dataType |= DataTypes.Store7BitEncoded;
+
+                // At root level encoding by DataTypes
+                Type typeToWrite = compress ? typeof(Compressible<>).GetGenericType(type) : type;
+
+                // If enum (impure type) or non-root level: encoding by type index
+                WriteType(bw, typeToWrite, dataType, false, false);
+                if (IsEnum(dataType))
+                    MarkAttributes(bw, type, dataType);
 
                 // storing the value as 7-bit encoded int, which will be shorter
                 if (compress)
@@ -808,7 +899,7 @@ namespace KGySoft.Serialization
                         return;
                     case DataTypes.RuntimeType:
                         // not passing an actual DataType here because so it will be obtained on demand if needed
-                        WriteType(bw, (Type)obj, true);
+                        WriteType(bw, (Type)obj, true, false);
                         return;
 
                     // these types have no effective data
@@ -839,10 +930,10 @@ namespace KGySoft.Serialization
                 switch (GetUnderlyingSimpleType(dataType))
                 {
                     case DataTypes.BinarySerializable:
-                        WriteBinarySerializable(bw, (IBinarySerializable)obj, true, true);
+                        WriteBinarySerializableRoot(bw, (IBinarySerializable)obj);
                         return;
                     case DataTypes.RawStruct:
-                        WriteValueType(bw, (ValueType)obj, true, true);
+                        WriteValueTypeRoot(bw, (ValueType)obj);
                         return;
                     case DataTypes.RecursiveObjectGraph:
                         WriteObjectGraphRoot(bw, obj, true);
@@ -857,20 +948,18 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteImpureNonRootObject(BinaryWriter bw, object obj, DataTypes dataType, Type knownBaseType)
+            private void WriteImpureNonRootObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypes DataType, Type Type) knownBaseType)
             {
                 switch (GetUnderlyingSimpleType(dataType))
                 {
                     case DataTypes.BinarySerializable:
-                        // TODO: knownBaseType
-                        WriteBinarySerializable(bw, (IBinarySerializable)obj, true, false);
+                        WriteBinarySerializableNonRoot(bw, (IBinarySerializable)obj, knownBaseType);
                         return;
                     case DataTypes.RawStruct:
-                        // TODO: knownBaseType
-                        WriteValueType(bw, (ValueType)obj, true, false);
+                        WriteValueTypeNonRoot(bw, (ValueType)obj, knownBaseType);
                         return;
                     case DataTypes.RecursiveObjectGraph:
-                        WriteObjectGraphNonRoot(bw, obj, knownBaseType);
+                        WriteObjectGraphNonRoot(bw, obj, knownBaseType.Type);
                         return;
 
                     // There is no ByRef instance and pointers cannot be cast to objects. These are supported as types only.
@@ -915,7 +1004,7 @@ namespace KGySoft.Serialization
                 // id is already written if needed
                 Type type = data.GetType();
                 CircularList<DataTypes> collectionType = EncodeDataType(type, dataType);
-                WriteType(bw, type, collectionType);
+                WriteType(bw, type, collectionType, false, false);
                 WriteCollection(bw, new DataTypesEnumerator(collectionType, true), data);
             }
 
@@ -948,7 +1037,7 @@ namespace KGySoft.Serialization
                             continue;
                         }
 
-                        WriteType(bw, Nullable.GetUnderlyingType(type) ?? type, null, allowOpenTypes);
+                        WriteType(bw, Nullable.GetUnderlyingType(type) ?? type, null, allowOpenTypes, false);
                         Debug.Assert(!enumerator.MoveNextExtracted(), $"Unprocessed element: {dataType}");
                         return;
                     }
@@ -1325,8 +1414,7 @@ namespace KGySoft.Serialization
                         Debug.Assert(element != null, "When element is null, WriteId should return true");
 
                         // 2. Serialize
-                        bool typeNeeded = collectionElementType.CanBeDerived();
-                        WriteBinarySerializable(bw, (IBinarySerializable)element, typeNeeded, false);
+                        WriteBinarySerializableNonRoot(bw, (IBinarySerializable)element, (elementDataType, collectionElementType));
                         return;
 
                     case DataTypes.RecursiveObjectGraph:
@@ -1334,7 +1422,7 @@ namespace KGySoft.Serialization
                         return;
 
                     case DataTypes.RawStruct:
-                        WriteValueType(bw, (ValueType)element, false, false);
+                        WriteValueTypeNonRoot(bw, (ValueType)element, (elementDataType, collectionElementType));
                         return;
 
                     // There is no ByRef instance and pointers cannot be cast to objects. These are supported as types only.
@@ -1390,7 +1478,10 @@ namespace KGySoft.Serialization
 
                 // 1.) Writing type. For recursive objects this is the first occasion we can be sure it can be written because on custom serialization type name can be changed.
                 if (writeType)
-                    WriteType(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type));
+                {
+                    //WriteType(bw, type, false, true);
+                    WriteType(bw, type, false, true);
+                }
 
                 // 2.) false for IsCustom object graph
                 MarkCustomSerialized(bw, type, false);
@@ -1440,7 +1531,10 @@ namespace KGySoft.Serialization
 
                 // 1.) Writing type. For recursive objects this is the first occasion we can be sure it can be written because on custom serialization type name can be changed.
                 if (writeType)
-                    WriteType(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type));
+                {
+                    //WriteType(bw, typeof(RecursiveObjectGraph<>).GetGenericType(type));
+                    WriteType(bw, type, false, true);
+                }
 
                 // 2.) false for IsCustom object graph
                 MarkCustomSerialized(bw, type, false);
@@ -1522,19 +1616,25 @@ namespace KGySoft.Serialization
                 // serialization we write the type anyway though, because it can be changed by SerializationInfo. Not bothering with
                 // writing a bool flag whether type has changed though because for known types just a 7-bit encoded id is written.
                 if (!forcedType)
+                {
                     MarkCustomSerialized(bw, typeToCache, true);
+                }
 
                 // 2.) Writing actual type
                 if (typeToWrite != null)
                     // we have a real type: normal case
-                    WriteType(bw, isRoot ? typeToWrite : typeof(RecursiveObjectGraph<>).GetGenericType(typeToWrite), DataTypes.RecursiveObjectGraph);
+                    //WriteType(bw, isRoot ? typeToWrite : typeof(RecursiveObjectGraph<>).GetGenericType(typeToWrite), DataTypes.RecursiveObjectGraph, false, false);
+                    WriteType(bw, typeToWrite, DataTypes.RecursiveObjectGraph, false, true);
                 else
                     // trick: writing a bound name for our original type
-                    WriteTypeWithName(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                    //WriteTypeWithName(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                    WriteTypeWithName(bw, type, explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
 
                 // 1/b.) If type must be written, then IsCustom comes after the type.
                 if (forcedType)
+                {
                     MarkCustomSerialized(bw, typeToCache, true);
+                }
 
                 // 3.) Serialization part.
                 Write7BitInt(bw, si.MemberCount);
@@ -1547,7 +1647,7 @@ namespace KGySoft.Serialization
                     WriteNonRoot(bw, entry.Value);
 
                     // type (again, we don't bother with isDifferent flags, the type id is 1 byte for the first 127 types)
-                    WriteType(bw, entry.ObjectType);
+                    WriteType(bw, entry.ObjectType, false, false);
                 }
             }
 
@@ -1595,19 +1695,28 @@ namespace KGySoft.Serialization
                 // serialization we write the type anyway though, because it can be changed by SerializationInfo. Not bothering with
                 // writing a bool flag whether type has changed though because for known types just a 7-bit encoded id is written.
                 if (!forcedType)
+                {
                     MarkCustomSerialized(bw, typeToCache, true);
+                }
 
                 // 2.) Writing actual type
                 if (typeToWrite != null)
+                {
                     // we have a real type: normal case
-                    WriteType(bw, isRoot ? typeToWrite : typeof(RecursiveObjectGraph<>).GetGenericType(typeToWrite), DataTypes.RecursiveObjectGraph);
+                    //WriteType(bw, isRoot ? typeToWrite : typeof(RecursiveObjectGraph<>).GetGenericType(typeToWrite), DataTypes.RecursiveObjectGraph, false, false);
+                    WriteType(bw, typeToWrite, DataTypes.RecursiveObjectGraph, false, true);
+                }
                 else
                     // trick: writing a bound name for our original type
-                    WriteTypeWithName(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                    //WriteTypeWithName(bw, isRoot ? type : typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                    //WriteTypeWithName(bw, typeof(RecursiveObjectGraph<>).GetGenericType(type), explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
+                    WriteTypeWithName(bw, type, explicitAsmName ?? String.Empty, explicitTypeName ?? String.Empty);
 
                 // 1/b.) If type must be written, then IsCustom comes after the type.
                 if (forcedType)
+                {
                     MarkCustomSerialized(bw, typeToCache, true);
+                }
 
                 // 3.) Serialization part.
                 Write7BitInt(bw, si.MemberCount);
@@ -1620,7 +1729,7 @@ namespace KGySoft.Serialization
                     WriteNonRoot(bw, entry.Value);
 
                     // type (again, we don't bother with isDifferent flags, the type id is 1 byte for the first 127 types)
-                    WriteType(bw, entry.ObjectType);
+                    WriteType(bw, entry.ObjectType, false, false);
                 }
             }
 
@@ -1628,17 +1737,17 @@ namespace KGySoft.Serialization
 
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializedAttribute));
 
-            private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
-                => WriteType(bw, type, null, allowOpenTypes);
+            private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes, bool writeAttributes)
+                => WriteType(bw, type, null, allowOpenTypes, writeAttributes);
 
-            private void WriteType(BinaryWriter bw, Type type, DataTypes dataType, bool allowOpenTypes = false)
+            private void WriteType(BinaryWriter bw, Type type, DataTypes dataType, bool allowOpenTypes, bool writeAttributes)
             {
                 // WriteType writes compressed as Compressible<T>
                 if (IsCompressed(dataType))
                     dataType = DataTypes.RecursiveObjectGraph;
 
                 var dataTypes = CanBeEncoded(dataType) ? EncodeDataType(type, dataType) : (IList<DataTypes>)new[] { dataType };
-                WriteType(bw, type, dataTypes, allowOpenTypes);
+                WriteType(bw, type, dataTypes, allowOpenTypes, writeAttributes);
             }
 
             /// <summary>
@@ -1647,9 +1756,9 @@ namespace KGySoft.Serialization
             /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when a RuntimeType instance is serialized.
             /// </summary>
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type, IList<DataTypes> encodedDataType, bool allowOpenTypes = false)
+            private void WriteType(BinaryWriter bw, Type type, IList<DataTypes> encodedDataType, bool allowOpenTypes, bool writeAttributes)
             {
-                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter) || type == typeof(RecursiveObjectGraph<>),
+                Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter) /*|| type == typeof(RecursiveObjectGraph<>)*/,
                     $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 string binderAsmName = null;
                 string binderTypeName = null;
@@ -1797,7 +1906,7 @@ namespace KGySoft.Serialization
 
                         // ByRef/pointer of impure type: prefixes were processed, rest is handled by WriteType
                         WriteDataType(bw, elementDataType);
-                        WriteType(bw, type, encodedDataTypes, allowOpenTypes);
+                        WriteType(bw, type, encodedDataTypes, allowOpenTypes, false);
                         return true;
                     }
 
@@ -1847,7 +1956,7 @@ namespace KGySoft.Serialization
                 // Constructed generic type of the (partially) unsupported or impure arguments:
                 // recursion for the arguments and adding the type to the index cache at the end.
                 foreach (Type genericArgument in type.GetGenericArguments())
-                    WriteType(bw, genericArgument, allowOpenTypes);
+                    WriteType(bw, genericArgument, allowOpenTypes, false);
 
                 return true;
             }
@@ -1937,9 +2046,9 @@ namespace KGySoft.Serialization
                 // 5.) Constructed generic type: arguments (it still can contain generic parameters)
                 if (isGeneric)
                 {
-                    Debug.Assert(!isTypeDef, "Type definition ");
+                    Debug.Assert(!isTypeDef, "Type definition is not expected here");
                     foreach (Type genericArgument in type.GetGenericArguments())
-                        WriteType(bw, genericArgument, allowOpenTypes);
+                        WriteType(bw, genericArgument, allowOpenTypes, false);
                 }
 
                 // 6.) Adding the original complex type to cache (binder is not used here)
@@ -1989,12 +2098,12 @@ namespace KGySoft.Serialization
 
                 // Writing a special placeholder indicating the generic method parameter because the declaring type
                 // of generic methods has nothing to do with the parameter so they cannot be encoded the same way as type parameters.
-                WriteType(bw, typeof(GenericMethodDefinitionPlaceholder));
+                WriteType(bw, typeof(GenericMethodDefinitionPlaceholder), false, false);
 
                 // For generic method parameters no specifier is needed because the placeholder type has been written.
                 // Instead, writing the declaring type, method signature and parameter index
                 Type declaringType = type.DeclaringType;
-                WriteType(bw, declaringType, true);
+                WriteType(bw, declaringType, true, false);
 
                 // ReSharper disable once PossibleNullReferenceException - false alarm in release build, see assert above
                 bw.Write(type.DeclaringMethod.ToString());
@@ -2079,14 +2188,33 @@ namespace KGySoft.Serialization
                 return false;
             }
 
-            private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, bool writeType, bool isRoot)
+            private void WriteBinarySerializableRoot(BinaryWriter bw, IBinarySerializable instance)
             {
+                bool isRoot = true;
+                bool writeType = true;
                 if (writeType)
                 {
                     Type type = instance.GetType();
-                    if (!isRoot)
-                        type = typeof(BinarySerializable<>).GetGenericType(type);
-                    WriteType(bw, type, DataTypes.BinarySerializable);
+                    WriteType(bw, type, DataTypes.BinarySerializable, false, false);
+                }
+
+                OnSerializing(instance);
+                byte[] rawData = instance.Serialize(Options);
+                Write7BitInt(bw, rawData.Length);
+                bw.Write(rawData);
+                OnSerialized(instance);
+            }
+
+            private void WriteBinarySerializableNonRoot(BinaryWriter bw, IBinarySerializable instance, (DataTypes DataType, Type Type) knownBaseType)
+            {
+                bool isRoot = false;
+                bool writeType = knownBaseType.Type == null || knownBaseType.Type.CanBeDerived();
+                if (writeType)
+                {
+                    Type type = instance.GetType();
+                    WriteType(bw, type, DataTypes.BinarySerializable, false, false);
+                    if (!isRoot && knownBaseType.DataType != DataTypes.BinarySerializable)
+                        MarkAttributes(bw, type, DataTypes.BinarySerializable);
                 }
 
                 OnSerializing(instance);
@@ -2097,14 +2225,34 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteValueType(BinaryWriter bw, ValueType data, bool writeType, bool isRoot)
+            private void WriteValueTypeRoot(BinaryWriter bw, ValueType data)
             {
+                bool isRoot = true;
+                bool writeType = true;
                 if (writeType)
                 {
                     Type type = data.GetType();
-                    if (!isRoot)
-                        type = typeof(RawStruct<>).GetGenericType(type);
-                    WriteType(bw, type, DataTypes.RawStruct);
+                    WriteType(bw, type, DataTypes.RawStruct, false, false);
+                }
+
+                OnSerializing(data);
+                byte[] rawData = BinarySerializer.SerializeValueType(data);
+                Write7BitInt(bw, rawData.Length);
+                bw.Write(rawData);
+                OnSerialized(data);
+            }
+
+            [SecurityCritical]
+            private void WriteValueTypeNonRoot(BinaryWriter bw, ValueType data, (DataTypes DataType, Type Type) knownBaseType)
+            {
+                bool isRoot = false;
+                bool writeType = knownBaseType.Type == null || knownBaseType.Type.CanBeDerived();
+                if (writeType)
+                {
+                    Type type = data.GetType();
+                    WriteType(bw, type, DataTypes.RawStruct, false, !isRoot);
+                    if (!isRoot && knownBaseType.DataType != DataTypes.RawStruct)
+                        MarkAttributes(bw, type, DataTypes.RawStruct);
                 }
 
                 OnSerializing(data);
@@ -2125,7 +2273,9 @@ namespace KGySoft.Serialization
                 if (TypeAttributesCache.ContainsKey(type))
                     return;
 
-                var attr = isCustomSerialized ? TypeAttributes.CustomSerialized : TypeAttributes.None;
+                var attr = TypeAttributes.RecursiveObjectGraph;
+                if (isCustomSerialized)
+                    attr |= TypeAttributes.CustomSerialized;
                 if (type is Type t)
                 {
                     if (t.IsValueType)
@@ -2143,12 +2293,20 @@ namespace KGySoft.Serialization
             /// </summary>
             private void MarkAttributes(BinaryWriter bw, Type elementType, DataTypes dataType)
             {
-                if (dataType != DataTypes.RecursiveObjectGraph || TypeAttributesCache.ContainsKey(elementType))
+                if (TypeAttributesCache.ContainsKey(elementType))
                     return;
 
-                var attr = !IgnoreISerializable && typeof(ISerializable).IsAssignableFrom(elementType) || CanUseSurrogate(elementType)
-                    ? TypeAttributes.CustomSerialized
-                    : TypeAttributes.None;
+                TypeAttributes attr = IsEnum(dataType) ? TypeAttributes.Enum
+                    : dataType == DataTypes.RecursiveObjectGraph ? TypeAttributes.RecursiveObjectGraph
+                    : dataType == DataTypes.BinarySerializable ? TypeAttributes.BinarySerializable
+                    : dataType == DataTypes.RawStruct ? TypeAttributes.RawStruct
+                    : throw new InvalidOperationException(Res.InternalError($"Unexpected DataType: {DataTypeToString(dataType)}"));
+
+                if (attr == TypeAttributes.RecursiveObjectGraph)
+                {
+                    if (!IgnoreISerializable && typeof(ISerializable).IsAssignableFrom(elementType) || CanUseSurrogate(elementType))
+                        attr |= TypeAttributes.CustomSerialized;
+                }
 
                 if (elementType.IsValueType)
                     attr |= TypeAttributes.ValueType;

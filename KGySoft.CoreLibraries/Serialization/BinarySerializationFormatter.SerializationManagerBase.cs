@@ -64,7 +64,7 @@ namespace KGySoft.Serialization
             private protected static readonly Type[] KnownTypes =
             {
                 Reflector.NullableType,
-                Reflector.ObjectType,
+                //Reflector.ObjectType,
 
                 // These types are just added for sparing 1 byte when they are stored for the fist time.
                 // Other primitives (U/IntPtr) are also protected from binder but they are stored as new type first
@@ -89,11 +89,9 @@ namespace KGySoft.Serialization
                 typeof(Compressible<uint>),
                 typeof(Compressible<long>),
                 typeof(Compressible<ulong>),
+                typeof(Compressible<char>),
 
                 // Technical helper types for special cases, must not be passed to binders
-                typeof(BinarySerializable<>),
-                typeof(RawStruct<>),
-                typeof(RecursiveObjectGraph<>),
                 typeof(Compressible<>),
                 typeof(GenericMethodDefinitionPlaceholder)
             };
