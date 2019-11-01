@@ -59,11 +59,12 @@ namespace KGySoft.Serialization
             #region Properties
 
             private Dictionary<int, object> IdCache => idCache ??= new Dictionary<int, object> { { 0, null } };
+
             private List<(Assembly Assembly, string BoundName)> CachedAssemblies
                 => cachedAssemblies ??= new List<(Assembly, string)>(KnownAssemblies.Select(a => (a, (string)null)));
 
             private List<DataTypeDescriptor> CachedTypes
-                => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t, null, false)));
+                => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
 
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
@@ -98,7 +99,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.BinarySerializationNotAnEnum(enumType));
                 DataTypes dataType = descriptor.ElementDataType;
                 bool is7BitEncoded = IsCompressed(dataType);
-                switch (dataType & DataTypes.SimpleTypes)
+                switch (GetUnderlyingSimpleType(dataType))
                 {
                     case DataTypes.Int8:
                         return Enum.ToObject(enumType, br.ReadSByte());
@@ -121,7 +122,7 @@ namespace KGySoft.Serialization
                         return Enum.ToObject(enumType,
                             is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                     default:
-                        throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(DataTypeToString(dataType & DataTypes.SimpleTypes)));
+                        throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(DataTypeToString(GetUnderlyingSimpleType(dataType))));
                 }
             }
 
@@ -191,7 +192,185 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            internal object ReadRoot(BinaryReader br)
+            internal object ReadWithType(BinaryReader br)
+            {
+                // 1.) Cached object
+                if (TryGetCachedObject(br, out object result))
+                    return result;
+
+                DataTypeDescriptor descriptor = ReadType(br, false);
+                if ((descriptor.DataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null)
+                    descriptor.ApplyAttributes(EnsureAttributes(br, descriptor.Type));
+                Debug.Assert(descriptor != null, "Descriptor should not be null");
+
+                // 2.) supported non-collection type
+                if (descriptor.CollectionDataType == DataTypes.Null)
+                    return ReadObject(br, true, descriptor);
+
+                // 3/a.) array
+                if (descriptor.IsArray)
+                    return CreateArray(br, true, descriptor);
+
+                // 3/b.) non-array collection or key-value
+                return CreateCollection(br, true, descriptor);
+            }
+
+            [SecurityCritical]
+            internal object ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
+            {
+                // single element
+                if (!elementDescriptor.IsCollection)
+                    return ReadObject(br, null, elementDescriptor);
+
+                // nested array
+                if (elementDescriptor.IsArray)
+                    return CreateArray(br, true, elementDescriptor);
+
+                // other nested collection
+                return CreateCollection(br, !IsValueType(elementDescriptor) || elementDescriptor.IsNullable, elementDescriptor);
+            }
+
+            /// <summary>
+            /// Reads a type from the serialization stream.
+            /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when type is deserialized as an instance.
+            /// </summary>
+            internal DataTypeDescriptor ReadType(BinaryReader br, bool allowOpenTypes)
+            {
+                DataTypeDescriptor result;
+                Type type;
+
+                // type index
+                int index = Read7BitInt(br);
+
+                // DataTypes encoded type
+                if (index == EncodedTypeIndex)
+                {
+                    DataTypes dataType = ReadDataType(br);
+                    result = new DataTypeDescriptor(null, dataType, br);
+                    result.DecodeType(br, this, allowOpenTypes);
+                    CachedTypes.Add(result);
+                    return result;
+                }
+
+                // known type
+                if (index != NewTypeIndex)
+                {
+                    Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
+                    result = CachedTypes[index];
+                    type = result.Type;
+                    if (type.IsGenericTypeDefinition)
+                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
+                    else if (type == genericMethodDefinitionPlaceholderType)
+                        result = HandleGenericMethodParameter(br);
+                    return result;
+                }
+
+                // new type: assembly index
+                index = Read7BitInt(br);
+
+                // new assembly: assembly and type names are both stored as strings
+                if (index == NewAssemblyIndex)
+                {
+                    // assembly qualified name (GetType uses binder if set)
+                    string storedAssemblyName = br.ReadString();
+                    string storedTypeName = br.ReadString();
+                    type = GetType(storedAssemblyName, storedTypeName);
+                    result = new DataTypeDescriptor(type);
+                    CachedAssemblies.Add((type.Assembly, storedAssemblyName));
+                    CachedTypes.Add(result);
+                    if (type.IsGenericTypeDefinition)
+                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
+                    return result;
+                }
+
+                (Assembly Assembly, string BoundName) assembly = default;
+
+                // type with known or omitted assembly: only type name is stored as string
+                if (index != OmitAssemblyIndex)
+                {
+                    Debug.Assert(index >= 0 && index < CachedAssemblies.Count, "Invalid assembly index");
+                    assembly = CachedAssemblies[index];
+                }
+
+                string typeName = br.ReadString();
+                type = ReadBoundType(assembly.BoundName, typeName)
+                    ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
+                    ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+
+                result = new DataTypeDescriptor(type);
+                CachedTypes.Add(result);
+                if (type.IsGenericTypeDefinition)
+                    result = HandleGenericTypeDef(br, result, allowOpenTypes);
+
+                return result;
+            }
+
+            internal DataTypeDescriptor HandleGenericTypeDef(BinaryReader br, DataTypeDescriptor descriptor, bool allowOpenTypes, bool addToCache = true)
+            {
+                Type typeDef = descriptor.Type;
+                Type[] args = typeDef.GetGenericArguments();
+                int len = args.Length;
+                DataTypeDescriptor result;
+
+                if (allowOpenTypes)
+                {
+                    switch ((GenericTypeSpecifier)br.ReadByte())
+                    {
+                        case GenericTypeSpecifier.TypeDefinition:
+                            return descriptor;
+                        case GenericTypeSpecifier.GenericParameter:
+                            {
+                                var index = Read7BitInt(br);
+                                if (index < 0 || index >= len)
+                                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                                result = new DataTypeDescriptor(typeDef.GetGenericArguments()[index]);
+                                if (addToCache)
+                                    CachedTypes.Add(result);
+                                return result;
+                            }
+                        case GenericTypeSpecifier.ConstructedType:
+                            break;
+                        default:
+                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                    }
+                }
+
+                // reading arguments
+                for (int i = 0; i < len; i++)
+                    args[i] = ReadType(br, allowOpenTypes).Type;
+
+                result = new DataTypeDescriptor(typeDef.GetGenericType(args));
+                if (addToCache)
+                    CachedTypes.Add(result);
+
+                return result;
+            }
+
+            internal void AddObjectToCache(object obj)
+            {
+                Dictionary<int, object> cache = IdCache;
+                cache.Add(idCache.Count, obj);
+            }
+
+            internal void AddObjectToCache(object obj, out int id)
+            {
+                Dictionary<int, object> cache = IdCache;
+                id = idCache.Count;
+                cache.Add(id, obj);
+            }
+
+            internal void ReplaceObjectInCache(int id, object obj)
+            {
+                Dictionary<int, object> cache = IdCache;
+                cache[id] = obj;
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            [SecurityCritical]
+            private object ReadRoot(BinaryReader br)
             {
                 DataTypes dataType = ReadDataType(br);
 
@@ -205,8 +384,8 @@ namespace KGySoft.Serialization
                 // 2.) supported non-collection type
                 if (!IsCollectionType(dataType))
                 {
-                    // on root level id is written for IBinarySerializable and recursive objects (collections are checked below)
-                    if (CanContainReferenceToSelf(dataType))
+                    // at root level id is written for recursive objects (collections are checked below)
+                    if (GetUnderlyingSimpleType(dataType) == DataTypes.RecursiveObjectGraph)
                     {
                         addToCache = true;
                         if (TryGetCachedObject(br, out var _))
@@ -237,164 +416,16 @@ namespace KGySoft.Serialization
                 return CreateCollection(br, addToCache, descriptor);
             }
 
-            [SecurityCritical]
-            internal object ReadWithType(BinaryReader br, DataTypeDescriptor knownBaseType = null)
+            private Type ReadBoundType(string assemblyName, string typeName)
             {
-                // 1.) Cached object
-                if (TryGetCachedObject(br, out object result))
-                    return result;
-
-                DataTypeDescriptor descriptor = ReadType(br, false, false);
-                if ((descriptor.DataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null)
-                    descriptor.ApplyAttributes(EnsureAttributes(br, descriptor.Type));
-                Debug.Assert(descriptor != null, "Descriptor should not be null");
-
-                // 2.) supported non-collection type
-                if (descriptor.CollectionDataType == DataTypes.Null)
-                    return ReadObject(br, true, descriptor);
-
-                // 3/a.) array
-                if (descriptor.IsArray)
-                    return CreateArray(br, true, descriptor);
-
-                // 3/b.) non-array collection or key-value
-                return CreateCollection(br, true, descriptor);
+                if (Binder is ISerializationBinder binder)
+                    return binder.BindToType(assemblyName ?? String.Empty, typeName);
+                return Binder?.BindToType(assemblyName ?? String.Empty, typeName);
             }
 
-            [SecurityCritical]
-            internal object ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
+            private DataTypeDescriptor HandleGenericMethodParameter(BinaryReader br)
             {
-                // single element
-                if (!elementDescriptor.IsCollection)
-                    return ReadObject(br, !elementDescriptor.Type.IsValueType, elementDescriptor);
-
-                // nested array
-                if (elementDescriptor.IsArray)
-                    return CreateArray(br, true, elementDescriptor);
-
-                // other nested collection
-                return CreateCollection(br, !elementDescriptor.Type.IsValueType || elementDescriptor.Type.IsNullable(), elementDescriptor);
-            }
-
-            /// <summary>
-            /// Reads a type from the serialization stream.
-            /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when type is deserialized as an instance.
-            /// </summary>
-            internal DataTypeDescriptor ReadType(BinaryReader br, bool allowOpenTypes, bool ensureAttributes)
-            {
-                DataTypeDescriptor result;
-                Type type;
-
-                // type index
-                int index = Read7BitInt(br);
-
-                // DataTypes encoded type
-                if (index == EncodedTypeIndex)
-                {
-                    DataTypes dataType = ReadDataType(br);
-                    result = new DataTypeDescriptor(null, dataType, br);
-                    result.DecodeType(br, this, allowOpenTypes);
-                    CachedTypes.Add(result);
-                    return result;
-                }
-
-                // known type
-                if (index != NewTypeIndex)
-                {
-                    Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
-                    result = CachedTypes[index];
-                    type = result.Type;
-                    if (type.IsGenericTypeDefinition)
-                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
-                    else if (type == typeof(GenericMethodDefinitionPlaceholder))
-                        result = HandleGenericMethodParameter(br);
-                    return result;
-                }
-
-                // new type: assembly index
-                index = Read7BitInt(br);
-
-                // new assembly: assembly and type names are both stored as strings
-                if (index == NewAssemblyIndex)
-                {
-                    // assembly qualified name (GetType uses binder if set)
-                    string storedAssemblyName = br.ReadString();
-                    string storedTypeName = br.ReadString();
-                    type = GetType(storedAssemblyName, storedTypeName);
-                    result = new DataTypeDescriptor(type, br, allowOpenTypes);
-                    CachedAssemblies.Add((type.Assembly, storedAssemblyName));
-                    CachedTypes.Add(result);
-                    if (type.IsGenericTypeDefinition)
-                        result = HandleGenericTypeDef(br, result, allowOpenTypes);
-                    return result;
-                }
-
-                (Assembly Assembly, string BoundName) assembly = default;
-
-                // type with known or omitted assembly: only type name is stored as string
-                if (index != OmitAssemblyIndex)
-                {
-                    Debug.Assert(index >= 0 && index < CachedAssemblies.Count, "Invalid assembly index");
-                    assembly = CachedAssemblies[index];
-                }
-
-                string typeName = br.ReadString();
-                type = ReadBoundType(assembly.BoundName, typeName)
-                    ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
-                    ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
-
-                result = new DataTypeDescriptor(type, br, allowOpenTypes);
-                CachedTypes.Add(result);
-                if (type.IsGenericTypeDefinition)
-                    result = HandleGenericTypeDef(br, result, allowOpenTypes);
-
-                return result;
-            }
-
-            internal DataTypeDescriptor HandleGenericTypeDef(BinaryReader br, DataTypeDescriptor descriptor, bool allowOpenTypes, bool addToCache = true)
-            {
-                Type typeDef = descriptor.Type;
-                Type[] args = typeDef.GetGenericArguments();
-                int len = args.Length;
-                DataTypeDescriptor result;
-
-                if (allowOpenTypes)
-                {
-                    switch ((GenericTypeSpecifier)br.ReadByte())
-                    {
-                        case GenericTypeSpecifier.TypeDefinition:
-                            return descriptor;
-                        case GenericTypeSpecifier.GenericParameter:
-                            {
-                                var index = Read7BitInt(br);
-                                if (index < 0 || index >= len)
-                                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                                result = new DataTypeDescriptor(typeDef.GetGenericArguments()[index], br, true);
-                                if (addToCache)
-                                    CachedTypes.Add(result);
-                                return result;
-                            }
-                        case GenericTypeSpecifier.ConstructedType:
-                            break;
-                        default:
-                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                    }
-                }
-
-                // reading arguments
-                for (int i = 0; i < len; i++)
-                    args[i] = ReadType(br, allowOpenTypes, false).Type;
-
-                result = new DataTypeDescriptor(typeDef.GetGenericType(args), br, allowOpenTypes);
-                if (addToCache)
-                    CachedTypes.Add(result);
-
-                return result;
-            }
-
-            internal DataTypeDescriptor HandleGenericMethodParameter(BinaryReader br)
-            {
-                Type declaringType = ReadType(br, true, false).Type;
+                Type declaringType = ReadType(br, true).Type;
                 string signature = br.ReadString();
                 MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
                     .FirstOrDefault(mi => mi.ToString() == signature);
@@ -404,40 +435,10 @@ namespace KGySoft.Serialization
                 Type[] args = method.GetGenericArguments();
                 DataTypeDescriptor result = argIndex < 0 || argIndex >= args.Length
                     ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
-                    : new DataTypeDescriptor(args[argIndex], br, true);
+                    : new DataTypeDescriptor(args[argIndex]);
 
                 CachedTypes.Add(result);
                 return result;
-            }
-
-            internal void AddObjectToCache(object obj)
-            {
-                Dictionary<int, object> cache = IdCache;
-                cache.Add(idCache.Count, obj);
-            }
-
-            internal void AddObjectToCache(object obj, out int id)
-            {
-                Dictionary<int, object> cache = IdCache;
-                id = idCache.Count;
-                cache.Add(id, obj);
-            }
-
-            internal void ReplaceObjectInCache(int id, object obj)
-            {
-                Dictionary<int, object> cache = IdCache;
-                cache[id] = obj;
-            }
-
-            #endregion
-
-            #region Private Methods
-
-            private Type ReadBoundType(string assemblyName, string typeName)
-            {
-                if (Binder is ISerializationBinder binder)
-                    return binder.BindToType(assemblyName ?? String.Empty, typeName);
-                return Binder?.BindToType(assemblyName ?? String.Empty, typeName);
             }
 
             /// <summary>
@@ -511,7 +512,7 @@ namespace KGySoft.Serialization
                     throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
 
                 // getting whether the current instance is in cache
-                if (descriptor.ParentDescriptor != null && (!descriptor.Type.IsValueType || descriptor.Type.IsNullable()))
+                if (descriptor.ParentDescriptor != null && (!IsValueType(descriptor) || descriptor.IsNullable))
                 {
                     if (TryGetCachedObject(br, out object cachedResult))
                         return cachedResult;
@@ -580,7 +581,7 @@ namespace KGySoft.Serialization
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
-            private object ReadObject(BinaryReader br, bool addToCache, DataTypeDescriptor dataTypeDescriptor)
+            private object ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
                 bool TryGetFromCache(out object cachedValue)
                 {
@@ -590,7 +591,7 @@ namespace KGySoft.Serialization
                         return false;
                     }
 
-                    Debug.Assert(addToCache, "Reference element types of collections should be cached");
+                    Debug.Assert(addToCache == true, "Reference element types of collections should be cached");
                     return TryGetCachedObject(br, out cachedValue);
                 }
 
@@ -598,15 +599,17 @@ namespace KGySoft.Serialization
                 bool is7BitEncoded = IsCompressed(dataType);
 
                 // nullable type
-                if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
+                if (IsNullable(dataType))
                 {
                     // there is no nullable type on root level so checking for null in any case (occurs in collection and type members)
                     if (!br.ReadBoolean())
                         return null;
                 }
 
-                if (dataTypeDescriptor.ParentDescriptor != null && GetUnderlyingSimpleType(dataType) == DataTypes.RecursiveObjectGraph)
+                if (dataTypeDescriptor.ParentDescriptor != null && IsImpureType(dataType))
                     EnsureAttributes(br, dataTypeDescriptor.Type);
+                if (addToCache == null)
+                    addToCache = !IsValueType(dataTypeDescriptor);
 
                 object createdResult = null;
                 try
@@ -666,7 +669,7 @@ namespace KGySoft.Serialization
                             if (dataTypeDescriptor.ParentDescriptor == null)
                                 return createdResult = new object();
                             // result is not set here - when caching is needed, will be done in the recursion
-                            return ReadWithType(br, dataTypeDescriptor);
+                            return ReadWithType(br);
                         case DataTypes.Version:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadVersion(br);
                         case DataTypes.Guid:
@@ -682,12 +685,12 @@ namespace KGySoft.Serialization
                         case DataTypes.StringBuilder:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                         case DataTypes.RuntimeType:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true, false).Type;
+                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
 
                         case DataTypes.BinarySerializable:
-                            return ReadBinarySerializable(br, addToCache, dataTypeDescriptor);
+                            return ReadBinarySerializable(br, addToCache.Value, dataTypeDescriptor);
                         case DataTypes.RecursiveObjectGraph:
-                            return ReadObjectGraph(br, addToCache, dataTypeDescriptor);
+                            return ReadObjectGraph(br, addToCache.Value, dataTypeDescriptor);
                         case DataTypes.RawStruct:
                             return createdResult = ReadValueType(br, dataTypeDescriptor);
                         default:
@@ -698,7 +701,7 @@ namespace KGySoft.Serialization
                 }
                 finally
                 {
-                    if (addToCache && createdResult != null)
+                    if (addToCache.Value && createdResult != null)
                         AddObjectToCache(createdResult);
                 }
             }
@@ -707,25 +710,20 @@ namespace KGySoft.Serialization
             private object ReadBinarySerializable(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // checking instance id
-                if (descriptor.ParentDescriptor != null && !descriptor.Type.IsValueType)
+                if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
                     if (TryGetCachedObject(br, out object cachedResult))
                         return cachedResult;
                 }
 
                 // actual type if needed
-                Type type = descriptor.ParentDescriptor != null && descriptor.Type.CanBeDerived()
-                    ? ReadType(br, false, false).Type
+                Type type = descriptor.ParentDescriptor != null && !IsSealed(descriptor)
+                    ? ReadType(br, false).Type
                     : descriptor.Type;
 
                 // deserialize (object will be cached immediately after creation so circular references will be found in time)
-                return DoReadBinarySerializable(br, addToCache, Nullable.GetUnderlyingType(type) ?? type);
-            }
-
-            [SecurityCritical]
-            private object DoReadBinarySerializable(BinaryReader br, bool addToCache, Type type)
-            {
-                if (!typeof(IBinarySerializable).IsAssignableFrom(type))
+                type = Nullable.GetUnderlyingType(type) ?? type;
+                if (!binarySerializableType.IsAssignableFrom(type))
                     throw new SerializationException(Res.BinarySerializationNotBinarySerializable(type));
                 byte[] serData = br.ReadBytes(Read7BitInt(br));
 
@@ -748,39 +746,33 @@ namespace KGySoft.Serialization
                 return result;
             }
 
+            /// <summary>
+            /// Deserializing object graph with options that was used on serialization.
+            /// </summary>
             [SecurityCritical]
             private object ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // When element types may differ, reading element with data type
-                if (descriptor.ParentDescriptor != null && descriptor.Type.CanBeDerived())
-                    return ReadWithType(br, descriptor);
+                if (descriptor.ParentDescriptor != null && !IsSealed(descriptor))
+                    return ReadWithType(br);
 
                 // checking instance id
-                if (descriptor.ParentDescriptor != null && !descriptor.Type.IsValueType)
+                if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
                     if (TryGetCachedObject(br, out object cachedResult))
                         return cachedResult;
                 }
 
                 // deserialize
-                return DoReadObjectGraph(br, addToCache, descriptor);
-            }
-
-            /// <summary>
-            /// Deserializing object graph with options that was used on serialization.
-            /// </summary>
-            [SecurityCritical]
-            private object DoReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
-            {
                 Type type = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
 
                 // a.) IsDefault flag
                 bool isCustomObjectGraph = IsCustomSerialized(br, type);
 
                 // b.) Types of custom serialized objects are always explicitly stored
-                bool isSealedElement = descriptor.ParentDescriptor != null && !descriptor.Type.CanBeDerived();
+                bool isSealedElement = descriptor.ParentDescriptor != null && IsSealed(descriptor);
                 if (isCustomObjectGraph && isSealedElement)
-                    type = ReadType(br, false, false).Type;
+                    type = ReadType(br, false).Type;
 
                 // c.) Reading members
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
@@ -915,7 +907,7 @@ namespace KGySoft.Serialization
                 {
                     string name = br.ReadString();
                     object value = ReadWithType(br);
-                    Type elementType = ReadType(br, false, false).Type;
+                    Type elementType = ReadType(br, false).Type;
                     si.AddValue(name, value, elementType);
                 }
 
@@ -996,7 +988,7 @@ namespace KGySoft.Serialization
                 {
                     string name = br.ReadString();
                     object value = ReadWithType(br);
-                    ReadType(br, false, false); // the element type, which is ignored now
+                    ReadType(br, false); // the element type, which is ignored now
 
                     if (fields.TryGetValue(name, out FieldInfo field))
                     {
@@ -1022,13 +1014,13 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private void OnDeserializing(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnDeserializingAttribute));
+            private void OnDeserializing(object obj) => ExecuteMethodsOfAttribute(obj, onDeserializingAttribute);
 
             private void OnDeserialized(object obj)
             {
                 if (IgnoreSerializationMethods)
                     return;
-                ExecuteMethodsOfAttribute(obj, typeof(OnDeserializedAttribute));
+                ExecuteMethodsOfAttribute(obj, onDeserializedAttribute);
                 RegisterDeserializedObject(obj as IDeserializationCallback);
             }
 

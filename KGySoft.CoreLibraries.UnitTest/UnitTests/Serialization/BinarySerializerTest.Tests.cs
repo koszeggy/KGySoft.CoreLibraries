@@ -1004,6 +1004,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         }
 
         [Test]
+        public void SerializeDerivedCollectionsTest()
+        {
+            object[] referenceObjects =
+            {
+                new List<List<int>> { new List<int> { 1 }, new CustomGenericCollection<int> { 2 } },
+                new List<ArrayList> { new ArrayList { 1 }, new CustomNonGenericCollection { 2 } },
+                new KeyValuePair<List<int>, ArrayList>(new CustomGenericCollection<int> { 2 }, new CustomNonGenericCollection { 2 }), 
+                new ListField { IntListField = new CustomGenericCollection<int> { 1 } }
+            };
+
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+        }
+
+        [Test]
         public void SerializeCache()
         {
             object[] referenceObjects =

@@ -42,7 +42,7 @@ using KGySoft.Reflection;
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
-/* HOWTO
+/* How to add a new type
  * =====
  *
  * I. Adding a simple type
@@ -582,6 +582,16 @@ namespace KGySoft.Serialization
 
         #region Static Fields
 
+        private static readonly Type onSerializingAttribute = typeof(OnSerializingAttribute);
+        private static readonly Type onSerializedAttribute = typeof(OnSerializedAttribute);
+        private static readonly Type onDeserializingAttribute = typeof(OnDeserializingAttribute);
+        private static readonly Type onDeserializedAttribute = typeof(OnDeserializedAttribute);
+
+        private static readonly Type compressibleType = typeof(Compressible<>);
+        private static readonly Type serializableType = typeof(ISerializable);
+        private static readonly Type binarySerializableType = typeof(IBinarySerializable);
+        private static readonly Type genericMethodDefinitionPlaceholderType = typeof(GenericMethodDefinitionPlaceholder);
+
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(EnumComparer<DataTypes>.Comparer)
         {
             // generic collections
@@ -785,12 +795,12 @@ namespace KGySoft.Serialization
             { Reflector.TimeSpanType, DataTypes.TimeSpan },
             { Reflector.ObjectType, DataTypes.Object },
             { Reflector.RuntimeType, DataTypes.RuntimeType },
-            { typeof(DBNull), DataTypes.DBNull },
+            { Reflector.DBNullType, DataTypes.DBNull },
             { typeof(Version), DataTypes.Version },
-            { typeof(Guid), DataTypes.Guid },
+            { Reflector.GuidType, DataTypes.Guid },
             { typeof(Uri), DataTypes.Uri },
             { typeof(StringBuilder), DataTypes.StringBuilder },
-            { typeof(BitArray), DataTypes.BitArray },
+            { Reflector.BitArrayType, DataTypes.BitArray },
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
         };
@@ -798,16 +808,16 @@ namespace KGySoft.Serialization
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
         {
             // Array is not here because that is an abstract type. Arrays are handled separately.
-            { typeof(List<>), DataTypes.List },
+            { Reflector.ListGenType, DataTypes.List },
             { typeof(Queue<>), DataTypes.Queue },
             { typeof(Stack<>), DataTypes.Stack },
             { typeof(LinkedList<>), DataTypes.LinkedList },
             { typeof(HashSet<>), DataTypes.HashSet },
 #if !NET35
-            { typeof(SortedSet<>), DataTypes.SortedSet },
+            { Reflector.SortedSetType, DataTypes.SortedSet },
 #endif
 
-            { typeof(Dictionary<,>), DataTypes.Dictionary },
+            { Reflector.DictionaryGenType, DataTypes.Dictionary },
             { typeof(SortedList<,>), DataTypes.SortedList },
             { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
             { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
@@ -815,7 +825,7 @@ namespace KGySoft.Serialization
             { typeof(ArrayList), DataTypes.ArrayList },
             { typeof(Queue), DataTypes.QueueNonGeneric },
             { typeof(Stack), DataTypes.StackNonGeneric },
-            { typeof(StringCollection), DataTypes.StringCollection },
+            { Reflector.StringCollectionType, DataTypes.StringCollection },
 
             { typeof(Hashtable), DataTypes.Hashtable },
             { typeof(SortedList), DataTypes.SortedListNonGeneric },
@@ -911,15 +921,17 @@ namespace KGySoft.Serialization
         private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypes) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null;
+        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
         private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
         private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
-        private static bool CanContainReferenceToSelf(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable);
+        private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable, DataTypes.Object);
         private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt.In(DataTypes.Pointer, DataTypes.ByRef);
-        private static bool IsImpureType(DataTypes dt) => dt.In(DataTypes.RecursiveObjectGraph); // (dt & DataTypes.ImpureType) != DataTypes.Null;
+        private static bool IsImpureType(DataTypes dt) => (dt & DataTypes.ImpureType) != DataTypes.Null;
+        private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
 
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
@@ -994,7 +1006,7 @@ namespace KGySoft.Serialization
             // using the low byte only
             if ((dataType & (DataTypes)0xFF) == dataType)
             {
-                Debug.Assert((dataType & DataTypes.Extended) == 0);
+                Debug.Assert(!IsExtended(dataType));
                 bw.Write((byte)dataType);
                 return;
             }
@@ -1006,7 +1018,7 @@ namespace KGySoft.Serialization
         private static DataTypes ReadDataType(BinaryReader br)
         {
             var result = (DataTypes)br.ReadByte();
-            if ((result & DataTypes.Extended) == DataTypes.Extended)
+            if (IsExtended(result))
             {
                 result |= (DataTypes)(br.ReadByte() << 8);
                 result &= ~DataTypes.Extended;
@@ -1026,13 +1038,13 @@ namespace KGySoft.Serialization
                 return dataType.ToString<DataTypes>();
 
             StringBuilder result = new StringBuilder();
-            if ((dataType & DataTypes.CollectionTypes) != DataTypes.Null)
-                result.Append(Enum<DataTypes>.ToString(dataType & DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
-            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
+            if (IsCollectionType(dataType))
+                result.Append(Enum<DataTypes>.ToString(GetCollectionDataType(dataType), EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
+            if (IsElementType(dataType))
             {
                 if (result.Length > 0)
                     result.Insert(0, " | ");
-                result.Insert(0, Enum<DataTypes>.ToString(dataType & ~DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
+                result.Insert(0, Enum<DataTypes>.ToString(GetElementDataType(dataType), EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
             }
 
             return result.ToString();

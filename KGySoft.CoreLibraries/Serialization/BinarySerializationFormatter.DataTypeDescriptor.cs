@@ -56,8 +56,6 @@ namespace KGySoft.Serialization
 
             #region Properties
 
-            #region Internal Properties
-
             internal DataTypeDescriptor ParentDescriptor { get; }
             internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
@@ -70,6 +68,7 @@ namespace KGySoft.Serialization
 #endif
             internal bool IsReadOnly { get; set; }
             internal bool IsSingleElement => isSingleElement ?? (isSingleElement = serializationInfo[CollectionDataType].IsSingleElement).Value;
+            internal bool IsNullable { get; private set; }
 
             /// <summary>
             /// Decoded type of self descriptor
@@ -91,28 +90,20 @@ namespace KGySoft.Serialization
             /// </summary>
             internal DataTypeDescriptor ValueDescriptor { get; }
 
-            internal bool IsDictionaryValue => ParentDescriptor?.ValueDescriptor == this;
-
             internal bool CanHaveRecursion
             {
                 get
                 {
                     DataTypes dt = ElementDataType;
-                    if ((dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
-                        || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
-                        || (dt & DataTypes.SimpleTypes) == DataTypes.Object)
+                    if (CanHaveRecursion(dt))
                         return true;
-
                     if (ElementDescriptor != null && ElementDescriptor.CanHaveRecursion)
                         return true;
                     if (ValueDescriptor != null && ValueDescriptor.CanHaveRecursion)
                         return true;
-
                     return false;
                 }
             }
-
-            #endregion
 
             #endregion
 
@@ -145,9 +136,9 @@ namespace KGySoft.Serialization
             /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
             /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
             /// </summary>
-            internal DataTypeDescriptor(Type type, BinaryReader br, bool allowOpenTypes)
+            internal DataTypeDescriptor(Type type)
             {
-                if (type.IsGenericTypeOf(typeof(Compressible<>)))
+                if (type.IsGenericTypeOf(compressibleType))
                 {
                     dataType = DataTypes.Store7BitEncoded;
                     type = type.GetGenericArguments()[0];
@@ -198,7 +189,7 @@ namespace KGySoft.Serialization
                         return typeof(CircularList<>);
 #if !NET35
                     case DataTypes.SortedSet:
-                        return typeof(SortedSet<>);
+                        return Reflector.SortedSetType;
 #endif
 
                     case DataTypes.ArrayList:
@@ -296,10 +287,10 @@ namespace KGySoft.Serialization
                     }
 
                     result = GetCollectionType(CollectionDataType);
+                    bool isNullable = IsNullable = result.IsNullable();
                     if (!result.ContainsGenericParameters)
                         return Type = result;
 
-                    bool isNullable = result.IsNullable();
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
                     result = typeDef.GetGenericArguments().Length == 1
                         ? typeDef.GetGenericType(ElementDescriptor.Type)
@@ -308,7 +299,7 @@ namespace KGySoft.Serialization
                 }
 
                 if (result.IsGenericTypeDefinition)
-                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result, br, allowOpenTypes), allowOpenTypes, false).Type;
+                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type;
                 return Type = result;
             }
 
@@ -375,9 +366,9 @@ namespace KGySoft.Serialization
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-            private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager, bool allowOpenTypes)
+            private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes)
             {
-                switch (dataType & ~DataTypes.Store7BitEncoded)
+                switch (dt & ~DataTypes.Store7BitEncoded)
                 {
                     case DataTypes.Bool:
                         return Reflector.BoolType;
@@ -410,7 +401,7 @@ namespace KGySoft.Serialization
                     case DataTypes.DateTime:
                         return Reflector.DateTimeType;
                     case DataTypes.DBNull:
-                        return typeof(DBNull);
+                        return Reflector.DBNullType;
                     case DataTypes.IntPtr:
                         return Reflector.IntPtrType;
                     case DataTypes.UIntPtr:
@@ -418,7 +409,7 @@ namespace KGySoft.Serialization
                     case DataTypes.Version:
                         return typeof(Version);
                     case DataTypes.Guid:
-                        return typeof(Guid);
+                        return Reflector.GuidType;
                     case DataTypes.TimeSpan:
                         return Reflector.TimeSpanType;
                     case DataTypes.DateTimeOffset:
@@ -448,19 +439,20 @@ namespace KGySoft.Serialization
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
-                        return manager.ReadType(br, allowOpenTypes, false).Type;
+                        return manager.ReadType(br, allowOpenTypes).Type;
 
                     default:
                         // nullable
-                        if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
+                        if (IsNullable(dt))
                         {
-                            Type underlyingType = GetElementType(dataType & ~DataTypes.Nullable, br, manager, allowOpenTypes);
+                            IsNullable = true;
+                            Type underlyingType = GetElementType(dt & ~DataTypes.Nullable, br, manager, allowOpenTypes);
                             return Reflector.NullableType.GetGenericType(underlyingType);
                         }
 
                         // enum
-                        if (IsEnum(dataType))
-                            return manager.ReadType(br, allowOpenTypes, false).Type;
+                        if (IsEnum(dt))
+                            return manager.ReadType(br, allowOpenTypes).Type;
                         throw new SerializationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
                 }
             }

@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
-
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -32,8 +33,6 @@ namespace KGySoft.Serialization
     {
         private abstract class SerializationManagerBase
         {
-            #region Nested Types
-
             #region Enumerations
 
             private protected enum GenericTypeSpecifier
@@ -42,8 +41,6 @@ namespace KGySoft.Serialization
                 ConstructedType,
                 GenericParameter,
             }
-
-            #endregion
 
             #endregion
 
@@ -92,8 +89,8 @@ namespace KGySoft.Serialization
                 typeof(Compressible<char>),
 
                 // Technical helper types for special cases, must not be passed to binders
-                typeof(Compressible<>),
-                typeof(GenericMethodDefinitionPlaceholder)
+                compressibleType,
+                genericMethodDefinitionPlaceholderType
             };
 
             #endregion
@@ -254,6 +251,22 @@ namespace KGySoft.Serialization
                     return;
                 foreach (MethodInfo method in methods)
                     method.Invoke(obj, Context);
+            }
+
+            private protected bool IsValueType(DataTypeDescriptor descriptor)
+            {
+                Debug.Assert(!IsImpureType(descriptor.ElementDataType) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureType(descriptor.ElementDataType)
+                    ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.ValueType) != TypeAttributes.None
+                    : descriptor.Type.IsValueType;
+            }
+
+            private protected bool IsSealed(DataTypeDescriptor descriptor)
+            {
+                Debug.Assert(!IsImpureType(descriptor.ElementDataType) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureType(descriptor.ElementDataType)
+                    ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.Sealed) != TypeAttributes.None
+                    : descriptor.Type.IsSealed;
             }
 
             #endregion

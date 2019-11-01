@@ -535,7 +535,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                         bsf.SerializeByWriter(bw, o);
                     else
                         formatter.Serialize(ms, o);
-                    Console.WriteLine($"{(o == null ? "<null>" : o.GetType().ToString())} - length: {ms.Position - pos}");
+                    Console.WriteLine($"{(o == null ? "<null>" : o.GetType().GetName(TypeNameKind.ShortName))} - length: {ms.Position - pos}");
                 }
                 Console.WriteLine($"Full length: {ms.Length}");
                 if (dumpSerContent)

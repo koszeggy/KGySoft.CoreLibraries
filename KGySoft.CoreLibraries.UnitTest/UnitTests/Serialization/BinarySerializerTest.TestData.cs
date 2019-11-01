@@ -806,6 +806,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region ListField class
+
+        [Serializable]
+        private class ListField
+        {
+            #region Fields
+
+            public List<int> IntListField; 
+            
+            #endregion
+        }
+
+        #endregion
+
         #region CustomGenericDictionary class
 
         [Serializable]
