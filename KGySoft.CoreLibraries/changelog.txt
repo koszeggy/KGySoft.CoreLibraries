@@ -45,7 +45,9 @@
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
-+ TypeExtensions class:
+! TypeExtensions class:
+  ! IsGenericTypeOf method returns false if the type to check is not a constructed generic type (it could return true
+    if the type and genericTypeDefinition parameters were the same generic type definition instance).
   + New GetName extension method for formatting type names in a more consistent way than Type members.
 + Range<T> struct:
   + New Deconstruct method.

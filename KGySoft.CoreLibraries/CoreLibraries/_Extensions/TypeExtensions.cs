@@ -171,7 +171,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (genericTypeDefinition == null)
                 throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
-            return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
+            return type.IsConstructedGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
 
         /// <summary>
