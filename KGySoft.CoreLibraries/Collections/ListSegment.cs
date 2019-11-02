@@ -19,7 +19,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using KGySoft.Diagnostics;
 
 #endregion
 
@@ -28,12 +30,15 @@ namespace KGySoft.Collections
     /// <summary>
     /// Wraps a segment of an <see cref="IList{T}"/> for read-only purposes.
     /// </summary>
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     internal sealed class ListSegment<T> : IList<T>
     {
         #region Fields
 
         private readonly IList<T> list;
         private readonly int offset;
+        private readonly int? count;
 
         #endregion
 
@@ -42,7 +47,7 @@ namespace KGySoft.Collections
         #region Properties
 
         public bool IsReadOnly => true;
-        public int Count => list.Count - offset;
+        public int Count => count ?? (list.Count - offset);
 
         #endregion
 
@@ -60,10 +65,11 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        internal ListSegment(IList<T> list, int offset)
+        internal ListSegment(IList<T> list, int offset, int? count = null)
         {
             this.list = list;
             this.offset = offset;
+            this.count = count;
         }
 
         #endregion

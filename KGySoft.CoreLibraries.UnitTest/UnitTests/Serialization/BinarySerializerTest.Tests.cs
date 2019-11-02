@@ -1008,9 +1008,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                new List<List<int>> { new List<int> { 1 }, new CustomGenericCollection<int> { 2 } },
+                new List<List<int>> { new List<int> { 1 }, new CustomGenericCollection<int> { 2 }, null }, // unsealed outer and element
+                new List<int[]> { new[] { 1 }, null }, // sealed element type
+                new List<int>[] {  new List<int> { 1 }, new CustomGenericCollection<int> { 2 }, null }, // sealed outer collection
                 new List<ArrayList> { new ArrayList { 1 }, new CustomNonGenericCollection { 2 } },
-                new KeyValuePair<List<int>, ArrayList>(new CustomGenericCollection<int> { 2 }, new CustomNonGenericCollection { 2 }), 
+                new KeyValuePair<List<int>, ArrayList>(new CustomGenericCollection<int> { 2 }, new CustomNonGenericCollection { 2 }),
                 new ListField { IntListField = new CustomGenericCollection<int> { 1 } }
             };
 

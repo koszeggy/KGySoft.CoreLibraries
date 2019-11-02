@@ -255,16 +255,16 @@ namespace KGySoft.Serialization
 
             private protected bool IsValueType(DataTypeDescriptor descriptor)
             {
-                Debug.Assert(!IsImpureType(descriptor.ElementDataType) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
-                return IsImpureType(descriptor.ElementDataType)
+                Debug.Assert(!IsImpureType(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureType(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.ValueType) != TypeAttributes.None
                     : descriptor.Type.IsValueType;
             }
 
             private protected bool IsSealed(DataTypeDescriptor descriptor)
             {
-                Debug.Assert(!IsImpureType(descriptor.ElementDataType) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
-                return IsImpureType(descriptor.ElementDataType)
+                Debug.Assert(!IsImpureType(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureType(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.Sealed) != TypeAttributes.None
                     : descriptor.Type.IsSealed;
             }

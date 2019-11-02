@@ -192,27 +192,36 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            internal object ReadWithType(BinaryReader br)
+            internal object ReadWithType(BinaryReader br, DataTypeDescriptor knownElementType = null)
             {
-                // 1.) Cached object
-                if (TryGetCachedObject(br, out object result))
-                    return result;
+                // getting whether the current instance is in cache
+                if (knownElementType == null || !IsValueType(knownElementType))
+                {
+                    if (TryGetCachedObject(br, out object cachedResult))
+                        return cachedResult;
+                }
 
-                DataTypeDescriptor descriptor = ReadType(br, false);
-                if ((descriptor.DataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null)
-                    descriptor.ApplyAttributes(EnsureAttributes(br, descriptor.Type));
-                Debug.Assert(descriptor != null, "Descriptor should not be null");
+                DataTypeDescriptor descriptor = knownElementType != null && IsSealed(knownElementType) ? knownElementType : null;
+
+                if (descriptor == null)
+                {
+                    descriptor = ReadType(br, false);
+                    if ((descriptor.DataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null)
+                        descriptor.ApplyAttributes(EnsureAttributes(br, descriptor.Type));
+                }
+
+                bool addToCache = knownElementType == null || !IsValueType(knownElementType);
 
                 // 2.) supported non-collection type
                 if (descriptor.CollectionDataType == DataTypes.Null)
-                    return ReadObject(br, true, descriptor);
+                    return ReadObject(br, addToCache, descriptor);
 
                 // 3/a.) array
                 if (descriptor.IsArray)
-                    return CreateArray(br, true, descriptor);
+                    return CreateArray(br, addToCache, descriptor);
 
                 // 3/b.) non-array collection or key-value
-                return CreateCollection(br, true, descriptor);
+                return CreateCollection(br, addToCache, descriptor);
             }
 
             [SecurityCritical]
@@ -222,12 +231,10 @@ namespace KGySoft.Serialization
                 if (!elementDescriptor.IsCollection)
                     return ReadObject(br, null, elementDescriptor);
 
-                // nested array
-                if (elementDescriptor.IsArray)
-                    return CreateArray(br, true, elementDescriptor);
-
-                // other nested collection
-                return CreateCollection(br, !IsValueType(elementDescriptor) || elementDescriptor.IsNullable, elementDescriptor);
+                // nested collection: full recursion because an actual collection instance can have a derived type
+                if (elementDescriptor.IsNullable && !br.ReadBoolean())
+                    return null;
+                return ReadWithType(br, elementDescriptor);
             }
 
             /// <summary>
@@ -447,13 +454,6 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private object CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                // getting whether the current instance is in cache
-                if (descriptor.ParentDescriptor != null)
-                {
-                    if (TryGetCachedObject(br, out object cachedResult))
-                        return cachedResult;
-                }
-
                 // creating the array
                 int rank = descriptor.Type.GetArrayRank();
                 int[] lengths = new int[rank];
@@ -512,7 +512,7 @@ namespace KGySoft.Serialization
                     throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
 
                 // getting whether the current instance is in cache
-                if (descriptor.ParentDescriptor != null && (!IsValueType(descriptor) || descriptor.IsNullable))
+                if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
                     if (TryGetCachedObject(br, out object cachedResult))
                         return cachedResult;

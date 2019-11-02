@@ -332,7 +332,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                             extendedDataType = false;
                         }
                         else
-                            extendedDataType = (result & 127) != 0;
+                            extendedDataType = (result & 128) != 0;
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", dataType)}]";
                     }
                     else if (name == "EnsureAttributes")

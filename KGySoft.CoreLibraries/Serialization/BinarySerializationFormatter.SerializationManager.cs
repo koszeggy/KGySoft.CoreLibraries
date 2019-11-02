@@ -40,108 +40,13 @@ namespace KGySoft.Serialization
 {
     public sealed partial class BinarySerializationFormatter
     {
+
         /// <summary>
         /// A manager class that provides that stored types will be built up in the same order both at serialization and deserialization for complex types.
         /// </summary>
         private sealed class SerializationManager : SerializationManagerBase
         {
             #region Nested Classes
-
-            #region DataTypesEnumerator class
-
-            /// <summary>
-            /// A special lightweight enumerator for encoded <see cref="DataTypes"/> collections.
-            /// </summary>
-            private sealed class DataTypesEnumerator
-            {
-                #region Fields
-
-                private readonly IList<DataTypes> dataTypes;
-                private DataTypes current;
-                private int index;
-
-                #endregion
-
-                #region Properties
-
-                internal DataTypes CurrentSeparated => IsCollectionType(current) ? GetCollectionDataType(current) : GetElementDataType(current);
-
-                internal DataTypes Current => current;
-
-                #endregion
-
-                #region Constructors
-
-                internal DataTypesEnumerator(IList<DataTypes> source, bool moveFirst = false)
-                {
-                    dataTypes = source;
-                    if (moveFirst)
-                        MoveNext();
-                }
-
-                #endregion
-
-                #region Methods
-
-                #region Public Methods
-
-                public override string ToString() => DataTypeToString(current);
-
-                #endregion
-
-                #region Internal Methods
-
-                internal bool MoveNext()
-                {
-                    if (index < dataTypes.Count)
-                    {
-                        current = dataTypes[index++];
-                        return true;
-                    }
-
-                    current = DataTypes.Null;
-                    return false;
-                }
-
-                internal bool MoveNextExtracted()
-                {
-                    if (current == DataTypes.Null && index >= dataTypes.Count)
-                        return false;
-
-                    if (!IsCollectionType(current))
-                        return MoveNext();
-
-                    current = GetElementDataType(current);
-                    return current != DataTypes.Null || MoveNext();
-                }
-
-                internal DataTypesEnumerator Clone() =>
-                    new DataTypesEnumerator(dataTypes)
-                    {
-                        current = current,
-                        index = index
-                    };
-
-                internal void Reset()
-                {
-                    index = 0;
-                    current = DataTypes.Null;
-                }
-
-                internal void MoveToFirst()
-                {
-                    Reset();
-                    MoveNext();
-                }
-
-                #endregion
-
-                #endregion
-            }
-
-            #endregion
-
-            #region TypeByString class
 
             /// <summary>
             /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has a tons of abstract methods.
@@ -174,8 +79,6 @@ namespace KGySoft.Serialization
 
                 #endregion
             }
-
-            #endregion
 
             #endregion
 
@@ -448,12 +351,12 @@ namespace KGySoft.Serialization
             /// We don't do the same for parent fields because we don't write the fields types at all.
             /// </summary>>
             [SecurityCritical]
-            internal void WriteNonRoot(BinaryWriter bw, object obj, (DataTypes DataType, Type Type) knownElementType = default)
+            internal void WriteNonRoot(BinaryWriter bw, object obj, (DataTypesEnumerator DataTypes, Type Type) knownElementType = default)
             {
                 // If we have an impure known collection element type we mark its attributes.
                 // Note: for fields it cannot be used because we don't write the field type anyway.
-                if (knownElementType.Type != null && IsImpureType(knownElementType.DataType)) // impure: ref/pointer cannot occur here
-                    MarkAttributes(bw, knownElementType.Type, knownElementType.DataType);
+                if (knownElementType.Type != null && IsImpureType(knownElementType.DataTypes.CurrentSeparated))
+                    MarkAttributes(bw, knownElementType.Type, GetUnderlyingSimpleType(knownElementType.DataTypes.Current));
 
                 // Existing object
                 if (knownElementType.Type?.IsValueType != true)
@@ -475,7 +378,7 @@ namespace KGySoft.Serialization
                 // Supported collections
                 if (IsCollectionType(dataType))
                 {
-                    WriteNonRootCollection(bw, obj, dataType);
+                    WriteNonRootCollection(bw, obj, dataType, knownElementType);
                     return;
                 }
 
@@ -943,7 +846,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteImpureNonRootObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypes DataType, Type Type) knownElementType)
+            private void WriteImpureNonRootObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypesEnumerator DataTypes, Type Type) knownElementType)
             {
                 switch (GetUnderlyingSimpleType(dataType))
                 {
@@ -988,13 +891,28 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteNonRootCollection(BinaryWriter bw, object data, DataTypes dataType)
+            private void WriteNonRootCollection(BinaryWriter bw, object data, DataTypes dataType, (DataTypesEnumerator DataTypes, Type Type) knownElementType)
             {
-                // id is already written if needed
-                Type type = data.GetType();
-                CircularList<DataTypes> collectionType = EncodeDataType(type, dataType);
-                WriteType(bw, type, collectionType);
-                WriteCollection(bw, new DataTypesEnumerator(collectionType, true), data);
+                Type type = null;
+                DataTypes knownElementDataType = (knownElementType.DataTypes?.CurrentSeparated).GetValueOrDefault();
+                bool canUseKnown = dataType == knownElementDataType
+                    || dataType == DataTypes.DictionaryEntry && knownElementDataType == DataTypes.DictionaryEntryNullable
+                    || dataType == DataTypes.KeyValuePair && knownElementDataType == DataTypes.KeyValuePairNullable;
+
+                // omitting type if collection is a struct element of a parent collection
+                IList<DataTypes> collectionType = null;
+                if (knownElementType.Type?.IsSealed != true)
+                {
+                    collectionType = (canUseKnown ? knownElementType.DataTypes?.GetCurrentSegment() : null)
+                        ?? EncodeDataType(type = data.GetType(), dataType);
+                    WriteType(bw, type ?? data.GetType(), collectionType);
+                }
+
+                // Reusing enumerator of parent collection type if possible by creating a lightweight clone at the current position.
+                DataTypesEnumerator collectionDataTypes = (canUseKnown ? knownElementType.DataTypes?.Clone() : null)
+                    ?? new DataTypesEnumerator(collectionType ?? EncodeDataType(data.GetType(), dataType), true);
+
+                WriteCollection(bw, collectionDataTypes, data);
             }
 
             /// <summary>
@@ -1335,23 +1253,25 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteElement(BinaryWriter bw, object element, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
-                DataTypes elementDataType = GetElementDataType(elementCollectionDataTypes.Current);
+                DataTypes collectionDataType = GetCollectionDataType(elementCollectionDataTypes.Current);
 
                 // Nested collection: recursion
-                if (IsCollectionType(elementCollectionDataTypes.Current))
+                if (collectionDataType != DataTypes.Null)
                 {
-                    // Writing id except for value types (KeyValuePair, DictionaryEntry)
-                    if (!collectionElementType.IsValueType || collectionElementType.IsNullable())
+                    // Nullable collections: writing if instance is null. Not as an id because nullables should not get an id.
+                    if (IsNullable(collectionDataType))
                     {
-                        if (WriteId(bw, element))
+                        bw.Write(element != null);
+                        if (element == null)
                             return;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
                     }
 
-                    // creating a lightweight clone of the enumerator because the caller also processes it
-                    WriteCollection(bw, elementCollectionDataTypes.Clone(), element);
+                    // full recursion because actual element can have a derived type
+                    WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
                     return;
                 }
+
+                DataTypes elementDataType = GetElementDataType(elementCollectionDataTypes.Current);
 
                 // Nullables: writing an IsNotNull value
                 if (IsNullable(elementDataType))
@@ -1367,7 +1287,7 @@ namespace KGySoft.Serialization
                 // As an element type, object means any type so treating along with impure types
                 if (elementDataType == DataTypes.Object || IsImpureType(elementDataType))
                 {
-                    WriteNonRoot(bw, element, (elementDataType, collectionElementType));
+                    WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
                     return;
                 }
 
@@ -2144,7 +2064,7 @@ namespace KGySoft.Serialization
                 OnSerialized(instance);
             }
 
-            private void WriteBinarySerializableNonRoot(BinaryWriter bw, IBinarySerializable instance, (DataTypes DataType, Type Type) knownElementType)
+            private void WriteBinarySerializableNonRoot(BinaryWriter bw, IBinarySerializable instance, (DataTypesEnumerator DataTypes, Type Type) knownElementType)
             {
                 bool isRoot = false;
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
@@ -2152,7 +2072,7 @@ namespace KGySoft.Serialization
                 {
                     Type type = instance.GetType();
                     WriteType(bw, type, DataTypes.BinarySerializable);
-                    if (!isRoot && knownElementType.DataType != DataTypes.BinarySerializable)
+                    if (!isRoot && knownElementType.DataTypes.Current != DataTypes.BinarySerializable)
                         MarkAttributes(bw, type, DataTypes.BinarySerializable);
                 }
 
@@ -2182,7 +2102,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void WriteValueTypeNonRoot(BinaryWriter bw, ValueType data, (DataTypes DataType, Type Type) knownElementType)
+            private void WriteValueTypeNonRoot(BinaryWriter bw, ValueType data, (DataTypesEnumerator DataTypes, Type Type) knownElementType)
             {
                 bool isRoot = false;
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
@@ -2190,7 +2110,7 @@ namespace KGySoft.Serialization
                 {
                     Type type = data.GetType();
                     WriteType(bw, type, DataTypes.RawStruct);
-                    if (!isRoot && knownElementType.DataType != DataTypes.RawStruct)
+                    if (!isRoot && knownElementType.DataTypes.Current != DataTypes.RawStruct)
                         MarkAttributes(bw, type, DataTypes.RawStruct);
                 }
 

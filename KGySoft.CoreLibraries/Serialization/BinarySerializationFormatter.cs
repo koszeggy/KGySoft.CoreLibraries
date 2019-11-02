@@ -919,9 +919,10 @@ namespace KGySoft.Serialization
         private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
         private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
         private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
+        private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null ? dt & DataTypes.CollectionTypes : dt & ~DataTypes.CollectionTypes;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypes) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null;
-        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null;
+        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null || dt.In(DataTypes.DictionaryEntryNullable, DataTypes.KeyValuePairNullable);
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
