@@ -260,7 +260,7 @@ namespace KGySoft.CoreLibraries
                     { typeof(Uri), GenerateUri },
 
                     // guid
-                    { typeof(Guid), GenerateGuid },
+                    { Reflector.GuidType, GenerateGuid },
 
                     // date and time
                     { Reflector.DateTimeType, GenerateDateTime },

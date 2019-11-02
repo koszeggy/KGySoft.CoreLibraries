@@ -233,7 +233,7 @@ namespace KGySoft.Serialization
                         writer.WriteEndElement();
                     else
                     {
-                        SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, writer, visibility);
+                        SerializeObject(item, !elementType.IsSealed && item.GetType() != elementType, writer, visibility);
                         writer.WriteFullEndElement();
                     }
                 }
@@ -256,7 +256,7 @@ namespace KGySoft.Serialization
                     writer.WriteEndElement();
                 else
                 {
-                    SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, writer, visibility);
+                    SerializeObject(item, !elementType.IsSealed && item.GetType() != elementType, writer, visibility);
                     writer.WriteFullEndElement();
                 }
             }

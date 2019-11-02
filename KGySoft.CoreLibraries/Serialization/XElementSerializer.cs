@@ -254,7 +254,7 @@ namespace KGySoft.Serialization
                 {
                     XElement child = new XElement(XmlSerializer.ElementItem);
                     if (item != null)
-                        SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, child, visibility);
+                        SerializeObject(item, !elementType.IsSealed && item.GetType() != elementType, child, visibility);
                     parent.Add(child);
                 }
 
@@ -273,7 +273,7 @@ namespace KGySoft.Serialization
             {
                 XElement child = new XElement(XmlSerializer.ElementItem);
                 if (item != null)
-                    SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, child, visibility);
+                    SerializeObject(item, !elementType.IsSealed && item.GetType() != elementType, child, visibility);
                 parent.Add(child);
             }
         }

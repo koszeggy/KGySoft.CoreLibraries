@@ -494,9 +494,6 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        internal static bool CanBeDerived(this Type type)
-            => !(type.IsValueType || type.IsClass && type.IsSealed);
-
         internal static ConstructorInfo GetDefaultConstructor(this Type type)
         {
             if (defaultCtorCache == null)

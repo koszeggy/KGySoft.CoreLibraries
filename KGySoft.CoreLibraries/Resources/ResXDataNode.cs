@@ -1235,7 +1235,7 @@ namespace KGySoft.Resources
         {
             Type type = cachedValue.GetType();
             return type.CanBeParsedNatively() && (!compatibleFormat
-                || !type.In(typeof(DBNull), Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType));
+                || !type.In(Reflector.DBNullType, Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType));
         }
 
         private object NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)

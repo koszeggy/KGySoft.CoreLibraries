@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -68,21 +69,21 @@ namespace KGySoft.Diagnostics
 
         private protected static readonly Dictionary<Type, string> KnownTypes = new Dictionary<Type, string>
         {
-            [typeof(bool)] = "bool",
-            [typeof(byte)] = "byte",
-            [typeof(sbyte)] = "sbyte",
-            [typeof(char)] = "char",
-            [typeof(string)] = "string",
-            [typeof(short)] = "short",
-            [typeof(ushort)] = "ushort",
-            [typeof(int)] = "int",
-            [typeof(uint)] = "uint",
-            [typeof(long)] = "long",
-            [typeof(ulong)] = "ulong",
-            [typeof(float)] = "float",
-            [typeof(double)] = "double",
-            [typeof(decimal)] = "decimal",
-            [typeof(object)] = "object",
+            [Reflector.BoolType] = "bool",
+            [Reflector.ByteType] = "byte",
+            [Reflector.SByteType] = "sbyte",
+            [Reflector.CharType] = "char",
+            [Reflector.StringType] = "string",
+            [Reflector.ShortType] = "short",
+            [Reflector.UShortType] = "ushort",
+            [Reflector.IntType] = "int",
+            [Reflector.UIntType] = "uint",
+            [Reflector.LongType] = "long",
+            [Reflector.ULongType] = "ulong",
+            [Reflector.FloatType] = "float",
+            [Reflector.DoubleType] = "double",
+            [Reflector.DecimalType] = "decimal",
+            [Reflector.ObjectType] = "object",
         };
 
         #endregion

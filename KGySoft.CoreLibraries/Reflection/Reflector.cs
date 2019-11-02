@@ -87,7 +87,9 @@ namespace KGySoft.Reflection
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
 
-        internal static readonly Type ArrayType = typeof(Array);
+        // ReSharper disable once InconsistentNaming
+        internal static readonly Type DBNullType = typeof(DBNull);
+        internal static readonly Type GuidType = typeof(Guid);
         internal static readonly Type EnumType = typeof(Enum);
         internal static readonly Type DelegateType = typeof(Delegate);
         internal static readonly Type NullableType = typeof(Nullable<>);
