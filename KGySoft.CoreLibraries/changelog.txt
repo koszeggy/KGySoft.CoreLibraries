@@ -121,6 +121,12 @@
   + Supporting runtime types natively. It was required for .NET Core/Standard that cannot serialize Type instances.
   + Supports serializing pointer fields.
   * Improving performance.
+  - Some edge case issues have been fixed:
+    - If different custom serialized types set the same type by string in SerializationInfo using different names,
+      which were resolved to the same type, then the deserialization failed.
+    - If non-sealed nested collections were serialized where the base type of an inner collection was a natively
+      supported one, and an inner collection element had a derived collection type, then the actual collection type
+      was ignored and the deserialized inner collection had the base element type.
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
     deserialization rather than the original one used for the serialization. If that info is needed you need to save

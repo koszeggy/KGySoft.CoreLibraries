@@ -549,6 +549,42 @@ namespace KGySoft.Serialization
 
         #endregion
 
+        #region Nested Classes
+
+        /// <summary>
+        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has a tons of abstract methods.
+        /// </summary>
+        private sealed class TypeByString : MemberInfo
+        {
+            #region Properties
+
+            public override MemberTypes MemberType => MemberTypes.TypeInfo;
+            public override string Name { get; }
+            public override Type DeclaringType => null;
+            public override Type ReflectedType => null;
+
+            #endregion
+
+            #region Constructors
+
+            public TypeByString(string assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
+
+            #endregion
+
+            #region Methods
+
+            public override object[] GetCustomAttributes(bool inherit) => null;
+            public override bool IsDefined(Type attributeType, bool inherit) => false;
+            public override object[] GetCustomAttributes(Type attributeType, bool inherit) => null;
+            public override string ToString() => Name;
+            public override bool Equals(object obj) => obj is TypeByString other && Name == other.Name;
+            public override int GetHashCode() => Name.GetHashCode();
+
+            #endregion
+        }
+
+        #endregion
+
         #region Nested Structs
 
         #region Compressible<T> struct
@@ -814,7 +850,7 @@ namespace KGySoft.Serialization
             { typeof(LinkedList<>), DataTypes.LinkedList },
             { typeof(HashSet<>), DataTypes.HashSet },
 #if !NET35
-            { Reflector.SortedSetType, DataTypes.SortedSet },
+            { typeof(SortedSet<>), DataTypes.SortedSet },
 #endif
 
             { Reflector.DictionaryGenType, DataTypes.Dictionary },
@@ -931,7 +967,8 @@ namespace KGySoft.Serialization
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
         private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable, DataTypes.Object);
         private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt.In(DataTypes.Pointer, DataTypes.ByRef);
-        private static bool IsImpureType(DataTypes dt) => (dt & DataTypes.ImpureType) != DataTypes.Null;
+        private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) != DataTypes.Null;
+        private static bool IsImpureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) != DataTypes.Null;
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
 
         private static void Write7BitInt(BinaryWriter bw, int value)
