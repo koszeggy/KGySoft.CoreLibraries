@@ -573,9 +573,9 @@ namespace KGySoft.Serialization
 
             #region Methods
 
-            public override object[] GetCustomAttributes(bool inherit) => null;
+            public override object[] GetCustomAttributes(bool inherit) => Reflector.EmptyObjects;
             public override bool IsDefined(Type attributeType, bool inherit) => false;
-            public override object[] GetCustomAttributes(Type attributeType, bool inherit) => null;
+            public override object[] GetCustomAttributes(Type attributeType, bool inherit) => Reflector.EmptyObjects;
             public override string ToString() => Name;
             public override bool Equals(object obj) => obj is TypeByString other && Name == other.Name;
             public override int GetHashCode() => Name.GetHashCode();

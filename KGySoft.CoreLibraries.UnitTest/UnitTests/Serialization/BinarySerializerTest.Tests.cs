@@ -412,13 +412,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma", Bool = null },
 
                 new KeyValuePair<int, object>(1, new object[] { 1, "alpha", DateTime.Now, null }),
+                (new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, 1),
 
                 new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent,
                 new CustomSerializedClass { Name = "Single node" }, // ISerializable
                 new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent,
                 new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent,
                 DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
-                new CustomGraphDefaultObjRef { Name = "alpha" } // obj is ISerializable but IObjectReference is not
+                new CustomGraphDefaultObjRef { Name = "alpha" }, // obj is ISerializable but IObjectReference is not
             };
 
             SystemSerializeObject(referenceObjects);
@@ -438,6 +439,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new NonSerializableClass{ IntProp = 3, StringProp = "gamma" },
                 new NonSerializableSealedClass(1, "alpha") { IntProp = 1, StringProp = "alpha" },
                 new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha" },
+                (new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, 1),
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);

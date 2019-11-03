@@ -194,7 +194,7 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             internal object ReadWithType(BinaryReader br, DataTypeDescriptor knownElementType = null)
             {
-                // getting whether the current instance is in cache
+                // 1.) getting whether the current instance is in cache
                 if (knownElementType == null || !IsValueType(knownElementType))
                 {
                     if (TryGetCachedObject(br, out object cachedResult))

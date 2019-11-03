@@ -339,7 +339,7 @@ namespace KGySoft.CoreLibraries
                     return CheckMembersAndItemsEqual(reference, check, errors, checkedObjects);
 
                 // Equals as fallback
-                return Check(Equals(reference, check), $"Equality check failed at type {typeRef}: {reference} <-> {check}", errors);
+                return Check(Equals(reference, check), $"Equality check failed at type {typeRef.GetName(TypeNameKind.ShortName)}: {reference} <-> {check}", errors);
             }
             finally
             {
