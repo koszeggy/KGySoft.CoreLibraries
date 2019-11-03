@@ -46,42 +46,6 @@ namespace KGySoft.Serialization
         /// </summary>
         private sealed class SerializationManager : SerializationManagerBase
         {
-            #region Nested Classes
-
-            /// <summary>
-            /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has a tons of abstract methods.
-            /// </summary>
-            private sealed class TypeByString : MemberInfo
-            {
-                #region Properties
-
-                public override MemberTypes MemberType => MemberTypes.TypeInfo;
-                public override string Name { get; }
-                public override Type DeclaringType => null;
-                public override Type ReflectedType => null;
-
-                #endregion
-
-                #region Constructors
-
-                public TypeByString(string name) => Name = name;
-
-                #endregion
-
-                #region Methods
-
-                public override object[] GetCustomAttributes(bool inherit) => null;
-                public override bool IsDefined(Type attributeType, bool inherit) => false;
-                public override object[] GetCustomAttributes(Type attributeType, bool inherit) => null;
-                public override string ToString() => Name;
-                public override bool Equals(object obj) => obj is TypeByString other && Name == other.Name;
-                public override int GetHashCode() => Name.GetHashCode();
-
-                #endregion
-            }
-
-            #endregion
-
             #region Constants
 
             private const int ticksPerMinute = 600_000_000;
@@ -156,7 +120,7 @@ namespace KGySoft.Serialization
             #region Static Methods
 
             private static string GetTypeNameIndexCacheKey(Type type, string binderAsmName, string binderTypeName)
-                => (binderAsmName ?? type.Assembly.FullName) + ":" + (binderTypeName ?? type.GetName(TypeNameKind.LongName));
+                => binderAsmName + ":" + (binderTypeName ?? type.GetName(TypeNameKind.LongName));
 
             /// <summary>
             /// Retrieves the value type(s) for a dictionary.
@@ -1285,7 +1249,7 @@ namespace KGySoft.Serialization
                 elementDataType = GetUnderlyingSimpleType(elementDataType);
 
                 // As an element type, object means any type so treating along with impure types
-                if (elementDataType == DataTypes.Object || IsImpureType(elementDataType))
+                if (elementDataType == DataTypes.Object || IsImpureTypeButEnum(elementDataType))
                 {
                     WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
                     return;
@@ -1476,13 +1440,19 @@ namespace KGySoft.Serialization
                 if (si.ObjectType != type)
                     typeToWrite = si.ObjectType?.FullName != null ? si.ObjectType : null;
                 else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
+                {
                     typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
                         ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
                         : null;
+
+                    // if the string name could be resolved but it has different name, then going on with string name
+                    if (typeToWrite != null && (typeToWrite.Assembly.FullName != si.AssemblyName || typeToWrite.FullName != si.FullTypeName))
+                        typeToWrite = null;
+                }
 #endif
 
                 MemberInfo typeToCache = forcedType
-                    ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName + ":" + si.FullTypeName)
+                    ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName, si.FullTypeName)
                     : type;
 
                 // 1/a.) If type is not forced (eg. known collection element), then the IsCustom is the first to write. On custom
@@ -1547,15 +1517,18 @@ namespace KGySoft.Serialization
                         : null;
                 }
 #else
-                if (si.ObjectType != type)
-                    typeToWrite = si.ObjectType?.FullName != null ? si.ObjectType : null;
-                else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
+                typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
+                    ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
+                    : null;
+
+                // if the string name could be resolved but it has different name, then going on with string name
+                if (typeToWrite != null && (typeToWrite.Assembly.FullName != si.AssemblyName || typeToWrite.FullName != si.FullTypeName))
                     typeToWrite = null;
 #endif
 
                 bool forcedType = knownElementType == null || !knownElementType.IsSealed;
                 MemberInfo typeToCache = forcedType
-                    ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName + ":" + si.FullTypeName)
+                    ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName, si.FullTypeName)
                     : type;
 
                 // 1/a.) If type is not forced (eg. known collection element), then the IsCustom is the first to write. On custom
@@ -1709,8 +1682,7 @@ namespace KGySoft.Serialization
             private int GetTypeIndex(Type type, string boundAsmName = null, string boundTypeName = null)
                 => boundAsmName == null && boundTypeName == null
                     ? TypeIndexCache.GetValueOrDefault(type, -1)
-                    // even if we have a bound name we look for the type in the unbound cache first so we can avoid storing the known types as new ones
-                    : TypeIndexCache.GetValueOrDefault(type, () => TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, boundAsmName, boundTypeName), -1));
+                    : TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, boundAsmName, boundTypeName), -1);
 
             /// <summary>
             /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
@@ -1734,6 +1706,8 @@ namespace KGySoft.Serialization
 
                         // ReSharper disable once PossibleNullReferenceException - Pointers and ByRef types have element type
                         t = t.GetElementType();
+
+                        Debug.Assert(!encodedDt.IsReadOnly, "Non read-only encoded types are expected for pointers and ByRef types");
                         encodedDt.RemoveAt(0);
                     } while (encodedDt[0].In(DataTypes.Pointer, DataTypes.ByRef));
 
@@ -1975,13 +1949,13 @@ namespace KGySoft.Serialization
                 AddToTypeCache(type);
             }
 
-            private void AddToTypeCache(Type type, string binderAsmName = null, string binderTypeName = null)
+            private void AddToTypeCache(Type type, string storedAsmName = null, string storedTypeName = null)
             {
                 // Even if current binder names are null we must use the string based cache if there is a binder
                 // to avoid possibly conflicting type names between the custom and default binding and among binder type names.
-                if (binderAsmName != null || binderTypeName != null)
+                if (storedAsmName != null || storedTypeName != null)
                 {
-                    TypeNameIndexCache.Add(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), TypeIndexCacheCount);
+                    TypeNameIndexCache.Add(GetTypeNameIndexCacheKey(type, storedAsmName, storedTypeName), TypeIndexCacheCount);
                     return;
                 }
 
@@ -2152,6 +2126,7 @@ namespace KGySoft.Serialization
             /// </summary>
             private void MarkAttributes(BinaryWriter bw, Type elementType, DataTypes dataType)
             {
+                elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
                 if (TypeAttributesCache.ContainsKey(elementType))
                     return;
 

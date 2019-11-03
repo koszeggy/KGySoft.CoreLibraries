@@ -527,7 +527,7 @@ Hit rate: {8:P2}</value>
     <value>Invalid stream data.</value>
   </data>
   <data name="BinarySerialization_MissingFieldFormat" xml:space="preserve">
-    <value>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</value>
+    <value>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
   <data name="BinarySerialization_MissingFieldBaseFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</value>

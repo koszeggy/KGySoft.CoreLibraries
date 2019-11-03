@@ -255,17 +255,19 @@ namespace KGySoft.Serialization
 
             private protected bool IsValueType(DataTypeDescriptor descriptor)
             {
-                Debug.Assert(!IsImpureType(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
-                return IsImpureType(GetCollectionOrElementType(descriptor.DataType))
-                    ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.ValueType) != TypeAttributes.None
+                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
+                Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
+                    ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.ValueType) != TypeAttributes.None
                     : descriptor.Type.IsValueType;
             }
 
             private protected bool IsSealed(DataTypeDescriptor descriptor)
             {
-                Debug.Assert(!IsImpureType(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(descriptor.Type), $"Attributes of type is not cached: {descriptor}");
-                return IsImpureType(GetCollectionOrElementType(descriptor.DataType))
-                    ? (TypeAttributesCache.GetValueOrDefault(descriptor.Type) & TypeAttributes.Sealed) != TypeAttributes.None
+                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
+                Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
+                return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
+                    ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.Sealed) != TypeAttributes.None
                     : descriptor.Type.IsSealed;
             }
 

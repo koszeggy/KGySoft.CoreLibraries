@@ -1669,6 +1669,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(obj, BinarySerializationOptions.None, binder: binder);
         }
 
+        [Test]
+        public void SerializeUsingSameObjectReferenceWithDifferentNames()
+        {
+            object[] referenceObjects =
+            {
+                Singleton1.Instance,
+                Singleton2.Instance,
+                Singleton3.Instance,
+                new[] { Singleton1.Instance },
+                new[] { Singleton2.Instance },
+                new[] { Singleton3.Instance },
+            };
+
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+        }
 
         #endregion
     }

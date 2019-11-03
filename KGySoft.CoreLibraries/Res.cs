@@ -522,7 +522,7 @@ namespace KGySoft
         /// <summary>Generic method with signature "{0}" was not found in type "{1}".</summary>
         internal static string BinarySerializationGenericMethodNotFound(string signature, Type type) => Get("BinarySerialization_GenericMethodNotFoundFormat", signature, type);
 
-        /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</summary>
+        /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type, field);
 
         /// <summary>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</summary>

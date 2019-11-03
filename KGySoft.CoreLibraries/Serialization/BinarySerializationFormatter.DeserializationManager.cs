@@ -60,7 +60,7 @@ namespace KGySoft.Serialization
 
             private Dictionary<int, object> IdCache => idCache ??= new Dictionary<int, object> { { 0, null } };
 
-            private List<(Assembly Assembly, string BoundName)> CachedAssemblies
+            private List<(Assembly Assembly, string StoredName)> CachedAssemblies
                 => cachedAssemblies ??= new List<(Assembly, string)>(KnownAssemblies.Select(a => (a, (string)null)));
 
             private List<DataTypeDescriptor> CachedTypes
@@ -207,7 +207,7 @@ namespace KGySoft.Serialization
                 {
                     descriptor = ReadType(br, false);
                     if ((descriptor.DataType & ~DataTypes.Store7BitEncoded) == DataTypes.Null)
-                        descriptor.ApplyAttributes(EnsureAttributes(br, descriptor.Type));
+                        descriptor.ApplyAttributes(EnsureAttributes(br, descriptor));
                 }
 
                 bool addToCache = knownElementType == null || !IsValueType(knownElementType);
@@ -282,7 +282,7 @@ namespace KGySoft.Serialization
                     string storedAssemblyName = br.ReadString();
                     string storedTypeName = br.ReadString();
                     type = GetType(storedAssemblyName, storedTypeName);
-                    result = new DataTypeDescriptor(type);
+                    result = new DataTypeDescriptor(type, new TypeByString(storedAssemblyName, storedTypeName));
                     CachedAssemblies.Add((type.Assembly, storedAssemblyName));
                     CachedTypes.Add(result);
                     if (type.IsGenericTypeDefinition)
@@ -290,7 +290,7 @@ namespace KGySoft.Serialization
                     return result;
                 }
 
-                (Assembly Assembly, string BoundName) assembly = default;
+                (Assembly Assembly, string StoredName) assembly = default;
 
                 // type with known or omitted assembly: only type name is stored as string
                 if (index != OmitAssemblyIndex)
@@ -300,11 +300,11 @@ namespace KGySoft.Serialization
                 }
 
                 string typeName = br.ReadString();
-                type = ReadBoundType(assembly.BoundName, typeName)
+                type = ReadBoundType(assembly.StoredName, typeName)
                     ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
                     ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
-                result = new DataTypeDescriptor(type);
+                result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
                 CachedTypes.Add(result);
                 if (type.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
@@ -342,11 +342,22 @@ namespace KGySoft.Serialization
                     }
                 }
 
-                // reading arguments
-                for (int i = 0; i < len; i++)
-                    args[i] = ReadType(br, allowOpenTypes).Type;
+                // special handling for compressible types
+                if (typeDef == compressibleType)
+                {
+                    var argDescriptor = ReadType(br, allowOpenTypes);
+                    args[0] = argDescriptor.Type;
+                    result = new DataTypeDescriptor(typeDef.GetGenericType(args), argDescriptor.StoredType);
+                }
+                else
+                {
+                    // reading arguments
+                    for (int i = 0; i < len; i++)
+                        args[i] = ReadType(br, allowOpenTypes).Type;
 
-                result = new DataTypeDescriptor(typeDef.GetGenericType(args));
+                    result = new DataTypeDescriptor(typeDef.GetGenericType(args));
+                }
+
                 if (addToCache)
                     CachedTypes.Add(result);
 
@@ -606,8 +617,8 @@ namespace KGySoft.Serialization
                         return null;
                 }
 
-                if (dataTypeDescriptor.ParentDescriptor != null && IsImpureType(dataType))
-                    EnsureAttributes(br, dataTypeDescriptor.Type);
+                if (dataTypeDescriptor.ParentDescriptor != null && IsImpureTypeButEnum(dataType))
+                    EnsureAttributes(br, dataTypeDescriptor);
                 if (addToCache == null)
                     addToCache = !IsValueType(dataTypeDescriptor);
 
@@ -767,7 +778,7 @@ namespace KGySoft.Serialization
                 Type type = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
 
                 // a.) IsDefault flag
-                bool isCustomObjectGraph = IsCustomSerialized(br, type);
+                bool isCustomObjectGraph = IsCustomSerialized(br, descriptor);
 
                 // b.) Types of custom serialized objects are always explicitly stored
                 bool isSealedElement = descriptor.ParentDescriptor != null && IsSealed(descriptor);
@@ -1172,14 +1183,15 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private bool IsCustomSerialized(BinaryReader br, Type type)
+            private bool IsCustomSerialized(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                var attr = EnsureAttributes(br, type);
+                var attr = EnsureAttributes(br, descriptor);
                 return (attr & TypeAttributes.CustomSerialized) != TypeAttributes.None;
             }
 
-            private TypeAttributes EnsureAttributes(BinaryReader br, MemberInfo type)
+            private TypeAttributes EnsureAttributes(BinaryReader br, DataTypeDescriptor descriptor)
             {
+                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
                 if (TypeAttributesCache.TryGetValue(type, out TypeAttributes result))
                     return result;
                 result = (TypeAttributes)br.ReadByte();

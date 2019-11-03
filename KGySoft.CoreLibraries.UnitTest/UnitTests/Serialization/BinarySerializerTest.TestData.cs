@@ -1280,6 +1280,146 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region Singleton1 class
+
+        [Serializable]
+        private class Singleton1 : ISerializable
+        {
+            #region Properties
+
+            public static Singleton1 Instance { get; } = new Singleton1();
+
+            #endregion
+
+            #region Constructors
+
+            private Singleton1()
+            {
+            }
+
+            #endregion
+
+            #region Methods
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                // by SetType
+                info.AddValue("id", 1);
+                info.SetType(typeof(SingletonDeserializer));
+            }
+
+            public override bool Equals(object obj) => obj is Singleton1;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Singleton2 class
+
+        [Serializable]
+        private class Singleton2 : ISerializable
+        {
+            #region Properties
+
+            public static Singleton2 Instance { get; } = new Singleton2();
+
+            #endregion
+
+            #region Constructors
+
+            private Singleton2()
+            {
+            }
+
+            #endregion
+
+            #region Methods
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                // By string, different assembly name
+                info.AddValue("id", 2);
+                info.AssemblyName = typeof(SingletonDeserializer).Assembly.GetName().Name;
+                info.FullTypeName = typeof(SingletonDeserializer).GetName(TypeNameKind.FullName);
+            }
+
+            public override bool Equals(object obj) => obj is Singleton2;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Singleton3 class
+
+        [Serializable]
+        private class Singleton3 : ISerializable
+        {
+            #region Properties
+
+            public static Singleton3 Instance { get; } = new Singleton3();
+
+            #endregion
+
+            #region Constructors
+
+            private Singleton3()
+            {
+            }
+
+            #endregion
+
+            #region Methods
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                // By string, same name as by SetType
+                info.AddValue("id", 3);
+                info.AssemblyName = typeof(SingletonDeserializer).Assembly.FullName;
+                info.FullTypeName = typeof(SingletonDeserializer).GetName(TypeNameKind.FullName);
+            }
+
+            public override bool Equals(object obj) => obj is Singleton3;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region SingletonDeserializer class
+
+        [Serializable]
+        private class SingletonDeserializer : ISerializable, IObjectReference
+        {
+            #region Fields
+
+            private readonly int i;
+
+            #endregion
+
+            #region Constructors
+
+            private SingletonDeserializer(SerializationInfo info, StreamingContext context) => i = info.GetInt32("id");
+
+            #endregion
+
+            #region Methods
+
+            public object GetRealObject(StreamingContext context) => i switch
+            {
+                1 => Singleton1.Instance,
+                2 => Singleton2.Instance,
+                _ => (object)Singleton3.Instance
+            };
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context) => throw new NotImplementedException();
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Nested structs
