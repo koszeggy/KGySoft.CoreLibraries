@@ -584,7 +584,7 @@ Hit rate: {8:P2}</value>
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
   </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
-    <value>Deserialization of an IObjectReference instance has a circular reference to itself.</value>
+    <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</value>
   </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>

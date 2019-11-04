@@ -148,7 +148,7 @@ namespace KGySoft
         /// <summary>Invalid stream data.</summary>
         internal static string BinarySerializationInvalidStreamData => Get("BinarySerialization_InvalidStreamData");
 
-        /// <summary>Deserialization of an IObjectReference instance has a circular reference to itself.</summary>
+        /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</summary>
         internal static string BinarySerializationCircularIObjectReference => Get("BinarySerialization_CircularIObjectReference");
 
         /// <summary>Unexpected id on deserialization. Serialization stream corrupted?</summary>

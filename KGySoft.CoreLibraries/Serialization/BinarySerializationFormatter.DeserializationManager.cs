@@ -44,6 +44,89 @@ namespace KGySoft.Serialization
         /// </summary>
         private sealed class DeserializationManager : SerializationManagerBase
         {
+            #region Nested classes
+
+            #region UsageReference class
+
+            private abstract class UsageReference
+            {
+                #region Methods
+
+                internal abstract void SetValue(object value);
+
+                #endregion
+            }
+
+            #endregion
+
+            #region FieldUsage class
+
+            private sealed class FieldUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly object target;
+                private readonly FieldInfo field;
+
+                #endregion
+
+                #region Constructors
+
+                internal FieldUsage(object target, FieldInfo field)
+                {
+                    this.target = target;
+                    this.field = field;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value) => field.Set(target, value);
+
+                #endregion
+            }
+
+            #endregion
+
+            #region ArrayUsage class
+
+            private sealed class ArrayUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly Array target;
+                private readonly int[] indices;
+
+                #endregion
+
+                #region Constructors
+
+                internal ArrayUsage(Array target, int[] indices)
+                {
+                    this.target = target;
+                    this.indices = indices;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value)
+                {
+                    if (indices.Length == 1)
+                        target.SetValue(value, indices[0]);
+                    else
+                        target.SetValue(value, indices);
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #endregion
+
             #region Fields
 
             private List<(Assembly, string)> cachedAssemblies;
@@ -51,7 +134,7 @@ namespace KGySoft.Serialization
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
-            private Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>> objectReferences;
+            private Dictionary<IObjectReference, List<UsageReference>> incompleteObjectReferences;
             private List<IDeserializationCallback> deserializationRegObjects;
 
             #endregion
@@ -65,6 +148,9 @@ namespace KGySoft.Serialization
 
             private List<DataTypeDescriptor> CachedTypes
                 => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
+
+            private Dictionary<IObjectReference, List<UsageReference>> IncompleteObjectReferences => incompleteObjectReferences
+                ??= new Dictionary<IObjectReference, List<UsageReference>>(1, ReferenceEqualityComparer<IObjectReference>.Comparer);
 
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
@@ -496,7 +582,7 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < result.Length; i++)
                     {
                         object value = ReadElement(br, descriptor.ElementDescriptor);
-                        result.SetValue(value, i + offset);
+                        TrySetArray(result, value, i + offset);
                     }
 
                     return result;
@@ -507,7 +593,7 @@ namespace KGySoft.Serialization
                 while (arrayIndexer.MoveNext())
                 {
                     object value = ReadElement(br, descriptor.ElementDescriptor);
-                    result.SetValue(value, arrayIndexer.Current);
+                    TrySetArray(result, value, arrayIndexer.Current);
                 }
 
                 return result;
@@ -991,7 +1077,7 @@ namespace KGySoft.Serialization
             {
                 // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
                 // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
-                Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), true);
+                Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
 
                 // Reading the custom content and trying to identify them as fields
                 int count = Read7BitInt(br);
@@ -1003,6 +1089,8 @@ namespace KGySoft.Serialization
 
                     if (fields.TryGetValue(name, out FieldInfo field))
                     {
+                        if (field.IsNotSerialized)
+                            continue;
                         TrySetField(field, obj, value);
                         continue;
                     }
@@ -1069,47 +1157,68 @@ namespace KGySoft.Serialization
 
             private void TrySetField(FieldInfo field, object obj, object value)
             {
-                if (!IgnoreIObjectReference && value is IObjectReference objRef)
+                if (IgnoreIObjectReference || !(value is IObjectReference objRef))
                 {
-                    // the object reference cannot be set yet so storing the new usage of the reference to be set later.
-                    if (objectReferences == null)
-                        objectReferences = new Dictionary<IObjectReference, List<KeyValuePair<FieldInfo, object>>>(1, ReferenceEqualityComparer<IObjectReference>.Comparer);
-
-                    if (!objectReferences.TryGetValue(objRef, out List<KeyValuePair<FieldInfo, object>> refUsages))
-                    {
-                        refUsages = new List<KeyValuePair<FieldInfo, object>>();
-                        objectReferences.Add(objRef, refUsages);
-                    }
-
-                    refUsages.Add(new KeyValuePair<FieldInfo, object>(field, obj));
+                    field.Set(obj, value);
                     return;
                 }
 
-                field.Set(obj, value);
+                // the object reference cannot be set yet so storing the new usage of the reference to be set later.
+                if (!IncompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
+                {
+                    refUsages = new List<UsageReference>();
+                    incompleteObjectReferences.Add(objRef, refUsages);
+                }
+
+                refUsages.Add(new FieldUsage(obj, field));
+            }
+
+            private void TrySetArray(Array array, object value, params int[] indices)
+            {
+                if (IgnoreIObjectReference || !(value is IObjectReference objRef))
+                {
+                    if (indices.Length == 1)
+                        array.SetValue(value, indices[0]);
+                    else
+                        array.SetValue(value, indices);
+                    return;
+                }
+
+                // the object reference cannot be set yet so storing the new usage of the reference to be set later.
+                if (!IncompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
+                {
+                    refUsages = new List<UsageReference>();
+                    incompleteObjectReferences.Add(objRef, refUsages);
+                }
+
+                refUsages.Add(new ArrayUsage(array, indices));
             }
 
             private void CheckReferences(SerializationInfo si)
             {
-                if (objectReferences == null)
+                if (incompleteObjectReferences == null)
                     return;
 
                 // circular IObjectReferences can be resolved after all, except if custom deserialization is used for unresolved references
                 foreach (SerializationEntry entry in si)
                 {
-                    if (entry.Value is IObjectReference objRef && objectReferences.ContainsKey(objRef))
+                    if (entry.Value is IObjectReference objRef && incompleteObjectReferences.ContainsKey(objRef))
                         throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
                 }
             }
 
             private void UpdateReferences(IObjectReference objRef, object realObject)
             {
-                if (objectReferences == null || !objectReferences.TryGetValue(objRef, out List<KeyValuePair<FieldInfo, object>> refUsages))
+                if (incompleteObjectReferences == null || !incompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
                     return;
 
-                foreach (KeyValuePair<FieldInfo, object> usage in refUsages)
-                    usage.Key.Set(usage.Value, realObject);
+                if (realObject == null)
+                    throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
 
-                objectReferences.Remove(objRef);
+                foreach (UsageReference usage in refUsages)
+                    usage.SetValue(realObject);
+
+                incompleteObjectReferences.Remove(objRef);
             }
 
             /// <summary>

@@ -1522,9 +1522,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 new CircularReferenceClass { Name = "Single" }, // no circular reference
                 new CircularReferenceClass { Name = "Parent" }.AddChild("Child").AddChild("Grandchild").Parent.Parent, // circular reference, but logically alright
-                new SelfReferencer("name"),
+                new SelfReferencerDirect("Direct"),
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true }, // circular reference deserialized by IObjectReference default object graph
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true }, // circular reference deserialized by IObjectReference custom object graph
 #if !(NETCOREAPP2_0 || NETCOREAPP3_0) // PlatformNotSupportedException : Operation is not supported on this platform.
-                Encoding.GetEncoding("shift_jis") // circular reference via IObjectReference instances but with no custom serialization  
+                Encoding.GetEncoding("shift_jis"), // circular reference deserialized by IObjectReference custom object graph
 #endif
             };
 
@@ -1553,14 +1555,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
-                new SelfReferencerIndirect("evil"), // the IObjectReference references itself in custom serialization: should throw SerializationException
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false },
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false },
+                new SelfReferencerInvalid("Default") { UseCustomDeserializer = false },
+                new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true },
             };
 
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            foreach (object referenceObject in referenceObjects)
+                SystemSerializeObject(referenceObject);
 
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None));
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
+            foreach (object referenceObject in referenceObjects)
+                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None));
         }
 
 #if NETFRAMEWORK

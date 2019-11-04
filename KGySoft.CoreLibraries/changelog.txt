@@ -127,6 +127,7 @@
     - If non-sealed nested collections were serialized where the base type of an inner collection was a natively
       supported one, and an inner collection element had a derived collection type, then the actual collection type
       was ignored and the deserialized inner collection had the base element type.
+    - Resolvable circular references to IObjectReference instances were not handled for array elements.
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
     deserialization rather than the original one used for the serialization. If that info is needed you need to save

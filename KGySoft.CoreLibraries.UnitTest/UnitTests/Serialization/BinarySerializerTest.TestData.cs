@@ -381,7 +381,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Properties
 
-            public int Id { get; protected set; }
+            public int Id { get; set; }
 
             public string Name { get; set; }
 
@@ -969,34 +969,54 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region SelfReferencer class
+        #region Box<T> class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
-        private class SelfReferencer : ISerializable
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+        private sealed class Box<T>
         {
-            #region Nested classes
+            #region Fields
 
-            #region Box class
+            internal readonly T Value;
+            internal readonly T[] ValueArray;
 
-            [Serializable]
-            private class Box
+            #endregion
+
+            #region Constructors
+
+            internal Box(T value)
             {
-                #region Fields
-
-                internal SelfReferencer owner;
-
-                #endregion
+                Value = value;
+                ValueArray = new[] { value };
             }
 
             #endregion
 
-            #endregion
+            #region Methods
 
+            public override bool Equals(object obj) =>
+                obj is Box<T> other
+                && Equals(Value, other.Value)
+                && Equals(ValueArray[0], other.ValueArray[0]);
+
+            public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+
+            public override string ToString() => Value?.ToString() ?? base.ToString();
+
+            #endregion
+        }
+
+        #endregion
+
+        #region SelfReferencerDirect class
+
+        [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+        private class SelfReferencerDirect : ISerializable
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+        {
             #region Fields
 
-            private readonly Box selfReferenceFromChild;
+            private readonly Box<SelfReferencerDirect> selfReferenceFromChild;
 
             #endregion
 
@@ -1004,7 +1024,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public string Name { get; set; }
 
-            public SelfReferencer Self { get; set; }
+            public SelfReferencerDirect Self { get; set; }
 
             #endregion
 
@@ -1012,22 +1032,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Constructors
 
-            public SelfReferencer(string name)
+            public SelfReferencerDirect(string name)
             {
                 Name = name;
                 Self = this;
-                selfReferenceFromChild = new Box { owner = this };
+                selfReferenceFromChild = new Box<SelfReferencerDirect>(this);
             }
 
             #endregion
 
             #region Private Constructors
 
-            private SelfReferencer(SerializationInfo info, StreamingContext context)
+            private SelfReferencerDirect(SerializationInfo info, StreamingContext context)
             {
                 Name = info.GetString("name");
-                Self = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
-                selfReferenceFromChild = (Box)info.GetValue("selfBox", typeof(Box));
+                Self = (SelfReferencerDirect)info.GetValue("self", typeof(SelfReferencerDirect));
+                selfReferenceFromChild = (Box<SelfReferencerDirect>)info.GetValue("selfBox", typeof(Box<SelfReferencerDirect>));
             }
 
             #endregion
@@ -1046,10 +1066,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override bool Equals(object obj)
             {
-                if (obj == null || obj.GetType() != typeof(SelfReferencer))
+                if (obj == null || obj.GetType() != typeof(SelfReferencerDirect))
                     return false;
 
-                var other = (SelfReferencer)obj;
+                var other = (SelfReferencerDirect)obj;
                 return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
             }
 
@@ -1061,13 +1081,247 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region SelfReferencerIndirect class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
-        private class SelfReferencerIndirect : SelfReferencer
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+        private class SelfReferencerIndirect : ISerializable
         {
+            #region Nested Classes
+
+            #region SelfReferencerIndirectDefaultDeserializer class
+
+            [Serializable]
+            private class SelfReferencerIndirectDefaultDeserializer : IObjectReference
+            {
+                #region Fields
+
+                public string Name;
+                public Box<SelfReferencerIndirect> SelfRef;
+                public bool UseValidWay;
+                public bool UseCustomDeserializer;
+
+                #endregion
+
+
+                #region Constructors
+
+                private SelfReferencerIndirectDefaultDeserializer(SerializationInfo info, StreamingContext context)
+                {
+                    throw new InvalidOperationException("Should not be executed");
+                }
+
+                #endregion
+
+                #region Methods
+
+                [SecurityCritical]
+                public object GetRealObject(StreamingContext context)
+                {
+                    return UseValidWay
+                        ? new SelfReferencerIndirect(Name)
+                        {
+                            UseCustomDeserializer = UseCustomDeserializer,
+                            UseValidWay = UseValidWay
+                        }
+                        : SelfRef.Value;
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #region SelfReferencerIndirectCustomDeserializer class
+
+            [Serializable]
+            private class SelfReferencerIndirectCustomDeserializer : ISerializable, IObjectReference
+            {
+                #region Fields
+
+                private readonly string name;
+                private readonly Box<SelfReferencerIndirect> selfRef;
+                private readonly bool useValidWay;
+                private readonly bool useCustomDeserializer;
+
+                #endregion
+
+
+                #region Constructors
+
+                private SelfReferencerIndirectCustomDeserializer(SerializationInfo info, StreamingContext context)
+                {
+                    name = info.GetString(nameof(SelfReferencerIndirect.Name));
+                    selfRef = (Box<SelfReferencerIndirect>)info.GetValue(nameof(SelfReferencerIndirect.SelfRef), typeof(Box<SelfReferencerIndirect>));
+                    useValidWay = info.GetBoolean(nameof(SelfReferencerIndirect.UseValidWay));
+                    useCustomDeserializer = info.GetBoolean(nameof(SelfReferencerIndirect.UseCustomDeserializer));
+                }
+
+                #endregion
+
+                #region Methods
+
+                [SecurityCritical]
+                public object GetRealObject(StreamingContext context)
+                {
+                    return useValidWay
+                        ? new SelfReferencerIndirect(name)
+                        {
+                            UseCustomDeserializer = useCustomDeserializer,
+                            UseValidWay = useValidWay
+                        }
+                        : selfRef.Value;
+                }
+
+                public void GetObjectData(SerializationInfo info, StreamingContext context)
+                {
+                    throw new InvalidOperationException("Should not be executed");
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
+            public string Name { get; }
+            public Box<SelfReferencerIndirect> SelfRef { get; }
+            public bool UseValidWay { get; set; }
+            public bool UseCustomDeserializer { get; set; }
+
+            #endregion
+
             #region Constructors
 
             public SelfReferencerIndirect(string name)
+            {
+                Name = name;
+                SelfRef = new Box<SelfReferencerIndirect>(this);
+            }
+
+            #endregion
+
+            #region Methods
+
+            [SecurityCritical]
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                info.AddValue(nameof(Name), Name);
+                info.AddValue(nameof(SelfRef), SelfRef);
+                info.AddValue(nameof(UseValidWay), UseValidWay);
+                info.AddValue(nameof(UseCustomDeserializer), UseCustomDeserializer);
+                info.SetType(UseCustomDeserializer ? typeof(SelfReferencerIndirectCustomDeserializer) : typeof(SelfReferencerIndirectDefaultDeserializer));
+            }
+
+#pragma warning disable 659
+            public override bool Equals(object obj)
+#pragma warning restore 659
+            {
+                if (obj == null || obj.GetType() != typeof(SelfReferencerIndirect))
+                    return false;
+
+                var other = (SelfReferencerIndirect)obj;
+                return other.Name == this.Name && ReferenceEquals(other, other.SelfRef.Value) && ReferenceEquals(this, this.SelfRef.Value);
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region SelfReferencerInvalid class
+
+        [Serializable]
+        private class SelfReferencerInvalid : SelfReferencerDirect
+        {
+            #region Nested Classes
+
+            #region SelfReferencerInvalidDefaultDeserializer class
+
+            [Serializable]
+            private class SelfReferencerInvalidDefaultDeserializer : IObjectReference
+            {
+                #region Fields
+
+                private string name;
+                private SelfReferencerDirect self;
+                private Box<SelfReferencerDirect> selfBox;
+
+                #endregion
+
+                #region Constructors
+
+                protected SelfReferencerInvalidDefaultDeserializer(SerializationInfo info, StreamingContext context)
+                {
+                    throw new InvalidOperationException("Should not be executed");
+                }
+
+                #endregion
+
+                #region Methods
+
+                [SecurityCritical]
+                public object GetRealObject(StreamingContext context)
+                {
+                    return self;
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #region SelfReferencerInvalidCustomDeserializer class
+
+            [Serializable]
+            private class SelfReferencerInvalidCustomDeserializer : IObjectReference, ISerializable
+            {
+                #region Fields
+
+                private SelfReferencerDirect instance;
+                private string name;
+
+                #endregion
+
+                #region Constructors
+
+                protected SelfReferencerInvalidCustomDeserializer(SerializationInfo info, StreamingContext context)
+                {
+                    name = info.GetString("name");
+                    instance = (SelfReferencerDirect)info.GetValue("self", typeof(SelfReferencerDirect));
+                }
+
+                #endregion
+
+                #region Methods
+
+                [SecurityCritical]
+                public object GetRealObject(StreamingContext context)
+                {
+                    return new SelfReferencerInvalid(name);
+                }
+
+                [SecurityCritical]
+                public void GetObjectData(SerializationInfo info, StreamingContext context)
+                {
+                    throw new NotImplementedException();
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
+            public bool UseCustomDeserializer { get; set; }
+
+            #endregion
+
+            #region Constructors
+
+            public SelfReferencerInvalid(string name)
                 : base(name)
             {
             }
@@ -1080,57 +1334,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 base.GetObjectData(info, context);
-                info.SetType(typeof(SelfReferencerIndirectDeserializer));
+                info.SetType(UseCustomDeserializer ? typeof(SelfReferencerInvalidCustomDeserializer) : typeof(SelfReferencerInvalidDefaultDeserializer));
             }
 
             public override bool Equals(object obj)
             {
-                if (obj == null || obj.GetType() != typeof(SelfReferencerIndirect))
+                if (obj == null || obj.GetType() != typeof(SelfReferencerInvalid))
                     return false;
 
-                var other = (SelfReferencerIndirect)obj;
+                var other = (SelfReferencerInvalid)obj;
                 return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region SelfReferencerIndirectDeserializer class
-
-        [Serializable]
-        private class SelfReferencerIndirectDeserializer : IObjectReference, ISerializable
-        {
-            #region Fields
-
-            private SelfReferencer instance;
-            private string name;
-
-            #endregion
-
-            #region Constructors
-
-            protected SelfReferencerIndirectDeserializer(SerializationInfo info, StreamingContext context)
-            {
-                name = info.GetString("name");
-                instance = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
-            }
-
-            #endregion
-
-            #region Methods
-
-            [SecurityCritical]
-            public object GetRealObject(StreamingContext context)
-            {
-                return new SelfReferencerIndirect(name);
-            }
-
-            [SecurityCritical]
-            public void GetObjectData(SerializationInfo info, StreamingContext context)
-            {
-                throw new NotImplementedException();
             }
 
             #endregion
