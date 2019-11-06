@@ -75,7 +75,7 @@ namespace KGySoft.Serialization
             internal CollectionCtorArguments[] CtorArguments { private get; set; }
 
             /// <summary>
-            /// Should be specified only when target collection is not <see cref="IList"/> or <see cref="ICollection{T}"/> implementation,
+            /// Should be specified only when target collection is not <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation,
             /// or when defining it results faster access than resolving the generic Add method for each access. Can refer to a generic method definition.
             /// </summary>
             internal string SpecificAddMethod { get; set; }
@@ -181,10 +181,6 @@ namespace KGySoft.Serialization
                     if (addToCache)
                         manager.AddObjectToCache(result);
 
-                    object key = manager.ReadElement(br, descriptor.ElementDescriptor);
-                    object value = manager.ReadElement(br, descriptor.ValueDescriptor);
-                    Accessors.SetKeyValue(result, key, value);
-
                     count = 1;
                     return result;
                 }
@@ -226,7 +222,7 @@ namespace KGySoft.Serialization
             {
                 MethodAccessor GetAddMethodAccessor(Type type)
                 {
-                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary keys.
+                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary values.
 
                     MethodInfo method = IsGeneric
                         ? type.GetMethod(methodName, type.GetGenericArguments()) // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)

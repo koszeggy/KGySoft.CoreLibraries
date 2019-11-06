@@ -1269,9 +1269,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
-#if !NETCOREAPP3_0 // works but Equals fails on the clone
-		        typeof(int),  
-#endif
 
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
@@ -1295,7 +1292,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new List<BinarySerializableStruct?> { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, default(BinarySerializableStruct?) },
                 new List<BinarySerializableClass> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), null },
                 new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alpha"), null },
-                new List<IBinarySerializable> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), new BinarySerializableStruct { IntProp = 3, StringProp = "gamma" }, null },
+                new List<object> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), new BinarySerializableStruct { IntProp = 3, StringProp = "gamma" }, null },
 
                 // lists with default recursive elements
                 new List<SystemSerializableStruct> { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, default(SystemSerializableStruct) },
@@ -1322,11 +1319,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             };
 
             // default
-            //SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable is not serializable
+            SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable is not serializable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             ISurrogateSelector selector = new TestSurrogateSelector();
             string title = nameof(TestSurrogateSelector);
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+
+            selector = new TestCloningSurrogateSelector();
+            title = nameof(TestCloningSurrogateSelector);
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
@@ -1533,8 +1536,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             var root = new CircularReferenceClass { Name = "root" }.AddChild("child").AddChild("grandchild").Parent.Parent;
             root.Children[0].Children[0].Children.Add(root);
@@ -1565,8 +1568,69 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 SystemSerializeObject(referenceObject);
 
             foreach (object referenceObject in referenceObjects)
-                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None));
+                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None),
+                    "Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.");
         }
+
+        [Test]
+        public void SerializeCircularReferencesBySurrogateSelector()
+        {
+            string title = "Valid cases using a non-replacing selector";
+            var selector = new TestSurrogateSelector();
+            object[] referenceObjects =
+            {
+                new CircularReferenceClass { Name = "Single" }, // no circular reference
+                new CircularReferenceClass { Name = "Parent" }.AddChild("Child").AddChild("Grandchild").Parent.Parent, // circular reference, but logically alright
+                new SelfReferencerDirect("Direct"),
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true }, // circular reference deserialized by IObjectReference default object graph
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true }, // circular reference deserialized by IObjectReference custom object graph
+                Encoding.GetEncoding("shift_jis"), // circular reference deserialized by IObjectReference custom object graph
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false }, // would not work without the surrogate
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false }, // would not work without the surrogate
+                new SelfReferencerInvalid("Default") { UseCustomDeserializer = false }, // would not work without the surrogate
+                new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true }, // would not work without the surrogate
+            };
+
+            //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); - SelfReferencerDirect: SerializationException: The object with ID 3 was referenced in a fixup but does not exist.
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+                | BinarySerializationOptions.IgnoreSerializationMethods, // OrderedDictionary.OnDeserialization
+                title, surrogateSelector: selector);
+
+            title = "Valid cases using a replacing selector";
+            selector = new TestCloningSurrogateSelector();
+            referenceObjects = new object[]
+            {
+                new CircularReferenceClass { Name = "Single" }, // no circular reference
+            };
+
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, surrogateSelector: selector);
+
+            title = "Invalid cases using a replacing selector";
+            referenceObjects = new object[]
+            {
+                // The first case actually works by BinaryFormatter because it orders the surrogate-deserialized objects in a way that every reference can be resolved
+                // BinarySerializationFormatter has a strict traversal order but we can detect if replacing causes problems
+                new CircularReferenceClass { Name = "Parent" }.AddChild("Child").AddChild("Grandchild").Parent.Parent,
+                new SelfReferencerDirect("Direct"),
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true },
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true },
+                Encoding.GetEncoding("shift_jis"),
+                new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false },
+                new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false },
+                new SelfReferencerInvalid("Default") { UseCustomDeserializer = false },
+                new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true },
+            };
+
+            foreach (object referenceObject in referenceObjects)
+                SystemSerializeObject(referenceObject, title, surrogateSelector: selector);
+            foreach (object referenceObject in referenceObjects)
+                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, title, surrogateSelector: selector),
+                    "The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself.");
+        }
+
 
 #if NETFRAMEWORK
         [Test]

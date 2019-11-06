@@ -72,12 +72,12 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Private Protected Properties
+        #region Internal Properties
 
         /// <summary>
         /// Gets the type of parameters of the accessed member in the reflected type.
         /// </summary>
-        private protected Type[] ParameterTypes { get; }
+        internal Type[] ParameterTypes { get; }
 
         #endregion
 

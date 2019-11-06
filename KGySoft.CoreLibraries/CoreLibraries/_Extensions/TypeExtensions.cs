@@ -363,12 +363,12 @@ namespace KGySoft.CoreLibraries
             if (!Reflector.IEnumerableType.IsAssignableFrom(type))
                 return null;
 
-            Type genericEnumerableType = type.IsGenericTypeOf(Reflector.IEnumerableGenType) ? type : type.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(Reflector.IEnumerableGenType));
-            return genericEnumerableType != null ? genericEnumerableType.GetGenericArguments()[0]
-                : (Reflector.IDictionaryType.IsAssignableFrom(type) ? Reflector.DictionaryEntryType
-                    : type == Reflector.BitArrayType ? Reflector.BoolType
-                    : type == Reflector.StringCollectionType ? Reflector.StringType
-                    : Reflector.ObjectType);
+            if (type.IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type genericEnumerableType))
+                return genericEnumerableType.GetGenericArguments()[0];
+            return Reflector.IDictionaryType.IsAssignableFrom(type) ? Reflector.DictionaryEntryType
+                : type == Reflector.BitArrayType ? Reflector.BoolType
+                : type == Reflector.StringCollectionType ? Reflector.StringType
+                : Reflector.ObjectType;
         }
 
         /// <summary>
@@ -643,6 +643,10 @@ namespace KGySoft.CoreLibraries
 #else
             type.IsConstructedGenericType;
 #endif
+
+        internal static object GetDefaultValue(this Type type) => type.IsValueType
+            ? Activator.CreateInstance(type)
+            : null;
 
         #endregion
 

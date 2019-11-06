@@ -89,6 +89,7 @@
     + It can be controlled whether to use case insensitive resolving.
     + Generic parameters and open constructed generics are supported if they were dumped by TypeExtensions.GetName.
     + More consistent behavior for partial assembly matching.
+  - [Try]InvokeMethod overloads by method name: Considering the methods also in the base object class.
 + WeakAssemblySerializationBinder:
   * OmitAssemblyNameOnSerialize property is available also in .NET 3.5.
   + New IgnoreAssemblyNameOnResolve property: Makes possible to completely ignore the assembly information even if
@@ -119,7 +120,9 @@
     separately. To call the binder for supported non-primitive types the ForceRecursiveSerializationOfSupportedTypes
     flag can be enabled in the options.
   + Supporting runtime types natively. It was required for .NET Core/Standard that cannot serialize Type instances.
-  + Supports serializing pointer fields.
+  + Supporting serialization of pointer fields.
+  + Supporting ISerializationSurrogate instances, which replace the deserialized object as long as it does not
+    prevent resolving circular references.
   * Improving performance.
   - Some edge case issues have been fixed:
     - If different custom serialized types set the same type by string in SerializationInfo using different names,
@@ -127,7 +130,8 @@
     - If non-sealed nested collections were serialized where the base type of an inner collection was a natively
       supported one, and an inner collection element had a derived collection type, then the actual collection type
       was ignored and the deserialized inner collection had the base element type.
-    - Resolvable circular references to IObjectReference instances were not handled for array elements.
+    - Resolvable circular references to IObjectReference instances were not handled for supported collection
+      elements.
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
     deserialization rather than the original one used for the serialization. If that info is needed you need to save

@@ -67,8 +67,8 @@ using KGySoft.Reflection;
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 8-13 bits (adjust free places in comments)
  *    - 0..15 << 8: Generic collections
- *    - 16..31 << 8: Generic dictionaries
- *    - 32..47 << 8: Non-generic collections
+ *    - 16..31 << 8: Non-generic collections
+ *    - 32..47 << 8: Generic dictionaries
  *    - 48..63 << 8: Non-generic dictionaries
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
@@ -76,12 +76,13 @@ using KGySoft.Reflection;
  * 4. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
  * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
- * 7. Add type to unit test:
+ * 7. If collection type is an ordered non-IList collection, handle it in AddCollectionElement
+ * 8. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
  *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
- * 8. Add type to description - Collections
+ * 9. Add type to description - Collections
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
  */

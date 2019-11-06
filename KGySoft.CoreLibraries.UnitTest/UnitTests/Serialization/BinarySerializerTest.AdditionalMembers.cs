@@ -518,7 +518,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private static byte[] SerializeObjects(ICollection<object> objects, IFormatter formatter)
+        private static byte[] SerializeObjects(IList<object> objects, IFormatter formatter)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -528,15 +528,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 if (dumpDetails && bsf != null)
                     bw = new TestWriter(ms, dumpDetails);
 
-                foreach (object o in objects)
+                for (var i = 0; i < objects.Count; i++)
                 {
+                    object o = objects[i];
                     long pos = ms.Position;
                     if (bw != null)
                         bsf.SerializeByWriter(bw, o);
                     else
                         formatter.Serialize(ms, o);
-                    Console.WriteLine($"{(o == null ? "<null>" : o.GetType().GetName(TypeNameKind.ShortName))} - length: {ms.Position - pos}");
+                    Console.WriteLine($"{i,2}. {(o == null ? "<null>" : o.GetType().GetName(TypeNameKind.ShortName))} - length: {ms.Position - pos}");
                 }
+
                 Console.WriteLine($"Full length: {ms.Length}");
                 if (dumpSerContent)
                     Console.WriteLine(ToRawString(ms.ToArray()));
@@ -629,7 +631,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void SystemSerializeObjects(ICollection<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -675,7 +677,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObjects(ICollection<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";

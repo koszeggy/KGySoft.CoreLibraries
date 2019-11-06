@@ -36,7 +36,7 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        internal static ReferenceEqualityComparer<T> Comparer => comparer ?? (comparer = new ReferenceEqualityComparer<T>());
+        internal static ReferenceEqualityComparer<T> Comparer => comparer ??= new ReferenceEqualityComparer<T>();
 
         #endregion
 

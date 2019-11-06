@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -30,7 +31,6 @@ using System.Security;
 
 using KGySoft.Reflection;
 using KGySoft.Serialization;
-using NUnit.Framework;
 
 #endregion
 
@@ -976,8 +976,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
+            #region Internal Fields
+
             internal readonly T Value;
-            internal readonly T[] ValueArray;
+
+            #endregion
+
+            #region Private Fields
+
+            private readonly T[] valueArray;
+            private readonly List<T> valueList;
+            private readonly Dictionary<T, T> keyValueUsageDictionary;
+            private readonly Dictionary<T, string> keyUsageDictionary;
+            private readonly Dictionary<string, T> valueUsageDictionary;
+            private readonly object valueKeyValuePair;
+            private readonly object valueDictionaryEntry;
+            private readonly LinkedList<T> valueLinkedList;
+            private readonly HashSet<T> valueHashSet;
+            private readonly OrderedDictionary valueOrderedDictionary;
+
+            #endregion
 
             #endregion
 
@@ -986,7 +1004,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             internal Box(T value)
             {
                 Value = value;
-                ValueArray = new[] { value };
+                valueArray = new[] { value };
+                valueList = new List<T>(1) { value };
+                keyValueUsageDictionary = new Dictionary<T, T>(1) { { value, value } };
+                keyUsageDictionary = new Dictionary<T, string>(1) { { value, value.ToString() } };
+                valueUsageDictionary = new Dictionary<string, T>(1) { { value.ToString(), value } };
+                valueKeyValuePair = new KeyValuePair<T, string>(value, value.ToString());
+                valueDictionaryEntry = new DictionaryEntry(value.ToString(), value);
+                valueLinkedList = new LinkedList<T>(new[] { value });
+                valueHashSet = new HashSet<T> { value };
+                valueOrderedDictionary = new OrderedDictionary { { value, value } };
             }
 
             #endregion
@@ -996,7 +1023,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             public override bool Equals(object obj) =>
                 obj is Box<T> other
                 && Equals(Value, other.Value)
-                && Equals(ValueArray[0], other.ValueArray[0]);
+                && Equals(valueArray[0], other.valueArray[0])
+                && Equals(valueList[0], other.valueList[0])
+                && Equals(keyValueUsageDictionary[Value], other.keyValueUsageDictionary[Value])
+                && Equals(keyUsageDictionary[Value], other.keyUsageDictionary[Value])
+                && Equals(valueUsageDictionary[Value.ToString()], other.valueUsageDictionary[Value.ToString()])
+                && Equals(((KeyValuePair<T, string>)valueKeyValuePair).Key, ((KeyValuePair<T, string>)other.valueKeyValuePair).Key)
+                && Equals(((DictionaryEntry)valueDictionaryEntry).Value, ((DictionaryEntry)other.valueDictionaryEntry).Value)
+                && Equals(valueLinkedList.First.Value, other.valueLinkedList.First.Value)
+                && Equals(valueHashSet.First(), other.valueHashSet.First())
+                && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[Value]);
 
             public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 
@@ -1016,7 +1052,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            private readonly Box<SelfReferencerDirect> selfReferenceFromChild;
+            private readonly Box<SelfReferencerDirect> selfBox;
 
             #endregion
 
@@ -1036,7 +1072,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Name = name;
                 Self = this;
-                selfReferenceFromChild = new Box<SelfReferencerDirect>(this);
+                selfBox = new Box<SelfReferencerDirect>(this);
             }
 
             #endregion
@@ -1047,7 +1083,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Name = info.GetString("name");
                 Self = (SelfReferencerDirect)info.GetValue("self", typeof(SelfReferencerDirect));
-                selfReferenceFromChild = (Box<SelfReferencerDirect>)info.GetValue("selfBox", typeof(Box<SelfReferencerDirect>));
+                selfBox = (Box<SelfReferencerDirect>)info.GetValue("selfBox", typeof(Box<SelfReferencerDirect>));
             }
 
             #endregion
@@ -1061,7 +1097,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 info.AddValue("name", Name);
                 info.AddValue("self", Self);
-                info.AddValue("selfBox", selfReferenceFromChild);
+                info.AddValue("selfBox", selfBox);
             }
 
             public override bool Equals(object obj)
@@ -1422,8 +1458,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
-            #region Public Methods
-
             [SecurityCritical]
             public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
@@ -1436,7 +1470,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 if (type == null)
                     throw new ArgumentNullException(nameof(type));
 
-                if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && type != typeof(string))
+                if (!type.IsPrimitive && !type.IsArray /*&& !typeof(ISerializable).IsAssignableFrom(type)*/ && type != typeof(string))
                 {
                     selector = this;
                     return this;
@@ -1450,12 +1484,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             }
 
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
             [SecurityCritical]
-            void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+            public virtual void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
             {
                 if (obj == null)
                     throw new ArgumentNullException(nameof(obj));
@@ -1473,7 +1503,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
 
             [SecurityCritical]
-            object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+            public virtual object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
             {
                 if (obj == null)
                     throw new ArgumentNullException(nameof(obj));
@@ -1487,6 +1517,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
 
             #endregion
+        }
+
+        #endregion
+
+        #region TestSurrogateSelector class
+
+        private class TestCloningSurrogateSelector : TestSurrogateSelector
+        {
+            #region Methods
+
+
+            [SecurityCritical]
+            public override object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector) 
+                => base.SetObjectData(Reflector.InvokeMethod(obj, nameof(MemberwiseClone)), info, context, selector);
 
             #endregion
         }

@@ -531,7 +531,7 @@ namespace KGySoft
         /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable</summary>
         internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type);
 
-        /// <summary>The serialization surrogate has changed the reference of the result object, which is not supported. Object type: {0}</summary>
+        /// <summary>The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: {0}</summary>
         internal static string BinarySerializationSurrogateChangedObject(Type type) => Get("BinarySerialization_SurrogateChangedObjectFormat", type);
 
         /// <summary>Could not decode data type: {0}. Serialization stream corrupted?</summary>
@@ -565,13 +565,16 @@ namespace KGySoft
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
 
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
-        internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_BinarySerializationNotBinarySerializableFormat", type);
+        internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type);
 
         /// <summary>Type '{0}' was serialized as a raw value type, though it is not a value type now.</summary>
-        internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_BinarySerializationNotAValueTypeFormat", type);
+        internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_NotAValueTypeFormat", type);
 
         /// <summary>Type '{0}' was serialized as an enum type though it is not an enum now.</summary>
         internal static string BinarySerializationNotAnEnum(Type type) => Get("BinarySerialization_NotAnEnumFormat", type);
+
+        /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</summary>
+        internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type);
 
         #endregion
 

@@ -737,6 +737,9 @@ namespace KGySoft.Reflection
         #region Any Member
         // Note: These methods could be completely replaced by Reflector methods but these use a smaller and more direct cache
 
+        internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern) 
+            => (FieldInfo)GetField(type, null, fieldNamePattern).MemberInfo ?? throw new ArgumentException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
+
         internal static object GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
         {
             Type type = genTypeDef.GetGenericType(t);

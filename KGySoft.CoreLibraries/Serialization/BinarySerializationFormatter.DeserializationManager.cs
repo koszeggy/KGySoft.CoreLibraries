@@ -29,9 +29,10 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
-
+using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+using Type = System.Type;
 
 #endregion
 
@@ -45,6 +46,27 @@ namespace KGySoft.Serialization
         private sealed class DeserializationManager : SerializationManagerBase
         {
             #region Nested classes
+
+            #region UsageReferences class
+
+            private sealed class UsageReferences : List<UsageReference>
+            {
+                #region Properties
+
+                internal bool CanBeReplaced { get; set; } = true;
+
+                #endregion
+
+                #region Constructors
+
+                internal UsageReferences() : base(1)
+                {
+                }
+
+                #endregion
+            }
+
+            #endregion
 
             #region UsageReference class
 
@@ -125,6 +147,226 @@ namespace KGySoft.Serialization
 
             #endregion
 
+            #region ListUsage class
+
+            private sealed class ListUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IList target;
+                private readonly int index;
+
+                #endregion
+
+                #region Constructors
+
+                internal ListUsage(IList target, int index)
+                {
+                    this.target = target;
+                    this.index = index;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value) => target[index] = value;
+
+                #endregion
+            }
+
+            #endregion
+
+            #region CollectionUsage class
+
+            private sealed class CollectionUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly object target;
+                private readonly MethodAccessor addMethod;
+
+                #endregion
+
+                #region Constructors
+
+                internal CollectionUsage(object target, MethodAccessor addMethod)
+                {
+                    this.target = target;
+                    this.addMethod = addMethod;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value) => addMethod.Invoke(target, value);
+
+                #endregion
+            }
+
+            #endregion
+
+            #region LinkedListUsage class
+
+            private sealed class LinkedListUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IEnumerable target;
+                private readonly object referenceNode;
+
+                #endregion
+
+                #region Constructors
+
+                internal LinkedListUsage(IEnumerable target, object referenceNode)
+                {
+                    this.target = target;
+                    this.referenceNode = referenceNode;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value)
+                {
+                    Reflector.InvokeMethod(target, nameof(LinkedList<_>.AddAfter), referenceNode, value);
+                    Reflector.InvokeMethod(target, nameof(LinkedList<_>.Remove), referenceNode);
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #region DictionaryKeyUsage class
+
+            private sealed class DictionaryKeyUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IDictionary target;
+                private readonly object value;
+
+                #endregion
+
+                #region Constructors
+
+                internal DictionaryKeyUsage(IDictionary target, object value)
+                {
+                    this.target = target;
+                    this.value = value;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object key) => target[key] = value;
+
+                #endregion
+            }
+
+            #endregion
+
+            #region DictionaryValueUsage class
+
+            private sealed class DictionaryValueUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IDictionary target;
+                private readonly object key;
+
+                #endregion
+
+                #region Constructors
+
+                internal DictionaryValueUsage(IDictionary target, object key)
+                {
+                    // null key means it will be the same as the replaced value
+                    this.target = target;
+                    this.key = key;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value) => target[key ?? value] = value;
+
+                #endregion
+            }
+
+            #endregion
+
+            #region OrderedDictionaryKeyUsage class
+
+            private sealed class OrderedDictionaryKeyUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IOrderedDictionary target;
+                private readonly int index;
+
+                #endregion
+
+                #region Constructors
+
+                internal OrderedDictionaryKeyUsage(IOrderedDictionary target, int index)
+                {
+                    this.target = target;
+                    this.index = index;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object key)
+                {
+                    object value = target[index];
+                    target.RemoveAt(index);
+                    target.Insert(index, key, value);
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            #region OrderedDictionaryValueUsage class
+
+            private sealed class OrderedDictionaryValueUsage : UsageReference
+            {
+                #region Fields
+
+                private readonly IOrderedDictionary target;
+                private readonly int index;
+
+                #endregion
+
+                #region Constructors
+
+                internal OrderedDictionaryValueUsage(IOrderedDictionary target, int index)
+                {
+                    this.target = target;
+                    this.index = index;
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal override void SetValue(object value) => target[index] = value;
+
+                #endregion
+            }
+
+            #endregion
+
             #endregion
 
             #region Fields
@@ -134,7 +376,7 @@ namespace KGySoft.Serialization
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
-            private Dictionary<IObjectReference, List<UsageReference>> incompleteObjectReferences;
+            private Dictionary<object, UsageReferences> objectsBeingDeserialized;
             private List<IDeserializationCallback> deserializationRegObjects;
 
             #endregion
@@ -149,8 +391,8 @@ namespace KGySoft.Serialization
             private List<DataTypeDescriptor> CachedTypes
                 => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
 
-            private Dictionary<IObjectReference, List<UsageReference>> IncompleteObjectReferences => incompleteObjectReferences
-                ??= new Dictionary<IObjectReference, List<UsageReference>>(1, ReferenceEqualityComparer<IObjectReference>.Comparer);
+            private Dictionary<object, UsageReferences> ObjectsBeingDeserialized => objectsBeingDeserialized
+                ??= new Dictionary<object, UsageReferences>(1, ReferenceEqualityComparer.Comparer);
 
             private int OmitAssemblyIndex => CachedAssemblies.Count;
             private int NewAssemblyIndex => CachedAssemblies.Count + 1;
@@ -262,6 +504,26 @@ namespace KGySoft.Serialization
                 int capacity = Read7BitInt(br);
                 return new StringBuilder(br.ReadString(), capacity);
             }
+
+            private static void ApplyPendingUsages(UsageReferences usages, object origObject, object finalObject)
+            {
+                if (finalObject == null)
+                    throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+
+                if (!usages.CanBeReplaced && origObject != finalObject)
+                {
+                    if (origObject is IObjectReference)
+                        throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+                    throw new SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject.GetType()));
+                }
+
+                // setting even if it did not change because in most cases the tracked objects were not set during the deserialization
+                foreach (UsageReference usage in usages)
+                    usage.SetValue(finalObject);
+            }
+
+            private static object GetPlaceholderValue(object value, [NoEnumeration]IEnumerable collection)
+                => value is IObjectReference ? collection.GetType().GetCollectionElementType().GetDefaultValue() : value;
 
             #endregion
 
@@ -582,7 +844,7 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < result.Length; i++)
                     {
                         object value = ReadElement(br, descriptor.ElementDescriptor);
-                        TrySetArray(result, value, i + offset);
+                        SetArrayElement(result, value, i + offset);
                     }
 
                     return result;
@@ -593,7 +855,7 @@ namespace KGySoft.Serialization
                 while (arrayIndexer.MoveNext())
                 {
                     object value = ReadElement(br, descriptor.ElementDescriptor);
-                    TrySetArray(result, value, arrayIndexer.Current);
+                    SetArrayElement(result, value, arrayIndexer.Current);
                 }
 
                 return result;
@@ -615,10 +877,16 @@ namespace KGySoft.Serialization
                         return cachedResult;
                 }
 
-                CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
+                var dataType = descriptor.CollectionDataType;
+                CollectionSerializationInfo serInfo = serializationInfo[dataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, out int count);
-
-                if (result is IEnumerable collection)
+                if (serInfo.IsSingleElement)
+                {
+                    object key = ReadElement(br, descriptor.ElementDescriptor);
+                    object value = ReadElement(br, descriptor.ValueDescriptor);
+                    SetKeyValue(result, key, value);
+                }
+                else if (result is IEnumerable collection)
                 {
                     MethodAccessor addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
                     for (int i = 0; i < count; i++)
@@ -630,7 +898,7 @@ namespace KGySoft.Serialization
                         {
                             if (addMethod != null)
                             {
-                                addMethod.Invoke(collection, element, value);
+                                AddDictionaryElement(collection, addMethod, element, value);
                                 continue;
                             }
 
@@ -638,26 +906,26 @@ namespace KGySoft.Serialization
                             if (value != null || !descriptor.IsGenericDictionary)
 #endif
                             {
-                                ((IDictionary)collection).Add(element, value);
+                                AddDictionaryElement((IDictionary)collection, element, value);
                                 continue;
                             }
 #if NET35
                             // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = serInfo.GetAddMethod(descriptor);
-                            addMethod.Invoke(collection, element, null);
+                            AddDictionaryElement(collection, addMethod, element, null);
                             continue;
 #endif
                         }
 
                         if (addMethod != null)
                         {
-                            addMethod.Invoke(collection, element);
+                            AddCollectionElement(collection, addMethod, element);
                             continue;
                         }
 
                         if (collection is IList list)
                         {
-                            list.Add(element);
+                            AddListElement(list, element);
                             continue;
                         }
 
@@ -843,9 +1111,6 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            /// <summary>
-            /// Deserializing object graph with options that was used on serialization.
-            /// </summary>
             [SecurityCritical]
             private object ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
@@ -860,65 +1125,64 @@ namespace KGySoft.Serialization
                         return cachedResult;
                 }
 
-                // deserialize
                 Type type = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
 
-                // a.) IsDefault flag
+                // IsDefault flag
                 bool isCustomObjectGraph = IsCustomSerialized(br, descriptor);
 
-                // b.) Types of custom serialized objects are always explicitly stored
+                // Types of custom serialized objects are always explicitly stored
                 bool isSealedElement = descriptor.ParentDescriptor != null && IsSealed(descriptor);
                 if (isCustomObjectGraph && isSealedElement)
                     type = ReadType(br, false).Type;
 
-                // c.) Reading members
-                if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+                // Creating initial instance, registration
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object obj))
                     throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
-                int id = 0;
-                if (addToCache)
-                    AddObjectToCache(result, out id);
-                OnDeserializing(result);
-
                 bool useSurrogate = TryGetSurrogate(type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector);
-                bool isISerializable = !IgnoreISerializable && result is ISerializable;
+                bool isISerializable = !IgnoreISerializable && obj is ISerializable;
+                IObjectReference objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
+                int id = 0;
+                UsageReferences usages = null;
+                bool trackUsages = useSurrogate || objRef != null;
 
-                // default graph was serialized
-                if (!isCustomObjectGraph)
+                // if the object can be possibly changed, then we prepare tracking its usage
+                if (trackUsages)
+                    ObjectsBeingDeserialized.Add(obj, usages = new UsageReferences());
+
+                if (addToCache)
+                    AddObjectToCache(obj, out id);
+
+                OnDeserializing(obj);
+
+                // The actual deserialization
+                object result = obj;
+                if (isISerializable || useSurrogate)
                 {
-                    if (!isISerializable && !useSurrogate)
-                    {
-                        // default graph should be deserialized
-                        ReadDefaultObjectGraph(br, result);
-                    }
-                    else
-                    {
-                        // the default graph should be deserialized either as ISerializable or by a surrogate
-                        ReadDefaultObjectGraphAsCustom(br, result, surrogate, selector);
-                    }
+                    result = isCustomObjectGraph
+                        ? ReadCustomObjectGraph(br, obj, surrogate, selector)
+                        : ReadDefaultObjectGraphAsCustom(br, obj, surrogate, selector);
                 }
-                // custom graph was serialized
-                else if (isISerializable || useSurrogate)
-                {
-                    // custom graph should be deserialized
-                    ReadCustomObjectGraph(br, result, surrogate, selector);
-                }
+                else if (isCustomObjectGraph)
+                    ReadCustomObjectGraphAsDefault(br, obj);
                 else
+                    ReadDefaultObjectGraph(br, obj);
+
+                // if type result is IObjectReference, then calling its GetRealObject to return something
+                if (objRef != null)
+                    result = objRef.GetRealObject(Context);
+
+                // some post administration if the object was registered for tracking usages
+                if (trackUsages)
                 {
-                    // the custom graph should be deserialized as a default object by setting fields
-                    ReadCustomObjectGraphAsDefault(br, result);
+                    ApplyPendingUsages(usages, obj, result);
+
+                    if (result != obj && addToCache)
+                        ReplaceObjectInCache(id, result);
+
+                    ObjectsBeingDeserialized.Remove(obj);
                 }
 
                 OnDeserialized(result);
-
-                // if type result is IObjectReference, then calling its GetRealObject to return something
-                if (!IgnoreIObjectReference && result is IObjectReference objRef)
-                {
-                    result = objRef.GetRealObject(Context);
-                    UpdateReferences(objRef, result);
-                    if (addToCache)
-                        ReplaceObjectInCache(id, result);
-                }
-
                 return result;
             }
 
@@ -969,7 +1233,7 @@ namespace KGySoft.Serialization
                         if (field.IsNotSerialized)
                             continue;
 
-                        TrySetField(field, obj, value);
+                        SetField(field, obj, value);
                     }
                 }
 
@@ -993,7 +1257,7 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private void ReadCustomObjectGraph(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
+            private object ReadCustomObjectGraph(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
             {
                 Type type = obj.GetType();
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
@@ -1013,18 +1277,15 @@ namespace KGySoft.Serialization
                 {
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
                         throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                    return obj;
                 }
-                else
-                {
-                    // Using surrogate
-                    object result = surrogate.SetObjectData(obj, si, Context, selector);
-                    if (obj != result)
-                        throw new NotSupportedException(Res.BinarySerializationSurrogateChangedObject(type));
-                }
+
+                // Using surrogate
+                return surrogate.SetObjectData(obj, si, Context, selector);
             }
 
             [SecurityCritical]
-            private void ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
+            private object ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
             {
                 Type type = obj.GetType();
 
@@ -1062,14 +1323,11 @@ namespace KGySoft.Serialization
                     // As ISerializable: Invoking serialization constructor
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
                         throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                    return obj;
                 }
-                else
-                {
-                    // Using surrogate
-                    object result = surrogate.SetObjectData(obj, si, Context, selector);
-                    if (obj != result)
-                        throw new NotSupportedException(Res.BinarySerializationSurrogateChangedObject(type));
-                }
+
+                // Using surrogate
+                return surrogate.SetObjectData(obj, si, Context, selector);
             }
 
             [SecurityCritical]
@@ -1091,7 +1349,7 @@ namespace KGySoft.Serialization
                     {
                         if (field.IsNotSerialized)
                             continue;
-                        TrySetField(field, obj, value);
+                        SetField(field, obj, value);
                         continue;
                     }
 
@@ -1155,27 +1413,22 @@ namespace KGySoft.Serialization
                 return false;
             }
 
-            private void TrySetField(FieldInfo field, object obj, object value)
+            private void SetField(FieldInfo field, object obj, object value)
             {
-                if (IgnoreIObjectReference || !(value is IObjectReference objRef))
+                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (trackedUsages == null)
                 {
                     field.Set(obj, value);
                     return;
                 }
 
-                // the object reference cannot be set yet so storing the new usage of the reference to be set later.
-                if (!IncompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
-                {
-                    refUsages = new List<UsageReference>();
-                    incompleteObjectReferences.Add(objRef, refUsages);
-                }
-
-                refUsages.Add(new FieldUsage(obj, field));
+                trackedUsages.Add(new FieldUsage(obj, field));
             }
 
-            private void TrySetArray(Array array, object value, params int[] indices)
+            private void SetArrayElement(Array array, object value, params int[] indices)
             {
-                if (IgnoreIObjectReference || !(value is IObjectReference objRef))
+                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (trackedUsages == null)
                 {
                     if (indices.Length == 1)
                         array.SetValue(value, indices[0]);
@@ -1184,41 +1437,177 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // the object reference cannot be set yet so storing the new usage of the reference to be set later.
-                if (!IncompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
+                trackedUsages.Add(new ArrayUsage(array, indices));
+            }
+
+            private void AddListElement(IList list, object value)
+            {
+                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (trackedUsages == null)
                 {
-                    refUsages = new List<UsageReference>();
-                    incompleteObjectReferences.Add(objRef, refUsages);
+                    list.Add(value);
+                    return;
                 }
 
-                refUsages.Add(new ArrayUsage(array, indices));
+                // though we can't add the final item now we add a placeholder so the index will be valid
+                int index = list.Count;
+                list.Add(GetPlaceholderValue(value, list));
+                trackedUsages.Add(new ListUsage(list, index));
+            }
+
+            private void AddCollectionElement([NoEnumeration]IEnumerable collection, MethodAccessor addMethod, object value)
+            {
+                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (trackedUsages == null)
+                {
+                    addMethod.Invoke(collection, value);
+                    return;
+                }
+
+                Type type = collection.GetType();
+
+                // LinkedList: adding a placeholder node that can be replaced later
+                if (type.IsGenericTypeOf(typeof(LinkedList<>)))
+                {
+                    object node = Reflector.CreateInstance(typeof(LinkedListNode<>), new[] { type.GetGenericArguments()[0] }, GetPlaceholderValue(value, collection));
+                    Reflector.InvokeMethod(collection, nameof(LinkedList<_>.AddLast), node);
+                    trackedUsages.Add(new LinkedListUsage(collection, node));
+                    return;
+                }
+
+                // Any other generic ICollection: supposing that collection is unordered
+                if (type.IsImplementationOfGenericType(Reflector.ICollectionGenType))
+                {
+                    trackedUsages.Add(new CollectionUsage(collection, addMethod));
+                    return;
+                }
+
+                // Adding if item is compatible, cannot be replaced
+                if (!addMethod.ParameterTypes[0].CanAcceptValue(value))
+                    throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+
+                trackedUsages.CanBeReplaced = false;
+                addMethod.Invoke(collection, value);
+            }
+
+            private void AddDictionaryElement(IDictionary dict, object key, object value)
+            {
+                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)
+                {
+                    // ReSharper disable once AssignNullToNotNullAttribute - though it is really a problem at most dictionaries we let the exception come if the key is really null
+                    dict.Add(key, value);
+                    return;
+                }
+
+                // OrderedDictionary: we need to add a placeholder item to maintain the correct order
+                if (dict is IOrderedDictionary orderedDictionary)
+                {
+                    int index = dict.Count;
+
+                    // we exploit that the supported ordered dictionary is non generic
+                    object placeholderKey = keyUsages == null ? key : new object();
+                    object placeholderValue = valueUsages == null ? value : null;
+
+                    // ReSharper disable once AssignNullToNotNullAttribute - placeholderKey is not null here
+                    dict.Add(placeholderKey, placeholderValue);
+
+                    keyUsages?.Add(new OrderedDictionaryKeyUsage(orderedDictionary, index));
+                    valueUsages?.Add(new OrderedDictionaryValueUsage(orderedDictionary, index));
+                    return;
+                }
+               
+                // Unordered dictionaries: if both key and value are being deserialized, than that is an issue unless they are not replaced.
+                if (keyUsages != null && valueUsages != null)
+                {
+                    // the same values: null key indicates that it will be same as the resolved value
+                    if (key == value)
+                    {
+                        valueUsages.Add(new DictionaryValueUsage(dict, null));
+                        return;
+                    }
+
+                    // They are different: we don't support their replacement. This could be solved if we put every resolved object in a cache first and then
+                    // do the replacements but this edge-case scenario isn't worth the effort. And this can be avoided by forcing recursive serialization.
+                    keyUsages.CanBeReplaced = false;
+                    valueUsages.CanBeReplaced = false;
+                    Type type = dict.GetType();
+                    var elementTypes = type.GetCollectionElementType().GetGenericArguments();
+                    var keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
+                        ? key
+                        : throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    var valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
+                        ? value
+                        : throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    dict.Add(keyToAdd, valueToAdd);
+                    return;
+                }
+
+                // Adding the possible usages. Both key and value can be replaced at the same time for ordered dictionaries only.
+                keyUsages?.Add(new DictionaryKeyUsage(dict, value));
+                valueUsages?.Add(new DictionaryValueUsage(dict, key));
+            }
+
+            private void AddDictionaryElement(object dictionary, MethodAccessor addMethod, object key, object value)
+            {
+                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (keyUsages != null || valueUsages != null)
+                {
+                    Debug.Assert(dictionary is IDictionary, "IDictionary is expected here");
+                    AddDictionaryElement((IDictionary)dictionary, key, value);
+                    return;
+                }
+
+                addMethod.Invoke(dictionary, key, value);
+            }
+
+            private void SetKeyValue(object obj, object key, object value)
+            {
+                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)
+                {
+                    Accessors.SetKeyValue(obj, key, value);
+                    return;
+                }
+
+                // Since KeyValuePair/DictionaryEntry are value types, late setting the key/value works only if the boxed reference "obj"
+                // is the final object itself. Otherwise, the late setting will not occur at the real destination.
+                // It still can be alright though, if an IObjectReference.GetRealObject returns a correct instance and obj is discarded anyway.
+                Type type = obj.GetType();
+
+                FieldInfo keyField = type.GetFieldInfo(nameof(key));
+                if (keyUsages == null)
+                    keyField.Set(obj, key);
+                else
+                    keyUsages.Add(new FieldUsage(obj, keyField));
+
+                FieldInfo valueField = type.GetFieldInfo(nameof(value));
+                if (valueUsages == null)
+                    valueField.Set(obj, value);
+                else
+                    valueUsages.Add(new FieldUsage(obj, valueField));
             }
 
             private void CheckReferences(SerializationInfo si)
             {
-                if (incompleteObjectReferences == null)
+                if (objectsBeingDeserialized == null)
                     return;
 
                 // circular IObjectReferences can be resolved after all, except if custom deserialization is used for unresolved references
                 foreach (SerializationEntry entry in si)
                 {
-                    if (entry.Value is IObjectReference objRef && incompleteObjectReferences.ContainsKey(objRef))
-                        throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+                    if (entry.Value == null)
+                        continue;
+                    if (objectsBeingDeserialized.TryGetValue(entry.Value, out UsageReferences usages))
+                    {
+                        if (entry.Value is IObjectReference)
+                            throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+                        usages.CanBeReplaced = false;
+                    }
                 }
-            }
-
-            private void UpdateReferences(IObjectReference objRef, object realObject)
-            {
-                if (incompleteObjectReferences == null || !incompleteObjectReferences.TryGetValue(objRef, out List<UsageReference> refUsages))
-                    return;
-
-                if (realObject == null)
-                    throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
-
-                foreach (UsageReference usage in refUsages)
-                    usage.SetValue(realObject);
-
-                incompleteObjectReferences.Remove(objRef);
             }
 
             /// <summary>
