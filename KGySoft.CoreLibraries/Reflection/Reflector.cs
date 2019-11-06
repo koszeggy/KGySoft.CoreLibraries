@@ -1605,7 +1605,7 @@ namespace KGySoft.Reflection
             result = null;
 
             Exception lastException = null;
-            for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
+            for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
