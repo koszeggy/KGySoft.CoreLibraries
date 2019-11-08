@@ -1033,7 +1033,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type System.Int32: 13 <-> 0");
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type Int32: 13 <-> 0");
         }
 
         /// <summary>
