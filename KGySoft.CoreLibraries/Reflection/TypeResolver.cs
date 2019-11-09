@@ -236,10 +236,6 @@ namespace KGySoft.Reflection
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
         private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> typeNameCache;
 
-#if !NETFRAMEWORK
-        private static Assembly mscorlibAssembly;
-#endif
-
         #endregion
 
         #region Instance Fields
@@ -270,10 +266,6 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> TypeNameCache
             => typeNameCache ??= new Cache<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
-
-#if !NETFRAMEWORK
-        private static Assembly MscorlibAssembly => mscorlibAssembly ??= AssemblyResolver.ResolveAssembly("mscorlib", ResolveAssemblyOptions.TryToLoadAssembly);
-#endif
 
         #endregion
 
@@ -1045,7 +1037,7 @@ namespace KGySoft.Reflection
                     TypeResolver arg = genericArgs[i];
                     bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
-                            && !(arg.assemblyName ?? arg.declaringType?.assemblyName).In(null, Reflector.SystemCoreLibrariesAssemblyName);
+                            && !AssemblyResolver.IsCoreLibAssemblyName(arg.assemblyName ?? arg.declaringType?.assemblyName);
                     if (aqn)
                         sb.Append('[');
                     arg.DumpName(sb, kind);
@@ -1102,7 +1094,8 @@ namespace KGySoft.Reflection
             {
                 if (assemblyName == null
                     || !(kind == TypeNameKind.ForcedAssemblyQualifiedName
-                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions) && assemblyName != Reflector.SystemCoreLibrariesAssemblyName))
+                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
+                        && !AssemblyResolver.IsCoreLibAssemblyName(assemblyName)))
                 {
                     return;
                 }
@@ -1253,7 +1246,7 @@ namespace KGySoft.Reflection
             else if (assemblyName == null)
             {
                 // We are not throwing an exception from here because on failure we try all assemblies
-                result = typeResolver?.Invoke(null, rootName) ?? MscorlibAssembly?.GetType(rootName, false, ignoreCase);
+                result = typeResolver?.Invoke(null, rootName) ?? AssemblyResolver.MscorlibAssembly?.GetType(rootName, false, ignoreCase);
                 if (result != null)
                     return result;
             }

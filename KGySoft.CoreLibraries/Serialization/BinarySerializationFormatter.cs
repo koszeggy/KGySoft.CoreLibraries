@@ -25,6 +25,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 #if !NET35
@@ -113,7 +114,8 @@ namespace KGySoft.Serialization
     /// the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option is enabled for the serialization.</para>
     /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations.
     /// <note type="tip">A <see cref="SerializationBinder"/> can be used to deserialize types of unmatching assembly identity and to specify custom type-name mappings in both directions.
-    /// For example, if you need to resolve types from different .NET platform targets, then you can use the <see cref="ForwardedTypesSerializationBinder"/>.
+    /// Though <see cref="BinarySerializationFormatter"/> automatically handles <see cref="TypeForwardedToAttribute"/> and <see cref="TypeForwardedFromAttribute"/> (see also
+    /// the <see cref="BinarySerializationOptions.IgnoreTypeForwardedFromAttribute"/> option), you can use also the <see cref="ForwardedTypesSerializationBinder"/>, especially for types without a defined forwarding.
     /// The <see cref="WeakAssemblySerializationBinder"/> can also be general solution if you need to ignore the assembly version or the complete assembly identity on resolving a type.
     /// If the name of the type has also been changed, then the <see cref="CustomSerializationBinder"/> can be used.
     /// See also the <strong>Remarks</strong> section of the <see cref="Binder"/> property for more details.</note>
@@ -915,8 +917,9 @@ namespace KGySoft.Serialization
         /// Instead, the binder is called only for the element types, the generic type definition and the generic arguments separately.</para>
         /// <note>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
         /// the <see cref="ISerializationBinder"/> interface.</note>
-        /// <note type="tip">To ensure emitting compatible assembly identities on different .NET platforms use the <see cref="ForwardedTypesSerializationBinder"/>
-        /// and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
+        /// <note type="tip">If you serialize forwarded types that have no defined forwarding by the <see cref="TypeForwardedToAttribute"/> and <see cref="TypeForwardedFromAttribute"/>
+        /// attributes, then to ensure emitting compatible assembly identities on different .NET platforms use the <see cref="ForwardedTypesSerializationBinder"/>,
+        /// define the missing mappings by the <see cref="ForwardedTypesSerializationBinder.AddType">AddType</see> method and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
         /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
         /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
         /// </remarks>

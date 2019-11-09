@@ -26,7 +26,7 @@ namespace KGySoft.Serialization
 {
     /// <summary>
     /// Provides a very simple customizable <see cref="SerializationBinder"/> that can convert <see cref="Type"/> to and from <see cref="string">string</see>
-    /// for serialization by using assignable delegate properties.
+    /// by using assignable delegate properties.
     /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <example>
@@ -43,6 +43,8 @@ namespace KGySoft.Serialization
     /// <note type="tip">If the inner structure of the type has also been changed, then you can use the
     /// <see cref="CustomSerializerSurrogateSelector"/> class.</note>
     /// </example>
+    /// <seealso cref="ForwardedTypesSerializationBinder"/>
+    /// <seealso cref="WeakAssemblySerializationBinder"/>
     public sealed class CustomSerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Properties

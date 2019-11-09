@@ -113,9 +113,9 @@ namespace KGySoft.Serialization
             if (!OmitAssemblyNameOnSerialize)
                 return;
 
-            // mscorlib is handled natively so is not omitted
+            // mscorlib/System.Private.CoreLib/netstandard is handled natively so is not omitted
             // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
-            if (serializedType.Assembly != Reflector.SystemCoreLibrariesAssembly)
+            if (!AssemblyResolver.IsCoreLibAssemblyName(serializedType.Assembly.FullName))
                 assemblyName = omittedAssemblyName;
 
             // generic type arguments contains assembly info as well so stripping name for generics

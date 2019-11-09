@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -109,7 +110,15 @@ namespace KGySoft.Serialization
         /// </summary>
         IgnoreObjectChanges = 1 << 6,
 
-        // Reserved: = 1 << 7 // Was used internally to indicate that options require two bytes but the options are not saved in the stream anymore.
+        /// <summary>
+        /// <para>When this flag is enabled, every type will be serialized with its actual assembly identity rather than considering
+        /// the value of an existing <see cref="TypeForwardedFromAttribute"/>.</para>
+        /// <para>This flag is ignored if <see cref="OmitAssemblyQualifiedNames"/> is enabled.</para>
+        /// <para>This flag is considered on serialization.
+        /// <note>Enabling this flag may cause that the type will not be able to be deserialized on a different platform, or at least not without using a <see cref="SerializationBinder"/>.</note></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// </summary>
+        IgnoreTypeForwardedFromAttribute = 1 << 7,
 
         /// <summary>
         /// <para>This flag ignores <see cref="ISerializable"/> implementations forcing to serialize a default object graph (unless an applicable surrogate is defined).</para>

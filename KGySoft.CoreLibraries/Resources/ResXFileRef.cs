@@ -22,6 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -269,7 +270,7 @@ namespace KGySoft.Resources
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             this.fileName = fileName;
-            typeName = type.Assembly == Reflector.SystemCoreLibrariesAssembly ? type.FullName : type.AssemblyQualifiedName;
+            typeName = type.GetName(TypeNameKind.AssemblyQualifiedName);
             if (textFileEncoding != null)
             {
                 this.textFileEncoding = textFileEncoding;

@@ -629,10 +629,8 @@ namespace KGySoft.Serialization
                     // assembly qualified name (GetType uses binder if set)
                     string storedAssemblyName = br.ReadString();
                     string storedTypeName = br.ReadString();
-                    type = GetType(storedAssemblyName, storedTypeName);
-                    result = new DataTypeDescriptor(type, new TypeByString(storedAssemblyName, storedTypeName));
-                    CachedAssemblies.Add((type.Assembly, storedAssemblyName));
-                    CachedTypes.Add(result);
+                    result = ReadNewTypeWithAssembly(storedAssemblyName, storedTypeName);
+                    type = result.Type;
                     if (type.IsGenericTypeDefinition)
                         result = HandleGenericTypeDef(br, result, allowOpenTypes);
                     return result;
@@ -649,7 +647,7 @@ namespace KGySoft.Serialization
 
                 string typeName = br.ReadString();
                 type = ReadBoundType(assembly.StoredName, typeName)
-                    ?? (assembly.Assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
+                    ?? (assembly.StoredName == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
                     ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
                 result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
@@ -1610,28 +1608,25 @@ namespace KGySoft.Serialization
                 }
             }
 
-            /// <summary>
-            /// Resolves a type by string. Here neither the assembly nor the type is resolved yet.
-            /// </summary>
-            private Type GetType(string assemblyName, string typeName)
+            private DataTypeDescriptor ReadNewTypeWithAssembly(string assemblyName, string typeName)
             {
                 string key = assemblyName + ":" + typeName;
-                if (typeByNameCache != null && typeByNameCache.TryGetValue(key, out Type result))
-                    return result;
-
-                result = ReadBoundType(assemblyName, typeName);
-                if (result != null)
+                Type type = ReadBoundType(assemblyName, typeName);
+                if (type != null)
+                    CachedAssemblies.Add((type.Assembly, assemblyName));
+                else
                 {
-                    AddTypeToCache(key, result);
-                    return result;
+
+                    Assembly assembly = GetAssembly(assemblyName);
+                    type = Reflector.ResolveType(assembly, typeName);
+                    if (type == null)
+                        throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
+                    CachedAssemblies.Add((assembly, assemblyName));
                 }
 
-                Assembly assembly = GetAssembly(assemblyName);
-                result = Reflector.ResolveType(assembly, typeName);
-                if (result == null)
-                    throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
-
-                AddTypeToCache(key, result);
+                var result = new DataTypeDescriptor(type, new TypeByString(assemblyName, typeName));
+                CachedTypes.Add(result);
+                AddTypeToCache(key, type);
                 return result;
             }
 

@@ -51,8 +51,8 @@ namespace KGySoft.Serialization
             private protected static readonly Assembly[] KnownAssemblies =
             {
                 // Do not add more assemblies. We must stay consistent on different platforms.
-                Reflector.SystemCoreLibrariesAssembly,
-                Reflector.KGySoftCoreLibrariesAssembly
+                AssemblyResolver.CoreLibrariesAssembly, // and for compatibility, mscorlib maps also here on every platform
+                AssemblyResolver.KGySoftCoreLibrariesAssembly
             };
 
             /// <summary>
@@ -132,6 +132,7 @@ namespace KGySoft.Serialization
             private protected bool IgnoreIObjectReference => (Options & BinarySerializationOptions.IgnoreIObjectReference) != BinarySerializationOptions.None;
             private protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
             private protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
+            private protected bool IgnoreTypeForwardedFromAttribute => (Options & BinarySerializationOptions.IgnoreTypeForwardedFromAttribute) != BinarySerializationOptions.None;
 
             private protected Dictionary<MemberInfo, TypeAttributes> TypeAttributesCache => typeAttributes ??= new Dictionary<MemberInfo, TypeAttributes>();
 

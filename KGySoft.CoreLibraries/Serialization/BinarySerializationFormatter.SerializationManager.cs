@@ -1356,8 +1356,8 @@ namespace KGySoft.Serialization
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter),
                     $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
-                string binderAsmName = null;
-                string binderTypeName = null;
+                string boundAsmName = null;
+                string boundTypeName = null;
 
                 // 1.) Checking if type is already known without binder (because maybe it is an encoded supported type).
                 int index = GetTypeIndex(type);
@@ -1372,11 +1372,9 @@ namespace KGySoft.Serialization
                     }
 
                     // 3.) Checking if type is already known. Binder is queried for root types only.
-                    if (Binder != null)
-                    {
-                        GetBoundNames(type, out binderAsmName, out binderTypeName);
-                        index = GetTypeIndex(type, binderAsmName, binderTypeName);
-                    }
+                    GetBoundNames(type, out boundAsmName, out boundTypeName);
+                    if (boundAsmName != null || boundTypeName != null)
+                        index = GetTypeIndex(type, boundAsmName, boundTypeName);
                 }
 
                 // The requested type (including constructed ones and parameters) is known
@@ -1396,19 +1394,25 @@ namespace KGySoft.Serialization
                 }
 
                 // 5.) Writing new type
-                WriteNewType(bw, type, allowOpenTypes, binderAsmName, binderTypeName);
+                WriteNewType(bw, type, allowOpenTypes, boundAsmName, boundTypeName);
             }
 
-            private void GetBoundNames(Type type, out string binderAsmName, out string binderTypeName)
+            private void GetBoundNames(Type type, out string boundAsmName, out string boundTypeName)
             {
                 Debug.Assert(!type.HasElementType, $"Arrays, pointers and ByRef types should be handled by {nameof(TryWriteTypeByDataType)}");
 
-                binderAsmName = null;
-                binderTypeName = null;
+                boundAsmName = null;
+                boundTypeName = null;
 
                 // Constructed generics, generic parameters and known types and non-root types are never bound
-                if (Binder == null || type.IsConstructedGenericType() || TypeIndexCache.ContainsKey(type) || type.IsGenericParameter)
+                if (type.IsConstructedGenericType() || TypeIndexCache.ContainsKey(type) || type.IsGenericParameter)
                     return;
+
+                if (Binder == null)
+                {
+                    boundAsmName = GetForwardedAssemblyName(type, true);
+                    return;
+                }
 
                 Debug.Assert(type.FullName != null, "A root type is expected here");
 
@@ -1417,27 +1421,39 @@ namespace KGySoft.Serialization
 
                 if (binderCache.TryGetValue(type, out (string AssemblyName, string TypeName) result))
                 {
-                    binderAsmName = result.AssemblyName;
-                    binderTypeName = result.TypeName;
+                    boundAsmName = result.AssemblyName;
+                    boundTypeName = result.TypeName;
                     return;
                 }
 
                 if (Binder is ISerializationBinder binder)
-                    binder.BindToName(type, out binderAsmName, out binderTypeName);
+                    binder.BindToName(type, out boundAsmName, out boundTypeName);
 #if !NET35
                 else
-                    Binder.BindToName(type, out binderAsmName, out binderTypeName);
+                    Binder.BindToName(type, out boundAsmName, out boundTypeName);
 #endif
 
-                binderCache.Add(type, (binderAsmName, binderTypeName));
+                binderCache.Add(type, (boundAsmName ?? GetForwardedAssemblyName(type, true), boundTypeName));
             }
 
-            private int GetAssemblyIndex(Type type, string binderAsmName)
-                => OmitAssemblyQualifiedNames
-                    ? OmitAssemblyIndex
-                    : binderAsmName == null
-                        ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
-                        : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
+            private string GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
+                => IgnoreTypeForwardedFromAttribute ? null : AssemblyResolver.GetForwardedAssemblyName(type, omitIfCoreLibrary);
+
+            private int GetAssemblyIndex(Type type, string boundAsmName)
+            {
+                if (OmitAssemblyQualifiedNames)
+                    return OmitAssemblyIndex;
+                if (boundAsmName == null && !IgnoreTypeForwardedFromAttribute)
+                {
+                    boundAsmName = GetForwardedAssemblyName(type, false);
+                    if (boundAsmName != null && AssemblyResolver.IsCoreLibAssemblyName(boundAsmName))
+                        return 0;
+                }
+
+                return boundAsmName == null
+                    ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
+                    : AssemblyNameIndexCache.GetValueOrDefault(boundAsmName, -1);
+            }
 
             private int GetTypeIndex(Type type, string boundAsmName = null, string boundTypeName = null)
                 => boundAsmName == null && boundTypeName == null
@@ -1558,13 +1574,13 @@ namespace KGySoft.Serialization
                 return true;
             }
 
-            private void WriteNewAssembly(BinaryWriter bw, Assembly assembly, string binderAsmName)
+            private void WriteNewAssembly(BinaryWriter bw, Assembly assembly, string boundAsmName)
             {
-                // by binder
-                if (binderAsmName != null)
+                // by binder or forwarded name
+                if (boundAsmName != null)
                 {
-                    bw.Write(binderAsmName);
-                    AssemblyNameIndexCache.Add(binderAsmName, AssemblyIndexCacheCount);
+                    bw.Write(boundAsmName);
+                    AssemblyNameIndexCache.Add(boundAsmName, AssemblyIndexCacheCount);
                     return;
                 }
 
@@ -1577,7 +1593,7 @@ namespace KGySoft.Serialization
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
-            private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string binderAsmName, string binderTypeName)
+            private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string boundAsmName, string boundTypeName)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
@@ -1590,14 +1606,14 @@ namespace KGySoft.Serialization
 
                 // Actualizing bound names if needed
                 if (rootType != type)
-                    GetBoundNames(rootType, out binderAsmName, out binderTypeName);
+                    GetBoundNames(rootType, out boundAsmName, out boundTypeName);
 
                 // 1.) Type index
                 bool isNewType = false;
                 int index;
 
                 // It can happen that the generic type definition is already known.
-                if (typeDef != null && (index = GetTypeIndex(typeDef, binderAsmName, binderTypeName)) != -1)
+                if (typeDef != null && (index = GetTypeIndex(typeDef, boundAsmName, boundTypeName)) != -1)
                     Debug.Assert(type != rootType && !isTypeDef, $"If the generic type definition was the requested type and it was known, it should have been written in {nameof(WriteType)}");
                 else
                 {
@@ -1610,7 +1626,7 @@ namespace KGySoft.Serialization
                 // 2.) New type: Assembly index (and name for new ones)
                 if (isNewType)
                 {
-                    index = GetAssemblyIndex(rootType, binderAsmName);
+                    index = GetAssemblyIndex(rootType, boundAsmName);
 
                     // known assembly
                     if (index != -1)
@@ -1621,14 +1637,14 @@ namespace KGySoft.Serialization
                         Write7BitInt(bw, NewAssemblyIndex);
 
                         // ReSharper disable once PossibleNullReferenceException - root type is never null here
-                        WriteNewAssembly(bw, rootType.Assembly, binderAsmName);
+                        WriteNewAssembly(bw, rootType.Assembly, boundAsmName);
                     }
 
                     // 3.) Root type name of new type
                     // ReSharper disable once AssignNullToNotNullAttribute - FullName is not null for the root type
                     // ReSharper disable once PossibleNullReferenceException - root type is never null here
-                    bw.Write(binderTypeName ?? rootType.FullName);
-                    AddToTypeCache(rootType, binderAsmName, binderTypeName);
+                    bw.Write(boundTypeName ?? rootType.FullName);
+                    AddToTypeCache(rootType, boundAsmName, boundTypeName);
 
                     // for non generics we are done
                     if (typeDef == null)

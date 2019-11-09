@@ -119,11 +119,6 @@ namespace KGySoft.Reflection
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
 
-        internal static readonly Assembly SystemCoreLibrariesAssembly = ObjectType.Assembly;
-        internal static readonly Assembly KGySoftCoreLibrariesAssembly = typeof(Reflector).Assembly;
-
-        internal static readonly string SystemCoreLibrariesAssemblyName = SystemCoreLibrariesAssembly.FullName;
-
         #endregion
 
         #region Private Fields
@@ -138,7 +133,7 @@ namespace KGySoft.Reflection
         #region Properties
 
         private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache
-            => defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor());
+            => defaultMemberCache ??= new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor();
 
         #endregion
 

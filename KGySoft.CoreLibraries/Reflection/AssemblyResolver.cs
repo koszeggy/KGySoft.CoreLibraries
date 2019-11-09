@@ -22,7 +22,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NETFRAMEWORK && !NET35
+using System.Runtime.CompilerServices;
+#if !NET35
 using System.Security;
 #endif
 
@@ -38,22 +39,71 @@ namespace KGySoft.Reflection
 {
     internal static class AssemblyResolver
     {
-#region Fields
+        #region Constants
 
+        private const string mscorlibName = "mscorlib";
+
+        #endregion
+
+        #region Fields
+
+        #region Internal Fields
+
+        internal static readonly Assembly KGySoftCoreLibrariesAssembly = typeof(AssemblyResolver).Assembly;
+        internal static readonly Assembly CoreLibrariesAssembly = typeof(object).Assembly; // it is mscorlib only in .NET Framework
+
+        #endregion
+
+        #region Private Fields
+
+        private static Assembly mscorlibAssembly;
         private static LockingDictionary<string, Assembly> assemblyCache;
 
-#endregion
+#if !NET35
+        private static IThreadSafeCacheAccessor<Type, (string, bool)> forwardedNamesCache; 
+#endif
 
-#region Properties
+        private static readonly string[] coreLibNames =
+        {
+            CoreLibrariesAssembly.FullName.Split(',')[0].ToLowerInvariant(), // could be by GetName but that requires FileIOPermission
+#if !NETFRAMEWORK
+            mscorlibName
+#endif
+        };
+
+        #endregion
+
+        #endregion
+
+        #region Properties
+
+        #region Internal Properties
+
+        internal static Assembly MscorlibAssembly => mscorlibAssembly ??=
+#if !NETFRAMEWORK
+            ResolveAssembly(mscorlibName, ResolveAssemblyOptions.TryToLoadAssembly) ??
+#endif
+            typeof(object).Assembly;
+
+        #endregion
+
+        #region Private Properties
 
         private static LockingDictionary<string, Assembly> AssemblyCache
             => assemblyCache ??= new Cache<string, Assembly>().AsThreadSafe();
 
-#endregion
+#if !NET35
+        private static IThreadSafeCacheAccessor<Type, (string ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
+            => forwardedNamesCache ??= new Cache<Type, (string, bool)>(DoGetForwardedAssemblyName).GetThreadSafeAccessor();
+#endif
 
-#region Methods
+        #endregion
 
-#region Internal Methods
+        #endregion
+
+        #region Methods
+
+        #region Internal Methods
 
         internal static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
         {
@@ -94,7 +144,7 @@ namespace KGySoft.Reflection
                 return false;
 
             // Different name: skip
-            if (toCheck.Name != refName.Name)
+            if (!String.Equals(toCheck.Name, refName.Name, StringComparison.OrdinalIgnoreCase))
                 return false;
 
             // Here name matches. In case of partial match we are done.
@@ -116,9 +166,25 @@ namespace KGySoft.Reflection
                 || publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
         }
 
-#endregion
+        internal static bool IsCoreLibAssemblyName(string assemblyName)
+        {
+            string name = assemblyName.Split(new[] { ',' }, 2)[0].ToLowerInvariant();
+            return name.In(coreLibNames);
+        }
 
-#region Private Methods
+        internal static string GetForwardedAssemblyName(Type type, in bool omitIfCoreLibrary)
+        {
+#if NET35
+            return null;
+#else
+            var name = ForwardedNamesCache[type];
+            return omitIfCoreLibrary && name.IsCoreIdentity ? null : name.ForwardedAssemblyName;
+#endif
+        }
+
+        #endregion
+
+        #region Private Methods
 
         private static Assembly GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
@@ -175,7 +241,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
-#if NETFRAMEWORK && !NET35
+#if !NET35
         [SecuritySafeCritical]
 #endif
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
@@ -236,8 +302,18 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
         }
 
-#endregion
+        private static (string, bool) DoGetForwardedAssemblyName(Type type)
+        {
+#if !NET35
+            if (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
+                return (attr.AssemblyFullName, IsCoreLibAssemblyName(attr.AssemblyFullName));
+#endif
 
-#endregion
+            return default;
+        }
+
+        #endregion
+
+        #endregion
     }
 }

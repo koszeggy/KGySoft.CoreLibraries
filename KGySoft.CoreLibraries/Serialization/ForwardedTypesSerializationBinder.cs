@@ -38,14 +38,18 @@ namespace KGySoft.Serialization
     /// </summary>
     /// <remarks>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
-    /// assemblies work automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
+    /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
-    /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, and no types are added to the binder, then
-    /// types, which are decorated by the <see cref="TypeForwardedFromAttribute"/> attribute will be serialized by the old identity.
-    /// For deserializing such types this binder is not needed to be set.</para>
     /// <para>To resolve types that are no forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
     /// given identity use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
     /// <see cref="AddTypes">AddTypes</see> methods.</para>
+    /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, and no types are added to the binder, then
+    /// mapping works also on serialization. For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/>
+    /// attribute will be written if it is defined.
+    /// <note>By default, both <see cref="BinaryFormatter"/> and <see cref="BinarySerializationFormatter"/> dumps legacy identities on serialization
+    /// for types decorated by the <see cref="TypeForwardedFromAttribute"/>. If you use this binder on serialization without adding any type
+    /// just after setting the <see cref="WriteLegacyIdentity"/> to <see langword="true"/>, then the only difference will be that even the <c>mscorlib</c> assembly
+    /// name will be dumped to the output stream, which would be omitted otherwise.</note></para>
     /// <para>To serialize types with arbitrary assembly identity, use this binder both for serialization and deserialization.
     /// Add the type to be handled by the <see cref="AddType">AddType</see> method and specify at least one <see cref="AssemblyName"/>
     /// for each added <see cref="Type"/>.</para>
@@ -67,13 +71,13 @@ namespace KGySoft.Serialization
     /// // MyOtherType will be able to be deserialized if it was serialized by any versions of MyAssembly.
     /// binder.AddType(typeof(MyOtherType), new AssemblyName("MyAssembly"));
     ///
-    /// // Any type of any assembly will be will be mapped to SomeOtherType if their full names match.
+    /// // Any type of any assembly will be mapped to SomeOtherType if their full names match.
     /// binder.AddType(typeof(SomeOtherType));
     ///
     /// // Multiple types can be enlisted without assembly identity
     /// binder.AddTypes(typeof(MyType), typeof(MyOtherType), typeof(SomeOtherType));
     ///
-    /// // Works also with the traditional BinaryFormatter!
+    /// // Works also with the classic BinaryFormatter!
     /// IFormatter formatter = new BinarySerializationFormatter { Binder = binder };
     /// object result = formatter.Deserialize(serializationStream);
     /// ]]></code></para>
@@ -107,6 +111,7 @@ namespace KGySoft.Serialization
     /// the <see cref="CustomSerializerSurrogateSelector"/> class.</note>
     /// </example>
     /// <seealso cref="WeakAssemblySerializationBinder"/>
+    /// <seealso cref="CustomSerializationBinder"/>
     public sealed class ForwardedTypesSerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Fields

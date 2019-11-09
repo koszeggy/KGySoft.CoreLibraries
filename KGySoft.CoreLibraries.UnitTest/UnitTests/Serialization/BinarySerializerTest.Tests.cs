@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -80,7 +81,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region Constants
 
         private const bool dumpDetails = false;
-        private const bool dumpSerContent = false;
+        private const bool dumpSerContent = true;
 
         #endregion
 
@@ -786,7 +787,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
 #if NETCOREAPP2_0
-             Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
+            // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -1584,7 +1585,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new SelfReferencerDirect("Direct"),
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true }, // circular reference deserialized by IObjectReference default object graph
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true }, // circular reference deserialized by IObjectReference custom object graph
-                Encoding.GetEncoding("shift_jis"), // circular reference deserialized by IObjectReference custom object graph
+#if NETFRAMEWORK // DBCSCodePageEncoding has pointer fields and TestSurrogateSelector uses Reflector.SetField
+                Encoding.GetEncoding("shift_jis"), // circular reference deserialized by IObjectReference custom object graph  
+#endif
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false }, // would not work without the surrogate
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false }, // would not work without the surrogate
                 new SelfReferencerInvalid("Default") { UseCustomDeserializer = false }, // would not work without the surrogate
@@ -1617,7 +1620,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new SelfReferencerDirect("Direct"),
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true },
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true },
+#if NETFRAMEWORK // DBCSCodePageEncoding has pointer fields and TestSurrogateSelector uses Reflector.SetField
                 Encoding.GetEncoding("shift_jis"),
+#endif
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false },
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false },
                 new SelfReferencerInvalid("Default") { UseCustomDeserializer = false },
@@ -1630,7 +1635,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, title, surrogateSelector: selector),
                     "The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself.");
         }
-
 
 #if NETFRAMEWORK
         [Test]
@@ -1758,6 +1762,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+        }
+
+        [Test]
+        public void SerializeForwardedTypes()
+        {
+            object[] referenceObjects =
+            {
+#if !NET35
+		        new ObservableCollection<int> { 1, 2, 3 }, // WindowsBase -> System/System.ObjectModel  
+#endif
+                TimeSpan.MaxValue, // mscorlib -> System.Private.CorLib (missing attribute)
+                DBNull.Value, // mscorlib -> System.Private.CorLib via UnitySerializationHolder (missing attribute)
+                new BitArray(new[] { 1 }), // mscorlib -> System.Collections
+                new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections
+                new LinkedList<int>(new[] { 1, 2, 3 }), // System -> System.Collections
+            };
+
+            SystemSerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
         }
 
         #endregion
