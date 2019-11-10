@@ -384,16 +384,8 @@ namespace KGySoft.Serialization
 
             AssemblyName GetAssemblyName(Type t)
             {
-                Type key = t.GetRootType();
-
-#if !NET35
-                // TypeForwardedFromAttribute is specified for the type
-                if (Attribute.GetCustomAttribute(key, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
-                    return new AssemblyName(attr.AssemblyFullName);
-#endif
-
-                // original name
-                return t.Assembly.GetName();
+                string legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
+                return legacyName != null ? new AssemblyName(legacyName) : t.Assembly.GetName();
             }
 
             #endregion

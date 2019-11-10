@@ -253,11 +253,9 @@ namespace KGySoft.Serialization
                 if (mapping.GetValueOrDefault(key.FullName)?.GetValueOrDefault(key).FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
                     return new AssemblyName(asmName);
 
-#if !NET35
-                // TypeForwardedFromAttribute is specified for the type
-                if (Attribute.GetCustomAttribute(key, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
-                    return new AssemblyName(attr.AssemblyFullName); 
-#endif
+                string legacyName = AssemblyResolver.GetForwardedAssemblyName(key, false);
+                if (legacyName != null)
+                    return new AssemblyName(legacyName);
 
                 // original name
                 return t.Assembly.GetName();
