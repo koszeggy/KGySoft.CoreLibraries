@@ -1216,6 +1216,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Array of pointer type 'System.Int32*[]' is not supported.");
         }
 
+        [Test]
+        public void SerializeForwardedTypes()
+        {
+            object[] referenceObjects =
+            {
+#if !NET35
+                new ObservableCollection<int> { 1, 2, 3 }, // WindowsBase -> System/System.ObjectModel  
+#endif
+                new BitArray(new[] { true }), // mscorlib -> System.Collections
+                new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections
+                new LinkedList<int>(new[] { 1, 2, 3 }), // System -> System.Collections
+            };
+
+            //SystemSerializeObject(referenceObjects); // There was an error generating the XML document.
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.IgnoreTypeForwardedFromAttribute);
+        }
+
         #endregion
     }
 }

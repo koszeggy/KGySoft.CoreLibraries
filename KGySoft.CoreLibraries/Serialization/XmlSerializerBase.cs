@@ -133,6 +133,7 @@ namespace KGySoft.Serialization
         private protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
         private protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
         private protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
+        private protected bool IgnoreTypeForwardedFromAttribute => (Options & XmlSerializationOptions.IgnoreTypeForwardedFromAttribute) != XmlSerializationOptions.None;
 
         #endregion
 
@@ -253,8 +254,10 @@ namespace KGySoft.Serialization
             BinarySerializationOptions result = BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
 
             // no fully qualified names -> omitting even in binary serializer
-            if ((Options & XmlSerializationOptions.FullyQualifiedNames) == XmlSerializationOptions.None)
+            if (!FullyQualifiedNames)
                 result |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
+            else if (IgnoreTypeForwardedFromAttribute)
+                result |= BinarySerializationOptions.IgnoreTypeForwardedFromAttribute;
 
             return result;
         }
@@ -375,7 +378,32 @@ namespace KGySoft.Serialization
             serObjects.Remove(obj);
         }
 
-        private protected string GetTypeString(Type type) => type.GetName(FullyQualifiedNames ? TypeNameKind.AssemblyQualifiedName : TypeNameKind.LongName);
+        private protected string GetTypeString(Type type)
+        {
+            #region Local Methods
+
+            AssemblyName GetAssemblyName(Type t)
+            {
+                Type key = t.GetRootType();
+
+#if !NET35
+                // TypeForwardedFromAttribute is specified for the type
+                if (Attribute.GetCustomAttribute(key, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
+                    return new AssemblyName(attr.AssemblyFullName);
+#endif
+
+                // original name
+                return t.Assembly.GetName();
+            }
+
+            #endregion
+
+            if (!FullyQualifiedNames)
+                return type.GetName(TypeNameKind.LongName);
+            return IgnoreTypeForwardedFromAttribute
+                ? type.GetName(TypeNameKind.AssemblyQualifiedName)
+                : type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
+        }
 
         private protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
         {

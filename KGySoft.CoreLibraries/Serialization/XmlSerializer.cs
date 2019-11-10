@@ -80,7 +80,7 @@ namespace KGySoft.Serialization
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
     /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
     /// <see cref="O:KGySoft.Serialization.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
-    /// <note>To use binary serialization only for some types or properties you can use specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
+    /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
     /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>

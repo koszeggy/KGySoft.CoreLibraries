@@ -24,6 +24,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -193,5 +194,14 @@ namespace KGySoft.Serialization
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         ForcedSerializationOfReadOnlyMembersAndCollections = 1 << 12,
+
+        /// <summary>
+        /// <para>When both <see cref="FullyQualifiedNames"/> and this flag are enabled, then every type will be serialized with its actual assembly identity rather than considering
+        /// the value of an existing <see cref="TypeForwardedFromAttribute"/>.</para>
+        /// <para>This flag is ignored if <see cref="FullyQualifiedNames"/> is disabled.</para>
+        /// <note>Enabling this flag may cause that the type will not be able to be deserialized on a different platform.</note>
+        /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
+        /// </summary>
+        IgnoreTypeForwardedFromAttribute = 1 << 13,
     }
 }

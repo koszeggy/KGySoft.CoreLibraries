@@ -123,6 +123,8 @@
   + Supporting serialization of pointer fields.
   + Supporting ISerializationSurrogate instances, which replace the deserialized object as long as it does not
     prevent resolving circular references.
+  + Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
+    IgnoreTypeForwardedFromAttribute flag is enabled.
   * Improving performance.
   - Some edge case issues have been fixed:
     - If different custom serialized types set the same type by string in SerializationInfo using different names,
@@ -138,7 +140,9 @@
     it into the custom serialized data.
 + AnyObjectSerializerWrapper class:
   + New optional forceSerializationByFields parameter in constructor.
-+ BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
++ BinarySerializationOptions:
+  + New ForceRecursiveSerializationOfSupportedTypes flag.
+  + New IgnoreTypeForwardedFromAttribute flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
 * WeakAssemblySerializationBinder:
   + Implements ISerializationBinder.
@@ -151,6 +155,10 @@
 * XmlSerializer:
   - Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
   + Supporting every RuntimeType instance natively.
+  + Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
+    IgnoreTypeForwardedFromAttribute flag is enabled.
++ XmlSerializationOptions:
+  + New IgnoreTypeForwardedFromAttribute flag.
 
 
 ~~~~~~~~~
