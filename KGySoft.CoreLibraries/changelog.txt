@@ -103,6 +103,10 @@
 
 ! KGySoft.Serialization namespace:
 ==================================
+! Has been split to KGySoft.Serialization.Binary and KGySoft.Serialization.Xml namespaces.
+
+! KGySoft.Serialization.Binary namespace:
+=========================================
 + New types:
   + CustomSerializerSurrogateSelector class: Makes possible to customize the serialization and deserialization
     process both with the original BinaryFormatter and KGy SOFT BinarySerializationFormatter. Can be useful for
@@ -134,7 +138,7 @@
       was ignored and the deserialized inner collection had the base element type.
     - Resolvable circular references to IObjectReference instances were not handled for supported collection
       elements.
-! IBinarySerializable interface (behavioral change for implementations):
+! IBinarySerializable interface:
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
     deserialization rather than the original one used for the serialization. If that info is needed you need to save
     it into the custom serialized data.
@@ -152,6 +156,9 @@
   + New IgnoreAssemblyNameOnResolve property: If assembly information is available on deserialization but the
     type cannot be resolved from that assembly, then this property allows to resolve the type from any loaded
     assemblies if possible.
+
+! KGySoft.Serialization.Xml namespace:
+======================================
 * XmlSerializer:
   - Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
   + Supporting every RuntimeType instance natively.

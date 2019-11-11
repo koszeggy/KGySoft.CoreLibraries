@@ -30,7 +30,8 @@ using System.Runtime.Serialization;
 #if !NET35
 using System.Security; 
 #endif
-using KGySoft.Serialization;
+
+using KGySoft.Serialization.Binary;
 
 #endregion
 

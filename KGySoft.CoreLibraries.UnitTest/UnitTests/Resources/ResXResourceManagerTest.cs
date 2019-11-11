@@ -30,11 +30,10 @@ using System.Text;
 #if !NETCOREAPP2_0
 using System.Windows.Forms; 
 #endif
-using KGySoft.IO;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using KGySoft.Serialization;
-
+using KGySoft.Serialization.Binary;
 using NUnit.Framework;
 
 #endregion

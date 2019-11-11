@@ -22,7 +22,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 
 using KGySoft.Reflection;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
 

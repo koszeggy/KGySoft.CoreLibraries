@@ -19,9 +19,10 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
 
 #endregion
 

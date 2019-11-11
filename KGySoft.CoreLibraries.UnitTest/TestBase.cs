@@ -16,8 +16,6 @@
 
 #region Usings
 
-using System.Collections.Specialized;
-
 #region Used Namespaces
 
 using System;
@@ -26,6 +24,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel.Design;
 using System.Drawing;
 using System.Drawing.Imaging; 
@@ -44,7 +43,7 @@ using System.Windows.Forms;
 
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
 

@@ -26,7 +26,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
-using KGySoft.Serialization;
+using KGySoft.Serialization.Xml;
 
 using NUnit.Framework;
 

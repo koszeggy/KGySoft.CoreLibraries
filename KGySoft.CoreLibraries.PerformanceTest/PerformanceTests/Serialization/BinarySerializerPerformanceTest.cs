@@ -25,7 +25,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
 using KGySoft.Collections;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
 

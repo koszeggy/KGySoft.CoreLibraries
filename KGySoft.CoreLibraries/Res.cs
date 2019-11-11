@@ -21,11 +21,13 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
+using KGySoft.Serialization.Xml;
 
 #endregion
 

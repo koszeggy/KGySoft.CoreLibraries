@@ -38,7 +38,7 @@ using System.Windows.Forms;
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Resources;
-using KGySoft.Serialization;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
 using NUnit.Framework.Internal;
