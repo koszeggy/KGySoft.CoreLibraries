@@ -382,7 +382,7 @@ namespace KGySoft.Serialization
         {
             #region Local Methods
 
-            AssemblyName GetAssemblyName(Type t)
+            static AssemblyName GetAssemblyName(Type t)
             {
                 string legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
                 return legacyName != null ? new AssemblyName(legacyName) : t.Assembly.GetName();

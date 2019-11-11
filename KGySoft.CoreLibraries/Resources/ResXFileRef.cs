@@ -132,7 +132,7 @@ namespace KGySoft.Resources
                 if (!String.IsNullOrEmpty(basePath) && !Path.IsPathRooted(fileName))
                     fileName = Path.Combine(basePath, fileName);
 
-                Type toCreate = objectType ?? Type.GetType(parts[1], true);
+                Type toCreate = objectType ?? TypeResolver.ResolveType(parts[1], null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
 
                 // string: consider encoding
                 if (toCreate == Reflector.StringType)

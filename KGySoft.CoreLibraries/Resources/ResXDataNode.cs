@@ -415,7 +415,7 @@ namespace KGySoft.Resources
 
         #region Static Properties
 
-        private static string CompatibleFileRefTypeName => compatibleFileRefTypeName ?? (compatibleFileRefTypeName = ResXCommon.ResXFileRefNameWinForms + ResXCommon.WinFormsPostfix);
+        private static string CompatibleFileRefTypeName => compatibleFileRefTypeName ??= ResXCommon.ResXFileRefNameWinForms + ResXCommon.WinFormsPostfix;
 
         #endregion
 

@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
 using KGySoft.CoreLibraries;
@@ -116,6 +117,16 @@ namespace KGySoft.Resources
         /// </summary>
         internal static string GetAssemblyQualifiedName(Type type, Func<Type, string> typeNameConverter, bool compatibleFormat)
         {
+            #region Local Methods
+
+            static AssemblyName GetAssemblyName(Type t)
+            {
+                string legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
+                return legacyName != null ? new AssemblyName(legacyName) : t.Assembly.GetName();
+            }
+
+            #endregion
+
             if (type == null)
                 return null;
 
@@ -131,7 +142,7 @@ namespace KGySoft.Resources
                     if (type == typeof(ResXFileRef))
                         result = ResXFileRefNameWinForms + WinFormsPostfix;
                     else if (type == Reflector.ByteArrayType)
-                        return Reflector.ByteArrayType.AssemblyQualifiedName; // byte[]: The System.ResXReader recognizes it only with aqn
+                        return Reflector.ByteArrayType.GetName(TypeNameKind.ForcedAssemblyQualifiedName, GetAssemblyName, null); // byte[]: The System.ResXReader recognizes it only with AssemblyQualifiedName
                     else if (type == typeof(ResXNullRef))
                         result = ResXNullRefNameWinForms + WinFormsPostfix;
                     else if (type == typeof(ResXResourceReader))
@@ -141,7 +152,7 @@ namespace KGySoft.Resources
                 }
 
                 if (result == null)
-                    result = type.GetName(TypeNameKind.AssemblyQualifiedName);
+                    result = type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
             }
 
             return result;
