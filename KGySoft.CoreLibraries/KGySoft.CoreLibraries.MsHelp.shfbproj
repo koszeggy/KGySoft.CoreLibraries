@@ -20,7 +20,8 @@
     <Language>en-US</Language>
     <DocumentationSources>
       <DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.dll" />
-<DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.xml" /></DocumentationSources>
+      <DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.xml" />
+    </DocumentationSources>
     <HelpFileFormat>HtmlHelp1</HelpFileFormat>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
@@ -39,6 +40,11 @@
     <SyntaxFilters>Standard</SyntaxFilters>
     <CleanIntermediates>True</CleanIntermediates>
     <ApiFilter>
+      <Filter entryType="Namespace" fullName="KGySoft.CoreLibraries" isExposed="True">
+  <Filter entryType="Structure" fullName="KGySoft.CoreLibraries.Range`1" filterName="Range`1" isExposed="True">
+    <Filter entryType="Operator" fullName="KGySoft.CoreLibraries.Range`1.op_Implicit" filterName="op_Implicit" isExposed="False" />
+  </Filter>
+</Filter>
     </ApiFilter>
     <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
     <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
@@ -83,6 +89,7 @@
     </TransformComponentArguments>
     <HeaderText>
     </HeaderText>
+    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected</VisibleItems>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

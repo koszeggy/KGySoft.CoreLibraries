@@ -20,10 +20,10 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
-namespace KGySoft.Serialization
+namespace KGySoft.Serialization.Xml
 {
     /// <summary>
-    /// Contains classes both for XML and binary serialization.
+    /// Contains types for XML serialization.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

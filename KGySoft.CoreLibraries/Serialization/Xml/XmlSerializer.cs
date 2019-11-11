@@ -63,12 +63,12 @@ namespace KGySoft.Serialization.Xml
     /// </list>
     /// </para>
     /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/>&#160;after creating its parent object, then the returned instance is tried to be re-used on deserialization.
-    /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.XmlSerializer.SerializeContent">SerializeContent</see> methods into an already existing
-    /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the <see cref="O:KGySoft.Serialization.XmlSerializer.SerializeContent">SerializeContent</see> method. When deserializing,
-    /// the result object should be created by the caller, and the content can be deserialized by the <see cref="O:KGySoft.Serialization.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>
+    /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> methods into an already existing
+    /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> method. When deserializing,
+    /// the result object should be created by the caller, and the content can be deserialized by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>
     /// </para>
     /// <para><strong>Options:</strong>
-    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.XmlSerializer.SerializeContent">SerializeContent</see>
+    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see>
     /// methods you can override the default behavior of serialization. The default options and the <see cref="XmlSerializationOptions.None"/> option ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly.
     /// For details see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
     /// <para>If a type cannot be serialized with the currently used options a <see cref="SerializationException"/> will be thrown.</para>
@@ -80,7 +80,7 @@ namespace KGySoft.Serialization.Xml
     /// </para>
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
     /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
-    /// <see cref="O:KGySoft.Serialization.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
+    /// <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
     /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
     /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
     /// </para>

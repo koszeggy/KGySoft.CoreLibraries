@@ -309,11 +309,12 @@ namespace KGySoft.CoreLibraries
             => DoRegisterConversion(sourceType, targetType, conversion);
 
         /// <summary>
-        /// Gets the name of the <paramref name="type"/> of the specified <paramref name="kind"/>.
+        /// Gets the name of the <paramref name="type"/> by the specified <paramref name="kind"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The type whose name is to be obtained.</param>
         /// <param name="kind">The formatting kind for the name to be retrieved.</param>
+        /// <returns>The name of the <paramref name="type"/> by the specified <paramref name="kind"/>.</returns>
         /// <remarks>
         /// <para>See the values of the <see cref="TypeNameKind"/>&#160;<see langword="enum"/>&#160;for the detailed differences
         /// from <see cref="Type"/> members such as <see cref="MemberInfo.Name"/>, <see cref="Type.FullName"/> and <see cref="Type.AssemblyQualifiedName"/>.</para>
@@ -328,7 +329,7 @@ namespace KGySoft.CoreLibraries
             => TypeResolver.GetName(type, kind, null, null);
 
         /// <summary>
-        /// Gets the name of the <paramref name="type"/> of the specified <paramref name="kind"/> using custom callbacks
+        /// Gets the name of the <paramref name="type"/> by the specified <paramref name="kind"/> using custom callbacks
         /// for resolving the assembly and type names.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="GetName(Type,TypeNameKind)"/> overload for details.
         /// </summary>
@@ -338,6 +339,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="assemblyNameResolver">If not <see langword="null"/>, then will be called when the assembly identity of a type is requested.</param>
         /// <param name="typeNameResolver">If not <see langword="null"/>, then will be called for each ultimate element type and generic type definitions from
         /// which <paramref name="type"/> consists of.</param>
+        /// <returns>The name of the <paramref name="type"/> by the specified <paramref name="kind"/> using the specified custom callbacks.</returns>
         /// <seealso cref="TypeNameKind"/>
         /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>
         public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)

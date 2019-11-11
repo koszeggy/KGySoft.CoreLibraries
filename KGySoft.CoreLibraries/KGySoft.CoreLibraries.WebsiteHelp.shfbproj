@@ -19,9 +19,8 @@
     <HtmlHelpName>KGySoft.CoreLibraries</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="bin\Release\net45\KGySoft.CoreLibraries.dll" />
-      <DocumentationSource sourceFile="bin\Release\net45\KGySoft.CoreLibraries.xml" />
-    </DocumentationSources>
+      <DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.dll" />
+<DocumentationSource sourceFile="bin\Release\net472\KGySoft.CoreLibraries.xml" /></DocumentationSources>
     <HelpFileFormat>Website</HelpFileFormat>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
@@ -41,7 +40,7 @@
     <ApiFilter>
     </ApiFilter>
     <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
-    <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
+    <FrameworkVersion>.NET Framework 4.7.2</FrameworkVersion>
     <KeepLogFile>False</KeepLogFile>
     <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
     <CppCommentsFixup>False</CppCommentsFixup>
