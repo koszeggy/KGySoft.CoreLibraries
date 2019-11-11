@@ -731,7 +731,7 @@ using (Profiler.Measure(category, "DoBigTask"))
 }
 ```
 
-The number of hits, execution times (first, total, average) are tracked and can be obtained explicitly you you can let them to be dumped automatically into an .xml file.
+The number of hits, execution times (first, total, average) are tracked and can be obtained explicitly or you can let them to be dumped automatically into an .xml file.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
