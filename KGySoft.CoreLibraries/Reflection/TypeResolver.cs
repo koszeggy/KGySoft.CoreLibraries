@@ -435,17 +435,15 @@ namespace KGySoft.Reflection
             if (!Enum<TypeNameKind>.IsDefined(kind))
                 throw new ArgumentOutOfRangeException(nameof(kind), Res.EnumOutOfRange(kind));
 
-            var resolver = new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver);
-
             // not caching if the result can be provided by delegates
             if (assemblyNameResolver != null || typeNameResolver != null)
-                return resolver.GetName(kind);
+                return new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver).GetName(kind);
 
             LockingDictionary<TypeNameKind, string> cache = TypeNameCache[type];
             if (cache.TryGetValue(kind, out string result))
                 return result;
 
-            result = resolver.GetName(kind);
+            result = new TypeResolver(type, kind, null, null).GetName(kind);
 
             cache[kind] = result;
             return result;
