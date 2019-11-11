@@ -20,6 +20,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+#if NET35
+using System.Reflection; 
+#endif
 using System.Runtime.Serialization;
 
 using KGySoft.CoreLibraries;

@@ -60,6 +60,12 @@
     <Rule Id="CS3026" Action="Error" />
     <Rule Id="CS3027" Action="Error" />
   </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
+    <Rule Id="IDE0042" Action="None" />
+    <Rule Id="IDE0042WithoutSuggestion" Action="None" />
+    <Rule Id="IDE0066" Action="None" />
+    <Rule Id="IDE0066WithoutSuggestion" Action="None" />
+  </Rules>
   <Rules AnalyzerId="Microsoft.CodeQuality.CSharp.Analyzers" RuleNamespace="Microsoft.CodeQuality.CSharp.Analyzers">
     <Rule Id="CA1200" Action="None" />
   </Rules>

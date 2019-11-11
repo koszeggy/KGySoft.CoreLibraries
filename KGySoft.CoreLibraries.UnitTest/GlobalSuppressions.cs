@@ -9,3 +9,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0034:Simplify 'default' expression", Justification = "Decided individually")]
 [assembly: SuppressMessage("Style", "IDE0017:Simplify object initialization", Justification = "Decided individually")]
 [assembly: SuppressMessage("MSBuild", "MSB3568:Duplicate Resources", Justification = "Intended, test data")]
+[assembly: SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "Decided individually")]

@@ -568,7 +568,7 @@ namespace KGySoft.Resources
 #else
         private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
 
-#if !NETFRAMEWORK
+#if NETFRAMEWORK
         [SuppressMessage("Compiler", "CS0109:Member does not hide an accessible member", Justification = "Required for .NET Framework targets")]
 #endif
         private new Dictionary<string, ResourceSet> ResourceSets

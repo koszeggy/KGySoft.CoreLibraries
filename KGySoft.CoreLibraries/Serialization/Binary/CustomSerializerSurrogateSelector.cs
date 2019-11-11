@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -263,6 +264,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">The next surrogate selector to examine.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
         /// <summary>
@@ -272,6 +274,7 @@ namespace KGySoft.Serialization.Binary
         /// The next surrogate selector in the chain or null.
         /// </returns>
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public ISurrogateSelector GetNextSelector() => next;
 
         /// <summary>
@@ -285,6 +288,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">When this method returns, contains a <see cref="ISurrogateSelector"/> that holds a reference to the surrogate selector where the appropriate surrogate was found.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
@@ -459,6 +463,7 @@ namespace KGySoft.Serialization.Binary
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null)
@@ -480,6 +485,7 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
         {
             if (obj == null)

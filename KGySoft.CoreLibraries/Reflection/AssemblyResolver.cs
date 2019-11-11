@@ -41,7 +41,9 @@ namespace KGySoft.Reflection
     {
         #region Constants
 
-        private const string mscorlibName = "mscorlib";
+#if !NETFRAMEWORK
+        private const string mscorlibName = "mscorlib"; 
+#endif
 
         #endregion
 
@@ -172,6 +174,7 @@ namespace KGySoft.Reflection
             return name.In(coreLibNames);
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Same signature for every target platform.")]
         internal static string GetForwardedAssemblyName(Type type, in bool omitIfCoreLibrary)
         {
 #if NET35
@@ -302,15 +305,15 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
         }
 
+#if !NET35
         private static (string, bool) DoGetForwardedAssemblyName(Type type)
         {
-#if !NET35
             if (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
                 return (attr.AssemblyFullName, IsCoreLibAssemblyName(attr.AssemblyFullName));
-#endif
 
             return default;
         }
+#endif
 
         #endregion
 

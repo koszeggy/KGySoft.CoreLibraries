@@ -65,9 +65,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #else
 #error .NET version is not supported
 #endif
-            if (Reflector.ResolveAssembly(asmName) != null)
+            if (Reflector.ResolveAssembly(asmName, ResolveAssemblyOptions.AllowPartialMatch) != null)
             {
-                Assert.Inconclusive("Assembly {0} is already loaded, test is ignored. Try to run this test alone.", asmName);
+                Assert.Inconclusive($"Assembly {asmName} is already loaded, test is ignored. Try to run this test alone.");
                 return;
             }
 

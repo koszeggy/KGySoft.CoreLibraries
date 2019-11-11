@@ -200,6 +200,7 @@ namespace KGySoft.CoreLibraries
 
         [SecurityCritical]
         [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
+        [SuppressMessage("Microsoft.Usage", "CA2240:ImplementISerializableCorrectly", Justification = "It MUST NOT be overridable. Every derived type must return the Comparer singleton instance.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
 
         #endregion

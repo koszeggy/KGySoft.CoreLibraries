@@ -24,7 +24,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
+#if !NET35
+using System.Runtime.CompilerServices; 
+#endif
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -35,16 +37,16 @@ using KGySoft.Collections;
 
 namespace KGySoft.Serialization.Xml
 {
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Options for serializer methods of <see cref="Xml.XmlSerializer"/> class.
     /// </summary>
     [Flags]
     public enum XmlSerializationOptions
     {
-        #if NET35
-        #pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
-        #pragma warning disable 1584,1711,1572,1581,1580
-        #endif
         /// <summary>
         /// <para>Represents no enabled options.</para>
         /// <para>
@@ -76,11 +78,6 @@ namespace KGySoft.Serialization.Xml
         /// </para>
         /// </summary>
         None,
-        #if NET35
-        #pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
-        #pragma warning restore 1584,1711,1572,1581,1580
-        #endif
-
 
         /// <summary>
         /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name, otherwise, only by full type name.

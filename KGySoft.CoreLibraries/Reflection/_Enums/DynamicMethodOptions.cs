@@ -22,6 +22,10 @@ using System;
 
 namespace KGySoft.Reflection
 {
+#if NETSTANDARD2_0
+#pragma warning disable CS1574 // the documentation contains members that are not available in every target
+#endif
+
     /// <summary>
     /// Options for the <see cref="MemberAccessor.CreateMethodInvokerAsDynamicMethod">MemberAccessor.CreateMethodInvokerAsDynamicMethod</see> method.
     /// </summary>

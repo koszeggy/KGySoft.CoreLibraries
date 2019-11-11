@@ -223,14 +223,16 @@ namespace KGySoft.CoreLibraries
             private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric).GetThreadSafeAccessor();
             private static readonly IThreadSafeCacheAccessor<Type, Delegate> delegatesCache = new Cache<Type, Delegate>(CreateDelegate).GetThreadSafeAccessor();
 
+#if !NETSTANDARD2_0
             /// <summary>
             /// Must be a separate instance because dynamic method references will never freed.
             /// Other problem if the original Random is a disposable secure random: invoking the delegate would throw an exception.
             /// </summary>
             private static readonly Random randomForDelegates = new Random();
 
-            private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates);
+            private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates); 
             private static readonly MethodInfo nextObjectGenMethod = (typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));
+#endif
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
                 new Dictionary<Type, GenerateKnownType>

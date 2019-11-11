@@ -1769,9 +1769,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 		        new ObservableCollection<int> { 1, 2, 3 }, // WindowsBase -> System/System.ObjectModel  
 #endif
                 TimeSpan.MaxValue, // mscorlib -> System.Private.CorLib (missing attribute)
-                DBNull.Value, // mscorlib -> System.Private.CorLib via UnitySerializationHolder (missing attribute)
+#if !NETCOREAPP2_0 // not serializable in .NET Core 2
+                DBNull.Value, // mscorlib -> System.Private.CorLib via UnitySerializationHolder (missing attribute)  
+#endif
                 new BitArray(new[] { 1 }), // mscorlib -> System.Collections
-                new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections
+#if !NETCOREAPP2_0
+                // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
+                new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections  
+#endif
                 new LinkedList<int>(new[] { 1, 2, 3 }), // System -> System.Collections
             };
 

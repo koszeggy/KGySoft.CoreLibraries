@@ -17,7 +17,9 @@
 #region Usings
 
 using System;
-using System.Runtime.CompilerServices;
+#if !NET35
+using System.Runtime.CompilerServices; 
+#endif
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -26,6 +28,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace KGySoft.Serialization.Binary
 {
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Options for serialization methods in <see cref="BinarySerializer"/> and <see cref="BinarySerializationFormatter"/> classes.
     /// </summary>

@@ -40,6 +40,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
     public class CustomSerializerSurrogateSelectorTest : TestBase
     {
         #region Nested classes
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 
         #region ConflictNameBase class
 
@@ -124,9 +125,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region SerializationEventsClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SerializationEventsClass : IDeserializationCallback
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -251,10 +250,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             #region Fields
 
+#pragma warning disable 649
             public void* VoidPointer;
             public int* IntPointer;
             public int*[] PointerArray;
             public void** PointerOfPointer;
+#pragma warning restore 649
 
             #endregion
         }
@@ -285,8 +286,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             #region Fields
 
+#pragma warning disable 649
             internal int IntField;
             internal string StringField;
+#pragma warning restore 649
 
             #endregion
         }
@@ -315,6 +318,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         #endregion
 
         #region Constants
@@ -326,7 +330,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region Fields
 
-        private static object[] testCases =
+        private static readonly object[] testCases =
         {
             // primitive types
             1,
@@ -392,7 +396,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                     Console.WriteLine($"{ms.Length} bytes.");
                     if (dumpSerContent)
+#pragma warning disable 162
                         Console.WriteLine(ms.ToArray().ToRawString());
+#pragma warning restore 162
 
                     formatter.SurrogateSelector = forReading ? surrogate : null;
                     ms.Position = 0L;
@@ -504,7 +510,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void IgnoreISerializableTest()
         {
-            object obj = new DataTable("tableName", "namespaceName");
+            using var obj = new DataTable("tableName", "namespaceName");
             var surrogate = new CustomSerializerSurrogateSelector();
             var formatter = new BinarySerializationFormatter { SurrogateSelector = surrogate };
 

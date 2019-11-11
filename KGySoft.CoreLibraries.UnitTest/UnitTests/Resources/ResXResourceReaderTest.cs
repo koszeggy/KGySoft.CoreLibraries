@@ -92,6 +92,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // as well as alias
             var aliasEnumCached = reader.GetAliasEnumerator();
             Assert.AreEqual(resEnumCached.GetType(), aliasEnumCached.GetType());
+            reader.Close();
 
             // alias enumerators are handled in a special way so they are tested separately
             // reader is recreated to get a lazy enumerator again
@@ -127,16 +128,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             reader.SafeMode = false;
             Assert.IsInstanceOf<string>(aliasEnumCached.Value);
             Assert.IsInstanceOf<string>(aliasEnumLazy.Value);
+
+            reader.Close();
         }
 
         [Test]
         public void TestDataTypes()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            var reader = new ResXResourceReader(path)
+            using var reader = new ResXResourceReader(path
+#if NETCOREAPP2_0
+                , new TestTypeResolver() // for Bitmap, Icon in .NET 2.0
+#endif
+            )
             {
                 AllowDuplicatedKeys = false,
-                BasePath = Path.GetDirectoryName(path)
+                BasePath = Path.GetDirectoryName(path),
             };
 
             // Since no duplicates are not allowed, this reads now the whole xml.
@@ -170,7 +177,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     <value>Missing name</value>
   </data>
 </root>";
-            var reader = new ResXResourceReader(new StringReader(resx));
+            using var reader = new ResXResourceReader(new StringReader(resx));
 
             Throws<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
         }

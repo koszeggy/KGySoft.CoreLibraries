@@ -32,6 +32,10 @@ using KGySoft.Reflection;
 
 namespace KGySoft.Serialization.Binary
 {
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
     /// <br/>See the <strong>Remarks</strong> section for details and some examples.
@@ -232,7 +236,7 @@ namespace KGySoft.Serialization.Binary
         /// If at least one <see cref="AssemblyName"/> was specified for the type by the <see cref="AddType">AddType</see> method, then the firstly specified name will be used.
         /// Otherwise, if the type has a <see cref="TypeForwardedFromAttribute"/> is specified for the type, its value will be used.
         /// Otherwise, returns <see langword="null"/>&#160;so the formatter will emit a default identity.</param>
-        /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/>&#160;when this method returns, then contains the full name of the <paramref name="serializedType"/>,<see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, then returns the full name of the type without assembly information;
+        /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/>&#160;when this method returns, then contains the full name of the <paramref name="serializedType"/>,
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
         /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer

@@ -1566,7 +1566,6 @@ namespace KGySoft.Serialization.Binary
                 UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (keyUsages != null || valueUsages != null)
                 {
-                    Debug.Assert(dictionary is IDictionary, "IDictionary is expected here");
                     AddDictionaryElement((IDictionary)dictionary, key, value);
                     return;
                 }

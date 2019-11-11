@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -28,6 +29,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
+
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
@@ -38,6 +40,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
     partial class BinarySerializerTest
     {
         #region Nested types
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 
         #region Enumerations
 
@@ -109,9 +112,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region NonSerializableClass class
 
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class NonSerializableClass
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -147,13 +148,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Public Fields
 
-            public int PublicDerivedField;
+            public readonly int PublicDerivedField;
 
             #endregion
 
             #region Private Fields
 
-            private string PrivateDerivedField;
+            private readonly string privateDerivedField;
 
             #endregion
 
@@ -164,8 +165,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             public NonSerializableSealedClass(int i, string s)
             {
                 PublicDerivedField = i;
-                PrivateDerivedField = s;
+                privateDerivedField = s;
             }
+
+            #endregion
+
+            #region Methods
+
+            public override bool Equals(object obj)
+                => obj is NonSerializableSealedClass other
+                    && base.Equals(obj)
+                    && other.PublicDerivedField == PublicDerivedField
+                    && other.privateDerivedField == privateDerivedField;
 
             #endregion
         }
@@ -268,9 +279,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region SystemSerializableClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SystemSerializableClass : AbstractClass
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -308,13 +317,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Public Fields
 
-            public int PublicDerivedField;
+            public readonly int PublicDerivedField;
 
             #endregion
 
             #region Private Fields
 
-            private string PrivateDerivedField;
+            private readonly string privateDerivedField;
 
             #endregion
 
@@ -325,8 +334,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             public NonSerializableClassWithSerializableBase(int i, string s)
             {
                 PublicDerivedField = i;
-                PrivateDerivedField = s;
+                privateDerivedField = s;
             }
+
+            #endregion
+
+            #region Methods
+
+            public override bool Equals(object obj)
+                => obj is NonSerializableClassWithSerializableBase other
+                    && base.Equals(obj)
+                    && other.PublicDerivedField == PublicDerivedField
+                    && other.privateDerivedField == privateDerivedField;
 
             #endregion
         }
@@ -345,9 +364,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region SerializationEventsClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SerializationEventsClass : IDeserializationCallback
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -481,9 +498,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region CustomSerializedClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class CustomSerializedClass : SerializationEventsClass, ISerializable
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -671,9 +686,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region DefaultGraphObjRef class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class DefaultGraphObjRef : IObjectReference
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -769,7 +782,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #region Fields
 
 #pragma warning disable 649
-            private string name;
+            private readonly string name;
 #pragma warning restore 649
 
             #endregion
@@ -872,9 +885,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region MemoryStreamWithEquals class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class MemoryStreamWithEquals : MemoryStream
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Methods
 
@@ -895,9 +906,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region CircularReferenceClass class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class CircularReferenceClass
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -1045,9 +1054,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region SelfReferencerDirect class
 
         [Serializable]
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SelfReferencerDirect : ISerializable
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -1127,20 +1134,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 #region Fields
 
+#pragma warning disable 649
                 public string Name;
                 public Box<SelfReferencerIndirect> SelfRef;
                 public bool UseValidWay;
                 public bool UseCustomDeserializer;
-
-                #endregion
-
-
-                #region Constructors
-
-                private SelfReferencerIndirectDefaultDeserializer(SerializationInfo info, StreamingContext context)
-                {
-                    throw new InvalidOperationException("Should not be executed");
-                }
+#pragma warning restore 649
 
                 #endregion
 
@@ -1247,9 +1246,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 info.SetType(UseCustomDeserializer ? typeof(SelfReferencerIndirectCustomDeserializer) : typeof(SelfReferencerIndirectDefaultDeserializer));
             }
 
-#pragma warning disable 659
             public override bool Equals(object obj)
-#pragma warning restore 659
             {
                 if (obj == null || obj.GetType() != typeof(SelfReferencerIndirect))
                     return false;
@@ -1277,18 +1274,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 #region Fields
 
-                private string name;
-                private SelfReferencerDirect self;
-                private Box<SelfReferencerDirect> selfBox;
-
-                #endregion
-
-                #region Constructors
-
-                protected SelfReferencerInvalidDefaultDeserializer(SerializationInfo info, StreamingContext context)
-                {
-                    throw new InvalidOperationException("Should not be executed");
-                }
+#pragma warning disable 169, IDE0051
+                private readonly string name;
+#pragma warning disable 649
+                private readonly SelfReferencerDirect self;
+#pragma warning restore 649
+                private readonly Box<SelfReferencerDirect> selfBox;
+#pragma warning restore 169, IDE0051
 
                 #endregion
 
@@ -1312,8 +1304,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 #region Fields
 
-                private SelfReferencerDirect instance;
-                private string name;
+#pragma warning disable IDE0052
+                private readonly SelfReferencerDirect instance;
+#pragma warning restore IDE0052
+                private readonly string name;
 
                 #endregion
 
@@ -1458,12 +1452,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #region Methods
 
             [SecurityCritical]
+            [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
             public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
             [SecurityCritical]
+            [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
             public ISurrogateSelector GetNextSelector() => next;
 
             [SecurityCritical]
+            [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
             public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
             {
                 if (type == null)
@@ -1484,6 +1481,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
 
             [SecurityCritical]
+            [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
             public virtual void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
             {
                 if (obj == null)
@@ -1502,6 +1500,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
 
             [SecurityCritical]
+            [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
             public virtual object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
             {
                 if (obj == null)
@@ -1682,9 +1681,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region NonSerializableStruct struct
 
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private struct NonSerializableStruct
-#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -1748,6 +1745,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Constructors
 
+            [SuppressMessage("VS", "IDE0060:Remove unused parameter", Justification = "Special constructor")]
             public BinarySerializableStruct(BinarySerializationOptions options, byte[] serData)
                 : this()
             {
@@ -1940,6 +1938,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         #endregion
     }
 }
