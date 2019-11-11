@@ -1317,10 +1317,13 @@ namespace KGySoft.Resources
             {
                 byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
 
-                var binaryFormatter = new BinaryFormatter();
-                binaryFormatter.Binder = typeResolver != null
-                    ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                    : new WeakAssemblySerializationBinder();
+                var binaryFormatter = new BinaryFormatter
+                {
+                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    Binder = typeResolver != null
+                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
+                        : new WeakAssemblySerializationBinder()
+                };
 
                 object result = null;
                 if (serializedData != null && serializedData.Length > 0)
@@ -1382,10 +1385,13 @@ namespace KGySoft.Resources
                 string text = dataNodeInfo.ValueData;
                 byte[] serializedData = FromBase64WrappedString(text);
 
-                var serializer = new BinarySerializationFormatter();
-                serializer.Binder = typeResolver != null
-                    ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                    : new WeakAssemblySerializationBinder();
+                var serializer = new BinarySerializationFormatter
+                {
+                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    Binder = typeResolver != null
+                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
+                        : new WeakAssemblySerializationBinder()
+                };
 
                 object result = null;
                 if (serializedData != null && serializedData.Length > 0)
