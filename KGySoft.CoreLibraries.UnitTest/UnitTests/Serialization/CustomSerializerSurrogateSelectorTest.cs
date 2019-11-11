@@ -48,16 +48,32 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            public string ConflictingField;
+            public readonly string ConflictingFieldPublic;
+            internal readonly string ConflictingFieldInternal;
+            private readonly string conflictingFieldPrivate;
+
+            #endregion
+
+            #region Constructors
+
+            protected ConflictNameBase(string valuePublic, string valueInternal, string valuePrivate)
+            {
+                ConflictingFieldPublic = valuePublic;
+                ConflictingFieldInternal = valueInternal;
+                conflictingFieldPrivate = valuePrivate;
+            }
 
             #endregion
 
             #region Methods
 
-            public ConflictNameBase SetBase(string value)
+            public override bool Equals(object obj)
             {
-                ConflictingField = value;
-                return this;
+                ConflictNameBase other;
+                return obj?.GetType() == GetType()
+                    && (other = (ConflictNameBase)obj).ConflictingFieldPublic == ConflictingFieldPublic
+                    && other.ConflictingFieldInternal == ConflictingFieldInternal
+                    && other.conflictingFieldPrivate == conflictingFieldPrivate;
             }
 
             #endregion
@@ -72,7 +88,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            public new int ConflictingField;
+            public readonly new int ConflictingFieldPublic;
+            internal readonly new int ConflictingFieldInternal;
+            private readonly int conflictingFieldPrivate;
+
+            #endregion
+
+            #region Constructors
+            
+            internal ConflictNameChild(int valuePublic, int valueInternal, int valuePrivate, string valuePublicBase, string valueInternalBase, string valuePrivateBase) : base(valuePublicBase, valueInternalBase, valuePrivateBase)
+            {
+                ConflictingFieldPublic = valuePublic;
+                ConflictingFieldInternal = valueInternal;
+                conflictingFieldPrivate = valuePrivate;
+            }
+
+            #endregion
+
+            #region Methods
+
+            public override bool Equals(object obj)
+            {
+                ConflictNameChild other;
+                return base.Equals(obj) &&
+                    (other = (ConflictNameChild)obj).ConflictingFieldPublic == ConflictingFieldPublic
+                    && other.ConflictingFieldInternal == ConflictingFieldInternal
+                    && other.conflictingFieldPrivate == conflictingFieldPrivate;
+            }
 
             #endregion
         }
@@ -275,6 +317,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region Constants
+
+        private const bool dumpSerContent = false;
+
+        #endregion
+
+
         #region Fields
 
         private static object[] testCases =
@@ -342,6 +391,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     }
 
                     Console.WriteLine($"{ms.Length} bytes.");
+                    if (dumpSerContent)
+                        Console.WriteLine(ms.ToArray().ToRawString());
 
                     formatter.SurrogateSelector = forReading ? surrogate : null;
                     ms.Position = 0L;
@@ -410,13 +461,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeClassWithConflictingFields()
         {
-            object obj = new ConflictNameChild { ConflictingField = 13 }.SetBase("base");
+            object obj = new ConflictNameChild(1, 2, 3, "Public Base", "Protected Base", "Private Base");
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
             var bf = new BinaryFormatter();
             var bsf = new BinarySerializationFormatter();
 
             // not using surrogate: tests if the formatter can handle the situation internally
-            //DoTest(bf, null, obj, false, false, false); // Deserialization failed: System.ArgumentException: Object of type 'System.String' cannot be converted to type 'System.Int32'.
+            DoTest(bf, null, obj, false, false, false);
             DoTest(bsf, null, obj, true, false, false);
 
             // using surrogate for both ways
@@ -425,12 +476,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             // default serialization by surrogate: the formatter must add unique names to the serialization info
             // and the surrogate must resolve these names somehow (can be solved by events)
-            //DoTest(bf, surrogate, obj, true, false, true); // SerializationException : Cannot add the same member twice to a SerializationInfo object.
+            //DoTest(bf, surrogate, obj, false, false, true); // SerializationException : Cannot add the same member twice to a SerializationInfo object (BF tries to add the same field names for public fields)
             DoTest(bsf, surrogate, obj, true, false, true);
 
             // surrogate serialization by default: the surrogate must add unique names, which should be
             // resolved by the formatter somehow (not really possible without hard coded handling in the formatter)
-            //DoTest(bf, surrogate, obj, false, true, false); // 'base' compared to '<null>'
+            //DoTest(bf, surrogate, obj, false, true, false); // Equality check failed for base public field (BF uses class name prefix for non-public fields only)
             DoTest(bsf, surrogate, obj, true, true, false);
         }
 

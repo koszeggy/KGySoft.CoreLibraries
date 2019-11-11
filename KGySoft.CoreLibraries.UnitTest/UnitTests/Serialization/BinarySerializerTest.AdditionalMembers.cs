@@ -513,7 +513,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 Console.WriteLine($"Length: {ms.Length}");
                 if (dumpSerContent)
-                    Console.WriteLine(ToRawString(ms.ToArray()));
+                    Console.WriteLine(ms.ToArray().ToRawString());
                 return ms.ToArray();
             }
         }
@@ -541,7 +541,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 Console.WriteLine($"Full length: {ms.Length}");
                 if (dumpSerContent)
-                    Console.WriteLine(ToRawString(ms.ToArray()));
+                    Console.WriteLine(ms.ToArray().ToRawString());
                 return ms.ToArray();
             }
         }
@@ -577,30 +577,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Assert.AreEqual(ms.Length, ms.Position, "Stream was not read until the end");
                 return result;
             }
-        }
-
-        /// <summary>
-        /// Converts the byte array (deemed as extended 8-bit ASCII characters) to raw Unicode UTF-8 string representation.
-        /// </summary>
-        /// <param name="bytes">The bytes to visualize as a raw UTF-8 data.</param>
-        /// <remarks>
-        /// <note type="caution">
-        /// Please note that the .NET <see cref="string"/> type is always UTF-16 encoded. What this method does is
-        /// not parsing an UTF-8 encoded stream but a special conversion that makes possible to display a byte array as a raw UTF-8 data.
-        /// To convert a byte array to a regular <see cref="string"/> for usual purposes
-        /// use <see cref="Encoding.Convert(System.Text.Encoding,System.Text.Encoding,byte[])"/> method instead.
-        /// </note>
-        /// </remarks>
-        /// <returns>
-        /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
-        private static string ToRawString(byte[] bytes)
-        {
-            string s = Encoding.Default.GetString(bytes);
-            var chars = new char[s.Length];
-            var whitespaceControls = new[] { '\t', '\r', '\n' };
-            for (int i = 0; i < s.Length; i++)
-                chars[i] = s[i] < 32 && !s[i].In(whitespaceControls) ? '□' : s[i];
-            return new String(chars);
         }
 
         #endregion

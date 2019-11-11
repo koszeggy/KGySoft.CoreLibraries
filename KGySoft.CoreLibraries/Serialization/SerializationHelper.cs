@@ -66,6 +66,15 @@ namespace KGySoft.Serialization
                         continue;
                     }
 
+                    // conflicting name 1st try: prefixing by type name
+                    string prefixedName = field.DeclaringType.Name + '+' + field.Name;
+                    if (!result.ContainsKey(prefixedName))
+                    {
+                        result[prefixedName] = (field, 1);
+                        continue;
+                    }
+
+                    // 1st try didn't work, using numeric postfix
                     entry.Count++;
                     result[name] = entry;
                     name += entry.Count.ToString(CultureInfo.InvariantCulture);

@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 #endregion
 
@@ -38,7 +39,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An <see cref="IEnumerable{T}"/> that enumerates the elements of the input <paramref name="enumerator"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="enumerator"/> is <see langword="null"/>.</exception>
         /// <remarks><note type="caution">Unlike the usual <see cref="IEnumerable{T}"/> implementations, the result of this method cannot be enumerated more than once.</note></remarks>
-        public static IEnumerable<DictionaryEntry> ToEnumerable(this IDictionaryEnumerator enumerator)
+        internal static IEnumerable<DictionaryEntry> ToEnumerable(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
                 throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
@@ -56,7 +57,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An <see cref="IEnumerable{T}"/> that enumerates the elements of the input <paramref name="enumerator"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="enumerator"/> is <see langword="null"/>.</exception>
         /// <remarks><note type="caution">Unlike the usual <see cref="IEnumerable{T}"/> implementations, the result of this method cannot be enumerated more than once.</note></remarks>
-        public static IEnumerable<KeyValuePair<TKey, TValue>> ToEnumerable<TKey, TValue>(this IDictionaryEnumerator enumerator)
+        internal static IEnumerable<KeyValuePair<TKey, TValue>> ToEnumerable<TKey, TValue>(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
                 throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
@@ -65,7 +66,7 @@ namespace KGySoft.CoreLibraries
                 yield return new KeyValuePair<TKey, TValue>((TKey)enumerator.Key, (TValue)enumerator.Value);
         }
 
-        public static IEnumerable<string> GetKeysEnumerator(this IDictionaryEnumerator enumerator)
+        internal static IEnumerable<string> GetKeysEnumerator(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
                 throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
@@ -74,6 +75,18 @@ namespace KGySoft.CoreLibraries
                 yield return enumerator.Key as string;
         }
 
+        /// <summary>
+        /// Converts the byte array (deemed as extended 8-bit ASCII characters) to its raw string representation.
+        /// </summary>
+        internal static string ToRawString(this byte[] bytes)
+        {
+            string s = Encoding.Default.GetString(bytes);
+            var chars = new char[s.Length];
+            var whitespaceControls = new[] { '\t', '\r', '\n' };
+            for (int i = 0; i < s.Length; i++)
+                chars[i] = s[i] < 32 && !s[i].In(whitespaceControls) ? '□' : s[i];
+            return new String(chars);
+        }
 
         #endregion
     }

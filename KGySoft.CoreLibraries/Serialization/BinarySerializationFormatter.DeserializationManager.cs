@@ -572,19 +572,6 @@ namespace KGySoft.Serialization
                 return CreateCollection(br, addToCache, descriptor);
             }
 
-            [SecurityCritical]
-            internal object ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
-            {
-                // single element
-                if (!elementDescriptor.IsCollection)
-                    return ReadObject(br, null, elementDescriptor);
-
-                // nested collection: full recursion because an actual collection instance can have a derived type
-                if (elementDescriptor.IsNullable && !br.ReadBoolean())
-                    return null;
-                return ReadWithType(br, elementDescriptor);
-            }
-
             /// <summary>
             /// Reads a type from the serialization stream.
             /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when type is deserialized as an instance.
@@ -933,6 +920,19 @@ namespace KGySoft.Serialization
                 }
 
                 return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(result) : result;
+            }
+
+            [SecurityCritical]
+            private object ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
+            {
+                // single element
+                if (!elementDescriptor.IsCollection)
+                    return ReadObject(br, null, elementDescriptor);
+
+                // nested collection: full recursion because an actual collection instance can have a derived type
+                if (elementDescriptor.IsNullable && !br.ReadBoolean())
+                    return null;
+                return ReadWithType(br, elementDescriptor);
             }
 
             /// <summary>
@@ -1290,6 +1290,7 @@ namespace KGySoft.Serialization
                 // reading original fields into si
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
                 var existingNames = new Dictionary<string, int>();
+                string currentTypeName = null;
                 do
                 {
                     // reading fields of current level
@@ -1304,8 +1305,19 @@ namespace KGySoft.Serialization
                             existingNames[name] = 1;
                         else
                         {
-                            existingNames[name] = ++usedCount;
-                            name += usedCount.ToString(CultureInfo.InvariantCulture);
+                            // conflicting name 1st try: prefixing by type name
+                            string prefixedName = currentTypeName + "+" + name;
+                            if (existingNames.GetValueOrDefault(prefixedName) == 0)
+                            {
+                                name = prefixedName;
+                                existingNames[prefixedName] = 1;
+                            }
+                            else
+                            {
+                                // 1st try didn't work, using numeric postfix
+                                existingNames[name] = ++usedCount;
+                                name += usedCount.ToString(CultureInfo.InvariantCulture);
+                            }
                         }
 
                         object value = ReadWithType(br);
@@ -1313,7 +1325,8 @@ namespace KGySoft.Serialization
                     }
 
                     // end level is marked with empty string
-                } while (br.ReadString().Length != 0);
+                    currentTypeName = br.ReadString();
+                } while (currentTypeName.Length != 0);
 
                 CheckReferences(si);
                 if (surrogate == null)

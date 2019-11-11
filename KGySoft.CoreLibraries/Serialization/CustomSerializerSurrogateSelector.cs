@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -349,12 +350,26 @@ namespace KGySoft.Serialization
                     };
 
                     int usedCount = existingNames.GetValueOrDefault(e.Name);
+
                     if (usedCount == 0)
                         existingNames[e.Name] = 1;
                     else
                     {
-                        existingNames[e.Name] = ++usedCount;
-                        e.Name += usedCount.ToString(CultureInfo.InvariantCulture);
+                        // conflicting name 1st try: prefixing by type name
+                        // ReSharper disable once PossibleNullReferenceException - obtained by type so DeclaringType cannot be null
+                        string prefixedName = field.DeclaringType.Name + "+" + field.Name;
+
+                        if (existingNames.GetValueOrDefault(prefixedName) == 0)
+                        {
+                            e.Name = prefixedName;
+                            existingNames[prefixedName] = 1;
+                        }
+                        else
+                        {
+                            // 1st try didn't work, using numeric postfix
+                            existingNames[e.Name] = ++usedCount;
+                            e.Name += usedCount.ToString(CultureInfo.InvariantCulture);
+                        }
                     }
 
                     OnGettingField(e);
@@ -367,16 +382,57 @@ namespace KGySoft.Serialization
 
         private void SetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
+            #region Local Methods
+
+            static FieldInfo TryGetField(Type instanceType, string name)
+            {
+                FieldInfo result;
+
+                // If there is a '+' in name we assume it is a type name prefix (this is how BinaryFormatter indicates non-public base fields)
+                int pos = name.LastIndexOf('+');
+                if (pos > 0)
+                {
+                    string typeNameHint = name.Substring(0, pos);
+                    string fieldName = name.Substring(pos + 1);
+                    Type t = instanceType;
+                    while (t != null && t.Name != typeNameHint)
+                        t = t.BaseType;
+                    if (t != null)
+                    {
+                        result = t.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                        if (result != null)
+                            return result;
+                    }
+                }
+
+                // otherwise, we try to match the name by case-insensitive substrings in both ways
+                for (Type t = instanceType; t != Reflector.ObjectType; t = t.BaseType)
+                {
+                    // ReSharper disable once PossibleNullReferenceException - t cannot be null
+                    result = t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                        .FirstOrDefault(f => f.Name.Contains(name, StringComparison.OrdinalIgnoreCase) || name.Contains(f.Name, StringComparison.OrdinalIgnoreCase));
+                    if (result != null)
+                        return result;
+                }
+
+                return null;
+            }
+
+            #endregion
+
             if (info.MemberCount == 0)
                 return;
 
-            Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
+            Type type = obj.GetType();
+
+            // Initially, mapping the fields with the same names as it is produced by GetDefaultObjectData
+            Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(type, false);
             foreach (SerializationEntry entry in info)
             {
                 var e = new SettingFieldEventArgs(obj, context, info, entry)
                 {
                     Value = entry.Value,
-                    Field = fields.GetValueOrDefault(entry.Name)
+                    Field = fields.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name))
                 };
 
                 OnSettingField(e);
@@ -384,7 +440,7 @@ namespace KGySoft.Serialization
                     continue;
 
                 if (e.Field == null)
-                    throw new SerializationException(Res.SerializationMissingField(obj.GetType(), entry.Name));
+                    throw new SerializationException(Res.SerializationMissingField(type, entry.Name));
 
                 e.Field.Set(obj, e.Value);
             }
