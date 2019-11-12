@@ -9,7 +9,8 @@
     <license type="file">LICENSE</license>
     <!--<licenseUrl>https://creativecommons.org/licenses/by-nd/4.0/legalcode</licenseUrl>-->
     <projectUrl>https://kgysoft.net/corelibraries</projectUrl>
-    <iconUrl>https://kgysoft.net/images/Icon64.png</iconUrl>
+    <!--<iconUrl>https://kgysoft.net/images/Icon64.png</iconUrl>-->
+    <icon>Icon64.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>High-performance and handy general libraries such as binary and XML serialization, alternative reflection API, fast collections and more.</summary>
     <description xml:space="preserve">KGy SOFT Core Libraries features high-performance and handy general libraries. Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
@@ -52,6 +53,7 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
     <file src="..\..\LICENSE" />
     <file src="..\Help\KGySoft.CoreLibraries.chm" target="Help" />
     <file src="readme.txt"/>
+    <file src="Icon64.png" target="" />
     <file src="..\bin\Release\net35\KGySoft.CoreLibraries.dll" target="lib\net35" />
     <file src="..\bin\Release\net35\KGySoft.CoreLibraries.xml" target="lib\net35" />
     <file src="..\bin\Release\net40\KGySoft.CoreLibraries.dll" target="lib\net40" />

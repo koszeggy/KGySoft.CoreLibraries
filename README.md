@@ -286,7 +286,7 @@ bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out resu
 
 [`BinarySerializationFormatter`][bsf] is functionally compatible with `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. Basically it has the same nature as `BinaryFormatter`: apart from some natively supported types it is based on field serialization by default and is sensitive to assembly version. While this can be desired in some cases such as saving/restoring bitwise state or [deep cloning](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_ObjectExtensions_DeepClone__1.htm), for serializing public members of data contracts and components it is suggested to use the text based `XmlSerializer` instead.
 
-Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
+Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
 > _Tip:_ Try also [online](https://dotnetfiddle.net/Q6t0le).
 
@@ -310,7 +310,7 @@ obj = (MyClass)BinarySerializer.DeserializeByReader(reader); // by BinaryReader
 
 Sensitivity of binary serializers to assembly version can be considered either a useful security protection or an annoying thing. The [`BinarySerializationFormatter`][bsf] supports many types and collections natively (see the link), which has two benefits: these types are serialized without any assembly information and the result is very compact as well. Additionally, you can use the `BinarySerializationOptions.OmitAssemblyQualifiedNames` flag to omit assembly information on serialization.
 
-In fact, KGy SOFT Core Library contains also a [`WeakAssemblySerializationBinder`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_WeakAssemblySerializationBinder.htm) class, which can be used with any `IFormatter` serializers (even with `BinaryFormatter`) to allow deserialization from different assemblies:
+In fact, KGy SOFT Core Library contains also a [`WeakAssemblySerializationBinder`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder.htm) class, which can be used with any `IFormatter` serializers (even with `BinaryFormatter`) to allow deserialization from different assemblies:
 
 ```cs
 IFormatter formatter = new BinarySerializationFormatter();
@@ -319,7 +319,7 @@ formatter.Binder = new WeakAssemblySerializationBinder(); // works also for Bina
 result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssembly);
 ```
 
-[bsf]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_BinarySerializationFormatter.htm
+[bsf]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm
 
 - #### XML Serialization
 
@@ -401,7 +401,7 @@ var cloneWithNewId = new MyComponent(Guid.NewGuid());
 XmlSerializer.DeserializeContent(root, cloneWithNewId);
 ```
 
-[xml]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_XmlSerializer.htm
+[xml]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Xml_XmlSerializer.htm
 
 ### Dynamic Resource Management
 
