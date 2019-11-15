@@ -408,6 +408,11 @@ namespace KGySoft.Resources
         /// </summary>
         private bool aqnValid;
 
+        /// <summary>
+        /// May contain a cached serialized value of <see cref="cachedValue"/> for cloning a bit faster. If null, can be restored.
+        /// </summary>
+        private byte[] rawValue;
+
         #endregion
 
         #endregion
@@ -772,6 +777,28 @@ namespace KGySoft.Resources
             return result;
         }
 
+        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, out object result)
+        {
+            string text = dataNodeInfo.ValueData;
+            var serializedData = FromBase64WrappedString(text);
+
+            if (serializedData != null && serializedData.Length > 0)
+            {
+                IFormatter formatter = ResXCommon.GetSoapFormatter();
+                if (formatter != null)
+                {
+                    using (var ms = new MemoryStream(serializedData))
+                        result = formatter.Deserialize(ms);
+                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
+                        result = ResXNullRef.Value;
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
+        }
+
         #endregion
 
         #region Instance Methods
@@ -856,6 +883,7 @@ namespace KGySoft.Resources
                 assemblyQualifiedName = result.GetType().AssemblyQualifiedName;
                 aqnValid = true;
             }
+
             return result == ResXNullRef.Value ? null : result;
         }
 
@@ -926,8 +954,8 @@ namespace KGySoft.Resources
 
             if (!isString)
             {
-                return cloneValue 
-                    ? new ResXDataNode(this).GetValue(typeResolver, basePath) // not cleaning up if cloning
+                return cloneValue
+                    ? CloneValue(typeResolver, basePath)
                     : GetValue(typeResolver, basePath, cleanup);
             }
 
@@ -1412,26 +1440,21 @@ namespace KGySoft.Resources
             throw new NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
         }
 
-        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, out object result)
+        private object CloneValue(ITypeResolutionService typeResolver, string basePath)
         {
-            string text = dataNodeInfo.ValueData;
-            var serializedData = FromBase64WrappedString(text);
+            Debug.Assert(!(cachedValue is string || cachedValue is ResXNullRef), "String or null value should never be cloned.");
+            
+            // we have no value yet: deserializing from FileRef or .resx data
+            if (cachedValue == null)
+                return GetValue(typeResolver, basePath); // not cleaning up if cloning
 
-            if (serializedData != null && serializedData.Length > 0)
-            {
-                IFormatter formatter = ResXCommon.GetSoapFormatter();
-                if (formatter != null)
-                {
-                    using (var ms = new MemoryStream(serializedData))
-                        result = formatter.Deserialize(ms);
-                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
-                        result = ResXNullRef.Value;
-                    return true;
-                }
-            }
+            var formatter = new BinarySerializationFormatter();
 
-            result = null;
-            return false;
+            // we have a cached value but it hasn't been cloned yet: creating a raw data of it
+            if (rawValue == null)
+                rawValue = formatter.Serialize(cachedValue);
+
+            return formatter.Deserialize(rawValue);
         }
 
         #endregion

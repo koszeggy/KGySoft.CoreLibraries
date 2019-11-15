@@ -33,34 +33,30 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Resources
     {
         #region Methods
 
-        [Test]
-        public void GetObject()
+        [TestCase("TestString")]
+        [TestCase("TestBytes")]
+        [TestCase("TestPoint")]
+        [TestCase("TestImageEmbedded")]
+        [TestCase("TestSoundEmbedded")]
+        [TestCase("TestObjectEmbedded")]
+        public void GetObject(string name)
         {
             var inv = CultureInfo.InvariantCulture;
-            var hu = CultureInfo.GetCultureInfo("hu-HU");
+
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly) { CloneValues = false };
-            new PerformanceTest<object>
-                {
-                    TestName = "GetObject Invariant Test",
-                    Iterations = 1000000,
-                    Repeat = 5
-                }
-                .AddCase(() => refManager.GetObject("TestString", inv), "ResourceManager")
-                .AddCase(() => manager.GetObject("TestString", inv), "ResXResourceManager")
-                .DoTest()
-                .DumpResults(Console.Out);
+            var managerCloning = new ResXResourceManager("TestResourceResX", GetType().Assembly) { CloneValues = true };
+            var managerNonCloning = new ResXResourceManager("TestResourceResX", GetType().Assembly) { CloneValues = false };
 
             new PerformanceTest<object>
                 {
-                    TestName = "GetObject fallback to invariant",
-                    Iterations = 1000000,
-                    Repeat = 5
+                    TestName = name,
+                    TestTime = 500
                 }
-                .AddCase(() => refManager.GetObject("TestString", hu), "ResourceManager")
-                .AddCase(() => manager.GetObject("TestString", hu), "ResXResourceManager")
+                .AddCase(() => refManager.GetObject(name, inv), "ResourceManager")
+                .AddCase(() => managerCloning.GetObject(name, inv), "ResXResourceManager CloneValues = true")
+                .AddCase(() => managerNonCloning.GetObject(name, inv), "ResXResourceManager CloneValues = false")
                 .DoTest()
-                .DumpResults(Console.Out);
+                .DumpResults(Console.Out, false);
         }
 
         #endregion
