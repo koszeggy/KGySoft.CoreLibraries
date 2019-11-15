@@ -749,7 +749,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SortedSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
 #endif
 
-
                 new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new Dictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } },
                 new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
@@ -810,24 +809,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if NETFRAMEWORK // concurrent collections are not serializable in .NET Core
             SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects); 
+            SystemSerializeObjects(referenceObjects);
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
-#if !NETFRAMEWORK
-                 | BinarySerializationOptions.RecursiveSerializationAsFallback 
+#if NETFRAMEWORK
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#else
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
 #endif
-            );
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
-#if !NETFRAMEWORK
-                | BinarySerializationOptions.RecursiveSerializationAsFallback
-#endif
-            );
-
-#endif // NET35
+#endif // !NET35
         }
 
         [Test]
@@ -984,7 +979,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
-
 #endif
         }
 

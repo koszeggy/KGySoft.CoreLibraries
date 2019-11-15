@@ -433,7 +433,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            return (defaultCtor != null || type.IsValueType) || collectionCtor != null;
+            return isPopulatableCollection && (defaultCtor != null || type.IsValueType) || collectionCtor != null;
         }
 
         /// <summary>

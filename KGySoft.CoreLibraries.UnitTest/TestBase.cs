@@ -355,10 +355,15 @@ namespace KGySoft.CoreLibraries
                 targetObjects = targetObjects.Convert<List<DictionaryEntry>>().OrderBy(i => i.Key.ToString()).ToList();
             }
 #if !NET35
-            if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
+            else if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
             {
                 referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i).ToList();
                 targetObjects = targetObjects.Cast<object>().OrderBy(i => i).ToList();
+            }
+            else if (type.IsGenericTypeOf(typeof(ConcurrentDictionary<,>)))
+            {
+                referenceObjects = referenceObjects.Convert<List<KeyValuePair<object, object>>>().OrderBy(i => i.Key.ToString()).ToList();
+                targetObjects = targetObjects.Convert<List<KeyValuePair<object, object>>>().OrderBy(i => i.Key.ToString()).ToList();
             }
 #endif
 

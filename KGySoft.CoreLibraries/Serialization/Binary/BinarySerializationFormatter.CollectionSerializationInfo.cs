@@ -207,9 +207,11 @@ namespace KGySoft.Serialization.Binary
                     manager.AddObjectToCache(null, out id);
 
                 // 5.) Comparer
-                object comparer = null;
-                if (HasAnyComparer && !br.ReadBoolean())
-                    comparer = manager.ReadWithType(br);
+                object comparer = HasAnyComparer
+                    ? br.ReadBoolean()
+                        ? GetDefaultComparer(descriptor.Type)
+                        : manager.ReadWithType(br)
+                    : null;
 
                 result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
                 if (id != 0)
@@ -241,19 +243,6 @@ namespace KGySoft.Serialization.Binary
 
             private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object comparer)
             {
-                object GetDefaultComparer(Type type)
-                {
-                    if (!IsGeneric)
-                        return HasEqualityComparer ? null : Comparer.Default;
-
-                    Type elementType = type.GetGenericArguments()[0];
-                    if (DefaultEnumComparer && elementType.IsEnum)
-                        return typeof(EnumComparer<>).GetPropertyValue(elementType, nameof(EnumComparer<_>.Comparer));
-                    return HasEqualityComparer
-                        ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<_>.Default))
-                        : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
-                }
-
                 object defaultComparer = GetDefaultComparer(collection.GetType());
                 if (Equals(defaultComparer, comparer))
                     return true;
@@ -262,6 +251,19 @@ namespace KGySoft.Serialization.Binary
                     return Equals(def.CompareInfo(), c.CompareInfo());
 
                 return false;
+            }
+
+            private object GetDefaultComparer(Type type)
+            {
+                if (!IsGeneric)
+                    return HasEqualityComparer ? null : Comparer.Default;
+
+                Type elementType = type.GetGenericArguments()[0];
+                if (DefaultEnumComparer && elementType.IsEnum)
+                    return typeof(EnumComparer<>).GetPropertyValue(elementType, nameof(EnumComparer<_>.Comparer));
+                return HasEqualityComparer
+                    ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<_>.Default))
+                    : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
             }
 
             private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, object comparer)
