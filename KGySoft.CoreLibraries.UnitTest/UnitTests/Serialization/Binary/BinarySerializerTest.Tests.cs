@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -788,6 +789,45 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+
+#if !NET35
+            referenceObjects = new object[]
+            {
+                new ConcurrentBag<int>(new[] { 1, 2, 3 }),
+                new ConcurrentBag<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+
+                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
+                new ConcurrentQueue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+
+                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
+                new ConcurrentStack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+
+                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
+                new ConcurrentDictionary<int, TestEnumByte>(new Dictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } }),
+                new ConcurrentDictionary<string, int>(new Dictionary<string, int> { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } }, StringComparer.CurrentCulture),
+                new ConcurrentDictionary<TestEnumByte, int>(new Dictionary<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } }, EnumComparer<TestEnumByte>.Comparer),
+            };
+
+#if NETFRAMEWORK // concurrent collections are not serializable in .NET Core
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects); 
+#endif
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+#if !NETFRAMEWORK
+                 | BinarySerializationOptions.RecursiveSerializationAsFallback 
+#endif
+            );
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
+#if !NETFRAMEWORK
+                | BinarySerializationOptions.RecursiveSerializationAsFallback
+#endif
+            );
+
+#endif // NET35
         }
 
         [Test]
@@ -886,7 +926,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, SortedSet<int>> { { 1, new SortedSet<int> { 1, 2 } }, { 2, null } }, // SortedSet
 #endif
 
-
                 // generic dictionary value
                 new Dictionary<int, Dictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } } }, { 2, null } }, // Dictionary
                 new Dictionary<int, SortedList<int, int>> { { 1, new SortedList<int, int> { { 1, 2 } } }, { 2, null } }, // SortedList
@@ -927,6 +966,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+#if !NET35
+            referenceObjects = new object[]
+            {
+                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },
+                new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>(new[] { 1, 2 }) }, { 2, null } },
+                new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
+
+                new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
+            };
+
+#if NETFRAMEWORK // value is not serializable
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects); 
+#endif
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+#endif
         }
 
         [Test]
@@ -1307,6 +1366,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CircularList<int> { 1, 2, 3 },
 #if !NET35
                 new SortedSet<int> { 1, 2, 3 },
+
+                //new ConcurrentBag<int>(new[] { 1, 2, 3 }), // SerializationException : The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: System.Threading.ThreadLocal`1+LinkedSlot[System.Collections.Concurrent.ConcurrentBag`1+WorkStealingQueue[System.Int32]]
+                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
+                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
+
+                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" } }),
 #endif
 
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },

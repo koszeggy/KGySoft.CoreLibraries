@@ -18,6 +18,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent; 
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -1487,7 +1490,11 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // Any other generic ICollection: supposing that collection is unordered
-                if (type.IsImplementationOfGenericType(Reflector.ICollectionGenType))
+                if (type.IsImplementationOfGenericType(Reflector.ICollectionGenType)
+#if !NET35
+                    || type.IsGenericTypeOf(typeof(ConcurrentBag<>))
+#endif
+                )
                 {
                     trackedUsages.Add(new CollectionUsage(collection, addMethod));
                     return;

@@ -18,6 +18,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent; 
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -193,6 +196,12 @@ namespace KGySoft.Serialization.Binary
 #if !NET35
                     case DataTypes.SortedSet:
                         return typeof(SortedSet<>);
+                    case DataTypes.ConcurrentBag:
+                        return typeof(ConcurrentBag<>);
+                    case DataTypes.ConcurrentQueue:
+                        return typeof(ConcurrentQueue<>);
+                    case DataTypes.ConcurrentStack:
+                        return typeof(ConcurrentStack<>);
 #endif
 
                     case DataTypes.ArrayList:
@@ -214,6 +223,11 @@ namespace KGySoft.Serialization.Binary
                         return typeof(SortedDictionary<,>);
                     case DataTypes.CircularSortedList:
                         return typeof(CircularSortedList<,>);
+#if !NET35
+                    case DataTypes.ConcurrentDictionary:
+                        return typeof(ConcurrentDictionary<,>); 
+#endif
+
 
                     case DataTypes.SortedListNonGeneric:
                         return typeof(SortedList);

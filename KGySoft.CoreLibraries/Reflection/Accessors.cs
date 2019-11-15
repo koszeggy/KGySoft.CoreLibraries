@@ -658,7 +658,7 @@ namespace KGySoft.Reflection
                 return property.Get(collection);
 
             // 2.) By *comparer* field
-            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary
+            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary
         }
 
         #endregion

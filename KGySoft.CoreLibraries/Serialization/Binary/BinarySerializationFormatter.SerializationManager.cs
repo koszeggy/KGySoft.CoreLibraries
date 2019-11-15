@@ -160,6 +160,9 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.Stack:
                         case DataTypes.CircularList:
                         case DataTypes.SortedSet:
+                        case DataTypes.ConcurrentBag:
+                        case DataTypes.ConcurrentQueue:
+                        case DataTypes.ConcurrentStack:
                         case DataTypes.ArrayList:
                         case DataTypes.QueueNonGeneric:
                         case DataTypes.StackNonGeneric:
@@ -175,6 +178,7 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.SortedList:
                         case DataTypes.SortedDictionary:
                         case DataTypes.CircularSortedList:
+                        case DataTypes.ConcurrentDictionary:
                         case DataTypes.Hashtable:
                         case DataTypes.SortedListNonGeneric:
                         case DataTypes.ListDictionary:

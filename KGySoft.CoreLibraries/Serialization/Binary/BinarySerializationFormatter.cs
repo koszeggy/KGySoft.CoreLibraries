@@ -29,6 +29,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 #if !NET35
+using System.Collections.Concurrent;
 using System.Security;
 #endif
 using System.Text;
@@ -79,7 +80,8 @@ using KGySoft.Serialization.Xml;
  * 4. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
  * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
- * 7. If collection type is an ordered non-IList collection, handle it in AddCollectionElement
+ * 7. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
+ *    then handle it in AddCollectionElement
  * 8. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
  *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
@@ -186,13 +188,17 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="CircularList{T}"/></item>
     /// <item><see cref="LinkedList{T}"/></item>
     /// <item><see cref="HashSet{T}"/></item>
+    /// <item><see cref="Queue{T}"/></item>
+    /// <item><see cref="Stack{T}"/></item>
+    /// <item><see cref="SortedSet{T}"/> (in .NET 4.0 and above)</item>
+    /// <item><see cref="ConcurrentBag{T}"/> (in .NET 4.0 and above)</item>
+    /// <item><see cref="ConcurrentQueue{T}"/> (in .NET 4.0 and above)</item>
+    /// <item><see cref="ConcurrentStack{T}"/> (in .NET 4.0 and above)</item>
     /// <item><see cref="Dictionary{TKey,TValue}"/></item>
     /// <item><see cref="SortedList{TKey,TValue}"/></item>
     /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
     /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
-    /// <item><see cref="Queue{T}"/></item>
-    /// <item><see cref="Stack{T}"/></item>
-    /// <item><see cref="SortedSet{T}"/> (in .NET 4 and above)</item>
+    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET 4.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -424,7 +430,10 @@ namespace KGySoft.Serialization.Binary
             Stack = 6 << 8,
             CircularList = 7 << 8,
             SortedSet = 8 << 8,
-            // 9-15 << 8: 7 reserved generic collections
+            ConcurrentBag = 9 << 8,
+            ConcurrentQueue = 10 << 8,
+            ConcurrentStack = 11 << 8,
+            // 12-15 << 8: 4 reserved generic collections
 
             // ...... non-generic collections:
             ArrayList = 16 << 8,
@@ -438,7 +447,8 @@ namespace KGySoft.Serialization.Binary
             SortedList = 33 << 8,
             SortedDictionary = 34 << 8,
             CircularSortedList = 35 << 8,
-            // 36-45 << 8 : 10 reserved generic dictionaries
+            ConcurrentDictionary = 36 << 8,
+            // 37-45 << 8 : 9 reserved generic dictionaries
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
             KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of the previous one.
@@ -697,7 +707,54 @@ namespace KGySoft.Serialization.Binary
                     SpecificAddMethod = nameof(SortedSet<_>.Add)
                 }
             },
+            {
+                DataTypes.ConcurrentBag, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    SpecificAddMethod = nameof(ConcurrentBag<_>.Add)
+                }
+            },
+            {
+                DataTypes.ConcurrentQueue, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    SpecificAddMethod = nameof(ConcurrentQueue<_>.Enqueue)
+                }
+            },
+            {
+                DataTypes.ConcurrentStack, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
+                    SpecificAddMethod = nameof(ConcurrentStack<_>.Push)
+                }
+            },
 #endif
+
+            // non-generic collections
+            {
+                DataTypes.ArrayList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                }
+            },
+            {
+                DataTypes.QueueNonGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.None,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Queue.Enqueue)
+                }
+            },
+            {
+                DataTypes.StackNonGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.ReverseElements,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Stack.Push)
+                }
+            },
+            { DataTypes.StringCollection, CollectionSerializationInfo.Default },
 
             // generic dictionaries
             {
@@ -730,32 +787,15 @@ namespace KGySoft.Serialization.Binary
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },
-
-            // non-generic collections
+#if !NET35
             {
-                DataTypes.ArrayList, new CollectionSerializationInfo
+                DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
                 }
             },
-            {
-                DataTypes.QueueNonGeneric, new CollectionSerializationInfo
-                {
-                    Info = CollectionInfo.None,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Queue.Enqueue)
-                }
-            },
-            {
-                DataTypes.StackNonGeneric, new CollectionSerializationInfo
-                {
-                    Info = CollectionInfo.ReverseElements,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Stack.Push)
-                }
-            },
-            { DataTypes.StringCollection, CollectionSerializationInfo.Default },
+#endif
 
             // non-generic dictionaries
             {
@@ -856,17 +896,23 @@ namespace KGySoft.Serialization.Binary
             { typeof(HashSet<>), DataTypes.HashSet },
 #if !NET35
             { typeof(SortedSet<>), DataTypes.SortedSet },
+            { typeof(ConcurrentBag<>), DataTypes.ConcurrentBag },
+            { typeof(ConcurrentQueue<>), DataTypes.ConcurrentQueue },
+            { typeof(ConcurrentStack<>), DataTypes.ConcurrentStack },
 #endif
-
-            { Reflector.DictionaryGenType, DataTypes.Dictionary },
-            { typeof(SortedList<,>), DataTypes.SortedList },
-            { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
-            { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
 
             { typeof(ArrayList), DataTypes.ArrayList },
             { typeof(Queue), DataTypes.QueueNonGeneric },
             { typeof(Stack), DataTypes.StackNonGeneric },
             { Reflector.StringCollectionType, DataTypes.StringCollection },
+
+            { Reflector.DictionaryGenType, DataTypes.Dictionary },
+            { typeof(SortedList<,>), DataTypes.SortedList },
+            { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
+            { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
+#if !NET35
+            { typeof(ConcurrentDictionary<,>), DataTypes.ConcurrentDictionary },
+#endif
 
             { typeof(Hashtable), DataTypes.Hashtable },
             { typeof(SortedList), DataTypes.SortedListNonGeneric },
