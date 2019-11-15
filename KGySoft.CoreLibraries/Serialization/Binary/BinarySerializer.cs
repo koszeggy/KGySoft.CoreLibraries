@@ -42,7 +42,7 @@ namespace KGySoft.Serialization.Binary
     {
         #region Constants
 
-        internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures; //| BinarySerializationOptions.CompactSerializationOfBoolCollections;
+        internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures;
 
         #endregion
 

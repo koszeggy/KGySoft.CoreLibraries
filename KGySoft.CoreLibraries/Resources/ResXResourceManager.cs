@@ -515,7 +515,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResourceManager" target="_blank">System.Resources.ResourceManager</a> this
         /// property is <see langword="true"/>&#160;by default. If this <see cref="ResXResourceManager"/> contains no mutable values or it is known that modifying values is not
-        /// an issue than this property can be set to <see langword="false"/>&#160;for better performance.</para>
+        /// an issue, then this property can be set to <see langword="false"/>&#160;for better performance.</para>
         /// <para>String values are not cloned.</para>
         /// </remarks>
         public bool CloneValues { get; set; } = true;
