@@ -183,7 +183,7 @@ namespace KGySoft.CoreLibraries
         public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             ISurrogateSelector surrogate = null;
-            var formatter = new BinarySerializationFormatter();
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
 #if NETFRAMEWORK
             if (RemotingServices.IsTransparentProxy(obj))
                 surrogate = new RemotingSurrogateSelector();

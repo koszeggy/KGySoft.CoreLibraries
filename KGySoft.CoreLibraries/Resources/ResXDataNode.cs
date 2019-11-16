@@ -1448,13 +1448,17 @@ namespace KGySoft.Resources
             if (cachedValue == null)
                 return GetValue(typeResolver, basePath); // not cleaning up if cloning
 
-            var formatter = new BinarySerializationFormatter();
+            // special handling for memory stream: we avoid cloning the underlying array if possible
+            if (cachedValue is MemoryStream ms)
+                return new MemoryStream(ms.InternalGetBuffer() ?? ms.ToArray(), false);
+
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
 
             // we have a cached value but it hasn't been cloned yet: creating a raw data of it
             if (rawValue == null)
                 rawValue = formatter.Serialize(cachedValue);
 
-            return formatter.Deserialize(rawValue);
+            return cachedValue = formatter.Deserialize(rawValue);
         }
 
         #endregion
