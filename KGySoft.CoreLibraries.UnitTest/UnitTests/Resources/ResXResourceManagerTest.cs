@@ -230,11 +230,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if !NETCOREAPP3_0 // .NET Core 3.0 bug: System.MissingMethodException : Constructor on type 'System.IO.MemoryStream' not found.
             AssertItemsEqual(refManager.GetStream(resName, inv).ToArray(), manager.GetStream(resName, inv).ToArray());
 #endif
-            // when CloneValues is true, GetObject returns always a new instance including the inner buffer
+            // even if CloneValues is true, GetObject returns a wrapper around the same buffer
             Assert.IsTrue(manager.CloneValues);
-            Assert.AreNotSame(((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer(), ((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer());
+            Assert.AreNotSame(manager.GetObject(resName, inv), manager.GetObject(resName, inv));
+            Assert.AreSame(((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer(), ((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer());
 
-            // but GetStream gets different streams wrapping the same buffer
+            // and GetStream also gets different streams wrapping the same buffer
             Assert.AreNotSame(manager.GetStream(resName, inv), manager.GetStream(resName, inv));
             Assert.AreSame(manager.GetStream(resName, inv).InternalGetBuffer(), manager.GetStream(resName, inv).InternalGetBuffer());
 
