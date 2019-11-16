@@ -249,6 +249,15 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.KeyValuePairNullable:
                         return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
 
+#if NET35
+                    case DataTypes.ConcurrentDictionary:
+                    case DataTypes.SortedSet:
+                    case DataTypes.ConcurrentBag:
+                    case DataTypes.ConcurrentQueue:
+                    case DataTypes.ConcurrentStack:
+                        throw new PlatformNotSupportedException(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType))); 
+#endif
+
                     default:
                         throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
                 }

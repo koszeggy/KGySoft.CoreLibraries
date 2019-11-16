@@ -578,6 +578,9 @@ namespace KGySoft
         /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</summary>
         internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type);
 
+        /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
+        internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);
+
         #endregion
 
         #region Cache<TKey, TValue>

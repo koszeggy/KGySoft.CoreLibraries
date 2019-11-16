@@ -99,6 +99,7 @@ namespace KGySoft.Serialization.Binary
             private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
             private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
             private bool DefaultEnumComparer => (Info & CollectionInfo.DefaultEnumComparer) == CollectionInfo.DefaultEnumComparer;
+            private bool IsNonNullDefaultComparer => (Info & CollectionInfo.NonNullDefaultComparer) == CollectionInfo.NonNullDefaultComparer;
 
             #endregion
 
@@ -209,7 +210,7 @@ namespace KGySoft.Serialization.Binary
                 // 5.) Comparer
                 object comparer = HasAnyComparer
                     ? br.ReadBoolean()
-                        ? GetDefaultComparer(descriptor.Type)
+                        ? IsNonNullDefaultComparer ? GetDefaultComparer(descriptor.Type) : null
                         : manager.ReadWithType(br)
                     : null;
 

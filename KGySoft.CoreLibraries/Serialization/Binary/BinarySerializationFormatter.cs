@@ -530,6 +530,11 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that <see cref="EnumComparer{TEnum}"/> is the default for enum element types.
             /// </summary>
             DefaultEnumComparer = 1 << 9,
+
+            /// <summary>
+            /// Indicates that even default comparer cannot be null.
+            /// </summary>
+            NonNullDefaultComparer = 1 << 10,
         }
 
         /// <summary>
@@ -791,7 +796,11 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer
+#if !NETCOREAPP
+                        | CollectionInfo.NonNullDefaultComparer
+#endif
+                    ,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer }
                 }
             },

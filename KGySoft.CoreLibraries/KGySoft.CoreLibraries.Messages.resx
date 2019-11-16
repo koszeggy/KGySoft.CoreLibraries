@@ -589,6 +589,9 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_CircularIObjectReferenceCollectionFormat" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</value>
   </data>
+  <data name="BinarySerialization_CollectionPlatformNotSupportedFormat" xml:space="preserve">
+    <value>The stream contains a collection of type '{0}', which is not supported on this platform.</value>
+  </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>
