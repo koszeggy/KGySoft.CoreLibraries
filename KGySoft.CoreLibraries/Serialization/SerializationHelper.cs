@@ -75,7 +75,7 @@ namespace KGySoft.Serialization
                     }
 
                     // 1st try didn't work, using numeric postfix
-                    entry.Count++;
+                    entry.Count += 1;
                     result[name] = entry;
                     name += entry.Count.ToString(CultureInfo.InvariantCulture);
                     result[name] = (field, 1);

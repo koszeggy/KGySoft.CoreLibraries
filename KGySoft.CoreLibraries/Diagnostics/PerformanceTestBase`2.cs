@@ -597,7 +597,7 @@ namespace KGySoft.Diagnostics
             stopwatch.Start();
             do
             {
-                iterations++;
+                iterations += 1;
                 result = Invoke(testCase);
             } while (stopwatch.ElapsedMilliseconds < TestTime);
             stopwatch.Stop();

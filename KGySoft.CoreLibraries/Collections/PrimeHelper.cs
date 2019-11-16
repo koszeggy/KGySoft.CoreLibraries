@@ -116,7 +116,7 @@ namespace KGySoft.Collections
             int r = 1;
             while ((d & 1) == 0)
             {
-                r++;
+                r += 1;
                 d >>= 1;
             }
 
@@ -145,7 +145,7 @@ namespace KGySoft.Collections
                     return false;
                 if (x == n - 1)
                     return true;
-                r--;
+                r -= 1;
             }
 
             return false;

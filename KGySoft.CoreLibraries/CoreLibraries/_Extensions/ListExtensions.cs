@@ -159,8 +159,9 @@ namespace KGySoft.CoreLibraries
                         int elementsCopied = 0;
                         while (count > 0 && enumerator.MoveNext())
                         {
-                            target[index + elementsCopied++] = enumerator.Current;
-                            count--;
+                            target[index + elementsCopied] = enumerator.Current;
+                            elementsCopied += 1;
+                            count -= 1;
                         }
 
                         // all inserted, removing the rest

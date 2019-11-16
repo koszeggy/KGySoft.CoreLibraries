@@ -305,7 +305,7 @@ namespace KGySoft.Resources
                                 {
                                     sb.Append(newLine);
                                     if (newLine.Length == 2)
-                                        i++;
+                                        ++i;
                                     continue;
                                 }
                             }
@@ -314,7 +314,7 @@ namespace KGySoft.Resources
                             if (i < text.Length - 1 && Char.IsSurrogatePair(c, text[i + 1]))
                             {
                                 sb.Append(new[] { c, text[i + 1] });
-                                i++;
+                                ++i;
                                 continue;
                             }
 

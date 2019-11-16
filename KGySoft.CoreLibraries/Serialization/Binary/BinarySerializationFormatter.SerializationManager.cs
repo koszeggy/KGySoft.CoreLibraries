@@ -147,7 +147,7 @@ namespace KGySoft.Serialization.Binary
                     {
                         // No collection type indicated: element type belongs to an already skipped previous collection.
                         case DataTypes.Null:
-                            skipLevel--;
+                            skipLevel -= 1;
                             break;
 
                         // Collections with a single element: decreasing level if element is specified.
@@ -168,7 +168,7 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.StackNonGeneric:
                         case DataTypes.StringCollection:
                             if (IsElementType(dataType))
-                                skipLevel--;
+                                skipLevel -= 1;
                             break;
 
                         // Dictionary type: Entry point of the loop or skipped nested key collections.
@@ -191,7 +191,7 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.DictionaryEntryNullable:
                             // this check works because flags cannot be combined with collection types (nullable "collections" have different values)
                             if (!IsElementType(dataType))
-                                skipLevel++;
+                                skipLevel += 1;
                             startingDictionaryResolved = true;
                             break;
                     }

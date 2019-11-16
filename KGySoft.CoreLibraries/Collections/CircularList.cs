@@ -174,10 +174,11 @@ namespace KGySoft.Collections
 
                 if (steps < list.size)
                 {
-                    current = list.items[index++];
+                    current = list.items[index];
+                    index += 1;
                     if (index == capacity)
                         index = 0;
-                    steps++;
+                    steps += 1;
                     return true;
                 }
 
@@ -267,7 +268,8 @@ namespace KGySoft.Collections
 
                 if (index < list.size)
                 {
-                    current = list.items[index++];
+                    current = list.items[index];
+                    index += 1;
                     return true;
                 }
 
@@ -374,10 +376,11 @@ namespace KGySoft.Collections
 
                 if (steps < list.size)
                 {
-                    current = list.items[index++];
+                    current = list.items[index];
+                    index += 1;
                     if (index == capacity)
                         index = 0;
-                    steps++;
+                    steps += 1;
                     return true;
                 }
 
@@ -586,7 +589,7 @@ namespace KGySoft.Collections
                     throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
                 SetElementAt(index, value);
-                version++;
+                version += 1;
             }
         }
 
@@ -700,11 +703,12 @@ namespace KGySoft.Collections
                 EnsureCapacity(size + 1);
 
             // faster than items[(startIndex + count) % length] = item;
-            int pos = startIndex + size++;
+            int pos = startIndex + size;
+            size += 1;
             if (pos >= items.Length)
                 pos -= items.Length;
             items[pos] = item;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -731,10 +735,10 @@ namespace KGySoft.Collections
                     startIndex = items.Length - 1;
             }
             else
-                startIndex--;
+                startIndex -= 1;
             items[startIndex] = item;
-            size++;
-            version++;
+            size += 1;
+            version += 1;
         }
 
         /// <summary>
@@ -792,12 +796,12 @@ namespace KGySoft.Collections
                 {
                     // decreasing startIndex and pos
                     if (startIndex > 0)
-                        startIndex--;
+                        startIndex -= 1;
                     else
                         startIndex = capacity - 1;
 
                     if (pos > 0)
-                        pos--;
+                        pos -= 1;
                     else
                         pos = capacity - 1;
 
@@ -805,8 +809,8 @@ namespace KGySoft.Collections
                 }
 
                 items[pos] = item;
-                size++;
-                version++;
+                size += 1;
+                version += 1;
             }
         }
 
@@ -901,7 +905,7 @@ namespace KGySoft.Collections
             // ReSharper restore PossibleMultipleEnumeration
 
             size += collectionSize;
-            version++;
+            version += 1;
         }
 
         #endregion
@@ -950,7 +954,7 @@ namespace KGySoft.Collections
 
             if (size == 0)
                 startIndex = 0;
-            version++;
+            version += 1;
             return true;
         }
 
@@ -964,11 +968,12 @@ namespace KGySoft.Collections
             if (size == 0)
                 return false;
 
-            items[startIndex++] = default(T);
+            items[startIndex] = default(T);
+            startIndex += 1;
 
             if (--size == 0 || startIndex == items.Length)
                 startIndex = 0;
-            version++;
+            version += 1;
             return true;
         }
 
@@ -1001,7 +1006,8 @@ namespace KGySoft.Collections
             if (index <= (--size >> 1))
             {
                 ShiftUp(startIndex, index);
-                items[startIndex++] = default(T);
+                items[startIndex] = default(T);
+                startIndex += 1;
                 if (startIndex == items.Length)
                     startIndex = 0;
             }
@@ -1017,7 +1023,7 @@ namespace KGySoft.Collections
                 items[pos] = default(T);
             }
 
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -1088,7 +1094,7 @@ namespace KGySoft.Collections
             }
 
             size -= count;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -1113,7 +1119,7 @@ namespace KGySoft.Collections
 
             // Find the first item which needs to be removed.
             while (freeIndex < size && !match(ElementAt(freeIndex)))
-                freeIndex++;
+                freeIndex += 1;
 
             if (freeIndex >= size)
                 return 0;
@@ -1123,11 +1129,15 @@ namespace KGySoft.Collections
             {
                 // Find the first item which needs to be kept.
                 while (current < size && match(ElementAt(current)))
-                    current++;
+                    current += 1;
 
                 // copy item to the free slot.
                 if (current < size)
-                    SetElementAt(freeIndex++, ElementAt(current++));
+                {
+                    SetElementAt(freeIndex, ElementAt(current));
+                    freeIndex += 1;
+                    current += 1;
+                }
             }
 
             int result = size - freeIndex;
@@ -1157,7 +1167,7 @@ namespace KGySoft.Collections
                 Array.Clear(items, 0, carry);
             size = 0;
             startIndex = 0;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -1194,7 +1204,7 @@ namespace KGySoft.Collections
             items = Reflector.EmptyArray<T>();
             startIndex = 0;
             size = 0;
-            version++;
+            version += 1;
         }
 
         #endregion
@@ -1238,8 +1248,9 @@ namespace KGySoft.Collections
                 int elementsCopied = 0;
                 while (count > 0 && enumerator.MoveNext())
                 {
-                    SetElementAt(index + elementsCopied++, enumerator.Current);
-                    count--;
+                    SetElementAt(index + elementsCopied, enumerator.Current);
+                    elementsCopied += 1;
+                    count -= 1;
                 }
 
                 // all inserted, removing the rest
@@ -1258,7 +1269,7 @@ namespace KGySoft.Collections
                 }
 
                 // elements to replace had the same size
-                version++;
+                version += 1;
             }
         }
 
@@ -1885,12 +1896,18 @@ namespace KGySoft.Collections
             int carry = startIndex + size - items.Length;
             int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
-                list.items[targetIndex++] = converter(items[i]);
+            {
+                list.items[targetIndex] = converter(items[i]);
+                targetIndex += 1;
+            }
 
             if (carry > 0)
             {
                 for (int i = 0; i < carry; i++)
-                    list.items[targetIndex++] = converter(items[i]);
+                {
+                    list.items[targetIndex] = converter(items[i]);
+                    targetIndex += 1;
+                }
             }
 
             return list;
@@ -2010,11 +2027,11 @@ namespace KGySoft.Collections
                     T temp = ElementAtNonZeroStart(i);
                     SetElementAt(i, ElementAtNonZeroStart(j));
                     SetElementAt(j, temp);
-                    i++;
-                    j--;
+                    i += 1;
+                    j -= 1;
                 }
 
-                version++;
+                version += 1;
                 return;
             }
 
@@ -2022,7 +2039,7 @@ namespace KGySoft.Collections
             if (start >= items.Length)
                 start -= items.Length;
             Array.Reverse(items, start, count);
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2167,7 +2184,7 @@ namespace KGySoft.Collections
             if (start >= capacity)
                 start -= capacity;
             Array.Sort(items, start, count, comparer);
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2346,7 +2363,7 @@ namespace KGySoft.Collections
             }
 
             size += collectionSize;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2391,7 +2408,7 @@ namespace KGySoft.Collections
 
             startIndex = pos;
             size += collectionSize;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2421,7 +2438,7 @@ namespace KGySoft.Collections
             }
 
             size -= count;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2446,7 +2463,7 @@ namespace KGySoft.Collections
                 Array.Clear(items, 0, carry);
 
             size -= count;
-            version++;
+            version += 1;
         }
 
         private void EnsureCapacity(int min)
@@ -2530,7 +2547,7 @@ namespace KGySoft.Collections
             items = newItems;
             size = newSize;
             startIndex = 0;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -2554,7 +2571,7 @@ namespace KGySoft.Collections
             if (carry >= 0)
             {
                 items[0] = items[items.Length - 1];
-                elemCount--;
+                elemCount -= 1;
             }
 
             // moving the rest of the items normally
@@ -2615,7 +2632,7 @@ namespace KGySoft.Collections
             if (carry >= 0)
             {
                 items[items.Length - 1] = items[0];
-                elemCount--;
+                elemCount -= 1;
             }
 
             // moving the rest of the items normally
@@ -2753,7 +2770,10 @@ namespace KGySoft.Collections
             if (array is object[] objectArray)
             {
                 for (int i = 0; i < size; i++)
-                    objectArray[index++] = ElementAt(i);
+                {
+                    objectArray[index] = ElementAt(i);
+                    index += 1;
+                }
             }
 
             throw new ArgumentException(Res.ICollectionArrayTypeInvalid, nameof(array));

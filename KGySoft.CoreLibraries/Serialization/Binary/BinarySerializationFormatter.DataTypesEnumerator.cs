@@ -72,7 +72,8 @@ namespace KGySoft.Serialization.Binary
             {
                 if (index < dataTypes.Count)
                 {
-                    current = dataTypes[index++];
+                    current = dataTypes[index];
+                    index += 1;
                     return true;
                 }
 
@@ -117,14 +118,15 @@ namespace KGySoft.Serialization.Binary
                 int skip = 1;
                 do
                 {
-                    DataTypes dt = dataTypes[end++];
+                    DataTypes dt = dataTypes[end];
+                    end += 1;
                     if (IsDictionary(dt))
                     {
                         if (!IsElementType(dt))
-                            skip++;
+                            skip += 1;
                     }
                     else if (IsElementType(dt))
-                        skip--;
+                        skip -= 1;
                 } while (skip > 0);
 
                 return new ListSegment<DataTypes>(dataTypes, index - 1, end - index + 1);

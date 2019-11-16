@@ -347,7 +347,7 @@ namespace KGySoft.Collections
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
                     if (++index == length)
                         index = 0;
-                    steps++;
+                    ++steps;
                     return true;
                 }
 
@@ -445,7 +445,7 @@ namespace KGySoft.Collections
                 if (index < size)
                 {
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
-                    index++;
+                    index += 1;
                     return true;
                 }
 
@@ -562,7 +562,7 @@ namespace KGySoft.Collections
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
                     if (++index == length)
                         index = 0;
-                    steps++;
+                    steps += 1;
                     return true;
                 }
 
@@ -1372,13 +1372,19 @@ namespace KGySoft.Collections
             if (array is DictionaryEntry[] dictionaryEntries)
             {
                 for (int i = 0; i < size; i++)
-                    dictionaryEntries[index++] = new DictionaryEntry(keys[i], values[i]);
+                {
+                    dictionaryEntries[index] = new DictionaryEntry(keys[i], values[i]);
+                    index += 1;
+                }
             }
 
             if (array is object[] objectArray)
             {
                 for (int i = 0; i < size; i++)
-                    objectArray[index++] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
+                {
+                    objectArray[index] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
+                    index += 1;
+                }
             }
 
             throw new ArgumentException(Res.ICollectionArrayTypeInvalid);

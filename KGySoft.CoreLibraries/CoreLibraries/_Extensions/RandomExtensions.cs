@@ -475,7 +475,7 @@ namespace KGySoft.CoreLibraries
             {
                 if (range == UInt64.MaxValue)
                     return random.NextInt64();
-                range++;
+                range += 1;
             }
 
             ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);
@@ -540,7 +540,7 @@ namespace KGySoft.CoreLibraries
             {
                 if (range == UInt64.MaxValue)
                     return random.NextUInt64();
-                range++;
+                range += 1;
             }
 
             ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);

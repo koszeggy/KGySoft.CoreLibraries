@@ -1230,7 +1230,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
                         return false;
-                    count--;
+                    count -= 1;
                 }
 
                 // all inserted, removing the rest
@@ -1404,7 +1404,7 @@ namespace KGySoft.CoreLibraries
                 if (predicate.Invoke(item))
                     return index;
 
-                index++;
+                index += 1;
             }
 
             return -1;
@@ -1457,7 +1457,7 @@ namespace KGySoft.CoreLibraries
                         if (comparer.Equals(item, element))
                             return index;
 
-                        index++;
+                        index += 1;
                     }
 
                     return -1;
@@ -1805,7 +1805,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
                         return false;
-                    count--;
+                    count -= 1;
                 }
 
                 // all inserted, removing the rest

@@ -248,7 +248,10 @@ namespace KGySoft.Security.Cryptography
             }
 
             while (offset < end)
-                crc = table[(byte)(crc ^ buffer[offset++])] ^ (crc >> 8);
+            {
+                crc = table[(byte)(crc ^ buffer[offset])] ^ (crc >> 8);
+                offset += 1;
+            }
 
             return ~crc;
         }

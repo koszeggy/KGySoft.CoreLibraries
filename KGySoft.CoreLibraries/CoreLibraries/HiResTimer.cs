@@ -232,7 +232,7 @@ namespace KGySoft.CoreLibraries
                 float delay = elapsed - nextTrigger;
                 if (delay >= Interlocked.CompareExchange(ref ignoreElapsedThreshold, -1f, -1f))
                 {
-                    fallouts++;
+                    fallouts += 1;
                     continue;
                 }
 

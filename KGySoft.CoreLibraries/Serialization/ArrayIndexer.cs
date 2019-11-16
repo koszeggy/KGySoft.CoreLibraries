@@ -104,7 +104,7 @@ namespace KGySoft.Serialization
                 {
                     for (int i = currentZeroBased.Length - 2; i >= 0; i--)
                     {
-                        currentZeroBased[i]++;
+                        currentZeroBased[i] += 1;
                         if (currentZeroBased[i] != lengths[i])
                             break;
                         currentZeroBased[i] = 0;

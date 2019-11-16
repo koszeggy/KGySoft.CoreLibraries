@@ -81,7 +81,7 @@ namespace KGySoft.Diagnostics
                 else
                     totalElapsed += timeSpan;
 
-                calls++;
+                calls += 1;
             }
         }
 

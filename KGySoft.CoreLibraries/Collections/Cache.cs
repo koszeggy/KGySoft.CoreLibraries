@@ -352,7 +352,7 @@ namespace KGySoft.Collections
                     throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (position < cache.Count)
-                    position++;
+                    position += 1;
 
                 if (position == cache.Count)
                     return false;
@@ -498,7 +498,10 @@ namespace KGySoft.Collections
                     throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
-                    array[arrayIndex++] = owner.items[current].Key;
+                {
+                    array[arrayIndex] = owner.items[current].Key;
+                    arrayIndex += 1;
+                }
             }
 
             public IEnumerator<TKey> GetEnumerator()
@@ -549,7 +552,10 @@ namespace KGySoft.Collections
                 if (array is object[] objectArray)
                 {
                     for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
-                        objectArray[index++] = owner.items[current].Key;
+                    {
+                        objectArray[index] = owner.items[current].Key;
+                        index += 1;
+                    }
                 }
 
                 throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
@@ -626,7 +632,10 @@ namespace KGySoft.Collections
                     throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
-                    array[arrayIndex++] = owner.items[current].Value;
+                {
+                    array[arrayIndex] = owner.items[current].Value;
+                    arrayIndex += 1;
+                }
             }
 
             public IEnumerator<TValue> GetEnumerator()
@@ -677,7 +686,10 @@ namespace KGySoft.Collections
                 if (array is object[] objectArray)
                 {
                     for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
-                        objectArray[index++] = owner.items[current].Value;
+                    {
+                        objectArray[index] = owner.items[current].Value;
+                        index += 1;
+                    }
                 }
 
                 throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
@@ -1148,10 +1160,10 @@ namespace KGySoft.Collections
             get
             {
                 int i = GetItemIndex(key);
-                cacheReads++;
+                cacheReads += 1;
                 if (i >= 0)
                 {
-                    cacheHit++;
+                    cacheHit += 1;
                     if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
                         InternalTouch(i);
                     return items[i].Value;
@@ -1398,7 +1410,7 @@ namespace KGySoft.Collections
             if (i >= 0)
             {
                 InternalTouch(i);
-                version++;
+                version += 1;
             }
             else
                 throw new KeyNotFoundException(Res.CacheKeyNotFound);
@@ -1580,10 +1592,10 @@ namespace KGySoft.Collections
         public bool TryGetValue(TKey key, out TValue value)
         {
             int i = GetItemIndex(key);
-            cacheReads++;
+            cacheReads += 1;
             if (i >= 0)
             {
-                cacheHit++;
+                cacheHit += 1;
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
                     InternalTouch(i);
 
@@ -1626,7 +1638,7 @@ namespace KGySoft.Collections
             usedCount = 0;
             deletedCount = 0;
             deletedItemsBucket = -1;
-            version++;
+            version += 1;
         }
 
         /// <summary>
@@ -1773,7 +1785,7 @@ namespace KGySoft.Collections
                 // moving entry to a special bucket of removed entries
                 items[i].NextInBucket = deletedItemsBucket;
                 deletedItemsBucket = i;
-                deletedCount++;
+                deletedCount += 1;
 
                 // adjusting first/last
                 if (i == last)
@@ -1794,8 +1806,8 @@ namespace KGySoft.Collections
                 items[i].NextInOrder = -1;
                 items[i].PrevInOrder = -1;
 
-                cacheDeletes++;
-                version++;
+                cacheDeletes += 1;
+                version += 1;
                 return true;
             }
 
@@ -1845,8 +1857,8 @@ namespace KGySoft.Collections
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
                     InternalTouch(i);
                 items[i].Value = value;
-                cacheWrites++;
-                version++;
+                cacheWrites += 1;
+                version += 1;
                 return;
             }
 
@@ -1860,7 +1872,7 @@ namespace KGySoft.Collections
             {
                 index = deletedItemsBucket;
                 deletedItemsBucket = items[index].NextInBucket;
-                deletedCount--;
+                deletedCount -= 1;
             }
             // otherwise, adding a new entry
             else
@@ -1875,7 +1887,7 @@ namespace KGySoft.Collections
                 }
 
                 index = usedCount;
-                usedCount++;
+                usedCount += 1;
             }
 
             items[index].Hash = hashCode;
@@ -1891,8 +1903,8 @@ namespace KGySoft.Collections
                 items[last].NextInOrder = index;
             last = index;
 
-            cacheWrites++;
-            version++;
+            cacheWrites += 1;
+            version += 1;
         }
 
         private void Resize(int suggestedSize)
@@ -2030,7 +2042,10 @@ namespace KGySoft.Collections
                 throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             for (int i = first; i != -1; i = items[i].NextInOrder)
-                array[arrayIndex++] = new KeyValuePair<TKey, TValue>(items[i].Key, items[i].Value);
+            {
+                array[arrayIndex] = new KeyValuePair<TKey, TValue>(items[i].Key, items[i].Value);
+                arrayIndex += 1;
+            }
         }
 
         /// <summary>
@@ -2148,12 +2163,20 @@ namespace KGySoft.Collections
 
                 case DictionaryEntry[] dictionaryEntries:
                     for (int i = first; i != -1; i = items[i].NextInOrder)
-                        dictionaryEntries[index++] = new DictionaryEntry(items[i].Key, items[i].Value);
+                    {
+                        dictionaryEntries[index] = new DictionaryEntry(items[i].Key, items[i].Value);
+                        index += 1;
+                    }
+
                     return;
 
                 case object[] objectArray:
                     for (int i = first; i != -1; i = items[i].NextInOrder)
-                        objectArray[index++] = new KeyValuePair<TKey, TValue>(items[i].Key, items[i].Value);
+                    {
+                        objectArray[index] = new KeyValuePair<TKey, TValue>(items[i].Key, items[i].Value);
+                        index += 1;
+                    }
+
                     return;
 
                 default:

@@ -316,7 +316,10 @@ namespace KGySoft.Collections.ObjectModel
             if (array.Length - arrayIndex < length)
                 throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
             for (int i = 0; i < length; i++)
-                array[arrayIndex++] = GetItem(i);
+            {
+                array[arrayIndex] = GetItem(i);
+                arrayIndex += 1;
+            }
         }
 
         #endregion
@@ -406,7 +409,11 @@ namespace KGySoft.Collections.ObjectModel
             if (array is object[] objectArray)
             {
                 for (int i = 0; i < length; i++)
-                    objectArray[index++] = GetItem(i);
+                {
+                    objectArray[index] = GetItem(i);
+                    index += 1;
+                }
+
                 return;
             }
 

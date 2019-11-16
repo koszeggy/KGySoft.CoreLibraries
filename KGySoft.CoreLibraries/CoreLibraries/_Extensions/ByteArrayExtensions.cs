@@ -96,7 +96,7 @@ namespace KGySoft.CoreLibraries
             {
                 if (lineLength > 0 && (lineLength & 1) == 1)
                 {
-                    lineLength--;
+                    lineLength -= 1;
                     if (lineLength == 0)
                         lineLength = 2;
                 }

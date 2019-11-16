@@ -278,7 +278,7 @@ namespace KGySoft.CoreLibraries
                 if ((power & 1) == 1)
                 {
                     result = current * result;
-                    power--;
+                    power -= 1;
                 }
 
                 power >>= 1;
@@ -320,16 +320,16 @@ namespace KGySoft.CoreLibraries
             while (value >= 1m)
             {
                 value *= eReciprocal;
-                count++;
+                count += 1;
             }
 
             while (value <= eReciprocal)
             {
                 value *= E;
-                count--;
+                count -= 1;
             }
 
-            value--;
+            value -= 1;
             if (value == 0m)
                 return count;
 

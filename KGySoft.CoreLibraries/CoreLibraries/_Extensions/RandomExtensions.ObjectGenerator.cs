@@ -190,7 +190,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (recursionLevel >= Settings.MaxRecursionLevel)
                             return false;
-                        recursionLevel++;
+                        recursionLevel += 1;
                     }
 
                     generatedTypes.Add(type);
@@ -202,7 +202,7 @@ namespace KGySoft.CoreLibraries
                     Type type = generatedTypes.Last();
                     generatedTypes.RemoveAt(generatedTypes.Count - 1);
                     if (generatedTypes.Any(t => t.IsAssignableFrom(type)))
-                        recursionLevel--;
+                        recursionLevel -= 1;
                 }
 
                 #endregion

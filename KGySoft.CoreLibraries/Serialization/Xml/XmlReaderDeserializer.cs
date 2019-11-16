@@ -536,7 +536,7 @@ namespace KGySoft.Serialization.Xml
                                     array.SetValue(value, arrayIndexer.Current);
                                 }
 
-                                deserializedItemsCount++;
+                                deserializedItemsCount += 1;
                                 continue;
                             }
 

@@ -449,7 +449,7 @@ namespace KGySoft.Serialization.Xml
                     }
 
                     if (isValidSurrogate)
-                        i++;
+                        i += 1;
                 }
             }
 

@@ -101,11 +101,11 @@ namespace KGySoft.CoreLibraries
                 {
                     result.Insert(index, c);
 
-                    RemainingSentenceLength--;
+                    RemainingSentenceLength -= 1;
                     if (index < CurrentWordStartPosition)
-                        CurrentWordStartPosition++;
+                        CurrentWordStartPosition += 1;
                     else
-                        RemainingWordLength--;
+                        RemainingWordLength -= 1;
                 }
 
                 public void Insert(int index, string s)
@@ -138,8 +138,8 @@ namespace KGySoft.CoreLibraries
                     result.Append(c);
 
                     // if currently out of word or sentence, these can go below zero
-                    RemainingWordLength--;
-                    RemainingSentenceLength--;
+                    RemainingWordLength -= 1;
+                    RemainingSentenceLength -= 1;
                 }
 
                 #endregion

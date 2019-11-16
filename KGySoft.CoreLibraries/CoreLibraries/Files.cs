@@ -128,7 +128,7 @@ namespace KGySoft.CoreLibraries
             {
                 if (!basePathParts[i].Equals(targetPathParts[i], StringComparison.OrdinalIgnoreCase))
                     break;
-                commonPathDepth++;
+                commonPathDepth += 1;
             }
 
             // no common parts

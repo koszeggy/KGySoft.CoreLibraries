@@ -136,7 +136,7 @@ namespace KGySoft.Serialization.Binary
 
                 // marking end of level
                 info.AddValue("x" + level.ToString("X", NumberFormatInfo.InvariantInfo), null);
-                level++;
+                level += 1;
             }
         }
 
@@ -201,12 +201,13 @@ namespace KGySoft.Serialization.Binary
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
                         throw new SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
-                    fields[fieldIndex++].Set(obj, entry.Value);
+                    fields[fieldIndex].Set(obj, entry.Value);
+                    fieldIndex += 1;
                 }
                 // end of level found
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))
                 {
-                    level++;
+                    level += 1;
 
                     // ReSharper disable once PossibleNullReferenceException - see first line inside the loop
                     type = type.BaseType;

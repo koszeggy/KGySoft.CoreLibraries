@@ -136,7 +136,12 @@ namespace KGySoft.IO
                 throw new ArgumentException(Res.ArrayInvalidOffsLen);
             int len = Math.Min(count, (str.Length << 1) - position);
             for (int i = 0; i < len; i++)
-                buffer[offset++] = this[position++];
+            {
+                buffer[offset] = this[position];
+                offset += 1;
+                position += 1;
+            }
+
             return len;
         }
 
