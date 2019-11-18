@@ -128,7 +128,7 @@ namespace KGySoft.Serialization.Binary
         public static byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             byte[] rawdata = new byte[Marshal.SizeOf(obj)];
             GCHandle handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             try
@@ -157,7 +157,7 @@ namespace KGySoft.Serialization.Binary
             result = null;
 
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (CanSerializeValueType(obj.GetType(), false))
             {
                 try
@@ -193,7 +193,7 @@ namespace KGySoft.Serialization.Binary
         public static byte[] SerializeValueArray<T>(T[] array) where T : struct
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (array.Length == 0)
                 return Reflector.EmptyArray<byte>();
 
@@ -227,7 +227,7 @@ namespace KGySoft.Serialization.Binary
             result = null;
 
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (array.Length == 0)
             {
                 result = Reflector.EmptyArray<byte>();
@@ -260,13 +260,13 @@ namespace KGySoft.Serialization.Binary
         public static object DeserializeValueType(Type type, byte[] data)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (!type.IsValueType)
-                throw new ArgumentException(Res.BinarySerializationValueTypeExpected, nameof(type));
+                Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.data);
             if (data.Length < Marshal.SizeOf(type))
-                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
@@ -291,17 +291,17 @@ namespace KGySoft.Serialization.Binary
         public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (!type.IsValueType)
-                throw new ArgumentException(Res.BinarySerializationValueTypeExpected, nameof(type));
+                Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.data);
 
             int len = Marshal.SizeOf(type);
             if (data.Length < len)
-                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
             if (data.Length - offset < len || offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.offset);
 
             IntPtr p = Marshal.AllocHGlobal(len);
             try
@@ -329,15 +329,15 @@ namespace KGySoft.Serialization.Binary
             where T : struct
         {
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.data);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             int len = Marshal.SizeOf(typeof(T)) * count;
             if (data.Length < len)
-                throw new ArgumentException(Res.BinarySerializationDataLengthTooSmall, nameof(data));
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
             if (data.Length - offset < len || offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.offset);
 
             if (count == 0)
                 return Reflector.EmptyArray<T>();

@@ -1,8 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<!--Microsoft.NET.Sdk.WindowsDesktop raises NETSDK1105 warning for non netcoreapp3.0 targets but there is no way using conditions here -->
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
-    <!--<TargetFrameworks>net472</TargetFrameworks>-->
+    <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

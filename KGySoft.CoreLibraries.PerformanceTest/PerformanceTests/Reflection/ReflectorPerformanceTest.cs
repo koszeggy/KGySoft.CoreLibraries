@@ -262,63 +262,63 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             PropertyDescriptorCollection propertyDescriptorCollection = TypeDescriptor.GetProperties(typeof(TestClass));
             PropertyDescriptor propertyDescriptor = propertyDescriptorCollection[nameInstance];
 
-            new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000 }
+            new PerformanceTest { TestName = "Set Property", Iterations = 10_000_000, Repeat = 3 }
                 .AddCase(() => t.InstanceProperty = value, "Direct set (instance)")
-                .AddCase(() => TestClass.StaticProperty = value, "Direct set (static)")
+                //.AddCase(() => TestClass.StaticProperty = value, "Direct set (static)")
 
-                .AddCase(() => piInstance.SetValue(t, value, null), "PropertyInfo.SetValue (instance)")
-                .AddCase(() => piStatic.SetValue(null, value, null), "PropertyInfo.SetValue (static)")
+                //.AddCase(() => piInstance.SetValue(t, value, null), "PropertyInfo.SetValue (instance)")
+                //.AddCase(() => piStatic.SetValue(null, value, null), "PropertyInfo.SetValue (static)")
 
-                .AddCase(() => typeof(TestClass).GetProperty(nameInstance).SetValue(t, value, null), "Type.GetProperty(name).SetValue (instance)")
-                .AddCase(() => typeof(TestClass).GetProperty(nameStatic).SetValue(null, value, null), "Type.GetProperty(name).SetValue (static)")
+                //.AddCase(() => typeof(TestClass).GetProperty(nameInstance).SetValue(t, value, null), "Type.GetProperty(name).SetValue (instance)")
+                //.AddCase(() => typeof(TestClass).GetProperty(nameStatic).SetValue(null, value, null), "Type.GetProperty(name).SetValue (static)")
 
-                .AddCase(() => propertyDescriptor.SetValue(t, value), "PropertyDescriptor.SetValue")
-                .AddCase(() => propertyDescriptorCollection[nameInstance].SetValue(t, value), "PropertyDescriptorCollection[name].SetValue")
-                .AddCase(() => TypeDescriptor.GetProperties(typeof(TestClass))[nameInstance].SetValue(t, value), "TypeDescriptor.GetProperties(Type)[name].SetValue")
+                //.AddCase(() => propertyDescriptor.SetValue(t, value), "PropertyDescriptor.SetValue")
+                //.AddCase(() => propertyDescriptorCollection[nameInstance].SetValue(t, value), "PropertyDescriptorCollection[name].SetValue")
+                //.AddCase(() => TypeDescriptor.GetProperties(typeof(TestClass))[nameInstance].SetValue(t, value), "TypeDescriptor.GetProperties(Type)[name].SetValue")
 
                 .AddCase(() => accessorInstance.Set(t, value), "PropertyAccessor.Set (instance)")
-                .AddCase(() => accessorStatic.Set(null, value), "PropertyAccessor.Set (static)")
+                //.AddCase(() => accessorStatic.Set(null, value), "PropertyAccessor.Set (static)")
 
-                .AddCase(() => PropertyAccessor.GetAccessor(piInstance).Set(t, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (instance)")
-                .AddCase(() => PropertyAccessor.GetAccessor(piStatic).Set(null, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (static)")
+                //.AddCase(() => PropertyAccessor.GetAccessor(piInstance).Set(t, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (instance)")
+                //.AddCase(() => PropertyAccessor.GetAccessor(piStatic).Set(null, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (static)")
 
-                .AddCase(() => Reflector.SetProperty(t, piInstance, value), "Reflector.SetProperty (instance by PropertyInfo)")
-                .AddCase(() => Reflector.SetProperty(null, piStatic, value), "Reflector.SetProperty (static by PropertyInfo)")
+                //.AddCase(() => Reflector.SetProperty(t, piInstance, value), "Reflector.SetProperty (instance by PropertyInfo)")
+                //.AddCase(() => Reflector.SetProperty(null, piStatic, value), "Reflector.SetProperty (static by PropertyInfo)")
 
-                .AddCase(() => Reflector.SetProperty(t, nameInstance, value), "Reflector.SetProperty (instance by name)")
-                .AddCase(() => Reflector.SetProperty(typeof(TestClass), nameStatic, value), "Reflector.SetProperty (static by name)")
-
-                .DoTest()
-                .DumpResults(Console.Out);
-
-            new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
-                .AddCase(() => t.InstanceProperty, "Direct get (instance)")
-                .AddCase(() => TestClass.StaticProperty, "Direct get (static)")
-
-                .AddCase(() => (int)piInstance.GetValue(t, null), "PropertyInfo.GetValue (instance)")
-                .AddCase(() => (int)piStatic.GetValue(null, null), "PropertyInfo.GetValue (static)")
-
-                .AddCase(() => (int)typeof(TestClass).GetProperty(nameInstance).GetValue(t, null), "Type.GetProperty(name).GetValue (instance)")
-                .AddCase(() => (int)typeof(TestClass).GetProperty(nameStatic).GetValue(null, null), "Type.GetProperty(name).GetValue (static)")
-
-                .AddCase(() => (int)propertyDescriptor.GetValue(t), "PropertyDescriptor.GetValue")
-                .AddCase(() => (int)propertyDescriptorCollection[nameInstance].GetValue(t), "PropertyDescriptorCollection[name].GetValue")
-                .AddCase(() => (int)TypeDescriptor.GetProperties(typeof(TestClass))[nameInstance].GetValue(t), "TypeDescriptor.GetProperties(Type)[name].GetValue")
-
-                .AddCase(() => (int)accessorInstance.Get(t), "PropertyAccessor.Get (instance)")
-                .AddCase(() => (int)accessorStatic.Get(null), "PropertyAccessor.Get (static)")
-
-                .AddCase(() => (int)PropertyAccessor.GetAccessor(piInstance).Get(t), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (instance)")
-                .AddCase(() => (int)PropertyAccessor.GetAccessor(piStatic).Get(null), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (static)")
-
-                .AddCase(() => (int)Reflector.GetProperty(t, piInstance), "Reflector.GetProperty (instance by PropertyInfo)")
-                .AddCase(() => (int)Reflector.GetProperty(null, piStatic), "Reflector.GetProperty (static by PropertyInfo)")
-
-                .AddCase(() => (int)Reflector.GetProperty(t, nameInstance), "Reflector.GetProperty (instance by name)")
-                .AddCase(() => (int)Reflector.GetProperty(typeof(TestClass), nameStatic), "Reflector.GetProperty (static by name)")
+                //.AddCase(() => Reflector.SetProperty(t, nameInstance, value), "Reflector.SetProperty (instance by name)")
+                //.AddCase(() => Reflector.SetProperty(typeof(TestClass), nameStatic, value), "Reflector.SetProperty (static by name)")
 
                 .DoTest()
                 .DumpResults(Console.Out);
+
+            //new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
+            //    .AddCase(() => t.InstanceProperty, "Direct get (instance)")
+            //    .AddCase(() => TestClass.StaticProperty, "Direct get (static)")
+
+            //    .AddCase(() => (int)piInstance.GetValue(t, null), "PropertyInfo.GetValue (instance)")
+            //    .AddCase(() => (int)piStatic.GetValue(null, null), "PropertyInfo.GetValue (static)")
+
+            //    .AddCase(() => (int)typeof(TestClass).GetProperty(nameInstance).GetValue(t, null), "Type.GetProperty(name).GetValue (instance)")
+            //    .AddCase(() => (int)typeof(TestClass).GetProperty(nameStatic).GetValue(null, null), "Type.GetProperty(name).GetValue (static)")
+
+            //    .AddCase(() => (int)propertyDescriptor.GetValue(t), "PropertyDescriptor.GetValue")
+            //    .AddCase(() => (int)propertyDescriptorCollection[nameInstance].GetValue(t), "PropertyDescriptorCollection[name].GetValue")
+            //    .AddCase(() => (int)TypeDescriptor.GetProperties(typeof(TestClass))[nameInstance].GetValue(t), "TypeDescriptor.GetProperties(Type)[name].GetValue")
+
+            //    .AddCase(() => (int)accessorInstance.Get(t), "PropertyAccessor.Get (instance)")
+            //    .AddCase(() => (int)accessorStatic.Get(null), "PropertyAccessor.Get (static)")
+
+            //    .AddCase(() => (int)PropertyAccessor.GetAccessor(piInstance).Get(t), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (instance)")
+            //    .AddCase(() => (int)PropertyAccessor.GetAccessor(piStatic).Get(null), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (static)")
+
+            //    .AddCase(() => (int)Reflector.GetProperty(t, piInstance), "Reflector.GetProperty (instance by PropertyInfo)")
+            //    .AddCase(() => (int)Reflector.GetProperty(null, piStatic), "Reflector.GetProperty (static by PropertyInfo)")
+
+            //    .AddCase(() => (int)Reflector.GetProperty(t, nameInstance), "Reflector.GetProperty (instance by name)")
+            //    .AddCase(() => (int)Reflector.GetProperty(typeof(TestClass), nameStatic), "Reflector.GetProperty (static by name)")
+
+            //    .DoTest()
+            //    .DumpResults(Console.Out);
         }
 
         [Test]

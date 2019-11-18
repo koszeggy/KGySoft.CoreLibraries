@@ -463,7 +463,7 @@ namespace KGySoft.Resources
                 }
 
                 if (value.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
-                    throw new ArgumentException(Res.ValueContainsIllegalPathCharacters(value));
+                    Throw.ArgumentException(Argument.value, Res.ValueContainsIllegalPathCharacters(value));
 
                 if (Path.IsPathRooted(value))
                 {
@@ -560,7 +560,7 @@ namespace KGySoft.Resources
             {
                 Hashtable result = base.ResourceSets;
                 if (result == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    ThrowHelper.ThrowObjectDisposedException();
                 return result;
             }
             set => base.ResourceSets = value;
@@ -577,7 +577,7 @@ namespace KGySoft.Resources
             {
                 Dictionary<string, ResourceSet> result = resourceSets;
                 if (result == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 return result;
             }
             set => resourceSets = value;
@@ -1153,7 +1153,7 @@ namespace KGySoft.Resources
         public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.culture);
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
             ResourceSet rs;
             lock (SyncRoot)
@@ -1262,7 +1262,7 @@ namespace KGySoft.Resources
         public IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRange(Argument.behavior, behavior);
 
             ResXResourceSet result = GetResXResourceSet(culture, behavior, tryParents);
 
@@ -1368,7 +1368,7 @@ namespace KGySoft.Resources
                     if (ThrowException && ctx.TryParents && !exists && ctx.Behavior != ResourceSetRetrieval.CreateIfNotExists
                         && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
                     {
-                        throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
+                        Throw.MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
                     }
 
                     // a new ResourceSet has been loaded; we're done
@@ -1393,7 +1393,7 @@ namespace KGySoft.Resources
             #endregion
 
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.culture);
             var context = new GetResXResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ResourceSets = ResourceSets };
             if (TryGetCachedResourceSet(ref context))
                 return GetResXResourceSet(context.Result);
@@ -1475,7 +1475,12 @@ namespace KGySoft.Resources
         /// <returns>
         /// The name that can be used for a resource file for the given <see cref="CultureInfo" /> object.
         /// </returns>
-        protected override string GetResourceFileName(CultureInfo culture) => GetResourceFileName((culture ?? throw new ArgumentNullException(nameof(culture), Res.ArgumentNull)).Name);
+        protected override string GetResourceFileName(CultureInfo culture)
+        {
+            if (culture == null)
+                Throw.ArgumentNullException(Argument.culture);
+            return GetResourceFileName(culture.Name);
+        }
 
         /// <summary>
         /// Provides the implementation for finding a resource set.
@@ -1532,7 +1537,7 @@ namespace KGySoft.Resources
         private object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
@@ -1581,7 +1586,7 @@ namespace KGySoft.Resources
         private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             // in case of metadata there is no hierarchy traversal so if there is no result trying to provoke the missing manifest exception
             ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);

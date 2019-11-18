@@ -77,7 +77,7 @@ namespace KGySoft.CoreLibraries
             set
             {
                 if (value < 0f || Single.IsNaN(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.value);
                 Interlocked.Exchange(ref interval, value);
             }
         }
@@ -100,7 +100,7 @@ namespace KGySoft.CoreLibraries
             set
             {
                 if (value <= 0f || Single.IsNaN(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.value);
                 Interlocked.Exchange(ref ignoreElapsedThreshold, value);
             }
         }
@@ -143,7 +143,7 @@ namespace KGySoft.CoreLibraries
         public HiResTimer(float interval)
         {
             if (interval < 0f || Single.IsNaN(interval))
-                throw new ArgumentOutOfRangeException(nameof(interval), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.interval);
             this.interval = interval;
         }
 

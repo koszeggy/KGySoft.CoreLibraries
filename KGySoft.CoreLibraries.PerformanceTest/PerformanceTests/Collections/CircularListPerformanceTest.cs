@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -61,73 +62,89 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void PopulateTest()
         {
-            const int count = 1000;
-            new RandomizedPerformanceTest { TestName = "Populate Lists Test", Iterations = 10000 }
-                .AddCase(rnd =>
+            const int count = 10_000;
+            new PerformanceTest { TestName = "Populate Lists Test", TestTime = 500 }
+                .AddCase(() =>
                 {
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
                         list.Add(i);
                 }, "Add to List end")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                         llist.AddLast(i);
                 }, "Add to LinkedList end")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
                         clist.Add(i);
                 }, "Add to CircularList end")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
                         list.Insert(0, i);
                 }, "Add to List head")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                         llist.AddFirst(i);
                 }, "Add to LinkedList head")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
-                        clist.Insert(0, i);
+                        clist.AddFirst(i);
                 }, "Add to CircularList head")
+                .AddCase(() =>
+                {
+                    var list = new List<int>(count);
+                    for (int i = 0; i < count; i++)
+                        list.Insert(i, i);
+                }, "Insert to List end")
+                .AddCase(() =>
+                {
+                    var clist = new CircularList<int>(count);
+                    for (int i = 0; i < count; i++)
+                        clist.Insert(i, i);
+                }, "Insert to CircularList end")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            new RandomizedPerformanceTest { TestName = "Random insert test", TestTime = 500 }
                 .AddCase(rnd =>
                 {
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
-                        list.Insert(rnd.Next(i), i);
-                }, "Insert to List randomly")
+                        list.Insert(rnd.Next(list.Count), i);
+                }, "Insert to List at random position")
+                .AddCase(rnd =>
+                {
+                    var clist = new CircularList<int>(count);
+                    for (int i = 0; i < count; i++)
+                        clist.Insert(rnd.Next(clist.Count), i);
+                }, "Insert to CircularList at random position")
                 .AddCase(rnd =>
                 {
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                     {
-                        int r = rnd.Next(i);
+                        int pos = rnd.Next(llist.Count);
                         LinkedListNode<int> node = llist.First;
                         if (node != null)
                         {
-                            for (int j = 0; j < r; j++)
+                            for (int j = 0; j < pos; j++)
                                 node = node.Next;
                             llist.AddBefore(node, i);
                         }
                         else
                             llist.AddLast(i);
                     }
-                }, "Insert to LinkedList randomly")
-                .AddCase(rnd =>
-                {
-                    var clist = new CircularList<int>(count);
-                    for (int i = 0; i < count; i++)
-                        clist.Insert(rnd.Next(i), i);
-                }, "Insert to CircularList randomly")
+                }, "Insert to LinkedList at random position")
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -141,43 +158,43 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             List<int> list = new List<int>(clist);
             LinkedList<int> llist = new LinkedList<int>(clist);
 
-            new PerformanceTest { TestName = "Enumerating Lists Test", Iterations = 100_000 }
-                .AddCase(() =>
-                {
-                    foreach (int i in list) { }
-                }, "Enumerating List by foreach")
-                .AddCase(() =>
-                {
-                    foreach (int i in llist) { }
-                }, "Enumerating LinkedList by foreach")
-                .AddCase(() =>
-                {
-                    foreach (int i in clist) { }
-                }, "Enumerating CircularList by foreach (0-aligned)")
-                .AddCase(() =>
-                {
-                    foreach (int i in clistShifted) { }
-                }, "Enumerating CircularList by foreach (shifted)")
-                .AddCase(() =>
-                {
-                    IEnumerable<int> ilist = list;
-                    foreach (int i in ilist) { }
-                }, "Enumerating List as IList by foreach (eg. LINQ)")
-                .AddCase(() =>
-                {
-                    IEnumerable<int> ilist = llist;
-                    foreach (int i in ilist) { }
-                }, "Enumerating LinkedList as IList by foreach")
-                .AddCase(() =>
-                {
-                    IEnumerable<int> ilist = clist;
-                    foreach (int i in ilist) { }
-                }, "Enumerating CircularList as IList by foreach (0-aligned)")
-                .AddCase(() =>
-                {
-                    IEnumerable<int> ilist = clistShifted;
-                    foreach (int i in ilist) { }
-                }, "Enumerating CircularList as IList by foreach (shifted)")
+            new PerformanceTest { TestName = "Enumerating Lists Test", Iterations = 100_000, Repeat = 5 }
+                //.AddCase(() =>
+                //{
+                //    foreach (int i in list) { }
+                //}, "Enumerating List by foreach")
+                //.AddCase(() =>
+                //{
+                //    foreach (int i in llist) { }
+                //}, "Enumerating LinkedList by foreach")
+                //.AddCase(() =>
+                //{
+                //    foreach (int i in clist) { }
+                //}, "Enumerating CircularList by foreach (0-aligned)")
+                //.AddCase(() =>
+                //{
+                //    foreach (int i in clistShifted) { }
+                //}, "Enumerating CircularList by foreach (shifted)")
+                //.AddCase(() =>
+                //{
+                //    IEnumerable<int> ilist = list;
+                //    foreach (int i in ilist) { }
+                //}, "Enumerating List as IList by foreach (eg. LINQ)")
+                //.AddCase(() =>
+                //{
+                //    IEnumerable<int> ilist = llist;
+                //    foreach (int i in ilist) { }
+                //}, "Enumerating LinkedList as IList by foreach")
+                //.AddCase(() =>
+                //{
+                //    IEnumerable<int> ilist = clist;
+                //    foreach (int i in ilist) { }
+                //}, "Enumerating CircularList as IList by foreach (0-aligned)")
+                //.AddCase(() =>
+                //{
+                //    IEnumerable<int> ilist = clistShifted;
+                //    foreach (int i in ilist) { }
+                //}, "Enumerating CircularList as IList by foreach (shifted)")
                 .AddCase(() =>
                 {
                     for (int i = 0; i < list.Count; i++)
@@ -192,13 +209,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         int x = clist[i];
                     }
                 }, "Enumerating CircularList by index (0-aligned)")
-                .AddCase(() =>
-                {
-                    for (int i = 0; i < clistShifted.Count; i++)
-                    {
-                        int x = clistShifted[i];
-                    }
-                }, "Enumerating CircularList by index (shifted)")
+                //.AddCase(() =>
+                //{
+                //    for (int i = 0; i < clistShifted.Count; i++)
+                //    {
+                //        int x = clistShifted[i];
+                //    }
+                //}, "Enumerating CircularList by index (shifted)")
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -206,62 +223,56 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void RemoveTest()
         {
-            const int count = 1000;
+            const int count = 10_000;
             List<int> list = Enumerable.Range(0, count).ToList();
             CircularList<int> clist = list.ToCircularList();
             LinkedList<int> llist = new LinkedList<int>(list);
             const int lastIndex = count - 1;
 
-            new RandomizedPerformanceTest { TestName = "Remove Item Test", Iterations = 100000 }
-                .AddCase(rnd =>
+            new PerformanceTest { TestName = "Remove Item Test", Iterations = 100_000 }
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
                     list.RemoveAt(lastIndex);
                     list.Add(lastIndex);
                 }, "Remove and re-insert last item - List")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
                     llist.RemoveLast();
                     llist.AddLast(lastIndex);
                 }, "Remove and re-insert last item - LinkedList")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
-                    clist.RemoveAt(lastIndex);
+                    clist.RemoveLast();
                     clist.Add(lastIndex);
                 }, "Remove and re-insert last item - CircularList")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = list[0];
                     list.RemoveAt(0);
                     list.Insert(0, e);
                 }, "Remove and re-insert first item - List")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = llist.First.Value;
                     llist.RemoveFirst();
                     llist.AddFirst(e);
                 }, "Remove and re-insert first item - LinkedList")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = clist[0];
                     clist.RemoveAt(0);
                     clist.AddFirst(e);
                 }, "Remove and re-insert first item - CircularList")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
-                    int i = rnd.Next(count);
+                    int i = 100;
                     int e = list[i];
                     list.RemoveAt(i);
                     list.Insert(i, e);
-                }, "Remove and re-insert random element - List")
-                .AddCase(rnd =>
+                }, "Remove and re-insert 100th element - List")
+                .AddCase(() =>
                 {
-                    int i = rnd.Next(count);
+                    int i = 100;
                     LinkedListNode<int> node = llist.First;
                     for (int j = 0; j < i; j++)
                         node = node.Next;
@@ -273,14 +284,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         llist.AddFirst(e);
                     else
                         llist.AddAfter(prev, e);
-                }, "Remove and re-insert random element - LinkedList")
-                .AddCase(rnd =>
+                }, "Remove and re-insert 100th element - LinkedList")
+                .AddCase(() =>
                 {
-                    int i = rnd.Next(count);
+                    int i = 100;
                     int e = clist[i];
                     clist.RemoveAt(i);
                     clist.Insert(i, e);
-                }, "Remove and re-insert random element - CircularList")
+                }, "Remove and re-insert 100th element - CircularList")
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -288,7 +299,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void SearchTest()
         {
-            const int count = 10000;
+            const int count = 10_000;
             List<int> list = Enumerable.Range(0, count).ToList();
             LinkedList<int> llist = new LinkedList<int>(list);
             CircularList<int> clist = list.ToCircularList();
@@ -297,7 +308,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             LinkedList<LongEnum> llistUIntEnum = new LinkedList<LongEnum>(listUIntEnum);
             CircularList<LongEnum> clistUIntEnum = listUIntEnum.ToCircularList();
 
-            new PerformanceTest { TestName = "Search Test", Iterations = 10000 }
+            new PerformanceTest { TestName = "Search Test", Iterations = 100_000 }
                 .AddCase(() => list.Contains(count), "List<int>.Contains")
                 .AddCase(() => llist.Contains(count), "LinkedList<int>.Contains")
                 .AddCase(() => clist.Contains(count), "CircularList<int>.Contains")
@@ -308,6 +319,33 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .AddCase(() => clistUIntEnum.Contains((LongEnum)count), "CircularList<LongEnum>.Contains")
                 .AddCase(() => listUIntEnum.BinarySearch((LongEnum)count), "List<LongEnum>.BinarySearch")
                 .AddCase(() => clistUIntEnum.BinarySearch((LongEnum)count), "CircularList<LongEnum>.BinarySearch")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void SetTest()
+        {
+            const int count = 10_000;
+            List<int> list = Enumerable.Range(0, count).ToList();
+            CircularList<int> clist = PrepareList<int>(count, 0, count);
+            CircularList<int> clistShifted = PrepareList<int>(count, count >> 1, count);
+            new PerformanceTest { TestName = "Set Lists Test", Iterations = 10_000, Repeat = 3 }
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                        list[i] = i;
+                }, "Set List")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                        clist[i] = i;
+                }, "Set CircularList zero-based")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                        clist[i] = i;
+                }, "Set CircularList shifted")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

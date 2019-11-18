@@ -20,77 +20,51 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using System.Text;
-
-using KGySoft.Collections;
-using KGySoft.Reflection;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
-#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible (needed because Enum implements it explicitly)
     /// <summary>
     /// Generic helper class for the <see cref="Enum"/> class.
-    /// Provides faster solutions for already existing functionality in the <see cref="Enum"/> class along with
+    /// Provides high performance solutions for already existing functionality in the <see cref="Enum"/> class along with
     /// some additional features.
     /// </summary>
+    /// <returns>
+    /// <note>In .NET Core the performance of <see cref="Enum"/> members have been improved significantly so the so the performance benefit of
+    /// using <see cref="EnumComparer{TEnum}"/> in .NET Core is negligible. Still, it is useful for the provided functionality or when
+    /// targeting multiple platforms or the .NET Framework.</note>
+    /// </returns>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
-    public static class Enum<TEnum> where TEnum : struct, Enum, IConvertible
-#pragma warning restore CS3024 // Constraint type is not CLS-compliant
+    public static class Enum<TEnum> where TEnum : struct, Enum
     {
+#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+
         #region Fields
 
-        private static readonly Type enumType = typeof(TEnum);
-
         // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
-        private static readonly TypeCode typeCode = Type.GetTypeCode(Enum.GetUnderlyingType(enumType));
-        private static readonly bool isFlags = enumType.IsFlagsEnum();
-        private static readonly bool isSigned = typeCode.In(TypeCode.SByte, TypeCode.Int16, TypeCode.Int32, TypeCode.Int64);
+        private static readonly bool isFlags = (typeof(TEnum)).IsFlagsEnum();
 
-        private static readonly long min
-            = typeCode == TypeCode.SByte ? SByte.MinValue
-            : typeCode == TypeCode.Int16 ? Int16.MinValue
-            : typeCode == TypeCode.Int32 ? Int32.MinValue
-            : typeCode == TypeCode.Int64 ? Int64.MinValue
-            : 0L;
+        // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
+        // but that is alright. Once a field is set no more locks will be requested for it again.
+        private static readonly object syncRoot = new object();
 
-        private static readonly ulong max
-            = typeCode == TypeCode.SByte ? (ulong)SByte.MaxValue
-            : typeCode == TypeCode.Byte ? Byte.MaxValue
-            : typeCode == TypeCode.Int16 ? (ulong)Int16.MaxValue
-            : typeCode == TypeCode.UInt16 ? UInt16.MaxValue
-            : typeCode == TypeCode.Int32 ? Int32.MaxValue
-            : typeCode == TypeCode.UInt32 ? UInt32.MaxValue
-            : typeCode == TypeCode.Int64 ? Int64.MaxValue
-            : UInt64.MaxValue;
+        // These fields share the same data per underlying type
+        private static readonly EnumComparer<TEnum> converter = EnumComparer<TEnum>.Comparer; // The comparer contains also some internal converter methods.
+        private static readonly EnumUnderlyingInfo underlyingInfo = EnumUnderlyingInfo.GetUnderlyingInfo(typeof(TEnum).GetEnumUnderlyingType());
 
-        // masking is needed because binary representation of (ulong)(1L << 31) != (1UL << 31), for example
-        private static readonly ulong sizeMask
-            = typeCode == TypeCode.SByte ? Byte.MaxValue
-            : typeCode == TypeCode.Byte ? Byte.MaxValue
-            : typeCode == TypeCode.Int16 ? UInt16.MaxValue
-            : typeCode == TypeCode.UInt16 ? UInt16.MaxValue
-            : typeCode == TypeCode.Int32 ? UInt32.MaxValue
-            : typeCode == TypeCode.UInt32 ? UInt32.MaxValue
-            : UInt64.MaxValue;
-
-        private static readonly object syncRoot = new object(); // locks are used so that multiple threads may assign a field multiple times but it is still faster than locking fields even on non-null access
-        private static readonly Func<ulong, TEnum> toEnum = GenerateToEnum();
-
+        // These members van vary per TEnum and are initialized only on demand
         private static TEnum[] values;
         private static string[] names;
         private static Dictionary<TEnum, string> valueNamePairs;
-        private static CircularSortedList<ulong, string> numValueNamePairs;
         private static Dictionary<string, TEnum> nameValuePairs;
-        private static Dictionary<string, ulong> nameNumValuePairs;
-        private static Dictionary<string, ulong> nameNumValuePairsIgnoreCase;
+        private static (ulong[] RawValues, string[] Names) rawValueNamePairs;
+        private static Dictionary<StringSegment, ulong> nameRawValuePairs;
+        private static Dictionary<StringSegment, ulong> nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
         // ReSharper restore StaticMemberInGenericType
 
@@ -108,7 +82,7 @@ namespace KGySoft.CoreLibraries
                     return result;
 
                 lock (syncRoot)
-                    return names = Enum.GetNames(enumType);
+                    return names = Enum.GetNames(typeof(TEnum));
             }
         }
 
@@ -122,7 +96,7 @@ namespace KGySoft.CoreLibraries
                     return result;
 
                 lock (syncRoot)
-                    return values = (TEnum[])Enum.GetValues(enumType);
+                    return values = (TEnum[])Enum.GetValues(typeof(TEnum));
             }
         }
 
@@ -150,32 +124,6 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static CircularSortedList<ulong, string> NumValueNamePairs
-        {
-            get
-            {
-                CircularSortedList<ulong, string> result = numValueNamePairs;
-
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                {
-                    result = new CircularSortedList<ulong, string>(Names.Length);
-                    for (int i = 0; i < Values.Length; i++)
-                    {
-                        ulong value = ToUInt64(values[i]);
-
-                        // avoiding duplicated keys (multiple names for the same value)
-                        if (!result.ContainsKey(value))
-                            result.Add(value, names[i]);
-                    }
-
-                    return numValueNamePairs = result;
-                }
-            }
-        }
-
         private static Dictionary<string, TEnum> NameValuePairs
         {
             get
@@ -195,47 +143,50 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static Dictionary<string, ulong> NameNumValuePairs
+        private static Dictionary<StringSegment, ulong> NameRawValuePairs
         {
             get
             {
-                Dictionary<string, ulong> result = nameNumValuePairs;
+                Dictionary<StringSegment, ulong> result = nameRawValuePairs;
                 if (result != null)
                     return result;
 
                 lock (syncRoot)
                 {
-                    result = new Dictionary<string, ulong>(Names.Length);
+                    result = new Dictionary<StringSegment, ulong>(Names.Length);
                     for (int i = 0; i < Values.Length; i++)
-                        result.Add(names[i], ToUInt64(values[i]));
+                        result.Add(new StringSegment(names[i]), converter.ToUInt64(values[i]));
 
-                    return nameNumValuePairs = result;
+                    return nameRawValuePairs = result;
                 }
             }
         }
 
-        private static Dictionary<string, ulong> NameNumValuePairsIgnoreCase
+        private static Dictionary<StringSegment, ulong> NameRawValuePairsIgnoreCase
         {
             get
             {
-                Dictionary<string, ulong> result = nameNumValuePairsIgnoreCase;
+                Dictionary<StringSegment, ulong> result = nameRawValuePairsIgnoreCase;
                 if (result != null)
                     return result;
 
-                result = new Dictionary<string, ulong>(Names.Length, StringComparer.OrdinalIgnoreCase);
-                Dictionary<string, ulong> refDict = NameNumValuePairs;
-                foreach (KeyValuePair<string, ulong> pair in refDict)
+                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegment.IgnoreCaseComparer);
+                Dictionary<StringSegment, ulong> refDict = NameRawValuePairs;
+                foreach (KeyValuePair<StringSegment, ulong> pair in refDict)
                     result[pair.Key] = pair.Value;
 
                 lock (syncRoot)
-                    return nameNumValuePairsIgnoreCase = result;
+                    return nameRawValuePairsIgnoreCase = result;
             }
         }
 
-        private static string Zero => NumValueNamePairs.GetValueOrDefault(0UL, "0");
+        private static string Zero =>
+            rawValueNamePairs.RawValues.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
+                ? rawValueNamePairs.Names[0]
+                : "0";
 
         private static ulong FlagsMask
-            => flagsMask ??= Values.Select(ToUInt64).Where(IsSingleFlagCore).Aggregate(0UL, (acc, value) => acc | value);
+            => flagsMask ??= Values.Select(converter.ToUInt64).Where(UInt64Extensions.IsSingleFlag).Aggregate(0UL, (acc, value) => acc | value);
 
         #endregion
 
@@ -285,11 +236,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         public static string GetName(long value)
         {
-            if (value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
+            if (value < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)value > underlyingInfo.MaxValue)
                 return null;
 
-            NumValueNamePairs.TryGetValue((ulong)value & sizeMask, out string result);
-            return result;
+            return TryGetNameByValue((ulong)value & underlyingInfo.SizeMask);
         }
 
         /// <summary>
@@ -298,14 +250,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value of the required field.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         [CLSCompliant(false)]
-        public static string GetName(ulong value)
-        {
-            if (value > max)
-                return null;
-
-            NumValueNamePairs.TryGetValue(value, out string result);
-            return result;
-        }
+        public static string GetName(ulong value) => value > underlyingInfo.MaxValue ? null : TryGetNameByValue(value);
 
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
@@ -320,7 +265,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <see cref="string"/> value representing a field name in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
-        public static bool IsDefined(string value) => value == null ? throw new ArgumentNullException(nameof(value), Res.ArgumentNull) : NameValuePairs.ContainsKey(value);
+        public static bool IsDefined(string value)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.ContainsKey(value);
+        }
 
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
@@ -329,9 +279,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(long value)
         {
-            if (value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
+            if (value < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)value > underlyingInfo.MaxValue)
                 return false;
-            return NumValueNamePairs.ContainsKey((ulong)value & sizeMask);
+            return FindIndex((ulong)value & underlyingInfo.SizeMask) >= 0;
         }
 
         /// <summary>
@@ -340,7 +292,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         [CLSCompliant(false)]
-        public static bool IsDefined(ulong value) => value <= max && NumValueNamePairs.ContainsKey(value);
+        public static bool IsDefined(ulong value) => value <= underlyingInfo.MaxValue && FindIndex(value) >= 0;
 
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
@@ -350,7 +302,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <see langword="false"/>.</returns>
-        public static bool HasFlag(TEnum value, TEnum flags) => HasFlagCore(value, ToUInt64(flags));
+        public static bool HasFlag(TEnum value, TEnum flags) => HasFlagCore(value, converter.ToUInt64(flags));
 
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
@@ -362,9 +314,11 @@ namespace KGySoft.CoreLibraries
         /// otherwise, <see langword="false"/>.</returns>
         public static bool HasFlag(TEnum value, long flags)
         {
-            if (flags < min || isSigned && flags > (long)max || !isSigned && (ulong)flags > max)
+            if (flags < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && flags > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)flags > underlyingInfo.MaxValue)
                 return false;
-            return HasFlagCore(value, (ulong)flags & sizeMask);
+            return HasFlagCore(value, (ulong)flags & underlyingInfo.SizeMask);
         }
 
         /// <summary>
@@ -376,18 +330,14 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <see langword="false"/>.</returns>
         [CLSCompliant(false)]
-        public static bool HasFlag(TEnum value, ulong flags) => flags <= max && HasFlagCore(value, flags);
+        public static bool HasFlag(TEnum value, ulong flags) => flags <= underlyingInfo.MaxValue && HasFlagCore(value, flags);
 
         /// <summary>
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool IsSingleFlag(TEnum value)
-        {
-            ulong rawValue = ToUInt64(value);
-            return rawValue != 0 && IsSingleFlagCore(rawValue);
-        }
+        public static bool IsSingleFlag(TEnum value) => converter.ToUInt64(value).IsSingleFlag();
 
         /// <summary>
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
@@ -397,9 +347,12 @@ namespace KGySoft.CoreLibraries
         /// and only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag(long value)
         {
-            if (value == 0L || value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
+            if (value == 0L
+                || value < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)value > underlyingInfo.MaxValue)
                 return false;
-            return IsSingleFlagCore((ulong)value);
+            return ((ulong)value).IsSingleFlag();
         }
 
         /// <summary>
@@ -411,9 +364,52 @@ namespace KGySoft.CoreLibraries
         [CLSCompliant(false)]
         public static bool IsSingleFlag(ulong value)
         {
-            if (value == 0UL || value > max)
+            if (value == 0UL || value > underlyingInfo.MaxValue)
                 return false;
-            return IsSingleFlagCore(value);
+            return value.IsSingleFlag();
+        }
+
+        /// <summary>
+        /// Gets the number of bits set in <paramref name="value"/>.
+        /// It is not checked, whether all flags are defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>The number of bits set in <paramref name="value"/>.</returns>
+        public static int GetFlagsCount(TEnum value) => converter.ToUInt64(value).GetFlagsCount();
+
+        /// <summary>
+        /// Gets the number of bits set in <paramref name="value"/> or <c>-1</c> if <paramref name="value"/> does not fall into the range of <typeparamref name="TEnum"/>.
+        /// It is not checked, whether all flags are defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>The number of bits set in <paramref name="value"/>, or <c>-1</c> if <paramref name="value"/> does not fall into the range of <typeparamref name="TEnum"/>.</returns>
+        public static int GetFlagsCount(long value)
+        {
+            if (value == 0L)
+                return 0;
+            if (value < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)value > underlyingInfo.MaxValue)
+                return -1;
+
+            return ((ulong)value & underlyingInfo.SizeMask).GetFlagsCount();
+        }
+
+        /// <summary>
+        /// Gets the number of bits set in <paramref name="value"/> or <c>-1</c> if <paramref name="value"/> does not fall into the range of <typeparamref name="TEnum"/>.
+        /// It is not checked, whether all flags are defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>The number of bits set in <paramref name="value"/>, or <c>-1</c> if <paramref name="value"/> does not fall into the range of <typeparamref name="TEnum"/>.</returns>
+        [CLSCompliant(false)]
+        public static int GetFlagsCount(ulong value)
+        {
+            if (value == 0UL)
+                return 0;
+            if (value > underlyingInfo.MaxValue)
+                return -1;
+
+            return value.GetFlagsCount();
         }
 
         /// <summary>
@@ -424,7 +420,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
-        public static bool AllFlagsDefined(TEnum flags) => AllFlagsDefinedCore(ToUInt64(flags));
+        public static bool AllFlagsDefined(TEnum flags) => AllFlagsDefinedCore(converter.ToUInt64(flags));
 
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
@@ -436,9 +432,12 @@ namespace KGySoft.CoreLibraries
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined(long flags)
         {
-            if (flags < min || isSigned && flags > (long)max || !isSigned && (ulong)flags > max)
+            if (flags < underlyingInfo.MinValue
+                || underlyingInfo.IsSigned && flags > (long)underlyingInfo.MaxValue
+                || !underlyingInfo.IsSigned && (ulong)flags > underlyingInfo.MaxValue)
                 return false;
-            return AllFlagsDefinedCore((ulong)flags & sizeMask);
+
+            return AllFlagsDefinedCore((ulong)flags & underlyingInfo.SizeMask);
         }
 
         /// <summary>
@@ -450,7 +449,17 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         [CLSCompliant(false)]
-        public static bool AllFlagsDefined(ulong flags) => flags <= max && AllFlagsDefinedCore(flags);
+        public static bool AllFlagsDefined(ulong flags) => flags <= underlyingInfo.MaxValue && AllFlagsDefinedCore(flags);
+
+        /// <summary>
+        /// Gets a <typeparamref name="TEnum"/> value where all defined single flag values are set. 
+        /// </summary>
+        /// <returns>A <typeparamref name="TEnum"/> value where all defined single flag values are set. </returns>
+        /// <remarks>
+        /// <para>Flag values are the ones whose binary representation contains only a single bit.</para>
+        /// <para>It is not checked whether <typeparamref name="TEnum"/> is really marked by <see cref="FlagsAttribute"/>.</para>
+        /// </remarks>
+        public static TEnum GetFlagsMask() => converter.ToEnum(FlagsMask);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
@@ -465,21 +474,23 @@ namespace KGySoft.CoreLibraries
         public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.value);
 
             // simple name match test
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
 
-            value = value.Trim();
+            var s = new StringSegment(value);
+            s.Trim();
             result = default(TEnum);
-            if (value.Length == 0)
+            if (s.Length == 0)
                 return false;
 
             // simple numeric value
-            if (((value[0] >= '0' && value[0] <= '9') || value[0] == '-' || value[0] == '+') && TryParseNumber(value, out ulong numericValue))
+            char c = s[0];
+            if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
-                result = toEnum.Invoke(numericValue);
+                result = converter.ToEnum(numericValue);
                 return true;
             }
 
@@ -487,30 +498,30 @@ namespace KGySoft.CoreLibraries
             if (String.IsNullOrEmpty(separator))
                 separator = EnumExtensions.DefaultParseSeparator;
 
-            string[] tokens = separator.Length == 1 ? value.Split(separator[0]) : value.Split(new[] { separator }, StringSplitOptions.None);
             ulong acc = 0UL;
-            foreach (string t in tokens)
+            while (s.TryGetNextSegment(separator, out StringSegment token))
             {
-                string token = t.Trim();
+                token.Trim();
                 if (token.Length == 0)
                     return false;
 
                 // literal token found in dictionary
-                if (NameNumValuePairs.TryGetValue(token, out ulong tokenValue))
+                if (NameRawValuePairs.TryGetValue(token, out ulong tokens))
                 {
-                    acc |= tokenValue;
+                    acc |= tokens;
                     continue;
                 }
 
                 // checking for case-insensitive match
-                if (ignoreCase && NameNumValuePairsIgnoreCase.TryGetValue(token, out tokenValue))
+                if (ignoreCase && NameRawValuePairsIgnoreCase.TryGetValue(token, out tokens))
                 {
-                    acc |= tokenValue;
+                    acc |= tokens;
                     continue;
                 }
 
                 // checking if is numeric token
-                if (((token[0] >= '0' && token[0] <= '9') || token[0] == '-' || token[0] == '+') && TryParseNumber(token, out numericValue))
+                c = token[0];
+                if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
                     continue;
@@ -520,7 +531,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            result = toEnum.Invoke(acc);
+            result = converter.ToEnum(acc);
             return true;
         }
 
@@ -569,9 +580,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, string separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
-            => !TryParse(value, separator, ignoreCase, out TEnum result)
-                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value))
-                : result;
+        {
+            if (!TryParse(value, separator, ignoreCase, out TEnum result))
+                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value, typeof(TEnum)));
+            return result;
+        }
 
         /// <summary>
         /// Converts the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
@@ -582,38 +595,58 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, bool ignoreCase)
-            => !TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out TEnum result)
-                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value))
-                : result;
+        {
+            if (!TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out TEnum result))
+                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value, typeof(TEnum)));
+            return result;
+        }
 
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <param name="format">Formatting option. This parameter is optional.
-        /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
+        /// <param name="format">Formatting options.</param>
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString(TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string separator = EnumExtensions.DefaultFormatSeparator)
+        public static string ToString(TEnum value, EnumFormattingOptions format, string separator = EnumExtensions.DefaultFormatSeparator)
         {
             if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
-                throw new ArgumentOutOfRangeException(nameof(format), Res.EnumOutOfRange(format));
+                Throw.EnumArgumentOutOfRange(Argument.format, value);
 
             if (format == EnumFormattingOptions.DistinctFlags)
                 return FormatDistinctFlags(value, separator);
 
+            // returning as flags
+            if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
+                return FormatCompoundFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
+            
             // defined value exists
             if (ValueNamePairs.TryGetValue(value, out string name))
                 return name;
 
             // if single value is requested returning a number
-            if ((format == EnumFormattingOptions.Auto && !isFlags) || format == EnumFormattingOptions.NonFlags)
-                return isSigned ? value.ToInt64(CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture) : value.ToUInt64(CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+            return ToNumericString(converter.ToUInt64(value));
+        }
 
+        /// <summary>
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
+        /// </summary>
+        /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
+        /// <returns>The string representation of <paramref name="value"/>.</returns>
+        public static string ToString(TEnum value)
+        {
             // returning as flags
-            return FormatFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
+            if (isFlags)
+                return FormatCompoundFlags(value, EnumExtensions.DefaultFormatSeparator, false);
+            
+            // defined value exists
+            if (ValueNamePairs.TryGetValue(value, out string name))
+                return name;
+
+            // defined value does not exist: returning a number
+            return ToNumericString(converter.ToUInt64(value));
         }
 
         /// <summary>
@@ -634,7 +667,11 @@ namespace KGySoft.CoreLibraries
         /// <para>Flags with the same values but different names are returned only once.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public static IEnumerable<TEnum> GetFlags() => Values.Where(IsSingleFlag).Distinct();
+        public static IEnumerable<TEnum> GetFlags()
+        {
+            EnsureRawValueNamePairs();
+            return rawValueNamePairs.RawValues.Where(UInt64Extensions.IsSingleFlag).Select(converter.ToEnum);
+        }
 
         /// <summary>
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
@@ -650,17 +687,17 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static IEnumerable<TEnum> GetFlags(TEnum flags, bool onlyDefinedValues)
         {
-            ulong value = ToUInt64(flags);
+            ulong value = converter.ToUInt64(flags);
             if (value == 0UL)
                 yield break;
 
-            for (int i = 0; i <= 63; i++)
+            for (int i = 0; i < underlyingInfo.BitSize; i++)
             {
                 ulong flag = 1UL << i;
                 if ((value & flag) != 0)
                 {
                     if (!onlyDefinedValues || (FlagsMask & flag) == flag)
-                        yield return toEnum.Invoke(flag);
+                        yield return converter.ToEnum(flag);
 
                     value &= ~flag;
                     if (value == 0UL)
@@ -668,16 +705,6 @@ namespace KGySoft.CoreLibraries
                 }
             }
         }
-
-        /// <summary>
-        /// Gets a <typeparamref name="TEnum"/> value where all defined single flag values are set. 
-        /// </summary>
-        /// <returns>A <typeparamref name="TEnum"/> value where all defined single flag values are set. </returns>
-        /// <remarks>
-        /// <para>Flag values are the ones whose binary representation contains only a single bit.</para>
-        /// <para>It is not checked whether <typeparamref name="TEnum"/> is really marked by <see cref="FlagsAttribute"/>.</para>
-        /// </remarks>
-        public static TEnum GetFlagsMask() => toEnum.Invoke(FlagsMask);
 
         /// <summary>
         /// Clears caches associated with <typeparamref name="TEnum"/> enumeration.
@@ -690,8 +717,9 @@ namespace KGySoft.CoreLibraries
                 names = null;
                 valueNamePairs = null;
                 nameValuePairs = null;
-                nameNumValuePairs = null;
-                numValueNamePairs = null;
+                nameRawValuePairs = null;
+                rawValueNamePairs.RawValues = null;
+                rawValueNamePairs.Names = null;
             }
         }
 
@@ -699,161 +727,277 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
-#endif
-        private static ulong ToUInt64(TEnum value)
-            => isSigned ? (ulong)value.ToInt64(CultureInfo.InvariantCulture) & sizeMask : value.ToUInt64(CultureInfo.InvariantCulture);
-
-        private static Func<ulong, TEnum> GenerateToEnum()
+        private static void EnsureRawValueNamePairs()
         {
-            // This could be in a static constructor but moved to an initializer method due to performance reasons (CA1810)
-            ParameterExpression valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
-            var lambda = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression);
-            return lambda.Compile();
+            if (rawValueNamePairs.RawValues == null)
+                InitRawValueNamePairs();
+        }
+
+        private static void InitRawValueNamePairs()
+        {
+            var result = new SortedList<ulong, string>(Names.Length);
+            int length = Values.Length;
+            for (int i = 0; i < length; i++)
+            {
+                ulong value = converter.ToUInt64(values[i]);
+
+                // avoiding duplicated keys (multiple names for the same value)
+                if (!result.ContainsKey(value))
+                    result.Add(value, names[i]);
+            }
+
+            rawValueNamePairs.RawValues = result.Keys.ToArray();
+            rawValueNamePairs.Names = result.Values.ToArray();
+        }
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static int FindIndex(ulong value) => Array.BinarySearch(rawValueNamePairs.RawValues, 0, rawValueNamePairs.RawValues.Length, value);
+
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static string TryGetNameByValue(ulong value)
+        {
+            int index = FindIndex(value);
+            return index >= 0 ? rawValueNamePairs.Names[index] : null;
         }
 
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static bool AllFlagsDefinedCore(ulong flags)
-            => flags == 0UL ? NumValueNamePairs.ContainsKey(0UL) : (FlagsMask & flags) == flags;
-
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        private static bool IsSingleFlagCore(ulong value) => (value & (value - 1UL)) == 0UL;
-
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (ToUInt64(value) & flags) == flags;
-
-        private static bool TryParseNumber(string value, out ulong result)
         {
-            if (isSigned)
+            if (flags == 0UL)
             {
-                if (Int64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long signedResult))
-                {
-                    result = (ulong)signedResult;
-                    return signedResult >= min && signedResult <= (long)max;
-                }
-
-                result = default;
-                return false;
+                EnsureRawValueNamePairs();
+                return FindIndex(0UL) == 0;
             }
 
-            if (UInt64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result))
-                return result <= max;
-
-            result = default;
-            return false;
+            return (FlagsMask & flags) == flags;
         }
 
-        private static string FormatDistinctFlags(TEnum e, string separator)
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (converter.ToUInt64(value) & flags) == flags;
+
+        private static unsafe string FormatDistinctFlags(TEnum e, string separator)
         {
-            ulong value = ToUInt64(e);
-            if (value == 0UL)
+            EnsureRawValueNamePairs();
+            ulong origRawValue = converter.ToUInt64(e);
+            if (origRawValue == 0UL)
                 return Zero;
 
-            if (String.IsNullOrEmpty(separator))
-                separator = EnumExtensions.DefaultFormatSeparator;
-            StringBuilder result = new StringBuilder();
-            bool first = true;
+            ulong value = origRawValue;
 
-            for (int i = 0; i <= 63; i++)
+            // Up to 64 flags. Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
+            // MinValue: Flag is unset; <0: Flag has no name (digits size are stored); >=0: Name index
+            int* resultsQueue = stackalloc int[underlyingInfo.BitSize];
+
+            int maxFlag = 0; // Indicates the valuable length of resultsQueue
+            int resultLength = 0; // Indicates the length of the string to be allocated
+
+            for (int i = 0; i < underlyingInfo.BitSize; i++)
             {
                 ulong flagValue = 1UL << i;
-                if ((value & flagValue) != 0UL)
+
+                // unset flag
+                if ((value & flagValue) == 0UL)
                 {
-                    if (!first)
-                        result.Append(separator);
-                    else
-                        first = false;
-
-                    if (NumValueNamePairs.TryGetValue(flagValue, out string name))
-                        result.Append(name);
-                    else
-                        result.Append(!isSigned ? flagValue.ToString(CultureInfo.InvariantCulture) : ToSignedIntegerString((long)flagValue));
-
-                    value &= ~flagValue;
-                    if (value == 0UL)
-                        break;
+                    resultsQueue[i] = Int32.MinValue;
+                    continue;
                 }
+
+                maxFlag = i;
+                int nameIndex = FindIndex(flagValue);
+
+                // flag with name
+                if (nameIndex >= 0)
+                {
+                    // The value can be covered by a single name
+                    if (origRawValue == flagValue)
+                        return rawValueNamePairs.Names[nameIndex];
+
+                    resultsQueue[i] = nameIndex;
+                    resultLength += rawValueNamePairs.Names[nameIndex].Length;
+                }
+                // flag without name
+                else
+                {
+                    // The numeric value of the single flag can be returned
+                    if (origRawValue == flagValue)
+                        return ToNumericString(flagValue);
+
+                    int size = GetStringLength(flagValue);
+                    resultsQueue[i] = -size;
+                    resultLength += size;
+                }
+
+                value &= ~flagValue;
+                if (value == 0UL)
+                    break;
             }
-
-            return result.ToString();
-        }
-
-        private static string FormatFlags(TEnum e, string separator, bool allowNumberWithNames)
-        {
-            ulong origNumValue = ToUInt64(e);
-            ulong value = origNumValue;
-            if (value == 0UL)
-                return Zero;
 
             if (String.IsNullOrEmpty(separator))
                 separator = EnumExtensions.DefaultFormatSeparator;
-            StringBuilder result = new StringBuilder();
-            IList<ulong> numValues = NumValueNamePairs.Keys;
-            bool first = true;
 
-            // processing existing values
-            for (int i = numValues.Count - 1; value > 0 && i >= 0; i--)
+            // Building result. Mutating a preallocated string is much faster than StringBuilder.
+            string result = new String('\0', resultLength + separator.Length * (origRawValue.GetFlagsCount() - 1));
+
+            fixed (char* pinnedResult = result)
             {
-                ulong biggestValue = numValues[i];
-                if (biggestValue == 0UL)
-                    break;
+                char* pos = pinnedResult;
 
-                if ((value & biggestValue) == biggestValue)
+                // Applying the names/numbers
+                for (int i = 0; i <= maxFlag; i++)
                 {
-                    if (!first)
-                        result.Insert(0, separator);
+                    if (resultsQueue[i] >= 0)
+                        rawValueNamePairs.Names[resultsQueue[i]].CopyToAndAdvance(&pos);
+                    else if (resultsQueue[i] == Int32.MinValue)
+                        continue;
                     else
-                        first = false;
-                    result.Insert(0, numValueNamePairs.Values[i]);
-                    value &= ~biggestValue;
+                        ToNumericString(1UL << i, -resultsQueue[i], &pos);
+
+                    if (i < maxFlag)
+                        separator.CopyToAndAdvance(&pos);
                 }
             }
 
-            // processing rest
-            if (value != 0UL)
-            {
-                if (allowNumberWithNames)
-                {
-                    if (!first)
-                        result.Insert(0, separator);
-                    result.Insert(0, isSigned ? ToSignedIntegerString((long)value) : value.ToString(CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    return isSigned ? ToSignedIntegerString((long)origNumValue) : origNumValue.ToString(CultureInfo.InvariantCulture);
-                }
-            }
-
-            return result.ToString();
+            return result;
         }
 
-        private static string ToSignedIntegerString(long nativeValue)
+        private static unsafe string FormatCompoundFlags(TEnum e, string separator, bool allowNumberWithNames)
         {
-            if (nativeValue <= (long)max)
-                return nativeValue.ToString(CultureInfo.InvariantCulture);
+            EnsureRawValueNamePairs();
+            ulong origRawValue = converter.ToUInt64(e);
+            if (origRawValue == 0UL)
+                return Zero;
 
-            // eg. (int)-10: after the ulong->long conversion this is a bigger positive number as max
-            unchecked
+            // Finally, thanks to the changes in .NET Core 3.0 (see https://github.com/dotnet/coreclr/pull/21254/files)
+            // the System.Enum.ToString performance is not terrible anymore. This is also a similar solution (apart
+            // from the feature differences). We can't use Span here because that is not available for all targets.
+            ulong[] rawValues = rawValueNamePairs.RawValues;
+            ulong value = origRawValue;
+
+            // Up to 64 flags. Unlike in FormatDistinctFlags it is used as a stack because the largest value is added first.
+            int* resultsStack = stackalloc int[underlyingInfo.BitSize];
+
+            int resultsCount = 0; // Indicates the top of resultsStack
+            int resultLength = 0; // Indicates the length of the string to be allocated
+
+            // Processing existing values from largest to smallest
+            for (int i = rawValues.Length - 1; value > 0 && i >= 0; i--)
             {
-                switch (typeCode)
+                ulong biggestUnprocessedValue = rawValues[i];
+                if (biggestUnprocessedValue == 0UL)
+                    break;
+
+                if ((value & biggestUnprocessedValue) == biggestUnprocessedValue)
                 {
-                    case TypeCode.Int32:
-                        return ((int)nativeValue).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.Int16:
-                        return ((short)nativeValue).ToString(CultureInfo.InvariantCulture);
-                    case TypeCode.SByte:
-                        return ((sbyte)nativeValue).ToString(CultureInfo.InvariantCulture);
+                    // The value can be covered by a single name
+                    if (origRawValue == biggestUnprocessedValue)
+                        return rawValueNamePairs.Names[i];
+
+                    resultsStack[resultsCount] = i;
+                    resultLength += rawValueNamePairs.Names[i].Length;
+                    resultsCount += 1;
+                    value &= ~biggestUnprocessedValue;
                 }
             }
 
-            throw new InvalidOperationException(Res.InternalError($"Unexpected signed base type: {typeCode}"));
+            // There is a rest value but numbers cannot be mixed with names: returning a standalone number
+            if (value != 0UL && !allowNumberWithNames)
+                return ToNumericString(origRawValue);
+
+            if (String.IsNullOrEmpty(separator))
+                separator = EnumExtensions.DefaultFormatSeparator;
+
+            int numericValueLen = 0;
+            if (value != 0UL)
+            {
+                numericValueLen = GetStringLength(value);
+                resultLength += numericValueLen;
+                resultsCount += 1;
+            }
+
+            // Building result. Mutating a preallocated string is much faster than StringBuilder.
+            string result = new String('\0', resultLength + separator.Length * (resultsCount - 1));
+            fixed (char* pinnedResult = result)
+            {
+                char* pos = pinnedResult;
+
+                // Applying the number (if any)
+                if (numericValueLen != 0)
+                {
+                    ToNumericString(value, numericValueLen, &pos);
+                    resultsCount -= 1;
+                    if (resultsCount > 1)
+                        separator.CopyToAndAdvance(&pos);
+                }
+
+                // Applying the names
+                for (int i = resultsCount - 1; i >= 0; i--)
+                {
+                    rawValueNamePairs.Names[resultsStack[i]].CopyToAndAdvance(&pos);
+
+                    if (i > 0)
+                        separator.CopyToAndAdvance(&pos);
+                }
+            }
+
+            return result;
+        }
+
+        private static long ToSigned(ulong value)
+            => underlyingInfo.TypeCode switch
+            {
+                TypeCode.Int32 => (int)value,
+                TypeCode.Int64 => (long)value,
+                TypeCode.Int16 => (short)value,
+                _ => (sbyte)value
+            };
+
+        private static string ToNumericString(ulong value)
+        {
+            if (!underlyingInfo.IsSigned)
+                return value.QuickToString(false);
+
+            long signedValue = ToSigned(value);
+            bool isNeg = signedValue < 0;
+            return (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg);
+        }
+
+        private static unsafe void ToNumericString(ulong value, int size, char** targetRef)
+        {
+            if (!underlyingInfo.IsSigned)
+                value.QuickToString(false, size, *targetRef);
+            else
+            {
+                long signedValue = ToSigned(value);
+                bool isNeg = signedValue < 0;
+                (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg, size, *targetRef);
+            }
+
+            *targetRef += size;
+        }
+
+        private static int GetStringLength(ulong value)
+        {
+            if (!underlyingInfo.IsSigned)
+                return (int)Math.Log10(value) + 1;
+            long signed = ToSigned(value);
+            int sign;
+            if (signed < 0)
+            {
+                signed = -signed;
+                sign = 1;
+            }
+            else
+                sign = 0;
+
+            return (int)Math.Log10(signed) + 1 + sign;
         }
 
         #endregion

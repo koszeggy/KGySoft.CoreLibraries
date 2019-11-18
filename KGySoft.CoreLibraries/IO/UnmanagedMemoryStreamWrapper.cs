@@ -77,14 +77,14 @@ namespace KGySoft.IO
         public override void WriteTo(Stream stream)
         {
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.stream);
             byte[] buffer = ToArray();
             stream.Write(buffer, 0, buffer.Length);
         }
 
-        public override void SetLength(long value) => throw new NotSupportedException(Res.NotSupported);
-        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(Res.NotSupported);
-        public override void WriteByte(byte value) => throw new NotSupportedException(Res.NotSupported);
+        public override void SetLength(long value) => Throw.NotSupportedException(Res.NotSupported);
+        public override void Write(byte[] buffer, int offset, int count) => Throw.NotSupportedException(Res.NotSupported);
+        public override void WriteByte(byte value) => Throw.NotSupportedException(Res.NotSupported);
 
         #endregion
 

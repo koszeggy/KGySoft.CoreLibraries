@@ -228,7 +228,6 @@ namespace KGySoft.Serialization.Binary
                         return typeof(ConcurrentDictionary<,>); 
 #endif
 
-
                     case DataTypes.SortedListNonGeneric:
                         return typeof(SortedList);
                     case DataTypes.ListDictionary:
@@ -255,11 +254,11 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ConcurrentBag:
                     case DataTypes.ConcurrentQueue:
                     case DataTypes.ConcurrentStack:
-                        throw new PlatformNotSupportedException(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType))); 
+                        return ThrowHelper.ThrowPlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 
                     default:
-                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
+                        return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
                 }
             }
 
@@ -340,13 +339,9 @@ namespace KGySoft.Serialization.Binary
 
             internal object GetAsReadOnly(object collection)
             {
-                switch (CollectionDataType)
-                {
-                    case DataTypes.OrderedDictionary:
-                        return ((OrderedDictionary)collection).AsReadOnly();
-                    default:
-                        throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
-                }
+                if (CollectionDataType != DataTypes.OrderedDictionary)
+                    Throw.NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
+                return ((OrderedDictionary)collection).AsReadOnly();
             }
 
             /// <summary>
@@ -376,7 +371,7 @@ namespace KGySoft.Serialization.Binary
                 if ((attr & TypeAttributes.Enum) != TypeAttributes.None)
                 {
                     if (!Type.IsEnum)
-                        throw new SerializationException(Res.BinarySerializationNotAnEnum(Type));
+                        Throw.SerializationException(Res.BinarySerializationNotAnEnum(Type));
                     dataType |= DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(Type)];
                     return;
                 }
@@ -494,7 +489,7 @@ namespace KGySoft.Serialization.Binary
                             return existingDescriptor.Type;
                         }
 
-                        throw new SerializationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
+                        return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
                 }
             }
 

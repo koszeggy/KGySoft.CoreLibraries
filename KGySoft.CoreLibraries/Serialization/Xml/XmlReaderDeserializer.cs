@@ -23,7 +23,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 using System.Xml;
@@ -70,11 +69,11 @@ namespace KGySoft.Serialization.Xml
         public static object Deserialize(XmlReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.reader);
 
             ReadToNodeType(reader, XmlNodeType.Element);
             if (reader.Name != XmlSerializer.ElementObject)
-                throw new ArgumentException(Res.XmlSerializationRootObjectExpected(reader.Name), nameof(reader));
+                Throw.ArgumentException(Argument.reader, Res.XmlSerializationRootObjectExpected(reader.Name));
 
             if (reader.IsEmptyElement)
                 return null;
@@ -85,15 +84,15 @@ namespace KGySoft.Serialization.Xml
             {
                 objType = Reflector.ResolveType(attrType);
                 if (objType == null)
-                    throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
+                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
             }
 
             if (TryDeserializeObject(objType, reader, null, out var result))
                 return result;
 
             if (attrType == null)
-                throw new ArgumentException(Res.XmlSerializationRootTypeMissing, nameof(reader));
-            throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(objType));
+                Throw.ArgumentException(Argument.content, Res.XmlSerializationRootTypeMissing);
+            return Throw.NotSupportedException<object>(Res.XmlSerializationDeserializingTypeNotSupported(objType));
         }
 
         /// <summary>
@@ -103,10 +102,9 @@ namespace KGySoft.Serialization.Xml
         public static void DeserializeContent(XmlReader reader, object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj));
+                Throw.ArgumentNullException(Argument.obj);
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader));
-
+                Throw.ArgumentNullException(Argument.reader);
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
@@ -114,7 +112,11 @@ namespace KGySoft.Serialization.Xml
             if (attrFormat == XmlSerializer.AttributeValueCustom)
             {
                 if (!(obj is IXmlSerializable xmlSerializable))
-                    throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(objType));
+                {
+                    Throw.ArgumentException(Argument.objType, Res.XmlSerializationNotAnIXmlSerializable(objType));
+                    return;
+                }
+
                 DeserializeXmlSerializable(xmlSerializable, reader);
                 return;
             }
@@ -132,7 +134,7 @@ namespace KGySoft.Serialization.Xml
             if (objType.IsCollection())
             {
                 if (!objType.IsReadWriteCollection(obj))
-                    throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(objType));
+                    Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(objType));
 
                 collectionElementType = objType.GetCollectionElementType();
                 IEnumerable collection = (IEnumerable)obj;
@@ -182,7 +184,7 @@ namespace KGySoft.Serialization.Xml
                                 ? property.Get(obj)
                                 : field.Get(obj);
                             if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(reader), out var result) && !TryDeserializeObject(itemType, reader, existingValue, out result))
-                                throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
+                                Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
 
                             // 1.c.) Processing result
                             HandleDeserializedMember(obj, member, result, existingValue, members);
@@ -205,8 +207,9 @@ namespace KGySoft.Serialization.Xml
                         }
 
                         if (itemType == null)
-                            throw new ArgumentException(Res.XmlSerializationCannotDetermineElementType(objRealType));
-                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
+                            Throw.ArgumentException(Res.XmlSerializationCannotDetermineElementType(objRealType));
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
+                        break;
 
                     case XmlNodeType.EndElement:
                         return;
@@ -246,7 +249,7 @@ namespace KGySoft.Serialization.Xml
                             {
                                 case nameof(KeyValuePair<_, _>.Key):
                                     if (keyRead)
-                                        throw new ArgumentException(Res.XmlSerializationMultipleKeys);
+                                        Throw.ArgumentException(Res.XmlSerializationMultipleKeys);
 
                                     keyRead = true;
                                     string attrType = ctx.Reader[XmlSerializer.AttributeType];
@@ -254,14 +257,14 @@ namespace KGySoft.Serialization.Xml
                                     if (!TryDeserializeObject(keyType, ctx.Reader, null, out key))
                                     {
                                         if (attrType != null && keyType == null)
-                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
+                                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
+                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
                                     }
                                     break;
 
                                 case nameof(KeyValuePair<_, _>.Value):
                                     if (valueRead)
-                                        throw new ArgumentException(Res.XmlSerializationMultipleValues);
+                                        Throw.ArgumentException(Res.XmlSerializationMultipleValues);
 
                                     valueRead = true;
                                     attrType = ctx.Reader[XmlSerializer.AttributeType];
@@ -269,22 +272,23 @@ namespace KGySoft.Serialization.Xml
                                     if (!TryDeserializeObject(valueType, ctx.Reader, null, out value))
                                     {
                                         if (attrType != null && valueType == null)
-                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
+                                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
+                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
                                     }
                                     break;
 
                                 default:
-                                    throw new ArgumentException(Res.XmlSerializationUnexpectedElement(ctx.Reader.Name));
+                                    Throw.ArgumentException(Res.XmlSerializationUnexpectedElement(ctx.Reader.Name));
+                                    break;
                             }
                             break;
 
                         case XmlNodeType.EndElement:
                             // end of KeyValue: checking whether both key and value have been read
                             if (!keyRead)
-                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
+                                Throw.ArgumentException(Res.XmlSerializationKeyValueMissingKey);
                             if (!valueRead)
-                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
+                                Throw.ArgumentException(Res.XmlSerializationKeyValueMissingValue);
 
                             ctx.Result = Activator.CreateInstance(ctx.Type);
                             Accessors.SetKeyValue(ctx.Result, key, value);
@@ -304,7 +308,7 @@ namespace KGySoft.Serialization.Xml
                 if (attrCrc != null)
                 {
                     if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                        throw new ArgumentException(Res.XmlSerializationCrcError);
+                        Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
                 ctx.Result = BinarySerializer.Deserialize(data);
@@ -342,7 +346,7 @@ namespace KGySoft.Serialization.Xml
 
                 ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
                     ? ctx.Type.IsValueType ? Activator.CreateInstance(ctx.Type) : CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+                    : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
 
                 // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
@@ -353,7 +357,7 @@ namespace KGySoft.Serialization.Xml
                         return true;
                     }
 
-                    throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
+                    Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
                 }
 
                 // 5.) Newly created collection or any other object (both existing and new)
@@ -387,9 +391,14 @@ namespace KGySoft.Serialization.Xml
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
                     ? type.IsValueType ? Activator.CreateInstance(type) : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                    : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
-                    throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
+                {
+                    result = default;
+                    Throw.ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
+                    return default;
+                }
+
                 DeserializeXmlSerializable(xmlSerializable, reader);
                 result = xmlSerializable;
                 return true;
@@ -455,7 +464,7 @@ namespace KGySoft.Serialization.Xml
             if (attrCrc != null)
             {
                 if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                    throw new ArgumentException(Res.XmlSerializationCrcError);
+                    Throw.ArgumentException(Res.XmlSerializationCrcError);
             }
 
             context.Result = BinarySerializer.DeserializeValueType(context.Type, data);
@@ -471,7 +480,7 @@ namespace KGySoft.Serialization.Xml
         private static Array DeserializeArray(Array array, Type elementType, XmlReader reader, bool canRecreateArray)
         {
             if (array == null && elementType == null)
-                throw new ArgumentNullException(nameof(elementType), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.elementType);
 
             ParseArrayDimensions(reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], out int[] lengths, out int[] lowerBounds);
 
@@ -486,7 +495,7 @@ namespace KGySoft.Serialization.Xml
             if (attrCrc != null)
             {
                 if (!UInt32.TryParse(attrCrc, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var result))
-                    throw new ArgumentException(Res.XmlSerializationCrcHexExpected(attrCrc));
+                    Throw.ArgumentException(Res.XmlSerializationCrcHexExpected(attrCrc));
                 crc = result;
             }
 
@@ -499,19 +508,19 @@ namespace KGySoft.Serialization.Xml
                 {
                     case XmlNodeType.Text:
                         if (deserializedItemsCount > 0)
-                            throw new ArgumentException(Res.XmlSerializationMixedArrayFormats);
+                            Throw.ArgumentException(Res.XmlSerializationMixedArrayFormats);
 
                         // primitive array (can be restored by BlockCopy)
                         byte[] data = Convert.FromBase64String(reader.Value);
                         if (crc.HasValue)
                         {
                             if (Crc32.CalculateHash(data) != crc.Value)
-                                throw new ArgumentException(Res.XmlSerializationCrcError);
+                                Throw.ArgumentException(Res.XmlSerializationCrcError);
                         }
 
                         deserializedItemsCount = data.Length / elementType.SizeOf();
                         if (array.Length != deserializedItemsCount)
-                            throw new ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
+                            Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
                         Buffer.BlockCopy(data, 0, array, 0, data.Length);
                         break;
 
@@ -540,15 +549,16 @@ namespace KGySoft.Serialization.Xml
                                 continue;
                             }
 
-                            throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
+                            Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
                         }
 
-                        throw new ArgumentException(Res.XmlSerializationUnexpectedElement(reader.Name));
+                        Throw.ArgumentException(Res.XmlSerializationUnexpectedElement(reader.Name));
+                        break;
 
                     case XmlNodeType.EndElement:
                         // in end element of parent: checking items count
                         if (deserializedItemsCount != array.Length)
-                            throw new ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
+                            Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
 
                         return array;
                 }
@@ -601,7 +611,7 @@ namespace KGySoft.Serialization.Xml
             do
             {
                 if (!reader.Read())
-                    throw new ArgumentException(Res.XmlSerializationUnexpectedEnd);
+                    Throw.ArgumentException(Res.XmlSerializationUnexpectedEnd);
 
                 if (reader.NodeType.In(nodeTypes))
                     return;
@@ -609,7 +619,7 @@ namespace KGySoft.Serialization.Xml
                 if (reader.NodeType.In(XmlNodeType.Whitespace, XmlNodeType.Comment, XmlNodeType.XmlDeclaration))
                     continue;
 
-                throw new ArgumentException(Res.XmlSerializationUnexpectedElement(Enum<XmlNodeType>.ToString(reader.NodeType)));
+                Throw.ArgumentException(Res.XmlSerializationUnexpectedElement(Enum<XmlNodeType>.ToString(reader.NodeType)));
             }
             while (true);
         }

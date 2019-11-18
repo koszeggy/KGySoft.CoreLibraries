@@ -19,6 +19,7 @@
 #if !NET35
 using System.Dynamic;
 #endif
+using KGySoft.Annotations;
 
 #region Used Namespaces
 
@@ -155,7 +156,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (key == nameof(Enabled) && !(value is bool))
-                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool, nameof(value));
+                    Throw.ArgumentException(Argument.value, Res.ComponentModelEnabledMustBeBool);
 
                 bool differs;
                 stateProperties.Lock();
@@ -194,7 +195,7 @@ namespace KGySoft.ComponentModel
             foreach (var state in initialConfiguration)
             {
                 if (state.Key == nameof(Enabled) && !(state.Value is bool))
-                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool, nameof(initialConfiguration));
+                    Throw.ArgumentException(Argument.initialConfiguration, Res.ComponentModelEnabledMustBeBool);
                 stateProperties[state.Key] = state.Value;
             }
         }
@@ -233,7 +234,7 @@ namespace KGySoft.ComponentModel
             try
             {
                 if (stateProperties.ContainsKey(key))
-                    throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
 
                 stateProperties.Add(key, value);
             }
@@ -263,10 +264,10 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The value of the state to set.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public override bool TrySetMember([CanBeNull]SetMemberBinder binder, object value)
         {
             if (binder == null)
-                throw new ArgumentNullException(nameof(binder), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.binder);
             this[binder.Name] = value;
             return true;
         }
@@ -278,10 +279,10 @@ namespace KGySoft.ComponentModel
         /// <param name="result">The value associated with the specified <see cref="GetMemberBinder.Name"/>.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public override bool TryGetMember([CanBeNull]GetMemberBinder binder, out object result)
         {
             if (binder == null)
-                throw new ArgumentNullException(nameof(binder), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.binder);
             result = this[binder.Name];
             return true;
         }

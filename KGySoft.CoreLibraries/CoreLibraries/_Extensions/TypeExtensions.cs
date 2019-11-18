@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -93,7 +94,7 @@ namespace KGySoft.CoreLibraries
         public static bool CanAcceptValue(this Type type, object value)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             // checking null value: if not reference or nullable, null is wrong
             if (value == null)
@@ -138,7 +139,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to check</param>
         /// <returns><see langword="true"/>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullable(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsGenericTypeOf(Reflector.NullableType);
+        {
+            if (type == null)
+                Throw.ArgumentNullException(Argument.type);
+            return type.IsGenericTypeOf(Reflector.NullableType);
+        }
 
         /// <summary>
         /// Determines whether the specified <paramref name="type"/> is an <see cref="Enum">enum</see> and <see cref="FlagsAttribute"/> is defined on it.
@@ -147,7 +152,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a flags <see cref="Enum">enum</see>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsFlagsEnum(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
+        {
+            if (type == null)
+                Throw.ArgumentNullException(Argument.type);
+            return type.IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
+        }
 
         /// <summary>
         /// Gets whether the specified <paramref name="type"/> is a delegate.
@@ -156,7 +165,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if the specified type is a delegate; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
-            => Reflector.DelegateType.IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
+        {
+            if (type == null)
+                Throw.ArgumentNullException(Argument.type);
+            return Reflector.DelegateType.IsAssignableFrom(type);
+        }
 
         /// <summary>
         /// Gets whether the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>.
@@ -168,9 +181,9 @@ namespace KGySoft.CoreLibraries
         public static bool IsGenericTypeOf(this Type type, Type genericTypeDefinition)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (genericTypeDefinition == null)
-                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.genericTypeDefinition);
             return type.IsConstructedGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
 
@@ -194,9 +207,9 @@ namespace KGySoft.CoreLibraries
         public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, out Type genericType)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (genericTypeDefinition == null)
-                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.genericTypeDefinition);
 
             genericType = null;
             if (!genericTypeDefinition.IsGenericTypeDefinition)
@@ -249,7 +262,7 @@ namespace KGySoft.CoreLibraries
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             TypeConverterAttribute attr = new TypeConverterAttribute(typeof(TConverter));
 
             if (!TypeDescriptor.GetAttributes(type).Contains(attr))
@@ -472,7 +485,7 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             if (!type.IsInstanceOfType(instance))
-                throw new ArgumentException(Res.NotAnInstanceOfType(type), nameof(instance));
+                Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(type));
 
             // not instance is IList test because then type could be even object
             if (Reflector.IListType.IsAssignableFrom(type))
@@ -573,7 +586,7 @@ namespace KGySoft.CoreLibraries
         internal static Type GetGenericType(this Type genTypeDef, Type[] args)
         {
             if (args == null)
-                throw new ArgumentNullException(nameof(args), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.args);
             switch (args.Length)
             {
                 case 1:
@@ -595,7 +608,7 @@ namespace KGySoft.CoreLibraries
         internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type[] args)
         {
             if (args == null)
-                throw new ArgumentNullException(nameof(args), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.args);
             switch (args.Length)
             {
                 case 1:
@@ -610,7 +623,7 @@ namespace KGySoft.CoreLibraries
         internal static bool IsZeroBasedArray(this Type type)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
 #if NET35 || NET40 || NET45 || NET472
             return type.IsSzArray();
@@ -624,8 +637,8 @@ namespace KGySoft.CoreLibraries
         internal static Type GetRootType(this Type type)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-            
+                Throw.ArgumentNullException(Argument.type);
+
             // ReSharper disable once PossibleNullReferenceException - false alarm, see condition
             while (type.HasElementType)
                 type = type.GetElementType();
@@ -650,6 +663,57 @@ namespace KGySoft.CoreLibraries
             ? Activator.CreateInstance(type)
             : null;
 
+        internal static bool IsUnmanaged(this Type type)
+        {
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+            Debug.Fail("Use RuntimeHelpers.IsReferenceOrContainsReferences instead");
+#endif
+            // not caching results so should be called from static field initializers only
+            if (!type.IsValueType)
+                return false;
+            if (type.IsPrimitive || type.IsPointer || type.IsEnum)
+                return true;
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            return fields.All(f => f.FieldType.IsUnmanaged());
+        }
+
+        internal static bool IsSignedIntegerType(this Type type)
+        {
+            switch (Type.GetTypeCode(type))
+            {
+                case TypeCode.SByte:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        internal static ulong GetSizeMask(this Type type)
+        {
+            switch (Type.GetTypeCode(type))
+            {
+                case TypeCode.Boolean:
+                case TypeCode.Byte:
+                case TypeCode.SByte:
+                    return Byte.MaxValue;
+                case TypeCode.Char:
+                case TypeCode.Int16:
+                case TypeCode.UInt16:
+                    return UInt16.MaxValue;
+                case TypeCode.Int32:
+                case TypeCode.UInt32:
+                    return UInt32.MaxValue;
+                case TypeCode.Int64:
+                case TypeCode.UInt64:
+                    return UInt64.MaxValue;
+                default:
+                    return Throw.InternalError<ulong>($"Unexpected enum base type code: {Type.GetTypeCode(type)}");
+            }
+        }
+
         #endregion
 
         #region Private Methods
@@ -658,11 +722,11 @@ namespace KGySoft.CoreLibraries
         private static void DoRegisterConversion(Type sourceType, Type targetType, Delegate conversion)
         {
             if (sourceType == null)
-                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.sourceType);
             if (targetType == null)
-                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.targetType);
             if (conversion == null)
-                throw new ArgumentNullException(nameof(conversion), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.conversion);
 
             if (!conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget))
             {

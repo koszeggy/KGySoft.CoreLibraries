@@ -151,7 +151,7 @@ namespace KGySoft.Serialization.Xml
         private protected XmlSerializerBase(XmlSerializationOptions options)
         {
             if (!options.AllFlagsDefined())
-                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+                Throw.EnumArgumentOutOfRange(Argument.options, options);
             Options = options;
         }
 
@@ -368,7 +368,7 @@ namespace KGySoft.Serialization.Xml
                 return;
 
             if (SerObjects.Contains(obj))
-                throw new ReflectionException(Res.XmlSerializationCircularReference(obj));
+                Throw.ReflectionException(Res.XmlSerializationCircularReference(obj));
             serObjects.Add(obj);
         }
 

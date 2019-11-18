@@ -58,7 +58,12 @@ namespace KGySoft.CoreLibraries
         public Range<int> CollectionsLength
         {
             get => collectionsLength;
-            set => collectionsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            set
+            {
+                if (value.LowerBound < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                collectionsLength = value;
+            }
         }
 
         /// <summary>
@@ -69,7 +74,12 @@ namespace KGySoft.CoreLibraries
         public Range<int> StringsLength
         {
             get => stringsLength;
-            set => stringsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            set
+            {
+                if (value.LowerBound < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                stringsLength = value;
+            }
         }
 
         /// <summary>
@@ -80,7 +90,12 @@ namespace KGySoft.CoreLibraries
         public Range<int> SentencesLength
         {
             get => sentencesLength;
-            set => sentencesLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            set
+            {
+                if (value.LowerBound < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                sentencesLength = value;
+            }
         }
 
         /// <summary>
@@ -95,7 +110,12 @@ namespace KGySoft.CoreLibraries
         public float ChanceOfNull
         {
             get => chanceOfNull;
-            set => chanceOfNull = value >= 0f && value <= 1f ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeBetween(0f, 1f));
+            set
+            {
+                if (value < 0f || value > 1f)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeBetween(0f, 1f));
+                chanceOfNull = value;
+            }
         }
 
         /// <summary>
@@ -106,7 +126,12 @@ namespace KGySoft.CoreLibraries
         public StringCreation? StringCreation
         {
             get => stringCreation;
-            set => stringCreation = value == null || Enum<StringCreation>.IsDefined(value.Value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+            set
+            {
+                if (value != null && !Enum<StringCreation>.IsDefined(value.Value))
+                    Throw.EnumArgumentOutOfRange(Argument.value, value.Value);
+                stringCreation = value;
+            }
         }
 
         /// <summary>
@@ -117,7 +142,12 @@ namespace KGySoft.CoreLibraries
         public ObjectInitialization ObjectInitialization
         {
             get => objectInitialization;
-            set => objectInitialization = Enum<ObjectInitialization>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+            set
+            {
+                if (!Enum<ObjectInitialization>.IsDefined(value))
+                    Throw.EnumArgumentOutOfRange(Argument.value, value);
+                objectInitialization = value;
+            }
         }
 
         /// <summary>
@@ -128,7 +158,12 @@ namespace KGySoft.CoreLibraries
         public FloatScale FloatScale
         {
             get => floatScale;
-            set => floatScale = Enum<FloatScale>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+            set
+            {
+                if (!Enum<FloatScale>.IsDefined(value))
+                    Throw.EnumArgumentOutOfRange(Argument.value, value);
+                floatScale = value;
+            }
         }
 
         /// <summary>
@@ -198,7 +233,12 @@ namespace KGySoft.CoreLibraries
         public int MaxRecursionLevel
         {
             get => maxRecursionLevel;
-            set => maxRecursionLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            set
+            {
+                if (value < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                maxRecursionLevel = value;
+            }
         }
 
         #endregion

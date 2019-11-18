@@ -440,7 +440,7 @@ namespace KGySoft.Resources
     ///                 throw new InvalidOperationException(Res.MyResourceExample);
     ///             if (someParameter == -42)
     ///                 // formatted resource - enough arguments must be specified for placeholders (though errors are handled in Res)
-    ///                 throw new ArgumentException(Res.MyResourceFormatExample(123, "x"), nameof(someParameter));
+    ///                 throw new Throw.ArgumentException(Res.MyResourceFormatExample(123, "x"), nameof(someParameter));
     ///         }
     ///     }
     /// }]]></code></item>
@@ -640,13 +640,13 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 if (autoSave == value)
                     return;
 
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.FlagsEnumArgumentOutOfRange(Argument.value, value);
 
                 lock (SyncRoot)
                 {
@@ -678,7 +678,7 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 if (autoAppend == value)
                     return;
@@ -714,7 +714,7 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 base.Source = value;
             }
@@ -1023,7 +1023,7 @@ namespace KGySoft.Resources
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.culture);
 
             if (loadIfExists && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists);
@@ -1061,10 +1061,10 @@ namespace KGySoft.Resources
         public override IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.culture);
 
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRange(Argument.behavior, behavior);
 
             if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, behavior);
@@ -1249,7 +1249,7 @@ namespace KGySoft.Resources
                     isFirstNeutral = false;
             }
 
-            throw new InvalidOperationException(Res.InternalError("Proxied culture not found in hierarchy"));
+            return Throw.InternalError<bool>(Res.InternalError("Proxied culture not found in hierarchy"));
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
@@ -1341,7 +1341,7 @@ namespace KGySoft.Resources
             #endregion
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             AdjustCulture(ref culture);
             if (!IsAppendPossible(culture))

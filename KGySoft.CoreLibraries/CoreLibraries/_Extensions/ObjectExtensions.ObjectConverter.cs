@@ -83,7 +83,7 @@ namespace KGySoft.CoreLibraries
             internal static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
             {
                 if (targetType == null)
-                    throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.targetType);
 
                 if (culture == null)
                     culture = CultureInfo.InvariantCulture;
@@ -234,7 +234,8 @@ namespace KGySoft.CoreLibraries
                             value = conversion.Invoke(obj, targetType, context.Culture);
                             return targetType.CanAcceptValue(value);
                         default:
-                            throw new InvalidOperationException(Res.InternalError($"Invalid conversion delegate type: {targetType}"));
+                            value = null;
+                            return Throw.InternalError<bool>($"Invalid conversion delegate type: {targetType}");
                     }
                 }
                 catch (Exception e) when (!e.IsCritical())

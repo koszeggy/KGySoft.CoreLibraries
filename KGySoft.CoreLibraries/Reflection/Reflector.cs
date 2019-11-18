@@ -44,6 +44,9 @@ namespace KGySoft.Reflection
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
+#pragma warning disable CA1062 // Validate arguments of public methods - False alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+
         #region Nested Classes
 
         private static class EmptyArrayHelper<T>
@@ -161,13 +164,12 @@ namespace KGySoft.Reflection
         public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
-
+                Throw.ArgumentNullException(Argument.property);
             if (!property.CanWrite)
-                throw new InvalidOperationException(Res.ReflectionPropertyHasNoSetter(property.DeclaringType, property.Name));
+                Throw.InvalidOperationException(Res.ReflectionPropertyHasNoSetter(property.DeclaringType, property.Name));
             bool isStatic = property.GetSetMethod(true).IsStatic;
             if (instance == null && !isStatic)
-                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
+                Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
             switch (way)
             {
@@ -185,9 +187,11 @@ namespace KGySoft.Reflection
                     property.SetValue(instance, value, indexParameters);
                     break;
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionSetPropertyTypeDescriptorNotSupported);
+                    Throw.NotSupportedException(Res.ReflectionSetPropertyTypeDescriptorNotSupported);
+                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    break;
             }
         }
 
@@ -236,9 +240,9 @@ namespace KGySoft.Reflection
         public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
                 indexParameters = EmptyObjects;
 
@@ -288,9 +292,9 @@ namespace KGySoft.Reflection
         public static void SetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, true);
         }
@@ -319,9 +323,9 @@ namespace KGySoft.Reflection
         public static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
                 indexParameters = EmptyObjects;
 
@@ -371,9 +375,9 @@ namespace KGySoft.Reflection
         public static bool TrySetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, false);
         }
@@ -428,18 +432,15 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-
-            if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type), lastException);
-            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
+            if (throwError)
+                Throw.ReflectionException(instance == null ? Res.ReflectionStaticPropertyDoesNotExist(propertyName, type) : Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
+            return false;
         }
 
         private static bool DoTrySetPropertyByTypeDescriptor(string propertyName, Type type, object instance, object value, bool throwError)
         {
             if (instance == null)
-                throw new NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
+                Throw.NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
             PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
             if (property != null)
             {
@@ -449,7 +450,9 @@ namespace KGySoft.Reflection
                 return true;
             }
 
-            return throwError ? throw new ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type)) : false;
+            if (throwError)
+                Throw.ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type));
+            return false;
         }
 
         #endregion
@@ -475,13 +478,13 @@ namespace KGySoft.Reflection
         public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
-                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
+                Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
 
             DoTrySetIndexedMember(instance, value, way, indexParameters, true);
         }
@@ -525,13 +528,13 @@ namespace KGySoft.Reflection
         public static bool TrySetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
-                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
+                Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
 
             return DoTrySetIndexedMember(instance, value, way, indexParameters, false);
         }
@@ -565,7 +568,7 @@ namespace KGySoft.Reflection
                 {
                     if (!throwError)
                         return false;
-                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexParameters));
+                    Throw.ArgumentException(Argument.indexParameters, Res.ReflectionIndexParamsLengthMismatch(array.Rank));
                 }
 
                 int[] indices = ToArrayIndices(indexParameters, out Exception error);
@@ -624,9 +627,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-            throw new ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
+            if (throwError)
+                Throw.ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
+            return false;
         }
 
         #endregion
@@ -652,12 +655,11 @@ namespace KGySoft.Reflection
         public static object GetProperty(object instance, PropertyInfo property, ReflectionWays way, params object[] indexParameters)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
-
+                Throw.ArgumentNullException(Argument.property);
             if (!property.CanRead)
-                throw new InvalidOperationException(Res.ReflectionPropertyHasNoGetter(property.DeclaringType, property.Name));
+                Throw.InvalidOperationException(Res.ReflectionPropertyHasNoGetter(property.DeclaringType, property.Name));
             if (instance == null && !property.GetGetMethod(true).IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
+                Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
             switch (way)
             {
@@ -667,9 +669,11 @@ namespace KGySoft.Reflection
                 case ReflectionWays.SystemReflection:
                     return property.GetValue(instance, indexParameters);
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionGetPropertyTypeDescriptorNotSupported);
+                    Throw.NotSupportedException(Res.ReflectionGetPropertyTypeDescriptorNotSupported);
+                    return null;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    return null;
             }
         }
 
@@ -712,9 +716,9 @@ namespace KGySoft.Reflection
         public static object GetProperty(object instance, string propertyName, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
                 indexParameters = EmptyObjects;
 
@@ -761,9 +765,9 @@ namespace KGySoft.Reflection
         public static object GetProperty(Type type, string propertyName, ReflectionWays way = ReflectionWays.Auto)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetProperty(propertyName, type, null, way, EmptyObjects, true, out object result) ? result : null;
         }
@@ -789,9 +793,9 @@ namespace KGySoft.Reflection
         public static bool TryGetProperty(object instance, string propertyName, ReflectionWays way, out object value, params object[] indexParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
                 indexParameters = EmptyObjects;
 
@@ -838,9 +842,9 @@ namespace KGySoft.Reflection
         public static bool TryGetProperty(Type type, string propertyName, out object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.propertyName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetProperty(propertyName, type, null, way, EmptyObjects, false, out value);
         }
@@ -853,7 +857,7 @@ namespace KGySoft.Reflection
             if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
             {
                 if (instance == null)
-                    throw new NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
+                    Throw.NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
                 PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
                 if (property != null)
                 {
@@ -861,7 +865,9 @@ namespace KGySoft.Reflection
                     return true;
                 }
 
-                return throwError ? throw new ReflectionException(Res.ReflectionCannotGetPropertyTypeDescriptor(propertyName, type)) : false;
+                if (throwError)
+                    Throw.ReflectionException(Res.ReflectionCannotGetPropertyTypeDescriptor(propertyName, type));
+                return false;
             }
 
             Exception lastException = null;
@@ -905,12 +911,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-
-            if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type), lastException);
-            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
+            if (throwError)
+                Throw.ReflectionException(instance == null ? Res.ReflectionStaticPropertyDoesNotExist(propertyName, type) : Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
+            return false;
         }
 
         #endregion
@@ -933,13 +936,13 @@ namespace KGySoft.Reflection
         public static object GetIndexedMember(object instance, ReflectionWays way, params object[] indexParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
-                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
+                Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
 
             return DoTryGetIndexedMember(instance, way, indexParameters, true, out object result) ? result : null;
         }
@@ -977,13 +980,13 @@ namespace KGySoft.Reflection
         public static bool TryGetIndexedMember(object instance, ReflectionWays way, out object value, params object[] indexParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
             if (indexParameters == null)
-                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
+                Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionInvokeMethodTypeDescriptorNotSupported);
 
             return DoTryGetIndexedMember(instance, way, indexParameters, true, out value);
         }
@@ -1016,7 +1019,7 @@ namespace KGySoft.Reflection
                 {
                     if (!throwError)
                         return false;
-                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexParameters));
+                    Throw.ArgumentException(Argument.indexParameters, Res.ReflectionIndexParamsLengthMismatch(array.Rank));
                 }
 
                 int[] indices = ToArrayIndices(indexParameters, out Exception error);
@@ -1072,9 +1075,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-            throw new ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
+            if (throwError)
+                Throw.ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
+            return false;
         }
 
         #endregion
@@ -1104,25 +1107,25 @@ namespace KGySoft.Reflection
         public static object InvokeMethod(object instance, MethodInfo method, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (method == null)
-                throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.method);
             if (instance == null && !method.IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
+                Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
             // if the method is generic we need the generic arguments and a constructed method with real types
             if (method.IsGenericMethodDefinition)
             {
                 if (genericParameters == null)
-                    throw new ArgumentNullException(nameof(genericParameters), Res.ReflectionTypeParamsAreNull);
+                    Throw.ArgumentNullException(Argument.genericParameters, Res.ReflectionTypeParamsAreNull);
                 Type[] genArgs = method.GetGenericArguments();
                 if (genericParameters.Length != genArgs.Length)
-                    throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
+                    Throw.ArgumentException(Argument.genericParameters, Res.ReflectionTypeArgsLengthMismatch(genArgs.Length));
                 try
                 {
                     method = method.GetGenericMethod(genericParameters);
                 }
                 catch (Exception e)
                 {
-                    throw new ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
+                    Throw.ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
                 }
             }
 
@@ -1140,9 +1143,10 @@ namespace KGySoft.Reflection
                 case ReflectionWays.SystemReflection:
                     return method.Invoke(instance, parameters);
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionInvokeMethodTypeDescriptorNotSupported);
+                    return Throw.NotSupportedException<object>(Res.ReflectionSetFieldTypeDescriptorNotSupported);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    return default;
             }
         }
 
@@ -1227,9 +1231,9 @@ namespace KGySoft.Reflection
         public static object InvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.methodName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             return DoTryInvokeMethod(methodName, instance.GetType(), instance, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
         }
@@ -1325,9 +1329,9 @@ namespace KGySoft.Reflection
         public static object InvokeMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.methodName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTryInvokeMethod(methodName, type, null, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
         }
@@ -1421,9 +1425,9 @@ namespace KGySoft.Reflection
         public static bool TryInvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.methodName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             return DoTryInvokeMethod(methodName, instance.GetType(), instance, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, false, out result);
         }
@@ -1519,9 +1523,9 @@ namespace KGySoft.Reflection
         public static bool TryInvokeMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.methodName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (parameters == null)
                 parameters = EmptyObjects;
             if (genericParameters == null)
@@ -1667,12 +1671,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-
-            if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticMethodNotFound(methodName, type), lastException);
-            throw new ReflectionException(Res.ReflectionInstanceMethodNotFound(methodName, type), lastException);
+            if (throwError)
+                Throw.ReflectionException(instance == null ? Res.ReflectionStaticMethodNotFound(methodName, type) : Res.ReflectionInstanceMethodNotFound(methodName, type), lastException);
+            return false;
         }
 
         #endregion
@@ -1699,7 +1700,7 @@ namespace KGySoft.Reflection
         public static object CreateInstance(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
         {
             if (ctor == null)
-                throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.ctor);
 
             switch (way)
             {
@@ -1715,9 +1716,10 @@ namespace KGySoft.Reflection
                 case ReflectionWays.SystemReflection:
                     return ctor.Invoke(parameters);
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionInvokeCtorTypeDescriptorNotSupported);
+                    return Throw.NotSupportedException<object>(Res.ReflectionInvokeCtorTypeDescriptorNotSupported);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    return default;
             }
         }
 
@@ -1757,7 +1759,7 @@ namespace KGySoft.Reflection
         public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
         }
 
@@ -1793,7 +1795,7 @@ namespace KGySoft.Reflection
         public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, false, out result);
         }
 
@@ -1850,7 +1852,11 @@ namespace KGySoft.Reflection
             {
                 Type[] genArgs = type.GetGenericArguments();
                 if (genericParameters.Length != genArgs.Length)
-                    return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
+                {
+                    if (throwError)
+                        Throw.ArgumentException(Argument.genericParameters, Res.ReflectionTypeArgsLengthMismatch(genArgs.Length));
+                    return false;
+                }
                 try
                 {
                     type = type.GetGenericType(genericParameters);
@@ -1893,7 +1899,8 @@ namespace KGySoft.Reflection
                     // ReSharper restore AssignNullToNotNullAttribute
                     return true;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    return false;
             }
         }
 
@@ -2012,7 +2019,7 @@ namespace KGySoft.Reflection
         public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             // In case of value types no parameterless constructor would be found - redirecting
             return type.IsValueType && (parameters?.Length ?? 0) == 0
@@ -2088,7 +2095,7 @@ namespace KGySoft.Reflection
         public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             // In case of value types no parameterless constructor would be found - redirecting
             return type.IsValueType && (parameters?.Length ?? 0) == 0
@@ -2155,7 +2162,11 @@ namespace KGySoft.Reflection
             {
                 Type[] genArgs = type.GetGenericArguments();
                 if (genericParameters.Length != genArgs.Length)
-                    return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
+                {
+                    if (throwError)
+                        Throw.ArgumentException(Argument.genericParameters, Res.ReflectionTypeArgsLengthMismatch(genArgs.Length));
+                    return false;
+                }
                 try
                 {
                     type = type.GetGenericType(genericParameters);
@@ -2206,9 +2217,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-            throw new ReflectionException(Res.ReflectionCtorNotFound(type), lastException);
+            if (throwError)
+                Throw.ReflectionException(Res.ReflectionCtorNotFound(type), lastException);
+            return false;
         }
 
         #endregion
@@ -2235,12 +2246,12 @@ namespace KGySoft.Reflection
         public static void SetField(object instance, FieldInfo field, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (field == null)
-                throw new ArgumentNullException(nameof(field), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.field);
             bool isStatic = field.IsStatic;
             if (instance == null && !isStatic)
-                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
+                Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
             if (field.IsLiteral)
-                throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(field.DeclaringType, field.Name));
+                Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(field.DeclaringType, field.Name));
 
             switch (way)
             {
@@ -2258,9 +2269,11 @@ namespace KGySoft.Reflection
                     field.SetValue(instance, value);
                     break;
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
+                    Throw.NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
+                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    break;
             }
         }
 
@@ -2286,9 +2299,9 @@ namespace KGySoft.Reflection
         public static void SetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
             DoTrySetField(fieldName, type, instance, value, way, true);
@@ -2315,9 +2328,9 @@ namespace KGySoft.Reflection
         public static void SetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             DoTrySetField(fieldName, type, null, value, way, true);
         }
@@ -2343,9 +2356,9 @@ namespace KGySoft.Reflection
         public static bool TrySetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
             return DoTrySetField(fieldName, type, instance, value, way, false);
@@ -2371,9 +2384,9 @@ namespace KGySoft.Reflection
         public static bool TrySetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTrySetField(fieldName, type, null, value, way, false);
         }
@@ -2381,7 +2394,7 @@ namespace KGySoft.Reflection
         private static bool DoTrySetField(string fieldName, Type type, object instance, object value, ReflectionWays way, bool throwError)
         {
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
@@ -2409,12 +2422,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-                return false;
-
-            if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticFieldDoesNotExist(fieldName, type));
-            throw new ReflectionException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
+            if (throwError)
+                Throw.ReflectionException(instance == null ? Res.ReflectionStaticFieldDoesNotExist(fieldName, type) : Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
+            return false;
         }
 
         #endregion
@@ -2436,9 +2446,9 @@ namespace KGySoft.Reflection
         public static object GetField(object instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
         {
             if (field == null)
-                throw new ArgumentNullException(nameof(field), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.field);
             if (instance == null && !field.IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
             switch (way)
             {
@@ -2448,9 +2458,10 @@ namespace KGySoft.Reflection
                 case ReflectionWays.SystemReflection:
                     return field.GetValue(instance);
                 case ReflectionWays.TypeDescriptor:
-                    throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
+                    return Throw.NotSupportedException<object>(Res.ReflectionGetFieldTypeDescriptorNotSupported);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+                    Throw.EnumArgumentOutOfRange(Argument.way, way);
+                    return default;
             }
         }
 
@@ -2473,9 +2484,9 @@ namespace KGySoft.Reflection
         public static object GetField(object instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
             return DoTryGetField(fieldName, type, instance, way, out object result, true) ? result : null;
@@ -2500,9 +2511,9 @@ namespace KGySoft.Reflection
         public static object GetField(Type type, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetField(fieldName, type, null, way, out object result, true) ? result : null;
         }
@@ -2525,9 +2536,9 @@ namespace KGySoft.Reflection
         public static bool TryGetField(object instance, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
             return DoTryGetField(fieldName, type, instance, way, out value, false);
@@ -2551,9 +2562,9 @@ namespace KGySoft.Reflection
         public static bool TryGetField(Type type, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fieldName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetField(fieldName, type, null, way, out value, false);
         }
@@ -2561,7 +2572,7 @@ namespace KGySoft.Reflection
         private static bool DoTryGetField(string fieldName, Type type, object instance, ReflectionWays way, out object value, bool throwError)
         {
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
+                Throw.NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
@@ -2587,15 +2598,11 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (!throwError)
-            {
-                value = null;
-                return false;
-            }
+            if (throwError)
+                Throw.ReflectionException(instance == null ? Res.ReflectionStaticFieldDoesNotExist(fieldName, type) : Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
 
-            if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticFieldDoesNotExist(fieldName, type));
-            throw new ReflectionException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
+            value = null;
+            return false;
         }
 
         #endregion
@@ -2898,7 +2905,7 @@ namespace KGySoft.Reflection
         public static MemberInfo MemberOf<T>(Expression<Func<T>> expression)
         {
             if (expression == null)
-                throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.expression);
 
             Expression body = expression.Body;
             if (body is MemberExpression member)
@@ -2910,7 +2917,7 @@ namespace KGySoft.Reflection
             if (body is NewExpression ctor)
                 return ctor.Constructor;
 
-            throw new ArgumentException(Res.ReflectionNotAMember(expression.GetType()), nameof(expression));
+            return Throw.ArgumentException<MemberInfo>(Argument.expression, Res.ReflectionNotAMember(expression.GetType()));
         }
 
         /// <summary>
@@ -2943,13 +2950,13 @@ namespace KGySoft.Reflection
         public static MethodInfo MemberOf(Expression<Action> expression)
         {
             if (expression == null)
-                throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.expression);
 
             Expression body = expression.Body;
             if (body is MethodCallExpression methodCall)
                 return methodCall.Method;
 
-            throw new ArgumentException(Res.ReflectionNotAMethod, nameof(expression));
+            return Throw.ArgumentException<MethodInfo>(Argument.expression, Res.ReflectionNotAMethod);
         }
 
         /// <summary>
@@ -2960,7 +2967,7 @@ namespace KGySoft.Reflection
         public static bool IsExplicitInterfaceImplementation(MethodInfo method)
         {
             if (method == null)
-                throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.method);
             Type declaringType = method.DeclaringType;
             if (declaringType == null)
                 return false;
@@ -2991,7 +2998,7 @@ namespace KGySoft.Reflection
         public static bool IsExplicitInterfaceImplementation(PropertyInfo property)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.property);
             return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true));
         }
 

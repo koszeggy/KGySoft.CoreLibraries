@@ -16,7 +16,6 @@
 
 #region Usings
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,13 +64,21 @@ namespace KGySoft.ComponentModel
             => TryReplaceProperty(propertyName, originalValue, newValue, invokeChangedEvent);
 
         IDictionary<string, object> IPersistableObject.GetProperties()
+        {
             // no need to Lock-Unlock because the enumerator of the LockingDictionary is already a snapshot
-            => PropertiesInternal.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.ComponentModelCannotGetProperty(p.Key)));
+            return PropertiesInternal.ToDictionary(p => p.Key,
+                p =>
+                {
+                    if (!CanGetProperty(p.Key))
+                        Throw.InvalidOperationException<object>(Res.ComponentModelCannotGetProperty(p.Key));
+                    return p.Value;
+                });
+        }
 
         void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool triggerChangedEvent)
         {
             if (newProperties == null)
-                throw new ArgumentNullException(nameof(newProperties), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.newProperties);
 
             // Using a separate lock makes possible to read the properties during the set.
             // This is desirable because OnChanging/changed events are raised during this process, which may cause that consumers read the values.

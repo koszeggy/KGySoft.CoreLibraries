@@ -156,9 +156,6 @@
   <data name="General_Millisecond" xml:space="preserve">
     <value>ms</value>
   </data>
-  <data name="PerformanceTest_InvalidTDelegate" xml:space="preserve">
-    <value>Type argument 'TDelegate' must be a delegate type</value>
-  </data>
   <data name="PerformanceTest_NoTestCases" xml:space="preserve">
     <value>No test cases are added.</value>
   </data>
@@ -925,7 +922,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="ComponentModel_InvalidCommandSource" xml:space="preserve">
     <value>Source must be an object instance for instance events and a Type for static events.</value>
   </data>
-  <data name="ComponentModel_CannotAddDiposedBinding" xml:space="preserve">
+  <data name="ComponentModel_CannotAddDisposedBinding" xml:space="preserve">
     <value>Cannot add an already disposed binding to this collection.</value>
   </data>
 </root>

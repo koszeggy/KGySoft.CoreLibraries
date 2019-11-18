@@ -95,7 +95,7 @@ namespace KGySoft.Serialization.Binary
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             if (!type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) )
             {
@@ -119,9 +119,9 @@ namespace KGySoft.Serialization.Binary
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             Type type = obj.GetType();
 
@@ -145,9 +145,9 @@ namespace KGySoft.Serialization.Binary
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             // can occur if the original type was ISerializable and GetObjectData has changed the type to a non-ISerializable one
             // Example: .NET 4.6 EnumEqualityComparer->ObjectEqualityComparer
@@ -166,10 +166,10 @@ namespace KGySoft.Serialization.Binary
                 if ((pos = entry.Name.IndexOf(':')) > 0 && pos < entry.Name.Length - 1)
                 {
                     if (!Int32.TryParse(entry.Name.Substring(0, pos), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out level))
-                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
+                        Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
 
                     if (!Int32.TryParse(entry.Name.Substring(pos + 1), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out fieldIndex))
-                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
+                        Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
 
                     list.Add(((ulong)level << 32) | (uint)fieldIndex, entry);
                 }
@@ -177,11 +177,11 @@ namespace KGySoft.Serialization.Binary
                 else if (entry.Name.Length >= 2 && entry.Name[0] == 'x')
                 {
                     if (!Int32.TryParse(entry.Name.Substring(1), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out level))
-                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
+                        Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
                     list.Add(((ulong)level << 32) | UInt32.MaxValue, entry);
                 }
                 else
-                    throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
+                    Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
             FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
@@ -190,16 +190,16 @@ namespace KGySoft.Serialization.Binary
             foreach (SerializationEntry entry in list.Values)
             {
                 if (type == Reflector.ObjectType)
-                    throw new SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
+                    Throw.SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
 
                 // field found
                 if (entry.Name == level.ToString("X", NumberFormatInfo.InvariantInfo) + ":" + fieldIndex.ToString("X", NumberFormatInfo.InvariantInfo))
                 {
                     if (fieldIndex >= fields.Length)
-                        throw new SerializationException(Res.BinarySerializationMissingFieldSurrogate(type, obj.GetType()));
+                        Throw.SerializationException(Res.BinarySerializationMissingFieldSurrogate(type, obj.GetType()));
 
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
-                        throw new SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
+                        Throw.SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
                     fields[fieldIndex].Set(obj, entry.Value);
                     fieldIndex += 1;
@@ -215,11 +215,11 @@ namespace KGySoft.Serialization.Binary
                     fieldIndex = 0;
                 }
                 else
-                    throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
+                    Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
             if (type != Reflector.ObjectType)
-                throw new SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
+                Throw.SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
 
             return obj;
         }

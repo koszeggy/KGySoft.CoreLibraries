@@ -17,11 +17,21 @@
 + Targeting also .NET Standard 2.0 (some Reflection APIs throw PlatformNotSupportedException - see the documentation).
 + Targeting also .NET Standard 2.1.
 
-! KGySoft namespace
-===================
+! KGySoft namespace:
+====================
 ! PublicResources Class:
   ! ICollectionNongenericValueTypeInvalid method has been renamed to ICollectionNonGenericValueTypeInvalid
   ! IDictionaryNongenericKeyTypeInvalid method has been renamed to IDictionaryNonGenericKeyTypeInvalid
+
+! KGySoft.Collections namespace:
+================================
+! Cache<TKey, TValue> class:
+  + New constructor for initializing from IDictionary<TKey, TValue>
+  ! The non-generic IDictionary.this[object] indexer returns null instead of throwing an ArgumentException if type
+    of the indexer argument is not compatible with TKey (this is how Dictionary<TKey, TValue> also works).
+! CircularSortedList<TKey, TValue> class:
+  ! The non-generic IDictionary.this[object] indexer returns null instead of throwing an ArgumentException if type
+    of the indexer argument is not compatible with TKey (this is how SortedList<TKey, TValue> also works).
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
@@ -35,16 +45,21 @@
 	overload when TValue and TActualValue were the same.
   + New GetValueOrDefault overloads for IEnumerable<KeyValuePair<TKey, Tvalue>> instances to support also read-only
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
-	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
+	to the interface inheritance of .NET. In case of non-dictionary instances a sequential search is performed.
   + New GetValueOrDefault overloads with Func<TValue> default value factory. These are useful if the default value
     should be evaluated only if the key was not present in the dictionary.
 + Enum<TEnum> class:
-  + New GetFlagsMask method
+  + New GetFlagsMask method: Similar to GetFlags methods but returns all flags in a single value.
+  + New GetFlagsCount methods.
+  + New ToString overload.
+  * Reducing heap usage and improving performance in all platform targets.
 - EnumerableExtensions class: Fixing non-generic TryAddRange/TryInsertRange/TryRemoveRange/TryReplaceRange if they
   are called multiple times with generic collections of different generic argument types.
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
++ EnumExtensions class:
+  + New GetFlagsCount method
 ! TypeExtensions class:
   ! IsGenericTypeOf method returns false if the type to check is not a constructed generic type (it could return true
     if the type and genericTypeDefinition parameters were the same generic type definition instance).

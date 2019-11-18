@@ -53,7 +53,7 @@ namespace KGySoft.Diagnostics
             stopwatch.Stop();
 
             if (item == null)
-                throw new ObjectDisposedException(GetType().Name);
+                Throw.ObjectDisposedException(GetType().Name);
 
             item.AddMeasurement(stopwatch.Elapsed);
             item = null;

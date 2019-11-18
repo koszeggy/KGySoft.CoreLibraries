@@ -62,7 +62,7 @@ namespace KGySoft.Resources
             get
             {
                 if (state != States.Enumerating)
-                    throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                 KeyValuePair<string, ResXDataNode> current = wrappedEnumerator.Current;
                 if (mode == ResXEnumeratorModes.Aliases)
@@ -79,7 +79,7 @@ namespace KGySoft.Resources
             get
             {
                 if (state != States.Enumerating)
-                    throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                 // if only key is requested, Value is not deserialized
                 return wrappedEnumerator.Current.Key;
@@ -151,7 +151,7 @@ namespace KGySoft.Resources
                 state = States.Enumerating;
 
             if (version != owner.Version)
-                throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
             if (wrappedEnumerator.MoveNext())
                 return true;
@@ -169,7 +169,7 @@ namespace KGySoft.Resources
             {
                 var aliases = owner.Aliases;
                 if (aliases == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 wrappedEnumerator = aliases.Select(SelectAlias).GetEnumerator();
                 return;
             }

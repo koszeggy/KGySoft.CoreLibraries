@@ -256,7 +256,7 @@ namespace KGySoft.ComponentModel
         protected override void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
         {
             if (!Enum<ListSortDirection>.IsDefined(direction))
-                throw new ArgumentOutOfRangeException(nameof(direction), Res.EnumOutOfRangeWithValues(direction));
+                Throw.EnumArgumentOutOfRangeWithValues(Argument.direction, direction);
 
             sortProperty = property;
             sortDirection = direction;
@@ -548,7 +548,7 @@ namespace KGySoft.ComponentModel
         protected override void OnListChanged(ListChangedEventArgs e)
         {
             if (e == null)
-                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.e);
 
             if (isChangingOrRaisingChanged)
                 return;

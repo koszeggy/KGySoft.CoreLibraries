@@ -17,7 +17,9 @@
 #region Usings
 
 using System;
-
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries.PerformanceTests.Reflection;
 
@@ -49,6 +51,57 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         #endregion
 
         #region Methods
+
+        [Test]
+        public void CacheOverheadBaselineTest()
+        {
+            const int count = 10_000;
+            Dictionary<int, string> dictionary = Enumerable.Range(0, count).ToDictionary(i => i, i => i.ToString(CultureInfo.InvariantCulture));
+            var cacheRemoveOldest = new Cache<int, string>(dictionary) { Behavior = CacheBehavior.RemoveOldestElement };
+            var cacheRemoveLeastRecent = new Cache<int, string>(dictionary);
+
+            // Dictionary expected to be the fastest one, Cache with RemoveLeastRecentUsedElement has the most overhead
+            new PerformanceTest { TestName = "Indexer access test", Iterations = 10_000 }
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        string s = dictionary[i];
+                    }
+                }, "Dictionary read")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        string s = cacheRemoveOldest[i];
+                    }
+                }, "Cache read (RemoveOldestElement)")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        string s = cacheRemoveLeastRecent[i];
+                    }
+                }, "Cache read (RemoveLeastRecentUsedElement)")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            new PerformanceTest { TestName = "Populate test", Iterations = 1000 }
+                .AddCase(() =>
+                {
+                    var dict = new Dictionary<int, string>(count);
+                    for (int i = 0; i < count; i++)
+                        dict[i] = i.ToString(CultureInfo.InvariantCulture);
+                }, "Dictionary")
+                .AddCase(() =>
+                {
+                    var dict = new Cache<int, string>(count);
+                    for (int i = 0; i < count; i++)
+                        dict[i] = i.ToString(CultureInfo.InvariantCulture);
+                }, "Cache")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
 
         [Test]
         public void NeverDropElementsTest()

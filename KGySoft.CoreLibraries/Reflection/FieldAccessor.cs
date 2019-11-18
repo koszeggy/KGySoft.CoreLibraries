@@ -20,6 +20,9 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 using System.Security;
 
 #endregion
@@ -158,14 +161,29 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the field getter delegate.
         /// </summary>
-        private FieldGetter Getter => getter ??= CreateGetter();
+        private FieldGetter Getter
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+            get => getter ??= CreateGetter();
+        }
 
         /// <summary>
         /// Gets the field setter delegate.
         /// </summary>
-        private FieldSetter Setter => setter ??= IsConstant 
-            ? throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name))
-            : CreateSetter();
+        private FieldSetter Setter
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+            get
+            {
+                if (IsConstant)
+                    Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
+                return setter ??= CreateSetter();
+            }
+        }
 
         #endregion
 
@@ -194,8 +212,15 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="field">The field for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="FieldAccessor"/> instance that can be used to get or set the field.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static FieldAccessor GetAccessor(FieldInfo field)
-            => (FieldAccessor)GetCreateAccessor(field ?? throw new ArgumentNullException(nameof(field), Res.ArgumentNull));
+        {
+            if (field == null)
+                Throw.ArgumentNullException(Argument.field);
+            return (FieldAccessor)GetCreateAccessor(field);
+        }
 
         #endregion
 
@@ -232,6 +257,9 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
         /// </remarks>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public void Set(object instance, object value)
         {
             try
@@ -240,7 +268,7 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
             }
         }
 
@@ -256,6 +284,9 @@ namespace KGySoft.Reflection
         /// method but further calls are much faster.
         /// </note>
         /// </remarks>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public object Get(object instance) => Getter.Invoke(instance);
 
         #endregion
@@ -269,9 +300,9 @@ namespace KGySoft.Reflection
             FieldInfo field = (FieldInfo)MemberInfo;
             Type declaringType = field.DeclaringType;
             if (!field.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (field.FieldType.IsPointer)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
             MemberExpression member = Expression.Field(
                     // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
                     field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
@@ -288,15 +319,15 @@ namespace KGySoft.Reflection
             FieldInfo field = (FieldInfo)MemberInfo;
             Type declaringType = field.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (field.FieldType.IsPointer)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             if (field.IsInitOnly)
-                throw new PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(field.Name, declaringType));
+                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(field.Name, declaringType));
             if (!field.IsStatic && declaringType.IsValueType)
-                throw new PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(field.Name, declaringType));
+                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(field.Name, declaringType));
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");

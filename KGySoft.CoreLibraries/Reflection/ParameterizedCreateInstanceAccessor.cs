@@ -21,6 +21,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
@@ -53,6 +56,9 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public override object CreateInstance(params object[] parameters)
             => ((Ctor)Initializer)(parameters);
 

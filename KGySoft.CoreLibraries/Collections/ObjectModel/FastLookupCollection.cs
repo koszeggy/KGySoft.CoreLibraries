@@ -25,7 +25,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 using KGySoft.Diagnostics;
-using KGySoft.Reflection;
+#region NET35 || NET40 || NET45 || NETSTANDARD2_0
+using KGySoft.Reflection; 
+#endregion
 
 #endregion
 

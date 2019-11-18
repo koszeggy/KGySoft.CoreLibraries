@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -177,13 +178,13 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
-        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
+        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, [CanBeNull]object value, Attribute[] attributes)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.value);
             Type enumType = value.GetType();
             if (!enumType.IsEnum)
-                throw new ArgumentException(Res.NotAnInstanceOfType(Reflector.EnumType), nameof(value));
+                Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(Reflector.EnumType));
 
             // Obtaining enum fields by reflection. GetNames/Values could be also used but this way be get also the attributes.
             FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);

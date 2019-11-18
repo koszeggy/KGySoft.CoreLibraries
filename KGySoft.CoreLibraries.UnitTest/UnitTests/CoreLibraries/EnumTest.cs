@@ -48,7 +48,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Max = Int64.MaxValue,
         }
 
-        private enum TestUlongEnum : ulong
+        private enum TestULongEnum : ulong
         {
             Max = UInt64.MaxValue
         }
@@ -110,11 +110,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [Test]
         public void ToStringTest()
         {
-            Assert.AreEqual("Max", Enum<TestUlongEnum>.ToString(TestUlongEnum.Max));
+            Assert.AreEqual("Max", Enum<TestULongEnum>.ToString(TestULongEnum.Max));
             Assert.AreEqual("0", Enum<EmptyEnum>.ToString(default(EmptyEnum)));
             Assert.AreEqual("None", Enum<TestLongEnum>.ToString(default(TestLongEnum)));
+            Assert.AreEqual("Alpha", Enum<TestLongEnum>.ToString(TestLongEnum.Alpha));
+            Assert.AreEqual("-2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)(1 << 31)));
+            Assert.AreEqual("-2147483647", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1)));
+            Assert.AreEqual("1, -2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1), EnumFormattingOptions.DistinctFlags));
 
-            Assert.AreNotEqual("-10", Enum<TestUlongEnum>.ToString(unchecked((TestUlongEnum)(-10))));
+            Assert.AreNotEqual("-10", Enum<TestULongEnum>.ToString(unchecked((TestULongEnum)(-10))));
             Assert.AreEqual("-10", Enum<TestLongEnum>.ToString((TestLongEnum)(-10)));
             Assert.AreEqual("-10", Enum<TestIntEnum>.ToString((TestIntEnum)(-10)));
 
@@ -137,13 +141,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
         [Test]
-        public void EnumParseTest()
+        public void ParseTest()
         {
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0"));
-            Assert.AreEqual(TestUlongEnum.Max, Enum<TestUlongEnum>.Parse("Max"));
-            Assert.AreEqual(TestUlongEnum.Max, Enum<TestUlongEnum>.Parse(UInt64.MaxValue.ToString()));
+            Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max"));
+            Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse(UInt64.MaxValue.ToString()));
             Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.Parse("Min"));
             Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.Parse(Int64.MinValue.ToString()));
+            Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.Parse(" -9223372036854775808 "));
+            Assert.AreEqual(TestLongEnum.Max, Enum<TestLongEnum>.Parse("9223372036854775807"));
+            Assert.AreEqual((EmptyEnum)(-10), Enum<EmptyEnum>.Parse("-10"));
 
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("Alpha"));
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("AlphaRedefined"));
@@ -166,6 +173,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 
             Assert.IsFalse(Enum<TestLongEnum>.TryParse(UInt64.MaxValue.ToString(), out e));
             Assert.IsFalse(Enum<TestLongEnum>.TryParse("Beta, Gamma, , Delta, 16", out e));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" ", out e));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse("9223372036854775808", out e));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" -9223372036854775809 ", out e));
 
             TestIntEnum ie = TestIntEnum.Simple | TestIntEnum.Normal | TestIntEnum.Risky;
             Assert.AreEqual(ie, Enum<TestIntEnum>.Parse(ie.ToString(EnumFormattingOptions.Auto)));
@@ -180,15 +190,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(5, Enum<TestLongEnum>.GetFlags((TestLongEnum)max, true).Count());
             Assert.AreEqual(64, Enum<TestLongEnum>.GetFlags((TestLongEnum)max, false).Count());
             Assert.AreEqual(1, Enum<TestLongEnum>.GetFlags(TestLongEnum.Min, true).Count());
-            Assert.AreEqual(0, Enum<TestUlongEnum>.GetFlags((TestUlongEnum)max, true).Count());
-            Assert.AreEqual(64, Enum<TestUlongEnum>.GetFlags((TestUlongEnum)max, false).Count());
+            Assert.AreEqual(0, Enum<TestULongEnum>.GetFlags((TestULongEnum)max, true).Count());
+            Assert.AreEqual(64, Enum<TestULongEnum>.GetFlags((TestULongEnum)max, false).Count());
 
             Assert.AreEqual(1, Enum<TestIntEnum>.GetFlags(TestIntEnum.Risky, true).Count());
             Assert.AreEqual(3, Enum<TestIntEnum>.GetFlags(unchecked((TestIntEnum)(int)UInt32.MaxValue), true).Count());
             Assert.AreEqual(32, Enum<TestIntEnum>.GetFlags(unchecked((TestIntEnum)(int)UInt32.MaxValue), false).Count());
 
             AssertItemsEqual(new[] { TestLongEnum.Alpha, TestLongEnum.Beta, TestLongEnum.Gamma, TestLongEnum.Delta, TestLongEnum.Min }.OrderBy(e => e), Enum<TestLongEnum>.GetFlags().OrderBy(e => e));
-            AssertItemsEqual(new TestUlongEnum[0], Enum<TestUlongEnum>.GetFlags());
+            AssertItemsEqual(new TestULongEnum[0], Enum<TestULongEnum>.GetFlags());
             AssertItemsEqual(new[] { TestIntEnum.Simple, TestIntEnum.Normal, TestIntEnum.Risky }.OrderBy(e => e), Enum<TestIntEnum>.GetFlags().OrderBy(e => e));
             AssertItemsEqual(new EmptyEnum[0], Enum<EmptyEnum>.GetFlags());
         }
@@ -208,7 +218,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.IsFalse(Enum<TestIntEnum>.AllFlagsDefined(1L << 31)); // 2147483648
             Assert.IsFalse(Enum<TestIntEnum>.AllFlagsDefined(1UL << 31)); // 2147483648
 
-            Assert.IsFalse(Enum<TestUlongEnum>.AllFlagsDefined(0UL)); // Zero is not defined in TestUlongEnum
+            Assert.IsFalse(Enum<TestULongEnum>.AllFlagsDefined(0UL)); // Zero is not defined in TestULongEnum
         }
 
         [Test]
@@ -232,9 +242,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.IsFalse(Enum<TestIntEnum>.HasFlag(e32, 1L << 31)); //  2147483648: This is not defined
             Assert.IsFalse(Enum<TestIntEnum>.HasFlag(e32, 1UL << 31)); //  2147483648: This is not defined
 
-            TestUlongEnum eu64 = TestUlongEnum.Max;
-            Assert.IsTrue(Enum<TestUlongEnum>.HasFlag(eu64, 0UL)); // Zero -> true
-            Assert.IsTrue(Enum<TestUlongEnum>.HasFlag(eu64, TestUlongEnum.Max));
+            TestULongEnum eu64 = TestULongEnum.Max;
+            Assert.IsTrue(Enum<TestULongEnum>.HasFlag(eu64, 0UL)); // Zero -> true
+            Assert.IsTrue(Enum<TestULongEnum>.HasFlag(eu64, TestULongEnum.Max));
         }
 
         [Test]
@@ -250,7 +260,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.IsFalse(Enum<TestLongEnum>.IsSingleFlag(1UL << 63)); // single bit but out of range
 
             Assert.IsFalse(Enum<TestIntEnum>.IsSingleFlag(1L << 63)); // out of range
-            Assert.IsFalse(Enum<TestUlongEnum>.IsSingleFlag(1L << 63)); // this is a negative value: out of range
+            Assert.IsFalse(Enum<TestULongEnum>.IsSingleFlag(1L << 63)); // this is a negative value: out of range
+        }
+
+        [Test]
+        public void GetFlagsCountTest()
+        {
+            Assert.AreEqual(0, Enum<TestLongEnum>.GetFlagsCount(TestLongEnum.None));
+            Assert.AreEqual(0, Enum<TestLongEnum>.GetFlagsCount(0L));
+            Assert.AreEqual(0, Enum<TestLongEnum>.GetFlagsCount(0UL));
+            Assert.AreEqual(1, Enum<TestLongEnum>.GetFlagsCount(TestLongEnum.Alpha));
+            Assert.AreEqual(1, Enum<TestLongEnum>.GetFlagsCount(1L));
+            Assert.AreEqual(-1, Enum<TestLongEnum>.GetFlagsCount(UInt64.MaxValue));
+            Assert.AreEqual(-1, Enum<TestULongEnum>.GetFlagsCount(Int64.MinValue));
         }
 
         #endregion

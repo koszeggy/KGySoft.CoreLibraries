@@ -87,7 +87,7 @@ namespace KGySoft.ComponentModel
             #region Methods
 
             void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target) => command.Execute(source, state, target);
-            void ICommand.Execute(ICommandSource source, ICommandState state, object target) => throw new InvalidOperationException();
+            void ICommand.Execute(ICommandSource source, ICommandState state, object target) => Throw.InternalError("Should never be invoked");
 
             #endregion
         }
@@ -152,7 +152,10 @@ namespace KGySoft.ComponentModel
 
         internal CommandBinding(ICommand command, IDictionary<string, object> initialState, bool disposeCommand)
         {
-            this.command = command ?? throw new ArgumentNullException(nameof(command), Res.ArgumentNull);
+            if (command == null)
+                Throw.ArgumentNullException(Argument.command);
+
+            this.command = command;
             this.disposeCommand = disposeCommand;
             state = initialState is CommandState s ? s : new CommandState(initialState);
             state.PropertyChanged += State_PropertyChanged;
@@ -189,26 +192,26 @@ namespace KGySoft.ComponentModel
         public ICommandBinding AddSource(object source, string eventName)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
             if (eventName == null)
-                throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.eventName);
 
             Type sourceType = source as Type ?? source.GetType();
             bool isStatic = ReferenceEquals(source, sourceType);
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
-                throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
+                Throw.ArgumentException(Argument.eventName, Res.ComponentModelMissingEvent(eventName, sourceType));
             MethodInfo addMethod = eventInfo.GetAddMethod(true);
             if (addMethod.IsStatic ^ isStatic)
-                throw new ArgumentException(Res.ComponentModelInvalidCommandSource, nameof(source));
+                Throw.ArgumentException(Argument.commandSource, Res.ComponentModelInvalidCommandSource);
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
 
             // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
             if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
-                throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
+                Throw.ArgumentException(Argument.eventName, Res.ComponentModelInvalidEvent(eventName));
 
             // already added
             if (sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions) && subscriptions.ContainsKey(eventInfo))
@@ -236,14 +239,14 @@ namespace KGySoft.ComponentModel
         public bool RemoveSource(object source)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             return DoRemoveSource(source);
         }
 
         public ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             stateUpdaters.Add(updater);
             if (updateSources && sources.Count > 0)
                 GetInstanceSources().ForEach(UpdateSource);
@@ -253,40 +256,47 @@ namespace KGySoft.ComponentModel
         public bool RemoveStateUpdater(ICommandStateUpdater updater)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             return stateUpdaters.Remove(updater);
         }
 
         public ICommandBinding AddTarget(object target)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            targets.Add(target ?? throw new ArgumentNullException(nameof(target), Res.ArgumentNull));
+                Throw.ObjectDisposedException();
+            if (target == null)
+                Throw.ArgumentNullException(Argument.target);
+
+            targets.Add(target);
             return this;
         }
 
         public ICommandBinding AddTarget(Func<object> getTarget)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             return AddTarget((object)getTarget);
         }
 
         public bool RemoveTarget(object target)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             return targets.Remove(target);
         }
 
         public void InvokeCommand(object source, string eventName, EventArgs eventArgs)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+            if (eventName == null)
+                Throw.ArgumentNullException(Argument.eventName);
             InvokeCommand(new CommandSource<EventArgs>
             {
-                Source = source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull),
-                TriggeringEvent = eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull),
+                Source = source,
+                TriggeringEvent = eventName,
                 EventArgs = eventArgs ?? EventArgs.Empty
             });
         }

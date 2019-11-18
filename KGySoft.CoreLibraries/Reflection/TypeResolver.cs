@@ -276,7 +276,7 @@ namespace KGySoft.Reflection
         private TypeResolver(string typeName, ResolveTypeOptions options) : this(options)
         {
             if (typeName == null)
-                throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.typeName);
 
             Initialize(typeName);
         }
@@ -284,7 +284,7 @@ namespace KGySoft.Reflection
         private TypeResolver(Assembly assembly, string typeName, ResolveTypeOptions options) : this(options)
         {
             if (typeName == null)
-                throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.typeName);
 
             this.assembly = assembly;
             assemblyName = assembly.FullName;
@@ -293,7 +293,9 @@ namespace KGySoft.Reflection
 
         private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
         {
-            this.type = type ?? throw new ArgumentNullException(nameof(this.type), Res.ArgumentNull);
+            if (type == null)
+                Throw.ArgumentNullException(Argument.type);
+            this.type = type;
 
             // modifiers
             // ReSharper disable once PossibleNullReferenceException
@@ -347,9 +349,9 @@ namespace KGySoft.Reflection
         internal static Type ResolveType(string typeName, Func<AssemblyName, string, Type> typeResolver, ResolveTypeOptions options)
         {
             if (typeName == null)
-                throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.typeName);
             if (!options.AllFlagsDefined())
-                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
             string key = null;
             Type result;
@@ -372,12 +374,12 @@ namespace KGySoft.Reflection
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
                 if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
+                    Throw.ReflectionException(Res.ReflectionNotAType(typeName), e);
                 return null;
             }
 
             if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                throw new ReflectionException(Res.ReflectionNotAType(typeName));
+                Throw.ReflectionException(Res.ReflectionNotAType(typeName));
 
             if (key != null && result != null)
                 typeCacheByString[key] = result;
@@ -388,11 +390,11 @@ namespace KGySoft.Reflection
         internal static Type ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options)
         {
             if (assembly == null)
-                throw new ArgumentNullException(nameof(assembly), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assembly);
             if (typeName == null)
-                throw new ArgumentNullException(nameof(typeName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.typeName);
             if (!options.AllFlagsDefined())
-                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
             ResolveTypeOptions prefix = options & ~ResolveTypeOptions.ThrowError;
             if ((prefix & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
@@ -405,7 +407,7 @@ namespace KGySoft.Reflection
             if (GetAssemblyNamePos(typeName) >= 0)
             {
                 if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
+                    Throw.ArgumentException(Argument.typeName, Res.ReflectionTypeWithAssemblyName);
                 return null;
             }
 
@@ -416,12 +418,12 @@ namespace KGySoft.Reflection
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
                 if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
+                    Throw.ReflectionException(Res.ReflectionNotAType(typeName), e);
                 return null;
             }
 
             if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                throw new ReflectionException(Res.ReflectionNotAType(typeName));
+                Throw.ReflectionException(Res.ReflectionNotAType(typeName));
 
             if (result != null)
                 cache[key] = result;
@@ -431,9 +433,9 @@ namespace KGySoft.Reflection
         internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             if (!Enum<TypeNameKind>.IsDefined(kind))
-                throw new ArgumentOutOfRangeException(nameof(kind), Res.EnumOutOfRange(kind));
+                Throw.EnumArgumentOutOfRange(Argument.kind, kind);
 
             // not caching if the result can be provided by delegates
             if (assemblyNameResolver != null || typeNameResolver != null)
@@ -501,7 +503,7 @@ namespace KGySoft.Reflection
                 if (context.Success)
                     return;
                 if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    throw new ReflectionException(Res.ReflectionNotAType(typeName));
+                    Throw.ReflectionException(Res.ReflectionNotAType(typeName));
             }
             finally
             {
@@ -658,7 +660,7 @@ namespace KGySoft.Reflection
                         return;
                     }
 
-                    throw new InvalidOperationException(Res.InternalError($"Unexpected state: {ctx.State}"));
+                    Throw.InternalError(Res.InternalError($"Unexpected state: {ctx.State}"));
                 }
 
                 if (ctx.Char == '[') // array
@@ -959,7 +961,8 @@ namespace KGySoft.Reflection
                         return;
 
                     default:
-                        throw new InvalidOperationException(Res.InternalError($"Unexpected state: {context.State}"));
+                        Throw.InternalError($"Unexpected state: {context.State}");
+                        return;
                 }
 
                 if (context.State == State.Return)
@@ -1211,7 +1214,7 @@ namespace KGySoft.Reflection
                     // This is OK, we don't want to support wrong names, which could break parsing.
                     // And this is the symmetric logic with GetName's assemblyNameResolver.
                     if (throwError)
-                        throw new ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), e);
+                        Throw.ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), e);
 
                     // In this case we don't use fallback logic because we couldn't call the delegate.
                     return null;
@@ -1264,7 +1267,9 @@ namespace KGySoft.Reflection
                     return result;
             }
 
-            return throwError ? throw new ReflectionException(Res.ReflectionNotAType(rootName)) : default(Type);
+            if (throwError)
+                Throw.ReflectionException(Res.ReflectionNotAType(rootName));
+            return null;
         }
 
         private Type ResolveGenericParameter(Func<AssemblyName, string, Type> typeResolver)

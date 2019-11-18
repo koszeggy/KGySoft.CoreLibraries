@@ -56,7 +56,7 @@ namespace KGySoft.Collections
         public T this[int index]
         {
             get => list[index + offset];
-            set => throw new NotSupportedException(Res.NotSupported);
+            set => Throw.NotSupportedException(Res.NotSupported);
         }
 
         #endregion
@@ -113,11 +113,11 @@ namespace KGySoft.Collections
         #region Explicitly Implemented Interface Methods
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        void ICollection<T>.Add(T item) => throw new NotSupportedException(Res.NotSupported);
-        void ICollection<T>.Clear() => throw new NotSupportedException(Res.NotSupported);
-        bool ICollection<T>.Remove(T item) => throw new NotSupportedException(Res.NotSupported);
-        void IList<T>.Insert(int index, T item) => throw new NotSupportedException(Res.NotSupported);
-        void IList<T>.RemoveAt(int index) => throw new NotSupportedException(Res.NotSupported);
+        void ICollection<T>.Add(T item) => Throw.NotSupportedException(Res.NotSupported);
+        void ICollection<T>.Clear() => Throw.NotSupportedException(Res.NotSupported);
+        bool ICollection<T>.Remove(T item) => Throw.NotSupportedException<bool>(Res.NotSupported);
+        void IList<T>.Insert(int index, T item) => Throw.NotSupportedException(Res.NotSupported);
+        void IList<T>.RemoveAt(int index) => Throw.NotSupportedException(Res.NotSupported);
 
         #endregion
 

@@ -77,7 +77,7 @@ namespace KGySoft.ComponentModel
             {
                 int oldCapacity = undoCapacity;
                 if (oldCapacity < 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.value);
                 if (oldCapacity == value)
                     return;
 

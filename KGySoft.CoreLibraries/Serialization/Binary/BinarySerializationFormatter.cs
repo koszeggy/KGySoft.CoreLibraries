@@ -956,7 +956,7 @@ namespace KGySoft.Serialization.Binary
             set
             {
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.FlagsEnumOutOfRange(value));
+                    Throw.FlagsEnumArgumentOutOfRange(Argument.value, value);
 
                 serializationOptions = value;
             }
@@ -1067,7 +1067,7 @@ namespace KGySoft.Serialization.Binary
             {
                 // Check for a corrupted stream. Max 4 * 7 bits are valid
                 if (shift == 35)
-                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
 
                 b = br.ReadByte();
 
@@ -1087,9 +1087,7 @@ namespace KGySoft.Serialization.Binary
             {
                 // Check for a corrupted stream. Max 9 * 7 bits are valid
                 if (shift == 70)
-                {
-                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
-                }
+                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
 
                 b = br.ReadByte();
 
@@ -1227,7 +1225,7 @@ namespace KGySoft.Serialization.Binary
         public void SerializeByWriter(BinaryWriter writer, object data)
         {
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.writer);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
             manager.WriteRoot(writer, data);
         }
@@ -1247,7 +1245,7 @@ namespace KGySoft.Serialization.Binary
         public object DeserializeByReader(BinaryReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.reader);
             var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector);
             return manager.Deserialize(reader);
         }

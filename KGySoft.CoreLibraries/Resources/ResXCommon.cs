@@ -202,7 +202,8 @@ namespace KGySoft.Resources
             if (CanGetAsMemoryStream(value, safeMode, out MemoryStream result))
                 return result;
 
-            throw new InvalidOperationException(Res.ResourcesNonStreamResourceWithType(name, value.GetType().ToString()));
+            Throw.InvalidOperationException(Res.ResourcesNonStreamResourceWithType(name, value.GetType()));
+            return default;
         }
 
         #endregion

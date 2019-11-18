@@ -47,10 +47,14 @@ namespace KGySoft.Security.Cryptography
         /// <summary>
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
         /// </summary>
-        /// <param name="rng">A <see cref="RandomNumberGenerator"/> instance to use.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="rng"/> is <see langword="null"/>.</exception>
-        public SecureRandom(RandomNumberGenerator rng) 
-            => provider = rng ?? throw new ArgumentNullException(nameof(rng), Res.ArgumentNull);
+        /// <param name="provider">A <see cref="RandomNumberGenerator"/> instance to use.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="provider"/> is <see langword="null"/>.</exception>
+        public SecureRandom(RandomNumberGenerator provider)
+        {
+            if (provider == null)
+                Throw.ArgumentNullException(Argument.provider);
+            this.provider = provider;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
@@ -71,8 +75,7 @@ namespace KGySoft.Security.Cryptography
         public override void NextBytes(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
-
+                Throw.ArgumentNullException(Argument.buffer);
             provider.GetBytes(buffer);
         }
 
@@ -121,7 +124,7 @@ namespace KGySoft.Security.Cryptography
         public override int Next(int minValue, int maxValue)
         {
             if (minValue > maxValue)
-                throw new ArgumentOutOfRangeException(nameof(minValue), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             if (minValue == maxValue)
                 return minValue;

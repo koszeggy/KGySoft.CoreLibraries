@@ -66,45 +66,49 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void PopulateTest()
         {
-            const int capacity = 1000;
+            const int capacity = 10_000;
 
-            new RandomizedPerformanceTest { TestName = "Populate Test", Iterations = 1000 }
-                .AddCase(rnd =>
+            new PerformanceTest { TestName = "Populate Test", Iterations = 100 }
+                .AddCase(() =>
                 {
                     var slist = new SortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         slist.Add(i, null);
                 }, "Populating SortedList from sorted data")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var sdict = new SortedDictionary<int, string>();
                     for (int i = 0; i < capacity; i++)
                         sdict.Add(i, null);
                 }, "Populating SortedDictionary from sorted data")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var cslist = new CircularSortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         cslist.Add(i, null);
                 }, "Populating CircularSortedList from sorted data")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var slist = new SortedList<int, string>(capacity);
                     for (int i = capacity - 1; i >= 0; i--)
                         slist.Add(i, null);
                 }, "Populating SortedList from reverse sorted data")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var sdict = new SortedDictionary<int, string>();
                     for (int i = capacity - 1; i >= 0; i--)
                         sdict.Add(i, null);
                 }, "Populating SortedDictionary from reverse sorted data")
-                .AddCase(rnd =>
+                .AddCase(() =>
                 {
                     var cslist = new CircularSortedList<int, string>(capacity);
                     for (int i = capacity - 1; i >= 0; i--)
                         cslist.Add(i, null);
                 }, "Populating CircularSortedList from reverse sorted data")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            new RandomizedPerformanceTest { TestName = "Randomized Populate Test", Iterations = 100 }
                 .AddCase(rnd =>
                 {
                     var slist = new SortedList<int, string>(capacity);
@@ -180,7 +184,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                     {
                         var x = slist.Keys[i];
                     }
-                }, "Enumerating SortedList.Keys (0-aligned) by indexer")
+                }, "Enumerating SortedList.Keys by indexer")
                 .AddCase(() =>
                 {
                     for (int i = 0; i < cslist.Count; i++)
@@ -202,7 +206,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void SearchTest()
         {
-            const int capacity = 10000;
+            const int capacity = 10_000;
 
             CircularSortedList<int, int> cslistShifted = PrepareList<int, int>(capacity, capacity >> 1, capacity);
             CircularSortedList<int, int> cslist = new CircularSortedList<int, int>(cslistShifted);
@@ -214,7 +218,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             SortedList<LongEnum, int> slistEnum = new SortedList<LongEnum, int>(cslistEnum);
             SortedDictionary<LongEnum, int> sdictEnum = new SortedDictionary<LongEnum, int>(cslistEnum);
 
-            new PerformanceTest<bool> { TestName = "Search Test", Iterations = 100000 }
+            new PerformanceTest<bool> { TestName = "Search Test", Iterations = 1_000_000 }
                 .AddCase(() => slist.ContainsKey(capacity), "SortedList<int,int>.ContainsKey")
                 .AddCase(() => sdict.ContainsKey(capacity), "SortedDictionary<int,int>.ContainsKey")
                 .AddCase(() => cslist.ContainsKey(capacity), "CircularSortedList<int,int>.ContainsKey (0-aligned)")

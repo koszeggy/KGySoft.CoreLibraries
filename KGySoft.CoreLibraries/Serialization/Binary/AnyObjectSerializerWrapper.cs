@@ -115,7 +115,7 @@ namespace KGySoft.Serialization.Binary
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
             ISurrogateSelector surrogate = null;
 #if NETFRAMEWORK

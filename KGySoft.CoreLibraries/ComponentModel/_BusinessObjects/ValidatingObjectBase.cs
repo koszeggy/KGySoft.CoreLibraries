@@ -172,7 +172,7 @@ namespace KGySoft.ComponentModel
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
             if (e == null)
-                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.e);
 
             // Invalidating cached validation results if an affected property has changed.
             if (isValid != null && AffectsModifiedState(e.PropertyName))
@@ -190,7 +190,9 @@ namespace KGySoft.ComponentModel
 
         private ValidationResultsCollection Validate()
         {
-            ValidationResultsCollection result = (DoValidation() ?? throw new InvalidOperationException(Res.ComponentModelDoValidationNull)).ToReadOnly();
+            ValidationResultsCollection result = DoValidation();
+            if (result == null)
+                Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
 
             bool newIsValid = !result.HasErrors;
             bool raiseIsValidChanged = newIsValid != lastIsValid;
@@ -198,7 +200,7 @@ namespace KGySoft.ComponentModel
 
             ValidationResultsCollection lastResult = cachedValidationResults;
             bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
-            cachedValidationResults = result;
+            cachedValidationResults = result.ToReadOnly();
 
             if (raiseIsValidChanged)
                 OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));

@@ -292,7 +292,7 @@ namespace KGySoft.Serialization.Binary
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             if (!type.IsPrimitive && type != Reflector.StringType && !type.HasElementType)
             {
@@ -333,7 +333,7 @@ namespace KGySoft.Serialization.Binary
         private void SetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context)
         {
             if (!Accessors.TryInvokeCtor(serializable, info, context))
-                throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(serializable.GetType()));
+                Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(serializable.GetType()));
         }
 
         private void GetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
@@ -445,7 +445,7 @@ namespace KGySoft.Serialization.Binary
                     continue;
 
                 if (e.Field == null)
-                    throw new SerializationException(Res.SerializationMissingField(type, entry.Name));
+                    Throw.SerializationException(Res.SerializationMissingField(type, entry.Name));
 
                 e.Field.Set(obj, e.Value);
             }
@@ -467,9 +467,9 @@ namespace KGySoft.Serialization.Binary
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             var e = new SerializingEventArgs(obj, context, info) { IgnoreISerializable = IgnoreISerializable };
             OnSerializing(e);
@@ -489,9 +489,9 @@ namespace KGySoft.Serialization.Binary
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             var e = new DeserializingEventArgs(obj, context, info) { IgnoreISerializable = IgnoreISerializable };
             OnDeserializing(e);

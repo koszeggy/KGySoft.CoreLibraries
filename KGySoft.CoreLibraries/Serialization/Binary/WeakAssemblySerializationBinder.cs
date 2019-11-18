@@ -104,7 +104,8 @@ namespace KGySoft.Serialization.Binary
         public void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             if (serializedType == null)
-                throw new ArgumentNullException(nameof(serializedType), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.serializedType);
+
 #if NET35
             assemblyName = null;
             typeName = null;
@@ -142,7 +143,7 @@ namespace KGySoft.Serialization.Binary
             Type result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
-                throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
+                Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
 
             return result;
         }

@@ -234,7 +234,7 @@ namespace KGySoft.Diagnostics
         public static IMeasureItem GetMeasurementResult(string category, string operation)
         {
             if (operation == null)
-                throw new ArgumentNullException(nameof(operation), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.operation);
 
             if (String.IsNullOrEmpty(category))
                 category = Res.ProfilerUncategorized;
@@ -266,7 +266,7 @@ namespace KGySoft.Diagnostics
                 return null;
 
             if (operation == null)
-                throw new ArgumentNullException(nameof(operation));
+                Throw.ArgumentNullException(Argument.operation);
 
             if (String.IsNullOrEmpty(category))
                 category = Res.ProfilerUncategorized;

@@ -521,7 +521,7 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
                 compatibleFormat = value;
             }
         }
@@ -540,10 +540,10 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
 
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
 
                 omitHeader = value;
             }
@@ -562,7 +562,7 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
+                    Throw.InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
                 basePath = value;
             }
         }
@@ -586,7 +586,7 @@ namespace KGySoft.Resources
             set
             {
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 autoGenerateAlias = value;
             }
         }
@@ -600,7 +600,7 @@ namespace KGySoft.Resources
             get
             {
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
 
                 if (!initialized)
                     InitializeWriter();
@@ -629,7 +629,7 @@ namespace KGySoft.Resources
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             writer = new ResXWriter(fileName);
             this.typeNameConverter = typeNameConverter;
@@ -706,7 +706,7 @@ namespace KGySoft.Resources
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
         {
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assemblyName);
 
             AddAlias(aliasName, assemblyName.FullName, forceWriteImmediately);
         }
@@ -723,9 +723,9 @@ namespace KGySoft.Resources
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)
         {
             if (aliasName == null)
-                throw new ArgumentNullException(nameof(aliasName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.aliasName);
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assemblyName);
 
             if (aliases == null)
                 aliases = new Dictionary<string, string>();
@@ -774,7 +774,7 @@ namespace KGySoft.Resources
         public void AddMetadata(ResXDataNode node)
         {
             if (node == null)
-                throw new ArgumentNullException(nameof(node), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.node);
             AddDataRow(ResXCommon.MetadataStr, node.Name, node);
         }
 
@@ -816,7 +816,7 @@ namespace KGySoft.Resources
         public void AddResource(ResXDataNode node)
         {
             if (node == null)
-                throw new ArgumentNullException(nameof(node), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.node);
             AddDataRow(ResXCommon.DataStr, node.Name, node);
         }
 
@@ -846,10 +846,10 @@ namespace KGySoft.Resources
         public void Generate()
         {
             if (writer == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (hasBeenSaved)
-                throw new InvalidOperationException(Res.ResourcesWriterSaved);
+                Throw.InvalidOperationException(Res.ResourcesWriterSaved);
 
             hasBeenSaved = true;
             if (initialized)
@@ -961,7 +961,7 @@ namespace KGySoft.Resources
         private void AddDataRow(string elementName, string name, string value, string typeWithAlias, string mimeType, string comment)
         {
             if (hasBeenSaved)
-                throw new InvalidOperationException(Res.ResourcesWriterSaved);
+                Throw.InvalidOperationException(Res.ResourcesWriterSaved);
 
             Writer.WriteStartElement(elementName);
             writer.WriteAttributeString(ResXCommon.NameStr, name);

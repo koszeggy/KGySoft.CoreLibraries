@@ -19,6 +19,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
@@ -109,7 +112,13 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance creator delegate.
         /// </summary>
-        private protected Delegate Initializer => initializer ??= CreateInitializer();
+        private protected Delegate Initializer
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+            get => initializer ??= CreateInitializer();
+        }
 
         #endregion
 
@@ -138,16 +147,30 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">A <see cref="Type"/> for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance of <paramref name="type"/>.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static CreateInstanceAccessor GetAccessor(Type type)
-            => (CreateInstanceAccessor)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
+        {
+            if (type == null)
+                Throw.ArgumentNullException(Argument.type);
+            return (CreateInstanceAccessor)GetCreateAccessor(type);
+        }
 
         /// <summary>
         /// Gets a <see cref="CreateInstanceAccessor"/> for the specified <see cref="ConstructorInfo"/>.
         /// </summary>
         /// <param name="ctor">The constructor for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance by the constructor.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static CreateInstanceAccessor GetAccessor(ConstructorInfo ctor)
-            => (CreateInstanceAccessor)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull));
+        {
+            if (ctor == null)
+                Throw.ArgumentNullException(Argument.ctor);
+            return (CreateInstanceAccessor)GetCreateAccessor(ctor);
+        }
 
         #endregion
 
@@ -165,7 +188,7 @@ namespace KGySoft.Reflection
                 case Type t:
                     return new DefaultCreateInstanceAccessor(t);
                 default:
-                    throw new ArgumentException(Res.ReflectionTypeOrCtorInfoExpected, nameof(member));
+                    return Throw.ArgumentException<CreateInstanceAccessor>(Argument.member, Res.ReflectionTypeOrCtorInfoExpected);
             }
         }
 

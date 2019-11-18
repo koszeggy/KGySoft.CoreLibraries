@@ -21,6 +21,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 using System.Security;
 
 #endregion
@@ -54,6 +57,9 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public override object Invoke(object instance, params object[] parameters)
         {
             try
@@ -62,7 +68,8 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+                return default;
             }
         }
 
@@ -75,9 +82,9 @@ namespace KGySoft.Reflection
             MethodInfo method = (MethodInfo)MemberInfo;
             Type declaringType = method.DeclaringType;
             if (!method.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (method.ReturnType.IsPointer)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
 #if !NETSTANDARD2_0
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);

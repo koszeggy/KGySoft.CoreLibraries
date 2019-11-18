@@ -43,6 +43,8 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class EnumerableExtensions
     {
+#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+
         #region Fields
 
         private static IThreadSafeCacheAccessor<Type, Type> genericEnumerableCache;
@@ -65,16 +67,16 @@ namespace KGySoft.CoreLibraries
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
             if (action == null)
-                throw new ArgumentNullException(nameof(action), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.action);
 
+            // ReSharper disable PossibleMultipleEnumeration
             foreach (T item in source)
-            {
                 action(item);
-            }
 
             return source;
+            // ReSharper restore PossibleMultipleEnumeration
         }
 
         /// <summary>
@@ -95,7 +97,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryAdd<T>([NoEnumeration]this IEnumerable<T> collection, T item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -118,7 +120,7 @@ namespace KGySoft.CoreLibraries
                         return true;
 
                     default:
-                        // TODO: Relflector.TryRunMethod...
+                        // TODO: Reflector.TryRunMethod...
                         return false;
                 }
             }
@@ -147,7 +149,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryAdd([NoEnumeration]this IEnumerable collection, object item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -160,7 +162,7 @@ namespace KGySoft.CoreLibraries
                     if (checkReadOnly && (list.IsReadOnly || list.IsFixedSize))
                         return false;
 #if NET35
-                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via nongeneric implementation
+                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via non-generic implementation
                     if (item != null)
 #endif
                     {
@@ -247,9 +249,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryAddRange<T>([NoEnumeration]this IEnumerable<T> target, IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -290,9 +292,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryAddRange([NoEnumeration]this IEnumerable target, IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -345,7 +347,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryClear<T>([NoEnumeration]this IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -393,7 +395,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryClear([NoEnumeration]this IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -451,7 +453,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryInsert<T>([NoEnumeration]this IEnumerable<T> collection, int index, T item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -498,7 +500,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryInsert([NoEnumeration]this IEnumerable collection, int index, object item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -510,7 +512,7 @@ namespace KGySoft.CoreLibraries
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || list.IsFixedSize || index < 0 || index > list.Count))
                         return false;
 #if NET35
-                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via nongeneric implementation
+                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via non-generic implementation
                     if (item != null)
 #endif
                     {
@@ -586,9 +588,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryInsertRange<T>([NoEnumeration]this IEnumerable<T> target, int index, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -630,9 +632,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryInsertRange([NoEnumeration]this IEnumerable target, int index, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -696,7 +698,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemove<T>([NoEnumeration]this IEnumerable<T> collection, T item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -744,7 +746,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemove([NoEnumeration]this IEnumerable collection, object item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -757,7 +759,7 @@ namespace KGySoft.CoreLibraries
                         return false;
 
 #if NET35
-                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via nongeneric implementation
+                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via non-generic implementation
                     if (item != null)
 #endif
                     {
@@ -826,7 +828,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemoveAt<T>([NoEnumeration]this IEnumerable<T> collection, int index, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -872,7 +874,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemoveAt([NoEnumeration]this IEnumerable collection, int index, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -934,9 +936,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemoveRange<T>([NoEnumeration]this IEnumerable<T> collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             try
             {
@@ -982,9 +984,9 @@ namespace KGySoft.CoreLibraries
         public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             try
             {
@@ -1049,7 +1051,7 @@ namespace KGySoft.CoreLibraries
         public static bool TrySetElementAt<T>([NoEnumeration]this IEnumerable<T> collection, int index, T item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -1097,7 +1099,7 @@ namespace KGySoft.CoreLibraries
         public static bool TrySetElementAt([NoEnumeration]this IEnumerable collection, int index, object item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -1109,7 +1111,7 @@ namespace KGySoft.CoreLibraries
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || index < 0 || index >= list.Count || list is Array array && array.Rank != 1))
                         return false;
 #if NET35
-                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via nongeneric implementation
+                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via non-generic implementation
                     if (item != null)
 #endif
                     {
@@ -1203,9 +1205,9 @@ namespace KGySoft.CoreLibraries
                 return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
 
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -1274,9 +1276,9 @@ namespace KGySoft.CoreLibraries
                 return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
 
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             try
             {
@@ -1382,9 +1384,9 @@ namespace KGySoft.CoreLibraries
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
             if (predicate == null)
-                throw new ArgumentNullException(nameof(predicate), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.predicate);
 
             if (source is IList<T> list)
             {
@@ -1419,10 +1421,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="predicate"/> is <see langword="null"/>.</exception>
         public static int IndexOf(this IEnumerable source, Func<object, bool> predicate)
         {
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+            
             switch (source)
             {
-                case null:
-                    throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
                 case IEnumerable<object> enumerableGeneric:
                     return enumerableGeneric.IndexOf(predicate);
                 default:
@@ -1441,10 +1444,11 @@ namespace KGySoft.CoreLibraries
         [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "False alarm: see the null case")]
         public static int IndexOf<T>(this IEnumerable<T> source, T element)
         {
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+
             switch (source)
             {
-                case null:
-                    throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
                 case IList<T> genericList:
                     return genericList.IndexOf(element);
                 case IList list:
@@ -1473,10 +1477,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
         public static int IndexOf(this IEnumerable source, object element)
         {
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+
             switch (source)
             {
-                case null:
-                    throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
                 case IList<object> genericList:
                     return genericList.IndexOf(element);
                 case IList list:
@@ -1507,7 +1512,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryGetElementAt<T>(this IEnumerable<T> collection, int index, out T item, bool checkBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
             item = default;
 
             try
@@ -1584,7 +1589,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryGetElementAt(this IEnumerable collection, int index, out object item, bool checkBounds = true, bool throwError = true)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
             item = default;
 
             try
@@ -1637,8 +1642,7 @@ namespace KGySoft.CoreLibraries
         public static CircularList<T> ToCircularList<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
-
+                Throw.ArgumentNullException(Argument.source);
             return new CircularList<T>(source);
         }
 
@@ -1676,9 +1680,9 @@ namespace KGySoft.CoreLibraries
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
 
             return source.Select(item => new { Order = random.Next(), Value = item }).OrderBy(i => i.Order).Select(i => i.Value);
         }
@@ -1710,28 +1714,35 @@ namespace KGySoft.CoreLibraries
         public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
 
             if (source is IList<T> list)
-                return list.Count > 0
-                    ? list[random.Next(list.Count)]
-                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
+            {
+                if (list.Count > 0)
+                    return list[random.Next(list.Count)];
+            }
 
 #if !NET35 && !NET40
-            if (source is IReadOnlyList<T> readonlyList)
-                return readonlyList.Count > 0
-                    ? readonlyList[random.Next(readonlyList.Count)]
-                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
-#endif
-
-            using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
+            else if (source is IReadOnlyList<T> readonlyList)
             {
-                if (!shuffledEnumerator.MoveNext())
-                    return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
-                return shuffledEnumerator.Current;
+                if (readonlyList.Count > 0)
+                    return readonlyList[random.Next(readonlyList.Count)];
             }
+#endif
+            else
+            {
+                using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
+                {
+                    if (shuffledEnumerator.MoveNext())
+                        return shuffledEnumerator.Current;
+                }
+            }
+
+            if (!defaultIfEmpty)
+                Throw.ArgumentException(Argument.source, Res.CollectionEmpty);
+            return default;
         }
 
         #endregion

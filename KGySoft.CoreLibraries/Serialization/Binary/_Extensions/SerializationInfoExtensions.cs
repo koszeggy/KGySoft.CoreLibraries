@@ -54,7 +54,7 @@ namespace KGySoft.Serialization.Binary
         public static IEnumerable<SerializationEntry> ToEnumerable(this SerializationInfo info)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             if (info.MemberCount == 0)
                 yield break;
@@ -76,7 +76,7 @@ namespace KGySoft.Serialization.Binary
         public static bool TryGetValue(this SerializationInfo info, string name, out object value)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             foreach (SerializationEntry entry in info)
             {
@@ -148,7 +148,7 @@ namespace KGySoft.Serialization.Binary
         public static bool ContainsName(this SerializationInfo info, string name)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             return info.ToEnumerable().Any(e => e.Name == name);
         }
@@ -163,9 +163,9 @@ namespace KGySoft.Serialization.Binary
         public static bool RemoveValue(this SerializationInfo info, string name)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             if (info.MemberCount == 0)
                 return false;
@@ -199,9 +199,9 @@ namespace KGySoft.Serialization.Binary
         public static bool UpdateValue(this SerializationInfo info, string name, object value, Type type = null)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             if (info.MemberCount == 0 || !info.ContainsName(name))
             {
@@ -238,11 +238,11 @@ namespace KGySoft.Serialization.Binary
         public static bool ReplaceValue(this SerializationInfo info, string oldName, string newName, object value, Type type = null)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
             if (oldName == null)
-                throw new ArgumentNullException(nameof(oldName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.oldName);
             if (newName == null)
-                throw new ArgumentNullException(nameof(newName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.newName);
 
             if (info.MemberCount == 0 || !info.ContainsName(oldName))
                 return false;

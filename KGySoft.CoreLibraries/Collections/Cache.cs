@@ -28,7 +28,6 @@ using System.Threading;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
-using KGySoft.Reflection;
 
 #endregion
 
@@ -244,6 +243,8 @@ namespace KGySoft.Collections
         , IReadOnlyDictionary<TKey, TValue>
 #endif
     {
+#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+
         #region Nested Types
 
         #region Nested classes
@@ -286,7 +287,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (position == -1 || position == cache.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     if (isGeneric)
                         return current;
                     return new DictionaryEntry(current.Key, current.Value);
@@ -298,7 +299,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (position == -1 || position == cache.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return new DictionaryEntry(current.Key, current.Value);
                 }
             }
@@ -308,7 +309,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (position == -1 || position == cache.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Key;
                 }
             }
@@ -318,7 +319,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (position == -1 || position == cache.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Value;
                 }
             }
@@ -349,7 +350,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != cache.version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (position < cache.Count)
                     position += 1;
@@ -375,7 +376,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != cache.version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
                 position = -1;
                 currentIndex = -1;
                 current = default;
@@ -484,18 +485,18 @@ namespace KGySoft.Collections
             public bool Contains(TKey item)
             {
                 if (item == null)
-                    throw new ArgumentNullException(nameof(item), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.item);
                 return owner.ContainsKey(item);
             }
 
-            public void CopyTo(TKey[] array, int arrayIndex)
+            public void CopyTo([CanBeNull]TKey[] array, int arrayIndex)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.array);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
-                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
                 if (array.Length - arrayIndex < Count)
-                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
                 {
@@ -513,7 +514,7 @@ namespace KGySoft.Collections
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
                 {
                     if (version != owner.version)
-                        throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                        Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                     yield return owner.items[current].Key;
                 }
@@ -523,18 +524,18 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Methods
 
-            void ICollection<TKey>.Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TKey>.Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            void ICollection<TKey>.Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TKey>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            bool ICollection<TKey>.Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool ICollection<TKey>.Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            void ICollection.CopyTo(Array array, int index)
+            void ICollection.CopyTo([CanBeNull]Array array, int index)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.array);
 
                 if (array is TKey[] keys)
                 {
@@ -543,11 +544,11 @@ namespace KGySoft.Collections
                 }
 
                 if (index < 0 || index > array.Length)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.index);
                 if (array.Length - index < Count)
-                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
                 if (array.Rank != 1)
-                    throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
                 if (array is object[] objectArray)
                 {
@@ -558,7 +559,7 @@ namespace KGySoft.Collections
                     }
                 }
 
-                throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
             }
 
             #endregion
@@ -622,14 +623,14 @@ namespace KGySoft.Collections
 
             public bool Contains(TValue item) => owner.ContainsValue(item);
 
-            public void CopyTo(TValue[] array, int arrayIndex)
+            public void CopyTo([CanBeNull]TValue[] array, int arrayIndex)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.array);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
-                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
                 if (array.Length - arrayIndex < Count)
-                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
                 {
@@ -647,7 +648,7 @@ namespace KGySoft.Collections
                 for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
                 {
                     if (version != owner.version)
-                        throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                        Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                     yield return owner.items[current].Value;
                 }
@@ -657,18 +658,18 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Methods
 
-            void ICollection<TValue>.Add(TValue item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TValue>.Add(TValue item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            void ICollection<TValue>.Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TValue>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            bool ICollection<TValue>.Remove(TValue item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool ICollection<TValue>.Remove(TValue item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            void ICollection.CopyTo(Array array, int index)
+            void ICollection.CopyTo([CanBeNull]Array array, int index)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.array);
 
                 if (array is TValue[] values)
                 {
@@ -677,11 +678,11 @@ namespace KGySoft.Collections
                 }
 
                 if (index < 0 || index > array.Length)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.index);
                 if (array.Length - index < Count)
-                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
                 if (array.Rank != 1)
-                    throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
                 if (array is object[] objectArray)
                 {
@@ -692,7 +693,7 @@ namespace KGySoft.Collections
                     }
                 }
 
-                throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
             }
 
             #endregion
@@ -854,7 +855,7 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         /// <seealso cref="Behavior"/>
-        private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.CacheNullLoaderInvoke);
+        private static readonly Func<TKey, TValue> nullLoader = key => Throw.KeyNotFoundException<TValue>(Res.CacheNullLoaderInvoke);
 
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
@@ -923,7 +924,7 @@ namespace KGySoft.Collections
             set
             {
                 if (value <= 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.CacheMinSize);
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.CacheMinSize);
 
                 if (capacity == value)
                     return;
@@ -963,7 +964,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!Enum<CacheBehavior>.IsDefined(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRangeWithValues(value));
+                    Throw.EnumArgumentOutOfRangeWithValues(Argument.value, value);
 
                 behavior = value;
             }
@@ -972,7 +973,9 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
         /// allocate memory for all cache entries.
-        /// <br/>Default value: <see langword="false"/>.
+        /// <br/>Default value: <see langword="false"/>, unless you use the <see cref="IDictionary{TKey,TValue}"/> initializer
+        /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Collections.Generic.IDictionary{`0,`1},System.Collections.Generic.IEqualityComparer{`0})">constructor</see>,
+        /// which initializes this property to <see langword="true"/>.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="Capacity"/> is large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
@@ -1012,7 +1015,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TKey> Keys => keysCollection ?? (keysCollection = new KeysCollection(this));
+        public ICollection<TKey> Keys => keysCollection ??= new KeysCollection(this);
 
         /// <summary>
         /// Gets the values stored in the cache in evaluation order.
@@ -1024,7 +1027,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TValue> Values => valuesCollection ?? (valuesCollection = new ValuesCollection(this));
+        public ICollection<TValue> Values => valuesCollection ??= new ValuesCollection(this);
 
         /// <summary>
         /// Gets number of elements currently stored in this <see cref="Cache{TKey,TValue}"/> instance.
@@ -1058,47 +1061,13 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Properties
 
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/>&#160;value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object has a fixed size.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/>&#160;value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
         bool IDictionary.IsFixedSize => false;
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object is read-only.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/>&#160;value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
         bool IDictionary.IsReadOnly => false;
 
-        /// <summary>
-        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </returns>
         ICollection IDictionary.Keys => (ICollection)Keys;
-
-        /// <summary>
-        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the values in the
-        /// <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.ICollection"/> object containing the values in the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </returns>
         ICollection IDictionary.Values => (ICollection)Values;
-
         bool ICollection.IsSynchronized => false;
 
         object ICollection.SyncRoot
@@ -1154,7 +1123,7 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})"/>
         /// <seealso cref="Behavior"/>
         /// <seealso cref="GetThreadSafeAccessor"/>
-        public TValue this[TKey key]
+        public TValue this[[CanBeNull]TKey key]
         {
             [CollectionAccess(CollectionAccessType.UpdatedContent)]
             get
@@ -1176,7 +1145,7 @@ namespace KGySoft.Collections
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.key);
                 Insert(key, value, false);
             }
         }
@@ -1185,34 +1154,38 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        /// <summary>
-        /// Gets or sets the element with the specified key.
-        /// </summary>
-        /// <returns>
-        /// The element with the specified key.
-        /// </returns>
-        /// <param name="key">The key of the element to get or set.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="key"/> or <paramref name="value"/> has an invalid type.</exception>
-        object IDictionary.this[object key]
+        object IDictionary.this[[CanBeNull]object key]
         {
             get
             {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
-                return this[(TKey)key];
+                // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+                if (!CanAcceptKey(key))
+                    return null;
+
+                return TryGetValue((TKey)key, out TValue value) ? (object)value : null;
             }
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
-                if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                this[(TKey)key] = (TValue)value;
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(value);
+
+                try
+                {
+                    TKey typedKey = (TKey)key;
+                    try
+                    {
+                        this[typedKey] = (TValue)value;
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                }
             }
         }
 
@@ -1353,6 +1326,40 @@ namespace KGySoft.Collections
             this.comparer = comparer ?? ComparerHelper<TKey>.EqualityComparer;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class from the specified <paramref name="dictionary"/> and <paramref name="comparer"/>, with not item loader.
+        /// The <see cref="Capacity"/> will be initialized to the number of elements in <paramref name="dictionary"/>.
+        /// </summary>
+        /// <param name="dictionary">The dictionary whose elements are added to the <see cref="Cache{TKey,TValue}"/>.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
+        /// <para>This constructor does not specify an item loader and initializes <see cref="Capacity"/> to the number of elements in
+        /// the specified <paramref name="dictionary"/>. Meaning, adding new elements manually will drop an element unless you increase <see cref="Capacity"/>,
+        /// and reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> with a non-existing key will throw
+        /// a <see cref="KeyNotFoundException"/>.</para>
+        /// <para>This constructor sets <see cref="EnsureCapacity"/> to <see langword="true"/>, so no multiple allocations occur during the initialization.</para>
+        /// </remarks>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="EnsureCapacity"/>
+        /// <seealso cref="Behavior"/>
+        public Cache(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer = null)
+        {
+            if (dictionary == null)
+                Throw.ArgumentNullException(Argument.dictionary);
+            itemLoader = nullLoader;
+            this.comparer = comparer ?? ComparerHelper<TKey>.EqualityComparer;
+            int count = dictionary.Count;
+            if (count == 0)
+                return;
+            Capacity = count;
+            EnsureCapacity = true;
+            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                Add(item.Key, item.Value);
+        }
+
         #endregion
 
         #region Protected Constructors
@@ -1381,7 +1388,14 @@ namespace KGySoft.Collections
         #region Static Methods
 
         private static bool IsDefaultComparer(IEqualityComparer<TKey> comparer)
-            => ComparerHelper<TKey>.EqualityComparer.Equals(comparer);
+            => ReferenceEquals(ComparerHelper<TKey>.EqualityComparer, comparer);
+
+        private static bool CanAcceptKey(object key)
+        {
+            if (key == null)
+                Throw.ArgumentNullException(Argument.key);
+            return key is TKey;
+        }
 
         #endregion
 
@@ -1407,13 +1421,11 @@ namespace KGySoft.Collections
         public void Touch(TKey key)
         {
             int i = GetItemIndex(key);
-            if (i >= 0)
-            {
-                InternalTouch(i);
-                version += 1;
-            }
-            else
-                throw new KeyNotFoundException(Res.CacheKeyNotFound);
+            if (i < 0)
+                Throw.KeyNotFoundException(Res.CacheKeyNotFound);
+
+            InternalTouch(i);
+            version += 1;
         }
 
         /// <summary>
@@ -1451,7 +1463,7 @@ namespace KGySoft.Collections
         public TValue GetValueUncached(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
             TValue result = itemLoader.Invoke(key);
             Insert(key, result, false);
@@ -1542,10 +1554,10 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public void Add(TKey key, TValue value)
+        public void Add([CanBeNull]TKey key, TValue value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
             Insert(key, value, true);
         }
@@ -1559,10 +1571,10 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        public bool Remove(TKey key)
+        public bool Remove([CanBeNull]TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
             return InternalRemove(key, default, false);
         }
@@ -1589,7 +1601,7 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue([CanBeNull]TKey key, out TValue value)
         {
             int i = GetItemIndex(key);
             cacheReads += 1;
@@ -1659,7 +1671,7 @@ namespace KGySoft.Collections
         /// and the cache will not be accessed by other members but via the returned accessor.
         /// </summary>
         /// <param name="protectItemLoader"><see langword="true"/>&#160;to ensure that also the item loader is locked if a new element has to be loaded and
-        /// <see langword="false"/>&#160;to allow the item loader to be called parallelly. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called
+        /// <see langword="false"/>&#160;to allow the item loader to be called concurrently. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called
         /// but it can happen that values for same key are loaded multiple times and all but one will be discarded. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
@@ -1723,7 +1735,7 @@ namespace KGySoft.Collections
         private int GetItemIndex(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
             if (buckets == null)
                 return -1;
@@ -1761,7 +1773,7 @@ namespace KGySoft.Collections
             last = index;
         }
 
-        private bool InternalRemove(TKey key, TValue value, bool ckeckValue)
+        private bool InternalRemove(TKey key, TValue value, bool checkValue)
         {
             if (buckets == null)
                 return false;
@@ -1773,7 +1785,7 @@ namespace KGySoft.Collections
             {
                 if (items[i].Hash != hashCode || !comparer.Equals(items[i].Key, key))
                     continue;
-                if (ckeckValue && !ComparerHelper<TValue>.EqualityComparer.Equals(items[i].Value, value))
+                if (checkValue && !ComparerHelper<TValue>.EqualityComparer.Equals(items[i].Value, value))
                     return false;
 
                 // removing entry from the original bucket
@@ -1851,7 +1863,7 @@ namespace KGySoft.Collections
                     continue;
 
                 if (throwIfExists)
-                    throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
 
                 // overwriting existing element
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
@@ -1956,90 +1968,61 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Methods
 
-        /// <summary>
-        /// Renews an item in the evaluation order.
-        /// </summary>
-        /// <param name="key">The key of the item to renew.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="key"/> must exist in the cache.</exception>
         void ICache.Touch(object key)
         {
-            if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
-            Touch((TKey)key);
+            if (key == null)
+                Throw.ArgumentNullException(Argument.key);
+
+            try
+            {
+                Touch((TKey)key);
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+            }
         }
 
-        /// <summary>
-        /// Refreshes the value in the cache even if it was already loaded.
-        /// </summary>
-        /// <param name="key">The key of the item to refresh.</param>
         void ICache.RefreshValue(object key)
         {
-            if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
-            RefreshValue((TKey)key);
+            if (key == null)
+                Throw.ArgumentNullException(Argument.key);
+
+            try
+            {
+                RefreshValue((TKey)key);
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+            }
         }
 
-        /// <summary>
-        /// Reloads the value into the cache even if it was already loaded using the item loader that was passed to the constructor.
-        /// </summary>
-        /// <param name="key">The key of the item to reload.</param>
-        /// <returns>Loaded value</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> must not be <see langword="null"/>.</exception>
         object ICache.GetValueUncached(object key)
         {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+            // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+            if (!CanAcceptKey(key))
+                return null;
+
             return GetValueUncached((TKey)key);
         }
 
-        /// <summary>
-        /// Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-        /// </summary>
-        /// <param name="item">The object to add to the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
-        /// <summary>
-        /// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1"/> contains a specific value.
-        /// </summary>
-        /// <returns>
-        /// true if <paramref name="item"/> is found in the <see cref="T:System.Collections.Generic.ICollection`1"/>; otherwise, false.
-        /// </returns>
-        /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
         {
-            if (item.Key == null)
-                return false;
-
             int i = GetItemIndex(item.Key);
             return i >= 0 && ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, items[i].Value);
         }
 
-        /// <summary>
-        /// Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1"/> to an <see cref="T:System.Array"/>,
-        /// starting at a particular <see cref="T:System.Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="T:System.Array"/> that is the destination of the elements copied from
-        /// <see cref="T:System.Collections.Generic.ICollection`1"/>. The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0, or larger than length
-        /// of <paramref name="array"/>.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="arrayIndex"/> is equal to or greater than the length
-        /// of <paramref name="array"/>.
-        /// <br/>-or-
-        /// <br/>The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"/> is greater than the available
-        /// space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < Count)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
             for (int i = first; i != -1; i = items[i].NextInOrder)
             {
@@ -2048,112 +2031,60 @@ namespace KGySoft.Collections
             }
         }
 
-        /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-        /// </summary>
-        /// <returns>
-        /// true if <paramref name="item"/> was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1"/>;
-        /// otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original
-        /// <see cref="T:System.Collections.Generic.ICollection`1"/>.
-        /// </returns>
-        /// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1"/>.</param>
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
-            => item.Key != null && InternalRemove(item.Key, item.Value, true);
+        {
+            if (item.Key == null)
+                Throw.ArgumentNullException(Argument.key);
+            return InternalRemove(item.Key, item.Value, true);
+        }
 
-        /// <summary>
-        /// Returns an enumerator that iterates through a collection.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
-        /// </returns>
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, true);
 
-        /// <summary>
-        /// Adds an element with the provided key and value to the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <param name="key">The <see cref="T:System.Object"/> to use as the key of the element to add.</param>
-        /// <param name="value">The <see cref="T:System.Object"/> to use as the value of the element to add.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="key"/> or <paramref name="value"/> has an invalid type
-        /// <br/>-or-
-        /// <br/>An element with the same key already exists in the <see cref="T:System.Collections.IDictionary"/> object.</exception>
-        void IDictionary.Add(object key, object value)
+        void IDictionary.Add([CanBeNull]object key, object value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
-            if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                Throw.ArgumentNullException(Argument.key);
+            Throw.ThrowIfNullIsInvalid<TValue>(value);
 
-            Add((TKey)key, (TValue)value);
+            try
+            {
+                TKey typedKey = (TKey)key;
+                try
+                {
+                    Add(typedKey, (TValue)value);
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                }
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+            }
         }
 
-        /// <summary>
-        /// Determines whether the <see cref="T:System.Collections.IDictionary"/> object contains an element with the specified key.
-        /// </summary>
-        /// <returns>
-        /// true if the <see cref="T:System.Collections.IDictionary"/> contains an element with the key; otherwise, false.
-        /// </returns>
-        /// <param name="key">The key to locate in the <see cref="T:System.Collections.IDictionary"/> object.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
-        bool IDictionary.Contains(object key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
-        }
+        bool IDictionary.Contains(object key) => CanAcceptKey(key) && ContainsKey((TKey)key);
 
-        /// <summary>
-        /// Returns an <see cref="T:System.Collections.IDictionaryEnumerator"/> object for the
-        /// <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.IDictionaryEnumerator"/> object for the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </returns>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new Enumerator(this, false);
 
-        /// <summary>
-        /// Removes the element with the specified key from the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <param name="key">The key of the element to remove.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
         void IDictionary.Remove(object key)
         {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (typeKey.CanAcceptValue(key))
+            if (CanAcceptKey(key))
                 Remove((TKey)key);
         }
 
-        /// <summary>
-        /// Copies the elements of the <see cref="T:System.Collections.ICollection"/> to an <see cref="T:System.Array"/>,
-        /// starting at a particular <see cref="T:System.Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="T:System.Array"/> that is the destination of the elements copied from <see cref="T:System.Collections.ICollection"/>.
-        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <param name="index">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is less than zero,
-        /// or larger that <paramref name="array"/> length.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-
-        /// <br/>The number of elements in the source <see cref="T:System.Collections.ICollection"/> is greater
-        /// than the available space from <paramref name="index"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-
-        /// <br/>Element type of <paramref name="array"/> is neither <see cref="KeyValuePair{TKey,TValue}"/>,
-        /// <see cref="DictionaryEntry"/> nor <see cref="object"/>.</exception>
-        void ICollection.CopyTo(Array array, int index)
+        void ICollection.CopyTo([CanBeNull]Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (index < 0 || index > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.index);
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(index));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             if (array.Rank != 1)
-                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
             switch (array)
             {
@@ -2180,7 +2111,8 @@ namespace KGySoft.Collections
                     return;
 
                 default:
-                    throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
+                    Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+                    return;
             }
         }
 
@@ -2189,7 +2121,7 @@ namespace KGySoft.Collections
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
-                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.info);
 
             info.AddValue(nameof(capacity), capacity);
             info.AddValue(nameof(ensureCapacity), ensureCapacity);

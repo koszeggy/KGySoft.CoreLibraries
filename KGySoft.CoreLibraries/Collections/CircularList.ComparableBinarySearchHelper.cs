@@ -45,7 +45,7 @@ namespace KGySoft.Collections
             while (lo <= hi)
             {
                 int i = lo + ((hi - lo) >> 1);
-                TComparable item = list[i];
+                TComparable item = list.ElementAt(i);
 
                 int order;
                 if (item == null)
@@ -81,13 +81,15 @@ namespace KGySoft.Collections
         {
             try
             {
-                return comparer.Equals(Comparer<TComparable>.Default)
+                return ReferenceEquals(comparer, Comparer<TComparable>.Default)
                     ? BinarySearchAsComparable(list, index, length, value)
                     : BinarySearchWithComparer(list, index, length, value, comparer);
             }
+#pragma warning disable CA1031 // false alarm, exception is re-thrown
             catch (Exception e)
+#pragma warning restore CA1031 // false alarm, exception is re-thrown
             {
-                throw new InvalidOperationException(Res.CircularListComparerFail, e);
+                return Throw.InvalidOperationException<int>(Res.CircularListComparerFail, e);
             }
         }
 

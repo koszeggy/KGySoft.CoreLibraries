@@ -89,7 +89,7 @@ namespace KGySoft.CoreLibraries
             internal static bool TryParse(string s, Type type, CultureInfo culture, out object value, out Exception error)
             {
                 if (type == null)
-                    throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.type);
 
                 error = null;
                 value = null;
@@ -98,7 +98,7 @@ namespace KGySoft.CoreLibraries
                     if (type.CanAcceptValue(null))
                         return true;
 
-                    throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.s);
                 }
 
                 type = Nullable.GetUnderlyingType(type) ?? type;

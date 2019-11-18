@@ -64,8 +64,11 @@ namespace KGySoft.ComponentModel
         [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "4", Justification = "targets is checked by IsNullOrEmpty")]
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
         {
-            ICommandBinding result = command.CreateBinding(initialState)
-                .AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull));
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+            if (eventName == null)
+                Throw.ArgumentNullException(Argument.eventName);
+            ICommandBinding result = command.CreateBinding(initialState).AddSource(source, eventName);
             if (!targets.IsNullOrEmpty())
             {
                 foreach (object target in targets)
@@ -204,11 +207,11 @@ namespace KGySoft.ComponentModel
         internal static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, object[] targets, bool syncTargets)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.source);
             if (sourcePropertyName == null)
-                throw new ArgumentNullException(nameof(sourcePropertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.sourcePropertyName);
             if (targetPropertyName == null)
-                throw new ArgumentNullException(nameof(targetPropertyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.targetPropertyName);
 
             var state = new CommandState
             {
@@ -247,8 +250,13 @@ namespace KGySoft.ComponentModel
 
         private static void OnUpdatePropertyCommand(ICommandSource src, ICommandState state, object target)
         {
-            string sourcePropertyName = state.GetValueOrDefault<string>(stateSourcePropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateSourcePropertyName));
-            string targetPropertyName = state.GetValueOrDefault<string>(stateTargetPropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateTargetPropertyName));
+            string sourcePropertyName = state.GetValueOrDefault<string>(stateSourcePropertyName);
+            if (sourcePropertyName == null)
+                Throw.InvalidOperationException(Res.ComponentModelMissingState(stateSourcePropertyName));
+            string targetPropertyName = state.GetValueOrDefault<string>(stateTargetPropertyName);
+            if (targetPropertyName == null)
+                Throw.InvalidOperationException(Res.ComponentModelMissingState(stateTargetPropertyName));
+
             object propertyValue = null;
             bool propertyValueObtained = false;
             if (src.EventArgs is PropertyChangedEventArgs e)

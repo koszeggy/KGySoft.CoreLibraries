@@ -247,7 +247,7 @@ namespace KGySoft.Serialization.Xml
         public static void Serialize(string fileName, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             XmlWriter xmlWriter = XmlWriter.Create(fileName, new XmlWriterSettings
             {
@@ -280,7 +280,7 @@ namespace KGySoft.Serialization.Xml
         public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.writer);
 
             XmlWriterSettings settings = new XmlWriterSettings
             {
@@ -312,7 +312,7 @@ namespace KGySoft.Serialization.Xml
         public static void Serialize(Stream stream, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.stream);
 
             XmlWriterSettings settings = new XmlWriterSettings
             {
@@ -411,7 +411,7 @@ namespace KGySoft.Serialization.Xml
         public static object Deserialize(TextReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.reader);
 
             // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
             XmlTextReader xmlReader = new XmlTextReader(reader)
@@ -442,7 +442,7 @@ namespace KGySoft.Serialization.Xml
         public static object Deserialize(string fileName)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
             using (var xmlReader = new XmlTextReader(fileName)
@@ -475,7 +475,7 @@ namespace KGySoft.Serialization.Xml
         public static object Deserialize(Stream stream)
         {
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.stream);
 
             XmlTextReader xmlReader = new XmlTextReader(stream)
             {

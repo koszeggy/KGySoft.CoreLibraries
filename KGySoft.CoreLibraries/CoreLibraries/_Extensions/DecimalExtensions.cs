@@ -132,7 +132,7 @@ namespace KGySoft.CoreLibraries
         public static decimal Log(this decimal value)
         {
             if (value <= 0m)
-                throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.value);
 
             if (value >= 1m && powerOf10.TryGetValue(value, out int resultLog10))
                 return resultLog10 / log10E;
@@ -154,7 +154,7 @@ namespace KGySoft.CoreLibraries
         public static decimal Log10(this decimal value)
         {
             if (value <= 0m)
-                throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.value);
 
             if (value >= 1m && powerOf10.TryGetValue(value, out int result))
                 return result;
@@ -179,7 +179,7 @@ namespace KGySoft.CoreLibraries
         public static decimal Log(this decimal value, decimal @base)
         {
             if (@base == 1m)
-                throw new ArgumentOutOfRangeException(nameof(@base), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.value);
             if (value == 1m && @base == 0m)
                 return 0m;
             var result = Log(value) / Log(@base);

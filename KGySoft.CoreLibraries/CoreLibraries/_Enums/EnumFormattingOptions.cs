@@ -30,7 +30,7 @@ namespace KGySoft.CoreLibraries
     public enum EnumFormattingOptions
     {
         /// <summary>
-        /// Provides similar formatting as the <see cref="Enum.ToString()">Enum.ToString</see> method, though result is not guaranteed to be exactly the same if there are more defined names for the
+        /// Provides a similar formatting to the <see cref="Enum.ToString()">Enum.ToString</see> method, though result is not guaranteed to be exactly the same if there are more defined names for the
         /// same value. The produced result will always be parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method as long as used separator is the comma character.
         /// </summary>
         Auto,
@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         NonFlags,
 
         /// <summary>
-        /// The result will contain only those names, which are powers of 2 (single bits). Missing names will be substituted by integers. Result
+        /// The result will contain only names of single bit values. Missing names will be substituted by integers. Result
         /// will not be parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method if the string contains a non-standalone number. To parse such a
         /// result the <see cref="O:KGySoft.CoreLibraries.Enum`1.Parse"><![CDATA[Enum<TEnum>.Parse]]></see> and <see cref="O:KGySoft.CoreLibraries.Enum`1.TryParse"><![CDATA[Enum<TEnum>.TryParse]]></see> overloads can be used.
         /// </summary>
@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// The result can contain defined names (including compound ones, which do not represent single bits) and optionally also a numeric value if the result cannot be covered only by names.
-        /// The result will not be parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method if contains a number along with names. To parse such a
+        /// The result will not be parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method if a number was applied to the names. To parse such a
         /// result the <see cref="O:KGySoft.CoreLibraries.Enum`1.Parse"><![CDATA[Enum<TEnum>.Parse]]></see> and <see cref="O:KGySoft.CoreLibraries.Enum`1.TryParse"><![CDATA[Enum<TEnum>.TryParse]]></see> overloads can be used.
         /// </summary>
         CompoundFlagsAndNumber,

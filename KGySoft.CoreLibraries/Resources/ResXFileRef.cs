@@ -125,9 +125,11 @@ namespace KGySoft.Resources
             [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "MemoryStream must not be disposed if returned.")]
             internal static object ConvertFrom(string stringValue, Type objectType, string basePath)
             {
-                string[] parts = ParseResXFileRefString(stringValue);
                 if (stringValue == null)
-                    throw new ArgumentException(Res.ArgumentInvalidString, nameof(stringValue));
+                    Throw.ArgumentNullException(Argument.stringValue);
+                string[] parts = ParseResXFileRefString(stringValue);
+                if (parts == null)
+                    Throw.ArgumentException(Argument.stringValue, Res.ArgumentInvalidString);
                 string fileName = parts[0];
                 if (!String.IsNullOrEmpty(basePath) && !Path.IsPathRooted(fileName))
                     fileName = Path.Combine(basePath, fileName);
@@ -151,7 +153,7 @@ namespace KGySoft.Resources
                 byte[] buffer;
 
                 if (!File.Exists(fileName))
-                    throw new FileNotFoundException(Res.ResourcesFileRefFileNotFound(fileName), fileName);
+                    Throw.FileNotFoundException(Res.ResourcesFileRefFileNotFound(fileName), fileName);
                 using (FileStream s = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     buffer = new byte[s.Length];
@@ -265,9 +267,9 @@ namespace KGySoft.Resources
         public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
 
             this.fileName = fileName;
             typeName = type.GetName(TypeNameKind.AssemblyQualifiedName);
@@ -309,12 +311,13 @@ namespace KGySoft.Resources
         public static ResXFileRef Parse(string s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
 
             if (TryParse(s, out ResXFileRef result))
                 return result;
 
-            throw new ArgumentException(Res.ArgumentInvalidString, nameof(s));
+            Throw.ArgumentException(Argument.s, Res.ArgumentInvalidString);
+            return default;
         }
 
         /// <summary>

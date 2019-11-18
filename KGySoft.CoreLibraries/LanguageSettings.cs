@@ -327,7 +327,7 @@ namespace KGySoft
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRangeWithValues(value));
+                    Throw.EnumArgumentOutOfRangeWithValues(Argument.value, value);
 
                 dynamicResourceManagersSource = value;
                 OnDynamicResourceManagersSourceChanged(EventArgs.Empty);
@@ -356,7 +356,7 @@ namespace KGySoft
                     return;
 
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.FlagsEnumOutOfRange(value));
+                    Throw.FlagsEnumArgumentOutOfRange(Argument.value, value);
 
                 dynamicResourceManagersAutoSave = value;
                 OnDynamicResourceManagersAutoSaveChanged(EventArgs.Empty);
@@ -397,7 +397,7 @@ namespace KGySoft
         public static string UntranslatedResourcePrefix
         {
             get => untranslatedResourcePrefix;
-            set => untranslatedResourcePrefix = value ?? throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+            set => untranslatedResourcePrefix = value ?? Throw.ArgumentNullException<string>(Argument.value);
         }
 
         /// <summary>
@@ -409,7 +409,7 @@ namespace KGySoft
         public static string UnknownResourcePrefix
         {
             get => unknownResourcePrefix;
-            set => unknownResourcePrefix = value ?? throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+            set => unknownResourcePrefix = value ?? Throw.ArgumentNullException<string>(Argument.value);
         }
 
         #endregion

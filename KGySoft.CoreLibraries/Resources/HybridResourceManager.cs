@@ -30,7 +30,6 @@ using System.Resources;
 
 using KGySoft.CoreLibraries;
 using KGySoft.IO;
-using KGySoft.Reflection;
 
 #endregion
 
@@ -298,11 +297,11 @@ namespace KGySoft.Resources
 
             #region Methods
 
-            public override object GetObject(string name, bool ignoreCase) => throw new InvalidOperationException(Res.InternalError(errorMessage));
-            public override object GetObject(string name) => throw new InvalidOperationException(Res.InternalError(errorMessage));
-            public override string GetString(string name) => throw new InvalidOperationException(Res.InternalError(errorMessage));
-            public override string GetString(string name, bool ignoreCase) => throw new InvalidOperationException(Res.InternalError(errorMessage));
-            public override IDictionaryEnumerator GetEnumerator() => throw new InvalidOperationException(Res.InternalError(errorMessage));
+            public override object GetObject(string name, bool ignoreCase) => Throw.InternalError<object>(errorMessage);
+            public override object GetObject(string name) => Throw.InternalError<object>(errorMessage);
+            public override string GetString(string name) => Throw.InternalError<string>(errorMessage);
+            public override string GetString(string name, bool ignoreCase) => Throw.InternalError<string>(errorMessage);
+            public override IDictionaryEnumerator GetEnumerator() => Throw.InternalError<IDictionaryEnumerator>(errorMessage);
 
             #endregion
         }
@@ -412,7 +411,7 @@ namespace KGySoft.Resources
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.EnumArgumentOutOfRange(Argument.value, value);
 
                 SetSource(value);
             }
@@ -870,7 +869,7 @@ namespace KGySoft.Resources
         public virtual IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRange(Argument.behavior, behavior);
 
             IExpandoResourceSet result = Unwrap(InternalGetResourceSet(culture, behavior, tryParents, true)) as IExpandoResourceSet;
 
@@ -909,7 +908,7 @@ namespace KGySoft.Resources
         public virtual void SetObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
+                Throw.InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
@@ -938,7 +937,7 @@ namespace KGySoft.Resources
         public virtual void RemoveObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
+                Throw.InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
             IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;
@@ -967,7 +966,7 @@ namespace KGySoft.Resources
         public virtual void SetMetaObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
+                Throw.InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
@@ -992,7 +991,7 @@ namespace KGySoft.Resources
         public virtual void RemoveMetaObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
+                Throw.InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
             IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;
@@ -1181,7 +1180,8 @@ namespace KGySoft.Resources
             if (safeMode)
                 return result.ToString();
 
-            throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(name, result.GetType().ToString()));
+            Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(name, result.GetType().GetName(TypeNameKind.LongName)));
+            return null;
         }
 
         /// <summary>
@@ -1314,7 +1314,7 @@ namespace KGySoft.Resources
                     {
                         // otherwise, disposed state is checked by ResXResourceSet
                         if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
-                            throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                            Throw.ObjectDisposedException();
                         compiled = base.InternalGetResourceSet(currentCultureInfo, ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
                     }
 
@@ -1389,11 +1389,14 @@ namespace KGySoft.Resources
                     switch (source)
                     {
                         case ResourceManagerSources.CompiledOnly:
-                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundCompiled(BaseName, MainAssembly.Location));
+                            Throw.MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundCompiled(BaseName, MainAssembly.Location));
+                            break;
                         case ResourceManagerSources.ResXOnly:
-                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(resxResources.ResourceFileName));
+                            Throw.MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(resxResources.ResourceFileName));
+                            break;
                         default:
-                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundHybrid(BaseName, MainAssembly.Location, resxResources.ResourceFileName));
+                            Throw.MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundHybrid(BaseName, MainAssembly.Location, resxResources.ResourceFileName));
+                            break;
                     }
                 }
             }
@@ -1403,7 +1406,7 @@ namespace KGySoft.Resources
             Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists, "Behavior can be CreateIfNotExists only if expando is requested.");
 
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.culture);
 
             var context = new InternalGetResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ForceExpandoResult = forceExpandoResult };
             if (TryGetCachedResourceSet(ref context))
@@ -1465,7 +1468,7 @@ namespace KGySoft.Resources
         private protected virtual object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
@@ -1597,7 +1600,7 @@ namespace KGySoft.Resources
         private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             if (source == ResourceManagerSources.CompiledOnly)
                 return null;

@@ -171,12 +171,12 @@ namespace KGySoft.Serialization.Binary
         public void AddType(Type type, params AssemblyName[] assemblyIdentities)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             string fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
-                throw new ArgumentException(Res.SerializationRootTypeExpected, nameof(type));
+                Throw.ArgumentException(Argument.type, Res.SerializationRootTypeExpected);
             Debug.Assert(type == type.GetRootType(), "Root type expected");
 
             // getting/creating the map by type of the same full names
@@ -218,11 +218,11 @@ namespace KGySoft.Serialization.Binary
         public void AddTypes(params Type[] types)
         {
             if (types == null)
-                throw new ArgumentNullException(nameof(types), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.types);
             if (types.Length == 0)
-                throw new ArgumentException(Res.CollectionEmpty, nameof(types));
+                Throw.ArgumentException(Argument.types, Res.CollectionEmpty);
             if (types.Contains(null))
-                throw new ArgumentException(Res.ArgumentContainsNull, nameof(types));
+                Throw.ArgumentException(Argument.types, Res.ArgumentContainsNull);
             foreach (Type type in types)
                 AddType(type);
         }
@@ -268,7 +268,7 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             if (serializedType == null)
-                throw new ArgumentNullException(nameof(serializedType), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.serializedType);
 #if NET35
             assemblyName = null;
             typeName = null;

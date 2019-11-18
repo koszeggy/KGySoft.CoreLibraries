@@ -19,6 +19,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
@@ -132,16 +135,36 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the property getter delegate.
         /// </summary>
-        private protected Delegate Getter => getter ?? (getter = CanRead
-            ? CreateGetter()
-            : throw new NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name)));
+        private protected Delegate Getter
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+#endif
+            get
+            {
+                if (CanRead)
+                    return getter ??= CreateGetter();
+                Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return default;
+            }
+        }
 
         /// <summary>
         /// Gets the property setter delegate.
         /// </summary>
-        private protected Delegate Setter => setter ?? (setter = CanWrite
-            ? CreateSetter()
-            : throw new NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name)));
+        private protected Delegate Setter
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+            get
+            {
+                if (CanWrite)
+                    return setter ??= CreateSetter();
+                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return default;
+            }
+        }
 
         #endregion
 
@@ -171,8 +194,15 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="PropertyAccessor"/> instance that can be used to get or set the property.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static PropertyAccessor GetAccessor(PropertyInfo property)
-            => (PropertyAccessor)GetCreateAccessor(property ?? throw new ArgumentNullException(nameof(property), Res.ArgumentNull));
+        {
+            if (property == null)
+                Throw.ArgumentNullException(Argument.property);
+            return (PropertyAccessor)GetCreateAccessor(property);
+        }
 
         #endregion
 

@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
+using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -134,15 +135,15 @@ namespace KGySoft.Collections.ObjectModel
             get
             {
                 if (index < 0 || index >= Count)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.index);
                 return GetItem(index);
             }
             set
             {
                 if (!CanSetItem)
-                    throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                    Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
                 if (index < 0 || index >= Count)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.index);
                 SetItem(index, value);
             }
         }
@@ -156,9 +157,15 @@ namespace KGySoft.Collections.ObjectModel
             get => this[index];
             set
             {
-                if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
-                this[index] = (T)value;
+                Throw.ThrowIfNullIsInvalid<T>(value);
+                try
+                {
+                    this[index] = (T)value;
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
+                }
             }
         }
 
@@ -180,7 +187,12 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <param name="list">The list that is wrapped by the new collection.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
-        public VirtualCollection(IList<T> list) => items = list ?? throw new ArgumentNullException(nameof(list), Res.ArgumentNull);
+        public VirtualCollection(IList<T> list)
+        {
+            if (list == null)
+                Throw.ArgumentNullException(Argument.list);
+            items = list;
+        }
 
         #endregion
 
@@ -197,7 +209,7 @@ namespace KGySoft.Collections.ObjectModel
         public void Add(T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             InsertItem(Count, item);
         }
@@ -212,10 +224,10 @@ namespace KGySoft.Collections.ObjectModel
         public void Insert(int index, T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             if (index < 0 || index > Count)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.index);
 
             InsertItem(index, item);
         }
@@ -230,7 +242,7 @@ namespace KGySoft.Collections.ObjectModel
         public bool Remove(T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             int index = GetItemIndex(item);
             if (index < 0)
@@ -250,10 +262,10 @@ namespace KGySoft.Collections.ObjectModel
         public void RemoveAt(int index)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             if (index < 0 || index >= Count)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.index);
 
             RemoveItem(index);
         }
@@ -266,7 +278,7 @@ namespace KGySoft.Collections.ObjectModel
         public void Clear()
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             ClearItems();
         }
@@ -306,15 +318,15 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
         /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(T[] array, int arrayIndex)
+        public void CopyTo([CanBeNull]T[] array, int arrayIndex)
         {
             int length = Count;
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < length)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             for (int i = 0; i < length; i++)
             {
                 array[arrayIndex] = GetItem(i);
@@ -385,12 +397,10 @@ namespace KGySoft.Collections.ObjectModel
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        void ICollection.CopyTo(Array array, int index)
+        void ICollection.CopyTo([CanBeNull]Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
-            if (array.Rank != 1)
-                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                Throw.ArgumentNullException(Argument.array);
 
             if (array is T[] typedArray)
             {
@@ -400,11 +410,11 @@ namespace KGySoft.Collections.ObjectModel
 
             int length = Count;
             if (index < 0 || index > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.index);
             if (array.Length - index < length)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             if (array.Rank != 1)
-                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
             if (array is object[] objectArray)
             {
@@ -417,7 +427,7 @@ namespace KGySoft.Collections.ObjectModel
                 return;
             }
 
-            throw new ArgumentException(Res.ICollectionArrayTypeInvalid, nameof(array));
+            Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
         }
 
         bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
@@ -426,25 +436,47 @@ namespace KGySoft.Collections.ObjectModel
 
         int IList.Add(object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
-            T item = (T)value;
-            Add(item);
+            Throw.ThrowIfNullIsInvalid<T>(value);
+
+            T item;
+            try
+            {
+                item = (T)value;
+                Add(item);
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
+                item = default;
+            }
+
             return GetItemIndex(item);
         }
 
         void IList.Insert(int index, object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
-            Insert(index, (T)value);
+            Throw.ThrowIfNullIsInvalid<T>(value);
+            try
+            {
+                Insert(index, (T)value);
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
+            }
         }
 
         void IList.Remove(object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
-            Remove((T)value);
+            Throw.ThrowIfNullIsInvalid<T>(value);
+            try
+            {
+                Remove((T)value);
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
+            }
         }
 
         #endregion

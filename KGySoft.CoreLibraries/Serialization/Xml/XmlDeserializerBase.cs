@@ -23,7 +23,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
 
 using KGySoft.CoreLibraries;
@@ -42,14 +41,14 @@ namespace KGySoft.Serialization.Xml
         private protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
         {
             if (attrLength == null && attrDim == null)
-                throw new ArgumentException(Res.XmlSerializationArrayNoLength);
+                Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
 
             if (attrLength != null)
             {
                 lengths = new int[1];
                 lowerBounds = new int[1];
                 if (!Int32.TryParse(attrLength, out lengths[0]))
-                    throw new ArgumentException(Res.XmlSerializationLengthInvalidType(attrLength));
+                    Throw.ArgumentException(Res.XmlSerializationLengthInvalidType(attrLength));
                 return;
             }
 
@@ -75,7 +74,11 @@ namespace KGySoft.Serialization.Xml
         private protected static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
         {
             if (lengths.Length != array.Rank)
-                return throwError ? throw new ArgumentException(Res.XmlSerializationArrayRankMismatch(array.GetType(), lengths.Length)) : false;
+            {
+                if (throwError)
+                    Throw.ArgumentException(Res.XmlSerializationArrayRankMismatch(array.GetType(), lengths.Length));
+                return false;
+            }
 
             for (int i = 0; i < lengths.Length; i++)
             {
@@ -84,12 +87,16 @@ namespace KGySoft.Serialization.Xml
                     if (!throwError)
                         return false;
                     if (lengths[0] == 1)
-                        throw new ArgumentException(Res.XmlSerializationArraySizeMismatch(array.GetType(), lengths[0]));
-                    throw new ArgumentException(Res.XmlSerializationArrayDimensionSizeMismatch(array.GetType(), i));
+                        Throw.ArgumentException(Res.XmlSerializationArraySizeMismatch(array.GetType(), lengths[0]));
+                    Throw.ArgumentException(Res.XmlSerializationArrayDimensionSizeMismatch(array.GetType(), i));
                 }
 
                 if (lowerBounds[i] != array.GetLowerBound(i))
-                    return throwError ? throw new ArgumentException(Res.XmlSerializationArrayLowerBoundMismatch(array.GetType(), i)) : false;
+                {
+                    if (throwError)
+                        Throw.ArgumentException(Res.XmlSerializationArrayLowerBoundMismatch(array.GetType(), i));
+                    return false;
+                }
             }
 
             return true;
@@ -115,17 +122,17 @@ namespace KGySoft.Serialization.Xml
                     {
                         if (Equals(existingValue, member.Value))
                             continue;
-                        throw new SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, collectionCtor.DeclaringType));
+                        Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, collectionCtor.DeclaringType));
                     }
 
                     if (existingValue == null && member.Value == null)
                         continue;
                     if (member.Value == null)
-                        throw new ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, collectionCtor.DeclaringType));
+                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, collectionCtor.DeclaringType));
                     if (existingValue == null)
-                        throw new ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, collectionCtor.DeclaringType));
+                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, collectionCtor.DeclaringType));
                     if (existingValue.GetType() != member.Value.GetType())
-                        throw new ArgumentException(Res.XmlSerializationPropertyTypeMismatch(collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
+                        Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
 
                     CopyContent(member.Value, existingValue);
                     continue;
@@ -155,7 +162,7 @@ namespace KGySoft.Serialization.Xml
             {
                 Type declaringType = Reflector.ResolveType(strDeclaringType);
                 if (declaringType == null)
-                    throw new ReflectionException(Res.XmlSerializationCannotResolveType(strDeclaringType));
+                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(strDeclaringType));
                 property = declaringType.GetProperty(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 if (property == null)
                     field = declaringType.GetField(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
@@ -173,7 +180,7 @@ namespace KGySoft.Serialization.Xml
             {
                 itemType = Reflector.ResolveType(strItemType);
                 if (itemType == null)
-                    throw new ReflectionException(Res.XmlSerializationCannotResolveType(strItemType));
+                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(strItemType));
             }
 
             if (itemType == null)
@@ -241,15 +248,15 @@ namespace KGySoft.Serialization.Xml
                 {
                     if (Equals(existingValue, deserializedValue))
                         return;
-                    throw new SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, obj.GetType()));
+                    Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, obj.GetType()));
                 }
 
                 if (existingValue == null)
-                    throw new ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, obj.GetType()));
+                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, obj.GetType()));
                 if (deserializedValue == null)
-                    throw new ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, obj.GetType()));
+                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, obj.GetType()));
                 if (existingValue.GetType() != deserializedValue.GetType())
-                    throw new ArgumentException(Res.XmlSerializationPropertyTypeMismatch(obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
+                    Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
 
                 CopyContent(deserializedValue, existingValue);
                 return;
@@ -264,12 +271,12 @@ namespace KGySoft.Serialization.Xml
             if (collectionElementType == null)
             {
                 if (name == XmlSerializer.ElementItem)
-                    throw new SerializationException(Res.XmlSerializationNotACollection(objRealType));
-                throw new ReflectionException(Res.XmlSerializationHasNoMember(objRealType, name));
+                    Throw.SerializationException(Res.XmlSerializationNotACollection(objRealType));
+                Throw.ReflectionException(Res.XmlSerializationHasNoMember(objRealType, name));
             }
 
             if (name != XmlSerializer.ElementItem)
-                throw new ArgumentException(Res.XmlSerializationItemExpected(name));
+                Throw.ArgumentException(Res.XmlSerializationItemExpected(name));
         }
 
         private protected static string Unescape(string s)
@@ -281,7 +288,7 @@ namespace KGySoft.Serialization.Xml
                 if (result[i] == '\\')
                 {
                     if (i + 1 == result.Length)
-                        throw new ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
+                        Throw.ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
 
                     // escaped backslash
                     if (result[i + 1] == '\\')
@@ -292,11 +299,11 @@ namespace KGySoft.Serialization.Xml
                     else
                     {
                         if (i + 4 >= result.Length)
-                            throw new ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
+                            Throw.ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
 
                         string escapedChar = result.ToString(i + 1, 4);
                         if (!UInt16.TryParse(escapedChar, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out ushort charValue))
-                            throw new ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
+                            Throw.ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
 
                         result.Replace("\\" + escapedChar, ((char)charValue).ToString(null), i, 5);
                     }

@@ -20,10 +20,13 @@
 using System;
 # endif
 using System.Collections.Generic;
+#if !NET35
+using System.Runtime.CompilerServices; 
+#endif
 
 #if NET40 || NET45
 using KGySoft.Reflection;
-# endif
+#endif
 
 #endregion
 
@@ -40,19 +43,37 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        internal static IEqualityComparer<T> EqualityComparer => equalityComparer ??=
-#if NETSTANDARD2_0
-            EqualityComparer<T>.Default;
-#else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
+        internal static IEqualityComparer<T> EqualityComparer
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
+            get
+            {
+                return equalityComparer ??=
+#if !NETSTANDARD2_0
+                    typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
+#else
+                    EqualityComparer<T>.Default;
+#endif
+            }
+        }
 
-        internal static IComparer<T> Comparer => comparer ??=
-#if NETSTANDARD2_0
-            Comparer<T>.Default;
-#else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
+        internal static IComparer<T> Comparer
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
+            get
+            {
+                return comparer ??=
+#if !NETSTANDARD2_0
+                    typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
+#else
+                    Comparer<T>.Default;
+#endif
+            }
+        }
 
         #endregion
     }

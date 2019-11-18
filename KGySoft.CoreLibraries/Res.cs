@@ -231,7 +231,7 @@ namespace KGySoft
         internal static string ComponentModelInvalidCommandSource => Get("ComponentModel_InvalidCommandSource");
 
         /// <summary>Cannot add an already disposed binding to this collection.</summary>
-        internal static string ComponentModelCannotAddDiposedBinding => Get("ComponentModel_CannotAddDiposedBinding");
+        internal static string ComponentModelCannotAddDisposedBinding => Get("ComponentModel_CannotAddDisposedBinding");
 
         #endregion
 
@@ -243,9 +243,6 @@ namespace KGySoft
         #endregion
 
         #region PerformanceTest
-
-        /// <summary>Type argument 'TDelegate' must be a delegate type</summary>
-        internal static string PerformanceTestInvalidTDelegate => Get("PerformanceTest_InvalidTDelegate");
 
         /// <summary>No test cases are added.</summary>
         internal static string PerformanceTestNoTestCases => Get("PerformanceTest_NoTestCases");
@@ -868,7 +865,7 @@ namespace KGySoft
         internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);
 
         /// <summary>Type of resource "{0}" is not MemoryStream but "{1}" - enable SafeMode or use GetObject instead.</summary>
-        internal static string ResourcesNonStreamResourceWithType(string name, string typeName) => Get("Resources_NonStreamResourceWithTypeFormat", name, typeName);
+        internal static string ResourcesNonStreamResourceWithType(string name, Type type) => Get("Resources_NonStreamResourceWithTypeFormat", name, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</summary>
         internal static string ResourcesConvertFromStringNotSupportedAt(string typeName, int line, int pos, string message) => Get("Resources_ConvertFromStringNotSupportedAtFormat", typeName, line, pos, message);

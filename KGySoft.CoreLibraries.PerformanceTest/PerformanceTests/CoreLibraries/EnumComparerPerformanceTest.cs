@@ -42,11 +42,30 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             Max = SByte.MaxValue,
         }
 
+        private enum ShortEnum : short
+        {
+            Min = Int16.MinValue,
+            Max = Int16.MaxValue,
+        }
+
+        private enum UShortEnum : ushort
+        {
+            Min = UInt16.MinValue,
+            Max = UInt16.MaxValue,
+        }
+
         private enum IntEnum : int
         {
             Min = Int32.MinValue,
             Max = Int32.MaxValue,
         }
+
+        private enum UIntEnum : uint
+        {
+            Min = UInt32.MinValue,
+            Max = UInt32.MaxValue,
+        }
+
 
         private enum LongEnum : long
         {
@@ -66,11 +85,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         [TestCase(ByteEnum.Min, ByteEnum.Max)]
         [TestCase(SByteEnum.Min, SByteEnum.Max)]
+        [TestCase(ShortEnum.Min, ShortEnum.Max)]
+        [TestCase(UShortEnum.Min, UShortEnum.Max)]
         [TestCase(IntEnum.Min, IntEnum.Max)]
+        [TestCase(UIntEnum.Min, UIntEnum.Max)]
         [TestCase(LongEnum.Min, LongEnum.Max)]
         [TestCase(ULongEnum.Min, ULongEnum.Max)]
         public void EnumComparerTest<TEnum>(TEnum min, TEnum max) where TEnum : Enum =>
-            new PerformanceTest { TestName = $"EnumComparer<{typeof(TEnum).Name}> Test", Iterations = 10000000 }
+            new PerformanceTest { TestName = $"EnumComparer<{typeof(TEnum).Name}> Test", Iterations = 10_000_000 }
                 //#pragma warning disable 219
                 //            .AddCase(() => { bool eq = TestEnum.Min == TestEnum.Max; }, "Operator ==")
                 //            .AddCase(() => { bool gt = TestEnum.Min > TestEnum.Max; }, "Operator >")

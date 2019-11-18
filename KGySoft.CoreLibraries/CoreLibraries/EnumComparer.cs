@@ -19,16 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-#if NETFRAMEWORK && !NET35
 using System.Linq.Expressions;
-#endif
 using System.Runtime.Serialization;
 using System.Security;
-#if NETFRAMEWORK && !NET35
 using System.Threading;
-#endif
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -53,11 +50,8 @@ namespace KGySoft.CoreLibraries
     /// <item>In .NET 4.0 Framework <see cref="EqualityComparer{T}"/> was optimized for <see cref="int"/>-based <see langword="enum"/>s. (Every .NET 4.0 assembly is executed on the latest 4.x runtime though, so this is might be relevant
     /// only on Windows XP where no newer than the 4.0 runtime can be installed.)</item>
     /// <item>In latest .NET 4.x Framework versions <see cref="EqualityComparer{T}"/> is optimized for any <see langword="enum"/>&#160;type but <see cref="Comparer{T}"/> is not.</item>
-    /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/>&#160;types. In fact, <see cref="Compare"><![CDATA[EnumComparer<T>.Compare]]></see>
-    /// and <see cref="Equals(TEnum,TEnum)"><![CDATA[EnumComparer<T>.Equals]]></see> are still slightly faster than <see cref="Comparer{T}.Compare"><![CDATA[Comparer<T>.Compare]]></see>
-    /// and <see cref="EqualityComparer{T}.Equals(T,T)"><![CDATA[EqualityComparer<T>.Equals]]></see> methods, while <see cref="GetHashCode(TEnum)"><![CDATA[EnumComparer<T>.GetHashCode]]></see> is slightly slower than
-    /// <see cref="EqualityComparer{T}.GetHashCode(T)"><![CDATA[EqualityComparer<T>.GetHashCode]]></see>. (A <see cref="Dictionary{TKey,TValue}"/> uses exactly one <see cref="IEqualityComparer{T}.GetHashCode(T)">GetHashCode</see> and
-    /// at least one <see cref="IEqualityComparer{T}.Equals(T,T)">Equals</see> call for each lookup, for example).</item>
+    /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/>&#160;types
+    /// so the performance benefit of using <see cref="EnumComparer{TEnum}"/> in .NET Core is negligible.</item>
     /// </list>
     /// </note>
     /// <note>In .NET Standard 2.0 building dynamic assembly is not supported so the .NET Standard 2.0 version falls back to using <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes.</note>
@@ -69,11 +63,12 @@ namespace KGySoft.CoreLibraries
     /// </code>
     /// </example>
     [Serializable]
+    [CLSCompliant(false)]
     [SuppressMessage("Usage", "CA2229:Implement serialization constructors", Justification = "False alarm, SerializationUnityHolder will be deserialized.")]
     public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>, ISerializable
     {
         #region Nested Classes
-        
+
         #region SerializationUnityHolder class
 
         /// <summary>
@@ -93,21 +88,131 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region FallbackEnumComparer
-#if NETSTANDARD2_0
 
+        /// <summary>
+        /// A fallback comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/>
+        /// classes for comparisons and dynamic delegates for conversions.
+        /// This class can be used from .NET Standard 2.0 and partially trusted domains.
+        /// </summary>
         [Serializable]
-        private sealed class FallbackEnumComparer : EnumComparer<TEnum>
+        private class FallbackEnumComparer : EnumComparer<TEnum>
         {
+            #region Fields
+
+            private Func<ulong, TEnum> toEnum;
+            private Func<TEnum, ulong> toUInt64;
+            private Func<TEnum, long> toInt64;
+
+            #endregion
+
+            #region Constructors
+
+#if !NETFRAMEWORK || NET35
+            internal
+#endif
+            protected FallbackEnumComparer()
+            {
+                ParameterExpression valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
+                toEnum = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression).Compile();
+
+                valueParamExpression = Expression.Parameter(typeof(TEnum), "value");
+
+                // ToUInt64 for unsigned types
+                if (!typeof(TEnum).IsSignedIntegerType())
+                {
+                    toUInt64 = Expression.Lambda<Func<TEnum, ulong>>(Expression.Convert(valueParamExpression, Reflector.ULongType), valueParamExpression).Compile();
+                    return;
+                }
+
+                toInt64 = Expression.Lambda<Func<TEnum, long>>(Expression.Convert(valueParamExpression, Reflector.LongType), valueParamExpression).Compile();
+
+                // ToUInt64 for signed types
+                var asULong = Expression.Convert(valueParamExpression, Reflector.ULongType);
+                var applyMask = Expression.And(asULong, Expression.Constant(typeof(TEnum).GetSizeMask()));
+                toUInt64 = Expression.Lambda<Func<TEnum, ulong>>(applyMask, valueParamExpression).Compile();
+            }
+
+            #endregion
+
             #region Methods
-            
+
+            #region Static Methods
+
+            /// <summary>
+            /// return (TEnum)value;
+            /// </summary>
+            private static Func<ulong, TEnum> GenerateToEnum()
+            {
+                ParameterExpression valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
+                return Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression).Compile();
+            }
+
+            /// <summary><![CDATA[
+            /// return (ulong)value & sizeMask;
+            /// ]]></summary>
+            private static Func<TEnum, ulong> GenerateToUInt64()
+            {
+                ParameterExpression valueParamExpression = Expression.Parameter(typeof(TEnum), "value");
+
+                // unsigned types simply returning converted value
+                if (!typeof(TEnum).IsSignedIntegerType())
+                    return Expression.Lambda<Func<TEnum, ulong>>(Expression.Convert(valueParamExpression, Reflector.ULongType), valueParamExpression).Compile();
+
+                var asULong = Expression.Convert(valueParamExpression, Reflector.ULongType);
+                var applyMask = Expression.And(asULong, Expression.Constant(typeof(TEnum).GetSizeMask()));
+                return Expression.Lambda<Func<TEnum, ulong>>(applyMask, valueParamExpression).Compile();
+            }
+
+            /// <summary>
+            /// return (TEnum)value;
+            /// </summary>
+            private static Func<TEnum, long> GenerateToInt64()
+            {
+                ParameterExpression valueParamExpression = Expression.Parameter(typeof(TEnum), "value");
+                return Expression.Lambda<Func<TEnum, long>>(Expression.Convert(valueParamExpression, Reflector.LongType), valueParamExpression).Compile();
+            }
+
+            #endregion
+
+            #region Instance Methods
+
+            #region Public Methods
+
             public override bool Equals(TEnum x, TEnum y) => EqualityComparer<TEnum>.Default.Equals(x, y);
             public override int GetHashCode(TEnum obj) => EqualityComparer<TEnum>.Default.GetHashCode(obj);
-            public override int Compare(TEnum x, TEnum y) => Comparer<TEnum>.Default.Compare(x, y); 
-            
+            public override int Compare(TEnum x, TEnum y) => Comparer<TEnum>.Default.Compare(x, y);
+
+            #endregion
+
+            #region Protected-Internal Methods
+
+            protected internal override TEnum ToEnum(ulong value)
+            {
+                if (toEnum == null)
+                    Interlocked.CompareExchange(ref toEnum, GenerateToEnum(), null);
+                return toEnum.Invoke(value);
+            }
+
+            protected internal override ulong ToUInt64(TEnum value)
+            {
+                if (toUInt64 == null)
+                    Interlocked.CompareExchange(ref toUInt64, GenerateToUInt64(), null);
+                return toUInt64.Invoke(value);
+            }
+
+            protected internal override long ToInt64(TEnum value)
+            {
+                if (toInt64 == null)
+                    Interlocked.CompareExchange(ref toInt64, GenerateToInt64(), null);
+                return toInt64.Invoke(value);
+            }
+
+            #endregion
+
+            #endregion
+
             #endregion
         }
-
-#endif
 
         #endregion
 
@@ -116,11 +221,11 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Similar to the DynamicEnumComparer generated by <see cref="EnumComparerBuilder"/> but can be used
-        /// even from partially trusted domains. Not using this from .NET Standard 2.0 because the actual platform
-        /// can be faster than this.
+        /// even from partially trusted domains. In .NET Standard 2.0 using the base FallbackEnumComparer because
+        /// the comparisons on the actual platform can be faster than by dynamic delegates.
         /// </summary>
         [Serializable]
-        private sealed class PartiallyTrustedEnumComparer : EnumComparer<TEnum>
+        private sealed class PartiallyTrustedEnumComparer : FallbackEnumComparer
         {
             #region Fields
 
@@ -242,9 +347,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         protected EnumComparer()
         {
-            // this could be in static ctor but that would throw a TypeInitializationException at unexpected place
+            // this could be in static ctor but that could throw a TypeInitializationException at unexpected places
             if (!typeof(TEnum).IsEnum)
-                throw new InvalidOperationException(Res.EnumTypeParameterInvalid);
+                Throw.InvalidOperationException(Res.EnumTypeParameterInvalid);
         }
 
         #endregion
@@ -302,6 +407,31 @@ namespace KGySoft.CoreLibraries
         /// <param name="x">The first <typeparamref name="TEnum"/> instance to compare.</param>
         /// <param name="y">The second <typeparamref name="TEnum"/> instance to compare.</param>
         public abstract int Compare(TEnum x, TEnum y);
+
+        #endregion
+
+        #region Protected-Internal Methods        
+
+        /// <summary>
+        /// Converts an <see cref="ulong">ulong</see> value to <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>The <typeparamref name="TEnum"/> representation of <paramref name="value"/>.</returns>
+        protected internal abstract TEnum ToEnum(ulong value);
+
+        /// <summary>
+        /// Converts a <typeparamref name="TEnum"/> value to <see cref="ulong">ulong</see>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>The <see cref="ulong">ulong</see> representation of <typeparamref name="TEnum"/>.</returns>
+        protected internal abstract ulong ToUInt64(TEnum value);
+
+        /// <summary>
+        /// Converts a <typeparamref name="TEnum"/> value to <see cref="long">long</see>.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>The <see cref="long">ulong</see> representation of <typeparamref name="TEnum"/>.</returns>
+        protected internal abstract long ToInt64(TEnum value);
 
         #endregion
 

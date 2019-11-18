@@ -427,7 +427,7 @@ namespace KGySoft.Serialization.Binary
             {
                 Type enumType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
                 if (!enumType.IsEnum)
-                    throw new SerializationException(Res.BinarySerializationNotAnEnum(enumType));
+                    Throw.SerializationException(Res.BinarySerializationNotAnEnum(enumType));
                 DataTypes dataType = descriptor.ElementDataType;
                 bool is7BitEncoded = IsCompressed(dataType);
                 switch (GetUnderlyingSimpleType(dataType))
@@ -453,7 +453,7 @@ namespace KGySoft.Serialization.Binary
                         return Enum.ToObject(enumType,
                             is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                     default:
-                        throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(DataTypeToString(GetUnderlyingSimpleType(dataType))));
+                        return Throw.InvalidOperationException<object>(Res.BinarySerializationInvalidEnumBase(DataTypeToString(GetUnderlyingSimpleType(dataType))));
                 }
             }
 
@@ -511,13 +511,13 @@ namespace KGySoft.Serialization.Binary
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object finalObject)
             {
                 if (finalObject == null)
-                    throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
 
                 if (!usages.CanBeReplaced && origObject != finalObject)
                 {
                     if (origObject is IObjectReference)
-                        throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
-                    throw new SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject.GetType()));
+                        Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
+                    Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject.GetType()));
                 }
 
                 // setting even if it did not change because in most cases the tracked objects were not set during the deserialization
@@ -637,8 +637,10 @@ namespace KGySoft.Serialization.Binary
 
                 string typeName = br.ReadString();
                 type = ReadBoundType(assembly.StoredName, typeName)
-                    ?? (assembly.StoredName == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName))
-                    ?? throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+                    ?? (assembly.StoredName == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName));
+
+                if (type == null)
+                    Throw.SerializationException(Res.BinarySerializationCannotResolveType(typeName));
 
                 result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
                 CachedTypes.Add(result);
@@ -665,7 +667,7 @@ namespace KGySoft.Serialization.Binary
                             {
                                 var index = Read7BitInt(br);
                                 if (index < 0 || index >= len)
-                                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
                                 result = new DataTypeDescriptor(typeDef.GetGenericArguments()[index]);
                                 if (addToCache)
                                     CachedTypes.Add(result);
@@ -674,7 +676,8 @@ namespace KGySoft.Serialization.Binary
                         case GenericTypeSpecifier.ConstructedType:
                             break;
                         default:
-                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                            Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
+                            break;
                     }
                 }
 
@@ -743,7 +746,7 @@ namespace KGySoft.Serialization.Binary
                     {
                         addToCache = true;
                         if (TryGetCachedObject(br, out var _))
-                            throw new InvalidOperationException(Res.InternalError("Root level object is not expected in the cache"));
+                            Throw.InternalError("Root level object is not expected in the cache");
                     }
 
                     descriptor = new DataTypeDescriptor(null, dataType, br);
@@ -759,7 +762,7 @@ namespace KGySoft.Serialization.Binary
                     CachedTypes.Add(descriptor);
                     addToCache = true;
                     if (TryGetCachedObject(br, out var _))
-                        throw new InvalidOperationException(Res.InternalError("Root level object is not expected in the cache"));
+                        Throw.InternalError(Res.InternalError("Root level object is not expected in the cache"));
                 }
 
                 // 3/a.) array
@@ -784,12 +787,12 @@ namespace KGySoft.Serialization.Binary
                 MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
                     .FirstOrDefault(mi => mi.ToString() == signature);
                 if (method == null)
-                    throw new SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
+                    Throw.SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
                 int argIndex = Read7BitInt(br);
                 Type[] args = method.GetGenericArguments();
-                DataTypeDescriptor result = argIndex < 0 || argIndex >= args.Length
-                    ? throw new SerializationException(Res.BinarySerializationInvalidStreamData)
-                    : new DataTypeDescriptor(args[argIndex]);
+                if (argIndex < 0 || argIndex >= args.Length)
+                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
+                DataTypeDescriptor result = new DataTypeDescriptor(args[argIndex]);
 
                 CachedTypes.Add(result);
                 return result;
@@ -856,7 +859,7 @@ namespace KGySoft.Serialization.Binary
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
-                    throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
+                    Throw.InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
 
                 // getting whether the current instance is in cache
                 if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
@@ -1028,7 +1031,7 @@ namespace KGySoft.Serialization.Binary
                             return createdResult = new UIntPtr(is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                         case DataTypes.Void: // though it does not really make sense as an instance, even BinaryFormatter supports it
                             if (!Reflector.TryCreateUninitializedObject(Reflector.VoidType, out createdResult))
-                                throw new NotSupportedException(Res.BinarySerializationCannotCreateUninitializedObject(Reflector.VoidType));
+                                Throw.NotSupportedException(Res.BinarySerializationCannotCreateUninitializedObject(Reflector.VoidType));
                             return createdResult;
                         case DataTypes.Object:
                             // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
@@ -1062,7 +1065,8 @@ namespace KGySoft.Serialization.Binary
                         default:
                             if (IsEnum(dataType))
                                 return createdResult = ReadEnum(br, dataTypeDescriptor);
-                            throw new InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(DataTypeToString(dataType)));
+                            Throw.InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(DataTypeToString(dataType)));
+                            return default;
                     }
                 }
                 finally
@@ -1090,11 +1094,11 @@ namespace KGySoft.Serialization.Binary
                 // deserialize (object will be cached immediately after creation so circular references will be found in time)
                 type = Nullable.GetUnderlyingType(type) ?? type;
                 if (!binarySerializableType.IsAssignableFrom(type))
-                    throw new SerializationException(Res.BinarySerializationNotBinarySerializable(type));
+                    Throw.SerializationException(Res.BinarySerializationNotBinarySerializable(type));
                 byte[] serData = br.ReadBytes(Read7BitInt(br));
 
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
-                    throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
 
                 if (addToCache)
                     AddObjectToCache(result);
@@ -1138,7 +1142,7 @@ namespace KGySoft.Serialization.Binary
 
                 // Creating initial instance, registration
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object obj))
-                    throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 bool useSurrogate = TryGetSurrogate(type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector);
                 bool isISerializable = !IgnoreISerializable && obj is ISerializable;
                 IObjectReference objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
@@ -1208,7 +1212,7 @@ namespace KGySoft.Serialization.Binary
                             return;
 
                         if (t.Name != name && !IgnoreObjectChanges)
-                            throw new SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
+                            Throw.SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
                     }
 
                     // reading fields of current level
@@ -1224,8 +1228,8 @@ namespace KGySoft.Serialization.Binary
                             if (!IgnoreObjectChanges)
                             {
                                 if (t == type)
-                                    throw new SerializationException(Res.BinarySerializationMissingField(type, name));
-                                throw new SerializationException(Res.BinarySerializationMissingFieldBase(type, name, t));
+                                    Throw.SerializationException(Res.BinarySerializationMissingField(type, name));
+                                Throw.SerializationException(Res.BinarySerializationMissingFieldBase(type, name, t));
                             }
 
                             continue;
@@ -1242,7 +1246,7 @@ namespace KGySoft.Serialization.Binary
                 if (br.ReadString().Length != 0)
                 {
                     if (!IgnoreObjectChanges)
-                        throw new SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
+                        Throw.SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
 
                     // skipping fields until the end of the serialized hierarchy
                     do
@@ -1277,7 +1281,7 @@ namespace KGySoft.Serialization.Binary
                 if (surrogate == null)
                 {
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
-                        throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                        Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
                     return obj;
                 }
 
@@ -1336,7 +1340,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     // As ISerializable: Invoking serialization constructor
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
-                        throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                        Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
                     return obj;
                 }
 
@@ -1368,7 +1372,7 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     if (!IgnoreObjectChanges)
-                        throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
+                        Throw.SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
                 }
             }
 
@@ -1377,7 +1381,7 @@ namespace KGySoft.Serialization.Binary
             {
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
                 if (!structType.IsValueType)
-                    throw new SerializationException(Res.BinarySerializationNotAValueType(structType));
+                    Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);
@@ -1423,7 +1427,7 @@ namespace KGySoft.Serialization.Binary
                     return true;
 
                 if (id > cache.Count)
-                    throw new SerializationException(Res.BinarySerializationDeserializeUnexpectedId);
+                    Throw.SerializationException(Res.BinarySerializationDeserializeUnexpectedId);
                 return false;
             }
 
@@ -1502,7 +1506,7 @@ namespace KGySoft.Serialization.Binary
 
                 // Adding if item is compatible, cannot be replaced
                 if (!addMethod.ParameterTypes[0].CanAcceptValue(value))
-                    throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
 
                 trackedUsages.CanBeReplaced = false;
                 addMethod.Invoke(collection, value);
@@ -1554,10 +1558,10 @@ namespace KGySoft.Serialization.Binary
                     var elementTypes = type.GetCollectionElementType().GetGenericArguments();
                     var keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
                         ? key
-                        : throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
                     var valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
                         ? value
-                        : throw new SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
                     dict.Add(keyToAdd, valueToAdd);
                     return;
                 }
@@ -1621,7 +1625,7 @@ namespace KGySoft.Serialization.Binary
                     if (objectsBeingDeserialized.TryGetValue(entry.Value, out UsageReferences usages))
                     {
                         if (entry.Value is IObjectReference)
-                            throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
+                            Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
                         usages.CanBeReplaced = false;
                     }
                 }
@@ -1639,7 +1643,7 @@ namespace KGySoft.Serialization.Binary
                     Assembly assembly = GetAssembly(assemblyName);
                     type = Reflector.ResolveType(assembly, typeName);
                     if (type == null)
-                        throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
+                        Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
                     CachedAssemblies.Add((assembly, assemblyName));
                 }
 
@@ -1682,13 +1686,13 @@ namespace KGySoft.Serialization.Binary
                         }
                         catch (Exception ex) when (!ex.IsCritical())
                         {
-                            throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
+                            Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
                         }
                     }
                 }
 
                 if (result == null)
-                    throw new SerializationException(Res.ReflectionCannotLoadAssembly(name));
+                    Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name));
                 if (assemblyByNameCache == null)
                     assemblyByNameCache = new Dictionary<string, Assembly>(1);
                 assemblyByNameCache.Add(name, result);
@@ -1708,7 +1712,7 @@ namespace KGySoft.Serialization.Binary
                     return result;
                 result = (TypeAttributes)br.ReadByte();
                 if (!result.AllFlagsDefined())
-                    throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
                 TypeAttributesCache.Add(type, result);
                 return result;
             }

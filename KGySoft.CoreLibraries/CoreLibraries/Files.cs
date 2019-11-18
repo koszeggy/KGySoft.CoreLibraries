@@ -45,7 +45,7 @@ namespace KGySoft.CoreLibraries
         public static bool CanCreate(string fileName, bool canOverwrite = true)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             try
             {
@@ -75,9 +75,9 @@ namespace KGySoft.CoreLibraries
         public static string GetNextFileName(string path, string postfixSeparator = null)
         {
             if (path == null)
-                throw new ArgumentNullException(nameof(path), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.path);
 
-            postfixSeparator = postfixSeparator ?? String.Empty;
+            postfixSeparator ??= String.Empty;
 
             if (!File.Exists(path))
                 return path;
@@ -111,9 +111,9 @@ namespace KGySoft.CoreLibraries
         public static string GetRelativePath(string target, string baseDirectory)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (baseDirectory == null)
-                throw new ArgumentNullException(nameof(baseDirectory), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.baseDirectory);
 
             if (!Path.IsPathRooted(target))
                 target = Path.GetFullPath(target);
@@ -165,9 +165,9 @@ namespace KGySoft.CoreLibraries
         public static bool IsWildcardMatch(string pattern, string fileName)
         {
             if (pattern == null)
-                throw new ArgumentNullException(nameof(pattern), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.pattern);
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             return new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase).IsMatch(fileName);
         }

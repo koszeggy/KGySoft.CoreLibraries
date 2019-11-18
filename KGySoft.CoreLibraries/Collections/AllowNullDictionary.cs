@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+
 using KGySoft.Annotations;
 using KGySoft.Diagnostics;
 
@@ -96,7 +97,15 @@ namespace KGySoft.Collections
 
         public TValue this[[CanBeNull]TKey key]
         {
-            get => key == null ? (hasNullKey ? nullValue : throw new KeyNotFoundException(Res.IDictionaryKeyNotFound)) : dict[key];
+            get
+            {
+                if (key != null)
+                    return dict[key];
+
+                if (!hasNullKey)
+                    Throw.KeyNotFoundException();
+                return nullValue;
+            }
             set
             {
                 if (key == null)
@@ -124,7 +133,7 @@ namespace KGySoft.Collections
         public AllowNullDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this(((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count).GetValueOrDefault(defaultCapacity))
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
             foreach (KeyValuePair<TKey, TValue> item in collection)
                 this[item.Key] = item.Value;
         }
@@ -144,7 +153,7 @@ namespace KGySoft.Collections
             }
 
             if (hasNullKey)
-                throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
             hasNullKey = true;
             nullValue = value;
         }
@@ -178,14 +187,14 @@ namespace KGySoft.Collections
         }
 
         [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Validation is forwarded to the embedded dictionary")]
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        public void CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < Count)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
             ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex);
             if (hasNullKey)

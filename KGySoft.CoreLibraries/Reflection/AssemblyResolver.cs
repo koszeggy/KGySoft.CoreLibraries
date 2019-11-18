@@ -110,11 +110,11 @@ namespace KGySoft.Reflection
         internal static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
         {
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assemblyName);
             if (assemblyName.Length == 0)
-                throw new ArgumentException(Res.ArgumentEmpty, nameof(assemblyName));
+                Throw.ArgumentException(Argument.assemblyName, Res.ArgumentEmpty);
             if (!options.AllFlagsDefined())
-                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
             AssemblyName asmName;
             try
@@ -124,7 +124,7 @@ namespace KGySoft.Reflection
             catch (Exception e) when (!e.IsCritical())
             {
                 if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    throw new ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), nameof(assemblyName), e);
+                    Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(assemblyName), e);
                 return null;
             }
 
@@ -134,9 +134,9 @@ namespace KGySoft.Reflection
         internal static Assembly ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assemblyName);
             if (!options.AllFlagsDefined())
-                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
             return GetOrResolve(assemblyName, options);
         }
 
@@ -202,14 +202,14 @@ namespace KGySoft.Reflection
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
                 if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    throw new ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
                 return null;
             }
 
             if (result == null)
             {
                 if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    throw new ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
                 return null;
             }
 
@@ -300,9 +300,9 @@ namespace KGySoft.Reflection
                     return result;
             }
 
-            if ((options & ResolveAssemblyOptions.ThrowError) == ResolveAssemblyOptions.None)
-                return null;
-            throw new ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
+            if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                Throw.ReflectionException(Res.ReflectionCannotLoadAssembly(assemblyName.FullName), e);
+            return null;
         }
 
 #if !NET35

@@ -254,7 +254,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             resName = "TestString";
             Assert.IsFalse(manager.SafeMode);
             Throws<InvalidOperationException>(() => refManager.GetStream(resName, inv));
-            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType.FullName));
+            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
 
             // but in SafeMode strings are returned as streams
             manager.SafeMode = true;

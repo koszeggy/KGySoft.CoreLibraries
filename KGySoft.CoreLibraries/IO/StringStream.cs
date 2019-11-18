@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using KGySoft.Annotations;
 #if NET35
 using KGySoft.CoreLibraries;
 #endif
@@ -52,7 +53,7 @@ namespace KGySoft.IO
             get
             {
                 if (position < 0)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 return str.Length << 1;
             }
         }
@@ -62,22 +63,27 @@ namespace KGySoft.IO
             get
             {
                 if (position < 0)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 return position;
             }
             set
             {
                 if (position < 0)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value < 0L || value > Length)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    Throw.ArgumentOutOfRangeException(Argument.value);
                 position = (int)value;
             }
         }
 
         public override int Capacity
         {
-            get => position >= 0 ? str.Length << 1 : throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            get
+            {
+                if (position < 0)
+                    Throw.ObjectDisposedException();
+                return str.Length << 1;
+            }
             set => base.Capacity = value; // to throw the appropriate exception
         }
 
@@ -94,7 +100,11 @@ namespace KGySoft.IO
         #region Constructors
 
         public StringStream(string s) : base(Reflector.EmptyArray<byte>(), false)
-            => str = s ?? throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+        {
+            if (s == null)
+                Throw.ArgumentNullException(Argument.s);
+            str = s;
+        }
 
         #endregion
 
@@ -105,7 +115,7 @@ namespace KGySoft.IO
         public override long Seek(long offset, SeekOrigin origin)
         {
             if (position < 0)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             switch (origin)
             {
                 case SeekOrigin.Begin:
@@ -122,18 +132,18 @@ namespace KGySoft.IO
             return position;
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override int Read([CanBeNull]byte[] buffer, int offset, int count)
         {
             if (position < 0)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (buffer == null)
-                throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.buffer);
             if (offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(Argument.offset, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(Argument.count, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (buffer.Length - offset < count)
-                throw new ArgumentException(Res.ArrayInvalidOffsLen);
+                Throw.ArgumentException(Res.ArrayInvalidOffsLen);
             int len = Math.Min(count, (str.Length << 1) - position);
             for (int i = 0; i < len; i++)
             {
@@ -148,7 +158,7 @@ namespace KGySoft.IO
         public override int ReadByte()
         {
             if (position < 0)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             return position == str.Length << 1 ? -1 : this[position++];
         }
 
@@ -163,16 +173,16 @@ namespace KGySoft.IO
         public override void WriteTo(Stream stream)
         {
             if (position < 0)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.stream);
             using (var ss = new StringStream(str))
                 ss.CopyTo(stream);
         }
 
-        public override void SetLength(long value) => throw new NotSupportedException(Res.NotSupported);
-        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(Res.NotSupported);
-        public override void WriteByte(byte value) => throw new NotSupportedException(Res.NotSupported);
+        public override void SetLength(long value) => Throw.NotSupportedException(Res.NotSupported);
+        public override void Write(byte[] buffer, int offset, int count) => Throw.NotSupportedException(Res.NotSupported);
+        public override void WriteByte(byte value) => Throw.NotSupportedException(Res.NotSupported);
 
         public override string ToString() => str;
 

@@ -55,9 +55,9 @@ namespace KGySoft.CoreLibraries
         public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> collection)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             switch (target)
             {
@@ -67,7 +67,7 @@ namespace KGySoft.CoreLibraries
                 case List<T> list:
                     list.AddRange(collection);
                     return;
-                // TODO: Relflector.TryRunMethod...
+                // TODO: Relflector.TryRunMethod(AddRange) first
                 default:
                     collection.ForEach(target.Add);
                     return;

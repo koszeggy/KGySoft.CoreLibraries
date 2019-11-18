@@ -61,10 +61,14 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see cref="ValidationSeverity.Error"/>.</param>
         public ValidationResult(string propertyName, string message, ValidationSeverity severity = ValidationSeverity.Error)
         {
-            PropertyName = propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
-            Message = message ?? throw new ArgumentNullException(nameof(message), Res.ArgumentNull);
+            if (propertyName == null)
+                Throw.ArgumentNullException(Argument.propertyName);
+            if (message == null)
+                Throw.ArgumentNullException(Argument.message);
+            PropertyName = propertyName;
+            Message = message;
             if (!Enum<ValidationSeverity>.IsDefined(severity))
-                throw new ArgumentOutOfRangeException(nameof(severity), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRangeWithValues(Argument.severity, severity);
             Severity = severity;
         }
 

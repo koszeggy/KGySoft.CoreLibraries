@@ -57,9 +57,9 @@ namespace KGySoft.CoreLibraries
         public static void InsertRange<T>(this IList<T> target, int index, IEnumerable<T> collection)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             switch (target)
             {
@@ -93,7 +93,7 @@ namespace KGySoft.CoreLibraries
         public static void RemoveRange<T>(this IList<T> collection, int index, int count)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             switch (collection)
             {
@@ -106,11 +106,11 @@ namespace KGySoft.CoreLibraries
                 default:
                     int len = collection.Count;
                     if ((uint)index >= (uint)len)
-                        throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                        Throw.ArgumentOutOfRangeException(Argument.index);
                     if (count < 0)
-                        throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                        Throw.ArgumentOutOfRangeException(Argument.count);
                     if (index + count > len)
-                        throw new ArgumentException(Res.IListInvalidOffsLen);
+                        Throw.ArgumentException(Res.IListInvalidOffsLen);
                     for (int i = 0; i < count; i++)
                         collection.RemoveAt(index);
                     return;
@@ -135,9 +135,9 @@ namespace KGySoft.CoreLibraries
         public static void ReplaceRange<T>(this IList<T> target, int index, int count, IEnumerable<T> collection)
         {
             if (target == null)
-                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.target);
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.collection);
 
             switch (target)
             {
@@ -147,11 +147,11 @@ namespace KGySoft.CoreLibraries
                 default:
                     int len = target.Count;
                     if ((uint)index >= (uint)len)
-                        throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                        Throw.ArgumentOutOfRangeException(Argument.index);
                     if (count < 0)
-                        throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                        Throw.ArgumentOutOfRangeException(Argument.count);
                     if (index + count > len)
-                        throw new ArgumentException(Res.IListInvalidOffsLen);
+                        Throw.ArgumentException(Res.IListInvalidOffsLen);
 
                     using (IEnumerator<T> enumerator = collection.GetEnumerator())
                     {

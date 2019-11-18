@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
+using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -169,7 +170,7 @@ namespace KGySoft.Collections
             public TKey this[int index]
             {
                 get => list.keys[index];
-                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                set => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             #endregion
@@ -179,7 +180,7 @@ namespace KGySoft.Collections
             object IList.this[int index]
             {
                 get => list.keys[index];
-                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                set => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             #endregion
@@ -199,16 +200,16 @@ namespace KGySoft.Collections
             #region Public Methods
 
             public int IndexOf(TKey item) => list.IndexOfKey(item);
-            public void Insert(int index, TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public void RemoveAt(int index) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public void Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public void Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Insert(int index, TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             public bool Contains(TKey item) => list.IndexOfKey(item) >= 0;
             public void CopyTo(TKey[] array, int arrayIndex) => list.keys.CopyTo(array, arrayIndex);
-            public bool Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public bool Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
 
             public IEnumerator<TKey> GetEnumerator()
-                // casting to get enumerator as interface
+                // casting to get a reference enumerator
                 => ((IList<TKey>)list.keys).GetEnumerator();
 
             #endregion
@@ -216,14 +217,14 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Methods
 
             IEnumerator IEnumerable.GetEnumerator()
-                // casting to get enumerator as interface
+                // casting to get a reference enumerator
                 => ((IList<TKey>)list.keys).GetEnumerator();
 
-            int IList.Add(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            bool IList.Contains(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : typeKey.CanAcceptValue(value) && Contains((TKey)value);
-            int IList.IndexOf(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : (typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1);
-            void IList.Insert(int index, object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            void IList.Remove(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool IList.Contains(object value) => CanAcceptKey(value) && Contains((TKey)value);
+            int IList.Add(object value) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
+            int IList.IndexOf(object value) => CanAcceptKey(value) ? IndexOf((TKey)value) : -1;
+            void IList.Insert(int index, object value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void IList.Remove(object value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             void ICollection.CopyTo(Array array, int index) => ((ICollection)list.keys).CopyTo(array, index);
 
             #endregion
@@ -249,8 +250,8 @@ namespace KGySoft.Collections
 
             private readonly CircularSortedList<TKey, TValue> list;
             private readonly int version;
-            private readonly int length;
-            private readonly int size;
+            private readonly int capacity;
+            private readonly int count;
             private readonly TKey[] keys;
             private readonly TValue[] values;
             private readonly bool isGeneric;
@@ -281,25 +282,40 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return isGeneric ? (object)current : new DictionaryEntry(current.Key, current.Value);
                 }
             }
 
             DictionaryEntry IDictionaryEnumerator.Entry
-                => steps == 0 || steps > list.Count
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
-                : new DictionaryEntry(current.Key, current.Value);
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return new DictionaryEntry(current.Key, current.Value);
+                }
+            }
 
             object IDictionaryEnumerator.Key
-                => steps == 0 || steps > list.Count
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
-                : current.Key;
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current.Key;
+                }
+            }
 
             object IDictionaryEnumerator.Value
-                => steps == 0 || steps > list.Count
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
-                : current.Value;
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current.Value;
+                }
+            }
 
             #endregion
 
@@ -310,12 +326,12 @@ namespace KGySoft.Collections
             internal EnumeratorAsReference(CircularSortedList<TKey, TValue> list, bool isGeneric)
             {
                 this.list = list;
-                size = list.Count;
+                count = list.Count;
                 keys = list.keys.Items;
                 values = list.values.Items;
                 index = list.keys.StartIndex;
                 version = list.keys.Version;
-                length = list.keys.Items.Length;
+                capacity = list.keys.Items.Length;
                 this.isGeneric = isGeneric;
             }
 
@@ -340,18 +356,19 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
-                if (steps < size)
+                if (steps < count)
                 {
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
-                    if (++index == length)
+                    index += 1;
+                    if (index == capacity)
                         index = 0;
-                    ++steps;
+                    steps += 1;
                     return true;
                 }
 
-                steps = size + 1;
+                steps = count + 1;
                 current = default(KeyValuePair<TKey, TValue>);
                 return false;
             }
@@ -363,7 +380,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.keys.StartIndex;
                 steps = 0;
@@ -389,7 +406,7 @@ namespace KGySoft.Collections
 
             private readonly CircularSortedList<TKey, TValue> list;
             private readonly int version;
-            private readonly int size;
+            private readonly int count;
             private readonly TKey[] keys;
             private readonly TValue[] values;
 
@@ -410,9 +427,15 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Properties
 
-            object IEnumerator.Current => index == 0 || index > list.Count
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
-                : current;
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (index == 0 || index > list.Count)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current;
+                }
+            }
 
             #endregion
 
@@ -424,7 +447,7 @@ namespace KGySoft.Collections
             {
                 this.list = list;
                 version = list.keys.Version;
-                size = list.Count;
+                count = list.Count;
                 keys = list.keys.Items;
                 values = list.values.Items;
             }
@@ -440,16 +463,16 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
-                if (index < size)
+                if (index < count)
                 {
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
                     index += 1;
                     return true;
                 }
 
-                index = size + 1;
+                index = count + 1;
                 current = default(KeyValuePair<TKey, TValue>);
                 return false;
             }
@@ -457,7 +480,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = 0;
                 current = default(KeyValuePair<TKey, TValue>);
@@ -484,8 +507,8 @@ namespace KGySoft.Collections
 
             private readonly CircularSortedList<TKey, TValue> list;
             private readonly int version;
-            private readonly int length;
-            private readonly int size;
+            private readonly int capacity;
+            private readonly int count;
             private readonly TKey[] keys;
             private readonly TValue[] values;
 
@@ -511,9 +534,14 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Properties
 
             object IEnumerator.Current
-                => steps == 0 || steps > list.Count
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
-                : current;
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current;
+                }
+            }
 
             #endregion
 
@@ -524,12 +552,12 @@ namespace KGySoft.Collections
             internal Enumerator(CircularSortedList<TKey, TValue> list)
             {
                 this.list = list;
-                size = list.Count;
+                count = list.Count;
                 keys = list.keys.Items;
                 values = list.values.Items;
                 index = list.keys.StartIndex;
                 version = list.keys.Version;
-                length = list.keys.Items.Length;
+                capacity = list.keys.Items.Length;
                 steps = 0;
                 current = default(KeyValuePair<TKey, TValue>);
             }
@@ -555,18 +583,19 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
-                if (steps < size)
+                if (steps < count)
                 {
                     current = new KeyValuePair<TKey, TValue>(keys[index], values[index]);
-                    if (++index == length)
+                    index += 1;
+                    if (index == capacity)
                         index = 0;
                     steps += 1;
                     return true;
                 }
 
-                steps = size + 1;
+                steps = count + 1;
                 current = default(KeyValuePair<TKey, TValue>);
                 return false;
             }
@@ -578,7 +607,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
+                    Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.keys.StartIndex;
                 steps = 0;
@@ -780,21 +809,21 @@ namespace KGySoft.Collections
         /// is at the first or last position. Otherwise, setting this property is an O(log n) operation, if the <paramref name="key"/> already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// If the <paramref name="key"/> is not in the list, and the new element is not at the first or last position, setting the property is an O(n) operation. If insertion causes a resize, the operation is O(n).</para>
         /// </remarks>
-        public TValue this[TKey key]
+        public TValue this[[CanBeNull]TKey key]
         {
             [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, KeyNotFoundException is expected")]
             get
             {
                 int index = IndexOfKey(key);
-                if (index >= 0)
-                    return values[index];
+                if (index < 0)
+                    Throw.KeyNotFoundException();
 
-                throw new KeyNotFoundException(Res.IDictionaryKeyNotFound);
+                return values[index];
             }
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.key);
 
                 int index = SearchKeyOptimizedLastOrFirst(key);
                 if (index >= 0)
@@ -811,35 +840,52 @@ namespace KGySoft.Collections
         KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
         {
             get => ElementAt(index);
-            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+            set => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
-        object IDictionary.this[object key]
+        object IDictionary.this[[CanBeNull]object key]
         {
             get
             {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
-                return this[(TKey)key];
+                // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+                if (!CanAcceptKey(key))
+                    return null;
+
+                int index = IndexOfKey((TKey)key);
+                if (index >= 0)
+                    return values[index];
+
+                return null;
             }
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
-                if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                this[(TKey)key] = (TValue)value;
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(value);
+
+                try
+                {
+                    TKey typedKey = (TKey)key;
+                    try
+                    {
+                        this[typedKey] = (TValue)value;
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                }
             }
         }
 
         object IList.this[int index]
         {
             get => ElementAt(index);
-            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+            set => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
 #if !(NET35 || NET40)
@@ -930,7 +976,7 @@ namespace KGySoft.Collections
             : this(dictionary?.Count ?? 0, comparer)
         {
             if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.dictionary);
 
             // this way of initialization is better than the one in SortedList, which would allow duplicate keys
             foreach (KeyValuePair<TKey, TValue> item in dictionary)
@@ -940,6 +986,19 @@ namespace KGySoft.Collections
         #endregion
 
         #region Methods
+
+        #region Static Methods
+
+        private static bool CanAcceptKey(object key)
+        {
+            if (key == null)
+                Throw.ArgumentNullException(Argument.key);
+            return key is TKey;
+        }
+
+        #endregion
+
+        #region Instance Methods
 
         #region Public Methods
 
@@ -966,11 +1025,11 @@ namespace KGySoft.Collections
         public int Add(TKey key, TValue value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
             int pos = SearchKeyOptimizedLastOrFirst(key);
             if (pos >= 0)
-                throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
 
             pos = ~pos;
             Insert(pos, key, value);
@@ -987,13 +1046,10 @@ namespace KGySoft.Collections
         public int IndexOfKey(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.key);
 
-            int index = keys.BinarySearch(key, comparer);
-            if (index < 0)
-                return -1;
-
-            return index;
+            int index = keys.InternalBinarySearch(0, keys.Count, key, comparer);
+            return index >= 0 ? index : -1;
         }
 
         /// <summary>
@@ -1184,31 +1240,22 @@ namespace KGySoft.Collections
                 return -1;
 
             // comparing to the last element
-            int lastIndex = size - 1;
-            int order = comparer.Compare(key, keys[lastIndex]);
+            int order = comparer.Compare(key, keys.ElementAt(size - 1));
 
-            // key is larger than last element
-            if (order > 0)
-                return ~size;
-
-            // found at last position
-            if (order == 0)
-                return lastIndex;
+            // key is larger than or equal to last element
+            if (order >= 0)
+                return order == 0 ? size - 1 : ~size;
 
             // size is 1 and key is less than that: ~0 == -1
             if (size == 1)
                 return -1;
 
             // comparing to the first element
-            order = comparer.Compare(key, keys[0]);
+            order = comparer.Compare(key, keys.ElementAt(0));
 
-            // key is smaller than first element
-            if (order < 0)
-                return -1;
-
-            // found at first position
-            if (order == 0)
-                return 0;
+            // key is smaller than or equal to first element
+            if (order <= 0)
+                return order == 0 ? 0 : -1;
 
             // searching in the middle
             switch (size)
@@ -1219,7 +1266,7 @@ namespace KGySoft.Collections
 
                 case 3:
                     // size is 3: one element in the middle
-                    order = comparer.Compare(key, keys[1]);
+                    order = comparer.Compare(key, keys.ElementAt(1));
 
                     // key should come after the middle
                     if (order > 0)
@@ -1234,7 +1281,7 @@ namespace KGySoft.Collections
 
                 default:
                     // performing binary search for the elements in the middle
-                    return keys.BinarySearch(1, size - 2, key, comparer);
+                    return keys.InternalBinarySearch(1, size - 2, key, comparer);
             }
         }
 
@@ -1250,12 +1297,25 @@ namespace KGySoft.Collections
             if (index < 0)
                 return index;
 
-            return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]) ? index : -1;
+            return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values.ElementAt(index)) ? index : -1;
         }
 
-        private IList<TKey> GetKeys() => keysList ?? (keysList = new KeysList(this));
+        private bool Remove(KeyValuePair<TKey, TValue> item)
+        {
+            int index = IndexOfKey(item.Key);
+            if (index < 0)
+                return false;
 
-        private IList<TValue> GetValues() => valuesList ?? (valuesList = values.AsReadOnly());
+            if (!ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values.ElementAt(index)))
+                return false;
+
+            RemoveAt(index);
+            return true;
+        }
+
+        private IList<TKey> GetKeys() => keysList ??= new KeysList(this);
+
+        private IList<TValue> GetValues() => valuesList ??= values.AsReadOnly();
 
         #endregion
 
@@ -1263,47 +1323,29 @@ namespace KGySoft.Collections
 
         void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => Add(key, value);
 
-        int IList<KeyValuePair<TKey, TValue>>.IndexOf(KeyValuePair<TKey, TValue> item)
-        {
-            int index = IndexOfKey(item.Key);
-            if (index < 0)
-                return -1;
+        int IList<KeyValuePair<TKey, TValue>>.IndexOf(KeyValuePair<TKey, TValue> item) => IndexOf(item);
 
-            return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]) ? index : -1;
-        }
-
-        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => IndexOf(item) >= 0;
 
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
 
-            if ((arrayIndex < 0) || (arrayIndex > array.Length))
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
 
             int size = keys.Count;
             if ((array.Length - arrayIndex) < size)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
             for (int i = 0; i < size; i++)
                 array[arrayIndex + i] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
         }
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
-        {
-            int index = IndexOfKey(item.Key);
-            if (index < 0)
-                return false;
-
-            if (!ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]))
-                return false;
-
-            RemoveAt(index);
-            return true;
-        }
+        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => Remove(item);
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
             => keys.StartIndex == 0
@@ -1319,113 +1361,122 @@ namespace KGySoft.Collections
         /// <filterpriority>2</filterpriority>
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
-        void IDictionary.Add(object key, object value)
+        void IDictionary.Add([CanBeNull]object key, object value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
-            if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-            Add((TKey)key, (TValue)value);
+                Throw.ArgumentNullException(Argument.key);
+            Throw.ThrowIfNullIsInvalid<TValue>(value);
+
+            try
+            {
+                TKey typedKey = (TKey)key;
+                try
+                {
+                    Add(typedKey, (TValue)value);
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                }
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+            }
         }
 
-        bool IDictionary.Contains(object key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
-        }
+        bool IDictionary.Contains(object key) => CanAcceptKey(key) && ContainsKey((TKey)key);
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new EnumeratorAsReference(this, false);
 
         void IDictionary.Remove(object key)
         {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (typeKey.CanAcceptValue(key))
+            if (CanAcceptKey(key))
                 Remove((TKey)key);
         }
 
-        void ICollection.CopyTo(Array array, int index)
+        void ICollection.CopyTo([CanBeNull]Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
             if (index < 0 || index > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.index);
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(index));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             if (array.Rank != 1)
-                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
             int size = keys.Count;
             if (size == 0)
                 return;
 
-            if (array is KeyValuePair<TKey, TValue>[] keyValuePairs)
+            switch (array)
             {
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
-                return;
-            }
+                case KeyValuePair<TKey, TValue>[] keyValuePairs:
+                    ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
+                    return;
 
-            if (array is DictionaryEntry[] dictionaryEntries)
-            {
-                for (int i = 0; i < size; i++)
-                {
-                    dictionaryEntries[index] = new DictionaryEntry(keys[i], values[i]);
-                    index += 1;
-                }
-            }
+                case DictionaryEntry[] dictionaryEntries:
+                    for (int i = 0; i < size; i++)
+                    {
+                        dictionaryEntries[index] = new DictionaryEntry(keys[i], values[i]);
+                        index += 1;
+                    }
 
-            if (array is object[] objectArray)
-            {
-                for (int i = 0; i < size; i++)
-                {
-                    objectArray[index] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
-                    index += 1;
-                }
-            }
+                    return;
 
-            throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
+                case object[] objectArray:
+                    for (int i = 0; i < size; i++)
+                    {
+                        objectArray[index] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
+                        index += 1;
+                    }
+
+                    return;
+
+                default:
+                    Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+                    return;
+            }
         }
 
         int IList.Add(object value)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.value);
 
             if (value is KeyValuePair<TKey, TValue> keyValuePair)
                 return Add(keyValuePair.Key, keyValuePair.Value);
 
-            if (value is DictionaryEntry dictionaryEntry)
-            {
-                if (!typeKey.CanAcceptValue(dictionaryEntry.Key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(dictionaryEntry, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(dictionaryEntry.Value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(dictionaryEntry, typeof(TValue)), nameof(value));
-                return Add((TKey)dictionaryEntry.Key, (TValue)dictionaryEntry.Value);
-            }
-
-            throw new ArgumentException(Res.CircularSortedListInvalidKeyValueType(typeof(KeyValuePair<TKey, TValue>)), nameof(value));
-        }
-
-        bool IList.Contains(object value)
-        {
-            if (value is KeyValuePair<TKey, TValue> keyValuePair)
-                return IndexOf(keyValuePair) >= 0;
-
             if (value is DictionaryEntry entry)
             {
-                if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
-                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value)) >= 0;
+                if (entry.Key == null)
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
+
+                try
+                {
+                    TKey typedKey = (TKey)entry.Key;
+                    try
+                    {
+                        return Add(typedKey, (TValue)entry.Value);
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                }
             }
 
-            return false;
+            return Throw.ArgumentException<int>(Argument.value, Res.CircularSortedListInvalidKeyValueType(typeof(KeyValuePair<TKey, TValue>)));
         }
+
+        bool IList.Contains(object value) => ((IList)this).IndexOf(value) >= 0;
 
         int IList.IndexOf(object value)
         {
@@ -1434,35 +1485,67 @@ namespace KGySoft.Collections
 
             if (value is DictionaryEntry entry)
             {
-                if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
-                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
+                if (entry.Key == null)
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
+
+                try
+                {
+                    TKey typedKey = (TKey)entry.Key;
+                    try
+                    {
+                        return IndexOf(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value));
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                }
             }
 
             return -1;
         }
 
-        void IList.Insert(int index, object value) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+        void IList.Insert(int index, object value) => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
 
         void IList.Remove(object value)
         {
             if (value is KeyValuePair<TKey, TValue> keyValuePair)
             {
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(keyValuePair);
+                Remove(keyValuePair);
                 return;
             }
 
             if (value is DictionaryEntry entry)
             {
-                if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
+                if (entry.Key == null)
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
+
+                try
+                {
+                    TKey typedKey = (TKey)entry.Key;
+                    try
+                    {
+                        Remove(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value));
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                }
             }
         }
+
+        #endregion
 
         #endregion
 

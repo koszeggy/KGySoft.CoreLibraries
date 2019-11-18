@@ -561,10 +561,9 @@ namespace KGySoft.Resources
         public ResXDataNode(string name, object value)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
-
+                Throw.ArgumentNullException(Argument.name);
             if (name.Length == 0)
-                throw new ArgumentException(Res.ArgumentEmpty, nameof(name));
+                Throw.ArgumentException(Argument.name, Res.ArgumentEmpty);
 
             this.name = name;
 
@@ -627,11 +626,13 @@ namespace KGySoft.Resources
         public ResXDataNode(string name, ResXFileRef fileRef, string basePath = null)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
             if (name.Length == 0)
-                throw new ArgumentException(Res.ArgumentEmpty, nameof(name));
+                Throw.ArgumentException(Argument.name, Res.ArgumentEmpty);
+            if (fileRef == null)
+                Throw.ArgumentNullException(Argument.fileRef);
 
-            this.fileRef = fileRef ?? throw new ArgumentNullException(nameof(fileRef), Res.ArgumentNull);
+            this.fileRef = fileRef;
             this.name = name;
             fileRefBasePath = basePath;
         }
@@ -856,10 +857,12 @@ namespace KGySoft.Resources
                 if (objectType != null)
                     cachedValue = result = fileRef.GetValue(objectType, basePath ?? fileRefBasePath);
                 else
-                    throw new TypeLoadException(
-                        nodeInfo == null
-                            ? Res.ResourcesTypeLoadException(fileRef.TypeName)
-                            : Res.ResourcesTypeLoadExceptionAt(fileRef.TypeName, nodeInfo.Line, nodeInfo.Column));
+                {
+                    Throw.TypeLoadException(nodeInfo == null
+                        ? Res.ResourcesTypeLoadException(fileRef.TypeName)
+                        : Res.ResourcesTypeLoadExceptionAt(fileRef.TypeName, nodeInfo.Line, nodeInfo.Column));
+                    return default;
+                }
             }
             else
             {
@@ -962,7 +965,7 @@ namespace KGySoft.Resources
             // string result required below
 
             if (cachedValue != null)
-                throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, cachedValue.GetType().ToString()));
+                Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, cachedValue.GetType().GetName(TypeNameKind.LongName)));
 
             // result is not deserialized here yet
 
@@ -973,13 +976,14 @@ namespace KGySoft.Resources
 
             // ReSharper disable once AssignNullToNotNullAttribute - string has a full name
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
-                throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
+                Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
             object result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
             if (result == null || result is string)
                 return result;
 
-            throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, result.GetType().ToString()));
+            Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, result.GetType().GetName(TypeNameKind.LongName)));
+            return null;
         }
 
         /// <summary>
@@ -1290,8 +1294,7 @@ namespace KGySoft.Resources
             {
                 string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
                 XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
-                TypeLoadException newTle = new TypeLoadException(newMessage, xml);
-                throw newTle;
+                Throw.TypeLoadException(newMessage, xml);
             }
 
             // 1.) Native type - type converter is slower and will not convert negative zeros, for example.
@@ -1318,8 +1321,7 @@ namespace KGySoft.Resources
             {
                 string message = Res.ResourcesConvertFromStringNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromStringNotSupported(tc.GetType()));
                 XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
-                NotSupportedException newNse = new NotSupportedException(message, xml);
-                throw newNse;
+                Throw.NotSupportedException(message, xml);
             }
 
             try
@@ -1330,8 +1332,8 @@ namespace KGySoft.Resources
             {
                 string message = Res.ResourcesConvertFromStringNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
                 XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
-                NotSupportedException newNse = new NotSupportedException(message, xml);
-                throw newNse;
+                Throw.NotSupportedException(message, xml);
+                return default;
             }
         }
 
@@ -1378,8 +1380,7 @@ namespace KGySoft.Resources
                 {
                     string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
                     XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
-                    TypeLoadException newTle = new TypeLoadException(newMessage, xml);
-                    throw newTle;
+                    Throw.TypeLoadException(newMessage, xml);
                 }
 
                 TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
@@ -1387,8 +1388,7 @@ namespace KGySoft.Resources
                 {
                     string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
-                    NotSupportedException newNse = new NotSupportedException(message, xml);
-                    throw newNse;
+                    Throw.NotSupportedException(message, xml);
                 }
 
                 byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
@@ -1403,8 +1403,7 @@ namespace KGySoft.Resources
                 {
                     string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
-                    NotSupportedException newNse = new NotSupportedException(message, xml);
-                    throw newNse;
+                    Throw.NotSupportedException(message, xml);
                 }
             }
 
@@ -1437,7 +1436,8 @@ namespace KGySoft.Resources
             if (mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object value))
                 return value;
 
-            throw new NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+            Throw.NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+            return null;
         }
 
         private object CloneValue(ITypeResolutionService typeResolver, string basePath)
@@ -1467,19 +1467,19 @@ namespace KGySoft.Resources
 
         [SecurityCritical]
         [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        void ISerializable.GetObjectData(SerializationInfo si, StreamingContext context)
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (si == null)
-                throw new ArgumentNullException(nameof(si), Res.ArgumentNull);
-            DataNodeInfo info = GetDataNodeInfo(null, null);
-            si.AddValue(ResXCommon.NameStr, info.Name);
-            si.AddValue(ResXCommon.CommentStr, info.Comment);
-            si.AddValue(ResXCommon.TypeStr, info.TypeName);
-            si.AddValue(ResXCommon.MimeTypeStr, info.MimeType);
-            si.AddValue(ResXCommon.ValueStr, info.ValueData);
-            si.AddValue(ResXCommon.AliasStr, info.AssemblyAliasValue);
-            si.AddValue(nameof(fileRefBasePath), fileRefBasePath);
-            si.AddValue(nameof(info.CompatibleFormat), info.CompatibleFormat);
+            if (info == null)
+                Throw.ArgumentNullException(Argument.info);
+            DataNodeInfo dataNodeInfo = GetDataNodeInfo(null, null);
+            info.AddValue(ResXCommon.NameStr, dataNodeInfo.Name);
+            info.AddValue(ResXCommon.CommentStr, dataNodeInfo.Comment);
+            info.AddValue(ResXCommon.TypeStr, dataNodeInfo.TypeName);
+            info.AddValue(ResXCommon.MimeTypeStr, dataNodeInfo.MimeType);
+            info.AddValue(ResXCommon.ValueStr, dataNodeInfo.ValueData);
+            info.AddValue(ResXCommon.AliasStr, dataNodeInfo.AssemblyAliasValue);
+            info.AddValue(nameof(fileRefBasePath), fileRefBasePath);
+            info.AddValue(nameof(dataNodeInfo.CompatibleFormat), dataNodeInfo.CompatibleFormat);
             // no fileRef is needed, it is retrieved from nodeInfo
         }
 

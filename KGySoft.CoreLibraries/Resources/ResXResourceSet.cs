@@ -445,7 +445,7 @@ namespace KGySoft.Resources
             set
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 safeMode = value;
             }
         }
@@ -480,7 +480,7 @@ namespace KGySoft.Resources
             set
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 autoFreeXmlData = value;
             }
         }
@@ -498,7 +498,7 @@ namespace KGySoft.Resources
             get
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 return isModified;
             }
         }
@@ -522,7 +522,7 @@ namespace KGySoft.Resources
             set
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 cloneValues = value;
             }
         }
@@ -652,7 +652,7 @@ namespace KGySoft.Resources
         private static bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             lock (data)
             {
@@ -866,7 +866,7 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             string result;
             lock (dict)
@@ -935,13 +935,13 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (alias == null)
-                throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.alias);
 
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.assemblyName);
 
             lock (dict)
             {
@@ -981,10 +981,10 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (alias == null)
-                throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.alias);
 
             lock (dict)
             {
@@ -1128,7 +1128,7 @@ namespace KGySoft.Resources
         {
             var syncObj = resources;
             if (syncObj == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             lock (syncObj)
             {
@@ -1143,7 +1143,7 @@ namespace KGySoft.Resources
             Dictionary<string, string> aliasesLocal = aliases;
 
             if ((resourcesLocal ?? metadataLocal ?? (object)aliasesLocal) == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             // 1. Adding existing aliases (writing them on-demand) - non existing ones will be auto-generated
             lock (aliasesLocal)
@@ -1194,10 +1194,10 @@ namespace KGySoft.Resources
         private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             lock (data)
             {
@@ -1228,10 +1228,10 @@ namespace KGySoft.Resources
         private void SetValueInternal(string name, object value, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             lock (data)
             {
@@ -1253,10 +1253,10 @@ namespace KGySoft.Resources
         private void RemoveValueInternal(string name, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.name);
 
             lock (data)
             {

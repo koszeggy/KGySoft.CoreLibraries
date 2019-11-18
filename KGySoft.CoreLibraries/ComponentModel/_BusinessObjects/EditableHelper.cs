@@ -66,7 +66,7 @@ namespace KGySoft.ComponentModel
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
-                    throw new InvalidOperationException(Res.ComponentModelNotEditing);
+                    Throw.InvalidOperationException(Res.ComponentModelNotEditing);
                 snapshots.RemoveAt(currentLevel - 1);
             }
             finally
@@ -85,7 +85,7 @@ namespace KGySoft.ComponentModel
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
-                    throw new InvalidOperationException(Res.ComponentModelNotEditing);
+                    Throw.InvalidOperationException(Res.ComponentModelNotEditing);
                 var undoable = owner as ICanUndoInternal;
                 undoable?.SuspendUndo();
                 try
@@ -178,7 +178,8 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                    Throw.EnumArgumentOutOfRangeWithValues(Argument.behavior, behavior);
+                    break;
             }
         }
 
@@ -195,7 +196,8 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                    Throw.EnumArgumentOutOfRangeWithValues(Argument.behavior, behavior);
+                    break;
             }
         }
 
@@ -212,7 +214,8 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
+                    Throw.EnumArgumentOutOfRangeWithValues(Argument.behavior, behavior);
+                    break;
             }
         }
 

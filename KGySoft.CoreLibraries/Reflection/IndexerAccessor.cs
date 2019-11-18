@@ -20,6 +20,9 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
@@ -54,9 +57,15 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public override void Set(object instance, object value, params object[] indexerParameters)
             => ((IndexerSetter)Setter)(instance, value, indexerParameters);
 
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public override object Get(object instance, params object[] indexerParameters)
             => ((IndexerGetter)Getter)(instance, indexerParameters);
 
@@ -71,9 +80,9 @@ namespace KGySoft.Reflection
             MethodInfo getterMethod = property.GetGetMethod(true);
             Type declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
 #if !NETSTANDARD2_0
             // for structs: Dynamic method
@@ -109,14 +118,14 @@ namespace KGySoft.Reflection
             MethodInfo setterMethod = property.GetSetMethod(true);
             Type declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             if (declaringType.IsValueType)
             {
 #if NETSTANDARD2_0
-                throw new PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(property.Name, declaringType));
+                Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(property.Name, declaringType));
 #else
                 // for structs: Dynamic method
                 DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);

@@ -357,7 +357,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Private Methods
 
-            private void ThrowNotSupported(Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, Options));
+            private void ThrowNotSupported(Type type) => Throw.NotSupportedException(Res.BinarySerializationNotSupported(type, Options));
 
             /// <summary>
             /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/>.
@@ -559,7 +559,8 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.UIntPtr:
                             return (8, (ulong)(UIntPtr)val);
                         default:
-                            throw new InvalidOperationException(Res.InternalError($"Unexpected compressible type: {dt}"));
+                            Throw.InternalError($"Unexpected compressible type: {dt}");
+                            return default;
                     }
                 }
 
@@ -710,7 +711,8 @@ namespace KGySoft.Serialization.Binary
                         return;
 
                     default:
-                        throw new InvalidOperationException($"Unexpected pure type: {dataType}");
+                        Throw.InternalError($"Unexpected pure type: {dataType}");
+                        return;
                 }
             }
 
@@ -736,7 +738,8 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.Pointer:
                     case DataTypes.ByRef:
                     default:
-                        throw new InvalidOperationException($"Unexpected impure type: {dataType}");
+                        Throw.InternalError($"Unexpected impure type: {dataType}");
+                        return;
                 }
             }
 
@@ -753,7 +756,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     AddToTypeCache(type);
                     if (WriteId(bw, data))
-                        throw new InvalidOperationException(Res.InternalError("Id of recursive object should be unknown at root level."));
+                        Throw.InternalError("Id of recursive object should be unknown at root level.");
                 }
 
                 // stepping to the fist element again and writing collection
@@ -1029,7 +1032,7 @@ namespace KGySoft.Serialization.Binary
 
                     // 2.b.) Complex array
                     if (elementType.IsPointer)
-                        throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
+                        Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                     collectionDataTypes.MoveNextExtracted();
                     WriteCollectionElements(bw, array, collectionDataTypes, elementType);
                     return;
@@ -1092,7 +1095,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                throw new InvalidOperationException(Res.InternalError("A supported collection expected here but other type found: " + collection.GetType()));
+                Throw.InternalError("A supported collection expected here but other type found: " + collection.GetType());
             }
 
             [SecurityCritical]
@@ -1189,7 +1192,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     // at root level writing the id even if the object is value type because the boxed reference can be shared
                     if (WriteId(bw, data))
-                        throw new InvalidOperationException(Res.InternalError("Id of root level object should be unknown."));
+                        Throw.InternalError("Id of root level object should be unknown.");
                 }
 
                 OnSerializing(data);
@@ -1880,7 +1883,7 @@ namespace KGySoft.Serialization.Binary
                     : dataType == DataTypes.RecursiveObjectGraph ? TypeAttributes.RecursiveObjectGraph
                     : dataType == DataTypes.BinarySerializable ? TypeAttributes.BinarySerializable
                     : dataType == DataTypes.RawStruct ? TypeAttributes.RawStruct
-                    : throw new InvalidOperationException(Res.InternalError($"Unexpected DataType: {DataTypeToString(dataType)}"));
+                    : Throw.InternalError<TypeAttributes>($"Unexpected DataType: {DataTypeToString(dataType)}");
 
                 if (attr == TypeAttributes.RecursiveObjectGraph)
                 {

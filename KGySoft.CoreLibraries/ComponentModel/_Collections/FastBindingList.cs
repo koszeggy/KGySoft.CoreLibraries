@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.Serialization;
+
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
@@ -155,7 +156,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == allowNew)
                     return;
                 allowNew = value;
@@ -173,7 +174,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (allowEdit == value)
                     return;
                 allowEdit = value;
@@ -191,7 +192,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (allowRemove == value)
                     return;
                 allowRemove = value;
@@ -346,9 +347,9 @@ namespace KGySoft.ComponentModel
         public T AddNew()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (!AllowNew)
-                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelAddNewDisabled);
             isAddingNew = true;
             try
             {
@@ -372,7 +373,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             ApplySortCore(null, direction);
         }
 
@@ -392,11 +393,11 @@ namespace KGySoft.ComponentModel
         public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.property);
             if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
+                Throw.ArgumentException(Argument.property, Res.ComponentModelInvalidProperty(property, typeof(T)));
             ApplySortCore(property, direction);
         }
 
@@ -416,10 +417,12 @@ namespace KGySoft.ComponentModel
         public void ApplySort(string propertyName, ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+                Throw.ObjectDisposedException();
+            if (propertyName == null)
+                Throw.ArgumentNullException(Argument.propertyName);
+            PropertyDescriptor property = PropertyDescriptors[propertyName];
             if (property == null)
-                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+                Throw.ArgumentException(Argument.property, Res.ComponentModelPropertyNotExists(propertyName, typeof(T)));
             ApplySortCore(property, direction);
         }
 
@@ -450,11 +453,11 @@ namespace KGySoft.ComponentModel
         public int Find(PropertyDescriptor property, object key)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.property);
             if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
+                Throw.ArgumentException(Argument.property, Res.ComponentModelInvalidProperty(property, typeof(T)));
             return FindCore(property, key);
         }
 
@@ -474,10 +477,12 @@ namespace KGySoft.ComponentModel
         public int Find(string propertyName, object key)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+                Throw.ObjectDisposedException();
+            if (propertyName == null)
+                Throw.ArgumentNullException(Argument.propertyName);
+            var property = PropertyDescriptors[propertyName];
             if (property == null)
-                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+                Throw.ArgumentException(Argument.property, Res.ComponentModelPropertyNotExists(propertyName, typeof(T)));
             return FindCore(property, key);
         }
 
@@ -497,7 +502,7 @@ namespace KGySoft.ComponentModel
         public virtual void CancelNew(int itemIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (addNewPos < 0 || addNewPos != itemIndex)
                 return;
 
@@ -512,7 +517,7 @@ namespace KGySoft.ComponentModel
         public virtual void EndNew(int itemIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             // inside from this class this should be called to make sure the index is not sorted.
             if (addNewPos >= 0 && addNewPos == itemIndex)
@@ -525,7 +530,7 @@ namespace KGySoft.ComponentModel
         public void ResetBindings()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             FireListChanged(ListChangedType.Reset, -1);
         }
 
@@ -536,7 +541,7 @@ namespace KGySoft.ComponentModel
         public void ResetItem(int position)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             FireListChanged(ListChangedType.ItemChanged, position);
         }
 
@@ -564,7 +569,9 @@ namespace KGySoft.ComponentModel
         {
             var e = new AddingNewEventArgs<T>();
             OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewFastBindingList(typeof(T)));
+            T newItem = e.NewObject is T t ? t
+                : canAddNew ? (T)Reflector.CreateInstance(typeof(T))
+                : Throw.InvalidOperationException<T>(Res.ComponentModelCannotAddNewFastBindingList(typeof(T)));
             Add(newItem);
 
             // Return new item to caller
@@ -582,7 +589,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
-        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction) => throw new NotSupportedException(Res.NotSupported);
+        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction) => Throw.NotSupportedException(Res.NotSupported);
 
         /// <summary>
         /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads.
@@ -592,7 +599,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
-        protected virtual void RemoveSortCore() => throw new NotSupportedException(Res.NotSupported);
+        protected virtual void RemoveSortCore() => Throw.NotSupportedException(Res.NotSupported);
 
         /// <summary>
         /// Searches for the index of the item that has the specified property descriptor with the specified value.
@@ -608,7 +615,7 @@ namespace KGySoft.ComponentModel
         protected virtual int FindCore(PropertyDescriptor property, object key)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.property);
 
             int length = Count;
             for (int i = 0; i < length; i++)
@@ -659,7 +666,7 @@ namespace KGySoft.ComponentModel
         protected override void SetItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (canRaiseItemChange || CheckConsistency)
             {
@@ -694,7 +701,7 @@ namespace KGySoft.ComponentModel
         protected override void InsertItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             EndNew();
             if (isAddingNew)
@@ -720,11 +727,11 @@ namespace KGySoft.ComponentModel
         protected override void RemoveItem(int index)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!AllowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             if (canRaiseItemChange)
@@ -744,14 +751,14 @@ namespace KGySoft.ComponentModel
         protected override void ClearItems()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (Count == 0)
                 return;
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!AllowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             UnhookPropertyChangedAll();

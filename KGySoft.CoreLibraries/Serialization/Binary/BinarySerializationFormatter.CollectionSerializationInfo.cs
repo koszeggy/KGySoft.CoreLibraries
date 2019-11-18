@@ -288,7 +288,7 @@ namespace KGySoft.Serialization.Binary
                             parameters[i] = isCaseInsensitive;
                             break;
                         default:
-                            throw new InvalidOperationException(Res.InternalError($"Unsupported {nameof(CollectionCtorArguments)}"));
+                            return Throw.InternalError<object>($"Unsupported {nameof(CollectionCtorArguments)}");
                     }
                 }
 
@@ -322,11 +322,14 @@ namespace KGySoft.Serialization.Binary
                                         : typeof(IComparer);
                                 break;
                             default:
-                                throw new InvalidOperationException($"Unsupported {nameof(CollectionCtorArguments)}");
+                                return Throw.InternalError<CreateInstanceAccessor>($"Unsupported {nameof(CollectionCtorArguments)}");
                         }
                     }
 
-                    return CreateInstanceAccessor.GetAccessor(type.GetConstructor(args) ?? throw new InvalidOperationException(Res.ReflectionCtorNotFound(type)));
+                    ConstructorInfo ctor = type.GetConstructor(args);
+                    if (ctor == null)
+                        Throw.InvalidOperationException(Res.ReflectionCtorNotFound(type));
+                    return CreateInstanceAccessor.GetAccessor(ctor);
                 }
 
                 if (ctorCache == null)

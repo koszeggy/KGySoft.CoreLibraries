@@ -327,9 +327,9 @@ namespace KGySoft.ComponentModel
         protected override void InsertItem(int index, ICommandBinding item)
         {
             if (item == null)
-                throw new ArgumentNullException(nameof(item));
+                Throw.ArgumentNullException(Argument.item);
             if (item.IsDisposed)
-                throw new ArgumentException(Res.ComponentModelCannotAddDiposedBinding, nameof(item));
+                Throw.ArgumentException(Argument.item, Res.ComponentModelCannotAddDisposedBinding);
             base.InsertItem(index, item);
         }
 
@@ -342,9 +342,9 @@ namespace KGySoft.ComponentModel
         protected override void SetItem(int index, ICommandBinding item)
         {
             if (item == null)
-                throw new ArgumentNullException(nameof(item));
+                Throw.ArgumentNullException(Argument.item);
             if (item.IsDisposed)
-                throw new ArgumentException(Res.ComponentModelCannotAddDiposedBinding, nameof(item));
+                Throw.ArgumentException(Argument.item, Res.ComponentModelCannotAddDisposedBinding);
             if (this[index] == item)
                 return;
             this[index].Dispose();

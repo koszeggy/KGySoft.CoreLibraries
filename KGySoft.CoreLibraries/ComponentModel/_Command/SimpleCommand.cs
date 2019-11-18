@@ -42,7 +42,12 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SimpleCommand(Action<ICommandState> callback) => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        public SimpleCommand(Action<ICommandState> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = callback;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
@@ -52,7 +57,7 @@ namespace KGySoft.ComponentModel
         public SimpleCommand(Action callback)
         {
             if (callback == null)
-                throw new ArgumentNullException(nameof(callback));
+                Throw.ArgumentNullException(Argument.callback);
             this.callback = _ => callback.Invoke();
         }
 
@@ -71,7 +76,13 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target) => (callback ?? throw new ObjectDisposedException(null, Res.ObjectDisposed)).Invoke(state);
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target)
+        {
+            Action<ICommandState> copy = callback;
+            if (copy == null)
+                Throw.ObjectDisposedException();
+            copy.Invoke(state);
+        }
 
         #endregion
 

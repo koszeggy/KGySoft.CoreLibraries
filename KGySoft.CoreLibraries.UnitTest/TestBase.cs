@@ -330,7 +330,7 @@ namespace KGySoft.CoreLibraries
                 }  
 #endif
 
-                bool simpleEquals = typeof(Encoding).IsAssignableFrom(typeRef);
+                bool simpleEquals = typeRef.IsEnum || typeof(Encoding).IsAssignableFrom(typeRef);
 
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
                 if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
@@ -375,23 +375,23 @@ namespace KGySoft.CoreLibraries
             bool result = true;
             while (enumRef.MoveNext())
             {
-                if (!Check(enumChk.MoveNext(), $"{type}: Reference collection contains more than {index} objects.", errors))
+                if (!Check(enumChk.MoveNext(), $"{type.GetName(TypeNameKind.ShortName)}: Reference collection contains more than {index} objects.", errors))
                     return false;
 
                 var subErrors = new List<string>();
                 result &= CheckDeepEquals(enumRef.Current, enumChk.Current, forceEqualityByMembers, subErrors, checkedObjects);
                 if (subErrors.Count > 0)
 #if NET35
-                    errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
+                    errors?.Add($"{type.GetName(TypeNameKind.ShortName)}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
 #else
-                    errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
+                    errors?.Add($"{type.GetName(TypeNameKind.ShortName)}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
 #endif
 
 
                 index++;
             }
 
-            result &= Check(!enumChk.MoveNext(), $"{type}: Target collection contains more than {index} objects.", errors);
+            result &= Check(!enumChk.MoveNext(), $"{type.GetName(TypeNameKind.ShortName)}: Target collection contains more than {index} objects.", errors);
             return result;
         }
 
@@ -426,11 +426,11 @@ namespace KGySoft.CoreLibraries
 
             // public fields
             foreach (FieldInfo field in typeRef.GetFields(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", field.Get(reference),  field.Get(check), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{field.Name}", field.Get(reference),  field.Get(check), false, errors, checkedObjects);
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
-                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
 
             // collection elements
             var collSrc = reference as IEnumerable;

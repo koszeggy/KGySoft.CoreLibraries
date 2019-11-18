@@ -44,7 +44,11 @@ namespace KGySoft.ComponentModel
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public TargetedCommand(Action<ICommandState, TTarget> callback)
-            => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = callback;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
@@ -54,7 +58,7 @@ namespace KGySoft.ComponentModel
         public TargetedCommand(Action<TTarget> callback)
         {
             if (callback == null)
-                throw new ArgumentNullException(nameof(callback));
+                Throw.ArgumentNullException(Argument.callback);
             this.callback = (_, target) => callback.Invoke(target);
         }
 
@@ -74,7 +78,12 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         void ICommand.Execute(ICommandSource source, ICommandState state, object target)
-            => (callback ?? throw new ObjectDisposedException(null, Res.ObjectDisposed)).Invoke(state, (TTarget)target);
+        {
+            Action<ICommandState, TTarget> copy = callback;
+            if (copy == null)
+                Throw.ObjectDisposedException();
+            copy.Invoke(state, (TTarget)target);
+        }
 
         #endregion
 

@@ -466,7 +466,7 @@ namespace KGySoft.Reflection
             if (field == null)
             {
                 if (throwIfMissing)
-                    throw new InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
+                    Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
                 return;
             }
 #if NETSTANDARD2_0
@@ -633,15 +633,17 @@ namespace KGySoft.Reflection
         {
             if (collection is ICollection c)
                 return c.Count;
-            PropertyAccessor property = GetProperty(collection.GetType(), "Count") // StringDictionary
-                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
+            PropertyAccessor property = GetProperty(collection.GetType(), "Count"); // StringDictionary
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
             return (int)property.Get(collection);
         }
 
         internal static int Capacity([NoEnumeration] this IEnumerable collection)
         {
-            PropertyAccessor property = GetProperty(collection.GetType(), "Capacity") // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
-                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
+            PropertyAccessor property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
             return (int)property.Get(collection);
         }
 
@@ -737,21 +739,28 @@ namespace KGySoft.Reflection
         #region Any Member
         // Note: These methods could be completely replaced by Reflector methods but these use a smaller and more direct cache
 
-        internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern) 
-            => (FieldInfo)GetField(type, null, fieldNamePattern).MemberInfo ?? throw new ArgumentException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
+        internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern)
+        {
+            var field = (FieldInfo)GetField(type, null, fieldNamePattern).MemberInfo;
+            if (field == null)
+                Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
+            return field;
+        }
 
         internal static object GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
         {
             Type type = genTypeDef.GetGenericType(t);
-            PropertyAccessor property = GetProperty(type, propertyName)
-                ?? throw new InvalidOperationException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, genTypeDef));
+            PropertyAccessor property = GetProperty(type, propertyName);
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, genTypeDef));
             return property.Get(null);
         }
 
         internal static object GetPropertyValue(object instance, string propertyName)
         {
-            PropertyAccessor property = GetProperty(instance.GetType(), propertyName)
-                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
+            PropertyAccessor property = GetProperty(instance.GetType(), propertyName);
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
             return property.Get(instance);
         }
 

@@ -145,7 +145,7 @@ namespace KGySoft.CoreLibraries
             {
                 Func<T> func = set[i];
                 if (func == null)
-                    throw new ArgumentException(Res.ArgumentContainsNull, nameof(set));
+                    Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
                 if (comparer.Equals(item, func.Invoke()))
                     return true;
             }
@@ -314,9 +314,11 @@ namespace KGySoft.CoreLibraries
         /// // Hashtable => Dictionary`2: [1, One], [Black, x] => [DarkBlue, One], [Black, x]]]></code>
         /// </example>
         public static TTarget Convert<TTarget>(this object obj, CultureInfo culture = null)
-            => ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object result, out Exception error) && (result is TTarget || typeof(TTarget).CanAcceptValue(result))
-                ? (TTarget)result
-                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), nameof(obj), error);
+        {
+            if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object result, out Exception error) || (!(result is TTarget) && !typeof(TTarget).CanAcceptValue(result)))
+                Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), error);
+            return (TTarget)result;
+        }
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
@@ -336,9 +338,11 @@ namespace KGySoft.CoreLibraries
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
-            => ObjectConverter.TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)
-                ? result
-                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(targetType), nameof(obj), error);
+        {
+            if (!ObjectConverter.TryConvert(obj, targetType, culture, out object result, out Exception error) || !targetType.CanAcceptValue(result))
+                Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(targetType), error);
+            return result;
+        }
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.

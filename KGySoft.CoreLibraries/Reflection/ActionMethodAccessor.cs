@@ -21,6 +21,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 using System.Security;
 
 #endregion
@@ -54,6 +57,9 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public override object Invoke(object instance, params object[] parameters)
         {
             try
@@ -63,7 +69,8 @@ namespace KGySoft.Reflection
             }
             catch (VerificationException e) when (IsSecurityConflict(e))
             {
-                throw new NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+                return default;
             }
         }
 
@@ -76,14 +83,14 @@ namespace KGySoft.Reflection
             var methodBase = (MethodBase)MemberInfo;
             Type declaringType = methodBase.DeclaringType;
             if (!methodBase.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             var method  = methodBase as MethodInfo;
             if (method?.ReturnType.IsPointer == true)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
 #if NETSTANDARD2_0
             if (method == null)
-                throw new InvalidOperationException(Res.InternalError($"Constructors cannot be invoked by {nameof(ActionMethodAccessor)} in .NET Standard 2.0"));
+                Throw.InternalError($"Constructors cannot be invoked by {nameof(ActionMethodAccessor)} in .NET Standard 2.0");
 #else
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 

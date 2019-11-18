@@ -227,7 +227,7 @@ namespace KGySoft.ComponentModel
         {
             Type type = GetType();
             if (type.GetDefaultConstructor() == null)
-                throw new InvalidOperationException(Res.ComponentModelObservableObjectHasNoDefaultCtor(type));
+                Throw.InvalidOperationException(Res.ComponentModelObservableObjectHasNoDefaultCtor(type));
             ObservableObjectBase clone = (ObservableObjectBase)Reflector.CreateInstance(type);
             clone.properties = CloneProperties().AsThreadSafe();
             clone.isModified = isModified;
@@ -265,7 +265,7 @@ namespace KGySoft.ComponentModel
         internal bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangedEvent)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName));
+                Throw.ArgumentNullException(Argument.propertyName);
 
             if (MissingProperty.Equals(newValue))
                 return ResetProperty(propertyName, invokeChangedEvent);
@@ -348,12 +348,12 @@ namespace KGySoft.ComponentModel
             if (TryGetPropertyValue(propertyName, out object value))
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new InvalidOperationException(Res.ComponentModelReturnedTypeInvalid(typeof(T)));
+                    Throw.InvalidOperationException(Res.ComponentModelReturnedTypeInvalid(typeof(T)));
                 return (T)value;
             }
 
             if (createInitialValue == null)
-                throw new InvalidOperationException(Res.ComponentModelPropertyValueNotExist(propertyName));
+                Throw.InvalidOperationException(Res.ComponentModelPropertyValueNotExist(propertyName));
             T result = createInitialValue.Invoke();
             Set(result, false, propertyName);
             return result;
@@ -396,12 +396,12 @@ namespace KGySoft.ComponentModel
         protected bool Set(object value, bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName));
+                Throw.ArgumentNullException(Argument.propertyName);
             if (MissingProperty.Equals(value))
                 return ResetProperty(propertyName, invokeChangedEvent);
 
             if (!CanSetProperty(propertyName, value))
-                throw new InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
+                Throw.InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
 
             bool exists = properties.TryGetValue(propertyName, out object oldValue);
             if (exists && Equals(value, oldValue))
@@ -426,7 +426,7 @@ namespace KGySoft.ComponentModel
         protected bool ResetProperty(string propertyName, bool invokeChangedEvent = true)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName));
+                Throw.ArgumentNullException(Argument.propertyName);
 
             if (!properties.TryGetValue(propertyName, out object oldValue))
                 return false;
@@ -501,7 +501,7 @@ namespace KGySoft.ComponentModel
         protected internal virtual void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
             if (e == null)
-                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.e);
             if (AffectsModifiedState(e.PropertyName))
                 SetModified(true);
             if (suspendCounter <= 0)
@@ -515,9 +515,9 @@ namespace KGySoft.ComponentModel
         private protected bool TryGetPropertyValue(string propertyName, out object value)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName));
+                Throw.ArgumentNullException(Argument.propertyName);
             if (!CanGetProperty(propertyName))
-                throw new InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
+                Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
             return properties.TryGetValue(propertyName, out value);
         }
 

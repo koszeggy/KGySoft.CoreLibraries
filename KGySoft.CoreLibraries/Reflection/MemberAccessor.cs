@@ -21,11 +21,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Security;
-
 #if !NETSTANDARD2_0
 using System.Collections.Generic; 
 using System.Diagnostics.CodeAnalysis; 
-using System.Reflection.Emit; 
+using System.Reflection.Emit;
+#endif
+#if !NET35
+using System.Runtime.CompilerServices;
 #endif
 
 using KGySoft.Collections;
@@ -92,11 +94,13 @@ namespace KGySoft.Reflection
         /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
         private protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
         {
-            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
+            if (member == null)
+                Throw.ArgumentNullException(Argument.member);
+            MemberInfo = member;
             ParameterTypes = parameterTypes ?? Type.EmptyTypes;
             Type pointerType = ParameterTypes.FirstOrDefault(p => p.IsPointer);
             if (pointerType != null)
-                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerType));
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerType));
         }
 
         #endregion
@@ -112,6 +116,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="memberInfo">The <see cref="MemberInfo"/> for which the accessor is to be obtained.</param>
         /// <returns>A <see cref="MemberAccessor"/> instance for the specified <paramref name="memberInfo"/>.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo) => accessorCache[memberInfo];
 
         #endregion
@@ -166,7 +173,7 @@ namespace KGySoft.Reflection
             if (field != null)
                 return FieldAccessor.CreateAccessor(field);
 
-            throw new NotSupportedException(Res.ReflectionNotSupportedMemberType(member.MemberType));
+            return Throw.NotSupportedException<MemberAccessor>(Res.ReflectionNotSupportedMemberType(member.MemberType));
         }
 
         #endregion
@@ -333,14 +340,14 @@ namespace KGySoft.Reflection
             #endregion
 
             if (methodBase == null)
-                throw new ArgumentNullException(nameof(methodBase), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.methodBase);
             Type declaringType = methodBase.DeclaringType;
             if (declaringType == null)
-                throw new ArgumentException(Res.ReflectionDeclaringTypeExpected, nameof(methodBase));
+                Throw.ArgumentException(Argument.methodBase, Res.ReflectionDeclaringTypeExpected);
             MethodInfo method = methodBase as MethodInfo;
             ConstructorInfo ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)
-                throw new ArgumentException(Res.ReflectionInvalidMethodBase, nameof(methodBase));
+                Throw.ArgumentException(Argument.methodBase, Res.ReflectionInvalidMethodBase);
 
             bool treatCtorAsMethod = (options & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
             Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? Reflector.VoidType : declaringType;
@@ -390,7 +397,7 @@ namespace KGySoft.Reflection
             {
                 PropertyInfo pi = MemberInfo as PropertyInfo;
                 if (pi == null)
-                    throw new InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
+                    Throw.InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
                 ilGenerator.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
                 ilGenerator.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
             }

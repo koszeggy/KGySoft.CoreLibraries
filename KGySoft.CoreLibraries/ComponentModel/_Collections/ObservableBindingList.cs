@@ -267,7 +267,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == raiseItemChangedEvents)
                     return;
                 bool raiseChange = value != RaiseItemChangedEvents;
@@ -288,7 +288,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == allowNew)
                     return;
                 bool raiseChange = value != AllowNew;
@@ -312,7 +312,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == allowEdit)
                     return;
                 bool raiseChange = value != AllowEdit;
@@ -336,7 +336,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == allowRemove)
                     return;
                 bool raiseChange = value != AllowRemove;
@@ -359,7 +359,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == raiseListChangedEvents)
                     return;
 
@@ -378,7 +378,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 if (value == raiseCollectionChangedEvents)
                     return;
 
@@ -480,9 +480,9 @@ namespace KGySoft.ComponentModel
         public T AddNew()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (!AllowNew)
-                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelAddNewDisabled);
 
             if (Items is IBindingList bindingList)
             {
@@ -499,7 +499,10 @@ namespace KGySoft.ComponentModel
                 return result;
             }
 
-            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewObservableBindingList(typeof(T)));
+            if (!canAddNew)
+                Throw.InvalidOperationException(Res.ComponentModelCannotAddNewObservableBindingList(typeof(T)));
+
+            T newItem = (T)Reflector.CreateInstance(typeof(T));
             Add(newItem);
             addNewPos = Count - 1;
             return newItem;
@@ -516,7 +519,7 @@ namespace KGySoft.ComponentModel
         public virtual void CancelNew(int itemIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             if (Items is ICancelAddNew cancelAddNew)
             {
                 cancelAddNew.CancelNew(itemIndex);
@@ -540,7 +543,7 @@ namespace KGySoft.ComponentModel
         public virtual void EndNew(int itemIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             if (Items is ICancelAddNew cancelAddNew)
             {
@@ -562,11 +565,11 @@ namespace KGySoft.ComponentModel
         public void Move(int oldIndex, int newIndex)
         {
             if (Items.IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             if (oldIndex < 0 || oldIndex >= Count)
-                throw new ArgumentOutOfRangeException(nameof(oldIndex), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.oldIndex);
             if (newIndex < 0 || newIndex >= Count)
-                throw new ArgumentOutOfRangeException(nameof(newIndex), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.newIndex);
             MoveItem(oldIndex, newIndex);
         }
 
@@ -577,7 +580,7 @@ namespace KGySoft.ComponentModel
         public void ResetBindings()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             FireCollectionReset(false, false);
         }
 
@@ -590,7 +593,7 @@ namespace KGySoft.ComponentModel
         public void ResetItem(int position)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
             FireItemChanged(position, this[position], null);
         }
 
@@ -638,7 +641,7 @@ namespace KGySoft.ComponentModel
         protected override void SetItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             T originalItem = this[index];
             if (ReferenceEquals(originalItem, item))
@@ -683,7 +686,7 @@ namespace KGySoft.ComponentModel
         protected override void InsertItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             CheckReentrancy();
             EndNew();
@@ -715,13 +718,13 @@ namespace KGySoft.ComponentModel
         protected override void RemoveItem(int index)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             CheckReentrancy();
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             T removedItem = this[index];
@@ -751,7 +754,7 @@ namespace KGySoft.ComponentModel
         protected override void ClearItems()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             CheckReentrancy();
 
@@ -760,7 +763,7 @@ namespace KGySoft.ComponentModel
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+                Throw.InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             if (HookItemsPropertyChanged)
@@ -794,7 +797,7 @@ namespace KGySoft.ComponentModel
         protected virtual void MoveItem(int oldIndex, int newIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                Throw.ObjectDisposedException();
 
             CheckReentrancy();
             EndNew();
@@ -862,9 +865,8 @@ namespace KGySoft.ComponentModel
             if (monitor.Busy)
             {
                 // we can allow changes if there's only one listener
-                if ((collectionChangedHandler?.GetInvocationList().Length ?? 0)
-                    + (listChangedHandler?.GetInvocationList().Length ?? 0) > 1)
-                    throw new InvalidOperationException(Res.ComponentModelReentrancyNotAllowed);
+                if ((collectionChangedHandler?.GetInvocationList().Length ?? 0) + (listChangedHandler?.GetInvocationList().Length ?? 0) > 1)
+                    Throw.InvalidOperationException(Res.ComponentModelReentrancyNotAllowed);
             }
         }
 
@@ -1207,11 +1209,11 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).ApplySort(property, direction);
-        int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? throw new NotSupportedException(Res.NotSupported);
+        void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).ApplySort(property, direction);
+        int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? Throw.NotSupportedException<int>();
         void IBindingList.AddIndex(PropertyDescriptor property) => AsBindingList?.AddIndex(property);
         void IBindingList.RemoveIndex(PropertyDescriptor property) => AsBindingList?.RemoveIndex(property);
-        void IBindingList.RemoveSort() => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).RemoveSort();
+        void IBindingList.RemoveSort() => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).RemoveSort();
         object IBindingList.AddNew() => AddNew();
 
         #endregion

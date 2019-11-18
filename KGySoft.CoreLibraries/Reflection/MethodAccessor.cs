@@ -19,6 +19,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
+#if !NET35
+using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
@@ -98,7 +101,13 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the method invoker delegate.
         /// </summary>
-        private protected Delegate Invoker => invoker ??= CreateInvoker();
+        private protected Delegate Invoker
+        {
+#if !NET35
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+            get => invoker ??= CreateInvoker();
+        }
 
         #endregion
 
@@ -126,8 +135,15 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="MethodAccessor"/> instance that can be used to invoke the method.</returns>
+#if !NET35
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static MethodAccessor GetAccessor(MethodInfo method)
-            => (MethodAccessor)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.ArgumentNull));
+        {
+            if (method == null)
+                Throw.ArgumentNullException(Argument.method);
+            return (MethodAccessor)GetCreateAccessor(method);
+        }
 
         #endregion
 

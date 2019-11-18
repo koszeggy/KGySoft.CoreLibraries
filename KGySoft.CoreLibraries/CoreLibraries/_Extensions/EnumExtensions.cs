@@ -163,6 +163,19 @@ namespace KGySoft.CoreLibraries
         {
             return Enum<TEnum>.GetFlags(flags, onlyDefinedValues);
         }
+
+        /// <summary>
+        /// Gets the number of bits set in <paramref name="value"/>.
+        /// It is not checked, whether all flags are defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>The number of bits set in <paramref name="value"/>.</returns>
+        public static int GetFlagsCount<TEnum>(this TEnum value)
+            where TEnum : struct, Enum
+        {
+            return Enum<TEnum>.GetFlagsCount(value);
+        }
+
 #pragma warning restore CS3024 // Constraint type is not CLS-compliant
 
         /// <summary>

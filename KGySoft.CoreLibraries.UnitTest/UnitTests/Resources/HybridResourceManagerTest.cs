@@ -285,7 +285,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Source = ResourceManagerSources.CompiledOnly;
             Assert.Throws<InvalidOperationException>(() => manager.GetStream(resName, inv));
             manager.Source = ResourceManagerSources.ResXOnly;
-            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType.FullName));
+            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
 
             // but when SafeMode is true, a string stream is returned
             manager.SafeMode = true;

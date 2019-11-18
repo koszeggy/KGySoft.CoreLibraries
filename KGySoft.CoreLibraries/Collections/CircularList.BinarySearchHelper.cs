@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -45,7 +46,7 @@ namespace KGySoft.Collections
             while (lo <= hi)
             {
                 int i = lo + ((hi - lo) >> 1);
-                int order = comparer.Compare(list[i], value);
+                int order = comparer.Compare(list.ElementAt(i), value);
 
                 if (order == 0)
                     return i;
@@ -72,9 +73,11 @@ namespace KGySoft.Collections
             {
                 return BinarySearchWithComparer(list, index, length, value, comparer);
             }
+#pragma warning disable CA1031 // false alarm, exception is re-thrown
             catch (Exception e)
+#pragma warning restore CA1031 // false alarm, exception is re-thrown
             {
-                throw new InvalidOperationException(Res.CircularListComparerFail, e);
+                return Throw.InvalidOperationException<int>(Res.CircularListComparerFail, e);
             }
         }
 

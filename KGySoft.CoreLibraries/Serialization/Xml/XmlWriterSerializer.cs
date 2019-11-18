@@ -23,7 +23,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -39,6 +38,8 @@ namespace KGySoft.Serialization.Xml
 {
     internal class XmlWriterSerializer : XmlSerializerBase
     {
+#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
+
         #region SerializeObjectContext Struct
 
         private struct SerializeObjectContext
@@ -98,7 +99,7 @@ namespace KGySoft.Serialization.Xml
         public void Serialize(XmlWriter writer, object obj)
         {
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.writer);
 
             writer.WriteStartElement(XmlSerializer.ElementObject);
             if (obj == null)
@@ -130,9 +131,9 @@ namespace KGySoft.Serialization.Xml
         public void SerializeContent(XmlWriter writer, object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.obj);
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.writer);
             Type objType = obj.GetType();
             try
             {
@@ -149,9 +150,9 @@ namespace KGySoft.Serialization.Xml
                 if (obj is IEnumerable enumerable)
                 {
                     if (!objType.IsCollection())
-                        throw new NotSupportedException(Res.XmlSerializationSerializingNonPopulatableCollectionNotSupported(objType));
+                        Throw.NotSupportedException(Res.XmlSerializationSerializingNonPopulatableCollectionNotSupported(objType));
                     if (!objType.IsReadWriteCollection(obj))
-                        throw new NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
+                        Throw.NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
 
                     SerializeCollection(enumerable, objType.GetCollectionElementType(), false, writer, DesignerSerializationVisibility.Visible);
                     return;
@@ -226,7 +227,7 @@ namespace KGySoft.Serialization.Xml
 
                 // non-primitive type array or compact serialization is not enabled
                 if (elementType.IsPointer)
-                    throw new NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
+                    Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
                 foreach (var item in array)
                 {
                     writer.WriteStartElement(XmlSerializer.ElementItem);
@@ -337,8 +338,8 @@ namespace KGySoft.Serialization.Xml
                     }
 
                     if (ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
-                        throw new SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
-                    throw new SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
+                        Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                    Throw.SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
                 }
 
                 // 2.) recursive serialization of any object, if requested
@@ -424,7 +425,7 @@ namespace KGySoft.Serialization.Xml
                 }
                 catch (Exception e)
                 {
-                    throw new SerializationException(Res.XmlSerializationBinarySerializationFailed(obj.GetType(), Options, e.Message), e);
+                    Throw.SerializationException(Res.XmlSerializationBinarySerializationFailed(obj.GetType(), Options, e.Message), e);
                 }
             }
 
@@ -440,7 +441,7 @@ namespace KGySoft.Serialization.Xml
                 UnregisterSerializedObject(obj);
             }
 
-            throw new SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
+            Throw.SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
         private void SerializeMembers(object obj, XmlWriter writer, DesignerSerializationVisibility visibility)

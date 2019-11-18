@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+
 using NUnit.Framework;
 
 #endregion
@@ -26,7 +27,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     [TestFixture]
     public class EnumPerformanceTest
     {
-        #region Enumerations
+#region Enumerations
 
         private enum NonFlagsEnum : long
         {
@@ -67,9 +68,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             AlphaBeta = Alpha | Beta
         }
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
         [Test]
         public void GetNamesTest() => new PerformanceTest { TestName = "GetName(s)", Iterations = 1000000 }
@@ -99,7 +100,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             .DumpResults(Console.Out);
 
         [Test]
-        public void ToStringTest() => new PerformanceTest<string> { TestName = "ToString", Iterations = 100000 }
+        public void ToStringTest() => new PerformanceTest<string> { TestName = "ToString", Iterations = 1_000_000 }
             .AddCase(() => NonFlagsEnum.Alpha.ToString(), $"{nameof(NonFlagsEnum)}.{nameof(NonFlagsEnum.Alpha)}.ToString()")
             .AddCase(() => ((NonFlagsEnum)100).ToString(), $"(({nameof(NonFlagsEnum)})100).ToString()")
             .AddCase(() => NonFlagsEnum.AlphaBeta.ToString(), $"{nameof(NonFlagsEnum)}.{nameof(NonFlagsEnum.AlphaBeta)}.ToString()")
@@ -119,12 +120,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             .AddCase(() => Enum<FlagsEnum>.ToString((FlagsEnum)100), $"Enum<{nameof(FlagsEnum)}>.ToString(({nameof(FlagsEnum)})100)")
             .AddCase(() => Enum<FlagsEnum>.ToString(FlagsEnum.AlphaBeta), $"Enum<{nameof(FlagsEnum)}>.ToString({nameof(FlagsEnum)}.{nameof(FlagsEnum.AlphaBeta)})")
             .AddCase(() => Enum<FlagsEnum>.ToString(FlagsEnum.Beta | FlagsEnum.Gamma), $"Enum<{nameof(FlagsEnum)}>.ToString({nameof(FlagsEnum)}.{nameof(FlagsEnum.Beta)} | {nameof(FlagsEnum)}.{nameof(FlagsEnum.Gamma)})")
+            .AddCase(() => Enum<FlagsEnum>.ToString(FlagsEnum.Beta | FlagsEnum.Gamma, EnumFormattingOptions.DistinctFlags), $"Enum<{nameof(FlagsEnum)}>.ToString({nameof(FlagsEnum)}.{nameof(FlagsEnum.Beta)} | {nameof(FlagsEnum)}.{nameof(FlagsEnum.Gamma)}, {nameof(EnumFormattingOptions)}.{nameof(EnumFormattingOptions.DistinctFlags)})")
 
             .DoTest()
             .DumpResults(Console.Out);
 
         [Test]
-        public void ParseTest() => new PerformanceTest { TestName = "Parse", Iterations = 100000 }
+        public void ParseTest() => new PerformanceTest { TestName = "Parse", Iterations = 1_000_000 }
             .AddCase(() => Enum.Parse(typeof(FlagsEnum), nameof(FlagsEnum.Alpha)), $"System.Enum.Parse(typeof({nameof(FlagsEnum)}), \"{nameof(FlagsEnum.Alpha)}\")")
             .AddCase(() => Enum<FlagsEnum>.Parse(nameof(FlagsEnum.Alpha)), $"KGySoft.CoreLibraries.Enum<{nameof(FlagsEnum)}>.Parse(\"{nameof(FlagsEnum.Alpha)}\")")
 

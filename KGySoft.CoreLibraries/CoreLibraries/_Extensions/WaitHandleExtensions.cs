@@ -46,10 +46,10 @@ namespace KGySoft.CoreLibraries
         /// <param name="cancellationToken">A token for cancellation. This parameter is optional.
         /// <br/>Default value: <see cref="CancellationToken.None">CancellationToken.None</see></param>
         /// <returns><see langword="true"/>, if the specified <paramref name="handle"/> receives a signal before timing out or canceling; otherwise, <see langword="false"/>.</returns>
-        public static async Task<bool> WaitOneAsync([NotNull] this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
+        public static async Task<bool> WaitOneAsync(this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
         {
             if (handle == null)
-                throw new ArgumentNullException(nameof(handle), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.handle);
             if (cancellationToken.IsCancellationRequested)
                 return false;
             RegisteredWaitHandle registeredHandle = null;

@@ -18,7 +18,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -36,6 +35,8 @@ namespace KGySoft.CoreLibraries
     public static partial class StringExtensions
     {
         #region Methods
+        
+        #region Public Methods
 
         #region Misc Tools
 
@@ -63,7 +64,7 @@ namespace KGySoft.CoreLibraries
         public static Regex ToWildcardsRegex(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
             return new Regex("^" + Regex.Escape(s).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
         }
 
@@ -78,9 +79,9 @@ namespace KGySoft.CoreLibraries
         public static string Repeat(this string s, int count)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             if (s.Length == 0 || count == 1)
                 return s;
@@ -113,7 +114,7 @@ namespace KGySoft.CoreLibraries
         public static byte[] ParseHexBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
 
             if (string.IsNullOrEmpty(separator))
                 return ParseHexBytes(s);
@@ -138,13 +139,13 @@ namespace KGySoft.CoreLibraries
         public static byte[] ParseHexBytes(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
 
             if (s.Length == 0)
                 return Reflector.EmptyArray<byte>();
 
             if (s.Length % 2 != 0)
-                throw new ArgumentException(Res.StringExtensionsSourceLengthNotEven, nameof(s));
+                Throw.ArgumentException(Argument.s, Res.StringExtensionsSourceLengthNotEven);
 
             byte[] result = new byte[s.Length >> 1];
             for (int i = 0; i < (s.Length >> 1); i++)
@@ -166,10 +167,10 @@ namespace KGySoft.CoreLibraries
         public static byte[] ParseDecimalBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
 
             if (String.IsNullOrEmpty(separator))
-                throw new ArgumentException(Res.StringExtensionsSeparatorNullOrEmpty, nameof(separator));
+                Throw.ArgumentException(Argument.separator, Res.StringExtensionsSeparatorNullOrEmpty);
 
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
@@ -244,9 +245,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
         public static T Parse<T>(this string s, CultureInfo culture = null)
-            => Parser.TryParse(s, typeof(T), culture, out object value, out Exception error) && typeof(T).CanAcceptValue(value)
-                ? (T)value
-                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, typeof(T)), nameof(s), error);
+        {
+            if (!Parser.TryParse(s, typeof(T), culture, out object value, out Exception error) || !typeof(T).CanAcceptValue(value))
+                Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s, typeof(T)), error);
+            return (T)value;
+        }
 
         /// <summary>
         /// Parses an object from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
@@ -263,9 +266,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object Parse(this string s, Type type, CultureInfo culture = null)
-            => Parser.TryParse(s, type, culture, out object value, out Exception error) && type.CanAcceptValue(value)
-                ? value
-                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, type), nameof(s), error);
+        {
+            if (!Parser.TryParse(s, type, culture, out object value, out Exception error) || !type.CanAcceptValue(value))
+                Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s, type), error);
+            return value;
+        }
 
         /// <summary>
         /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
@@ -343,11 +348,11 @@ namespace KGySoft.CoreLibraries
         public static bool Contains(this string s, string value, StringComparison comparison)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.value);
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
             return s.IndexOf(value, comparison) >= 0;
         }
@@ -385,7 +390,7 @@ namespace KGySoft.CoreLibraries
         public static bool EqualsAny(this string s, StringComparer comparer, params string[] set)
         {
             if (comparer == null)
-                throw new ArgumentNullException(nameof(comparer), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.comparer);
 
             return set != null && set.Any(t => comparer.Equals(s, t));
         }
@@ -401,7 +406,7 @@ namespace KGySoft.CoreLibraries
         public static bool EqualsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
             return set != null && set.Any(str => String.Equals(s, str, comparison));
         }
@@ -436,16 +441,18 @@ namespace KGySoft.CoreLibraries
         public static int IndexOfAny(this string s, StringComparison comparison, params string[] set)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
             if (set == null)
-                throw new ArgumentNullException(nameof(set), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.set);
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
             var index = -1;
             foreach (var str in set)
             {
-                int pos = s.IndexOf(str ?? throw new ArgumentException(Res.ArgumentContainsNull, nameof(set)), comparison);
+                if (str == null)
+                    Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                int pos = s.IndexOf(str, comparison);
                 if (pos == 0)
                     return 0;
                 if (pos >= 0 && pos < index)
@@ -483,19 +490,37 @@ namespace KGySoft.CoreLibraries
         public static bool ContainsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.s);
             if (set == null)
-                throw new ArgumentNullException(nameof(set), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.set);
 
             foreach (var str in set)
             {
-                if (s.IndexOf(str ?? throw new ArgumentException(Res.ArgumentContainsNull, nameof(set)), comparison) >= 0)
+                if (str == null)
+                    Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                if (s.IndexOf(str, comparison) >= 0)
                     return true;
             }
 
             return false;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static unsafe void CopyToAndAdvance(this string source, char** targetRef)
+        {
+            int len = source.Length;
+            char* target = *targetRef;
+            for (int i = 0; i < len; i++)
+                target[i] = source[i];
+
+            *targetRef += len;
         }
 
         #endregion

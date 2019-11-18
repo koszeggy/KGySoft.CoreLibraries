@@ -59,7 +59,7 @@ namespace KGySoft.Serialization
         internal ArrayIndexer(Array array)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.array);
 
             totalLength = array.Length;
             int rank = array.Rank;

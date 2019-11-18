@@ -17,6 +17,7 @@
 
 #region Usings
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -67,7 +68,7 @@ namespace KGySoft.Reflection.WinApi
                 var aInfo = new ASSEMBLY_INFO
                 {
                     cchBuf = bufSize,
-                    currentAssemblyPath = new string('\0', bufSize)
+                    currentAssemblyPath = new String('\0', bufSize)
                 };
 
                 int hresult = assemblyCache.QueryAssemblyInfo(0, name, ref aInfo);

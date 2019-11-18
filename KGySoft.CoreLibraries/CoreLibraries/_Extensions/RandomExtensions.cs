@@ -124,6 +124,8 @@ namespace KGySoft.CoreLibraries
     /// </example>
     public static partial class RandomExtensions
     {
+        // ReSharper disable CompareOfFloatsByEqualityOperator - in this class this is intended
+
         #region Constants
 
         private const string digits = "0123456789";
@@ -155,9 +157,9 @@ namespace KGySoft.CoreLibraries
         public static byte[] NextBytes(this Random random, int length)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (length < 0)
-                throw new ArgumentOutOfRangeException(nameof(length), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (length == 0)
                 return Reflector.EmptyArray<byte>();
 
@@ -179,7 +181,7 @@ namespace KGySoft.CoreLibraries
         public static bool NextBoolean(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             return (random.Next() & 1) == 0;
         }
 
@@ -463,12 +465,12 @@ namespace KGySoft.CoreLibraries
         public static long NextInt64(this Random random, long minValue, long maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (minValue == maxValue)
                 return minValue;
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = (ulong)(maxValue - minValue);
             if (inclusiveUpperBound)
@@ -528,12 +530,12 @@ namespace KGySoft.CoreLibraries
         public static ulong NextUInt64(this Random random, ulong minValue, ulong maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (minValue == maxValue)
                 return minValue;
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = maxValue - minValue;
             if (inclusiveUpperBound)
@@ -567,7 +569,7 @@ namespace KGySoft.CoreLibraries
         public static float NextSingle(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
 
             return (float)random.NextDouble();
         }
@@ -615,9 +617,8 @@ namespace KGySoft.CoreLibraries
             float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
 
             // both are the same infinity
-            if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue)
-                || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
-                throw new ArgumentOutOfRangeException(nameof(minValue), Res.ArgumentOutOfRange);
+            if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue) || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
 
             return (float)random.NextDouble(AdjustValue(minValue), AdjustValue(maxValue), scale);
         }
@@ -664,18 +665,15 @@ namespace KGySoft.CoreLibraries
         public static double NextDouble(this Random random, double minValue, double maxValue, FloatScale scale = FloatScale.Auto)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
-
-            // both are the same infinity
-            if ((Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue) || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
-                // or any of them is NaN
-                || Double.IsNaN(minValue) || Double.IsNaN(maxValue)
-                // or max < min
-                || maxValue < minValue)
-                throw new ArgumentOutOfRangeException(Double.IsNaN(maxValue) || maxValue < minValue ? nameof(maxValue) : nameof(minValue), maxValue < minValue ? Res.MaxValueLessThanMinValue : Res.ArgumentOutOfRange);
-
+                Throw.ArgumentNullException(Argument.random);
+            if (Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue) || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (Double.IsNaN(minValue) || Double.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Double.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
             if (!Enum<FloatScale>.IsDefined(scale))
-                throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
             return DoGetNextDouble(random, minValue, maxValue, scale);
         }
@@ -689,7 +687,7 @@ namespace KGySoft.CoreLibraries
         public static decimal NextDecimal(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
 
             decimal result;
             do
@@ -743,13 +741,13 @@ namespace KGySoft.CoreLibraries
         public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue, FloatScale scale = FloatScale.Auto)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             if (!Enum<FloatScale>.IsDefined(scale))
-                throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
             if (minValue == maxValue)
                 return minValue;
@@ -839,15 +837,15 @@ namespace KGySoft.CoreLibraries
         public static string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(Argument.minLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (maxLength < minLength)
-                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
+                Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.MaxLengthLessThanMinLength);
             if (allowedCharacters == null)
-                throw new ArgumentNullException(nameof(allowedCharacters), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.allowedCharacters);
             if (allowedCharacters.Length == 0)
-                throw new ArgumentException(Res.ArgumentEmpty, nameof(allowedCharacters));
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
 
             return GenerateString(random, random.NextInt32(minLength, maxLength, true), allowedCharacters);
         }
@@ -870,13 +868,13 @@ namespace KGySoft.CoreLibraries
         public static string NextString(this Random random, int minLength = 4, int maxLength = 10, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(Argument.minLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (maxLength < minLength)
-                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
+                Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.MaxLengthLessThanMinLength);
             if (!Enum<StringCreation>.IsDefined(strategy))
-                throw new ArgumentOutOfRangeException(nameof(strategy), Res.EnumOutOfRange(strategy));
+                Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
 
             int length = random.NextInt32(minLength, maxLength, true);
             if (length == 0)
@@ -928,7 +926,7 @@ namespace KGySoft.CoreLibraries
                     return WordGenerator.GenerateSentence(random, length);
 
                 default:
-                    throw new InvalidOperationException(Res.InternalError(nameof(strategy)));
+                    return Throw.InternalError<string>($"Unexpected strategy: {strategy}");
             }
         }
 
@@ -954,11 +952,11 @@ namespace KGySoft.CoreLibraries
         public static DateTime NextDateTime(this Random random, DateTime? minValue = null, DateTime? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             var minTicks = minValue.GetValueOrDefault(DateTime.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(DateTime.MaxValue).Ticks;
             if (maxTicks < minTicks)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             return new DateTime(random.NextInt64(minTicks, maxTicks, true));
         }
@@ -984,11 +982,11 @@ namespace KGySoft.CoreLibraries
         public static DateTime NextDate(this Random random, DateTime? minValue = null, DateTime? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             var minDate = minValue.GetValueOrDefault(DateTime.MinValue).Date;
             var maxDate = maxValue.GetValueOrDefault(DateTime.MaxValue).Date;
             if (maxDate < minDate)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             int range = (maxDate - minDate).Days;
             return minDate.AddDays(random.NextInt32(range, true));
@@ -1009,11 +1007,11 @@ namespace KGySoft.CoreLibraries
         {
             const int maximumOffset = 14 * 60;
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             var minDateTime = minValue?.UtcDateTime ?? DateTime.MinValue;
             var maxDateTime = maxValue?.UtcDateTime ?? DateTime.MaxValue;
             if (maxDateTime < minDateTime)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             var result = random.NextDateTime(minDateTime, maxDateTime);
             double diffInMinutes;
@@ -1036,12 +1034,12 @@ namespace KGySoft.CoreLibraries
         public static TimeSpan NextTimeSpan(this Random random, TimeSpan? minValue = null, TimeSpan? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
 
             var minTicks = minValue.GetValueOrDefault(TimeSpan.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(TimeSpan.MaxValue).Ticks;
             if (maxTicks < minTicks)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             return new TimeSpan(random.NextInt64(minTicks, maxTicks, true));
         }
@@ -1062,7 +1060,7 @@ namespace KGySoft.CoreLibraries
             where TEnum : struct, Enum
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             return Enum<TEnum>.GetValues().GetRandomElement(random, true);
         }
 
@@ -1085,7 +1083,7 @@ namespace KGySoft.CoreLibraries
         public static Guid NextGuid(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
 
             var result = random.NextBytes(16);
             result[6] = (byte)((result[6] & 0x0F) | 0x40); // the high nibble of 6th byte is 4
@@ -1143,7 +1141,7 @@ namespace KGySoft.CoreLibraries
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             return (T)ObjectGenerator.GenerateObject(random, typeof(T), settings ?? GenerateObjectSettings.DefaultSettings);
         }
 
@@ -1166,9 +1164,9 @@ namespace KGySoft.CoreLibraries
         public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.random);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.type);
             return ObjectGenerator.GenerateObject(random, type, settings ?? GenerateObjectSettings.DefaultSettings);
         }
 

@@ -367,14 +367,14 @@ namespace KGySoft.Resources
                 get
                 {
                     if (state != EnumeratorStates.Enumerating)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                     if (mode == ResXEnumeratorModes.Aliases)
                         return new DictionaryEntry(key, value.ValueInternal);
 
                     return owner.safeMode
                         ? new DictionaryEntry(key, value)
-                        : new DictionaryEntry(key, value.GetValue(owner.typeResolver, owner.basePath, false));
+                        : new DictionaryEntry(key, value.GetValue(owner.typeResolver, owner.basePath));
                 }
             }
 
@@ -383,7 +383,7 @@ namespace KGySoft.Resources
                 get
                 {
                     if (state != EnumeratorStates.Enumerating)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                     return key;
                 }
@@ -639,7 +639,8 @@ namespace KGySoft.Resources
                 switch (state)
                 {
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                        Throw.ObjectDisposedException();
+                        break;
                     default:
                         basePath = value;
                         break;
@@ -685,7 +686,7 @@ namespace KGySoft.Resources
             set
             {
                 if (state == States.Disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
                 safeMode = value;
             }
         }
@@ -710,9 +711,11 @@ namespace KGySoft.Resources
                         checkHeader = value;
                         break;
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                        Throw.ObjectDisposedException();
+                        break;
                     default:
-                        throw new InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
+                        Throw.InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
+                        break;
                 }
             }
         }
@@ -745,9 +748,11 @@ namespace KGySoft.Resources
                         allowDuplicatedKeys = value;
                         break;
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                        Throw.ObjectDisposedException();
+                        break;
                     default:
-                        throw new InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
+                        Throw.InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
+                        break;
                 }
             }
         }
@@ -786,7 +791,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.fileName);
 
             reader = new ResXReader(fileName);
             this.typeResolver = typeResolver;
@@ -803,7 +808,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(TextReader reader, ITypeResolutionService typeResolver = null)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.reader);
 
             this.reader = new ResXReader(reader);
             this.typeResolver = typeResolver;
@@ -820,7 +825,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(Stream stream, ITypeResolutionService typeResolver = null)
         {
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.stream);
 
             reader = new ResXReader(stream);
             this.typeResolver = typeResolver;
@@ -1032,7 +1037,8 @@ namespace KGySoft.Resources
                         return new ResXResourceEnumerator(this, mode);
 
                     default:
-                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                        Throw.ObjectDisposedException();
+                        return default;
                 }
             }
         }
@@ -1071,7 +1077,7 @@ namespace KGySoft.Resources
             {
                 string resHeaderMimeType = reader.NodeType == XmlNodeType.Element ? reader.ReadElementString() : reader.Value.Trim();
                 if (resHeaderMimeType != ResXCommon.ResMimeType)
-                    throw new NotSupportedException(Res.ResourcesHeaderMimeTypeNotSupported(resHeaderMimeType, GetLineNumber(), GetLinePosition()));
+                    Throw.NotSupportedException(Res.ResourcesHeaderMimeTypeNotSupported(resHeaderMimeType, GetLineNumber(), GetLinePosition()));
             }
             else if (name == ResXCommon.ReaderStr || name == ResXCommon.WriterStr)
             {
@@ -1085,12 +1091,12 @@ namespace KGySoft.Resources
                 if (name == ResXCommon.ReaderStr)
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(), GetLinePosition()));
+                        Throw.NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
                 else
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(), GetLinePosition()));
+                        Throw.NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
             }
 #pragma warning restore 252, 253
@@ -1145,7 +1151,7 @@ namespace KGySoft.Resources
             switch (state)
             {
                 case States.Created:
-                    throw new InvalidOperationException(Res.InternalError($"State should not be in {States.Created} in {nameof(ReadNext)}"));
+                    return Throw.InternalError<bool>(Res.InternalError($"State should not be in {States.Created} in {nameof(ReadNext)}"));
                 case States.Reading:
                     if (!Advance(mode, out key, out value))
                     {
@@ -1158,7 +1164,8 @@ namespace KGySoft.Resources
                 case States.Read:
                     return false;
                 default:
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                    Throw.ObjectDisposedException();
+                    return default;
             }
         }
 

@@ -118,7 +118,7 @@ namespace KGySoft.CoreLibraries
         public Range(T lowerBound, T upperBound)
         {
             if (lowerBound.CompareTo(upperBound) > 0)
-                throw new ArgumentOutOfRangeException(nameof(upperBound), Res.MaxValueLessThanMinValue);
+                Throw.ArgumentOutOfRangeException(Argument.upperBound, Res.MaxValueLessThanMinValue);
             LowerBound = lowerBound;
             UpperBound = upperBound;
         }
@@ -140,7 +140,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Indicates whether the current <see cref="Range{T}"/> instance is equal to another one specified in the <paramref name="other"/> prameter.
+        /// Indicates whether the current <see cref="Range{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="Range{T}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true" />&#160;if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>

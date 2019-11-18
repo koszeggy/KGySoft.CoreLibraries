@@ -70,6 +70,7 @@ namespace KGySoft.Diagnostics
     /// <seealso cref="PerformanceTest"/>
     /// <seealso cref="PerformanceTest{TResult}"/>
     public abstract class PerformanceTestBase<TDelegate, TResult> : PerformanceTestBase
+        where TDelegate : Delegate
     {
         #region Nested classes
 
@@ -191,7 +192,7 @@ namespace KGySoft.Diagnostics
                 #endregion
 
                 if (writer == null)
-                    throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+                    Throw.ArgumentNullException(Argument.writer);
 
                 writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
                 DumpConfig();
@@ -283,17 +284,6 @@ namespace KGySoft.Diagnostics
 
         #endregion
 
-        #region Constructors
-
-        [SuppressMessage("Microsoft.Design", "CA1065:DoNotRaiseExceptionsInUnexpectedLocations", Justification = "Delegate constraint works only in C# 7.3 and above")]
-        static PerformanceTestBase()
-        {
-            if (!typeof(TDelegate).IsDelegate())
-                throw new InvalidOperationException(Res.PerformanceTestInvalidTDelegate);
-        }
-
-        #endregion
-
         #region Methods
 
         #region Static Methods
@@ -323,7 +313,7 @@ namespace KGySoft.Diagnostics
         public PerformanceTestBase<TDelegate, TResult> AddCase(TDelegate testCase, string name = null)
         {
             if (testCase == null)
-                throw new ArgumentNullException(nameof(testCase), Res.ArgumentNull);
+                Throw.ArgumentNullException(Argument.testCase);
             cases.Add(new TestCase { Case = testCase, Name = name ?? Res.PerformanceTestCaseDefaultName(cases.Count + 1) });
             return this;
         }
@@ -335,7 +325,8 @@ namespace KGySoft.Diagnostics
         public override IPerformanceTestResultCollection DoTest()
         {
             if (cases == null)
-                throw new InvalidOperationException(Res.PerformanceTestNoTestCases);
+                Throw.InvalidOperationException(Res.PerformanceTestNoTestCases);
+
             Initialize();
             try
             {
