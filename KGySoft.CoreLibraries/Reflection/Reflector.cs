@@ -44,7 +44,6 @@ namespace KGySoft.Reflection
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
-#pragma warning disable CA1062 // Validate arguments of public methods - False alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
 #pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
 
         #region Nested Classes

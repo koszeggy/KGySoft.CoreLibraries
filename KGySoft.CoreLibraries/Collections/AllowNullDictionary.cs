@@ -169,7 +169,6 @@ namespace KGySoft.Collections
             return oldHasNull;
         }
 
-        //[SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1")]
         public bool TryGetValue([CanBeNull]TKey key, out TValue value)
         {
             if (key != null)
@@ -186,7 +185,6 @@ namespace KGySoft.Collections
             dict.Clear();
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Validation is forwarded to the embedded dictionary")]
         public void CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)

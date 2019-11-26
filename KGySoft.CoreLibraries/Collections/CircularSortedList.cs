@@ -76,7 +76,7 @@ namespace KGySoft.Collections
     /// <item><em>Store model and memory:</em> Keys and values are stored in separated <see cref="CircularList{TKey}"/> instances, which is a wrapper class around an array. This is a minimal overhead
     /// compared to the <see cref="SortedList{TKey,TValue}"/> class.</item>
     /// <item><em>Insertion and removal:</em> When inserting a new element, first of all it is checked, whether it comes to the last or first position. Due to the underlying <see cref="CircularList{T}"/>,
-    /// inserting at the first/last position are O(1) operations. Removing an element from the last/first position by the <see cref="Remove">Remove</see> method has an O(log n) cost, because the item is found by binary search.
+    /// inserting at the first/last position are O(1) operations. Removing an element from the last/first position by the <see cref="Remove(TKey)">Remove</see> method has an O(log n) cost, because the item is found by binary search.
     /// However, removing the first or last element by the <see cref="RemoveAt">RemoveAt</see> method is an O(1) operation. When an element is inserted/removed
     /// at any other position, it has generally O(n) cost, though the <see cref="CircularSortedList{TKey,TValue}"/> is designed so, that in worst case no more than half of the elements will be moved.</item>
     /// <item><em>Populating from sorted data:</em> Inserting element to the end or to the first position is O(1) cost, so it is faster than any other sorted dictionary types, even if populating from reverse ordered data.</item>

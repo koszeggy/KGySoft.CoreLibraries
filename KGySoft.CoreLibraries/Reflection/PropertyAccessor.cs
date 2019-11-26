@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
 #endif
 
@@ -137,7 +137,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private protected Delegate Getter
         {
-#if !NET35
+#if !(NET35 || NET40)
             [MethodImpl(MethodImplOptions.AggressiveInlining)] 
 #endif
             get
@@ -154,7 +154,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private protected Delegate Setter
         {
-#if !NET35
+#if !(NET35 || NET40)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
             get
@@ -194,7 +194,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="PropertyAccessor"/> instance that can be used to get or set the property.</returns>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public static PropertyAccessor GetAccessor(PropertyInfo property)

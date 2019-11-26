@@ -20,7 +20,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
 #endif
 using System.Security;
@@ -163,7 +163,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private FieldGetter Getter
         {
-#if !NET35
+#if !(NET35 || NET40)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
             get => getter ??= CreateGetter();
@@ -174,7 +174,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private FieldSetter Setter
         {
-#if !NET35
+#if !(NET35 || NET40)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
             get
@@ -212,7 +212,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="field">The field for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="FieldAccessor"/> instance that can be used to get or set the field.</returns>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public static FieldAccessor GetAccessor(FieldInfo field)
@@ -257,7 +257,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
         /// </remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public void Set(object instance, object value)
@@ -284,7 +284,7 @@ namespace KGySoft.Reflection
         /// method but further calls are much faster.
         /// </note>
         /// </remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public object Get(object instance) => Getter.Invoke(instance);

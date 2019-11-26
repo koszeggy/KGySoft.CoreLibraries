@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     /// Similar to Memory/ArraySegment{char} but this is mutable, can be used in any platform and is optimized
     /// for quite a few special operations.
     /// </summary>
-    internal struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>
+    internal struct StringSegment : IEquatable<StringSegment>
     {
         #region StringSegmentIgnoreCaseComparer class
 
@@ -46,7 +46,7 @@ namespace KGySoft.CoreLibraries
                 if (x.str.Length == x.Length && y.str.Length == y.Length)
                     return String.Equals(x.str, y.str, StringComparison.OrdinalIgnoreCase);
 
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
                 return x.str.AsSpan(x.offset, x.Length).Equals(y.str.AsSpan(y.offset, y.Length), StringComparison.OrdinalIgnoreCase);
 #else
                 for (int i = 0; i < x.Length; i++)
@@ -64,11 +64,12 @@ namespace KGySoft.CoreLibraries
                 if (obj.Length == 0)
                     return 0;
 
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
                 if (obj.Length == obj.str.Length)
                     return obj.str.GetHashCode(StringComparison.OrdinalIgnoreCase);
+#endif
 
-
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
                 return String.GetHashCode(obj.str.AsSpan(obj.offset, obj.Length), StringComparison.OrdinalIgnoreCase);
 #else
                 var result = 13;
@@ -158,7 +159,7 @@ namespace KGySoft.CoreLibraries
             if (ReferenceEquals(str, other.str) && offset == other.offset)
                 return true;
 
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
             // It would be better by Vector but that needs a char->ushort conversion
             if (Length >= 20)
                 return str.AsSpan(offset, Length).SequenceEqual(other.str.AsSpan(other.offset, other.Length));
@@ -170,15 +171,6 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
-        }
-
-        public int CompareTo(StringSegment other)
-        {
-            if (ReferenceEquals(str, other.str) && offset == other.offset && Length == other.Length)
-                return 0;
-#if !NETFRAMEWORK
-            return str.AsSpan(offset, Length).CompareTo(other.str.AsSpan(other.offset, other.Length), StringComparison.Ordinal);
-#endif
         }
 
         public override bool Equals(object obj) => obj is StringSegment other && Equals(other);

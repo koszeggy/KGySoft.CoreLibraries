@@ -614,7 +614,7 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static float NextSingle(this Random random, float minValue, float maxValue, FloatScale scale = FloatScale.Auto)
         {
-            float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
+            static float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
 
             // both are the same infinity
             if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue) || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
@@ -1179,7 +1179,7 @@ namespace KGySoft.CoreLibraries
 #endif
         private static double DoGetNextDouble(Random random, double minValue, double maxValue, FloatScale scale)
         {
-            double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
+            static double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
 
             minValue = AdjustValue(minValue);
             maxValue = AdjustValue(maxValue);

@@ -85,7 +85,6 @@ namespace KGySoft.Collections
                 yield return this[i];
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Not checking bounds as we always create ListSegment for ourselves.")]
         public void CopyTo(T[] array, int arrayIndex)
         {
             int len = Count;

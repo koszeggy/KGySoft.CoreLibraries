@@ -43,8 +43,6 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class EnumerableExtensions
     {
-#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
         #region Fields
 
         private static IThreadSafeCacheAccessor<Type, Type> genericEnumerableCache;
@@ -1441,7 +1439,6 @@ namespace KGySoft.CoreLibraries
         /// <param name="element">The element to search.</param>
         /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
-        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "False alarm: see the null case")]
         public static int IndexOf<T>(this IEnumerable<T> source, T element)
         {
             if (source == null)

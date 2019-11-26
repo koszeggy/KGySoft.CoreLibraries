@@ -13,6 +13,7 @@
     <Rule Id="CA1031" Action="Error" />
     <Rule Id="CA1033" Action="None" />
     <Rule Id="CA1036" Action="Error" />
+    <Rule Id="CA1062" Action="None" />
     <Rule Id="CA1304" Action="Error" />
     <Rule Id="CA1305" Action="Error" />
     <Rule Id="CA1307" Action="None" />
@@ -65,8 +66,15 @@
     <Rule Id="IDE0042WithoutSuggestion" Action="None" />
     <Rule Id="IDE0056" Action="None" />
     <Rule Id="IDE0056WithoutSuggestion" Action="None" />
+    <Rule Id="IDE0064" Action="None" />
     <Rule Id="IDE0066" Action="None" />
     <Rule Id="IDE0066WithoutSuggestion" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.Features" RuleNamespace="Microsoft.CodeAnalysis.Features">
+    <Rule Id="IDE0067" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeQuality.Analyzers" RuleNamespace="Microsoft.CodeQuality.Analyzers">
+    <Rule Id="CA1062" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeQuality.CSharp.Analyzers" RuleNamespace="Microsoft.CodeQuality.CSharp.Analyzers">
     <Rule Id="CA1200" Action="None" />

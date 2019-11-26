@@ -74,7 +74,6 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "4", Justification = "target is checked by IsNullOrEmpty")]
         public ICommandBinding Add(ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
         {
             ICommandBinding result = Add(command, initialState).AddSource(source, eventName);

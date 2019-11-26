@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis; 
 using System.Reflection.Emit;
 #endif
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
 #endif
 
@@ -116,7 +116,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="memberInfo">The <see cref="MemberInfo"/> for which the accessor is to be obtained.</param>
         /// <returns>A <see cref="MemberAccessor"/> instance for the specified <paramref name="memberInfo"/>.</returns>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo) => accessorCache[memberInfo];

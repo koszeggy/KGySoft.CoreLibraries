@@ -30,7 +30,7 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// A class, which can generate an <see cref="EnumComparer{TEnum}"/> and <see cref="EnumConverter{TEnum}"/> implementations.
+    /// A class, which can generate an <see cref="EnumComparer{TEnum}"/> implementations.
     /// <br/>This class is a replacement of the old RecompILer logic and can be used also for .NET Core/Standard platforms.
     /// </summary>
     internal static class EnumComparerBuilder
@@ -151,24 +151,6 @@ namespace KGySoft.CoreLibraries
             il.Emit(OpCodes.Ceq);
             il.Emit(OpCodes.Ret);
         }
-
-        private enum ByteEnum : byte { }
-        private enum SByteEnum : sbyte { }
-        private enum Int16Enum : short { }
-        private enum UInt16Enum : ushort { }
-        private enum Int32Enum : int { }
-        private enum UInt32Enum : uint { }
-        private enum Int64Enum : long { }
-        private enum UInt64Enum : ulong { }
-
-        private static int GetHashCode(ByteEnum obj) => (int)obj;
-        private static int GetHashCode(SByteEnum obj) => (int)obj;
-        private static int GetHashCode(Int16Enum obj) => (int)obj;
-        private static int GetHashCode(UInt16Enum obj) => (int)obj;
-        private static int GetHashCode(Int32Enum obj) => (int)obj;
-        private static int GetHashCode(UInt32Enum obj) => (int)obj;
-        private static int GetHashCode(Int64Enum obj) => (int)((long)obj ^ ((long)obj >> 32));
-        private static int GetHashCode(UInt64Enum obj) => (int)((ulong)obj ^ ((ulong)obj >> 32));
 
         /// <summary><![CDATA[
         /// public override int GetHashCode(TEnum obj);

@@ -541,7 +541,6 @@ namespace KGySoft.Resources
         /// <param name="explicitResXBaseFileName">When <see langword="null"/>&#160;the .resx file name will be constructed based on the
         /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "resourceSource is checked by base")]
         public HybridResourceManager(Type resourceSource, string explicitResXBaseFileName = null)
             : base(resourceSource)
         {

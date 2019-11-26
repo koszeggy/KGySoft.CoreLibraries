@@ -560,7 +560,7 @@ namespace KGySoft.Resources
             {
                 Hashtable result = base.ResourceSets;
                 if (result == null)
-                    ThrowHelper.ThrowObjectDisposedException();
+                    Throw.ObjectDisposedException();
                 return result;
             }
             set => base.ResourceSets = value;
@@ -568,10 +568,10 @@ namespace KGySoft.Resources
 #else
         private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
 
-#if NET35 || !NETFRAMEWORK
-        [SuppressMessage("Compiler", "CS0109:Member does not hide an accessible member", Justification = "Required for .NET Framework targets")]
+#if NETFRAMEWORK
+        new
 #endif
-        private new Dictionary<string, ResourceSet> ResourceSets
+        private Dictionary<string, ResourceSet> ResourceSets
         {
             get
             {

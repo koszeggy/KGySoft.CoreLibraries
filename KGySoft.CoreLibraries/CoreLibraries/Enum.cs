@@ -42,8 +42,6 @@ namespace KGySoft.CoreLibraries
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
     public static class Enum<TEnum> where TEnum : struct, Enum
     {
-#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
         #region Fields
 
         // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
@@ -55,7 +53,7 @@ namespace KGySoft.CoreLibraries
 
         // These fields share the same data per underlying type
         private static readonly EnumComparer<TEnum> converter = EnumComparer<TEnum>.Comparer; // The comparer contains also some internal converter methods.
-        private static readonly EnumUnderlyingInfo underlyingInfo = EnumUnderlyingInfo.GetUnderlyingInfo(typeof(TEnum).GetEnumUnderlyingType());
+        private static readonly EnumUnderlyingInfo underlyingInfo = EnumUnderlyingInfo.GetUnderlyingInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 
         // These members van vary per TEnum and are initialized only on demand
         private static TEnum[] values;

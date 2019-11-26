@@ -23,7 +23,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
 #endif
 using System.Threading;
@@ -78,8 +78,6 @@ namespace KGySoft.Collections
     [Serializable]
     public sealed class CircularList<T> : ISupportsRangeList<T>, IList
     {
-#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
         #region Nested types
 
         #region ComparisonWrapper class
@@ -666,7 +664,7 @@ namespace KGySoft.Collections
 
         #region Static Methods
 
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static void CopyElements(T[] source, int sourceIndex, T[] dest, int destIndex, int count)
@@ -682,7 +680,7 @@ namespace KGySoft.Collections
 
         private static bool CanAccept(object value) => value is T || value == null && default(T) == null;
 
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private static bool IsManaged() =>
@@ -713,7 +711,7 @@ namespace KGySoft.Collections
         /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
         /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
         /// </remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public void Add(T item) => AddLast(item);
@@ -730,7 +728,7 @@ namespace KGySoft.Collections
         /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
         /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
         /// </remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)] 
 #endif
         public void AddLast(T item)
@@ -766,7 +764,7 @@ namespace KGySoft.Collections
         /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
         /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
         /// </remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public void AddFirst(T item)
@@ -947,7 +945,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
         /// <remarks>This method has an O(1) cost.</remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public bool RemoveLast()
@@ -974,7 +972,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
         /// <remarks>This method has an O(1) cost.</remarks>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public bool RemoveFirst()
@@ -2263,7 +2261,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets an element without check
         /// </summary>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         internal T ElementAt(int index) => startIndex == 0 ? items[index] : ElementAtNonZeroStart(index);
@@ -2271,7 +2269,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Performs a binary search without check
         /// </summary>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         internal int InternalBinarySearch(int index, int count, T item, IComparer<T> comparer)
@@ -2436,7 +2434,9 @@ namespace KGySoft.Collections
             version += 1;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+#if !(NET35 || NET40) // NoInlining is available also in .NET 3.5 but we want to prevent it only if AddLast/First are forcibly inlined
+        [MethodImpl(MethodImplOptions.NoInlining)] 
+#endif
         private void EnsureCapacity(int min)
         {
             if (items.Length >= min)

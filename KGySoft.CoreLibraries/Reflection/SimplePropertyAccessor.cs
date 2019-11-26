@@ -20,7 +20,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
 #endif
 
@@ -57,13 +57,13 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public override void Set(object instance, object value, params object[] indexerParameters)
             => ((PropertySetter)Setter)(instance, value);
 
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public override object Get(object instance, params object[] indexerParameters)

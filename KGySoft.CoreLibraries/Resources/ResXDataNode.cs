@@ -286,11 +286,12 @@ namespace KGySoft.Resources
         /// A partial type resolver for the formatters for a custom <see cref="ITypeResolutionService"/> type resolver (deserialization) or
         /// a type name converter (serialization). For deserialization if there is no type resolver a <see cref="WeakAssemblySerializationBinder"/> is used instead.
         /// </summary>
-        private sealed class ResXSerializationBinder : SerializationBinder
+        private sealed class ResXSerializationBinder : SerializationBinder, ISerializationBinder
         {
             #region Fields
 
             private readonly ITypeResolutionService typeResolver; // deserialization
+
             private readonly Func<Type, string> typeNameConverter; // serialization
             private readonly bool compatibleFormat; // serialization
 
@@ -314,9 +315,9 @@ namespace KGySoft.Resources
             #region Methods
 
 #if !NET35
-            [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0",
-                Justification = "If serializedType is null the base will be called.")]
-            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
+            override
+#endif
+            public void BindToName(Type serializedType, out string assemblyName, out string typeName)
             {
                 // Actually the same as in the WinForms implementation but fixed for generics.
                 typeName = null;
@@ -338,9 +339,9 @@ namespace KGySoft.Resources
                     }
                 }
 
-                base.BindToName(serializedType, out assemblyName, out typeName);
+                assemblyName = null;
+                typeName = null;
             }
-#endif
 
             public override Type BindToType(string assemblyName, string typeName)
             {
@@ -1253,8 +1254,7 @@ namespace KGySoft.Resources
             nodeInfo.CompatibleFormat = false;
 
             // Type
-            Type type = cachedValue as Type;
-            if (type != null)
+            if (cachedValue is Type type)
             {
                 nodeInfo.ValueData = type.GetName(TypeNameKind.AssemblyQualifiedName);
                 return;

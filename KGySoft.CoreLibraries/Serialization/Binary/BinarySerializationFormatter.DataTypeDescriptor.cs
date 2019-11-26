@@ -254,7 +254,7 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ConcurrentBag:
                     case DataTypes.ConcurrentQueue:
                     case DataTypes.ConcurrentStack:
-                        return ThrowHelper.ThrowPlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 
                     default:

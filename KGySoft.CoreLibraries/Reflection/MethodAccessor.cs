@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-#if !NET35
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
 #endif
 
@@ -103,7 +103,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private protected Delegate Invoker
         {
-#if !NET35
+#if !(NET35 || NET40)
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
             get => invoker ??= CreateInvoker();
@@ -135,7 +135,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="MethodAccessor"/> instance that can be used to invoke the method.</returns>
-#if !NET35
+#if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public static MethodAccessor GetAccessor(MethodInfo method)

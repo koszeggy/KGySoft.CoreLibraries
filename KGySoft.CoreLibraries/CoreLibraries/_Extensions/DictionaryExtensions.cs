@@ -32,7 +32,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1) // These methods are not included into .NET Core/Standard versions to prevent conflict with CollectionExtensions
+#if NETFRAMEWORK || NETSTANDARD2_0 // These methods are not included into .NET Core/Standard versions to prevent conflict with CollectionExtensions
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
@@ -58,7 +58,7 @@ namespace KGySoft.CoreLibraries
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
         {
             if (dictionary == null)
-                ThrowHelper.ThrowArgumentNullException(ThrowHelper.Argument.dictionary);
+                Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
         }
@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries
                 return dictionary.GetValueOrDefault(key, default(TValue));
 
             if (dictionary == null)
-                ThrowHelper.ThrowArgumentNullException(ThrowHelper.Argument.dictionary);
+                Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValueFactory.Invoke();
         }

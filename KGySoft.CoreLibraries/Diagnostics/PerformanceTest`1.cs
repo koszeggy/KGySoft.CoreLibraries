@@ -100,7 +100,6 @@ namespace KGySoft.Diagnostics
         /// </summary>
         /// <param name="del">The delegate to invoke.</param>
         /// <returns>A <typeparamref name="TResult" /> instance returned by the specified delegate.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Intentionally unchecked for performance reasons. Normally called by base class, which checks the delegate.")]
         protected override TResult Invoke(Func<TResult> del) => del.Invoke();
 
         #endregion

@@ -243,8 +243,6 @@ namespace KGySoft.Collections
         , IReadOnlyDictionary<TKey, TValue>
 #endif
     {
-#pragma warning disable CA1062 // Validate arguments of public methods - false alarm, this class uses ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
         #region Nested Types
 
         #region Nested classes
