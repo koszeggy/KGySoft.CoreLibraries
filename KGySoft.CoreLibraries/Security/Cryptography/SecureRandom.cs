@@ -18,6 +18,12 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NETCOREAPP3_0
+using System.Runtime.CompilerServices; 
+#endif
+#if NETSTANDARD2_1
+using System.Runtime.InteropServices; 
+#endif
 using System.Security.Cryptography;
 
 #endregion
@@ -79,6 +85,17 @@ namespace KGySoft.Security.Cryptography
             provider.GetBytes(buffer);
         }
 
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+        /// <summary>
+        /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
+        /// </summary>
+        /// <param name="buffer">A <see cref="Span{T}"/> of bytes to contain random numbers.</param>
+        public override void NextBytes(Span<byte> buffer)
+        {
+            provider.GetBytes(buffer);
+        }
+#endif
+
         /// <summary>
         /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
         /// </summary>
@@ -98,7 +115,7 @@ namespace KGySoft.Security.Cryptography
             int result;
             do
             {
-                result = (int)(SampleUInt32() >> 1);
+                result = (int)SampleUInt32() & Int32.MaxValue;
             } while (result == Int32.MaxValue);
 
             return result;
@@ -160,13 +177,26 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-        protected override double Sample()
+        protected override unsafe double Sample()
         {
-            var bytes = new byte[8];
+            // ReSharper disable once JoinDeclarationAndInitializer - due to #if
+            ulong sample;
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Span<byte> bytes = stackalloc byte[8];
             provider.GetBytes(bytes);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<ulong>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            sample = Unsafe.As<byte, ulong>(ref bytes[0]);
+#endif // NETSTANDARD2_1
 
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            byte[] bytes = new byte[8];
+            provider.GetBytes(bytes);
+            fixed (byte* p = bytes)
+                sample = *(ulong*)p;
+#endif
             // mantissa of the double type is at the last 53 bits
-            ulong sample = BitConverter.ToUInt64(bytes, 0) >> 11;
             return sample / (double)(1UL << 53);
         }
 
@@ -186,11 +216,22 @@ namespace KGySoft.Security.Cryptography
 
         #region Private Methods
 
-        private uint SampleUInt32()
+        private unsafe uint SampleUInt32()
         {
-            var bytes = new byte[4];
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Span<byte> bytes = stackalloc byte[4];
             provider.GetBytes(bytes);
-            return BitConverter.ToUInt32(bytes, 0);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<uint>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            return Unsafe.As<byte, uint>(ref bytes[0]);
+#endif // NETSTANDARD2_1
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            byte[] bytes = new byte[4];
+            provider.GetBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(uint*)p;
+#endif
         }
 
         #endregion

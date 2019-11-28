@@ -18,12 +18,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NETSTANDARD2_1
+using System.Runtime.InteropServices; 
+#endif
 using System.Security;
 using System.Text;
+
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
 
@@ -126,22 +130,6 @@ namespace KGySoft.CoreLibraries
     {
         // ReSharper disable CompareOfFloatsByEqualityOperator - in this class this is intended
 
-        #region Constants
-
-        private const string digits = "0123456789";
-        private const string lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
-        private const string upperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private const string letters = lowerCaseLetters + upperCaseLetters;
-        private const string lettersAndDigits = digits + letters;
-
-        #endregion
-
-        #region Fields
-
-        private static readonly string ascii = new String(Enumerable.Range(32, 95).Select(i => (char)i).ToArray());
-
-        #endregion
-
         #region Methods
 
         #region Byte Array
@@ -197,7 +185,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random)
-            => (sbyte)random.NextBytes(1)[0];
+            => (sbyte)random.Next();
 
         /// <summary>
         /// Returns a random <see cref="sbyte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -212,7 +200,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random, sbyte maxValue, bool inclusiveUpperBound = false)
-            => (sbyte)random.NextInt64(0L, maxValue, inclusiveUpperBound);
+            => (sbyte)random.NextInt32(0, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="sbyte"/> value that is within a specified range.
@@ -228,7 +216,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random, sbyte minValue, sbyte maxValue, bool inclusiveUpperBound = false)
-            => (sbyte)random.NextInt64(minValue, maxValue, inclusiveUpperBound);
+            => (sbyte)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="byte"/> value.
@@ -237,7 +225,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An 8-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="Byte.MaxValue">Byte.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static byte NextByte(this Random random)
-            => random.NextBytes(1)[0];
+            => (byte)random.Next();
 
         /// <summary>
         /// Returns a random <see cref="byte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -250,7 +238,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static byte NextByte(this Random random, byte maxValue, bool inclusiveUpperBound = false)
-            => (byte)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
+            => (byte)random.NextUInt32(0U, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="byte"/> value that is within a specified range.
@@ -265,7 +253,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static byte NextByte(this Random random, byte minValue, byte maxValue, bool inclusiveUpperBound = false)
-            => (byte)random.NextUInt64(minValue, maxValue, inclusiveUpperBound);
+            => (byte)random.NextUInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="short"/> value.
@@ -276,7 +264,7 @@ namespace KGySoft.CoreLibraries
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static short NextInt16(this Random random)
-            => BitConverter.ToInt16(random.NextBytes(2), 0);
+            => (short)random.Next();
 
         /// <summary>
         /// Returns a random <see cref="short"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -290,7 +278,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static short NextInt16(this Random random, short maxValue, bool inclusiveUpperBound = false)
-            => (short)random.NextInt64(0L, maxValue, inclusiveUpperBound);
+            => (short)random.NextInt32(0, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="short"/> value that is within a specified range.
@@ -305,7 +293,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static short NextInt16(this Random random, short minValue, short maxValue, bool inclusiveUpperBound = false)
-            => (short)random.NextInt64(minValue, maxValue, inclusiveUpperBound);
+            => (short)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="ushort"/> value.
@@ -315,7 +303,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random)
-            => BitConverter.ToUInt16(random.NextBytes(2), 0);
+            => (ushort)random.Next();
 
         /// <summary>
         /// Returns a random <see cref="ushort"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -329,7 +317,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort maxValue, bool inclusiveUpperBound = false)
-            => (ushort)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
+            => (ushort)random.NextUInt32(0U, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="ushort"/> value that is within a specified range.
@@ -345,7 +333,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort minValue, ushort maxValue, bool inclusiveUpperBound = false)
-            => (ushort)random.NextUInt64(minValue, maxValue, inclusiveUpperBound);
+            => (ushort)random.NextUInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="int"/> value.
@@ -355,8 +343,26 @@ namespace KGySoft.CoreLibraries
         /// <remarks>Similarly to the <see cref="Random.Next()">Random.Next()</see> method this one returns an <see cref="int"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        public static int NextInt32(this Random random)
-            => BitConverter.ToInt32(random.NextBytes(4), 0);
+        public static unsafe int NextInt32(this Random random)
+        {
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
+            // we hope the best for the future and at least we spare some heap allocation
+            Span<byte> bytes = stackalloc byte[4];
+            random.NextBytes(bytes);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<int>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            return Unsafe.As<byte, int>(ref bytes[0]);
+#endif // NETSTANDARD2_1
+
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            var bytes = new byte[4];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(int*)p;
+#endif
+        }
 
         /// <summary>
         /// Returns a random <see cref="int"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -370,7 +376,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static int NextInt32(this Random random, int maxValue, bool inclusiveUpperBound = false)
-            => (int)random.NextInt64(0L, maxValue, inclusiveUpperBound);
+            => random.NextInt32(0, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="int"/> value that is within a specified range.
@@ -385,7 +391,31 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static int NextInt32(this Random random, int minValue, int maxValue, bool inclusiveUpperBound = false)
-            => (int)random.NextInt64(minValue, maxValue, inclusiveUpperBound);
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (minValue == maxValue)
+                return minValue;
+
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            uint range = (uint)(maxValue - minValue);
+            bool shift = false;
+            if (inclusiveUpperBound)
+            {
+                if (range == UInt32.MaxValue)
+                    return random.NextInt32();
+                range += 1;
+                shift = maxValue == Int32.MaxValue;
+            }
+
+            if (!shift)
+                return random.Next(minValue, (int)(minValue + range));
+
+            Debug.Assert(minValue > Int32.MinValue, "Unconditional NextInt32 should have been called");
+            return random.Next(minValue - 1, (int)(minValue - 1 + range)) + 1;
+        }
 
         /// <summary>
         /// Returns a random <see cref="uint"/> value.
@@ -394,8 +424,26 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        public static uint NextUInt32(this Random random)
-            => BitConverter.ToUInt32(random.NextBytes(4), 0);
+        public static unsafe uint NextUInt32(this Random random)
+        {
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
+            // we hope the best for the future and at least we spare some heap allocation
+            Span<byte> bytes = stackalloc byte[4];
+            random.NextBytes(bytes);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<uint>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            return Unsafe.As<byte, uint>(ref bytes[0]);
+#endif // NETSTANDARD2_1
+
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            var bytes = new byte[4];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(uint*)p;
+#endif
+        }
 
         /// <summary>
         /// Returns a random <see cref="uint"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -409,7 +457,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static uint NextUInt32(this Random random, uint maxValue, bool inclusiveUpperBound = false)
-            => (uint)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
+            => random.NextUInt32(0U, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="uint"/> value that is within a specified range.
@@ -425,7 +473,28 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         [CLSCompliant(false)]
         public static uint NextUInt32(this Random random, uint minValue, uint maxValue, bool inclusiveUpperBound = false)
-            => (uint)random.NextUInt64(minValue, maxValue, inclusiveUpperBound);
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (minValue == maxValue)
+                return minValue;
+
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            uint range = maxValue - minValue;
+            if (inclusiveUpperBound)
+            {
+                if (range == UInt32.MaxValue)
+                    return random.NextUInt32();
+                range += 1;
+            }
+
+            if (range < Int32.MaxValue)
+                return (uint)random.Next((int)range) + minValue;
+            long low = (long)Int32.MaxValue - range;
+            return (uint)(random.Next((int)low, Int32.MaxValue) - low + minValue);
+        }
 
         /// <summary>
         /// Returns a random <see cref="long"/> value.
@@ -433,8 +502,26 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        public static long NextInt64(this Random random)
-            => BitConverter.ToInt64(random.NextBytes(8), 0);
+        public static unsafe long NextInt64(this Random random)
+        {
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
+            // we hope the best for the future and at least we spare some heap allocation
+            Span<byte> bytes = stackalloc byte[8];
+            random.NextBytes(bytes);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<long>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            return Unsafe.As<byte, long>(ref bytes[0]);
+#endif // NETSTANDARD2_1
+
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            var bytes = new byte[8];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(long*)p;
+#endif
+        }
 
         /// <summary>
         /// Returns a random <see cref="long"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -497,8 +584,26 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        public static ulong NextUInt64(this Random random)
-            => BitConverter.ToUInt64(random.NextBytes(8), 0);
+        public static unsafe ulong NextUInt64(this Random random)
+        {
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
+            // we hope the best for the future and at least we spare some heap allocation
+            Span<byte> bytes = stackalloc byte[8];
+            random.NextBytes(bytes);
+#if NETSTANDARD2_1
+            return MemoryMarshal.Read<ulong>(bytes); // Unsafe.As would be much faster but that is not available in Standard
+#else
+            return Unsafe.As<byte, ulong>(ref bytes[0]);
+#endif // NETSTANDARD2_1
+
+#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            var bytes = new byte[8];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(ulong*)p;
+#endif
+        }
 
         /// <summary>
         /// Returns a random <see cref="ulong"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -642,7 +747,7 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static double NextDouble(this Random random, double maxValue, FloatScale scale = FloatScale.Auto)
             => random.NextDouble(0d, maxValue, scale);
-        
+
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
         /// </summary>
@@ -820,7 +925,7 @@ namespace KGySoft.CoreLibraries
         public static char NextChar(this Random random, char minValue = Char.MinValue, char maxValue = Char.MaxValue)
             => minValue == Char.MinValue && maxValue == Char.MaxValue
                 ? (char)random.NextUInt16()
-                : (char)random.NextUInt64(minValue, maxValue, true);
+                : (char)random.NextUInt16(minValue, maxValue, true);
 
         /// <summary>
         /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
@@ -828,13 +933,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minLength">The inclusive lower bound of the length of the returned string.</param>
         /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>.</param>
-        /// <param name="allowedCharacters">A string containing the allowed characters. Recurrence is not checked.</param>
+        /// <param name="allowedCharacters">A string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
         /// <returns>A <see cref="string"/> value that has the length greater than or equal to <paramref name="minLength"/> and less and less or equal to <paramref name="maxLength"/>
         /// and contains only the specified characters.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-        public static string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
+        public static unsafe string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
@@ -847,17 +952,96 @@ namespace KGySoft.CoreLibraries
             if (allowedCharacters.Length == 0)
                 Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
 
-            return GenerateString(random, random.NextInt32(minLength, maxLength, true), allowedCharacters);
+            int length = random.NextInt32(minLength, maxLength, true);
+            if (length == 0)
+                return String.Empty;
+
+            string result = new String('\0', length);
+            fixed(char* s = result)
+            fixed(char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
         }
+
+        /// <summary>
+        /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minLength">The inclusive lower bound of the length of the returned string.</param>
+        /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>.</param>
+        /// <param name="allowedCharacters">An array containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <returns>A <see cref="string"/> value that has the length greater than or equal to <paramref name="minLength"/> and less and less or equal to <paramref name="maxLength"/>
+        /// and contains only the specified characters.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe string NextString(this Random random, int minLength, int maxLength, char[] allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (minLength < 0)
+                Throw.ArgumentOutOfRangeException(Argument.minLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (maxLength < minLength)
+                Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.MaxLengthLessThanMinLength);
+            if (allowedCharacters == null)
+                Throw.ArgumentNullException(Argument.allowedCharacters);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            int length = random.NextInt32(minLength, maxLength, true);
+            if (length == 0)
+                return String.Empty;
+
+            string result = new String('\0', length);
+            fixed (char* s = result)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
+        }
+
+
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+        /// <summary>
+        /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minLength">The inclusive lower bound of the length of the returned string.</param>
+        /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>.</param>
+        /// <param name="allowedCharacters">A <see cref="ReadOnlySpan{T}"/> containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <returns>A <see cref="string"/> value that has the length greater than or equal to <paramref name="minLength"/> and less and less or equal to <paramref name="maxLength"/>
+        /// and contains only the specified characters.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe string NextString(this Random random, int minLength, int maxLength, ReadOnlySpan<char> allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (minLength < 0)
+                Throw.ArgumentOutOfRangeException(Argument.minLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (maxLength < minLength)
+                Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.MaxLengthLessThanMinLength);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            int length = random.NextInt32(minLength, maxLength, true);
+            if (length == 0)
+                return String.Empty;
+
+            string result = new String('\0', length);
+            fixed (char* s = result)
+            fixed (char* set = &allowedCharacters.GetPinnableReference())
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
+        }
+#endif
 
         /// <summary>
         /// Returns a random <see cref="string"/> using the specified <paramref name="strategy"/> that has the length between the specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
-        /// <param name="minLength">The inclusive lower bound of the length of the returned string. This parameter is optional.
-        /// <br/>Default value: <c>4</c>.</param>
-        /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>. This parameter is optional.
-        /// <br/>Default value: <c>10</c>.</param>
+        /// <param name="minLength">The inclusive lower bound of the length of the returned string.</param>
+        /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>.</param>
         /// <param name="strategy">The strategy to use. This parameter is optional.
         /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
         /// <returns>A <see cref="string"/> value generated by the specified <paramref name="strategy"/> that has the length greater than or equal to <paramref name="minLength"/> and less and less or equal to <paramref name="maxLength"/>.</returns>
@@ -865,7 +1049,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/>
         /// <br/>-or-
         /// <br/><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
-        public static string NextString(this Random random, int minLength = 4, int maxLength = 10, StringCreation strategy = StringCreation.Ascii)
+        public static unsafe string NextString(this Random random, int minLength, int maxLength, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
@@ -880,55 +1064,288 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-            switch (strategy)
-            {
-                case StringCreation.AnyChars:
-                    return GenerateString(random, length, null);
-
-                case StringCreation.AnyValidChars:
-                    return GenerateString(random, length, null, true);
-
-                case StringCreation.Ascii:
-                    return GenerateString(random, length, ascii);
-
-                case StringCreation.Digits:
-                    return GenerateString(random, length, digits);
-
-                case StringCreation.DigitsNoLeadingZeros:
-                    return digits[random.Next(1, digits.Length)] + GenerateString(random, length - 1, digits);
-
-                case StringCreation.Letters:
-                    return GenerateString(random, length, letters);
-
-                case StringCreation.LettersAndDigits:
-                    return GenerateString(random, length, lettersAndDigits);
-
-                case StringCreation.UpperCaseLetters:
-                    return GenerateString(random, length, upperCaseLetters);
-
-                case StringCreation.LowerCaseLetters:
-                    return GenerateString(random, length, lowerCaseLetters);
-
-                case StringCreation.TitleCaseLetters:
-                    return upperCaseLetters.GetRandomElement(random) + GenerateString(random, length - 1, lowerCaseLetters);
-
-                case StringCreation.UpperCaseWord:
-                    return WordGenerator.GenerateWord(random, length).ToUpperInvariant();
-
-                case StringCreation.LowerCaseWord:
-                    return WordGenerator.GenerateWord(random, length);
-
-                case StringCreation.TitleCaseWord:
-                    string word = WordGenerator.GenerateWord(random, length);
-                    return Char.ToUpperInvariant(word[0]) + word.Substring(1);
-
-                case StringCreation.Sentence:
-                    return WordGenerator.GenerateSentence(random, length);
-
-                default:
-                    return Throw.InternalError<string>($"Unexpected strategy: {strategy}");
-            }
+            string result = new String('\0', length);
+            fixed (char* s = result)
+                FillChars(random, new MutableString(s, length), strategy);
+            return result;
         }
+
+        /// <summary>
+        /// Returns a random <see cref="string"/> of the specified <paramref name="length"/> using the specified <paramref name="strategy"/> that has the length between the specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="length">The length of the string to be generated.</param>
+        /// <param name="strategy">The strategy to use. This parameter is optional.
+        /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
+        /// <returns>A <see cref="string"/> value generated by the specified <paramref name="strategy"/> and <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0
+        /// <br/>-or-
+        /// <br/><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
+        public static string NextString(this Random random, int length, StringCreation strategy = StringCreation.Ascii)
+            => NextString(random, length, length, strategy);
+
+        /// <summary>
+        /// Returns a random <see cref="string"/> using the specified <paramref name="strategy"/> that has the length between 4 and 10 inclusive.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="strategy">The strategy to use. This parameter is optional.
+        /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
+        /// <returns>A <see cref="string"/> value generated by the specified <paramref name="strategy"/> that has the length between 4 and 10 inclusive.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
+        public static string NextString(this Random random, StringCreation strategy = StringCreation.Ascii)
+            => NextString(random, 4, 10, strategy);
+
+        /// <summary>
+        /// Returns an <see cref="Array"/> of random characters that has the specified <paramref name="length"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="length">The desired length of the result.</param>
+        /// <param name="allowedCharacters">An string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <returns>An array of random characters that has the specified <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe char[] NextChars(this Random random, int length, string allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (length < 0)
+                Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (allowedCharacters == null)
+                Throw.ArgumentNullException(Argument.allowedCharacters);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (length == 0)
+                return Reflector.EmptyArray<char>();
+
+            var result = new char[length];
+            fixed (char* s = result)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
+        }
+
+        /// <summary>
+        /// Returns an <see cref="Array"/> of random characters that has the specified <paramref name="length"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="length">The desired length of the result.</param>
+        /// <param name="allowedCharacters">An array of the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <returns>An array of random characters that has the specified <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe char[] NextChars(this Random random, int length, char[] allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (length < 0)
+                Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (allowedCharacters == null)
+                Throw.ArgumentNullException(Argument.allowedCharacters);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (length == 0)
+                return Reflector.EmptyArray<char>();
+
+            var result = new char[length];
+            fixed (char* s = result)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
+        }
+
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+        /// <summary>
+        /// Returns an <see cref="Array"/> of random characters that has the specified <paramref name="length"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="length">The desired length of the result.</param>
+        /// <param name="allowedCharacters">A <see cref="ReadOnlySpan{T}"/> containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <returns>An array of random characters that has the specified <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe char[] NextChars(this Random random, int length, ReadOnlySpan<char> allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (length < 0)
+                Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (length == 0)
+                return Reflector.EmptyArray<char>();
+
+            var result = new char[length];
+            fixed (char* s = result)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            return result;
+        }
+#endif
+
+        /// <summary>
+        /// Returns an <see cref="Array"/> of random characters using the specified <paramref name="strategy"/> that has the specified <paramref name="length"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="length">The desired length of the result.</param>
+        /// <param name="strategy">The strategy to use. This parameter is optional.
+        /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
+        /// <returns>An array of characters <see cref="string"/> value generated by the specified <paramref name="strategy"/> that has the specified <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0
+        /// <br/>-or-
+        /// <br/><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
+        public static unsafe char[] NextChars(this Random random, int length, StringCreation strategy = StringCreation.Ascii)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (length < 0)
+                Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            if (!Enum<StringCreation>.IsDefined(strategy))
+                Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
+
+            if (length == 0)
+                return Reflector.EmptyArray<char>();
+
+            var result = new char[length];
+            fixed (char* s = result)
+                FillChars(random, new MutableString(s, length), strategy);
+            return result;
+        }
+
+        /// <summary>
+        /// Fills the elements of a <paramref name="buffer"/> of character array with random characters using the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="buffer">An array of characters to contain random values.</param>
+        /// <param name="allowedCharacters">A string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/>, <paramref name="buffer"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe void NextChars(this Random random, char[] buffer, string allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (buffer == null)
+                Throw.ArgumentNullException(Argument.buffer);
+            if (allowedCharacters == null)
+                Throw.ArgumentNullException(Argument.allowedCharacters);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (buffer.Length == 0)
+                return;
+
+            fixed (char* s = buffer)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+        }
+
+        /// <summary>
+        /// Fills the elements of a <paramref name="buffer"/> of character array with random characters using the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="buffer">An array of characters to contain random values.</param>
+        /// <param name="allowedCharacters">An array of the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/>, <paramref name="buffer"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe void NextChars(this Random random, char[] buffer, char[] allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (buffer == null)
+                Throw.ArgumentNullException(Argument.buffer);
+            if (allowedCharacters == null)
+                Throw.ArgumentNullException(Argument.allowedCharacters);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (buffer.Length == 0)
+                return;
+
+            fixed (char* s = buffer)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+        }
+
+        /// <summary>
+        /// Fills the elements of a <paramref name="buffer"/> of character array with random characters using the specified <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="buffer">An array of characters to contain random values.</param>
+        /// <param name="strategy">The strategy to use. This parameter is optional.
+        /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="buffer"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
+        public static unsafe void NextChars(this Random random, char[] buffer, StringCreation strategy = StringCreation.Ascii)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (buffer == null)
+                Throw.ArgumentNullException(Argument.buffer);
+            if (!Enum<StringCreation>.IsDefined(strategy))
+                Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
+
+            if (buffer.Length == 0)
+                return;
+
+            fixed (char* s = buffer)
+                FillChars(random, new MutableString(s, buffer.Length), strategy);
+        }
+
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+        /// <summary>
+        /// Fills the elements of a <paramref name="buffer"/> with random characters using the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="buffer">A <see cref="Span{T}"/> of characters to contain random values.</param>
+        /// <param name="allowedCharacters">A <see cref="ReadOnlySpan{T}"/> containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static unsafe void NextChars(this Random random, Span<char> buffer, ReadOnlySpan<char> allowedCharacters)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (allowedCharacters.Length == 0)
+                Throw.ArgumentException(Argument.allowedCharacters, Res.ArgumentEmpty);
+
+            if (buffer.Length == 0)
+                return;
+
+            fixed (char* s = buffer)
+            fixed (char* set = allowedCharacters)
+                FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+        }
+
+        /// <summary>
+        /// Fills the elements of a <paramref name="buffer"/> with random characters using the specified <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="buffer">A <see cref="Span{T}"/> of characters to contain random values.</param>
+        /// <param name="strategy">The strategy to use. This parameter is optional.
+        /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="buffer"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
+        public static unsafe void NextChars(this Random random, Span<char> buffer, StringCreation strategy = StringCreation.Ascii)
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            if (!Enum<StringCreation>.IsDefined(strategy))
+                Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
+
+            if (buffer.Length == 0)
+                return;
+
+            fixed (char* s = buffer)
+                FillChars(random, new MutableString(s, buffer.Length), strategy);
+        }
+#endif
 
         #endregion
 
@@ -1071,7 +1488,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Returns a random RFC 4122 compliant <see cref="Guid"/> value generated by using the specified <see cref="Random"/> instance.
         /// </summary>
-        /// <param name="random">The <see cref="Random"/> instance to use. Note that if it is a non-derived <see cref="System.Random">System.Random</see> instance, then
+        /// <param name="random">The <see cref="Random"/> instance to use. Note that if it is a non-derived <see cref="Random">System.Random</see> instance, then
         /// the result cannot be considered as a cryptographically secure identifier.</param>
         /// <returns>An RFC 4122 compliant <see cref="Guid"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
@@ -1085,10 +1502,18 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
 
-            var result = random.NextBytes(16);
-            result[6] = (byte)((result[6] & 0x0F) | 0x40); // the high nibble of 6th byte is 4
-            result[8] = (byte)((result[8] & 0b0011_1111) & 0b1000_0000); // the two MSBs of 8th byte are 10b
-            return new Guid(result);
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            // Interestingly, in .NET Core 3.0 this is still slower than pure byte arrays.
+            // Still, we hope that Span performance (or the cast to ReadOnlySpan?) will be faster later
+            // and that sparing heap allocation is worth it.
+            Span<byte> bytes = stackalloc byte[16];
+#else
+            byte[] bytes = new byte[16];
+#endif
+            random.NextBytes(bytes);
+            bytes[6] = (byte)((bytes[6] & 0x0F) | 0x40); // the high nibble of 6th byte is 4
+            bytes[8] = (byte)((bytes[8] & 0b0011_1111) & 0b1000_0000); // the two MSBs of 8th byte are 10b
+            return new Guid(bytes);
         }
 
         #endregion
@@ -1174,9 +1599,6 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
         private static double DoGetNextDouble(Random random, double minValue, double maxValue, FloatScale scale)
         {
             static double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
@@ -1252,28 +1674,106 @@ namespace KGySoft.CoreLibraries
         private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
         {
             decimal sample = random.NextDecimal();
-            return Math.Sign(minValue) * Math.Sign(maxValue) >= 0 
+            return Math.Sign(minValue) * Math.Sign(maxValue) >= 0
                 // ranged version (because the other branch may overflow by 0.5 if both min and max are near MaxValue)
                 ? (maxValue - minValue) * sample + minValue
                 // wide-range proof version (max - min can be larger than MaxValue)
                 : (maxValue * sample) + (minValue * (1m - sample));
         }
 
-        private static string GenerateString(Random random, int length, string allowedCharacters, bool checkInvalid = false)
+        private static void FillChars(Random random, MutableString target, bool checkInvalid = false)
         {
-            if (length == 0)
-                return String.Empty;
-
-            var result = new char[length];
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < target.Length; i++)
             {
                 do
                 {
-                    result[i] = allowedCharacters?[random.Next(allowedCharacters.Length)] ?? random.NextChar();
-                } while (checkInvalid && !result[i].IsValidCharacter());
+                    target[i] = random.NextChar();
+                } while (checkInvalid && !target[i].IsValidCharacter());
             }
+        }
 
-            return new String(result);
+        private static void FillChars(Random random, in MutableString target, CharSet allowedCharacters)
+        {
+            for (int i = 0; i < target.Length; i++)
+                target[i] = allowedCharacters[random.Next(allowedCharacters.Length)];
+        }
+
+        private static void FillChars(Random random, in MutableString target, in MutableString allowedCharacters)
+        {
+            for (int i = 0; i < target.Length; i++)
+                target[i] = allowedCharacters[random.Next(allowedCharacters.Length)];
+        }
+
+        private static void FillChars(Random random, in MutableString target, StringCreation strategy)
+        {
+            switch (strategy)
+            {
+                case StringCreation.AnyChars:
+                    FillChars(random, target);
+                    break;
+
+                case StringCreation.AnyValidChars:
+                    FillChars(random, target, true);
+                    break;
+
+                case StringCreation.Ascii:
+                    FillChars(random, target, CharSet.Ascii);
+                    break;
+
+                case StringCreation.Digits:
+                    FillChars(random, target, CharSet.Digits);
+                    break;
+
+                case StringCreation.DigitsNoLeadingZeros:
+                    FillChars(random, target.Substring(0, 1), CharSet.NonZeroDigits);
+                    if (target.Length > 1)
+                        FillChars(random, target.Substring(1), CharSet.Digits);
+                    break;
+
+                case StringCreation.Letters:
+                    FillChars(random, target, CharSet.Letters);
+                    break;
+
+                case StringCreation.LettersAndDigits:
+                    FillChars(random, target, CharSet.LettersAndDigits);
+                    break;
+
+                case StringCreation.UpperCaseLetters:
+                    FillChars(random, target, CharSet.UpperCaseLetters);
+                    break;
+
+                case StringCreation.LowerCaseLetters:
+                    FillChars(random, target, CharSet.LowerCaseLetters);
+                    break;
+
+                case StringCreation.TitleCaseLetters:
+                    FillChars(random, target.Substring(0, 1), CharSet.UpperCaseLetters);
+                    if (target.Length > 1)
+                        FillChars(random, target.Substring(1), CharSet.LowerCaseLetters);
+                    break;
+
+                case StringCreation.UpperCaseWord:
+                    WordGenerator.GenerateWord(random, target);
+                    target.ToUpper();
+                    break;
+
+                case StringCreation.LowerCaseWord:
+                    WordGenerator.GenerateWord(random, target);
+                    break;
+
+                case StringCreation.TitleCaseWord:
+                    WordGenerator.GenerateWord(random, target);
+                    target.Substring(0, 1).ToUpper();
+                    break;
+
+                case StringCreation.Sentence:
+                    WordGenerator.GenerateSentence(random, target);
+                    break;
+
+                default:
+                    Throw.InternalError($"Unexpected strategy: {strategy}");
+                    break;
+            }
         }
 
         #endregion

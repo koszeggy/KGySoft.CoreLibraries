@@ -159,42 +159,42 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             LinkedList<int> llist = new LinkedList<int>(clist);
 
             new PerformanceTest { TestName = "Enumerating Lists Test", Iterations = 100_000, Repeat = 5 }
-                //.AddCase(() =>
-                //{
-                //    foreach (int i in list) { }
-                //}, "Enumerating List by foreach")
-                //.AddCase(() =>
-                //{
-                //    foreach (int i in llist) { }
-                //}, "Enumerating LinkedList by foreach")
-                //.AddCase(() =>
-                //{
-                //    foreach (int i in clist) { }
-                //}, "Enumerating CircularList by foreach (0-aligned)")
-                //.AddCase(() =>
-                //{
-                //    foreach (int i in clistShifted) { }
-                //}, "Enumerating CircularList by foreach (shifted)")
-                //.AddCase(() =>
-                //{
-                //    IEnumerable<int> ilist = list;
-                //    foreach (int i in ilist) { }
-                //}, "Enumerating List as IList by foreach (eg. LINQ)")
-                //.AddCase(() =>
-                //{
-                //    IEnumerable<int> ilist = llist;
-                //    foreach (int i in ilist) { }
-                //}, "Enumerating LinkedList as IList by foreach")
-                //.AddCase(() =>
-                //{
-                //    IEnumerable<int> ilist = clist;
-                //    foreach (int i in ilist) { }
-                //}, "Enumerating CircularList as IList by foreach (0-aligned)")
-                //.AddCase(() =>
-                //{
-                //    IEnumerable<int> ilist = clistShifted;
-                //    foreach (int i in ilist) { }
-                //}, "Enumerating CircularList as IList by foreach (shifted)")
+                .AddCase(() =>
+                {
+                    foreach (int i in list) { }
+                }, "Enumerating List by foreach")
+                .AddCase(() =>
+                {
+                    foreach (int i in llist) { }
+                }, "Enumerating LinkedList by foreach")
+                .AddCase(() =>
+                {
+                    foreach (int i in clist) { }
+                }, "Enumerating CircularList by foreach (0-aligned)")
+                .AddCase(() =>
+                {
+                    foreach (int i in clistShifted) { }
+                }, "Enumerating CircularList by foreach (shifted)")
+                .AddCase(() =>
+                {
+                    IEnumerable<int> ilist = list;
+                    foreach (int i in ilist) { }
+                }, "Enumerating List as IList by foreach (eg. LINQ)")
+                .AddCase(() =>
+                {
+                    IEnumerable<int> ilist = llist;
+                    foreach (int i in ilist) { }
+                }, "Enumerating LinkedList as IList by foreach")
+                .AddCase(() =>
+                {
+                    IEnumerable<int> ilist = clist;
+                    foreach (int i in ilist) { }
+                }, "Enumerating CircularList as IList by foreach (0-aligned)")
+                .AddCase(() =>
+                {
+                    IEnumerable<int> ilist = clistShifted;
+                    foreach (int i in ilist) { }
+                }, "Enumerating CircularList as IList by foreach (shifted)")
                 .AddCase(() =>
                 {
                     for (int i = 0; i < list.Count; i++)
@@ -209,13 +209,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         int x = clist[i];
                     }
                 }, "Enumerating CircularList by index (0-aligned)")
-                //.AddCase(() =>
-                //{
-                //    for (int i = 0; i < clistShifted.Count; i++)
-                //    {
-                //        int x = clistShifted[i];
-                //    }
-                //}, "Enumerating CircularList by index (shifted)")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < clistShifted.Count; i++)
+                    {
+                        int x = clistShifted[i];
+                    }
+                }, "Enumerating CircularList by index (shifted)")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

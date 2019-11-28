@@ -25,7 +25,7 @@ using System.Diagnostics;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Similar to Memory/ArraySegment{char} but this is mutable, can be used in any platform and is optimized
+    /// Similar to Memory/ArraySegment/ReadOnlySpan{char} but this is mutable, can be used in any platform and is optimized
     /// for quite a few special operations.
     /// </summary>
     internal struct StringSegment : IEquatable<StringSegment>

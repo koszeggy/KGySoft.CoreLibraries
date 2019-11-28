@@ -53,77 +53,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Nested classes
 
-        #region TestRandom class
-
-        private class TestRandom : Random
-        {
-            #region Fields
-
-            private int nextBytePtr;
-            private byte[] nextBytes;
-            private int nextDoublePtr;
-            private double[] nextDoubles;
-            private int nextIntPtr;
-            private int[] nextIntegers;
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            public override void NextBytes(byte[] buffer)
-            {
-                if (nextBytes == null)
-                {
-                    base.NextBytes(buffer);
-                    return;
-                }
-
-                for (int i = 0; i < buffer.Length; i++)
-                    buffer[i] = nextBytes[nextBytePtr++ % nextBytes.Length];
-            }
-
-            public override double NextDouble() => nextDoubles?[nextDoublePtr++ % nextDoubles.Length] ?? base.NextDouble();
-
-            public override int Next() => nextIntegers?[nextIntPtr++ % nextIntegers.Length] ?? base.Next();
-
-            public override int Next(int maxValue) => nextIntegers == null ? base.Next(maxValue) : Next();
-
-            public override int Next(int minValue, int maxValue) => nextIntegers == null ? base.Next(minValue, maxValue) : Next();
-
-            #endregion
-
-            #region Internal Methods
-
-            internal TestRandom WithNextBytes(params byte[] nextBytes)
-            {
-                this.nextBytes = nextBytes;
-                nextBytePtr = 0;
-                return this;
-            }
-
-            internal TestRandom WithNextDoubles(params double[] nextDoubles)
-            {
-                this.nextDoubles = nextDoubles;
-                nextDoublePtr = 0;
-                return this;
-            }
-
-            internal TestRandom WithNextIntegers(params int[] nextIntegers)
-            {
-                this.nextIntegers = nextIntegers;
-                nextIntPtr = 0;
-                return this;
-            }
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
         #region Recursive class
 
         private class Recursive
@@ -163,17 +92,61 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         #region Methods
 
         [Test]
+        public void NextInt32Test()
+        {
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt32(1, 0));
+
+            var result = rnd.NextInt32(1, 2);
+            Assert.AreEqual(1, result);
+            result = rnd.NextInt32(Int32.MaxValue - 1, Int32.MaxValue);
+            Assert.AreEqual(Int32.MaxValue - 1, result);
+
+            // big range
+            result = rnd.NextInt32(-10, Int32.MaxValue);
+            Assert.IsTrue(result >= -10 && result < Int32.MaxValue);
+
+            result = rnd.NextInt32(Int32.MaxValue, true);
+            Assert.IsTrue(result >= 0);
+
+            // no shift, largest possible range
+            result = rnd.NextInt32(Int32.MinValue, Int32.MaxValue, false);
+            Assert.IsTrue(result < Int32.MaxValue);
+
+            // fallback to random bytes
+            rnd.NextInt32(Int32.MinValue, Int32.MaxValue, true);
+
+            // shift, largest possible range
+            result = rnd.NextInt32(Int32.MinValue + 1, Int32.MaxValue, true);
+            Assert.IsTrue(result > Int32.MinValue);
+        }
+
+        [Test]
+        public void NextUInt32Test()
+        {
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt32(1, 0));
+
+            var result = rnd.NextUInt32(1, 2);
+            Assert.AreEqual(1, result);
+            result = rnd.NextUInt32(UInt32.MaxValue - 1, UInt32.MaxValue);
+            Assert.AreEqual(UInt32.MaxValue - 1, result);
+
+            // big range
+            result = rnd.NextUInt32(10, (uint)Int32.MaxValue + 100);
+            Assert.IsTrue(result >= 10 && result < (uint)Int32.MaxValue + 100);
+        }
+
+        [Test]
         public void NextUInt64Test()
         {
-            // full range
-            var rnd = new TestRandom().WithNextBytes(0);
-            Assert.AreEqual(0UL, rnd.NextUInt64());
-
-            rnd.WithNextBytes(255);
-            Assert.AreEqual(ulong.MaxValue, rnd.NextUInt64());
+            var rnd = new Random();
 
             // min-max
-            rnd.WithNextBytes(null);
             Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
 
             var result = rnd.NextUInt64(0, 10);
@@ -184,14 +157,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void NextInt64Test()
         {
             // full range
-            var rnd = new TestRandom().WithNextBytes(0);
-            Assert.AreEqual(0L, rnd.NextInt64());
-
-            rnd.WithNextBytes(255);
-            Assert.AreEqual(-1, rnd.NextInt64());
+            var rnd = new Random();
 
             // min-max
-            rnd.WithNextBytes(null);
             Throws<ArgumentOutOfRangeException>(() => rnd.NextInt64(1, 0));
 
             var result = rnd.NextInt64(-5, 5);
@@ -222,7 +190,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
             }
 
-            var rnd = new TestRandom();
+            var rnd = new Random();
 
             // edge cases
             Test(rnd, Double.MinValue, Double.MaxValue);
@@ -283,9 +251,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
             }
 
-            var rnd = new TestRandom();
-            Test(rnd.WithNextDoubles(1d), Single.MinValue, Single.MaxValue);
-            Test(rnd.WithNextDoubles(null), Single.MinValue, Single.MaxValue);
+            var rnd = new Random();
+            Test(rnd, Single.MinValue, Single.MaxValue);
             Test(rnd, 0, Single.Epsilon);
             Test(rnd, Single.MaxValue, Single.PositiveInfinity);
             Test(rnd, Single.NegativeInfinity, Single.PositiveInfinity);
@@ -374,6 +341,27 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(DateTimeOffset.MaxValue.AddMinutes(-1), DateTimeOffset.MaxValue);
             Test(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
             Test(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
+        }
+
+        [TestCase(StringCreation.AnyChars)]
+        [TestCase(StringCreation.AnyValidChars)]
+        [TestCase(StringCreation.Ascii)]
+        [TestCase(StringCreation.Digits)]
+        [TestCase(StringCreation.DigitsNoLeadingZeros)]
+        [TestCase(StringCreation.Letters)]
+        [TestCase(StringCreation.LettersAndDigits)]
+        [TestCase(StringCreation.UpperCaseLetters)]
+        [TestCase(StringCreation.LowerCaseLetters)]
+        [TestCase(StringCreation.TitleCaseLetters)]
+        [TestCase(StringCreation.UpperCaseWord)]
+        [TestCase(StringCreation.LowerCaseWord)]
+        [TestCase(StringCreation.TitleCaseWord)]
+        [TestCase(StringCreation.Sentence)]
+        public void NextStringTest(StringCreation strategy)
+        {
+            var s = ThreadSafeRandom.Instance.NextString(10, strategy);
+            Console.WriteLine($"{strategy}: {s}");
+            Assert.AreEqual(10, s.Length);
         }
 
         [Test]

@@ -58,6 +58,10 @@
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
++ RandomExtensions class:
+  + New NextString overloads
+  + New NextChars methods to fill up or return a char buffer instead of returning a string instance
+  * Reducing heap usage and improving performance in all platform targets.
 + EnumExtensions class:
   + New GetFlagsCount method
 ! TypeExtensions class:
@@ -67,6 +71,8 @@
 + Range<T> struct:
   + New Deconstruct method.
   + New operators for converting from T, (T, T). Not available in .NET 3.5, .NET 4.0 and .NET 4.5 versions.
++ ThreadSsafeRandom class:
+  + New NextBytes overload for Span<char> (only in .NET Core 3.0 and .NET Standard 2.1)
 
 - KGySoft.Diagnostics namespace:
 ================================
@@ -115,6 +121,11 @@
 - ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining
   executing directory.
 + ResXResourceReader/ResXResourceWriter: Supporting every RuntimeType instance natively.
+
++ KGySoft.Security.Cryptography namespace
+=========================================
++ SecuraRandom class:
+  + New NextBytes overload for Span<char> (only in .NET Core 3.0 and .NET Standard 2.1)
 
 ! KGySoft.Serialization namespace:
 ==================================

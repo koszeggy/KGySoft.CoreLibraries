@@ -87,26 +87,6 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static unsafe void QuickToString(this ulong value, bool isNegative, int size, char* target)
-        {
-            if (value == 0)
-            {
-                *target = '0';
-                return;
-            }
-
-            while (value > 0)
-            {
-                target[--size] = (char)(value % 10 + '0');
-                value /= 10;
-            }
-
-            if (isNegative)
-                target[--size] = '-';
-
-            Debug.Assert(size == 0, "Invalid size was passed to QuickToString");
-        }
-
         #endregion
     }
 }

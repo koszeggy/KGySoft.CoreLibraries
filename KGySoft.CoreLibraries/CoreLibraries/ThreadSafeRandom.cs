@@ -140,6 +140,18 @@ namespace KGySoft.CoreLibraries
                 base.NextBytes(buffer);
         }
 
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+        /// <summary>
+        /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
+        /// </summary>
+        /// <param name="buffer">A <see cref="Span{T}"/> of bytes to contain random numbers.</param>
+        public override void NextBytes(Span<byte> buffer)
+        {
+            lock (syncRoot)
+                base.NextBytes(buffer);
+        } 
+#endif
+
         #endregion
 
         #region Protected Methods

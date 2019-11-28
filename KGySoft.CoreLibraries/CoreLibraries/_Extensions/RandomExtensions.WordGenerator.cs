@@ -19,7 +19,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 #endregion
 
@@ -45,7 +44,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Private Fields
 
-                private readonly StringBuilder result;
+                private MutableStringBuilder result;
 
                 #endregion
 
@@ -83,10 +82,10 @@ namespace KGySoft.CoreLibraries
 
                 #region Constructors
 
-                internal GeneratorContext(Random random) : this()
+                internal GeneratorContext(Random random, in MutableString target) : this()
                 {
                     Random = random;
-                    result = new StringBuilder();
+                    result = new MutableStringBuilder(target);
                 }
 
                 #endregion
@@ -127,6 +126,7 @@ namespace KGySoft.CoreLibraries
 
                 internal void StartNewWord(int length)
                 {
+                    Debug.Assert(length <= result.Capacity - result.Length, "Length too long");
                     CurrentWordStartPosition = result.Length;
                     RemainingWordLength = length;
                 }
@@ -151,10 +151,10 @@ namespace KGySoft.CoreLibraries
 
             #region Fields
 
-            private static string vowels = "aeiou";
-            private static string consonants = "bcdfghjklmnpqrstvwxyz";
-            private static string consonantsAlone = "qwx";
-            private static string consonantsNotDoubled = "qwxy";
+            private static readonly string vowels = "aeiou";
+            private static readonly string consonants = "bcdfghjklmnpqrstvwxyz";
+            private static readonly string consonantsAlone = "qwx";
+            private static readonly string consonantsNotDoubled = "qwxy";
             private static readonly string[] consonantsNotCombined = { "bcdgkpt", "fv", "jy" };
 
             #endregion
@@ -163,29 +163,34 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static string GenerateWord(Random random, int length)
+            internal static void GenerateWord(Random random, in MutableString target)
             {
-                var context = new GeneratorContext(random);
-                GenerateWord(ref context, length);
-                return context.ToString();
+                if (target.Length == 0)
+                    return;
+
+                var context = new GeneratorContext(random, target);
+                GenerateWord(ref context, target.Length);
             }
 
-            internal static string GenerateSentence(Random random, int length)
+            internal static void GenerateSentence(Random random, in MutableString target)
             {
-                if (length == 0)
-                    return String.Empty;
+                if (target.Length == 0)
+                    return;
 
-                if (length == 1)
-                    return GenerateWord(random, 1).ToUpperInvariant();
+                if (target.Length == 1)
+                {
+                    GenerateWord(random, target);
+                    target.ToUpper();
+                    return;
+                }
 
-                var context = new GeneratorContext(random);
-                context.StartNewSentence(length);
+                var context = new GeneratorContext(random, target);
+                context.StartNewSentence(target.Length);
                 GenerateFirstWord(ref context);
                 while (context.RemainingSentenceLength > 1)
                     GenerateNextWord(ref context);
                 GenerateSentenceEnd(ref context);
                 Debug.Assert(context.RemainingSentenceLength == 0);
-                return context.ToString();
             }
 
             #endregion
@@ -289,7 +294,7 @@ namespace KGySoft.CoreLibraries
             {
                 char last = context.LastLetter;
 
-                // after a vowel: alyaws ok
+                // after a vowel: always ok
                 if (vowels.IndexOf(last) >= 0)
                     return true;
 

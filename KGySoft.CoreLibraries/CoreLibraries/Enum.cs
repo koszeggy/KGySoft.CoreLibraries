@@ -790,7 +790,7 @@ namespace KGySoft.CoreLibraries
 
             ulong value = origRawValue;
 
-            // Up to 64 flags. Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
+            // Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
             // MinValue: Flag is unset; <0: Flag has no name (digits size are stored); >=0: Name index
             int* resultsQueue = stackalloc int[underlyingInfo.BitSize];
 
@@ -846,20 +846,20 @@ namespace KGySoft.CoreLibraries
 
             fixed (char* pinnedResult = result)
             {
-                char* pos = pinnedResult;
+                var sb = new MutableStringBuilder(pinnedResult, result.Length);
 
                 // Applying the names/numbers
                 for (int i = 0; i <= maxFlag; i++)
                 {
                     if (resultsQueue[i] >= 0)
-                        rawValueNamePairs.Names[resultsQueue[i]].CopyToAndAdvance(&pos);
+                        sb.Append(rawValueNamePairs.Names[resultsQueue[i]]);
                     else if (resultsQueue[i] == Int32.MinValue)
                         continue;
                     else
-                        ToNumericString(1UL << i, -resultsQueue[i], &pos);
+                        ToNumericString(1UL << i, -resultsQueue[i], ref sb);
 
                     if (i < maxFlag)
-                        separator.CopyToAndAdvance(&pos);
+                        sb.Append(separator);
                 }
             }
 
@@ -879,7 +879,7 @@ namespace KGySoft.CoreLibraries
             ulong[] rawValues = rawValueNamePairs.RawValues;
             ulong value = origRawValue;
 
-            // Up to 64 flags. Unlike in FormatDistinctFlags it is used as a stack because the largest value is added first.
+            // Unlike in FormatDistinctFlags it is used as a stack because the largest value is added first.
             int* resultsStack = stackalloc int[underlyingInfo.BitSize];
 
             int resultsCount = 0; // Indicates the top of resultsStack
@@ -924,24 +924,24 @@ namespace KGySoft.CoreLibraries
             string result = new String('\0', resultLength + separator.Length * (resultsCount - 1));
             fixed (char* pinnedResult = result)
             {
-                char* pos = pinnedResult;
+                var sb = new MutableStringBuilder(pinnedResult, result.Length);
 
                 // Applying the number (if any)
                 if (numericValueLen != 0)
                 {
-                    ToNumericString(value, numericValueLen, &pos);
+                    ToNumericString(value, numericValueLen, ref sb);
                     resultsCount -= 1;
                     if (resultsCount > 1)
-                        separator.CopyToAndAdvance(&pos);
+                        sb.Append(separator);
                 }
 
                 // Applying the names
                 for (int i = resultsCount - 1; i >= 0; i--)
                 {
-                    rawValueNamePairs.Names[resultsStack[i]].CopyToAndAdvance(&pos);
+                    sb.Append(rawValueNamePairs.Names[resultsStack[i]]);
 
                     if (i > 0)
-                        separator.CopyToAndAdvance(&pos);
+                        sb.Append(separator);
                 }
             }
 
@@ -967,18 +967,16 @@ namespace KGySoft.CoreLibraries
             return (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg);
         }
 
-        private static unsafe void ToNumericString(ulong value, int size, char** targetRef)
+        private static void ToNumericString(ulong value, int numLen, ref MutableStringBuilder sb)
         {
             if (!underlyingInfo.IsSigned)
-                value.QuickToString(false, size, *targetRef);
+                sb.Append(value, false, numLen);
             else
             {
                 long signedValue = ToSigned(value);
                 bool isNeg = signedValue < 0;
-                (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg, size, *targetRef);
+                sb.Append((isNeg ? (ulong)-signedValue : (ulong)signedValue), isNeg, numLen);
             }
-
-            *targetRef += size;
         }
 
         private static int GetStringLength(ulong value)

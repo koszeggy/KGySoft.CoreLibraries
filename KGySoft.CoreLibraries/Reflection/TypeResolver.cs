@@ -454,20 +454,6 @@ namespace KGySoft.Reflection
         internal static string StripName(string typeName, bool stripVersionOnly)
             => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.LongName) ?? typeName;
 
-        internal static void SplitName(string fullName, out string assemblyName, out string typeName)
-        {
-            int pos = GetAssemblyNamePos(fullName);
-            if (pos < 0)
-            {
-                assemblyName = null;
-                typeName = fullName;
-                return;
-            }
-
-            assemblyName = fullName.Substring(pos + 1).Trim();
-            typeName = fullName.Substring(0, pos).Trim();
-        }
-
         #endregion
 
         #region Private Methods

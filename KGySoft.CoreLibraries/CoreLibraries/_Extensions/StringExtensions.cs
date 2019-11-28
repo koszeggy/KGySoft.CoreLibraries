@@ -35,8 +35,6 @@ namespace KGySoft.CoreLibraries
     public static partial class StringExtensions
     {
         #region Methods
-        
-        #region Public Methods
 
         #region Misc Tools
 
@@ -505,22 +503,6 @@ namespace KGySoft.CoreLibraries
             }
 
             return false;
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Internal Methods
-
-        internal static unsafe void CopyToAndAdvance(this string source, char** targetRef)
-        {
-            int len = source.Length;
-            char* target = *targetRef;
-            for (int i = 0; i < len; i++)
-                target[i] = source[i];
-
-            *targetRef += len;
         }
 
         #endregion
