@@ -18,13 +18,15 @@
 
 using System.Diagnostics;
 #if !(NET35 || NET40)
-using System.Runtime.CompilerServices; 
+using System.Runtime.CompilerServices;
 #endif
+using System.Security; 
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
+    [SecurityCritical]
     internal struct MutableStringBuilder
     {
         #region Fields
@@ -86,6 +88,9 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         public override string ToString() => str.Substring(0, Length).ToString();
 
         #endregion

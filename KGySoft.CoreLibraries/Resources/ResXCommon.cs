@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -191,6 +192,7 @@ namespace KGySoft.Resources
             return soapFormatter;
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")]
         internal static MemoryStream ToMemoryStream(string name, object value, bool safeMode)
         {
             if (value == null)
@@ -244,6 +246,7 @@ namespace KGySoft.Resources
             return true;
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")]
         private static MemoryStream ToStreamSafe(ResXDataNode node)
         {
             object value = node.ValueInternal;

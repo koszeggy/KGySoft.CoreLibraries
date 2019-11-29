@@ -17,6 +17,8 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Security; 
 
 #endregion
 
@@ -25,6 +27,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Similar to Span{char} but can be used in any platform.
     /// </summary>
+    [SecurityCritical]
     internal readonly unsafe struct MutableString
     {
         #region Fields
@@ -37,6 +40,8 @@ namespace KGySoft.CoreLibraries
 
         #region Private Fields
 
+        [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2151:Fields with critical types should be security critical", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         private readonly char* head;
         
         #endregion
@@ -54,7 +59,10 @@ namespace KGySoft.CoreLibraries
 
         internal char this[int index]
         {
+            [SecurityCritical]
             get => head[index];
+
+            [SecurityCritical]
             set => head[index] = value;
         }
 
@@ -67,6 +75,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Should be initialized from a fixed or stack allocated pointer.
         /// </summary>
+        [SecurityCritical]
         internal MutableString(char* s, int len)
         {
             head = s;
@@ -79,15 +88,22 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         public override string ToString() => new String(head, 0, Length).Replace('\0', '□');
 
         #endregion
 
         #region Internal Methods
 
+        [SecurityCritical]
         internal MutableString Substring(int start, int count) => new MutableString(head + start, count);
+
+        [SecurityCritical]
         internal MutableString Substring(int start) => new MutableString(head + start, Length - start);
 
+        [SecurityCritical]
         internal void ToUpper()
         {
             for (int i = 0; i < Length; i++)

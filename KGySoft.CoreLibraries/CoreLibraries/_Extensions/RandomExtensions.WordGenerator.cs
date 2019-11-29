@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Security;
 
 #endregion
 
@@ -44,6 +45,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Private Fields
 
+                [SecurityCritical]
                 private MutableStringBuilder result;
 
                 #endregion
@@ -60,11 +62,23 @@ namespace KGySoft.CoreLibraries
 
                 internal int RemainingSentenceLength { get; private set; }
 
-                internal char CurrentWordFirstLetter => result.Length == 0 ? default : result[CurrentWordStartPosition];
+                internal char CurrentWordFirstLetter
+                {
+                    [SecurityCritical]
+                    get => result.Length == 0 ? default : result[CurrentWordStartPosition];
+                }
 
-                internal char LastLetter => result.Length == 0 ? default : result[result.Length - 1];
+                internal char LastLetter
+                {
+                    [SecurityCritical]
+                    get => result.Length == 0 ? default : result[result.Length - 1];
+                }
 
-                internal int CurrentWordLength => result.Length - CurrentWordStartPosition;
+                internal int CurrentWordLength
+                {
+                    [SecurityCritical]
+                    get => result.Length - CurrentWordStartPosition;
+                }
 
                 #endregion
 
@@ -72,7 +86,9 @@ namespace KGySoft.CoreLibraries
 
                 public char this[int index]
                 {
+                    [SecurityCritical]
                     get => result[index];
+                    [SecurityCritical]
                     set => result[index] = value;
                 }
 
@@ -82,6 +98,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Constructors
 
+                [SecurityCritical]
                 internal GeneratorContext(Random random, in MutableString target) : this()
                 {
                     Random = random;
@@ -94,9 +111,40 @@ namespace KGySoft.CoreLibraries
 
                 #region Public Methods
 
+#if !NET35
+                [SecuritySafeCritical] 
+#endif
                 public override string ToString() => result.ToString();
 
-                public void Insert(int index, char c)
+                #endregion
+
+                #region Internal Methods
+
+                [SecurityCritical]
+                internal char GetLetterFromEnd(int index) => result[result.Length - index - 1];
+
+                [SecurityCritical]
+                internal void StartNewWord(int length)
+                {
+                    Debug.Assert(length <= result.Capacity - result.Length, "Length too long");
+                    CurrentWordStartPosition = result.Length;
+                    RemainingWordLength = length;
+                }
+
+                internal void StartNewSentence(int length) => RemainingSentenceLength = length;
+
+                [SecurityCritical]
+                internal void AddChar(char c)
+                {
+                    result.Append(c);
+
+                    // if currently out of word or sentence, these can go below zero
+                    RemainingWordLength -= 1;
+                    RemainingSentenceLength -= 1;
+                }
+
+                [SecurityCritical]
+                internal void Insert(int index, char c)
                 {
                     result.Insert(index, c);
 
@@ -107,7 +155,8 @@ namespace KGySoft.CoreLibraries
                         RemainingWordLength -= 1;
                 }
 
-                public void Insert(int index, string s)
+                [SecurityCritical]
+                internal void Insert(int index, string s)
                 {
                     result.Insert(index, s);
 
@@ -120,41 +169,22 @@ namespace KGySoft.CoreLibraries
 
                 #endregion
 
-                #region Internal Methods
-
-                internal char GetLetterFromEnd(int index) => result[result.Length - index - 1];
-
-                internal void StartNewWord(int length)
-                {
-                    Debug.Assert(length <= result.Capacity - result.Length, "Length too long");
-                    CurrentWordStartPosition = result.Length;
-                    RemainingWordLength = length;
-                }
-
-                internal void StartNewSentence(int length) => RemainingSentenceLength = length;
-
-                internal void AddChar(char c)
-                {
-                    result.Append(c);
-
-                    // if currently out of word or sentence, these can go below zero
-                    RemainingWordLength -= 1;
-                    RemainingSentenceLength -= 1;
-                }
-
-                #endregion
-
                 #endregion
             }
 
             #endregion
 
+            #region Constants
+            
+            private const string vowels = "aeiou";
+            private const string consonants = "bcdfghjklmnpqrstvwxyz";
+            private const string consonantsAlone = "qwx";
+            private const string consonantsNotDoubled = "qwxy";
+
+            #endregion
+            
             #region Fields
 
-            private static readonly string vowels = "aeiou";
-            private static readonly string consonants = "bcdfghjklmnpqrstvwxyz";
-            private static readonly string consonantsAlone = "qwx";
-            private static readonly string consonantsNotDoubled = "qwxy";
             private static readonly string[] consonantsNotCombined = { "bcdgkpt", "fv", "jy" };
 
             #endregion
@@ -163,6 +193,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
+            [SecurityCritical]
             internal static void GenerateWord(Random random, in MutableString target)
             {
                 if (target.Length == 0)
@@ -172,6 +203,7 @@ namespace KGySoft.CoreLibraries
                 GenerateWord(ref context, target.Length);
             }
 
+            [SecurityCritical]
             internal static void GenerateSentence(Random random, in MutableString target)
             {
                 if (target.Length == 0)
@@ -197,6 +229,7 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+            [SecurityCritical]
             private static void GenerateWord(ref GeneratorContext context, int length)
             {
                 context.StartNewWord(length);
@@ -214,11 +247,13 @@ namespace KGySoft.CoreLibraries
 
             private static char GetConsonant(ref GeneratorContext context) => consonants[context.Random.Next(consonants.Length)];
 
+            [SecurityCritical]
             private static char GetNextLetter(ref GeneratorContext context)
                 => vowels.IndexOf(context.LastLetter) >= 0
                 ? GetVowelSuccessor(ref context)
                 : GetConsonantSuccessor(ref context);
 
+            [SecurityCritical]
             private static char GetVowelSuccessor(ref GeneratorContext context)
             {
                 switch (context.Random.NextDouble())
@@ -233,6 +268,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static char GetConsonantSuccessor(ref GeneratorContext context)
             {
                 switch (context.Random.NextDouble())
@@ -253,6 +289,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static bool CanAddAnyVowel(ref GeneratorContext context)
             {
                 // last char is consonant
@@ -267,9 +304,11 @@ namespace KGySoft.CoreLibraries
                 return vowels.IndexOf(context.GetLetterFromEnd(1)) < 0;
             }
 
+            [SecurityCritical]
             private static bool CanAddVowel(ref GeneratorContext context, char c)
                 => c != context.LastLetter; // doubled vowel is not allowed
 
+            [SecurityCritical]
             private static bool CanAddAnyConsonant(ref GeneratorContext context)
             {
                 char last = context.LastLetter;
@@ -290,6 +329,7 @@ namespace KGySoft.CoreLibraries
                 return vowels.IndexOf(context.GetLetterFromEnd(1)) >= 0;
             }
 
+            [SecurityCritical]
             private static bool CanAddConsonant(ref GeneratorContext context, char c)
             {
                 char last = context.LastLetter;
@@ -310,6 +350,7 @@ namespace KGySoft.CoreLibraries
                 return consonantsNotCombined.All(group => !(group.IndexOf(c) >= 0 && group.IndexOf(last) >= 0));
             }
 
+            [SecurityCritical]
             private static void GenerateFirstWord(ref GeneratorContext context)
             {
                 Debug.Assert(context.RemainingSentenceLength > 1);
@@ -326,6 +367,7 @@ namespace KGySoft.CoreLibraries
                 Debug.Assert(context.RemainingSentenceLength >= 3 || context.RemainingSentenceLength == 1);
             }
 
+            [SecurityCritical]
             private static void GenerateNextWord(ref GeneratorContext context)
             {
                 Debug.Assert(context.RemainingSentenceLength > 2);
@@ -346,6 +388,7 @@ namespace KGySoft.CoreLibraries
                 Debug.Assert(context.RemainingSentenceLength >= 3 || context.RemainingSentenceLength == 1);
             }
 
+            [SecurityCritical]
             private static void AddPunctuation(ref GeneratorContext context)
             {
                 Debug.Assert(context.RemainingSentenceLength == 2 || context.RemainingSentenceLength > 4);
@@ -385,6 +428,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static void AddVariation(ref GeneratorContext context)
             {
                 Debug.Assert(context[context.CurrentWordStartPosition - 1] == ' ');
@@ -412,6 +456,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static void GenerateSentenceEnd(ref GeneratorContext context)
             {
                 switch (context.Random.NextDouble())

@@ -904,6 +904,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         public virtual void SetObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
@@ -933,6 +934,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         public virtual void RemoveObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
@@ -962,6 +964,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         public virtual void SetMetaObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
@@ -987,6 +990,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         public virtual void RemoveMetaObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
@@ -1464,6 +1468,7 @@ namespace KGySoft.Resources
             }
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         private protected virtual object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
@@ -1596,6 +1601,7 @@ namespace KGySoft.Resources
             lastUsedResourceSet = default;
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)

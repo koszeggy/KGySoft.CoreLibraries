@@ -31,6 +31,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices; 
 #endif
 using System.Runtime.Serialization;
+#if !NET35
+using System.Security; 
+#endif
 #if !NETCOREAPP2_0
 using System.Text;
 #endif
@@ -783,6 +786,9 @@ namespace KGySoft.Reflection
 #endif
         }
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
@@ -794,6 +800,9 @@ namespace KGySoft.Reflection
             return FieldAccessor.GetAccessor(field).Get(instance);
         }
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
@@ -818,6 +827,9 @@ namespace KGySoft.Reflection
             FieldAccessor.GetAccessor(field).Set(instance, value);
         }
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
@@ -835,6 +847,9 @@ namespace KGySoft.Reflection
             return PropertyAccessor.GetAccessor(property).Get(instance);
         }
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif

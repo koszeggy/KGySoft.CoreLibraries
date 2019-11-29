@@ -1340,9 +1340,11 @@ namespace KGySoft.Serialization.Binary
 
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, onSerializedAttribute);
 
+            [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
                 => WriteType(bw, type, null, allowOpenTypes);
 
+            [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, DataTypes dataType, bool allowOpenTypes = false)
             {
                 // WriteType writes compressed as Compressible<T>
@@ -1682,6 +1684,7 @@ namespace KGySoft.Serialization.Binary
             /// Writes the type using explicit names. Occurs when <see cref="SerializationInfo"/> changes the type to an unknown one.
             /// The Binder is not queried this time because there is no known type to query. Instead, we handle the names as bound type names.
             /// </summary>
+            [SecurityCritical]
             private void WriteTypeWithName(BinaryWriter bw, Type origType, string explicitAsmName, string explicitTypeName)
             {
                 // 1.) Checking if type is already known as bound name
@@ -1715,6 +1718,7 @@ namespace KGySoft.Serialization.Binary
                 AddToTypeCache(origType, explicitAsmName, explicitTypeName);
             }
 
+            [SecurityCritical]
             private void WriteGenericMethodParameter(BinaryWriter bw, Type type)
             {
                 Debug.Assert(type.IsGenericParameter && type.DeclaringMethod != null, "Generic method argument is expected here");
@@ -1807,6 +1811,7 @@ namespace KGySoft.Serialization.Binary
                 return false;
             }
 
+            [SecurityCritical]
             private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, (DataTypesEnumerator DataTypes, Type Type) knownElementType, bool isRoot)
             {
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
@@ -1873,6 +1878,7 @@ namespace KGySoft.Serialization.Binary
             /// Marks the type attributes in the stream.
             /// This ensures a successful deserialization even if a type changed its sealed or class/struct attributes.
             /// </summary>
+            [SecurityCritical]
             private void MarkAttributes(BinaryWriter bw, Type elementType, DataTypes dataType)
             {
                 elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;

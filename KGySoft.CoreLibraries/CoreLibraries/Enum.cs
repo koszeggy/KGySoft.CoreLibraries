@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security; 
 
 #endregion
 
@@ -781,6 +782,9 @@ namespace KGySoft.CoreLibraries
 #endif
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (converter.ToUInt64(value) & flags) == flags;
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         private static unsafe string FormatDistinctFlags(TEnum e, string separator)
         {
             EnsureRawValueNamePairs();
@@ -866,6 +870,9 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         private static unsafe string FormatCompoundFlags(TEnum e, string separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();
@@ -967,6 +974,7 @@ namespace KGySoft.CoreLibraries
             return (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg);
         }
 
+        [SecurityCritical]
         private static void ToNumericString(ulong value, int numLen, ref MutableStringBuilder sb)
         {
             if (!underlyingInfo.IsSigned)

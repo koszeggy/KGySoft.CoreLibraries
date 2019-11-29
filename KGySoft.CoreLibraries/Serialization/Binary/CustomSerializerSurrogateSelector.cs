@@ -328,6 +328,7 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Methods
 
+        [SecurityCritical]
         private void GetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context) => serializable.GetObjectData(info, context);
 
         private void SetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context)
