@@ -21,11 +21,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+#if NETCOREAPP3_0
 using System.Runtime.CompilerServices;
+#endif
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
-using System.Security;
+#if !NET35 && !NET40
+using System.Security; 
+#endif
 using System.Text;
 
 using KGySoft.Reflection;

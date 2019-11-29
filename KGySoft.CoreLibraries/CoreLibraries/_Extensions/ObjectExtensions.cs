@@ -121,6 +121,37 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="In{T}(T,T[])"/> overload for an example.
+        /// </summary>
+        /// <param name="item">The item to search for in <paramref name="set"/>.</param>
+        /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
+        /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
+        /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
+        /// <note>If elements of <paramref name="set"/> are complex expressions consider to use the <see cref="In{T}(T,Func{T}[])"/> overload instead to prevent evaluating all elements until they are actually compared.</note></para>
+        /// </remarks>
+        public static bool In<T>(this T item, ReadOnlySpan<T> set)
+        {
+            int length;
+            if (set == null || (length = set.Length) == 0)
+                return false;
+
+            var comparer = ComparerHelper<T>.EqualityComparer;
+            for (int i = 0; i < length; i++)
+            {
+                if (comparer.Equals(item, set[i]))
+                    return true;
+            }
+
+            return false;
+        } 
+#endif
+
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the results of <paramref name="set"/>.
         /// </summary>

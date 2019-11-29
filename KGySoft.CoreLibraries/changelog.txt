@@ -58,6 +58,7 @@
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
     the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
+  + New In overload with ReadOnlySpan (only in .NET Core 3.0 and .NET Standard 2.1)
 + RandomExtensions class:
   + New NextString overloads
   + New NextChars methods to fill up or return a char buffer instead of returning a string instance
