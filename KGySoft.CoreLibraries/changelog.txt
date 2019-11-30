@@ -47,11 +47,11 @@
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
 	to the interface inheritance of .NET. In case of non-dictionary instances a sequential search is performed.
   + New GetValueOrDefault overloads with Func<TValue> default value factory. These are useful if the default value
-    should be evaluated only if the key was not present in the dictionary.
+    should be evaluated only if the key does not exist in the dictionary.
 + Enum<TEnum> class:
   + New GetFlagsMask method: Similar to GetFlags methods but returns all flags in a single value.
   + New GetFlagsCount methods.
-  + New ToString overload.
+  + New ToString overload (only for performance optimization, there is no any feature change).
   * Reducing heap usage and improving performance in all platform targets.
 - EnumerableExtensions class: Fixing non-generic TryAddRange/TryInsertRange/TryRemoveRange/TryReplaceRange if they
   are called multiple times with generic collections of different generic argument types.
@@ -66,13 +66,13 @@
 + EnumExtensions class:
   + New GetFlagsCount method
 ! TypeExtensions class:
-  ! IsGenericTypeOf method returns false if the type to check is not a constructed generic type (it could return true
+  ! IsGenericTypeOf method returns false if the type to check is not a constructed generic type (it returned true
     if the type and genericTypeDefinition parameters were the same generic type definition instance).
-  + New GetName extension method for formatting type names in a more consistent way than Type members.
+  + New GetName extension methods for formatting type names in a more consistent way than Type members.
 + Range<T> struct:
   + New Deconstruct method.
   + New operators for converting from T, (T, T). Not available in .NET 3.5, .NET 4.0 and .NET 4.5 versions.
-+ ThreadSsafeRandom class:
++ ThreadSafeRandom class:
   + New NextBytes overload for Span<char> (only in .NET Core 3.0 and .NET Standard 2.1)
 
 - KGySoft.Diagnostics namespace:
@@ -86,7 +86,7 @@
   + New ResolveTypeOptions enum
 ! Reflector class:
   ! ResolveAssembly(string,bool,bool) method:
-    ! This method is obsolete now in favor of the new overloads.
+    ! This method is now obsolete in favor of the new overloads.
     ! Earlier the method returned null if the assembly could not be resolved and tryToLoad was false, and
       threw an exception on load errors. From now on this overload returns always null if the assembly
       cannot be resolved. Use the other overloads with ResolveAssemblyOptions.ThrowError flag to throw a
@@ -94,7 +94,7 @@
   + New ResolveAssembly(string,ResolveAssemblyOptions) method
   + New ResolveAssembly(AssemblyName,ResolveAssemblyOptions) method
   ! ResolveType(string,bool,bool) method:
-    ! This method is obsolete now in favor of the new overloads.
+    ! This method is now obsolete in favor of the new overloads.
     ! The bool parameters have been renamed to reflect the current behavior better. The default values have
       been adjusted to provide a better compatibility with the former behavior.
     ! Earlier the method could return null or throw an exception depending on the nature of the resolving error.
@@ -111,11 +111,7 @@
     + It can be controlled whether to use case insensitive resolving.
     + Generic parameters and open constructed generics are supported if they were dumped by TypeExtensions.GetName.
     + More consistent behavior for partial assembly matching.
-  - [Try]InvokeMethod overloads by method name: Considering the methods also in the base object class.
-+ WeakAssemblySerializationBinder:
-  * OmitAssemblyNameOnSerialize property is available also in .NET 3.5.
-  + New IgnoreAssemblyNameOnResolve property: Makes possible to completely ignore the assembly information even if
-    it was not omitted on serialization.
+  - [Try]InvokeMethod overloads by method name: Considering the methods also in the object class.
 
 * KGySoft.Resources namespace:
 ==============================
@@ -125,7 +121,7 @@
 
 + KGySoft.Security.Cryptography namespace
 =========================================
-+ SecuraRandom class:
++ SecureRandom class:
   + New NextBytes overload for Span<char> (only in .NET Core 3.0 and .NET Standard 2.1)
 
 ! KGySoft.Serialization namespace:
@@ -144,6 +140,15 @@
   + ForwardedTypesSerializationBinder class: Allows to define mappings for legacy assembly identities as well as
     using writing the legacy identity of a forwarded type. This makes possible to use the .NET Framework assembly
     identities even in .NET Core and .NET Standard, for example.
+  + CustomSerializationBinder class: Provides delegate callback properties to customize Type-name binding.
+  + SerializationInfoExtensions class: Extension methods for manipulating a SerializationInfo instance.
+  + ISerializationBinder interface.
+  + SerializingEventArgs class.
+  + DeserializingEventArgs class.
+  + GettingFieldEventArgs class.
+  + SettingFieldEventArgs class.
+  + ObjectDataObtainedEventArgs class.
+  + ObjectDataRestoredEventArgs class.
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   ! The SerializationBinder that is set in the Binder property is not called for constructed generic types and
@@ -152,9 +157,9 @@
     flag can be enabled in the options.
   + Supporting runtime types natively. It was required for .NET Core/Standard that cannot serialize Type instances.
   + Supporting serialization of pointer fields.
-  + Supporting ISerializationSurrogate instances, which replace the deserialized object as long as it does not
+  + Supporting ISerializationSurrogate instances, which replace the deserialized object as long as they do not
     prevent resolving circular references.
-  + Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
+  ! Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
     IgnoreTypeForwardedFromAttribute flag is enabled.
   * Improving performance.
   - Some edge case issues have been fixed:
@@ -163,7 +168,7 @@
     - If non-sealed nested collections were serialized where the base type of an inner collection was a natively
       supported one, and an inner collection element had a derived collection type, then the actual collection type
       was ignored and the deserialized inner collection had the base element type.
-    - Resolvable circular references to IObjectReference instances were not handled for supported collection
+    - Resolvable circular references to IObjectReference instances were not handled for natively supported collection
       elements.
 ! IBinarySerializable interface:
   ! The options parameter of the special constructor and the Deserialize methods get the options of the
@@ -186,10 +191,10 @@
 
 ! KGySoft.Serialization.Xml namespace:
 ======================================
-* XmlSerializer:
+! XmlSerializer:
   - Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
   + Supporting every RuntimeType instance natively.
-  + Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
+  ! Considering the TypeForwardedFromAttribute attributes of types on serialization, unless the
     IgnoreTypeForwardedFromAttribute flag is enabled.
 + XmlSerializationOptions:
   + New IgnoreTypeForwardedFromAttribute flag.

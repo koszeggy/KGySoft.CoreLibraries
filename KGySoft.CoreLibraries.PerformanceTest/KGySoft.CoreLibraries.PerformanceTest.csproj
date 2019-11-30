@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
-    <!--<TargetFrameworks>net472</TargetFrameworks>-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SignAssembly>true</SignAssembly>
@@ -18,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" /><!--Do not upgrade this; otherwise, .NET Core 2.0 tests cannot be executed anymore-->
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
   </ItemGroup>
