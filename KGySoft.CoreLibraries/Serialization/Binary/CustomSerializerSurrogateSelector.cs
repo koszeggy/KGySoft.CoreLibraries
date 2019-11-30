@@ -62,20 +62,20 @@ namespace KGySoft.Serialization.Binary
     /// <list type="definition">
     /// <item><term>Basic case</term><description>If the only difference is that the type, which is serializable in the original platform
     /// is not marked by the <see cref="SerializableAttribute"/> in the new one (eg.: <see cref="MemoryStream"/> is not serializable
-    /// in .NET Core but otherwise is still the same as in .NET Framework), then it is enough to use the default <see cref="CustomSerializerSurrogateSelector"/>:
+    /// in .NET Core but otherwise it is still the same as in .NET Framework), then it is enough to use the default <see cref="CustomSerializerSurrogateSelector"/>:
     /// <code lang="C#"><![CDATA[
     /// // deserializing a MemoryStream in .NET Core that was serialized in .NET Framework
     /// var formatter = new BinaryFormatter { SurrogateSelector = new CustomSerializerSurrogateSelector() };
     /// var memoryStream = (MemoryStream)formatter.Deserialize(streamSerializedInNetFramework); ]]></code></description></item>
     /// <item><term>The original type implements <see cref="ISerializable"/></term><description>In .NET Core there are several types that still
     /// implement <see cref="ISerializable"/>, though their <see cref="ISerializable.GetObjectData">ISerializable.GetObjectData</see> method
-    /// throws a <see cref="PlatformNotSupportedException"/> (eg. <see cref="DBNull"/>, <see cref="Type"/> and <see cref="Assembly"/> in .NET Core 2).
-    /// It still can change, for example, in .NET Core 3.0 <see cref="DBNull"/> is serializable again, <see cref="Assembly"/> remained the same and
+    /// throws a <see cref="PlatformNotSupportedException"/> (eg. <see cref="DBNull"/>, <see cref="Type"/> and <see cref="Assembly"/> in .NET Core 2.0).
+    /// On the other hand, in .NET Core 3.0 <see cref="DBNull"/> is serializable again, <see cref="Assembly"/> remained the same and
     /// from <see cref="Type"/> the <see cref="ISerializable"/> implementation has also been removed along with the <see cref="SerializableAttribute"/>.
     /// For such cases there are more possible solutions:
     /// <list type="bullet">
     /// <item>In best cases it is enough to use the <see cref="BinarySerializationFormatter"/> both for serializing and deserializing without any surrogate selector.
-    /// It natively supports <see cref="Type"/> instances in all platforms</item>
+    /// It natively supports <see cref="Type"/> instances in all platforms.</item>
     /// <item>When serializing by <see cref="CustomSerializerSurrogateSelector"/> you can set the <see cref="IgnoreISerializable"/> property
     /// to force serializing the object by fields. If the fields are the same on the deserializing side, then the object will be deserializable
     /// by using the <see cref="CustomSerializerSurrogateSelector"/> on both sides with the same settings.</item>
@@ -176,7 +176,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Occurs when an object is being deserialized.
-        /// <br/>If initialize the <see cref="SerializingEventArgs.Object"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
+        /// <br/>If you initialize the <see cref="SerializingEventArgs.Object"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
         /// property to <see langword="true"/>&#160;to omit the default deserialization logic.
         /// </summary>
         public event EventHandler<DeserializingEventArgs> Deserializing

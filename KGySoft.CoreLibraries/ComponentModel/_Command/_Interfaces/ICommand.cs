@@ -36,7 +36,7 @@ namespace KGySoft.ComponentModel
     /// <para>A binding can be created by the <see cref="O:KGySoft.ComponentModel.Command.CreateBinding">Commands.CreateBinding</see> methods or by the <see cref="CommandBindingsCollection"/> class.
     /// When a binding or a collection of bindings are disposed all of the event subscriptions are released, which makes the cleanup really simple.</para>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/jg4OXS" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/7b0lFq" target="_blank">online</a>.</note>
     /// The following examples demonstrate how to define different kind of commands:
     /// <code lang="C#"><![CDATA[
     /// public static partial class MyCommands

@@ -978,12 +978,10 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>If <see cref="Capacity"/> is large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
         /// <para>When <see cref="EnsureCapacity"/> is <see langword="true"/>, the full capacity of the inner storage is allocated when the first
-        /// item is added to the cache. Otherwise, inner storage is allocated dynamically, doubling the currently used inner
-        /// storage until the preset <see cref="Capacity"/> is reached.
-        /// <note>When <see cref="EnsureCapacity"/> is <see langword="false"/>&#160;and <see cref="Capacity"/> is not a power of 2, then after the last storage doubling
-        /// the internally allocated storage can be bigger than <see cref="Capacity"/>. But setting <see langword="true"/>&#160;to this property trims the possibly exceeded size of the internal storage.</note>
-        /// <note>Even if <see cref="EnsureCapacity"/> is <see langword="true"/>&#160;(and thus the internal storage is preallocated), adding elements to the cache
-        /// consumes some memory for each added element.</note>
+        /// item is added to the cache. Otherwise, inner storage is allocated dynamically, increasing its size again and again until the preset <see cref="Capacity"/> is reached.
+        /// When increasing occurs the storage size is increased to a prime number close to the double of the previous storage size.
+        /// <note>When <see cref="EnsureCapacity"/> is <see langword="false"/>, then after the last storage doubling the internally allocated storage can be much bigger than <see cref="Capacity"/>.
+        /// But setting <see langword="true"/>&#160;to this property trims the possibly exceeded size to a prime value close to the actual capacity.</note>
         /// </para>
         /// <para>When cache is not empty and <see cref="EnsureCapacity"/> is just turned on, the cost of setting this property is O(n),
         /// where n is <see cref="Count"/>. In any other cases cost of setting this property is O(1).</para>

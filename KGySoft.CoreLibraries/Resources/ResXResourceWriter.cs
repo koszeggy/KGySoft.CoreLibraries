@@ -183,9 +183,10 @@ namespace KGySoft.Resources
     /// <term>-0 (negative zero) value is handled correctly.</term>
     /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
     /// however, in case of <see cref="float"/> and <see cref="double"/> -0 will always turn to +0.</term></item>
-    /// <item><term><see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> instances containing a runtime type (which is not a generic type argument).</term>
+    /// <item><term><see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> instances containing a runtime type.</term>
     /// <term>These types are supported natively (without a <c>mimetype</c> attribute). Only if <see cref="CompatibleFormat"/> is <see langword="false"/>.</term>
-    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> can serialize these type only by <see cref="BinaryFormatter"/>.</term></item>
+    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> can serialize these type only by <see cref="BinaryFormatter"/>.
+    /// Though in .NET Core and .NET Standard <see cref="Type"/> is not serializable even by <see cref="BinaryFormatter"/>.</term></item>
     /// <item><term>Generic types</term>
     /// <term>Generic types with a <see cref="TypeConverter"/> are handled correctly.</term>
     /// <term>Parsing generic type names may fail with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.

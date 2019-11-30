@@ -44,7 +44,7 @@ namespace KGySoft.Serialization.Binary
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.IO;
-    /// using KGySoft.Serialization;
+    /// using KGySoft.Serialization.Binary;
     ///
     /// // This is a simple sealed class that will never be derived
     /// public sealed class ExampleSimple : IBinarySerializable
@@ -94,7 +94,7 @@ namespace KGySoft.Serialization.Binary
     /// and with versioned content (optional fields):
     /// <code lang="C#"><![CDATA[
     /// using System.IO;
-    /// using KGySoft.Serialization;
+    /// using KGySoft.Serialization.Binary;
     ///
     /// public class SerializableBase : IBinarySerializable
     /// {

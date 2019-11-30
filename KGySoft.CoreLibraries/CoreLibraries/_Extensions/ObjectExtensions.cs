@@ -191,7 +191,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">Type of the object</typeparam>
         /// <param name="obj">The object to clone.</param>
         /// <param name="ignoreCustomSerialization"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
-        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead performing a forced
+        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead of performing a forced
         /// field-based serialization. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
@@ -259,7 +259,7 @@ namespace KGySoft.CoreLibraries
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         /// <example>
-        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/r04jpf" target="_blank">online</a>.</note>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/rzg8If" target="_blank">online</a>.</note>
         /// <code lang="C#"><![CDATA[
         /// using System;
         /// using System.Collections;
@@ -301,7 +301,7 @@ namespace KGySoft.CoreLibraries
         /// 
         ///     private static void ConvertTo<T>(object source)
         ///     {
-        ///         Console.Write($"{source.GetType().Name} => {typeof(T).Name}: {AsString(source)} => ");
+        ///         Console.Write($"{source.GetType().GetName(TypeNameKind.ShortName)} => {typeof(T).GetName(TypeNameKind.ShortName)}: {AsString(source)} => ");
         ///         try
         ///         {
         ///             T result = source.Convert<T>(); // a culture can be specified here for string conversions

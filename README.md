@@ -69,7 +69,7 @@ See the [change log](https://github.com/koszeggy/KGySoft.CoreLibraries/blob/mast
 
 - #### [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) extension methods:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/XDjrOB).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/GKSif4).
 ```cs
 // old way:
 object obj;
@@ -105,7 +105,7 @@ Therefore, an `AsThreadSafe` method is available for the `ICollection<T>`, `ILis
 
 - #### [`Object.Convert<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_ObjectExtensions_Convert.htm) extension method:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/r04jpf).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/rzg8If).
 ```cs
 // between convertible types: like the Convert class but supports also enums in both ways
 result = "123".Convert<int>(); // culture can be specified, default is InvariantCulture
@@ -148,7 +148,7 @@ if (stringValue.In("something", "something else", "maybe some other value", "or.
 
 - #### [`Random` extensions methods](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_RandomExtensions.htm):
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/hQRVoZ).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/EPHRIx).
 
 ```cs
 var rnd = new Random();
@@ -288,7 +288,7 @@ bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out resu
 
 Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/Q6t0le).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/T7BUyB).
 
 ```cs
 // Simple way: by the static BinarySerializer class
@@ -349,7 +349,7 @@ public class Person
 
 And the serialization:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/37YDns).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/M2dfrx).
 
 ```cs
 var person = ThreadSafeRandom.Instance.NextObject<Person>();
@@ -515,7 +515,7 @@ public static class MyCommands
 
 To use a command it has to be bound to one or more sources (and to some targets if the command is targeted). To create a binding the `CreateBinding` extension method can be used:
 
-_Tip:_ Try also [online](https://dotnetfiddle.net/jg4OXS).
+_Tip:_ Try also [online](https://dotnetfiddle.net/7b0lFq).
 
 ```cs
 var binding = MyCommands.PasteCommand.CreateBinding(menuItemPaste, "Click", textBox);

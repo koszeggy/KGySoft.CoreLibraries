@@ -100,7 +100,7 @@ namespace KGySoft.Serialization.Xml
     /// </para>
     /// </remarks>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/37YDns" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/M2dfrx" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.IO;
@@ -110,7 +110,7 @@ namespace KGySoft.Serialization.Xml
     /// using System.Collections.ObjectModel;
     /// using System.Xml.Linq;
     /// using KGySoft.CoreLibraries;
-    /// using KGySoft.Serialization;
+    /// using KGySoft.Serialization.Xml;
     /// 
     /// // A good candidate for XML serialization:
     /// public class Person

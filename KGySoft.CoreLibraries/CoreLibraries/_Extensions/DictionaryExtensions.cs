@@ -333,7 +333,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <example>
         /// The following example demonstrates how to use the <see cref="O:KGySoft.CoreLibraries.DictionaryExtensions.GetValueOrDefault">GetValueOrDefault</see> overloads.
-        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/XDjrOB" target="_blank">online</a>.</note>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/GKSif4" target="_blank">online</a>.</note>
         /// <code lang="C#"><![CDATA[
         /// using System;
         /// using System.Collections.Generic;
@@ -378,13 +378,20 @@ namespace KGySoft.CoreLibraries
         ///
         ///         // If obtaining a default value is an expensive operation you can use the delegate overloads.
         ///         // The delegate is invoked only when the key was not found in the dictionary:
-        ///         intValue = dict.GetValueOrDefault("Unknown", () =>
+        ///         intValue = (int)dict.GetValueOrDefault("Unknown", () =>
         ///         {
-        ///             Console.WriteLine("Default value factory was invoked");
+        ///             Console.WriteLine("Default value factory was invoked from GetValueOrDefault");
         ///             return -1;
         ///         });
+        ///
+        ///		   // Which is the same as:
+        ///        intValue = dict.GetActualValueOrDefault("Unknown", () =>
+        ///        {
+        ///            Console.WriteLine("Default value factory was invoked from GetActualValueOrDefault");
+        ///            return -1;
+        ///        });
         /// 
-        ///         Console.WriteLine($"{nameof(intValue)}: {intValue}; {nameof(intOrNull)}: {intOrNull}");
+        ///        Console.WriteLine($"{nameof(intValue)}: {intValue}; {nameof(intOrNull)}: {intOrNull}");
         ///     }
         /// }]]></code>
         /// </example>

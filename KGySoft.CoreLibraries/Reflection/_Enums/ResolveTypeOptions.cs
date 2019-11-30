@@ -48,7 +48,7 @@ namespace KGySoft.Reflection
         /// <note>Depending on the type system of the current platform it can happen that new assemblies of unmatching identity are loaded even if this flag is disabled.
         /// In such case the loaded assemblies are ignored.</note>
         /// <note type="tip">Forwarded types can be loaded even if this flag is disabled but only if the old assembly of the exact identity can be resolved.
-        /// So for example, to allow a type, which was forwarded from the mscorlib 4.0 assembly, to be resolved by an mscorlib 2.0 identity,
+        /// So for example, to allow a type, which was forwarded from the <c>mscorlib 4.0</c> assembly, to be resolved by an <c>mscorlib 2.0</c> identity,
         /// this flag should be enabled.</note>
         /// <para>Default state at <see cref="O:KGySoft.Reflection.Reflector.ResolveType">Reflector.ResolveType</see> methods: <strong>Enabled</strong></para>
         /// </summary>

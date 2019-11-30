@@ -53,7 +53,7 @@ namespace KGySoft.Serialization.Xml
         /// With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
         /// <list type="bullet">
         /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> counterpart and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
-        /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is not a standalone generic parameter.</description></item>
+        /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is a runtime type instance.</description></item>
         /// <item><term><see cref="IXmlSerializable"/> instances</term><description>Types that implement the <see cref="IXmlSerializable"/> interface can be serialized.</description></item>
         /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
         /// <item><term>Simple objects</term><description>A type can be serialized with the default options if it meets the following criteria:

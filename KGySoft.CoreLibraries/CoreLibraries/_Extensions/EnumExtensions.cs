@@ -168,6 +168,7 @@ namespace KGySoft.CoreLibraries
         /// Gets the number of bits set in <paramref name="value"/>.
         /// It is not checked, whether all flags are defined in <typeparamref name="TEnum"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The value to check.</param>
         /// <returns>The number of bits set in <paramref name="value"/>.</returns>
         public static int GetFlagsCount<TEnum>(this TEnum value)

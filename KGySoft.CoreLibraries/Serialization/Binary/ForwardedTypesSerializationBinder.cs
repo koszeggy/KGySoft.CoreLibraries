@@ -44,12 +44,11 @@ namespace KGySoft.Serialization.Binary
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
-    /// <para>To resolve types that are no forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
+    /// <para>To resolve types that are not forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
     /// given identity use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
     /// <see cref="AddTypes">AddTypes</see> methods.</para>
-    /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, and no types are added to the binder, then
-    /// mapping works also on serialization. For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/>
-    /// attribute will be written if it is defined.
+    /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, then mapping works also on serialization.
+    /// For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/> attribute will be written if it is defined.
     /// <note>By default, both <see cref="BinaryFormatter"/> and <see cref="BinarySerializationFormatter"/> dumps legacy identities on serialization
     /// for types decorated by the <see cref="TypeForwardedFromAttribute"/>. If you use this binder on serialization without adding any type
     /// just after setting the <see cref="WriteLegacyIdentity"/> to <see langword="true"/>, then the only difference will be that even the <c>mscorlib</c> assembly
@@ -81,8 +80,7 @@ namespace KGySoft.Serialization.Binary
     /// // Multiple types can be enlisted without assembly identity
     /// binder.AddTypes(typeof(MyType), typeof(MyOtherType), typeof(SomeOtherType));
     ///
-    /// // Works also with the classic BinaryFormatter!
-    /// IFormatter formatter = new BinarySerializationFormatter { Binder = binder };
+    /// IFormatter formatter = new BinarySerializationFormatter { Binder = binder }; // or BinaryFormatter
     /// object result = formatter.Deserialize(serializationStream);
     /// ]]></code></para>
     /// <note>The <see cref="WeakAssemblySerializationBinder"/> is also able to ignore assembly information but if there are two different
@@ -106,8 +104,7 @@ namespace KGySoft.Serialization.Binary
     /// // mscorlib assembly identity in every platform:
     /// var obj = new List<MyType> { new MyType() };
     /// 
-    /// // Works also with KGy SOFT BinarySerializationFormatter!
-    /// IFormatter formatter = new BinaryFormatter { Binder = binder };
+    /// IFormatter formatter = new BinaryFormatter { Binder = binder }; // or BinarySerializationFormatter
     /// formatter.Serialize(serializationStream, obj);
     /// ]]></code>
     /// </para>
@@ -158,7 +155,7 @@ namespace KGySoft.Serialization.Binary
         /// <see cref="Type"/> with the same full name will be resolved to <paramref name="type"/>; otherwise, only the ones,
         /// whose identities match.
         /// </summary>
-        /// <param name="type">The type to be added to the handled types by this binder/</param>
+        /// <param name="type">The type to be added to the handled types by this binder.</param>
         /// <param name="assemblyIdentities">The legacy assembly identities to be recognized. Can contain also partial names. If empty or contains a <see langword="null"/>
         /// element, then any type of the same full name will be resolved to <paramref name="type"/>.</param>
         /// <remarks>
@@ -166,7 +163,7 @@ namespace KGySoft.Serialization.Binary
         /// will be resolved to the specified <paramref name="type"/>.</para>
         /// <para>If at least one assembly identity is specified and <see cref="WriteLegacyIdentity"/> is <see langword="true"/>,
         /// then on serialization the first specified name will be returned as the assembly name of the <paramref name="type"/>.</para>
-        /// <para>For generic types you should specify the generic type definition.</para>
+        /// <para>For generic types you should specify the generic type definition only.</para>
         /// </remarks>
         public void AddType(Type type, params AssemblyName[] assemblyIdentities)
         {
@@ -213,7 +210,7 @@ namespace KGySoft.Serialization.Binary
         /// <para>To resolve types from specific assemblies only use the <see cref="AddType">AddType</see> method.</para>
         /// <para>If <see cref="WriteLegacyIdentity"/> is <see langword="true"/>, then on serialization a legacy assembly name
         /// will be used only for those types, which are decorated by the <see cref="TypeForwardedFromAttribute"/> attribute.</para>
-        /// <para>For generic types it is enough to specify the generic type definition.</para>
+        /// <para>For generic types it is enough to specify the generic type definition only.</para>
         /// </remarks>
         public void AddTypes(params Type[] types)
         {

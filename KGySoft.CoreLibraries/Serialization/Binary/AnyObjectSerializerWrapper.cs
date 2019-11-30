@@ -77,8 +77,8 @@ namespace KGySoft.Serialization.Binary
         /// This makes possible to deserialize objects stored in different versions of the original assembly.</param>
         /// <param name="forceSerializationByFields"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
         /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead performing a forced
-        /// field-based serialization. Can be useful for types whose <see cref="ISerializable"/> implementation throw a <see cref="PlatformNotSupportedException"/> on
-        /// .NET Core, for example; though it does not guarantee that the object will be deserializable on another platform. This parameter is optional.
+        /// field-based serialization. Can be useful for types that implement <see cref="ISerializable"/> but the implementation throws a <see cref="PlatformNotSupportedException"/>
+        /// (on .NET Core, for example). It still does not guarantee that the object will be deserializable on another platform. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
         {

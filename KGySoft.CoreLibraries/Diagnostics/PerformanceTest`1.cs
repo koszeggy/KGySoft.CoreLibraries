@@ -36,7 +36,7 @@ namespace KGySoft.Diagnostics
     /// using System.IO;
     /// using System.Runtime.Serialization.Formatters.Binary;
     /// using KGySoft.Diagnostics;
-    /// using KGySoft.Serialization;
+    /// using KGySoft.Serialization.Binary;
     ///
     /// class Example
     /// {

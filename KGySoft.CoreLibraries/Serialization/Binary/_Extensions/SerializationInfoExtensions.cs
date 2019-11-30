@@ -223,9 +223,8 @@ namespace KGySoft.Serialization.Binary
             return true;
         }
 
-
         /// <summary>
-        /// Replaces or adds a value with the specified old and new names in the <see cref="SerializationInfo"/>.
+        /// Replaces a value with the specified old and new names in the <see cref="SerializationInfo"/>.
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> to be updated.</param>
         /// <param name="oldName">The name of the entry to be removed.</param>

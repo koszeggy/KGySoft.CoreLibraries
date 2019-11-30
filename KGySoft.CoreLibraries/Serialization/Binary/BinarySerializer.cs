@@ -65,7 +65,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
-        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized object.</returns>
         public static object Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
@@ -83,7 +83,7 @@ namespace KGySoft.Serialization.Binary
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
-        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized data.</returns>
         public static object DeserializeFromStream(Stream stream, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
@@ -105,7 +105,7 @@ namespace KGySoft.Serialization.Binary
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
         /// </summary>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
-        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <remarks>
         /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
