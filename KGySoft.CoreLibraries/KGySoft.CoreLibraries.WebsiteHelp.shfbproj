@@ -19,9 +19,9 @@
     <HtmlHelpName>KGySoft.CoreLibraries</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.dll" />
-<DocumentationSource sourceFile="bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.xml" /></DocumentationSources>
-    <HelpFileFormat>Website</HelpFileFormat>
+      <DocumentationSource sourceFile="KGySoft.CoreLibraries.csproj" />
+    </DocumentationSources>
+    <HelpFileFormat>HtmlHelp1, Website</HelpFileFormat>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
     <NamingMethod>MemberName</NamingMethod>
@@ -64,19 +64,19 @@
       </ComponentConfig>
     </ComponentConfigurations>
     <PlugInConfigurations>
-      <PlugInConfig id="Member ID Fix-Ups" enabled="True">
+      <PlugInConfig id="Member ID Fix-Ups" enabled="False">
         <configuration>
-  <expressions>
-    <expression matchExpression="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan{``0})" replacementValue="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span{System.Char},System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span`1,System.Void)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression{System.Func{``0}})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression{System.Action})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
-    <expression matchExpression="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
-  </expressions>
-</configuration>
+          <expressions>
+            <expression matchExpression="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan{``0})" replacementValue="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span{System.Char},System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span`1,System.Void)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression{System.Func{``0}})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression{System.Action})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
+            <expression matchExpression="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
+          </expressions>
+        </configuration>
       </PlugInConfig>
     </PlugInConfigurations>
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
@@ -173,8 +173,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System.Private.CoreLib">
-      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.0.0\System.Private.CoreLib.dll</HintPath>
+    <Reference Include="netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>C:\Program Files\dotnet\packs\NETStandard.Library.Ref\2.1.0\ref\netstandard2.1\netstandard.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <!-- Import the SHFB build targets -->
