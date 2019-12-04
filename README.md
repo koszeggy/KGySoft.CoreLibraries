@@ -319,6 +319,8 @@ formatter.Binder = new WeakAssemblySerializationBinder(); // works also for Bina
 result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssembly);
 ```
 
+> _Solving compatibility issues between different platforms:_ In .NET Core there are many types that used to be serializable in .NET Framework but the `[Serializable]` attribute is not applied to them in .NET Core/Standard. Though the binary serialization of such types is not recommended anymore, their support could be required for compatibility reasons. In this case the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) can be a solution, which can be used both with `BinaryFormatter` and [`BinarySerializationFormatter`][bsf]. See the **Remarks** section of the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) class for various use cases and their solutions.
+
 [bsf]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm
 
 - #### XML Serialization

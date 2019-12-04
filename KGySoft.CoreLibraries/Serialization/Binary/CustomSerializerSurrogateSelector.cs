@@ -46,7 +46,7 @@ namespace KGySoft.Serialization.Binary
     /// <para>By using the <see cref="CustomSerializerSurrogateSelector"/> you can serialize and deserialize any types.
     /// <note>The <see cref="BinarySerializationFormatter"/> is also able to serialize non-serializable types by itself
     /// by using the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option. But the
-    /// <see cref="CustomSerializerSurrogateSelector"/> provides more control and can used also for other formatters.</note>
+    /// <see cref="CustomSerializerSurrogateSelector"/> provides more control and can be used also for other formatters.</note>
     /// </para>
     /// <para>To serialize a non-serializable type, or a type, which contains non-serializable types, it is usually enough to assign
     /// a <see cref="CustomSerializerSurrogateSelector"/> to the formatter:
