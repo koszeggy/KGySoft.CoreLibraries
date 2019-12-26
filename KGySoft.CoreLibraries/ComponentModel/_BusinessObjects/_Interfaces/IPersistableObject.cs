@@ -76,7 +76,7 @@ namespace KGySoft.ComponentModel
         /// Gets a copy of the stored properties.
         /// </summary>
         /// <returns>A copy of the stored properties.</returns>
-        /// <exception cref="InvalidOperationException">A property cannot be get.</exception>
+        /// <exception cref="InvalidOperationException">A property cannot be retrieved.</exception>
         IDictionary<string, object> GetProperties();
 
         /// <summary>

@@ -186,7 +186,7 @@ namespace KGySoft.ComponentModel
             if (!enumType.IsEnum)
                 Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(Reflector.EnumType));
 
-            // Obtaining enum fields by reflection. GetNames/Values could be also used but this way be get also the attributes.
+            // Obtaining enum fields by reflection. GetNames/Values could be also used but this way we get also the attributes.
             FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);
             if (fields.Length == 0)
                 return base.GetProperties(context, value, attributes);

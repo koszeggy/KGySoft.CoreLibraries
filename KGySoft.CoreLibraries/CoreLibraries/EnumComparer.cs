@@ -54,7 +54,7 @@ namespace KGySoft.CoreLibraries
     /// so the performance benefit of using <see cref="EnumComparer{TEnum}"/> in .NET Core is negligible.</item>
     /// </list>
     /// </note>
-    /// <note>In .NET Standard 2.0 building dynamic assembly is not supported so the .NET Standard 2.0 version falls back to using <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes.</note>
+    /// <note>In .NET Standard 2.0 building dynamic assembly is not supported so the .NET Standard 2.0 version falls back to use <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes.</note>
     /// </remarks>
     /// <example>
     /// Example for initializing of a <see cref="Dictionary{TKey,TValue}"/> with <see cref="EnumComparer{TEnum}"/>:

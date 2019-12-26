@@ -333,7 +333,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: The name of the caller member.</param>
         /// <returns>The value of the property, or the created initial value returned by the <paramref name="createInitialValue"/> parameter.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
-        /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be get.
+        /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be retrieved.
         /// <br/>-or-
         /// <br/>The stored value of the property is not compatible with <typeparamref name="T"/>.
         /// <br/>-or-
@@ -372,7 +372,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: The name of the caller member.</param>
         /// <returns>The value of the property, or the specified <paramref name="defaultValue"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
-        /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be get.
+        /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be retrieved.
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
@@ -440,11 +440,11 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Gets whether the specified property can be get.
+        /// Gets whether the specified property can be retrieved.
         /// <br/>The base implementation allows to get the actual instance properties in this instance.
         /// </summary>
         /// <param name="propertyName">Name of the property to get.</param>
-        /// <returns><see langword="true"/>&#160;if the specified property can be get; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanGetProperty(string propertyName)
         {
             Dictionary<string, PropertyInfo> props = reflectedProperties[GetType()];
