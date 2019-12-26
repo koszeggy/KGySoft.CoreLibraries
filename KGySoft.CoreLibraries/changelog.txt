@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v5.0.1:
+~~~~~~~~~
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- Enum<TEnum> class: An exception could come from IsDefined(long/ulong) and GetName(long/ulong) methods if
+  if no other members were called previously with the same enum type.
+
+
+~~~~~~~~~
 ! v5.0.0:
 ~~~~~~~~~
 
