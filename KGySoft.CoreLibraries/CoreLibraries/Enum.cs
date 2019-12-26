@@ -21,7 +21,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
+#if !(NET35 || NET40)
+using System.Runtime.CompilerServices; 
+#endif
 using System.Security; 
 
 #endregion
@@ -33,11 +35,6 @@ namespace KGySoft.CoreLibraries
     /// Provides high performance solutions for already existing functionality in the <see cref="Enum"/> class along with
     /// some additional features.
     /// </summary>
-    /// <returns>
-    /// <note>In .NET Core the performance of <see cref="Enum"/> members have been improved significantly so the so the performance benefit of
-    /// using <see cref="EnumComparer{TEnum}"/> in .NET Core is negligible. Still, it is useful for the provided functionality or when
-    /// targeting multiple platforms or the .NET Framework.</note>
-    /// </returns>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
@@ -282,6 +279,7 @@ namespace KGySoft.CoreLibraries
                 || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
                 || !underlyingInfo.IsSigned && (ulong)value > underlyingInfo.MaxValue)
                 return false;
+            EnsureRawValueNamePairs();
             return FindIndex((ulong)value & underlyingInfo.SizeMask) >= 0;
         }
 
@@ -291,7 +289,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         [CLSCompliant(false)]
-        public static bool IsDefined(ulong value) => value <= underlyingInfo.MaxValue && FindIndex(value) >= 0;
+        public static bool IsDefined(ulong value)
+        {
+            if (value > underlyingInfo.MaxValue)
+                return false;
+            EnsureRawValueNamePairs();
+            return FindIndex(value) >= 0;
+        }
 
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
@@ -759,6 +763,7 @@ namespace KGySoft.CoreLibraries
 #endif
         private static string TryGetNameByValue(ulong value)
         {
+            EnsureRawValueNamePairs();
             int index = FindIndex(value);
             return index >= 0 ? rawValueNamePairs.Names[index] : null;
         }
