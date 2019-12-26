@@ -1,14 +1,13 @@
 Thank you for installing KGy SOFT Core Libraries 5.0.1
 
+KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
+
 Main new features in 5.0.x:
 - Targeting .NET Framework 4.7.2 (additionally to 3.5, 4.0 and 4.5)
 - Targeting .NET Core 2.0 and .NET Core 3.0
 - Targeting .NET Standard 2.0 (some reflection APIs throw PlatformNotSupportedException) and .NET Standard 2.1
 
 Release Notes: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt
-
-KGy SOFT Core Libraries features high-performance and handy general libraries.
-Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
 
                                                  ~~*~~
 
@@ -20,9 +19,11 @@ Many of them aim to replace existing APIs of the original .NET framework with mo
                                                  ~~*~~
 
 Project Home Page: https://kgysoft.net/corelibraries
+GitHub: https://github.com/koszeggy/KGySoft.CoreLibraries
+
 Online Documentation: https://docs.kgysoft.net/corelibraries
 Offline Documentation: <packages folder>\KGySoft.CoreLibraries.<version>\Help\KGySoft.CoreLibraries.chm
-GitHub: https://github.com/koszeggy/KGySoft.CoreLibraries
+Download link for the offline documentation: https://github.com/koszeggy/KGySoft.CoreLibraries/raw/master/KGySoft.CoreLibraries/Help/KGySoft.CoreLibraries.chm
 
                                                  ~~*~~
 
