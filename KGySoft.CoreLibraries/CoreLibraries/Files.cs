@@ -18,7 +18,10 @@
 
 using System;
 using System.IO;
+#if NETFRAMEWORK
 using System.Reflection;
+#endif
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -34,6 +37,46 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         /// <summary>
+        /// Creates or overwrites a file of the specified <paramref name="path"/> along with possibly non-existing parent directories.
+        /// </summary>
+        /// <param name="path">The name of the file to be created with path.</param>
+        /// <returns>The created <see cref="FileStream"/>.</returns>
+        public static FileStream CreateWithPath(string path)
+        {
+            if (path == null)
+                Throw.ArgumentNullException(Argument.path);
+            if (path.Length == 0)
+                Throw.ArgumentException(Argument.path, Res.ArgumentEmpty);
+
+            var dir = Path.GetDirectoryName(path);
+            if (!String.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            return File.Create(path);
+        }
+
+        /// <summary>
+        /// Tries to create a file of the specified <paramref name="path"/> along with possibly non-existing parent directories.
+        /// </summary>
+        /// <param name="path">The name of the file to be created with path.</param>
+        /// <param name="overwriteIfExists"><see langword="true"/>&#160;to allow an already existing file to be overwritten; otherwise, <see langword="false"/>.</param>
+        /// <returns>A <see cref="FileStream"/> instance if the file could be created or overwritten; otherwise, <see langword="null"/>.</returns>
+        public static FileStream TryCreateWithPath(string path, bool overwriteIfExists = true)
+        {
+            if (path == null)
+                Throw.ArgumentNullException(Argument.path);
+            try
+            {
+                if (!overwriteIfExists && File.Exists(path))
+                    return null;
+                return CreateWithPath(path);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ArgumentException))
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Checks whether a file can be created with given name.
         /// </summary>
         /// <param name="fileName">The name of the file to test.</param>
@@ -42,24 +85,26 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> is <see langword="null"/>.</exception>
         /// <returns><see langword="true"/>, if <paramref name="fileName"/> can be created; otherwise, <see langword="false"/>.</returns>
+        [Obsolete("This method is obsolete. Use " + nameof(TryCreateWithPath) + "method instead")]
         public static bool CanCreate(string fileName, bool canOverwrite = true)
         {
-            if (fileName == null)
-                Throw.ArgumentNullException(Argument.fileName);
+            bool result;
+            using (FileStream fs = TryCreateWithPath(fileName, canOverwrite))
+                result = fs != null;
 
-            try
+            if (result)
             {
-                if (File.Exists(fileName) && !canOverwrite)
+                try
+                {
+                    File.Delete(fileName);
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
                     return false;
-                FileStream fs = File.Create(fileName);
-                fs.Close();
-                File.Delete(fileName);
-                return true;
+                }
             }
-            catch (Exception e) when (!e.IsCriticalOr(e is ArgumentException))
-            {
-                return false;
-            }
+
+            return result;
         }
 
         /// <summary>
@@ -176,7 +221,12 @@ namespace KGySoft.CoreLibraries
         /// Gets the real full path of the directory, where the executing application resides.
         /// </summary>
         /// <returns>The full path of the directory where the executing application resides.</returns>
-        public static string GetExecutingPath() => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static string GetExecutingPath() =>
+#if NETFRAMEWORK
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+#else
+            Path.GetDirectoryName(AppContext.BaseDirectory);
+#endif
 
         #endregion
     }
