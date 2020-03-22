@@ -6,6 +6,23 @@
 ===============================================================================
 
 ~~~~~~~~~
+! v5.1.0:
+~~~~~~~~~
+
+! KGySoft.CoreLibraries namespace:
+==================================
+! Files class:
+   - GetExecutingPath method: result is fixed for .NET Core 2.0.
+   + New CreateWithPath and TryCreateWithPath methods
+   ! CanCreate is now obsolete in favor of TryCreateWithPath.
+
+- KGySoft.Serialization.Binary namespace:
+==========================================
+- BinarySerializationFormatter class: Allowing an IObjectReference to return null if there are no circular
+  references to itself.
+
+
+~~~~~~~~~
 - v5.0.1:
 ~~~~~~~~~
 
@@ -13,7 +30,7 @@
 ==================================
 - Enum<TEnum> class: An exception could come from IsDefined(long/ulong) and GetName(long/ulong) methods if
   if no other members were called previously with the same enum type.
-
+ 
 
 ~~~~~~~~~
 ! v5.0.0:

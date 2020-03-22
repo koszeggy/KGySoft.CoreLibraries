@@ -1675,6 +1675,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region NullReference class
+
+        [Serializable]
+        private class NullReference : IObjectReference
+        {
+            #region Methods
+
+            public object GetRealObject(StreamingContext context) => null;
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Nested structs

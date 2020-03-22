@@ -30,6 +30,7 @@ using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 #if NETFRAMEWORK
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
@@ -1817,6 +1818,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+        }
+
+        [Test]
+        public void NullReferenceSerializerTest()
+        {
+            var referenceObject = new NullReference();
+
+            BinaryFormatter bf = new BinaryFormatter();
+            BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
+
+            Console.WriteLine("------------------System BinaryFormatter--------------------");
+            byte[] raw = SerializeObject(referenceObject, bf);
+            object result = DeserializeObject(raw, bf);
+            Assert.IsNull(result);
+
+            Console.WriteLine($"------------------KGy SOFT BinarySerializer--------------------");
+            raw = SerializeObject(referenceObject, bsf);
+            result = DeserializeObject(raw, bsf);
+            Assert.IsNull(result);
         }
 
         [Test]

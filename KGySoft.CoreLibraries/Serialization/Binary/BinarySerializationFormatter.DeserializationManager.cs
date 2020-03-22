@@ -510,15 +510,18 @@ namespace KGySoft.Serialization.Binary
 
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object finalObject)
             {
-                if (finalObject == null)
-                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
-
                 if (!usages.CanBeReplaced && origObject != finalObject)
                 {
                     if (origObject is IObjectReference)
                         Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
                     Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject.GetType()));
                 }
+
+                if (usages.Count == 0)
+                    return;
+
+                if (finalObject == null)
+                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
 
                 // setting even if it did not change because in most cases the tracked objects were not set during the deserialization
                 foreach (UsageReference usage in usages)
@@ -1393,7 +1396,7 @@ namespace KGySoft.Serialization.Binary
 
             private void OnDeserialized(object obj)
             {
-                if (IgnoreSerializationMethods)
+                if (obj == null || IgnoreSerializationMethods)
                     return;
                 ExecuteMethodsOfAttribute(obj, onDeserializedAttribute);
                 RegisterDeserializedObject(obj as IDeserializationCallback);
