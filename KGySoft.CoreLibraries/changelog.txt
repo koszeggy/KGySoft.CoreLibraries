@@ -16,6 +16,19 @@
    + New CreateWithPath and TryCreateWithPath methods
    ! CanCreate is now obsolete in favor of TryCreateWithPath.
 
+- KGySoft.ComponentModel namespace:
+==========================================
+- ObservableObjectBase class:
+  - CanGetProperty and CanSetProperty methods:
+    - The default implementations recognize also private properties of base classes (they can use Get/Set methods).
+    - If a class had overloaded indexers, then an exception was thrown. Now the type of the firstly defined indexer
+      of the most derived class is considered. If there indexers with different return types are set by the Set
+      method, then you need to override the CanSetProperty method.
+      no overloads). To allow using Get/Set from indexers override the CanGetProperty and CanSetProperty methods.
+    - If a derived class had non-overridden properties of the same name as the base class, then an exception was
+      thrown. Now the most derived property is considered. If you want to set a property of the same name but
+      different type in the base class you need to override the CanSetProperty method.
+
 - KGySoft.Serialization.Binary namespace:
 ==========================================
 - BinarySerializationFormatter class: Allowing an IObjectReference to return null if there are no circular

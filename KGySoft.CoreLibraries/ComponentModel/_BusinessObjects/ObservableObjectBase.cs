@@ -105,7 +105,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> reflectedProperties = new Cache<Type, Dictionary<string, PropertyInfo>>(GetProperties).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, Type>> reflectedProperties = new Cache<Type, Dictionary<string, Type>>(GetProperties).GetThreadSafeAccessor();
 
         #endregion
 
@@ -192,7 +192,28 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static Dictionary<string, PropertyInfo> GetProperties(Type type) => new Dictionary<string, PropertyInfo>(type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).ToDictionary(pi => pi.Name, pi => pi));
+        private static Dictionary<string, Type> GetProperties(Type type)
+        {
+            static void PopulateProperties(Dictionary<string, Type> dict, IEnumerable<PropertyInfo> props)
+            {
+                foreach (PropertyInfo prop in props)
+                {
+                    // for conflicting names only the first property is added
+                    if (!dict.ContainsKey(prop.Name))
+                        dict[prop.Name] = prop.PropertyType;
+                }
+            }
+
+            // public properties of all levels
+            var result = new Dictionary<string, Type>();
+            PopulateProperties(result, type.GetProperties(BindingFlags.Instance | BindingFlags.Public));
+
+            // non-public properties by type (because private properties cannot be obtained for all levels in one step)
+            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+                PopulateProperties(result, t.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
+
+            return result;
+        }
 
         #endregion
 
@@ -393,6 +414,11 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanSetProperty">CanSetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance, or <paramref name="value"/> is not compatible with the property type.
         /// </exception>
+        /// <remarks>
+        /// <para>If a property is redefined in a derived class with a different type, or a type has multiple indexers with different types,
+        /// the this method may throw an <see cref="InvalidOperationException"/>. Overriding the <see cref="CanSetProperty">CanSetProperty</see> method can solve this issue
+        /// but it may lead to further errors if multiple properties use the same key in the inner storage.</para>
+        /// </remarks>
         protected bool Set(object value, bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null)
         {
             if (propertyName == null)
@@ -447,7 +473,7 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true"/>&#160;if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanGetProperty(string propertyName)
         {
-            Dictionary<string, PropertyInfo> props = reflectedProperties[GetType()];
+            Dictionary<string, Type> props = reflectedProperties[GetType()];
             return props.ContainsKey(propertyName);
         }
 
@@ -460,8 +486,8 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true"/>&#160;if the specified property can be set; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanSetProperty(string propertyName, object value)
         {
-            Dictionary<string, PropertyInfo> props = reflectedProperties[GetType()];
-            return props.TryGetValue(propertyName, out PropertyInfo pi) && pi.PropertyType.CanAcceptValue(value);
+            Dictionary<string, Type> props = reflectedProperties[GetType()];
+            return props.TryGetValue(propertyName, out Type type) && type.CanAcceptValue(value);
         }
 
         /// <summary>
