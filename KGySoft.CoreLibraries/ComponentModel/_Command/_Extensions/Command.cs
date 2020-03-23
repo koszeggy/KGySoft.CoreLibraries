@@ -280,7 +280,11 @@ namespace KGySoft.ComponentModel
             switch (target)
             {
                 case IPersistableObject persistableTarget:
-                    persistableTarget.SetProperty(targetPropertyName, propertyValue);
+                    // setting by interface only if there is such a property in the storage so simple properties are still set by reflection
+                    if (persistableTarget.TryGetPropertyValue(targetPropertyName, out var _))
+                        persistableTarget.SetProperty(targetPropertyName, propertyValue);
+                    else
+                        Reflector.SetProperty(target, targetPropertyName, propertyValue);
                     break;
                 case ICommandState stateTarget:
                     stateTarget[targetPropertyName] = propertyValue;
