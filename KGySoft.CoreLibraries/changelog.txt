@@ -18,8 +18,11 @@
 
 ! KGySoft.ComponentModel namespace:
 ==========================================
-! PersistableObjectBase: The IPersistableObject.TryGetPropertyValue implementation does not throw an 
-  InvalidOperationException anymore if CanGetProperty returns false. In such case TryGetPropertyValue returns false.
+! IPersistableObject interface:
+  ! TryGetPropertyValue does not throw an InvalidOperationException anymore if CanGetProperty returns false.
+    In such case TryGetPropertyValue returns false.
+  + New CanGetProperty and CanSetProperty methods: they expose the protected ObservableObjectBase.CanGetProperty and
+    CanSetProperty methods via the PersistableObjectBase implementation
 * Adding [Serializable] attribute to ObservableObjectBase and its derived types
 - ObservableObjectBase.CanGetProperty and CanSetProperty methods:
   - The default implementations recognize also private properties of base classes (they can use Get/Set methods).

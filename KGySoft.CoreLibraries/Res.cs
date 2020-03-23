@@ -618,7 +618,7 @@ namespace KGySoft
         /// <summary>The property binding command state does not contain the expected entry '{0}'.</summary>
         internal static string ComponentModelMissingState(string stateName) => Get("ComponentModel_MissingStateFormat", stateName);
 
-        /// <summary>There is no public event '{0}' in type '{1}'.</summary>
+        /// <summary>There is no event '{0}' in type '{1}'.</summary>
         internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
 
         /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>

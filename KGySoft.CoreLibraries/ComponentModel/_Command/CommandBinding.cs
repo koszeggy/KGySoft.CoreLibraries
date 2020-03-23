@@ -100,8 +100,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache = new Cache<Type, Dictionary<string, EventInfo>>(t =>
-            t.GetEvents().ToDictionary(e => e.Name, e => e)).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache =
+            new Cache<Type, Dictionary<string, EventInfo>>(GetEvents).GetThreadSafeAccessor();
 
         #endregion
 
@@ -164,6 +164,35 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region Methods
+
+        #region Static Methods
+
+        private static Dictionary<string, EventInfo> GetEvents(Type type)
+        {
+            static void PopulateEvents(Dictionary<string, EventInfo> dict, IEnumerable<EventInfo> events)
+            {
+                foreach (EventInfo eventInfo in events)
+                {
+                    // for conflicting names only the first event is added
+                    if (!dict.ContainsKey(eventInfo.Name))
+                        dict[eventInfo.Name] = eventInfo;
+                }
+            }
+
+            // public events of all levels
+            var result = new Dictionary<string, EventInfo>();
+            PopulateEvents(result, type.GetEvents());
+
+            // non-public events by type (because private events cannot be obtained for all levels in one step)
+            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+                PopulateEvents(result, t.GetEvents(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
+
+            return result;
+        }
+
+        #endregion
+
+        #region Instance Methods
 
         #region Public Methods
 
@@ -389,6 +418,8 @@ namespace KGySoft.ComponentModel
             foreach (object source in GetInstanceSources())
                 UpdateSource(source, e.PropertyName);
         }
+
+        #endregion
 
         #endregion
 
