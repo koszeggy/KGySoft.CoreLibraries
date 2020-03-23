@@ -26,10 +26,12 @@ using KGySoft.Collections;
 
 namespace KGySoft.ComponentModel
 {
-    internal class UndoableHelper : ICanUndoRedo, ICanUndoInternal
+    [Serializable]
+    internal sealed class UndoableHelper : ICanUndoRedo, ICanUndoInternal
     {
         #region UndoEntry struct
 
+        [Serializable]
         private struct UndoEntry
         {
             #region Fields

@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,6 +45,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="EditableObjectBase" />
     /// <seealso cref="ValidatingObjectBase" />
     /// <seealso cref="ModelBase" />
+    [Serializable]
     public abstract class PersistableObjectBase : ObservableObjectBase, IPersistableObject
     {
         #region Methods
@@ -65,7 +67,7 @@ namespace KGySoft.ComponentModel
 
         IDictionary<string, object> IPersistableObject.GetProperties()
         {
-            // no need to Lock-Unlock because the enumerator of the LockingDictionary is already a snapshot
+            // no need to Lock-Unlock because the underlying dictionary is changed by set or assignment only
             return PropertiesInternal.ToDictionary(p => p.Key,
                 p =>
                 {
@@ -80,13 +82,11 @@ namespace KGySoft.ComponentModel
             if (newProperties == null)
                 Throw.ArgumentNullException(Argument.newProperties);
 
-            // Using a separate lock makes possible to read the properties during the set.
-            // This is desirable because OnChanging/changed events are raised during this process, which may cause that consumers read the values.
-            lock (WriteLock)
-            {
-                foreach (var property in newProperties)
-                    Set(property.Value, triggerChangedEvent, property.Key);
-            }
+            // Not locking properties can change even during the set.
+            // This is desirable because OnChanging/changed events are raised during this process,
+            // which may cause that consumers read/write the values.
+            foreach (var property in newProperties)
+                Set(property.Value, triggerChangedEvent, property.Key);
         }
 
         void IPersistableObject.ReplaceProperties(IDictionary<string, object> properties, bool triggerChangedEvent)

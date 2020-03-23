@@ -73,6 +73,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="EditableObjectBase" />
     /// <seealso cref="ValidatingObjectBase" />
     /// <seealso cref="ModelBase" />
+    [Serializable]
     public abstract class UndoableObjectBase : PersistableObjectBase, ICanUndoRedo, ICanUndoInternal, IRevertibleChangeTracking
     {
         #region Fields

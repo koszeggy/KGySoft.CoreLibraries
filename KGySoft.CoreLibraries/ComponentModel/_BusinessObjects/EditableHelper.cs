@@ -26,7 +26,8 @@ using KGySoft.CoreLibraries;
 
 namespace KGySoft.ComponentModel
 {
-    internal class EditableHelper : ICanEdit
+    [Serializable]
+    internal sealed class EditableHelper : ICanEdit
     {
         #region Fields
 

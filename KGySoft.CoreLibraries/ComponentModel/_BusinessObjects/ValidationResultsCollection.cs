@@ -32,6 +32,7 @@ namespace KGySoft.ComponentModel
     /// Represents a collection of <see cref="ValidationResult"/> entries.
     /// </summary>
     [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
+    [Serializable]
     public class ValidationResultsCollection : Collection<ValidationResult>
     {
         #region Fields
@@ -52,7 +53,7 @@ namespace KGySoft.ComponentModel
 #else
         public IReadOnlyList<ValidationResult>
 #endif
-            Errors => errors ?? (errors = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Error).ToArray()));
+            Errors => errors ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Error).ToArray());
 
         /// <summary>
         /// Gets the validation results denoting a warning.
@@ -62,7 +63,7 @@ namespace KGySoft.ComponentModel
 #else
         public IReadOnlyList<ValidationResult>
 #endif
-            Warnings => warnings ?? (warnings = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray()));
+            Warnings => warnings ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray());
 
         /// <summary>
         /// Gets the validation results denoting an information.
@@ -72,7 +73,7 @@ namespace KGySoft.ComponentModel
 #else
         public IReadOnlyList<ValidationResult>
 #endif
-            Infos => infos ?? (infos = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Information).ToArray()));
+            Infos => infos ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Information).ToArray());
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.

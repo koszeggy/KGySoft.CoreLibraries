@@ -86,6 +86,7 @@ namespace KGySoft.ComponentModel
     /// <note type="implement">For another example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
     /// The same applies also for the <see cref="ValidatingObjectBase"/> class regarding the ways of defining properties in a derived class.</note>
     /// </remarks>
+    [Serializable]
     public abstract class ValidatingObjectBase : PersistableObjectBase, IValidatingObject, IDataErrorInfo
     {
         #region Fields

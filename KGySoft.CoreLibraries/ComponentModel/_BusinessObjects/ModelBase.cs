@@ -60,6 +60,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="IRevertibleChangeTracking" />
     /// <seealso cref="ICanEdit" />
     /// <seealso cref="IEditableObject" />
+    [Serializable]
     public abstract class ModelBase : ValidatingObjectBase,
         ICanUndoRedo, ICanUndoInternal, IRevertibleChangeTracking, // Undoable
         ICanEdit, IEditableObject // Editable

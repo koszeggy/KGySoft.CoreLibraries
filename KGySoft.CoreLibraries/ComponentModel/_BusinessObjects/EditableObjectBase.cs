@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System;
 using System.ComponentModel;
 using System.Threading;
 
@@ -91,6 +92,7 @@ namespace KGySoft.ComponentModel
     /// <note type="implement">For an example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
     /// The same applies also for the <see cref="EditableObjectBase"/> class in terms of implementation.</note>
     /// </remarks>
+    [Serializable]
     public abstract class EditableObjectBase : PersistableObjectBase, ICanEdit, IEditableObject
     {
         #region Fields
