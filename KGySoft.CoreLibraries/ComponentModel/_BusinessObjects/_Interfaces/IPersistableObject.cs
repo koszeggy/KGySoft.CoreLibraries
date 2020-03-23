@@ -38,7 +38,6 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="value">Returns the value of the property if it could be found in the inner storage. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>&#160;if the property exists in the inner storage; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">Cannot get the property.</exception>
         bool TryGetPropertyValue(string propertyName, out object value);
 
         /// <summary>
@@ -106,7 +105,7 @@ namespace KGySoft.ComponentModel
         /// <param name="newValue">The new value.</param>
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
         /// <returns><see langword="true"/>&#160;if the originally stored value equals <paramref name="originalValue"/> and the replacement was successful; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="InvalidOperationException">Cannot set the property.</exception>
+        /// <exception cref="InvalidOperationException">Cannot get or set the property.</exception>
         bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool triggerChangedEvent = true);
 
         #endregion

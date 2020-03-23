@@ -51,7 +51,7 @@ namespace KGySoft.ComponentModel
         #region Methods
 
         bool IPersistableObject.TryGetPropertyValue(string propertyName, out object value)
-            => TryGetPropertyValue(propertyName, out value);
+            => TryGetPropertyValue(propertyName, false, out value);
 
         T IPersistableObject.GetPropertyOrDefault<T>(string propertyName, T defaultValue)
             => Get(defaultValue, propertyName);

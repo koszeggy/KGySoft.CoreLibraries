@@ -327,7 +327,7 @@ namespace KGySoft.ComponentModel
                 return ResetProperty(propertyName, invokeChangedEvent);
 
             bool tryAddNew = MissingProperty.Equals(originalValue);
-            bool exists = TryGetPropertyValue(propertyName, out object currentValue);
+            bool exists = TryGetPropertyValue(propertyName, true, out object currentValue);
             if (exists && tryAddNew || !exists || !Equals(originalValue, currentValue))
                 return false;
 
@@ -393,7 +393,7 @@ namespace KGySoft.ComponentModel
         /// </exception>
         protected T Get<T>(Func<T> createInitialValue, [CallerMemberName] string propertyName = null)
         {
-            if (TryGetPropertyValue(propertyName, out object value))
+            if (TryGetPropertyValue(propertyName, true, out object value))
             {
                 if (!typeof(T).CanAcceptValue(value))
                     Throw.InvalidOperationException(Res.ComponentModelReturnedTypeInvalid(typeof(T)));
@@ -425,7 +425,7 @@ namespace KGySoft.ComponentModel
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
         protected T Get<T>(T defaultValue = default, [CallerMemberName] string propertyName = null)
-            => TryGetPropertyValue(propertyName, out object value) && typeof(T).CanAcceptValue(value) ? (T)value : defaultValue;
+            => TryGetPropertyValue(propertyName, true, out object value) && typeof(T).CanAcceptValue(value) ? (T)value : defaultValue;
 
         /// <summary>
         /// Sets the value of a property.
@@ -619,12 +619,18 @@ namespace KGySoft.ComponentModel
 
         #region Private Protected Methods
 
-        private protected bool TryGetPropertyValue(string propertyName, out object value)
+        private protected bool TryGetPropertyValue(string propertyName, bool errorIfCannotGetProperty, out object value)
         {
             if (propertyName == null)
                 Throw.ArgumentNullException(Argument.propertyName);
             if (!CanGetProperty(propertyName))
-                Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
+            {
+                if (errorIfCannotGetProperty)
+                    Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
+                value = null;
+                return false;
+            }
+
             Dictionary<string, object> lockFreeProps = lockFreeStorage;
             if (lockFreeProps.TryGetValue(propertyName, out value))
                 return true;
@@ -685,6 +691,9 @@ namespace KGySoft.ComponentModel
                 lockingStorage = null;
             }
         }
+
+        [OnSerializing]
+        private void OnSerializing(StreamingContext ctx) => EnsureMerged();
 
         #endregion
 
