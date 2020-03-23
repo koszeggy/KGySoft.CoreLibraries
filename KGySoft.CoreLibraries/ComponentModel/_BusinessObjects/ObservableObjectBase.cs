@@ -551,7 +551,7 @@ namespace KGySoft.ComponentModel
         /// <br/>The base implementation allows to get the actual instance properties in this instance.
         /// </summary>
         /// <param name="propertyName">Name of the property to get.</param>
-        /// <returns><see langword="true"/>&#160;if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanGetProperty(string propertyName)
         {
             Dictionary<string, Type> props = reflectedProperties ??= reflectedPropertiesCache[GetType()];
@@ -564,7 +564,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
-        /// <returns><see langword="true"/>&#160;if the specified property can be set; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanSetProperty(string propertyName, object value)
         {
             Dictionary<string, Type> props = reflectedProperties ??= reflectedPropertiesCache[GetType()];

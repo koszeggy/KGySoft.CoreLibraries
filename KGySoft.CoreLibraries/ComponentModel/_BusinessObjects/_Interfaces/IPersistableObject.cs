@@ -41,6 +41,25 @@ namespace KGySoft.ComponentModel
         bool TryGetPropertyValue(string propertyName, out object value);
 
         /// <summary>
+        /// Gets whether the specified property can be retrieved.
+        /// If returns <see langword="false"/>, then <see cref="GetPropertyOrDefault{T}">GetPropertyOrDefault</see>, <see cref="ReplaceProperties">ReplaceProperties</see>
+        /// and <see cref="TryReplaceProperty">TryReplaceProperty</see> methods throw an <see cref="InvalidOperationException"/> for the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <returns><see langword="true"/>, if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
+        bool CanGetProperty(string propertyName);
+
+        /// <summary>
+        /// Gets whether the specified property can be set.
+        /// If returns <see langword="false"/>, then <see cref="SetProperty">SetProperty</see>, <see cref="SetProperties">SetProperties</see>, <see cref="ReplaceProperties">ReplaceProperties</see>
+        /// and <see cref="TryReplaceProperty">TryReplaceProperty</see> methods throw an <see cref="InvalidOperationException"/> for the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <param name="value">The property value to set.</param>
+        /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
+        bool CanSetProperty(string propertyName, object value);
+
+        /// <summary>
         /// Gets the specified property if it exists in the inner storage and has a compatibly type with <typeparamref name="T"/>; otherwise, returns <paramref name="defaultValue"/>.
         /// </summary>
         /// <typeparam name="T">Type of the property to return.</typeparam>

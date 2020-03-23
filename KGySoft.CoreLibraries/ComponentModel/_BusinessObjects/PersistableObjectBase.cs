@@ -53,6 +53,9 @@ namespace KGySoft.ComponentModel
         bool IPersistableObject.TryGetPropertyValue(string propertyName, out object value)
             => TryGetPropertyValue(propertyName, false, out value);
 
+        bool IPersistableObject.CanGetProperty(string propertyName) => CanGetProperty(propertyName);
+        bool IPersistableObject.CanSetProperty(string propertyName, object value) => CanSetProperty(propertyName, value);
+
         T IPersistableObject.GetPropertyOrDefault<T>(string propertyName, T defaultValue)
             => Get(defaultValue, propertyName);
 
