@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System;
 using System.Collections.Generic;
 
 #endregion
@@ -39,17 +40,24 @@ namespace KGySoft.Diagnostics
         /// </summary>
         object Result { get; }
 
+        /// <summary>
+        /// Gets the <see cref="Exception"/> of the test case if it failed; otherwise, gets <see langword="null"/>.
+        /// </summary>
+        Exception Error { get; }
+
 #if NET35 || NET40
         /// <summary>
         /// Gets the results of repetitions of this test case.
-        /// Items count is determined by the <see cref="PerformanceTestBase.Repeat"/> property of the original test.
+        /// Items count is determined by the <see cref="PerformanceTestBase.Repeat"/> property of the original test,
+        /// unless <see cref="Error"/> returns a non-<see langword="null"/> value.
         /// Order of the items is the original execution order.
         /// </summary>
         IList<ITestCaseRepetition> Repetitions { get; }
 #else
         /// <summary>
         /// Gets the results of repetitions of this test case.
-        /// Items count is determined by the <see cref="PerformanceTestBase.Repeat"/> property of the original test.
+        /// Items count is determined by the <see cref="PerformanceTestBase.Repeat"/> property of the original test,
+        /// unless <see cref="Error"/> returns a non-<see langword="null"/> value.
         /// Order of the items is the original execution order.
         /// </summary>
         IReadOnlyList<ITestCaseRepetition> Repetitions { get; }

@@ -283,6 +283,9 @@ namespace KGySoft
         /// <summary>Dumped result:</summary>
         internal static string PerformanceTestDumpedResult => Get("PerformanceTest_DumpedResult");
 
+        /// <summary>Error dump:</summary>
+        internal static string PerformanceTestDumpedError => Get("PerformanceTest_DumpedError");
+
         #endregion
 
         #region Profiler
@@ -710,6 +713,9 @@ namespace KGySoft
 
         /// <summary>{0:N0} iterations in {1:N2} ms. Adjusted: {2:N2}</summary>
         internal static string PerformanceTestCaseRepetitionIterations(int iterations, double totalMilliseconds, double averageIterationsPerTestTime) => Get("PerformanceTest_CaseRepetitionIterationsFormat", iterations, totalMilliseconds, averageIterationsPerTestTime);
+
+        /// <summary>{0}: {1}</summary>
+        internal static string PerformanceTestCaseError(Type type, string message) => Get("PerformanceTest_CaseErrorFormat", type, message);
 
         /// <summary>{0:N2} ms ({1:P2})</summary>
         internal static string PerformanceTestWorstBestDiffTime(double totalMilliseconds, double percent) => Get("PerformanceTest_WorstBestDiffTimeFormat", totalMilliseconds, percent);

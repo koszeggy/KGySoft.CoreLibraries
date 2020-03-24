@@ -100,6 +100,7 @@ namespace KGySoft.Diagnostics
             internal TResult Result;
             internal int IndexBest;
             internal int IndexWorst;
+            internal Exception Error;
 
             #endregion
 
@@ -108,8 +109,8 @@ namespace KGySoft.Diagnostics
             #region Internal Properties
 
             internal TimeSpan TotalTime => Repetitions.Aggregate(TimeSpan.Zero, (acc, curr) => acc + curr.ExecutionTime);
-            internal TimeSpan AverageTime => new TimeSpan(TotalTime.Ticks / Repetitions.Count);
-            internal double AverageIterations => Repetitions.Average(r => r.AverageIterationsPerTestTime);
+            internal TimeSpan AverageTime => Error != null ? TimeSpan.MaxValue : new TimeSpan(TotalTime.Ticks / Repetitions.Count);
+            internal double AverageIterations => Error != null ? Double.MaxValue : Repetitions.Average(r => r.AverageIterationsPerTestTime);
 
             #endregion
 
@@ -117,6 +118,7 @@ namespace KGySoft.Diagnostics
 
             string ITestCaseResult.Name => Case.Name;
             object ITestCaseResult.Result => Result;
+            Exception ITestCaseResult.Error => Error;
 #if NET35 || NET40
             IList<ITestCaseRepetition> ITestCaseResult.Repetitions => Repetitions.Cast<ITestCaseRepetition>().ToArray();
 #else
@@ -187,8 +189,13 @@ namespace KGySoft.Diagnostics
                     if (test.cases.Count > 1)
                         writer.WriteLine(Res.PerformanceTestSortOfCases(test.SortBySize ? Res.PerformanceTestSortBySize : test.Iterations > 0 ? Res.PerformanceTestSortByTime : Res.PerformanceTestSortByIterations));
                     writer.WriteLine(Res.PerformanceTestSeparator);
-                } 
-               
+                }
+
+                void DumpResult()
+                {
+
+                }
+
                 #endregion
 
                 if (writer == null)
@@ -206,7 +213,9 @@ namespace KGySoft.Diagnostics
                         writer.Write(Res.PerformanceTestCaseOrder(i + 1));
                     writer.Write(Res.PerformanceTestCaseName(result.Case.Name));
 
-                    if (test.Iterations > 0)
+                    if (result.Error != null)
+                        writer.Write(Res.PerformanceTestCaseError(result.Error.GetType(), result.Error.Message));
+                    else if (test.Iterations > 0)
                     {
                         writer.Write(Res.PerformanceTestCaseAverageTime(result.AverageTime.TotalMilliseconds));
                         if (i > 0)
@@ -223,7 +232,7 @@ namespace KGySoft.Diagnostics
                     writer.WriteLine();
 
                     // Repeats
-                    if (result.Repetitions.Count > 1)
+                    if (result.Error == null && result.Repetitions.Count > 1)
                     {
                         for (int r = 0; r < result.Repetitions.Count; r++)
                         {
@@ -242,6 +251,20 @@ namespace KGySoft.Diagnostics
                             : Res.PerformanceTestWorstBestDiffIteration(result.Repetitions[result.IndexBest].AverageIterationsPerTestTime - result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime, result.Repetitions[result.IndexBest].AverageIterationsPerTestTime / result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime - 1));
                     }
 
+                    // Error
+                    if (result.Error != null)
+                    {
+                        if (!dumpReturnValue)
+                            continue;
+
+                        writer.WriteLine();
+                        writer.WriteLine(Res.PerformanceTestDumpedError);
+                        writer.WriteLine(result.Error.ToString());
+                        writer.WriteLine();
+
+                        continue;
+                    }
+
                     // Result
                     // ReSharper disable once PossibleNullReferenceException - never null, ensured by static ctor
                     if (typeof(TDelegate).GetMethod(nameof(Action.Invoke)).ReturnType != Reflector.VoidType
@@ -254,13 +277,13 @@ namespace KGySoft.Diagnostics
                             writer.Write(DumpDiff(caseLength, baseLength, units));
                         writer.WriteLine();
 
-                        if (dumpReturnValue)
-                        {
-                            writer.WriteLine();
-                            writer.WriteLine(Res.PerformanceTestDumpedResult);
-                            writer.WriteLine(test.AsString(result.Result));
-                            writer.WriteLine();
-                        }
+                        if (!dumpReturnValue)
+                            continue;
+
+                        writer.WriteLine();
+                        writer.WriteLine(Res.PerformanceTestDumpedResult);
+                        writer.WriteLine(test.AsString(result.Result));
+                        writer.WriteLine();
                     }
                 }
 
@@ -330,7 +353,7 @@ namespace KGySoft.Diagnostics
             Initialize();
             try
             {
-                var testResults = DoTestCases();
+                List<TestResult> testResults = DoTestCases();
                 SortResults(testResults);
                 return new PerformanceTestResultCollection(this, testResults);
             }
@@ -503,23 +526,30 @@ namespace KGySoft.Diagnostics
             Thread.CurrentThread.Priority = origThreadPrio;
         }
 
-        private void DoWarmUp(TDelegate testCase)
+        private void DoWarmUp(TDelegate testCase, TestResult testResult)
         {
             if (!WarmUp)
                 return;
 
-            if (Iterations > 0)
+            try
             {
-                for (int i = 0; i < Iterations; i++)
-                    Invoke(testCase);
-                return;
-            }
+                if (Iterations > 0)
+                {
+                    for (int i = 0; i < Iterations; i++)
+                        Invoke(testCase);
+                    return;
+                }
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            do
-                Invoke(testCase);
-            while (stopwatch.ElapsedMilliseconds < TestTime);
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                do
+                    Invoke(testCase);
+                while (stopwatch.ElapsedMilliseconds < TestTime);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                testResult.Error = e;
+            }
         }
 
         private List<TestResult> DoTestCases()
@@ -530,11 +560,13 @@ namespace KGySoft.Diagnostics
                 var testResult = new TestResult { Case = testCase };
                 results.Add(testResult);
                 OnBeforeCase();
-                DoWarmUp(testCase.Case);
+                DoWarmUp(testCase.Case, testResult);
                 OnAfterCase();
 
                 for (int r = 0; r < Repeat; r++)
                 {
+                    if (testResult.Error != null)
+                        break;
                     OnBeforeCase();
                     if (Collect)
                         DoCollect();
@@ -544,6 +576,9 @@ namespace KGySoft.Diagnostics
                         DoTestByTime(testCase.Case, testResult);
                     OnAfterCase();
                 }
+
+                if (testResult.Error != null)
+                    continue;
 
                 for (int r = 0; r < Repeat; r++)
                 {
@@ -573,8 +608,17 @@ namespace KGySoft.Diagnostics
             TResult result = default;
             int iterations = Iterations;
             stopwatch.Start();
-            for (int i = 0; i < iterations; i++)
-                result = Invoke(testCase);
+            try
+            {
+                for (int i = 0; i < iterations; i++)
+                    result = Invoke(testCase);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                testResult.Error = e;
+                return;
+            }
+
             stopwatch.Stop();
             testResult.Repetitions.Add(new Repetition(stopwatch.Elapsed, iterations));
             testResult.Result = result;
@@ -586,11 +630,20 @@ namespace KGySoft.Diagnostics
             TResult result;
             int iterations = 0;
             stopwatch.Start();
-            do
+            try
             {
-                iterations += 1;
-                result = Invoke(testCase);
-            } while (stopwatch.ElapsedMilliseconds < TestTime);
+                do
+                {
+                    iterations += 1;
+                    result = Invoke(testCase);
+                } while (stopwatch.ElapsedMilliseconds < TestTime);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                testResult.Error = e;
+                return;
+            }
+
             stopwatch.Stop();
             testResult.Repetitions.Add(new Repetition(stopwatch.Elapsed, iterations) { AverageIterationsPerTestTime = iterations * (TestTime / stopwatch.Elapsed.TotalMilliseconds) });
             testResult.Result = result;

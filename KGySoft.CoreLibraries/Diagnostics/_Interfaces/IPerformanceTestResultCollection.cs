@@ -45,7 +45,8 @@ namespace KGySoft.Diagnostics
         /// <param name="textWriter">The text writer to use for dumping the results.</param>
         /// <param name="dumpConfig"><see langword="true"/>&#160;to dump the test configuration; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="dumpReturnValue"><see langword="true"/>&#160;to dump also the return value of the test cases. Ignored, when the delegate type of the test has a <see langword="void"/>&#160;return value. This parameter is optional.
+        /// <param name="dumpReturnValue"><see langword="true"/>&#160;to dump also the return value (or the call stack of the thrown exception) of the test cases.
+        /// Ignored, when the delegate type of the test has a <see langword="void"/>&#160;return value and the test case did not throw an exception. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="forceShowReturnSizes"><see langword="true"/>&#160;to show the size of non-<see langword="void"/>&#160;test cases even if <paramref name="dumpReturnValue"/> is <see langword="false"/>&#160;and results are not sorted by size;
         /// <see langword="false"/>&#160;to show result size only when return values are dumped or results are sorted by size. This parameter is optional.
@@ -54,7 +55,8 @@ namespace KGySoft.Diagnostics
         /// <para>If <paramref name="dumpConfig"/> is <see langword="true"/>, then please note that the configuration properties are taken from the
         /// <see cref="PerformanceTestBase"/> instance at the moment the results are dumped. If you change the configuration after retrieving a result the new values will be reflected in the dumped values.</para>
         /// <para>If <paramref name="dumpReturnValue"/> is <see langword="true"/>, then the lastly returned value will also be dumped. Can be useful for tests, which measure size instead of execution time.
-        /// In this case it can make sense to set <see cref="PerformanceTestBase.SortBySize"/> to <see langword="true"/>.
+        /// In this case it can make sense to set <see cref="PerformanceTestBase.SortBySize"/> to <see langword="true"/>. If the test case has thrown an exception, then
+        /// the call stack of the exception will be dumped.
         /// </para>
         /// </remarks>
         void DumpResults(TextWriter textWriter, bool dumpConfig = true, bool dumpReturnValue = false, bool forceShowReturnSizes = false);

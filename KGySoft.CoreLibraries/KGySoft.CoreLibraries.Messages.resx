@@ -195,6 +195,9 @@
   <data name="PerformanceTest_DumpedResult" xml:space="preserve">
     <value>Dumped result:</value>
   </data>
+  <data name="PerformanceTest_DumpedError" xml:space="preserve">
+    <value>Error dump:</value>
+  </data>
   <data name="PerformanceTest_CaseDefaultNameFormat" xml:space="preserve">
     <value>Case #{0}</value>
   </data>
@@ -248,6 +251,9 @@
   </data>
   <data name="PerformanceTest_CaseRepetitionIterationsFormat" xml:space="preserve">
     <value>{0:N0} iterations in {1:N2} ms. Adjusted: {2:N2}</value>
+  </data>
+  <data name="PerformanceTest_CaseErrorFormat" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
   <data name="PerformanceTest_WorstBestDiffTimeFormat" xml:space="preserve">
     <value>{0:N2} ms ({1:P2})</value>

@@ -39,6 +39,13 @@
   - Command.CreatePropertyBinding (and CommandBindingsCollection.AddPropertyBinding) works also for simple target
     properties on IPersistableObjectBase targets.
 
+! KGySoft.Diagnostics namespace:
+================================
++ ITestCaseResult interface: new Error property. Will be set if a test case throws an exception
+! PerformanceTestBase<TDelegate, TResult> class:
+  ! DoTest method: If a test case throws a non-critical exception, then it will be caught. The exception is returned
+    by the ITestCaseResult.Error property and is dumped by the IPerformanceTestResultCollection.DumpResults method.
+
 ! KGySoft.Serialization.Binary namespace:
 ==========================================
 ! BinarySerializationFormatter class:
