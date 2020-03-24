@@ -32,7 +32,6 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 #if NETFRAMEWORK
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Policy;
@@ -42,6 +41,7 @@ using System.Text;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
+
 using NUnit.Framework;
 
 #endregion
@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region Constants
 
         private const bool dumpDetails = false;
-        private const bool dumpSerContent = true;
+        private const bool dumpSerContent = false;
 
         #endregion
 
@@ -1057,7 +1057,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
-        public void SerializeDerivedCollectionsTest()
+        public void SerializeDerivedCollections()
         {
             object[] referenceObjects =
             {

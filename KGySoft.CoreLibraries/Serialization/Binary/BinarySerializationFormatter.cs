@@ -94,7 +94,7 @@ using KGySoft.Serialization.Xml;
 namespace KGySoft.Serialization.Binary
 {
     /// <summary>
-    /// Serializes and deserialized objects in binary format.
+    /// Serializes and deserializes objects in binary format.
     /// <br/>See the <strong>Remarks</strong> section for details and for the differences to <see cref="BinaryFormatter"/>.
     /// </summary>
     /// <seealso cref="BinarySerializer"/>

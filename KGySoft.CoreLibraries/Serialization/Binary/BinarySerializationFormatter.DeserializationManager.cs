@@ -374,6 +374,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
+            private List<string> cachedNames;
             private List<(Assembly, string)> cachedAssemblies;
             private List<DataTypeDescriptor> cachedTypes;
             private Dictionary<string, Assembly> assemblyByNameCache;
@@ -576,6 +577,19 @@ namespace KGySoft.Serialization.Binary
 
                 // 3/b.) non-array collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
+            }
+
+            private string ReadName(BinaryReader br)
+            {
+                var names = cachedNames ??= new List<string>();
+                int id = Read7BitInt(br);
+                if ((uint)id > names.Count)
+                    Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
+                if (id < names.Count)
+                    return names[id];
+                string name = br.ReadString();
+                names.Add(name);
+                return name;
             }
 
             /// <summary>
@@ -1205,7 +1219,7 @@ namespace KGySoft.Serialization.Binary
                     // checking name of base type
                     if (t != type)
                     {
-                        string name = br.ReadString();
+                        string name = ReadName(br);
 
                         // ReSharper disable once PossibleNullReferenceException - obj is object in all cases
                         while (t.Name != name && t != Reflector.ObjectType)
@@ -1222,7 +1236,7 @@ namespace KGySoft.Serialization.Binary
                     int count = Read7BitInt(br);
                     for (int i = 0; i < count; i++)
                     {
-                        string name = br.ReadString();
+                        string name = ReadName(br);
                         object value = ReadWithType(br);
 
                         FieldInfo field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
@@ -1246,7 +1260,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // checking end of hierarchy
-                if (br.ReadString().Length != 0)
+                if (ReadName(br).Length != 0)
                 {
                     if (!IgnoreObjectChanges)
                         Throw.SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
@@ -1257,10 +1271,10 @@ namespace KGySoft.Serialization.Binary
                         int count = Read7BitInt(br);
                         for (int i = 0; i < count; i++)
                         {
-                            br.ReadString();
+                            ReadName(br);
                             ReadWithType(br);
                         }
-                    } while (br.ReadString().Length != 0);
+                    } while (ReadName(br).Length != 0);
                 }
             }
 
@@ -1274,7 +1288,7 @@ namespace KGySoft.Serialization.Binary
                 // reading content into si
                 for (int i = 0; i < count; i++)
                 {
-                    string name = br.ReadString();
+                    string name = ReadName(br);
                     object value = ReadWithType(br);
                     Type elementType = ReadType(br, false).Type;
                     si.AddValue(name, value, elementType);
@@ -1307,7 +1321,7 @@ namespace KGySoft.Serialization.Binary
                     int count = Read7BitInt(br);
                     for (int i = 0; i < count; i++)
                     {
-                        string name = br.ReadString();
+                        string name = ReadName(br);
 
                         // conflicting names can occur if there are fields of the same name in the base class
                         int usedCount = existingNames.GetValueOrDefault(name);
@@ -1335,7 +1349,7 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // end level is marked with empty string
-                    currentTypeName = br.ReadString();
+                    currentTypeName = ReadName(br);
                 } while (currentTypeName.Length != 0);
 
                 CheckReferences(si);
@@ -1362,7 +1376,7 @@ namespace KGySoft.Serialization.Binary
                 int count = Read7BitInt(br);
                 for (int i = 0; i < count; i++)
                 {
-                    string name = br.ReadString();
+                    string name = ReadName(br);
                     object value = ReadWithType(br);
                     ReadType(br, false); // the element type, which is ignored now
 

@@ -39,10 +39,12 @@
   - Command.CreatePropertyBinding (and CommandBindingsCollection.AddPropertyBinding) works also for simple target
     properties on IPersistableObjectBase targets.
 
-- KGySoft.Serialization.Binary namespace:
+! KGySoft.Serialization.Binary namespace:
 ==========================================
-- BinarySerializationFormatter class: Allowing an IObjectReference to return null if there are no circular
-  references to itself.
+! BinarySerializationFormatter class:
+  - Allowing an IObjectReference to return null if there are no circular references to itself.
+  ! Serialization stream has been changed for non-natively supported object graphs (the stream is not compatible
+    with previous versions)
 
 
 ~~~~~~~~~

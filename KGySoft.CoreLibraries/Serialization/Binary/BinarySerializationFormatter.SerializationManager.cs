@@ -54,6 +54,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
+            private Dictionary<string, int> nameIndexCache;
             private Dictionary<Assembly, int> assemblyIndexCache;
             private Dictionary<Type, int> typeIndexCache;
             private Dictionary<Type, (string AssemblyName, string TypeName)> binderCache;
@@ -1235,13 +1236,13 @@ namespace KGySoft.Serialization.Binary
                         // ReSharper disable once PossibleNullReferenceException - type is never null
                         // writing name of base type
                         if (t != type)
-                            bw.Write(t.Name);
+                            WriteName(bw, t.Name);
 
                         // writing the fields
                         Write7BitInt(bw, fields.Length);
                         foreach (FieldInfo field in fields)
                         {
-                            bw.Write(field.Name);
+                            WriteName(bw, field.Name);
                             Type fieldType = field.FieldType;
                             object fieldValue = field.Get(data);
                             if (fieldValue != null && fieldType.IsEnum)
@@ -1252,7 +1253,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // marking end of hierarchy
-                bw.Write(String.Empty);
+                WriteName(bw, String.Empty);
             }
 
             [SecurityCritical]
@@ -1326,7 +1327,7 @@ namespace KGySoft.Serialization.Binary
                 foreach (SerializationEntry entry in si)
                 {
                     // name
-                    bw.Write(entry.Name);
+                    WriteName(bw, entry.Name);
 
                     // value
                     WriteNonRoot(bw, entry.Value);
@@ -1339,6 +1340,22 @@ namespace KGySoft.Serialization.Binary
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, onSerializingAttribute);
 
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, onSerializedAttribute);
+
+            private void WriteName(BinaryWriter bw, string name)
+            {
+                Debug.Assert(name != null, "name is null");
+                var names = nameIndexCache ??= new Dictionary<string, int>();
+                if (names.TryGetValue(name, out int id))
+                {
+                    Write7BitInt(bw, id);
+                    return;
+                }
+
+                id = names.Count;
+                names[name] = id;
+                Write7BitInt(bw, id);
+                bw.Write(name);
+            }
 
             [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
