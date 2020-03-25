@@ -239,7 +239,7 @@ namespace KGySoft.ComponentModel
         {
             // ToArray is needed to use CopyTo instead of Enumerator on the original dictionary because the
             // enumerator can throw an exception if a value is overwritten in the meantime
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
             KeyValuePair<string, object>[] props = lockFreeProps.ToArray();
             var newStorage = new Dictionary<string, object>();
             foreach (KeyValuePair<string, object> prop in props)
@@ -663,7 +663,6 @@ namespace KGySoft.ComponentModel
 
         private void MergeIfExpired(Dictionary<string, object> lockFreeProps, Dictionary<string, object> lockingProps)
         {
-            Debug.Assert(!Monitor.TryEnter(SyncRoot), "Must be called in a lock");
             if (DateTime.UtcNow < nextMerge)
                 return;
             lockFreeStorage = MergeProperties(lockFreeProps, lockingProps);
@@ -672,7 +671,6 @@ namespace KGySoft.ComponentModel
 
         private Dictionary<string, object> GetCreateLockingStorage()
         {
-            Debug.Assert(!Monitor.TryEnter(SyncRoot), "Must be called in a lock");
             Dictionary<string, object> result = lockingStorage;
             if (result != null)
                 return result;

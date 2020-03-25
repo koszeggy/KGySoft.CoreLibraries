@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 // ReSharper disable once CheckNamespace
 namespace System
 {
-    internal static class ValueTuple
+    internal struct ValueTuple
     {
         internal static int CombineHashCodes(int h1, int h2)
         {
