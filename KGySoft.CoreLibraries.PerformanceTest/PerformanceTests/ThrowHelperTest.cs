@@ -72,8 +72,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests
                     for (int i = 0; i < max; i++)
                         n = test.ThrowByHelper(n);
                 }, nameof(test.ThrowByHelper))
+                .AddCase(() => { test.ThrowByHelper(-1); }, $"{nameof(test.ThrowByHelper)} Error")
                 .DoTest()
-                .DumpResults(Console.Out);
+                .DumpResults(Console.Out, forceShowReturnSizes: true);
         }
 
         #endregion

@@ -2,8 +2,9 @@
 
 # KGy SOFT Core Libraries
 
-KGy SOFT Core Libraries features high-performance and handy general libraries.
+KGy SOFT Core Libraries offer high-performance and handy general libraries.
 Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
+Multiple versions of .NET Framework, .NET Core and .NET Standard are supported.
 
 [![Website](https://img.shields.io/website/https/kgysoft.net/corelibraries.svg)](https://kgysoft.net/corelibraries)
 [![Online Help](https://img.shields.io/website/https/docs.kgysoft.net/corelibraries.svg?label=online%20help&up_message=available)](https://docs.kgysoft.net/corelibraries)

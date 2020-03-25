@@ -64,9 +64,9 @@ namespace KGySoft.Collections
     /// <list type="bullet">
     /// <item><em>Store model and memory:</em> Keys and values are stored in separated arrays, which is the most compact storage form among the sorted dictionaries.</item>
     /// <item><em>Insertion and removal:</em> Position of the element is searched with binary search in the array, which in an O(log n) operation.
-    /// Insertion/removal at the last position has a constant additional cost, so inserting/removing at the and has O(log n) cost, otherwise O(n) cost.</item>
+    /// Insertion/removal at the last position has a constant additional cost, so inserting/removing at the end has O(log n) cost, otherwise O(n) cost.</item>
     /// <item><em>Populating from sorted data:</em> Since position of the elements are always checked, adding a new element to the end has always O(log n) cost, though it is faster than in case of a <see cref="SortedDictionary{TKey,TValue}"/>.
-    /// Though, populating from a reverse ordered data has the worst possible performance, because every already existing elements have to be shifted in the underlying arrays.</item>
+    /// Though, populating from a reverse ordered data has the worst possible performance, because every already existing element has to be shifted in the underlying arrays.</item>
     /// <item><em>Enumerating the collection:</em> Really fast, it is actually a traversal of arrays.</item>
     /// </list>
     /// </description></item>

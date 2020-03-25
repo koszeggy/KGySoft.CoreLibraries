@@ -1533,7 +1533,7 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
-        /// Applies the AppenOnLoad rule.
+        /// Applies the AppendOnLoad rule.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
