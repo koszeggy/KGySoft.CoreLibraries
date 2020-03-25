@@ -239,7 +239,14 @@ namespace KGySoft.ComponentModel
         {
             // ToArray is needed to use CopyTo instead of Enumerator on the original dictionary because the
             // enumerator can throw an exception if a value is overwritten in the meantime
+#if NETFRAMEWORK
+            KeyValuePair<string, object>[] props = lockFreeProps.ToArray();
+            var newStorage = new Dictionary<string, object>();
+            foreach (KeyValuePair<string, object> prop in props)
+                newStorage[prop.Key] = prop.Value;
+#else
             var newStorage = new Dictionary<string, object>(lockFreeProps.ToArray());
+#endif
             if (lockingProps != null)
             {
                 foreach (KeyValuePair<string, object> item in lockingProps)
