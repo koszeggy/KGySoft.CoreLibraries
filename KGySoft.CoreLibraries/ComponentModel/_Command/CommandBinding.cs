@@ -61,7 +61,13 @@ namespace KGySoft.ComponentModel
             #region Methods
 
             // ReSharper disable once UnusedParameter.Local - sender must be specified because this method is invoked by event handler delegates
-            internal void Execute(object sender, TEventArgs e) => Binding.InvokeCommand(new CommandSource<TEventArgs> { Source = Source, TriggeringEvent = EventName, EventArgs = e });
+            internal void Execute(object sender, TEventArgs e)
+                => Binding.InvokeCommand(new CommandSource<TEventArgs>
+                {
+                    Source = Source,
+                    TriggeringEvent = EventName,
+                    EventArgs = e
+                }, Binding.EvaluateParameters());
 
             #endregion
         }
@@ -86,8 +92,8 @@ namespace KGySoft.ComponentModel
 
             #region Methods
 
-            void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target) => command.Execute(source, state, target);
-            void ICommand.Execute(ICommandSource source, ICommandState state, object target) => Throw.InternalError("Should never be invoked");
+            void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object[] parameters) => command.Execute(source, state, target, parameters);
+            void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters) => Throw.InternalError("Should never be invoked");
 
             #endregion
         }
@@ -115,6 +121,7 @@ namespace KGySoft.ComponentModel
         private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
 
         private bool disposed;
+        private Func<object>[] parameters;
         private EventHandler<ExecuteCommandEventArgs> executing;
         private EventHandler<ExecuteCommandEventArgs> executed;
 
@@ -205,6 +212,7 @@ namespace KGySoft.ComponentModel
             state.PropertyChanged -= State_PropertyChanged;
             executing = null;
             executed = null;
+            parameters = null;
 
             foreach (object source in sources.Keys.ToArray())
                 DoRemoveSource(source);
@@ -236,10 +244,10 @@ namespace KGySoft.ComponentModel
                 Throw.ArgumentException(Argument.commandSource, Res.ComponentModelInvalidCommandSource);
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
-            ParameterInfo[] parameters = invokeMethod?.GetParameters();
+            ParameterInfo[] invokerParameters = invokeMethod?.GetParameters();
 
             // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
-            if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
+            if (invokeMethod?.ReturnType != Reflector.VoidType || invokerParameters.Length != 2 || invokerParameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(invokerParameters[1].ParameterType))
                 Throw.ArgumentException(Argument.eventName, Res.ComponentModelInvalidEvent(eventName));
 
             // already added
@@ -247,7 +255,7 @@ namespace KGySoft.ComponentModel
                 return this;
 
             // creating generic info by reflection because the signature must match and EventArgs can vary
-            var info = (SubscriptionInfo)Reflector.CreateInstance(typeof(SubscriptionInfo<>).GetGenericType(parameters[1].ParameterType));
+            var info = (SubscriptionInfo)Reflector.CreateInstance(typeof(SubscriptionInfo<>).GetGenericType(invokerParameters[1].ParameterType));
             info.Source = source;
             info.EventName = eventName;
             info.Binding = this;
@@ -314,7 +322,13 @@ namespace KGySoft.ComponentModel
             return targets.Remove(target);
         }
 
-        public void InvokeCommand(object source, string eventName, EventArgs eventArgs)
+        public ICommandBinding WithParameters(Func<object>[] parameterGetters)
+        {
+            parameters = parameterGetters;
+            return this;
+        }
+
+        public void InvokeCommand(object source, string eventName, EventArgs eventArgs, object[] parameterValues)
         {
             if (disposed)
                 Throw.ObjectDisposedException();
@@ -326,8 +340,8 @@ namespace KGySoft.ComponentModel
             {
                 Source = source,
                 TriggeringEvent = eventName,
-                EventArgs = eventArgs ?? EventArgs.Empty
-            });
+                EventArgs = eventArgs ?? EventArgs.Empty,
+            }, parameterValues ?? Reflector.EmptyObjects);
         }
 
         #endregion
@@ -354,7 +368,17 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source)
+        private object[] EvaluateParameters()
+        {
+            if (parameters.IsNullOrEmpty())
+                return Reflector.EmptyObjects;
+            var result = new object[parameters.Length];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = parameters[i].Invoke();
+            return result;
+        }
+
+        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source, object[] parameterValues)
             where TEventArgs : EventArgs
         {
             if (disposed)
@@ -368,13 +392,13 @@ namespace KGySoft.ComponentModel
             try
             {
                 if (targets.IsNullOrEmpty())
-                    cmd.Execute(source, state, null);
+                    cmd.Execute(source, state, null, parameterValues);
                 else
                 {
                     foreach (object targetEntry in targets)
                     {
                         object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
-                        cmd.Execute(source, state, target);
+                        cmd.Execute(source, state, target, parameterValues);
                         if (disposed || !state.Enabled)
                             return;
                     }

@@ -33,11 +33,25 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState> callback;
+        private Action<ICommandSource<TEventArgs>, ICommandState, object[]> callback;
 
         #endregion
 
         #region Constructors
+
+        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState, object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = callback;
+        }
+
+        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = (src, _, pars) => callback.Invoke(src, pars);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
@@ -48,7 +62,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = callback;
+            this.callback = (src, state, _) => callback.Invoke(src, state);
         }
 
         /// <summary>
@@ -60,7 +74,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = (e, _) => callback.Invoke(e);
+            this.callback = (src, _, __) => callback.Invoke(src);
         }
 
         #endregion
@@ -78,20 +92,20 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target)
+        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object[] parameters)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, object[]> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source, state);
+            copy.Invoke(source, state, parameters);
         }
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, object[]> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source.Cast<TEventArgs>(), state);
+            copy.Invoke(source.Cast<TEventArgs>(), state, parameters);
         }
 
         #endregion

@@ -31,11 +31,25 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandState> callback;
+        private Action<ICommandState, object[]> callback;
 
         #endregion
 
         #region Constructors
+
+        public SimpleCommand(Action<ICommandState, object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = callback;
+        }
+
+        public SimpleCommand(Action<object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = (_, pars) => callback.Invoke(pars);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
@@ -46,7 +60,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = callback;
+            this.callback = (state, _) => callback.Invoke(state);
         }
 
         /// <summary>
@@ -58,7 +72,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = _ => callback.Invoke();
+            this.callback = (_, __) => callback.Invoke();
         }
 
         #endregion
@@ -76,12 +90,12 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters)
         {
-            Action<ICommandState> copy = callback;
+            Action<ICommandState, object[]> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(state);
+            copy.Invoke(state, parameters);
         }
 
         #endregion

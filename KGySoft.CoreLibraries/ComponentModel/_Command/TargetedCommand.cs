@@ -32,11 +32,25 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandState, TTarget> callback;
+        private Action<ICommandState, TTarget, object[]> callback;
 
         #endregion
 
         #region Constructors
+
+        public TargetedCommand(Action<ICommandState, TTarget, object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = callback;
+        }
+
+        public TargetedCommand(Action<TTarget, object[]> callback)
+        {
+            if (callback == null)
+                Throw.ArgumentNullException(Argument.callback);
+            this.callback = (_, t, pars) => callback.Invoke(t, pars);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
@@ -47,7 +61,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = callback;
+            this.callback = (state, t, _) => callback.Invoke(state, t);
         }
 
         /// <summary>
@@ -59,7 +73,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = (_, target) => callback.Invoke(target);
+            this.callback = (_, target, __) => callback.Invoke(target);
         }
 
         #endregion
@@ -77,12 +91,12 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters)
         {
-            Action<ICommandState, TTarget> copy = callback;
+            Action<ICommandState, TTarget, object[]> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(state, (TTarget)target);
+            copy.Invoke(state, (TTarget)target, parameters);
         }
 
         #endregion
