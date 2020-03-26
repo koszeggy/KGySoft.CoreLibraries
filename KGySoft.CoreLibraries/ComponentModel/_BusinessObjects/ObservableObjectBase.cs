@@ -126,6 +126,7 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private PropertyChangedEventHandler propertyChanged;
 
         private volatile bool isModified;
+        private bool isDisposed;
 
         #endregion
 
@@ -184,7 +185,7 @@ namespace KGySoft.ComponentModel
             get
             {
                 EnsureMerged();
-                return lockFreeStorage;
+                return LockFreeStorage;
             }
         }
 
@@ -199,6 +200,17 @@ namespace KGySoft.ComponentModel
                 if (syncRoot == null)
                     Interlocked.CompareExchange(ref syncRoot, new object(), null);
                 return syncRoot;
+            }
+        }
+
+        private Dictionary<string, object> LockFreeStorage
+        {
+            get
+            {
+                Dictionary<string, object> result = lockFreeStorage;
+                if (result == null || isDisposed)
+                    Throw.ObjectDisposedException();
+                return result;
             }
         }
 
@@ -317,7 +329,7 @@ namespace KGySoft.ComponentModel
 
             // Firstly remove the properties, which are not among the new ones.
             // We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
-            IEnumerable<string> toRemove = lockFreeStorage.Keys.ToArray().Except(newProperties.Select(p => p.Key));
+            IEnumerable<string> toRemove = LockFreeStorage.Keys.ToArray().Except(newProperties.Select(p => p.Key));
             foreach (var propertyName in toRemove)
                 ResetProperty(propertyName, invokeChangedEvent);
 
@@ -353,7 +365,7 @@ namespace KGySoft.ComponentModel
             var result = new Dictionary<string, object>();
 
             // ToArray ensures that CopyTo is used instead of the enumerator, which does not tolerate value replacements
-            foreach (KeyValuePair<string, object> property in lockFreeStorage.ToArray())
+            foreach (KeyValuePair<string, object> property in LockFreeStorage.ToArray())
             {
                 // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use cache now
                 object clonedValue;
@@ -463,7 +475,7 @@ namespace KGySoft.ComponentModel
             if (!CanSetProperty(propertyName, value))
                 Throw.InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
 
-            Dictionary<string, object> lockFreeProps = lockFreeStorage;
+            Dictionary<string, object> lockFreeProps = LockFreeStorage;
             bool exists = lockFreeProps.TryGetValue(propertyName, out object oldValue);
             if (exists)
             {
@@ -509,7 +521,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 Throw.ArgumentNullException(Argument.propertyName);
 
-            Dictionary<string, object> lockFreeProps = lockFreeStorage;
+            Dictionary<string, object> lockFreeProps = LockFreeStorage;
             bool exists = lockFreeProps.TryGetValue(propertyName, out object oldValue);
 
             if (exists)
@@ -602,7 +614,15 @@ namespace KGySoft.ComponentModel
         /// <br/>The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing) => propertyChanged = null;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed)
+                return;
+            isDisposed = true;
+            lockFreeStorage = null;
+            lockingStorage = null;
+            propertyChanged = null;
+        }
 
         #endregion
 
@@ -638,7 +658,7 @@ namespace KGySoft.ComponentModel
                 return false;
             }
 
-            Dictionary<string, object> lockFreeProps = lockFreeStorage;
+            Dictionary<string, object> lockFreeProps = LockFreeStorage;
             if (lockFreeProps.TryGetValue(propertyName, out value))
                 return true;
             if (lockingStorage == null)
@@ -692,7 +712,7 @@ namespace KGySoft.ComponentModel
                 if (lockingProps == null)
                     return;
 
-                lockFreeStorage = MergeProperties(lockFreeStorage, lockingProps);
+                lockFreeStorage = MergeProperties(LockFreeStorage, lockingProps);
                 lockingStorage = null;
             }
         }
