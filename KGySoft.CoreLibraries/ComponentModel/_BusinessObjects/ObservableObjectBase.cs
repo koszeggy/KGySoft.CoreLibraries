@@ -611,7 +611,8 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Releases the resources held by this instance.
-        /// <br/>The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
+        /// <br/>The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event and clears the property storage.
+        /// If the overridden method accesses managed properties, then the base method should be called after those accesses to prevent <see cref="ObjectDisposedException"/>.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)

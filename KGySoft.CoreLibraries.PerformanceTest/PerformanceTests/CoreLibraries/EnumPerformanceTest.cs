@@ -27,7 +27,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     [TestFixture]
     public class EnumPerformanceTest
     {
-#region Enumerations
+        #region Enumerations
 
         private enum NonFlagsEnum : long
         {
@@ -68,9 +68,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             AlphaBeta = Alpha | Beta
         }
 
-#endregion
+        #endregion
 
-#region Methods
+        #region Methods
 
         [Test]
         public void GetNamesTest() => new PerformanceTest { TestName = "GetName(s)", Iterations = 1000000 }
