@@ -191,11 +191,6 @@ namespace KGySoft.Diagnostics
                     writer.WriteLine(Res.PerformanceTestSeparator);
                 }
 
-                void DumpResult()
-                {
-
-                }
-
                 #endregion
 
                 if (writer == null)
