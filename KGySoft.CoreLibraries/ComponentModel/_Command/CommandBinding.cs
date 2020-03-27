@@ -397,7 +397,7 @@ namespace KGySoft.ComponentModel
                 return false;
 
             foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
-                Reflector.InvokeMethod(source is Type ? null : source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
+                Reflector.InvokeMethod(source is Type ? null : source, subscriptionInfo.Key.GetRemoveMethod(true), subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
         }
