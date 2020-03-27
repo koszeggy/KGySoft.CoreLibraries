@@ -26,6 +26,8 @@
 * Adding [Serializable] attribute to ObservableObjectBase and its derived types
 ! ObservableObjectBase
   ! The inner storage is cleared on disposing. Most members will throw an ObjectDisposedException afterwards.
+    If the Dispose(bool) method is overridden, then after calling the base implementation observed properties will
+    not be accessible anymore.
   * Improving performance of Get/Set methods
   - CanGetProperty and CanSetProperty methods:
     - The default implementations recognize also private properties of base classes (they can use Get/Set methods).
