@@ -68,6 +68,7 @@ namespace KGySoft
         format,
         genericParameters,
         genericTypeDefinition,
+        getParam,
         handle,
         index,
         indexParameters,

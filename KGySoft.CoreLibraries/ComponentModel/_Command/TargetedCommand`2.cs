@@ -1,9 +1,9 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: SimpleCommand.cs
+//  File: TargetedCommand`2.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2020 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution. If not, then this file is considered as
@@ -24,42 +24,33 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is unaware of its triggering sources and has no bound targets.
+    /// Represents a command, which is unaware of its triggering sources and has one or more bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public sealed class SimpleCommand : ICommand, IDisposable
+    public sealed class TargetedCommand<TTarget, TParam> : ICommand, IDisposable
     {
         #region Fields
 
-        private Action<ICommandState> callback;
+        private Action<ICommandState, TTarget, TParam> callback;
 
         #endregion
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
-        /// </summary>
-        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SimpleCommand(Action<ICommandState> callback)
+        public TargetedCommand(Action<ICommandState, TTarget, TParam> callback)
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
-        /// </summary>
-        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SimpleCommand(Action callback)
+        public TargetedCommand(Action<TTarget, TParam> callback)
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = _ => callback.Invoke();
+            this.callback = (_, t, param) => callback.Invoke(t, param);
         }
 
         #endregion
@@ -80,12 +71,12 @@ namespace KGySoft.ComponentModel
 #if !(NET35 || NET40)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameters)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
         {
-            Action<ICommandState> copy = callback;
+            Action<ICommandState, TTarget, TParam> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(state);
+            copy.Invoke(state, (TTarget)target, (TParam)parameter);
         }
 
         #endregion

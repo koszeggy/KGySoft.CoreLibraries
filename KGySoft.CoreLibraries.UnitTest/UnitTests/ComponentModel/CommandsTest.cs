@@ -21,7 +21,7 @@ using System.Globalization;
 using System.IO;
 
 using KGySoft.ComponentModel;
-
+using KGySoft.Diagnostics;
 using NUnit.Framework;
 
 #endregion
@@ -37,9 +37,26 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
         private class TestClass : ObservableObjectBase
         {
+            #region Events
+
+            internal event EventHandler TestEvent;
+
+            #endregion
+
             #region Properties
 
             public string TestProp { get => Get<string>(); set => Set(value); }
+
+            #endregion
+
+            #region Methods
+
+            protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
+            {
+                base.OnPropertyChanged(e);
+                if (e.PropertyName == nameof(TestProp))
+                    TestEvent?.Invoke(this, EventArgs.Empty);
+            }
 
             #endregion
         }
@@ -63,7 +80,6 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 writer.WriteLine($"New display language: {LanguageSettings.DisplayLanguage.Name}");
                 state[nameof(LanguageSettings.DisplayLanguage)] = LanguageSettings.DisplayLanguage.Name;
             });
-
 
         #endregion
 
@@ -206,6 +222,40 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             binding.Dispose();
             source.TestProp = "Delta";
             Assert.AreNotEqual(source.TestProp, target.TestProp);
+        }
+
+        [Test]
+        public void NonPublicEventTest()
+        {
+            bool executed = false;
+            var test = new TestClass();
+            using var bindings = new CommandBindingsCollection();
+            bindings.Add(() => executed = true)
+                .AddSource(test, nameof(test.TestEvent));
+
+            // triggering command
+            test.TestProp = "Alpha";
+            Assert.IsTrue(executed);
+        }
+
+        [Test]
+        public void ParameterizedCommandTest()
+        {
+            bool executed = false;
+            var test = new TestClass();
+            using var bindings = new CommandBindingsCollection();
+            bindings.Add(OnExecute, () => test.TestProp)
+                .AddSource(test, nameof(test.PropertyChanged));
+
+            void OnExecute(string value)
+            {
+                Assert.AreEqual(test.TestProp, value);
+                executed = true;
+            }
+
+            // triggering command
+            test.TestProp = "Alpha";
+            Assert.IsTrue(executed);
         }
 
         #endregion

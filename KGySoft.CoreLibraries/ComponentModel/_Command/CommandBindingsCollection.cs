@@ -58,7 +58,7 @@ namespace KGySoft.ComponentModel
         /// </returns>
         public virtual ICommandBinding Add(ICommand command, IDictionary<string, object> initialState = null, bool disposeCommand = false)
         {
-            var result = command.CreateBinding(initialState, disposeCommand);
+            ICommandBinding result = command.CreateBinding(initialState, disposeCommand);
             Add(result);
             return result;
         }
@@ -85,6 +85,18 @@ namespace KGySoft.ComponentModel
 
             return result;
         }
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
+        /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
+        /// </summary>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
+        /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        public ICommandBinding Add(ICommand command, object source, string eventName, params object[] targets)
+            => Add(command, source, eventName, null, targets);
 
         /// <summary>
         /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
@@ -149,18 +161,6 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
-        /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
-        /// </summary>
-        /// <param name="command">The command to bind.</param>
-        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
-        /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
-        /// <param name="targets">Zero or more targets for the binding.</param>
-        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        public ICommandBinding Add(ICommand command, object source, string eventName, params object[] targets)
-            => Add(command, source, eventName, null, targets);
-
-        /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SimpleCommand"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
@@ -193,6 +193,20 @@ namespace KGySoft.ComponentModel
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
         public ICommandBinding Add(Action callback, IDictionary<string, object> initialState = null)
             => Add(new SimpleCommand(callback), initialState, true);
+
+        public ICommandBinding Add<TParam>(Action<ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SimpleCommand<TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
+
+        public ICommandBinding Add<TParam>(Action<TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SimpleCommand<TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
 
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareCommand{TEventArgs}"/> for the specified <paramref name="callback"/>
@@ -230,6 +244,20 @@ namespace KGySoft.ComponentModel
         public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareCommand<TEventArgs>(callback), initialState, true);
 
+        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SourceAwareCommand<TEventArgs, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
+
+        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SourceAwareCommand<TEventArgs, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
+
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="TargetedCommand{TTarget}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
@@ -265,6 +293,20 @@ namespace KGySoft.ComponentModel
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
         public ICommandBinding Add<TTarget>(Action<TTarget> callback, IDictionary<string, object> initialState = null)
             => Add(new TargetedCommand<TTarget>(callback), initialState, true);
+
+        public ICommandBinding Add<TTarget, TParam>(Action<ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new TargetedCommand<TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
+
+        public ICommandBinding Add<TTarget, TParam>(Action<TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new TargetedCommand<TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
 
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareTargetedCommand{TEventArgs,TTarget}"/> for the specified <paramref name="callback"/>
@@ -303,6 +345,20 @@ namespace KGySoft.ComponentModel
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
         public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, TTarget> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareTargetedCommand<TEventArgs, TTarget>(callback), initialState, true);
+
+        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
+
+        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        {
+            if (getParam == null)
+                Throw.ArgumentNullException(Argument.getParam);
+            return Add(new SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
+        }
 
         /// <summary>
         /// Releases every binding in this <see cref="CommandBindingsCollection"/>.

@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: SourceAwareCommand.cs
+//  File: TargetedCommand`1.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -17,64 +17,50 @@
 #region Usings
 
 using System;
+using System.Runtime.CompilerServices;
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is aware of its triggering sources and has no bound targets.
+    /// Represents a command, which is unaware of its triggering sources and has one or more bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
-    /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public sealed class SourceAwareCommand<TEventArgs> : ICommand<TEventArgs>, IDisposable
-        where TEventArgs : EventArgs
+    public sealed class TargetedCommand<TTarget> : ICommand, IDisposable
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, object[]> callback;
+        private Action<ICommandState, TTarget> callback;
 
         #endregion
 
         #region Constructors
 
-        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState, object[]> callback)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
+        public TargetedCommand(Action<ICommandState, TTarget> callback)
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
         }
 
-        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, object[]> callback)
-        {
-            if (callback == null)
-                Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, _, pars) => callback.Invoke(src, pars);
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState> callback)
+        public TargetedCommand(Action<TTarget> callback)
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, state, _) => callback.Invoke(src, state);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
-        /// </summary>
-        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SourceAwareCommand(Action<ICommandSource<TEventArgs>> callback)
-        {
-            if (callback == null)
-                Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, _, __) => callback.Invoke(src);
+            this.callback = (_, target) => callback.Invoke(target);
         }
 
         #endregion
@@ -92,20 +78,15 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object[] parameters)
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, object[]> copy = callback;
+            Action<ICommandState, TTarget> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source, state, parameters);
-        }
-
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters)
-        {
-            Action<ICommandSource<TEventArgs>, ICommandState, object[]> copy = callback;
-            if (copy == null)
-                Throw.ObjectDisposedException();
-            copy.Invoke(source.Cast<TEventArgs>(), state, parameters);
+            copy.Invoke(state, (TTarget)target);
         }
 
         #endregion

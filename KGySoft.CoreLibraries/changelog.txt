@@ -18,6 +18,13 @@
 
 ! KGySoft.ComponentModel namespace:
 ==========================================
+! ICommand interface: The Execute method now has a new object parameter argument
++ ICommandBinding interface
+  + New WithParameter method
+  + The InvokeCommand method has now a new optional object parameter argument
++ New SimpleCommand<TParam>, SourceAwareCommand<TEventArgs, TParam>, TargetedCommand<TTarget, TParam>,
+  SourceAwareTargetedCommand<TEventArgs, TTarget, TParam> classes for parameterized commands
++ CommandBindingsCollection: New Add overloads for implicit parameterized commands
 ! IPersistableObject interface:
   ! TryGetPropertyValue does not throw an InvalidOperationException anymore if CanGetProperty returns false.
     In such case TryGetPropertyValue returns false.

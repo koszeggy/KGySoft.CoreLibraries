@@ -130,7 +130,7 @@ namespace KGySoft.ComponentModel
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources = false);
 
-        ICommandBinding WithParameters(params Func<object>[] parameters);
+        ICommandBinding WithParameter(Func<object> getParameterCallback);
 
         /// <summary>
         /// Removes the specified <paramref name="source"/> from this <see cref="ICommandBinding"/> instance. The used events of the removed source will be released.
@@ -159,8 +159,9 @@ namespace KGySoft.ComponentModel
         /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">Name of the event. It is not checked whether this is en existing event.</param>
         /// <param name="eventArgs">The <see cref="EventArgs"/> instance containing the event data.</param>
-        /// <param name="parameters">The parameters to be passed to the invoked command. A possible previous <see cref="WithParameters">WithParameters</see> call is ignored when calling this method.</param>
-        void InvokeCommand(object source, string eventName, EventArgs eventArgs, params object[] parameters);
+        /// <param name="parameter">The parameter value to be passed to the invoked command. A possible previous call is ignored when calling this method. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        void InvokeCommand(object source, string eventName, EventArgs eventArgs, object parameter = null);
 
         #endregion
     }

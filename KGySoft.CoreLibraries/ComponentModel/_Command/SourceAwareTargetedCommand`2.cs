@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: SourceAwareTargetedCommand.cs
+//  File: SourceAwareTargetedCommand`2.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-using System.Linq;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -35,25 +35,11 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget, object[]> callback;
+        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback;
 
         #endregion
 
         #region Constructors
-
-        public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, ICommandState, TTarget, object[]> callback)
-        {
-            if (callback == null)
-                Throw.ArgumentNullException(Argument.callback);
-            this.callback = callback;
-        }
-
-        public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, TTarget, object[]> callback)
-        {
-            if (callback == null)
-                Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, _, t, pars) => callback.Invoke(src, t, pars);
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
@@ -64,7 +50,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, state, t, _) => callback.Invoke(src, state, t);
+            this.callback = callback;
         }
 
         /// <summary>
@@ -76,7 +62,7 @@ namespace KGySoft.ComponentModel
         {
             if (callback == null)
                 Throw.ArgumentNullException(Argument.callback);
-            this.callback = (src, _, t, __) => callback.Invoke(src, t);
+            this.callback = (src, _, t) => callback.Invoke(src, t);
         }
 
         #endregion
@@ -94,20 +80,26 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object[] parameters)
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, object[]> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TTarget> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source, state, (TTarget)target, parameters);
+            copy.Invoke(source, state, (TTarget)target);
         }
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters)
+#if !(NET35 || NET40)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, object[]> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TTarget> copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target, parameters);
+            copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target);
         }
 
         #endregion

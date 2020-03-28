@@ -67,33 +67,7 @@ namespace KGySoft.ComponentModel
                     Source = Source,
                     TriggeringEvent = EventName,
                     EventArgs = e
-                }, Binding.EvaluateParameters());
-
-            #endregion
-        }
-
-        #endregion
-
-        #region CommandGenericWrapper class
-
-        private sealed class CommandGenericWrapper<TEventArgs> : ICommand<TEventArgs> where TEventArgs : EventArgs
-        {
-            #region Fields
-
-            private readonly ICommand command;
-
-            #endregion
-
-            #region Constructors
-
-            internal CommandGenericWrapper(ICommand command) => this.command = command;
-
-            #endregion
-
-            #region Methods
-
-            void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object[] parameters) => command.Execute(source, state, target, parameters);
-            void ICommand.Execute(ICommandSource source, ICommandState state, object target, object[] parameters) => Throw.InternalError("Should never be invoked");
+                }, Binding.getParameterCallback?.Invoke());
 
             #endregion
         }
@@ -121,7 +95,7 @@ namespace KGySoft.ComponentModel
         private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
 
         private bool disposed;
-        private Func<object>[] parameters;
+        private Func<object> getParameterCallback;
         private EventHandler<ExecuteCommandEventArgs> executing;
         private EventHandler<ExecuteCommandEventArgs> executed;
 
@@ -212,7 +186,7 @@ namespace KGySoft.ComponentModel
             state.PropertyChanged -= State_PropertyChanged;
             executing = null;
             executed = null;
-            parameters = null;
+            getParameterCallback = null;
 
             foreach (object source in sources.Keys.ToArray())
                 DoRemoveSource(source);
@@ -322,13 +296,13 @@ namespace KGySoft.ComponentModel
             return targets.Remove(target);
         }
 
-        public ICommandBinding WithParameters(Func<object>[] parameterGetters)
+        public ICommandBinding WithParameter(Func<object> callback)
         {
-            parameters = parameterGetters;
+            getParameterCallback = callback;
             return this;
         }
 
-        public void InvokeCommand(object source, string eventName, EventArgs eventArgs, object[] parameterValues)
+        public void InvokeCommand(object source, string eventName, EventArgs eventArgs, object parameter)
         {
             if (disposed)
                 Throw.ObjectDisposedException();
@@ -341,7 +315,7 @@ namespace KGySoft.ComponentModel
                 Source = source,
                 TriggeringEvent = eventName,
                 EventArgs = eventArgs ?? EventArgs.Empty,
-            }, parameterValues ?? Reflector.EmptyObjects);
+            }, parameter);
         }
 
         #endregion
@@ -368,23 +342,13 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private object[] EvaluateParameters()
-        {
-            if (parameters.IsNullOrEmpty())
-                return Reflector.EmptyObjects;
-            var result = new object[parameters.Length];
-            for (int i = 0; i < result.Length; i++)
-                result[i] = parameters[i].Invoke();
-            return result;
-        }
-
-        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source, object[] parameterValues)
+        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source, object parameter)
             where TEventArgs : EventArgs
         {
             if (disposed)
                 return;
 
-            ICommand<TEventArgs> cmd = command as ICommand<TEventArgs> ?? new CommandGenericWrapper<TEventArgs>(command);
+            ICommand<TEventArgs> cmdTypedArgs = command as ICommand<TEventArgs>;
             var e = new ExecuteCommandEventArgs(source, state);
             OnExecuting(e);
             if (disposed || !state.Enabled)
@@ -392,13 +356,21 @@ namespace KGySoft.ComponentModel
             try
             {
                 if (targets.IsNullOrEmpty())
-                    cmd.Execute(source, state, null, parameterValues);
+                {
+                    if (cmdTypedArgs != null)
+                        cmdTypedArgs.Execute(source, state, null, parameter);
+                    else
+                        command.Execute(source, state, null, parameter);
+                }
                 else
                 {
                     foreach (object targetEntry in targets)
                     {
                         object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
-                        cmd.Execute(source, state, target, parameterValues);
+                        if (cmdTypedArgs != null)
+                            cmdTypedArgs.Execute(source, state, target, parameter);
+                        else
+                            command.Execute(source, state, target, parameter);
                         if (disposed || !state.Enabled)
                             return;
                     }
