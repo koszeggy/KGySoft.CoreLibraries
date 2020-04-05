@@ -2848,6 +2848,13 @@ namespace KGySoft.Reflection
         public static Type ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(assembly, typeName, options);
 
+        /// <summary>
+        /// Returns an empty array of <typeparamref name="T"/>. The same as <see cref="Array.Empty{T}">Array.Empty</see> but works on every platform.
+        /// </summary>
+        /// <typeparam name="T">The element type of the returned array.</typeparam>
+        /// <returns>An empty array of <typeparamref name="T"/>.</returns>
+        public static T[] EmptyArray<T>() => EmptyArrayHelper<T>.Instance;
+
         internal static int SizeOf<T>()
         {
             var type = typeof(T);
@@ -2855,13 +2862,6 @@ namespace KGySoft.Reflection
                 return Buffer.ByteLength(new T[1]);
             return type.SizeOf();
         }
-
-        internal static T[] EmptyArray<T>() =>
-#if NET35 || NET40 || NET45
-            EmptyArrayHelper<T>.Instance;
-#else
-            Array.Empty<T>();
-#endif
 
         #endregion
 

@@ -56,6 +56,10 @@
   ! DoTest method: If a test case throws a non-critical exception, then it will be caught. The exception is returned
     by the ITestCaseResult.Error property and is dumped by the IPerformanceTestResultCollection.DumpResults method.
 
++ KGySoft.Reflection namespace:
+===============================
++ Reflector class: making the EmptyArray<T> method public.
+
 ! KGySoft.Serialization.Binary namespace:
 ==========================================
 ! BinarySerializationFormatter class:
