@@ -349,8 +349,8 @@ namespace KGySoft.ComponentModel
                 return;
 
             ICommand<TEventArgs> cmdTypedArgs = command as ICommand<TEventArgs>;
-            var e = new ExecuteCommandEventArgs(source, state);
-            OnExecuting(e);
+            ExecuteCommandEventArgs e = null;
+            executing?.Invoke(this, e = new ExecuteCommandEventArgs(source, state));
             if (disposed || !state.Enabled)
                 return;
             try
@@ -379,7 +379,7 @@ namespace KGySoft.ComponentModel
             finally
             {
                 if (!disposed)
-                    OnExecuted(e);
+                    executed?.Invoke(this, e ?? new ExecuteCommandEventArgs(source, state));
             }
         }
 
@@ -399,9 +399,6 @@ namespace KGySoft.ComponentModel
         }
 
         private IEnumerable<object> GetInstanceSources() => sources.Keys.Where(k => !(k is Type));
-
-        private void OnExecuting(ExecuteCommandEventArgs e) => executing?.Invoke(this, e);
-        private void OnExecuted(ExecuteCommandEventArgs e) => executed?.Invoke(this, e);
 
         #endregion
 
