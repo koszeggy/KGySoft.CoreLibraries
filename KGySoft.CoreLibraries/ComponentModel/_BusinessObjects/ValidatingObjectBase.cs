@@ -146,6 +146,41 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
+        #region Public Methods
+
+        /// <summary>
+        /// Forces calling the <see cref="DoValidation">DoValidation</see> method and updates the <see cref="ValidationResults"/> and <see cref="IsValid"/> properties.
+        /// </summary>
+        /// <returns>A <see cref="ValidationResultsCollection" /> instance containing the validation results.</returns>
+        /// <remarks>
+        /// <note>Normally you don't need to call this method because the <see cref="IsValid"/> and <see cref="ValidationResults"/>
+        /// properties are automatically re-evaluated when they are accessed and the object has been changed since last validation.
+        /// Explicit validation can be useful when not every change that affects validation triggers the <see cref="ObservableObjectBase.PropertyChanged"/> event.</note>
+        /// </remarks>
+        public ValidationResultsCollection Validate()
+        {
+            ValidationResultsCollection result = DoValidation();
+            if (result == null)
+                Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
+
+            bool newIsValid = !result.HasErrors;
+            bool raiseIsValidChanged = newIsValid != lastIsValid;
+            isValid = lastIsValid = newIsValid;
+
+            ValidationResultsCollection lastResult = cachedValidationResults;
+            bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
+            cachedValidationResults = result.ToReadOnly();
+
+            if (raiseIsValidChanged)
+                OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));
+            if (raiseValidationResultsChanged)
+                OnPropertyChanged(new PropertyChangedExtendedEventArgs(lastResult, result, nameof(ValidationResults)));
+
+            return result;
+        }
+
+        #endregion
+
         #region Protected Methods
 
         /// <summary>
@@ -183,32 +218,6 @@ namespace KGySoft.ComponentModel
             }
 
             base.OnPropertyChanged(e);
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private ValidationResultsCollection Validate()
-        {
-            ValidationResultsCollection result = DoValidation();
-            if (result == null)
-                Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
-
-            bool newIsValid = !result.HasErrors;
-            bool raiseIsValidChanged = newIsValid != lastIsValid;
-            isValid = lastIsValid = newIsValid;
-
-            ValidationResultsCollection lastResult = cachedValidationResults;
-            bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
-            cachedValidationResults = result.ToReadOnly();
-
-            if (raiseIsValidChanged)
-                OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));
-            if (raiseValidationResultsChanged)
-                OnPropertyChanged(new PropertyChangedExtendedEventArgs(lastResult, result, nameof(ValidationResults)));
-
-            return result;
         }
 
         #endregion
