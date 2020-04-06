@@ -44,6 +44,7 @@
     - If a derived class had non-overridden properties of the same name as the base class, then an exception was
       thrown. Now the most derived property is considered. If you want to set a property of the same name but
       different type in the base class you need to override the CanSetProperty method.
+- PersistableObjectBase: Fixing TryReplaceProperty if originalValue is MissingProperty
 + ValidatingObjectBase: The Validate method has been made public. Not needed if changing validated properties
   trigger the PropertyChanged property.
 * Commands:

@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -347,7 +346,7 @@ namespace KGySoft.ComponentModel
 
             bool tryAddNew = MissingProperty.Equals(originalValue);
             bool exists = TryGetPropertyValue(propertyName, true, out object currentValue);
-            if (exists && tryAddNew || !exists || !Equals(originalValue, currentValue))
+            if (!(exists ^ tryAddNew) || exists && !Equals(originalValue, currentValue))
                 return false;
 
             // Since we are not in a lock continuously it can happen that a value is set between reading the old
