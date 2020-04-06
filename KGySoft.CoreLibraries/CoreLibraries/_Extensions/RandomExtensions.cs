@@ -1727,7 +1727,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [SecurityCritical]
-        private static void FillChars(Random random, MutableString target, bool checkInvalid = false)
+        private static void FillChars(Random random, in MutableString target, bool checkInvalid = false)
         {
             for (int i = 0; i < target.Length; i++)
             {

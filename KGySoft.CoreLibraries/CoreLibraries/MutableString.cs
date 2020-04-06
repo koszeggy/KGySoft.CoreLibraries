@@ -48,13 +48,6 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region Properties and Indexers
-
-        #region Properties
-
-
-        #endregion
-
         #region Indexers
 
         internal char this[int index]
@@ -65,8 +58,6 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             set => head[index] = value;
         }
-
-        #endregion
 
         #endregion
 
