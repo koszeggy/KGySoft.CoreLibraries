@@ -509,7 +509,7 @@ A command is represented by the [`ICommand`][ICommand] interface (see some examp
 - [`SimpleCommand`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand.htm) and [`SimpleCommand<TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand_1.htm)
 - [`TargetedCommand<TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_1.htm) and [`TargetedCommand<TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_2.htm)
 - [`SourceAwareCommand<TEventArgs>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_1.htm) and [`SourceAwareCommand<TEventArgs, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_2.htm)
-- [`SourceAwareTargetedCommand<TEventArgs, TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_2.htm) and [`SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_3.htm).
+- [`SourceAwareTargetedCommand<TEventArgs, TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_2.htm) and [`SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_3.htm)
 
 A command itself is a static logic. Every dynamic attribute of a command (including the Enabled and other arbitrary states but also the sources and targets) belong to the binding(s).
 
