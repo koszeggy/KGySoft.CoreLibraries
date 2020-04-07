@@ -17,18 +17,22 @@
 #region Usings
 
 using System;
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is unaware of its triggering sources and has one or more bound targets.
+    /// Represents parameterized a command, which is unaware of its triggering sources and has one or more bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <typeparam name="TParam">The type of the command parameter.</typeparam>
     /// <seealso cref="ICommand" />
+    /// <seealso cref="TargetedCommand{TTarget}"/>
     public sealed class TargetedCommand<TTarget, TParam> : ICommand, IDisposable
     {
         #region Fields
@@ -39,6 +43,11 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public TargetedCommand(Action<ICommandState, TTarget, TParam> callback)
         {
             if (callback == null)
@@ -46,6 +55,11 @@ namespace KGySoft.ComponentModel
             this.callback = callback;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public TargetedCommand(Action<TTarget, TParam> callback)
         {
             if (callback == null)

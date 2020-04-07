@@ -17,19 +17,22 @@
 #region Usings
 
 using System;
-using System.Runtime.CompilerServices;
+#if !(NET35 || NET40)
+using System.Runtime.CompilerServices; 
+#endif
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is aware of its triggering sources and has one or more bound targets.
+    /// Represents a non-parameterized command, which is aware of its triggering sources and has one or more bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
-    /// <seealso cref="ICommand" />
+    /// <seealso cref="ICommand"/>
+    /// <seealso cref="SourceAwareTargetedCommand{TEventArgs,TTarget,TParam}"/>
     public sealed class SourceAwareTargetedCommand<TEventArgs, TTarget> : ICommand<TEventArgs>, IDisposable
         where TEventArgs : EventArgs
     {

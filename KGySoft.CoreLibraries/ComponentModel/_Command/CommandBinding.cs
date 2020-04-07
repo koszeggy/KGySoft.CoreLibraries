@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -60,7 +61,8 @@ namespace KGySoft.ComponentModel
         {
             #region Methods
 
-            // ReSharper disable once UnusedParameter.Local - sender must be specified because this method is invoked by event handler delegates
+            [SuppressMessage("VS", "IDE0060:Remove unused parameter", Justification = "Event handler")]
+            [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Event handler")]
             internal void Execute(object sender, TEventArgs e)
                 => Binding.InvokeCommand(new CommandSource<TEventArgs>
                 {

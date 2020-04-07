@@ -130,7 +130,18 @@ namespace KGySoft.ComponentModel
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources = false);
 
-        ICommandBinding WithParameter(Func<object> getParameterCallback);
+        /// <summary>
+        /// Specifies a callback to obtain the command parameter value for the underlying <see cref="ICommand"/>.
+        /// It is evaluated once whenever a source event is triggered. If this <see cref="ICommandBinding"/> has multiple targets,
+        /// the <see cref="ICommand.Execute">ICommand.Execute</see> method is invoked with the same parameter value for each target.
+        /// </summary>
+        /// <param name="getParameterValue">A function, which returns the parameter value before the underlying <see cref="ICommand"/> is executed.</param>
+        /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
+        /// <remarks>
+        /// <note>Calling the <see cref="WithParameter">WithParameter</see> method multiple times on the same <see cref="ICommandBinding"/> instance
+        /// just overwrites the lastly set callback function. To use more parameter values the function should return a compound type such as an array or tuple.</note>
+        /// </remarks>
+        ICommandBinding WithParameter(Func<object> getParameterValue);
 
         /// <summary>
         /// Removes the specified <paramref name="source"/> from this <see cref="ICommandBinding"/> instance. The used events of the removed source will be released.

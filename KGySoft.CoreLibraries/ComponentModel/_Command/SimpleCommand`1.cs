@@ -17,12 +17,21 @@
 #region Usings
 
 using System;
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
+    /// <summary>
+    /// Represents a parameterized command, which is unaware of its triggering sources and has no bound targets.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
+    /// </summary>
+    /// <typeparam name="TParam">The type of the command parameter.</typeparam>
+    /// <seealso cref="ICommand"/>
+    /// <seealso cref="SimpleCommand"/>
     public sealed class SimpleCommand<TParam> : ICommand, IDisposable
     {
         #region Fields
@@ -33,6 +42,11 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SimpleCommand(Action<ICommandState, TParam> callback)
         {
             if (callback == null)
@@ -40,6 +54,11 @@ namespace KGySoft.ComponentModel
             this.callback = callback;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SimpleCommand(Action<TParam> callback)
         {
             if (callback == null)

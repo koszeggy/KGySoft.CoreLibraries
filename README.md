@@ -408,9 +408,9 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
-The KGy SOFT Core Libraries contains numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in all circumstances) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
+The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in all circumstances) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
-On top of those, KGy SOFT Core Libraries introduces a sort of new types that can be used the same way as a standard `ResourceManager` class:
+On top of those, KGy SOFT Core Libraries introduce a sort of new types that can be used the same way as a standard `ResourceManager` class:
 - [`ResXResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceManager.htm) works the same way as the regular `ResourceManager` but works on .resx files instead of compiled resources and supports adding and saving new resources, .resx metadata and assembly aliases.
 - The [`HybridResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_HybridResourceManager.htm) is able to work both with compiled and .resx resources even at the same time: it can be used to override the compiled resources with .resx content.
 - The [`DynamicResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_DynamicResourceManager.htm) can be used to generate new .resx files automatically for languages without a localization. The KGy SOFT Libraries also use `DynamicResourceManager` instances to maintain their resources. The library assemblies are compiled only with the English resources but any consumer library or application can enable the .resx expansion for any language.
@@ -503,9 +503,9 @@ public class MyModel : ValidatingObjectBase
 
 ### Command Binding
 
-KGy SOFT Core Libraries contains a simple, technology-agnostic implementation of the Command pattern. Commands are actually event handlers with a static logic on possibly dynamic parameters.
+KGy SOFT Core Libraries contain a simple, technology-agnostic implementation of the Command pattern. Commands are actually event handlers with a static logic on possibly dynamic parameters.
 
-A command is represented by the [`ICommand`][ICommand] interface (see some examples also in the link). There are four predefined `ICommand` implementations that can accept delegate handlers: [`SimpleCommand`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand.htm), [`TargetedCommand<TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_1.htm), [`SourceAwareCommand<TEventArgs>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_1.htm) and [`SourceAwareTargetedCommand<TEventArgs, TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_2.htm).
+A command is represented by the [`ICommand`][ICommand] interface (see some examples also in the link). There are four pairs of predefined `ICommand` implementations that can accept delegate handlers: [`SimpleCommand`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand.htm)/[`SimpleCommand<TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand_1.htm), [`TargetedCommand<TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_1.htm)/[`TargetedCommand<TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_2.htm), [`SourceAwareCommand<TEventArgs>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_1.htm)/[`SourceAwareCommand<TEventArgs, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_2.htm) and [`SourceAwareTargetedCommand<TEventArgs, TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_2.htm)/[`SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_3.htm).
 
 - #### [`ICommand`][ICommand] and [`ICommandBinding`][ICommandBinding]:
 
@@ -513,12 +513,14 @@ A command is represented by the [`ICommand`][ICommand] interface (see some examp
 public static class MyCommands
 {
     public static readonly ICommand PasteCommand = new TargetedCommand<TextBoxBase>(tb => tb.Paste());
+
+    public static readonly ICommand ReplaceTextCommand = new TargetedCommand<Control, string>((target, value) => target.Text = value);
 }
 ```
 
 To use a command it has to be bound to one or more sources (and to some targets if the command is targeted). To create a binding the `CreateBinding` extension method can be used:
 
-_Tip:_ Try also [online](https://dotnetfiddle.net/7b0lFq).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/7b0lFq).
 
 ```cs
 var binding = MyCommands.PasteCommand.CreateBinding(menuItemPaste, "Click", textBox);
@@ -653,18 +655,23 @@ pasteCommandState.Enabled = true;
 pasteCommandState.AsDynamic.ToolTip = "Paste text from the Clipboard";
 ```
 
-- #### Command Parameters:
+- #### Parameterized Commands:
 
-In WPF you can pass a parameter to a command, whose value is determined when the command is executed. In KGy SOFT Core Libraries the command targets can be considered as such parameters. If a target cannot be determined when the binding is created, then you can pass a delegate to the `AddTarget` method, which will be invoked just before executing the command.
+In WPF you can pass a parameter to a command, whose value is determined when the command is executed. KGy SOFT Libraries also have parameterized command support:
 
 ```cs
-bindings.Add(MyCommands.PasteCommand)
+bindings.Add(MyCommands.ReplaceTextCommand)
     .AddSource(menuItemPaste, nameof(menuItemPaste.Click))
     .AddSource(buttonPaste, nameof(buttonPaste.Click))
-    .AddTarget(() => GetFocusedTextBox()); // the delegate will be called when the command is executed
+    .AddTarget(textBox)
+    .WithParameter(() => GetNewText()); // the delegate will be called when the command is executed
 ```
 
-Alternatively, you can use the command states to store parameters. However, it is not recommended if you use updaters (see the previous point) and the parameters have nothing to do with the sources.
+- #### Command Targets vs. Parameter:
+
+Actually also the `AddTarget` method can accept a delegate, which is invoked just before executing the command.  The difference between targets and parameters is that whenever triggering the command the parameter value is evaluated only once but the `ICommand.Execute` method is invoked as many times as many targets are added to the binding (but at least once if there are no targets) using the same parameter value.
+
+But if there are no multiple targets, then either a target or a parameter can be used interchangeably. Use whatever is more correct semantically. If the parameter/target can be determined when creating the binding (no callback is needed to determine its value), then it is probably rather a target than a parameter.
 
 - #### Property Binding:
 
@@ -700,7 +707,7 @@ public class MyView : ViewBase<MyViewModel>
         bindings.AddPropertyBinding(
             viewModel, "Text", // source object and property name
             "BackColor", // target property name
-            value => value == null ? Colors.Yellow : SystemColors.WindowColor, // string -> Color
+            value => value == null ? Colors.Yellow : SystemColors.WindowColor, // string -> Color conversion
             textBox); // target object(s)
     }
 }
@@ -816,7 +823,7 @@ new RandomizedPerformanceTest<string> { Iterations = 1_000_000 }
 ```
 
 ## License
-KGy SOFT Core Libraries is under the [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/legalcode) license (see a short summary [here](https://creativecommons.org/licenses/by-nd/4.0)). It allows you to copy and redistribute the material in any medium or format for any purpose, even commercially. The only thing is not allowed is to distribute a modified material as yours.
+KGy SOFT Core Libraries are under the [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/legalcode) license (see a short summary [here](https://creativecommons.org/licenses/by-nd/4.0)). It allows you to copy and redistribute the material in any medium or format for any purpose, even commercially. The only thing is not allowed is to distribute a modified material as yours.
 
 ---
 

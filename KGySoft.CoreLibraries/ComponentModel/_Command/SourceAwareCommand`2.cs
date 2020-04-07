@@ -17,18 +17,22 @@
 #region Usings
 
 using System;
-using System.Runtime.CompilerServices;
+#if !(NET35 || NET40)
+using System.Runtime.CompilerServices; 
+#endif
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is aware of its triggering sources and has no bound targets.
+    /// Represents a parameterized command, which is aware of its triggering sources and has no bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
+    /// <typeparam name="TParam">The type of the command parameter.</typeparam>
     /// <seealso cref="ICommand" />
+    /// <seealso cref="SourceAwareCommand{TEventArgs}"/>
     public sealed class SourceAwareCommand<TEventArgs, TParam> : ICommand<TEventArgs>, IDisposable
         where TEventArgs : EventArgs
     {
@@ -40,6 +44,11 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback)
         {
             if (callback == null)
@@ -47,6 +56,11 @@ namespace KGySoft.ComponentModel
             this.callback = callback;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareCommand(Action<ICommandSource<TEventArgs>, TParam> callback)
         {
             if (callback == null)

@@ -30,14 +30,19 @@ namespace KGySoft.ComponentModel
     /// command so the implementations are best to be accessed via static members. The command states (such as <c>Enabled</c> or any other status) belong to
     /// the created binding represented by the <see cref="ICommandBinding"/> interface and can be accessed by the <see cref="ICommandBinding.State">ICommandBinding.State</see> property,
     /// which returns an <see cref="ICommandState"/> instance.</para>
-    /// <para>To implement a command by using a delegate you can also choose one of the four predefined classes: <see cref="SimpleCommand"/>, <see cref="TargetedCommand{TTarget}"/>,
-    /// <see cref="SourceAwareCommand{TEventArgs}"/> and <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> depending whether the command targets specific objects and
-    /// behaves differently based on the source's state or event arguments.</para>
+    /// <para>To implement a command by using a delegate you can also choose one of the four pairs of predefined classes: <see cref="SimpleCommand"/>/<see cref="SimpleCommand{TParam}"/>,
+    /// <see cref="TargetedCommand{TTarget}"/>/<see cref="TargetedCommand{TTarget,TParam}"/>, <see cref="SourceAwareCommand{TEventArgs}"/>/<see cref="SourceAwareCommand{TEventArgs,TParam}"/>
+    /// and <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/>/<see cref="SourceAwareTargetedCommand{TEventArgs,TTarget,TParam}"/> depending whether the command is parameterized,
+    /// targets specific objects and behaves differently based on the source's state or event arguments.</para>
     /// <para>A binding can be created by the <see cref="O:KGySoft.ComponentModel.Command.CreateBinding">Commands.CreateBinding</see> methods or by the <see cref="CommandBindingsCollection"/> class.
     /// When a binding or a collection of bindings are disposed all of the event subscriptions are released, which makes the cleanup really simple.</para>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/7b0lFq" target="_blank">online</a>.</note>
-    /// The following examples demonstrate how to define different kind of commands:
+    /// <note type="tip"><list type="bullet">
+    /// <item>Try also <a href="https://dotnetfiddle.net/7b0lFq" target="_blank">online</a>.</item>
+    /// <item>For a more detailed step-by-step guide see the <strong>Command Binding</strong> section at
+    /// the <a href="https://kgysoft.net/corelibraries#command-binding" target="_blank">Project Site</a>.</item>
+    /// </list></note>
+    /// <para>The following examples demonstrate how to define different kind of commands:
     /// <code lang="C#"><![CDATA[
     /// public static partial class MyCommands
     /// {
@@ -47,7 +52,7 @@ namespace KGySoft.ComponentModel
     /// 
     ///     // A source aware command, which can access the source object and the triggering event data
     ///     public static ICommand LogMouseCommand =>
-    ///         new SourceAwareCommand<MouseEventArgs>((source, state) => Debug.WriteLine($"Mouse coordinates: {source.EventArgs.X}; {source.EventArgs.Y}"));
+    ///         new SourceAwareCommand<MouseEventArgs>(source => Debug.WriteLine($"Mouse coordinates: {source.EventArgs.X}; {source.EventArgs.Y}"));
     /// 
     ///     // A targeted command (also demonstrates how to change the command state of another command):
     ///     public static ICommand ToggleCommandEnabled =>
@@ -56,12 +61,12 @@ namespace KGySoft.ComponentModel
     ///     // A source aware targeted command:
     ///     public static ICommand ProcessKeysCommand => new SourceAwareTargetedCommand<KeyEventArgs, Control>(OnProcessKeysCommand);
     /// 
-    ///     private static void OnProcessKeysCommand(ICommandSource<KeyEventArgs> source, ICommandState state, Control target)
+    ///     private static void OnProcessKeysCommand(ICommandSource<KeyEventArgs> source, Control target)
     ///     {
     ///         // do something with target by source.EventArgs
     ///     }
-    /// }]]></code>
-    /// And a binding for a command can be created in an application, with any kind of UI, which uses events, or even without any UI: only event sources are needed.
+    /// }]]></code></para>
+    /// <para>And a binding for a command can be created in an application, with any kind of UI, which uses events, or even without any UI: only event sources are needed.
     /// <code lang="C#"><![CDATA[
     /// public class MyView : SomeViewBaseWithEvents // base can be a Window in WPF or a Form in WindowsForms or simply any component with events.
     /// {
@@ -108,13 +113,30 @@ namespace KGySoft.ComponentModel
     /// 
     ///     protected override Dispose(bool disposing)
     ///     {
-    ///         base.Dispose(disposing);
-    /// 
-    ///         // disposing a CommandBindingsCollection will release all of the internal event subscriptions at once
+    ///          // disposing a CommandBindingsCollection will release all of the internal event subscriptions at once
     ///         if (disposing)
     ///             commandBindings.Dispose();
+    /// 
+    ///         base.Dispose(disposing);
     ///     }
-    /// }]]></code>
+    /// }]]></code></para>
+    /// <para>
+    /// Commands can also have parameter, which is evaluated whenever the command is triggered:
+    /// <code lang="C#"><![CDATA[
+    /// // A parameterized and targeted command:
+    /// public static ICommand SetBackColorCommand =>
+    ///     new TargetedCommand<Control, Color>((target, value) => target.BackColor = value);
+    ///
+    /// // [...]
+    /// 
+    /// // The parameter is evaluated only once whenever the command is triggered but SetBackColorCommand
+    /// // will be invoked three times (once for each target) with the same parameter value.
+    /// commandBindings.Add(MyCommands.SetBackColorCommand)
+    ///     .AddSource(myViewModel, nameof(myViewModel.SeverityChanged)) // whatever source event
+    ///     .WithParameter(() => GetSomeColor(myViewModel.Severity)) // specifying a callback to return a parameter value
+    ///     .AddTarget(this)
+    ///     .AddTarget(panelInfo) // now multiple targets will be set by the same parameter
+    ///     .AddTarget(buttonDoSomething);]]></code></para>
     /// </example>
     /// </remarks>
     /// <seealso cref="ICommandBinding"/>
@@ -137,7 +159,7 @@ namespace KGySoft.ComponentModel
         /// If the command binding has multiple targets the <see cref="Execute">Execute</see> method will be invoked multiple times.</param>
         /// <param name="parameter">The parameter of the command. Can be <see langword="null"/>&#160;if the binding has no parameter.
         /// Evaluated once per triggering the command. Even if the binding has multiple targets the <see cref="Execute">Execute</see> method
-        /// is invoked with the same <paramref name="parameter"/> value for each targets.</param>
+        /// is invoked with the same <paramref name="parameter"/> value for each target.</param>
         void Execute(ICommandSource source, ICommandState state, object target, object parameter);
 
         #endregion

@@ -17,17 +17,20 @@
 #region Usings
 
 using System;
+#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
+#endif
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is unaware of its triggering sources and has no bound targets.
+    /// Represents a non-parameterized command, which is unaware of its triggering sources and has no bound targets.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
-    /// <seealso cref="ICommand" />
+    /// <seealso cref="ICommand"/>
+    /// <seealso cref="SimpleCommand{TParam}"/>
     public sealed class SimpleCommand : ICommand, IDisposable
     {
         #region Fields
