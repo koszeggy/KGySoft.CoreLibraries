@@ -47,10 +47,11 @@
 - PersistableObjectBase: Fixing TryReplaceProperty if originalValue is MissingProperty
 + ValidatingObjectBase: The Validate method has been made public. Not needed if changing validated properties
   trigger the PropertyChanged property.
-* Commands:
+* Commands class:
   * ICommandBinding.AddSource now supports also non-public events
   - Command.CreatePropertyBinding (and CommandBindingsCollection.AddPropertyBinding) works also for simple target
     properties on IPersistableObjectBase targets.
++ CommandState class: Implements IReadOnlyDictionary<string, object> in .NET 4.5 and above
 
 ! KGySoft.Diagnostics namespace:
 ================================

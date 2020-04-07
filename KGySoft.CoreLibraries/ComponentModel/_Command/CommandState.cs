@@ -51,8 +51,10 @@ namespace KGySoft.ComponentModel
 #if !NET35
         DynamicObject,
         ITypedList, // so a binding will not treat the type as a list of Key and Value properties (because the CommandState implements IDictionary<string, object>)
+#if !NET40
+        IReadOnlyDictionary<string, object>,
 #endif
-
+#endif
         ICommandState,
         ICustomTypeDescriptor // so the dynamic properties can be reflected as normal ones (eg. in a property grid)
     {
@@ -139,6 +141,10 @@ namespace KGySoft.ComponentModel
         bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
         ICollection<string> IDictionary<string, object>.Keys => stateProperties.Keys.ToArray();
         ICollection<object> IDictionary<string, object>.Values => stateProperties.Values.ToArray();
+#if !(NET35 || NET40)
+        IEnumerable<string> IReadOnlyDictionary<string, object>.Keys => stateProperties.Keys.ToArray();
+        IEnumerable<object> IReadOnlyDictionary<string, object>.Values => stateProperties.Values.ToArray();
+#endif
 
         #endregion
 
