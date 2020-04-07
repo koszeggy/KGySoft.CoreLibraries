@@ -505,13 +505,13 @@ public class MyModel : ValidatingObjectBase
 
 KGy SOFT Core Libraries contain a simple, technology-agnostic implementation of the Command pattern. Commands are actually advanced event handlers. The main benefit of using commands is that they can be bound to multiple sources and targets, and unsubscription from sources is handled automatically when the binding is disposed (no more memory leaks due to delegates and you don't even need to use heavy-weight weak events).
 
-A command itself is a static logic. Every dynamic attribute of a command (including the Enabled and other arbitrary states but also the sources and targets) belong to the binding(s).
-
 A command is represented by the [`ICommand`][ICommand] interface (see some examples also in the link). There are four pairs of predefined `ICommand` implementations that can accept delegate handlers:
 - [`SimpleCommand`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand.htm) and [`SimpleCommand<TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SimpleCommand_1.htm)
 - [`TargetedCommand<TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_1.htm) and [`TargetedCommand<TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_TargetedCommand_2.htm)
 - [`SourceAwareCommand<TEventArgs>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_1.htm) and [`SourceAwareCommand<TEventArgs, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareCommand_2.htm)
 - [`SourceAwareTargetedCommand<TEventArgs, TTarget>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_2.htm) and [`SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SourceAwareTargetedCommand_3.htm).
+
+A command itself is a static logic. Every dynamic attribute of a command (including the Enabled and other arbitrary states but also the sources and targets) belong to the binding(s).
 
 - #### [`ICommand`][ICommand] and [`ICommandBinding`][ICommandBinding]:
 
