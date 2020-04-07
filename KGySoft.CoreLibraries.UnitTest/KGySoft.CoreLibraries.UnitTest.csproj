@@ -1,4 +1,5 @@
-﻿<!--Microsoft.NET.Sdk.WindowsDesktop raises NETSDK1105 warning for non netcoreapp3.0 targets but there is no way using conditions here -->
+﻿<!--Microsoft.NET.Sdk.WindowsDesktop is required for non-string resources.
+    It raises NETSDK1105 warning for non netcoreapp3.0 targets but there is no way using conditions here (and NETSDK1105 cannot be suppressed) -->
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>

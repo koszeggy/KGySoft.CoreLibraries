@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>5.1.0-alpha.2</version>
+    <version>5.1.0</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -13,7 +13,7 @@
     <icon>Icon64.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>High-performance and handy general libraries such as binary and XML serialization, alternative reflection API, fast collections and more.</summary>
-    <description xml:space="preserve">KGy SOFT Core Libraries features high-performance and handy general libraries. Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
+    <description xml:space="preserve">KGy SOFT Core Libraries offer high-performance and handy general libraries. Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
 
 Among others:
 - Useful extensions for simple types, collections, and others

@@ -81,15 +81,16 @@
     </PlugInConfigurations>
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>4.6.0</HelpFileVersion>
+    <HelpFileVersion>5.1.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
     <HeaderText>
     </HeaderText>
     <CopyrightText>Copyright &amp;#169%3b KGy SOFT. All rights reserved.</CopyrightText>
-    <FooterText>
-    </FooterText>
+    <FooterText>Find the complete KGy SOFT Libraries documentation at the &amp;lt%3ba href=&amp;quot%3bhttps://docs.kgysoft.net&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bKGy SOFT Docs&amp;lt%3b/a&amp;gt%3b page.
+&amp;lt%3bbr/&amp;gt%3bProject Site: &amp;lt%3ba href=&amp;quot%3bhttps://kgysoft.net/corelibraries&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bhttps://kgysoft.net/corelibraries/&amp;lt%3b/a&amp;gt%3b
+&amp;lt%3bbr/&amp;gt%3bGitHub Repository: &amp;lt%3ba href=&amp;quot%3bhttps://github.com/koszeggy/KGySoft.CoreLibraries&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bhttps://github.com/koszeggy/KGySoft.CoreLibraries&amp;lt%3b/a&amp;gt%3b</FooterText>
     <TransformComponentArguments>
       <Argument Key="logoFile" Value="logo.png" />
       <Argument Key="logoHeight" Value="" />

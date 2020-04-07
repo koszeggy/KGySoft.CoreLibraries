@@ -30,7 +30,7 @@
     In such case TryGetPropertyValue returns false.
   + New CanGetProperty and CanSetProperty methods: they expose the protected ObservableObjectBase.CanGetProperty and
     CanSetProperty methods via the PersistableObjectBase implementation
-* Adding [Serializable] attribute to ObservableObjectBase and its derived types
++ ObservableObjectBase and its derived types in Core Libraries are now serializable
 ! ObservableObjectBase
   ! The inner storage is cleared on disposing. Most members will throw an ObjectDisposedException afterwards.
     If the Dispose(bool) method is overridden, then after calling the base implementation observed properties will
