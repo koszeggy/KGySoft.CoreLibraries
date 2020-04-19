@@ -125,7 +125,7 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private PropertyChangedEventHandler propertyChanged;
 
         private volatile bool isModified;
-        private bool isDisposed;
+        private volatile bool isDisposed;
 
         #endregion
 
@@ -171,6 +171,25 @@ namespace KGySoft.ComponentModel
         /// Modified state can be set by the <see cref="SetModified">SetModified</see> method.
         /// </summary>
         public bool IsModified => isModified;
+
+        #endregion
+
+        #region Protected Properties
+
+        /// <summary>
+        /// Gets whether this instance has already been disposed.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>Properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see>/<see cref="Set">Set</see> methods
+        /// throw an <see cref="ObjectDisposedException"/> when this property returns <see langword="true"/>.</para>
+        /// <para>If the <see cref="Dispose(bool)"/> method is overridden and you need to dispose properties accessed by
+        /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see>/<see cref="Set">Set</see> methods
+        /// check this property first to prevent the <see cref="ObjectDisposedException"/>.</para>
+        /// <note>The change of this property is not observable. When an <see cref="ObservableObjectBase"/> instance is disposed
+        /// all subscribers of the <see cref="PropertyChanged"/> method are removed.</note>
+        /// </remarks>
+        protected bool IsDisposed => isDisposed;
 
         #endregion
 
@@ -481,7 +500,7 @@ namespace KGySoft.ComponentModel
                 if (Equals(value, oldValue))
                     return false;
 
-                // Dictionary is thread safe for overwriting an existing value new values are never added
+                // Dictionary is thread safe for overwriting an existing value when new values are never added
                 // (except for version++ but we don't care with that)
                 lockFreeProps[propertyName] = value;
             }
@@ -611,7 +630,8 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Releases the resources held by this instance.
         /// <br/>The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event and clears the property storage.
-        /// If the overridden method accesses managed properties, then the base method should be called after those accesses to prevent <see cref="ObjectDisposedException"/>.
+        /// If the overridden method disposes properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see>/<see cref="Set">Set</see> methods,
+        /// then check the <see cref="IsDisposed"/> property first and call the base method as the last step to prevent <see cref="ObjectDisposedException"/>.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)

@@ -11,8 +11,11 @@
 
 - KGySoft.CoreLibraries namespace:
 ==================================
-- EnumerableExtensions class:
-  - Fixing a case in IsNullOrEmpty(IEnumerable) method
+- EnumerableExtensions class: Fixing a case in IsNullOrEmpty(IEnumerable) method.
+
++ KGySoft.ComponentModel namespace:
+===================================
++ ObservableObjectBase class: New protected IsDisposed property.
 
 
 ~~~~~~~~~
