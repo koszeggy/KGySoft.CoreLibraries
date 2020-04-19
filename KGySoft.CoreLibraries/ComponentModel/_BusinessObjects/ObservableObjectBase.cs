@@ -187,7 +187,7 @@ namespace KGySoft.ComponentModel
         /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
         /// check this property first to prevent the <see cref="ObjectDisposedException"/>.</para>
         /// <note>The change of this property is not observable. When an <see cref="ObservableObjectBase"/> instance is disposed
-        /// all subscribers of the <see cref="PropertyChanged"/> method are removed.</note>
+        /// all subscribers of the <see cref="PropertyChanged"/> event are removed.</note>
         /// </remarks>
         protected bool IsDisposed => isDisposed;
 
