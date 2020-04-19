@@ -6,6 +6,20 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.1.1:
+~~~~~~~~~
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- EnumerableExtensions class: Fixing a case in IsNullOrEmpty(IEnumerable) method.
+- Files class: Fixing GetRelativePath for non-fully qualified yet rooted paths such as "C:x"
+
++ KGySoft.ComponentModel namespace:
+===================================
++ ObservableObjectBase class: New protected IsDisposed property.
+
+
+~~~~~~~~~
 ! v5.1.0:
 ~~~~~~~~~
 

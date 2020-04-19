@@ -157,13 +157,15 @@ namespace KGySoft.CoreLibraries
         {
             if (target == null)
                 Throw.ArgumentNullException(Argument.target);
+            if (target.Length == 0)
+                Throw.ArgumentException(Argument.target, Res.ArgumentEmpty);
             if (baseDirectory == null)
                 Throw.ArgumentNullException(Argument.baseDirectory);
+            if (baseDirectory.Length == 0)
+                Throw.ArgumentException(Argument.baseDirectory, Res.ArgumentEmpty);
 
-            if (!Path.IsPathRooted(target))
-                target = Path.GetFullPath(target);
-            if (!Path.IsPathRooted(baseDirectory))
-                baseDirectory = Path.GetFullPath(baseDirectory);
+            target = Path.GetFullPath(target);
+            baseDirectory = Path.GetFullPath(baseDirectory);
 
             string[] basePathParts = baseDirectory.Trim(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);
             string[] targetPathParts = target.Trim(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);

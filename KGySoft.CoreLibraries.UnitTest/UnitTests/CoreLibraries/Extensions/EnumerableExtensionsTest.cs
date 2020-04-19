@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -103,6 +104,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             e = new List<int?>(list);
             Assert.IsTrue(e.TryReplaceRange(1, 2, new[] { -1, -2, -3 }));
             Assert.IsTrue(e.Cast<int?>().SequenceEqual(new int?[] { null, -1, -2, -3, 3, 4, 5 }));
+        }
+
+        [Test]
+        public void IsNullOrEmptyTest()
+        {
+            Assert.IsTrue("".IsNullOrEmpty());
+            Assert.IsFalse("alpha".IsNullOrEmpty());
+            Assert.IsTrue("alpha".Where(Char.IsDigit).IsNullOrEmpty());
+            Assert.IsFalse("alpha".Where(Char.IsLetter).IsNullOrEmpty());
         }
 
         #endregion
