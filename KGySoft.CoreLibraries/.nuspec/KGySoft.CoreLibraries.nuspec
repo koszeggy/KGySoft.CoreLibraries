@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>5.1.0</version>
+    <version>5.1.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -27,7 +27,7 @@ Among others:
 - Performance measurement and other diagnostic tools
 - and more...
 
-Just the most core framework .dlls are referenced. No dependencies to any 3rd party libraries.
+Just the most fundamental framework .dlls are referenced. No dependencies to any 3rd party libraries.
 
 Demo App: https://github.com/koszeggy/KGySoft.ComponentModelDemo
 Online Live Examples: https://dotnetfiddle.net/Authors/84474/koszeggy
