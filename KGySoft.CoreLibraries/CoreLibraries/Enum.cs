@@ -66,113 +66,12 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        private static string[] Names
-        {
-            get
-            {
-                string[] result = names;
-
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                    return names = Enum.GetNames(typeof(TEnum));
-            }
-        }
-
-        private static TEnum[] Values
-        {
-            get
-            {
-                TEnum[] result = values;
-
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                    return values = (TEnum[])Enum.GetValues(typeof(TEnum));
-            }
-        }
-
-        private static Dictionary<TEnum, string> ValueNamePairs
-        {
-            get
-            {
-                Dictionary<TEnum, string> result = valueNamePairs;
-
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                {
-                    result = new Dictionary<TEnum, string>(Names.Length, ComparerHelper<TEnum>.EqualityComparer);
-                    for (int i = 0; i < Values.Length; i++)
-                    {
-                        // avoiding duplicated keys (multiple names for the same value)
-                        if (!result.ContainsKey(values[i]))
-                            result.Add(values[i], names[i]);
-                    }
-
-                    return valueNamePairs = result;
-                }
-            }
-        }
-
-        private static Dictionary<string, TEnum> NameValuePairs
-        {
-            get
-            {
-                Dictionary<string, TEnum> result = nameValuePairs;
-
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                {
-                    result = new Dictionary<string, TEnum>(Names.Length);
-                    for (int i = 0; i < Values.Length; i++)
-                        result.Add(names[i], values[i]);
-                    return nameValuePairs = result;
-                }
-            }
-        }
-
-        private static Dictionary<StringSegment, ulong> NameRawValuePairs
-        {
-            get
-            {
-                Dictionary<StringSegment, ulong> result = nameRawValuePairs;
-                if (result != null)
-                    return result;
-
-                lock (syncRoot)
-                {
-                    result = new Dictionary<StringSegment, ulong>(Names.Length);
-                    for (int i = 0; i < Values.Length; i++)
-                        result.Add(new StringSegment(names[i]), converter.ToUInt64(values[i]));
-
-                    return nameRawValuePairs = result;
-                }
-            }
-        }
-
-        private static Dictionary<StringSegment, ulong> NameRawValuePairsIgnoreCase
-        {
-            get
-            {
-                Dictionary<StringSegment, ulong> result = nameRawValuePairsIgnoreCase;
-                if (result != null)
-                    return result;
-
-                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegment.IgnoreCaseComparer);
-                Dictionary<StringSegment, ulong> refDict = NameRawValuePairs;
-                foreach (KeyValuePair<StringSegment, ulong> pair in refDict)
-                    result[pair.Key] = pair.Value;
-
-                lock (syncRoot)
-                    return nameRawValuePairsIgnoreCase = result;
-            }
-        }
+        private static string[] Names => names ?? InitNames();
+        private static TEnum[] Values => values ?? InitValues();
+        private static Dictionary<TEnum, string> ValueNamePairs => valueNamePairs ?? InitValueNamePairs();
+        private static Dictionary<string, TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
+        private static Dictionary<StringSegment, ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
+        private static Dictionary<StringSegment, ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
 
         private static string Zero =>
             rawValueNamePairs.RawValues.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
@@ -482,13 +381,13 @@ namespace KGySoft.CoreLibraries
                 return true;
 
             var s = new StringSegment(value);
-            s.Trim();
+            s.TrimInternal();
             result = default(TEnum);
             if (s.Length == 0)
                 return false;
 
             // simple numeric value
-            char c = s[0];
+            char c = s.GetCharInternal(0);
             if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
                 result = converter.ToEnum(numericValue);
@@ -502,7 +401,7 @@ namespace KGySoft.CoreLibraries
             ulong acc = 0UL;
             while (s.TryGetNextSegment(separator, out StringSegment token))
             {
-                token.Trim();
+                token.TrimInternal();
                 if (token.Length == 0)
                     return false;
 
@@ -521,7 +420,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // checking if is numeric token
-                c = token[0];
+                c = token.GetCharInternal(0);
                 if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
@@ -749,6 +648,94 @@ namespace KGySoft.CoreLibraries
 
             rawValueNamePairs.RawValues = result.Keys.ToArray();
             rawValueNamePairs.Names = result.Values.ToArray();
+        }
+
+        private static string[] InitNames()
+        {
+            lock (syncRoot)
+                return names = Enum.GetNames(typeof(TEnum));
+        }
+
+        private static TEnum[] InitValues()
+        {
+            lock (syncRoot)
+                return values = (TEnum[])Enum.GetValues(typeof(TEnum));
+        }
+
+        private static Dictionary<string, TEnum> InitNameValuePairs()
+        {
+            lock (syncRoot)
+            {
+                Dictionary<string, TEnum> result = nameValuePairs;
+
+                // lost race
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<string, TEnum>(Names.Length);
+                for (int i = 0; i < Values.Length; i++)
+                    result.Add(names[i], values[i]);
+                return nameValuePairs = result;
+            }
+        }
+
+        private static Dictionary<TEnum, string> InitValueNamePairs()
+        {
+            lock (syncRoot)
+            {
+                Dictionary<TEnum, string> result = valueNamePairs;
+
+                // lost race
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<TEnum, string>(Names.Length, ComparerHelper<TEnum>.EqualityComparer);
+                for (int i = 0; i < Values.Length; i++)
+                {
+                    // avoiding duplicated keys (multiple names for the same value)
+                    if (!result.ContainsKey(values[i]))
+                        result.Add(values[i], names[i]);
+                }
+
+                return valueNamePairs = result;
+            }
+        }
+
+        private static Dictionary<StringSegment, ulong> InitNameRawValuePairs()
+        {
+            lock (syncRoot)
+            {
+                Dictionary<StringSegment, ulong> result = nameRawValuePairs;
+
+                // lost race
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<StringSegment, ulong>(Names.Length);
+                for (int i = 0; i < Values.Length; i++)
+                    result.Add(new StringSegment(names[i]), converter.ToUInt64(values[i]));
+
+                return nameRawValuePairs = result;
+            }
+        }
+
+        private static Dictionary<StringSegment, ulong> InitNameRawValuePairsIgnoreCase()
+        {
+            lock (syncRoot)
+            {
+                Dictionary<StringSegment, ulong> result = nameRawValuePairsIgnoreCase;
+
+                // lost race
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegment.IgnoreCaseComparer);
+                Dictionary<StringSegment, ulong> refDict = NameRawValuePairs;
+                foreach (KeyValuePair<StringSegment, ulong> pair in refDict)
+                    result[pair.Key] = pair.Value;
+
+                return nameRawValuePairsIgnoreCase = result;
+            }
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
