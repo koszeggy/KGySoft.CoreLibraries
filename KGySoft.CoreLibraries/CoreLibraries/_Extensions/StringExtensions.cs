@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -504,6 +505,48 @@ namespace KGySoft.CoreLibraries
 
             return false;
         }
+
+        #endregion
+
+        #region StringSegment
+
+        /// <summary>
+        /// Gets a <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.
+        /// No new string allocation occurs when using this method.
+        /// </summary>
+        /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
+        /// <param name="offset">The offset that points to the first character of the returned segment.</param>
+        /// <param name="length">The desired length of the returned segment.</param>
+        /// <returns>A <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static StringSegment GetSegment(this string s, int offset, int length)
+        {
+            if (s == null)
+                Throw.ArgumentNullException(Argument.s);
+            if ((uint)offset > (uint)s.Length)
+                Throw.ArgumentOutOfRangeException(Argument.offset);
+            if (length < 0)
+                Throw.ArgumentOutOfRangeException(Argument.length);
+            if (offset + length > s.Length)
+                Throw.ArgumentException(Res.InvalidOffsLen);
+            return length == 0 ? StringSegment.Empty : new StringSegment(s, offset, length);
+        }
+
+        /// <summary>
+        /// Gets a <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.
+        /// No new string allocation occurs when using this method.
+        /// </summary>
+        /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
+        /// <param name="offset">The offset that points to the first character of the returned segment.</param>
+        /// <returns>A <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.</returns>
+        public static StringSegment GetSegment(this string s, int offset) => GetSegment(s, offset, (s?.Length).GetValueOrDefault() - offset);
+
+        /// <summary>
+        /// Gets the specified string as a <see cref="StringSegment"/> instance.
+        /// </summary>
+        /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
+        /// <returns>A <see cref="StringSegment"/> instance for the specified string.</returns>
+        public static StringSegment AsSegment(this string s) => s == null ? StringSegment.Null : new StringSegment(s);
 
         #endregion
 

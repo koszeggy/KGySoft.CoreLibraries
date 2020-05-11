@@ -729,7 +729,7 @@ namespace KGySoft.CoreLibraries
                 if (result != null)
                     return result;
 
-                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegment.IgnoreCaseComparer);
+                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegmentComparer.OrdinalIgnoreCase);
                 Dictionary<StringSegment, ulong> refDict = NameRawValuePairs;
                 foreach (KeyValuePair<StringSegment, ulong> pair in refDict)
                     result[pair.Key] = pair.Value;

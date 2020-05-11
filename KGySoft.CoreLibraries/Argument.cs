@@ -137,7 +137,9 @@ namespace KGySoft
         upperBound,
         value,
         way,
-        writer
+        writer,
+        x,
+        y
         // ReSharper restore InconsistentNaming
     }
 }
