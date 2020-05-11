@@ -19,7 +19,7 @@
 using System;
 using System.Globalization;
 using System.Resources;
-#if NET40 || NET45 || NET472
+#if NETFRAMEWORK
 using System.Security; 
 #endif
 using System.Threading;
@@ -288,9 +288,7 @@ namespace KGySoft
         {
             get => captureSystemLocaleChange;
 
-#if !NET35
             [SecuritySafeCritical]
-#endif
             set
             {
                 if (captureSystemLocaleChange == value)
@@ -444,9 +442,7 @@ namespace KGySoft
         #region Event handlers
 
 #if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
-#if !NET35
         [SecuritySafeCritical]
-#endif
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             if (e.Category != UserPreferenceCategory.Locale)

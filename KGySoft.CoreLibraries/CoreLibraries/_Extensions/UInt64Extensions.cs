@@ -21,9 +21,7 @@ using System;
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
-#if !NET35
 using System.Security; 
-#endif
 
 #endregion
 
@@ -59,9 +57,7 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         internal static unsafe string QuickToString(this ulong value, bool isNegative)
         {
             if (value == 0)

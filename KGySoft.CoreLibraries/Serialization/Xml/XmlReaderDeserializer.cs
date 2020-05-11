@@ -451,9 +451,7 @@ namespace KGySoft.Serialization.Xml
             return false;
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         private static void DeserializeStructBinary(ref TryDeserializeObjectContext context)
         {
             string attrCrc = context.Reader[XmlSerializer.AttributeCrc];

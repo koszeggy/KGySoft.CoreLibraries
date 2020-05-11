@@ -3,8 +3,8 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
-    <!--<TargetFrameworks>net472</TargetFrameworks>-->
+    <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <UseWindowsForms>true</UseWindowsForms>

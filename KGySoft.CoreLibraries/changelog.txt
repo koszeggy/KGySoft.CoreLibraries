@@ -11,6 +11,8 @@
 
 + KGySoft.CoreLibraries namespace:
 ==================================
++ The StringSegment type has been made public. It offers a sort of string operations without allocating new strings
+  when using its Substring, Trim and Split methods.
 + ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 

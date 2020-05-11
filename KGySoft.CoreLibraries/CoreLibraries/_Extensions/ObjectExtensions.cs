@@ -27,9 +27,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
-#if !NET35
 using System.Security; 
-#endif
 
 using KGySoft.Serialization.Binary;
 
@@ -231,9 +229,7 @@ namespace KGySoft.CoreLibraries
         /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             ISurrogateSelector surrogate = null;
