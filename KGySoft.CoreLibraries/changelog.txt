@@ -14,6 +14,10 @@
 + ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 
+* KGySoft.ComponentModel namespace:
+===================================
+* ObservableObjectBase class: Performance improvement: AffectsModifiedState is not called in a modified state.
+
 
 ~~~~~~~~~
 * v5.1.1:
