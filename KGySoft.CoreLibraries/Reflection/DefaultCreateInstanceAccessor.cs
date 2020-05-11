@@ -18,9 +18,7 @@
 
 using System;
 using System.Linq.Expressions;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
-#endif
 
 #endregion
 
@@ -54,9 +52,7 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override object CreateInstance(params object[] parameters) => ((DefaultCtor)Initializer)();
 
         #endregion

@@ -19,9 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
-#endif
 
 #endregion
 
@@ -114,9 +112,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private protected Delegate Initializer
         {
-#if !(NET35 || NET40)
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get => initializer ??= CreateInitializer();
         }
 
@@ -147,9 +143,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">A <see cref="Type"/> for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance of <paramref name="type"/>.</returns>
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static CreateInstanceAccessor GetAccessor(Type type)
         {
             if (type == null)
@@ -162,9 +156,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="ctor">The constructor for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance by the constructor.</returns>
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static CreateInstanceAccessor GetAccessor(ConstructorInfo ctor)
         {
             if (ctor == null)

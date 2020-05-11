@@ -17,9 +17,7 @@
 #region Usings
 
 using System;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 
 #endregion
 
@@ -83,9 +81,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object parameter)
         {
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget> copy = callback;
@@ -94,9 +90,7 @@ namespace KGySoft.ComponentModel
             copy.Invoke(source, state, (TTarget)target);
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
         {
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget> copy = callback;

@@ -17,9 +17,7 @@
 #region Usings
 
 using System.Diagnostics;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
-#endif
 using System.Security; 
 
 #endregion
@@ -95,9 +93,7 @@ namespace KGySoft.CoreLibraries
 
         #region Internal Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(char c)
         {
             Debug.Assert(Length < Capacity, "Not enough capacity");
@@ -105,9 +101,7 @@ namespace KGySoft.CoreLibraries
             usedLen += 1;
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(string s)
         {
             Debug.Assert(Length + s.Length <= Capacity, "Not enough capacity");
@@ -173,9 +167,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void CopyTo(int index, string s)
         {
             int len = s.Length;

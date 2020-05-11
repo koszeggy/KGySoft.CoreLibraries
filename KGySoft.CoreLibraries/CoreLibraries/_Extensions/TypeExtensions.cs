@@ -24,9 +24,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 #if !NETSTANDARD2_0
 using System.Reflection.Emit; 
 #else
@@ -647,9 +645,7 @@ namespace KGySoft.CoreLibraries
 
         internal static bool IsRuntimeType(this Type type) => type?.GetType() == Reflector.RuntimeType;
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsConstructedGenericType(this Type type) =>
 #if NET35 || NET40
             type.IsGenericType && !type.IsGenericTypeDefinition;

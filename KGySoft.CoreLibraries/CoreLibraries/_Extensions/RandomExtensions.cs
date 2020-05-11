@@ -21,9 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-#if !NET35 && !NET40
 using System.Runtime.CompilerServices;
-#endif
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
@@ -1671,9 +1669,7 @@ namespace KGySoft.CoreLibraries
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static double NextDoubleLinear(Random random, double minValue, double maxValue)
         {
             double sample = random.NextDouble();
@@ -1683,9 +1679,7 @@ namespace KGySoft.CoreLibraries
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
         {
             decimal sample = random.NextDecimal();

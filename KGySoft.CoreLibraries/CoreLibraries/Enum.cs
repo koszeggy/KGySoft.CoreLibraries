@@ -21,9 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 using System.Security; 
 
 #endregion
@@ -753,14 +751,10 @@ namespace KGySoft.CoreLibraries
             rawValueNamePairs.Names = result.Values.ToArray();
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static int FindIndex(ulong value) => Array.BinarySearch(rawValueNamePairs.RawValues, 0, rawValueNamePairs.RawValues.Length, value);
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static string TryGetNameByValue(ulong value)
         {
             EnsureRawValueNamePairs();
@@ -768,9 +762,7 @@ namespace KGySoft.CoreLibraries
             return index >= 0 ? rawValueNamePairs.Names[index] : null;
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static bool AllFlagsDefinedCore(ulong flags)
         {
             if (flags == 0UL)
@@ -782,9 +774,7 @@ namespace KGySoft.CoreLibraries
             return (FlagsMask & flags) == flags;
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (converter.ToUInt64(value) & flags) == flags;
 
         [SecuritySafeCritical]

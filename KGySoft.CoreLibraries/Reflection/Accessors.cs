@@ -27,9 +27,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 using System.Runtime.Serialization;
 using System.Security; 
 #if !NETCOREAPP2_0
@@ -785,9 +783,7 @@ namespace KGySoft.Reflection
         }
 
         [SecuritySafeCritical]
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe object Get(this FieldInfo field, object instance)
         {
             if (field.FieldType.IsPointer)
@@ -797,9 +793,7 @@ namespace KGySoft.Reflection
         }
 
         [SecuritySafeCritical]
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe void Set(this FieldInfo field, object instance, object value)
         {
             Debug.Assert(!field.IsLiteral);
@@ -822,9 +816,7 @@ namespace KGySoft.Reflection
         }
 
         [SecuritySafeCritical]
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe object Get(this PropertyInfo property, object instance)
         {
             Debug.Assert(property.CanRead);
@@ -840,9 +832,7 @@ namespace KGySoft.Reflection
         }
 
         [SecuritySafeCritical]
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
         {
             Debug.Assert(property.CanWrite);
@@ -864,9 +854,7 @@ namespace KGySoft.Reflection
             PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParams);
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object Invoke(this MethodInfo method, object instance, params object[] parameters)
         {
 #if NETSTANDARD2_0

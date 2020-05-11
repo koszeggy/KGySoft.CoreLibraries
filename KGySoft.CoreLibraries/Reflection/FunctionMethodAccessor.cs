@@ -21,9 +21,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices;
-#endif
 using System.Security;
 
 #endregion
@@ -57,9 +55,7 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override object Invoke(object instance, params object[] parameters)
         {
             try

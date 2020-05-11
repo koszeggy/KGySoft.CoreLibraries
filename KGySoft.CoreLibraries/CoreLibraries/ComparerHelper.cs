@@ -20,9 +20,7 @@
 using System;
 # endif
 using System.Collections.Generic;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 
 #if NET40 || NET45
 using KGySoft.Reflection;
@@ -45,9 +43,7 @@ namespace KGySoft.CoreLibraries
 
         internal static IEqualityComparer<T> EqualityComparer
         {
-#if !(NET35 || NET40)
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
                 return equalityComparer ??=
@@ -61,9 +57,7 @@ namespace KGySoft.CoreLibraries
 
         internal static IComparer<T> Comparer
         {
-#if !(NET35 || NET40)
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
                 return comparer ??=

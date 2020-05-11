@@ -730,9 +730,7 @@ namespace KGySoft.Resources
             }
         }
 #else
-#if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static bool TryGetResource(Dictionary<string, ResourceSet> localResourceSets, string cultureName, out ResourceSet rs)
         {
             return localResourceSets.TryGetValue(cultureName, out rs);
