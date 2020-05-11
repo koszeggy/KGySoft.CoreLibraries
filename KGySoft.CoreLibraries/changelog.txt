@@ -12,7 +12,7 @@
 + KGySoft.CoreLibraries namespace:
 ==================================
 + ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
-
+- WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 
 
 ~~~~~~~~~
