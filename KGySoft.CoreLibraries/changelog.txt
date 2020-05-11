@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.2.0:
+~~~~~~~~~
+
++ KGySoft.CoreLibraries namespace:
+==================================
++ ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
+
+
+
+~~~~~~~~~
 * v5.1.1:
 ~~~~~~~~~
 
