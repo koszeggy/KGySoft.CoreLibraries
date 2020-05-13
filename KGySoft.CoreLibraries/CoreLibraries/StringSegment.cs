@@ -17,6 +17,8 @@
 #region Usings
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -48,8 +50,106 @@ namespace KGySoft.CoreLibraries
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
         Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "(false)}")]
-    public struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable
+    public struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable, IEnumerable<char>
     {
+        #region Nested Types
+
+        /// <summary>
+        /// Enumerates the characters of a <see cref="StringSegment"/>.
+        /// </summary>
+        [Serializable]
+        public struct Enumerator : IEnumerator<char>
+        {
+            #region Fields
+
+            private StringSegment segment;
+            private int index;
+            private char current;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
+            public char Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (index == 0 || index > segment.Length)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(ref StringSegment segment)
+            {
+                this.segment = segment;
+                index = 0;
+                current = default;
+            }
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Releases the enumerator
+            /// </summary>
+            public void Dispose()
+            {
+            }
+
+            /// <summary>
+            /// Advances the enumerator to the next element of the collection.
+            /// </summary>
+            /// <returns>
+            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// </returns>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public bool MoveNext()
+            {
+                if (index < segment.Length)
+                {
+                    current = segment.GetCharInternal(index);
+                    index += 1;
+                    return true;
+                }
+
+                current = default;
+                return false;
+            }
+
+            /// <summary>
+            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public void Reset()
+            {
+                index = 0;
+                current = default;
+            }
+
+            #endregion
+        } 
+        
+        #endregion
+
         #region Fields
 
         #region Static Fields
@@ -427,24 +527,6 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Compares this instance with a specified <see cref="object">object</see> and indicates whether this instance precedes,
-        /// follows, or appears in the same position in the sort order as the specified object.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public int CompareTo(object obj)
-        {
-            if (obj is StringSegment ss)
-                return CompareTo(ss);
-            if (obj is string s)
-                return CompareTo(s);
-            if (obj == null)
-                return CompareTo(Null);
-            Throw.ArgumentException(Argument.obj, Res.NotAnInstanceOfType(typeof(StringSegment)));
-            return default;
-        }
-
-        /// <summary>
         /// Removes all leading and trailing white-space characters from the current <see cref="StringSegment"/>.
         /// </summary>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all white-space
@@ -501,6 +583,15 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public StringSegment Substring(int offset) => Substring(this.offset + offset, length - offset);
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the <see cref="StringSegment"/> characters.
+        /// </summary>
+        /// <returns>An <see cref="Enumerator"/> instance that can be used to iterate though the characters of the <see cref="StringSegment"/>.</returns>
+        /// <remarks>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        public Enumerator GetEnumerator() => new Enumerator(ref this);
+        
         #endregion
 
         #region Internal Methods
@@ -708,6 +799,23 @@ namespace KGySoft.CoreLibraries
             SliceInternal(pos + separator.Length);
             return true;
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        int IComparable.CompareTo(object obj)
+            => obj switch
+            {
+                StringSegment ss => CompareTo(ss),
+                string s => CompareTo(s),
+                null => CompareTo(Null),
+                _ => Throw.ArgumentException<int>(Argument.obj, Res.NotAnInstanceOfType(typeof(StringSegment)))
+            };
+
+        IEnumerator<char> IEnumerable<char>.GetEnumerator() => GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         #endregion
 
