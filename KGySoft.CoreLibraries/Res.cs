@@ -419,9 +419,8 @@ namespace KGySoft
 
         #region StringSegment
 
-        /// <summary>The segment was created from a null string.</summary>
+        /// <summary>The string segment represents a null string.</summary>
         internal static string StringSegmentNull => Get("StringSegment_Null");
-
 
         #endregion
 

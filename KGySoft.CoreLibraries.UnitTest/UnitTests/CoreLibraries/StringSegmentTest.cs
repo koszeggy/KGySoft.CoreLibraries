@@ -100,21 +100,83 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
 
-        [Test]
-        public void IndexOf()
+        [TestCase(0, " ", " ")]
+        [TestCase(1, " ,, ", ",")]
+        [TestCase(2, " ,, ", ", ")]
+        [TestCase(1, " ,., ", ",")]
+        [TestCase(3, " ,., ", ", ")]
+        [TestCase(-1, " ,.", ", ")]
+        public void IndexOf(int expectedResult, string s, string toSearch)
         {
-            Assert.AreEqual(0, new StringSegment(" ").IndexOf(" "));
-            Assert.AreEqual(1, new StringSegment(" ,, ").IndexOf(","));
-            Assert.AreEqual(2, new StringSegment(" ,, ").IndexOf(", "));
-            Assert.AreEqual(1, new StringSegment(" ,., ").IndexOf(","));
-            Assert.AreEqual(3, new StringSegment(" ,., ").IndexOf(", "));
+            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch, 0, s.Length));
+            Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch));
 
-            Assert.AreEqual(0, new StringSegment("  ", 1).IndexOf(" "));
-            Assert.AreEqual(1, new StringSegment("  ,, ", 1).IndexOf(","));
-            Assert.AreEqual(2, new StringSegment("  ,, ", 1).IndexOf(", "));
-            Assert.AreEqual(1, new StringSegment("  ,., ", 1).IndexOf(","));
-            Assert.AreEqual(3, new StringSegment("  ,., ", 1).IndexOf(", "));
+            foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+            {
+                Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, new StringSegment(" " + s + " ").IndexOf(toSearch, 1, s.Length, stringComparison));
+            }
         }
+
+        [TestCase(0, " ", " ")]
+        [TestCase(2, " ,, ", ",")]
+        [TestCase(2, " ,, ", ", ")]
+        [TestCase(3, " ,., ", ",")]
+        [TestCase(3, " ,., ", ", ")]
+        [TestCase(-1, " ,.", ", ")]
+        public void LastIndexOf(int expectedResult, string s, string toSearch)
+        {
+            Assert.AreEqual(expectedResult, new StringSegment(s).LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, new StringSegment(s).LastIndexOf(toSearch, 0, s.Length));
+            Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).LastIndexOf(toSearch));
+
+            foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+            {
+                Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).LastIndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, new StringSegment(" " + s + " ").LastIndexOf(toSearch, 1, s.Length, stringComparison));
+            }
+        }
+
+        private const string a = "+123456789+123456789+123456789+123456789+123456789+123456789+123456789";
+        private const string b = "6789+123";
+
+        [Test]
+        public void PerfTest() => new KGySoft.Diagnostics.PerformanceTest<int> { Iterations = 10_000_000 }
+            //.AddCase(() => String.Compare(a, 1, b, 1, 9, StringComparison.Ordinal) == 0, "Compare")
+            //.AddCase(() => a.AsSpan(1, 9).SequenceEqual(b.AsSpan(1, 9)), "AsSpan")
+            .AddCase(() => A(a, b, 0, 30), "A")
+            .AddCase(() => B(a, b, 0, 30), "B")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        private static int A(StringSegment ss, StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            return ss.IndexOfInternal(s, startIndex, count);
+        }
+
+        private static int B(StringSegment ss, StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            int result = ss.AsSpan.Slice(startIndex, count).IndexOf(s.AsSpan, comparison);
+            return result >= 0 ? result + startIndex : -1;
+        }
+
+        //private static int GetHashCode(string str)
+        //{
+        //    var length = str.Length;
+        //    if (length == 0)
+        //        return 0;
+
+        //    //return String.GetHashCode(Span);
+
+        //    // This is a much cheaper hash code than the one used by string
+        //    // Of course, we utilize that StringString is internal and used in dictionaries for enums with typically short names.
+        //    var result = 13;
+        //    for (int i = 0; i < length; i++)
+        //        result = result * 397 + str[i];
+
+        //    return result;
+        //}
 
         #endregion
     }

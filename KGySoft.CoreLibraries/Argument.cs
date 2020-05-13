@@ -124,6 +124,7 @@ namespace KGySoft
         source,
         sourcePropertyName,
         sourceType,
+        startIndex,
         strategy,
         stream,
         stringValue,

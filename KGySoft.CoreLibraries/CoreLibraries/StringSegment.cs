@@ -37,12 +37,11 @@ namespace KGySoft.CoreLibraries
     /// <remarks>
     /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="StringExtensions.AsSegment">AsSegment</see>
     /// and <see cref="O:KGySoft.CoreLibraries.StringExtensions.GetSegment"/> extension methods.</para>
-    /// <note type="note">For public usage this type behaves as an immutable type. However, <see cref="StringSegment"/> is not declared as <see langword="readonly"/>, and for the best performance you should
-    /// not declare a <see langword="readonly"/>&#160;<see cref="StringSegment"/> field. For example, when the <see cref="ToString()">ToString</see> method is called for the first time, the internally stored string is replaced to store the actual represented segment only.
-    /// If you declare a <see cref="StringSegment"/> as <see langword="readonly"/>, then the CLR generates a defensive copy so a new <see cref="string">string</see> might be allocated on each <see cref="ToString()">ToString</see> call.</note>
-    ///
+    /// <para>To convert a <see cref="StringSegment"/> instance to <see cref="string">string</see> use an explicit cast or the <see cref="ToString()">ToString</see> method.</para>
+    /// 
     /// TODO: .NET 3.5/4.0/4.5 .NET Standard 2.0/2.1 .NET Core 2.0: Non-ordinal GetHashCode may allocate a new string
-    /// TODO: As opposed to string, CompareTo default is by ordinal
+    /// TODO: All but .NET Core 3: Non-ordinal IndexOf may allocate a new string
+    /// TODO: CompareTo, IndexOf: As opposed to string default is by ordinal in these methods
     /// TODO: assign, compare string
     /// TODO: assign works even with null, IsNull is true, Length is 0
     /// </remarks>
@@ -146,8 +145,8 @@ namespace KGySoft.CoreLibraries
             }
 
             #endregion
-        } 
-        
+        }
+
         #endregion
 
         #region Fields
@@ -192,9 +191,9 @@ namespace KGySoft.CoreLibraries
         public bool IsNullOrEmpty => length == 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        public ReadOnlySpan<char> Span => str.AsSpan(offset, length);
+        public ReadOnlySpan<char> AsSpan => str.AsSpan(offset, length);
 
-        public ReadOnlyMemory<char> Memory => str.AsMemory(offset, length); 
+        public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length); 
 #endif
 
         #endregion
@@ -211,12 +210,10 @@ namespace KGySoft.CoreLibraries
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                StringSegment a = null;
-                bool e = a == null;
                 if (str == null)
                     Throw.InvalidOperationException(Res.StringSegmentNull);
-                if ((uint)index >= (uint)length)
-                    Throw.ArgumentOutOfRangeException(Argument.index);
+
+                // we let the ArgumentOutOfRangeException come from string, even if not localized
                 return GetCharInternal(index);
             }
         }
@@ -340,12 +337,7 @@ namespace KGySoft.CoreLibraries
             if (a.str.Length == a.length && b.str.Length == b.length)
                 return String.Equals(a.str, b.str, StringComparison.OrdinalIgnoreCase);
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
-            // TODO: fix for length
-            return String.Compare(a.str, a.offset, b.str, b.offset, a.length, StringComparison.OrdinalIgnoreCase) == 0;
-            // TODO
-            return a.str.AsSpan(a.offset, a.length).Equals(b.str.AsSpan(b.offset, b.length), StringComparison.OrdinalIgnoreCase);
-#else
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
             for (int i = 0; i < a.length; i++)
             {
                 if (Char.ToUpperInvariant(a.GetCharInternal(i)) != Char.ToUpperInvariant(b.GetCharInternal(i)))
@@ -353,6 +345,9 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
+#else
+            // for ordinal ignore case Span.Equals is faster than String.Compare
+            return a.str.AsSpan(a.offset, a.length).Equals(b.str.AsSpan(b.offset, b.length), StringComparison.OrdinalIgnoreCase);
 #endif
         }
 
@@ -390,14 +385,7 @@ namespace KGySoft.CoreLibraries
             if (length != other.length || str == null || other.str == null)
                 return false;
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
-            // TODO performance String.Equals vs String.Compare
-            // It would be better by Vector but that needs a char->ushort conversion
-            if (length >= 16)
-                return String.Compare(str, offset, other.str, other.offset, length, StringComparison.Ordinal) == 0;
-            //return str.AsSpan(offset, length).SequenceEqual(other.str.AsSpan(other.offset, other.length));
-#endif
-
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
             for (int i = 0; i < length; i++)
             {
                 if (GetCharInternal(i) != other.GetCharInternal(i))
@@ -405,6 +393,10 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
+#else
+            // for ordinal String.Compare is faster than Span.[Sequence]Equals
+            return String.Compare(str, offset, other.str, other.offset, length, StringComparison.Ordinal) == 0;
+#endif
         }
 
         /// <summary>
@@ -428,18 +420,16 @@ namespace KGySoft.CoreLibraries
             if (str == null)
                 return 0;
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
-            if (length >= 16)
-                return String.GetHashCode(Span);
-#endif
-
-            // For shorter strings this is a much cheaper hash code than the one used by string.
-            // This does not use a randomized hash but is used only for short strings anyway.
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            // This does not use a randomized hash but at least this way we don't allocate a new string
             var result = 13;
             for (int i = 0; i < length; i++)
                 result = result * 397 + GetCharInternal(i);
 
             return result;
+#else
+            return String.GetHashCode(AsSpan);
+#endif
         }
 
         public int GetHashCode(StringComparison comparison)
@@ -451,25 +441,12 @@ namespace KGySoft.CoreLibraries
                 case StringComparison.OrdinalIgnoreCase:
                     return GetHashCodeOrdinalIgnoreCase();
 
-#if NET35 || NET40 || NET45
                 case StringComparison.CurrentCulture:
-                    return StringSegmentComparer.CurrentCulture.GetHashCode(this);
                 case StringComparison.CurrentCultureIgnoreCase:
-                    return StringSegmentComparer.CurrentCultureIgnoreCase.GetHashCode(this);
                 case StringComparison.InvariantCulture:
-                    return StringSegmentComparer.InvariantCulture.GetHashCode(this);
                 case StringComparison.InvariantCultureIgnoreCase:
-                    return StringSegmentComparer.InvariantCultureIgnoreCase.GetHashCode(this);
-#else
-                case StringComparison.CurrentCulture:
-                    return GetHashCode(CultureInfo.CurrentCulture.CompareInfo, CompareOptions.None);
-                case StringComparison.CurrentCultureIgnoreCase:
-                    return GetHashCode(CultureInfo.CurrentCulture.CompareInfo, CompareOptions.IgnoreCase);
-                case StringComparison.InvariantCulture:
-                    return GetHashCode(CultureInfo.InvariantCulture.CompareInfo, CompareOptions.None);
-                case StringComparison.InvariantCultureIgnoreCase:
-                    return GetHashCode(CultureInfo.InvariantCulture.CompareInfo, CompareOptions.IgnoreCase);
-#endif
+                    return StringSegmentComparer.FromComparison(comparison).GetHashCode(this);
+
                 default:
                     Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
                     return default;
@@ -482,7 +459,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="other">The <see cref="StringSegment"/> to compare with this instance.</param>
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="other"/> parameter.</returns>
         /// <remarks><note>Unlike the <see cref="string.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
-        /// Use the </remarks>
+        /// Use the <see cref="Compare(StringSegment,StringSegment,StringComparison)"/> method to perform a custom comparison.</remarks>
         public int CompareTo(StringSegment other)
         {
             if (str == null || other.str == null)
@@ -540,6 +517,8 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the start of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimStart()
         {
+            if (str == null)
+                return this;
             int start = 0;
             while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
                 start += 1;
@@ -554,6 +533,8 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the end of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimEnd()
         {
+            if (str == null)
+                return this;
             int end = length - 1;
             while (end >= 0 && Char.IsWhiteSpace(GetCharInternal(end)))
                 end -= 1;
@@ -570,6 +551,8 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public StringSegment Substring(int offset, int length)
         {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (offset < 0)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
             return str.GetSegment(this.offset + offset, length);
@@ -583,6 +566,152 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public StringSegment Substring(int offset) => Substring(this.offset + offset, length - offset);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(string s)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (s == null)
+                Throw.ArgumentNullException(Argument.s);
+
+            return IndexOfInternal(s);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(StringSegment s)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (s.str == null)
+                Throw.ArgumentNullException(Argument.s);
+            return IndexOfInternal(s, 0, length);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(StringSegment s, StringComparison comparison)
+            => comparison == StringComparison.Ordinal ? IndexOf(s) : IndexOf(s, 0, length, comparison);
+
+        // note: new string allocation may occur in <.NET Core 3
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(StringSegment s, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => IndexOf(s, startIndex, length - startIndex, comparison);
+
+        // note: new string allocation may occur in <.NET Core 3
+        public int IndexOf(StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (s.str == null)
+                Throw.ArgumentNullException(Argument.s);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+
+            if (comparison == StringComparison.Ordinal)
+                return IndexOfInternal(s, startIndex, count);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            int result = str.IndexOf(s.ToString(false), offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
+#else
+            int result = AsSpan.Slice(startIndex, count).IndexOf(s.AsSpan, comparison);
+            return result >= 0 ? result + startIndex : -1;
+#endif
+        }
+
+        public int IndexOf(char c)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            int result = str.IndexOf(c, offset, length);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public int IndexOf(char c, int startIndex)
+            => IndexOf(c, startIndex, length - startIndex);
+
+        public int IndexOf(char c, int startIndex, int count)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            int result = str.IndexOf(c, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(StringSegment s, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(s, 0, length, comparison);
+
+        // note: new string allocation may occur in <.NET Core 3
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(StringSegment s, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(s, startIndex, length - startIndex, comparison);
+
+        // note: new string allocation may occur in <.NET Core 3
+        public int LastIndexOf(StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (s.str == null)
+                Throw.ArgumentNullException(Argument.s);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            int result = str.LastIndexOf(s.ToString(false), offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
+#else
+            int result = AsSpan.Slice(startIndex, count).LastIndexOf(s.AsSpan, comparison);
+            return result >= 0 ? result + startIndex : -1;
+#endif
+        }
+
+        public int LastIndexOf(char c)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            int result = str.LastIndexOf(c, offset, length);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public int LastIndexOf(char c, int startIndex)
+            => LastIndexOf(c, startIndex, length - startIndex);
+
+        public int LastIndexOf(char c, int startIndex, int count)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            int result = str.LastIndexOf(c, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public int IndexOfAny(params char[] anyOf) => IndexOfAny(anyOf, 0, length);
+
+        public int IndexOfAny(char[] anyOf, int startIndex) => IndexOfAny(anyOf, startIndex, length - startIndex);
+
+        public int IndexOfAny(char[] anyOf, int startIndex, int count)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            int result = str.IndexOfAny(anyOf, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="StringSegment"/> characters.
         /// </summary>
@@ -591,7 +720,7 @@ namespace KGySoft.CoreLibraries
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public Enumerator GetEnumerator() => new Enumerator(ref this);
-        
+
         #endregion
 
         #region Internal Methods
@@ -599,26 +728,13 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal char GetCharInternal(int index) => str[offset + index];
 
-#if !(NET35 || NET40 || NET45)
-        internal int GetHashCode(CompareInfo compareInfo, CompareOptions options)
-        {
-            if (str == null)
-                return 0;
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
-            return compareInfo.GetHashCode(Span, options);
-#else
-            return compareInfo.GetHashCode(ToString(), options);
-#endif
-        } 
-#endif
-
         internal int GetHashCodeOrdinalIgnoreCase()
         {
             if (str == null)
                 return 0;
 
 #if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
-            return String.GetHashCode(Span, StringComparison.OrdinalIgnoreCase);
+            return String.GetHashCode(AsSpan, StringComparison.OrdinalIgnoreCase);
 #else
             var result = 13;
             for (int i = 0; i < length; i++)
@@ -717,10 +833,10 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
-        internal int IndexOf(string s)
+        internal int IndexOfInternal(string s)
         {
             // This would be the native version, which is much slower even in .NET Core:
-            //int result = str.IndexOf(s, offset, Length, StringComparison.Ordinal);
+            //int result = s.IndexOf(s, offset, Length, StringComparison.Ordinal);
             //return result >= 0 ? result - offset : -1;
 
             int len = s.Length;
@@ -736,11 +852,13 @@ namespace KGySoft.CoreLibraries
             }
 
             char first = s[0];
+            int end;
 
-            // single char separator: the simple way
+            // searching for a single char: the simple way
             if (len == 1)
             {
-                for (int i = offset; i < offset + length; i++)
+                end = offset + length;
+                for (int i = offset; i < end; i++)
                 {
                     if (str[i] == first)
                         return i - offset;
@@ -749,7 +867,7 @@ namespace KGySoft.CoreLibraries
                 return -1;
             }
 
-            int end = offset + length - len + 1;
+            end = offset + length - len + 1;
             for (int i = offset; i < end; i++)
             {
                 if (str[i] != first)
@@ -766,7 +884,71 @@ namespace KGySoft.CoreLibraries
                     goto continueOuter; // yes, a dreadful goto which is actually a continue
                 }
 
-                // Here we have full match. As single char separators are not handled here we could have
+                // Here we have full match. As single char patterns are not handled here we could have
+                // check this into the inner loop to avoid goto but that requires an extra condition.
+                return i - offset;
+
+            continueOuter:;
+            }
+
+            return -1;
+        }
+
+        internal int IndexOfInternal(StringSegment s, int startIndex, int count)
+        {
+            // this is the less optimized version than the IndexOfInternal(string) method but it is still faster than str.IndexOf
+            Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
+
+            int len = s.length;
+            if (len == 0)
+                return startIndex;
+
+            if (len >= count)
+            {
+                if (len != count)
+                    return -1;
+                if (count == length)
+                {
+                    Debug.Assert(startIndex == 0);
+                    return Equals(s) ? 0 : -1;
+                }
+            }
+
+            char first = s.GetCharInternal(0);
+            int start = offset + startIndex;
+            int end;
+
+            // searching for a single char: the simple way
+            if (len == 1)
+            {
+                end = start + count;
+                for (int i = offset + startIndex; i < end; i++)
+                {
+                    if (str[i] == first)
+                        return i - offset;
+                }
+
+                return -1;
+            }
+
+            end = start + count - len + 1;
+            for (int i = offset + startIndex; i < end; i++)
+            {
+                if (str[i] != first)
+                    continue;
+
+                // first char matches: looking for difference in other chars if any
+                for (int j = 1; j < len; j++)
+                {
+                    if (str[i + j] == s.GetCharInternal(j))
+                        continue;
+
+                    // here we have a difference: continuing with skipping the matched characters
+                    i += j - 1;
+                    goto continueOuter; // yes, a dreadful goto which is actually a continue
+                }
+
+                // Here we have full match. As single char patterns are not handled here we could have
                 // check this into the inner loop to avoid goto but that requires an extra condition.
                 return i - offset;
 
@@ -784,7 +966,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            int pos = IndexOf(separator);
+            int pos = IndexOfInternal(separator);
 
             // last segment
             if (pos == -1)

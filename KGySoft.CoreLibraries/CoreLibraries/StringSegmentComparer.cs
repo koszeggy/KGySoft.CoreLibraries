@@ -38,6 +38,13 @@ namespace KGySoft.CoreLibraries
         [Serializable]
         private sealed class StringSegmentOrdinalComparer : StringSegmentComparer
         {
+            #region Properties
+
+            internal override CompareInfo CompareInfo { get; } = CultureInfo.InvariantCulture.CompareInfo;
+            internal override CompareOptions CompareOptions => CompareOptions.Ordinal;
+
+            #endregion
+
             #region Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => x.Equals(y);
@@ -54,6 +61,13 @@ namespace KGySoft.CoreLibraries
         [Serializable]
         private sealed class StringSegmentOrdinalIgnoreCaseComparer : StringSegmentComparer
         {
+            #region Properties
+
+            internal override CompareInfo CompareInfo { get; } = CultureInfo.InvariantCulture.CompareInfo;
+            internal override CompareOptions CompareOptions => CompareOptions.OrdinalIgnoreCase;
+
+            #endregion
+
             #region Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
@@ -80,6 +94,13 @@ namespace KGySoft.CoreLibraries
 
             #endregion
 
+            #region Properties
+
+            internal override CompareInfo CompareInfo => compareInfo;
+            internal override CompareOptions CompareOptions => options;
+
+            #endregion
+
             #region Constructors
 
             internal StringSegmentCultureAwareComparer(CultureInfo culture, bool ignoreCase)
@@ -99,13 +120,20 @@ namespace KGySoft.CoreLibraries
 
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options);
-            public override int GetHashCode(StringSegment obj) =>
+
+            public override int GetHashCode(StringSegment obj)
+            {
+                if (obj.IsNull)
+                    return 0;
+
 #if NET35 || NET40 || NET45
-                // normalization does not make any sense because obj is passed as value
-                obj.IsNull ? 0 : stringComparer.GetHashCode(obj.ToString(false));
+                return stringComparer.GetHashCode(obj.ToString(false));
+#elif NET472 || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+                return compareInfo.GetHashCode(obj.ToString(false), options);
 #else
-                obj.GetHashCode(compareInfo, options);
+                return compareInfo.GetHashCode(obj.AsSpan, options);
 #endif
+            }
 
             #endregion
         }
@@ -125,6 +153,8 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
+        #region Static Properties
+        
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal <see cref="StringSegment"/> comparison.
         /// </summary>
@@ -142,6 +172,16 @@ namespace KGySoft.CoreLibraries
         public static StringSegmentComparer CurrentCulture => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, false);
 
         public static StringSegmentComparer CurrentCultureIgnoreCase => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, true);
+
+        #endregion
+
+        #region Instance Properties
+
+        internal abstract CompareInfo CompareInfo { get; }
+
+        internal abstract CompareOptions CompareOptions { get; }
+
+        #endregion
 
         #endregion
 

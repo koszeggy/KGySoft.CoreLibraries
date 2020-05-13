@@ -857,7 +857,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Source length must consist of even amount of hex digits.</value>
   </data>
   <data name="StringSegment_Null" xml:space="preserve">
-    <value>The segment was created from a null string.</value>
+    <value>The string segment represents a null string.</value>
   </data>
   <data name="ComponentModel_CannotGetPropertyFormat" xml:space="preserve">
     <value>Cannot get property '{0}'.</value>
