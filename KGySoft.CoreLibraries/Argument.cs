@@ -137,6 +137,7 @@ namespace KGySoft
         types,
         upperBound,
         value,
+        values,
         way,
         writer,
         x,

@@ -17,6 +17,9 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 
 #endregion
@@ -57,7 +60,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             ss = "";
             Assert.IsTrue(ss.Equals(""));
             Assert.IsTrue(ss.Equals((object)""));
-           
+
             Assert.AreNotEqual(StringSegment.Null, StringSegment.Empty);
         }
 
@@ -82,7 +85,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             foreach (StringComparison comparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(String.Equals(a, b, comparison), StringSegment.Equals(a, b, comparison));
-                Assert.AreEqual(Math.Sign(String.Compare(a, b, comparison)), Math.Sign( StringSegment.Compare(a, b, comparison)));
+                Assert.AreEqual(Math.Sign(String.Compare(a, b, comparison)), Math.Sign(StringSegment.Compare(a, b, comparison)));
             }
 
             Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals(a, b));
@@ -138,45 +141,62 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             }
         }
 
-        private const string a = "+123456789+123456789+123456789+123456789+123456789+123456789+123456789";
-        private const string b = "6789+123";
-
-        [Test]
-        public void PerfTest() => new KGySoft.Diagnostics.PerformanceTest<int> { Iterations = 10_000_000 }
-            //.AddCase(() => String.Compare(a, 1, b, 1, 9, StringComparison.Ordinal) == 0, "Compare")
-            //.AddCase(() => a.AsSpan(1, 9).SequenceEqual(b.AsSpan(1, 9)), "AsSpan")
-            .AddCase(() => A(a, b, 0, 30), "A")
-            .AddCase(() => B(a, b, 0, 30), "B")
-            .DoTest()
-            .DumpResults(Console.Out);
-
-        private static int A(StringSegment ss, StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        [TestCase(true, " ", "")]
+        [TestCase(true, " ", " ")]
+        [TestCase(false, "", " ")]
+        [TestCase(false, " ,, ", ",")]
+        [TestCase(false, ",, ", ", ")]
+        [TestCase(true, " ,, ", " ,")]
+        public void StartsWith(bool expectedResult, string s, string value)
         {
-            return ss.IndexOfInternal(s, startIndex, count);
+            foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
+
+            if (value.Length == 1)
+                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value[0]));
         }
 
-        private static int B(StringSegment ss, StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        [TestCase(true, " ", "")]
+        [TestCase(true, " ", " ")]
+        [TestCase(false, "", " ")]
+        [TestCase(false, " ,, ", ",")]
+        [TestCase(true, ",, ", ", ")]
+        [TestCase(false, " ,, ", " ,")]
+        public void EndsWith(bool expectedResult, string s, string value)
         {
-            int result = ss.AsSpan.Slice(startIndex, count).IndexOf(s.AsSpan, comparison);
-            return result >= 0 ? result + startIndex : -1;
+            foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value, stringComparison));
+
+            if (value.Length == 1)
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
         }
 
-        //private static int GetHashCode(string str)
-        //{
-        //    var length = str.Length;
-        //    if (length == 0)
-        //        return 0;
-
-        //    //return String.GetHashCode(Span);
-
-        //    // This is a much cheaper hash code than the one used by string
-        //    // Of course, we utilize that StringString is internal and used in dictionaries for enums with typically short names.
-        //    var result = 13;
-        //    for (int i = 0; i < length; i++)
-        //        result = result * 397 + str[i];
-
-        //    return result;
-        //}
+        [TestCase("", "x", true, 1)]
+        [TestCase("", "x", false, 0)]
+        [TestCase("x", "", true, 1)]
+        [TestCase("x", "", false, 1)]
+        [TestCase("alpha", ",", true, 1)]
+        [TestCase("alpha", ",", false, 1)]
+        [TestCase("alpha, beta", ",", true, 2)]
+        [TestCase("alpha, beta", ",", false, 2)]
+        [TestCase("alpha, beta", ", ", true, 2)]
+        [TestCase("alpha, beta", ", ", false, 2)]
+        [TestCase("alpha,beta", ", ", true, 1)]
+        [TestCase("alpha,beta", ", ", false, 1)]
+        [TestCase("alpha,", ",", true, 2)]
+        [TestCase("alpha,", ",", false, 1)]
+        [TestCase(",alpha", ",", true, 2)]
+        [TestCase(",alpha", ",", false, 1)]
+        [TestCase(",alpha,", ",", true, 3)]
+        [TestCase(",alpha,", ",", false, 1)]
+        [TestCase(",,", ",", true, 3)]
+        [TestCase(",,", ",", false, 0)]
+        public void SplitTest(string s, string separator, bool allowEmpty, int expectedCount)
+        {
+            StringSegment[] segments = s.AsSegment().Split(separator, allowEmpty).ToArray();
+            Console.WriteLine($@"""{s}"" vs ""{separator}"" ({(allowEmpty ? "allow empty" : "remove empty")}) => ""{String.Join('|', segments)}""");
+            Assert.AreEqual(expectedCount, segments.Length);
+        }
 
         #endregion
     }

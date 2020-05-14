@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -41,9 +42,9 @@ namespace KGySoft.CoreLibraries
     /// 
     /// TODO: .NET 3.5/4.0/4.5 .NET Standard 2.0/2.1 .NET Core 2.0: Non-ordinal GetHashCode may allocate a new string
     /// TODO: All but .NET Core 3: Non-ordinal IndexOf may allocate a new string
-    /// TODO: CompareTo, IndexOf: As opposed to string default is by ordinal in these methods
-    /// TODO: assign, compare string
-    /// TODO: assign works even with null, IsNull is true, Length is 0
+    /// TODO: CompareTo, [Last]IndexOf/StartsWith/EndsWith: As opposed to string default is by ordinal in these methods
+    /// TODO example: assign, compare string
+    /// TODO example: assign works even with null, IsNull is true, Length is 0
     /// </remarks>
     [Serializable]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
@@ -282,17 +283,12 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         public static bool Equals(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
-        {
-            switch (comparison)
+            => comparison switch
             {
-                case StringComparison.Ordinal:
-                    return a.Equals(b);
-                case StringComparison.OrdinalIgnoreCase:
-                    return EqualsOrdinalIgnoreCase(a, b);
-                default:
-                    return Compare(a, b, comparison) == 0;
-            }
-        }
+                StringComparison.Ordinal => a.Equals(b),
+                StringComparison.OrdinalIgnoreCase => EqualsOrdinalIgnoreCase(a, b),
+                _ => Compare(a, b, comparison) == 0
+            };
 
         public static int Compare(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
         {
@@ -538,7 +534,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public StringSegment Substring(int offset, int length)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
             if (offset < 0)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
@@ -554,138 +550,249 @@ namespace KGySoft.CoreLibraries
         public StringSegment Substring(int offset) => Substring(this.offset + offset, length - offset);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment s)
+        public int IndexOf(in StringSegment value)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (s.str == null)
-                Throw.ArgumentNullException(Argument.s);
-            return IndexOfInternal(s, 0, length);
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return IndexOfInternal(value, 0, length);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment s, StringComparison comparison)
-            => comparison == StringComparison.Ordinal ? IndexOf(s) : IndexOf(s, 0, length, comparison);
+        public int IndexOf(in StringSegment value, StringComparison comparison)
+            => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
 
         // note: new string allocation may occur in <.NET Core 3
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment s, int startIndex, StringComparison comparison = StringComparison.Ordinal)
-            => IndexOf(s, startIndex, length - startIndex, comparison);
+        public int IndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => IndexOf(value, startIndex, length - startIndex, comparison);
 
         // note: new string allocation may occur in <.NET Core 3
-        public int IndexOf(in StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        public int IndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (s.str == null)
-                Throw.ArgumentNullException(Argument.s);
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             if (count < 0 || startIndex + count > length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
 
             if (comparison == StringComparison.Ordinal)
-                return IndexOfInternal(s, startIndex, count);
+                return IndexOfInternal(value, startIndex, count);
+
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-            int result = str.IndexOf(s.ToString(), offset + startIndex, count, comparison);
+            int result = str.IndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
-            int result = AsSpan.Slice(startIndex, count).IndexOf(s.AsSpan, comparison);
+            int result = AsSpan.Slice(startIndex, count).IndexOf(value.AsSpan, comparison);
             return result >= 0 ? result + startIndex : -1;
 #endif
         }
 
-        public int IndexOf(char c)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value)
         {
             if (str == null)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            int result = str.IndexOf(c, offset, length);
-            return result >= 0 ? result - offset : -1;
+            return IndexOfInternal(value, offset, length);
         }
 
-        public int IndexOf(char c, int startIndex)
-            => IndexOf(c, startIndex, length - startIndex);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value, int startIndex)
+            => IndexOf(value, startIndex, length - startIndex);
 
-        public int IndexOf(char c, int startIndex, int count)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value, int startIndex, int count)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             if (count < 0 || startIndex + count > length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
-            int result = str.IndexOf(c, offset + startIndex, count);
-            return result >= 0 ? result - offset : -1;
+            return IndexOfInternal(value, offset + startIndex, count);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment s, StringComparison comparison = StringComparison.Ordinal)
-            => LastIndexOf(s, 0, length, comparison);
+        public int LastIndexOf(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, 0, length, comparison);
 
         // note: new string allocation may occur in <.NET Core 3
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment s, int startIndex, StringComparison comparison = StringComparison.Ordinal)
-            => LastIndexOf(s, startIndex, length - startIndex, comparison);
+        public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
         // note: new string allocation may occur in <.NET Core 3
-        public int LastIndexOf(in StringSegment s, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        public int LastIndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            int result = str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
+#else
+            int result = AsSpan.Slice(startIndex, count).LastIndexOf(value.AsSpan, comparison);
+            return result >= 0 ? result + startIndex : -1;
+#endif
+        }
+
+        public int LastIndexOf(char value)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            int result = str.LastIndexOf(value, offset, length);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public int LastIndexOf(char value, int startIndex)
+            => LastIndexOf(value, startIndex, length - startIndex);
+
+        public int LastIndexOf(char value, int startIndex, int count)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            int result = str.LastIndexOf(value, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public int IndexOfAny(params char[] values) => IndexOfAny(values, 0, length);
+
+        public int IndexOfAny(char[] values, int startIndex) => IndexOfAny(values, startIndex, length - startIndex);
+
+        public int IndexOfAny(char[] values, int startIndex, int count)
         {
             if (str == null)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (s.str == null)
+            if (values == null)
+                Throw.ArgumentNullException(Argument.values);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            return IndexOfAnyInternal(values, offset + startIndex, count);
+        }
+
+        public int LastIndexOfAny(params char[] values) => LastIndexOfAny(values, 0, length);
+
+        public int LastIndexOfAny(char[] values, int startIndex) => LastIndexOfAny(values, startIndex, length - startIndex);
+
+        public int LastIndexOfAny(char[] values, int startIndex, int count)
+        {
+            if (str == null)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (values == null)
+                Throw.ArgumentNullException(Argument.values);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            int result = str.LastIndexOfAny(values, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        public bool StartsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (value.IsNull)
                 Throw.ArgumentNullException(Argument.s);
-            if ((uint)startIndex > (uint)length)
-                Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
-                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-            int result = str.LastIndexOf(s.ToString(), offset + startIndex, count, comparison);
-            return result >= 0 ? result - offset : -1;
-#else
-            int result = AsSpan.Slice(startIndex, count).LastIndexOf(s.AsSpan, comparison);
-            return result >= 0 ? result + startIndex : -1;
-#endif
+            int len = value.length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+            StringSegment segment = len == length ? this : SubstringInternal(0, len);
+            return Equals(segment, value, comparison);
         }
 
-        public int LastIndexOf(char c)
+        public bool StartsWith(char value)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            int result = str.LastIndexOf(c, offset, length);
-            return result >= 0 ? result - offset : -1;
+            return length > 0 && GetCharInternal(offset) == value;
         }
 
-        public int LastIndexOf(char c, int startIndex)
-            => LastIndexOf(c, startIndex, length - startIndex);
-
-        public int LastIndexOf(char c, int startIndex, int count)
+        public bool EndsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if ((uint)startIndex > (uint)length)
-                Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
-                Throw.ArgumentOutOfRangeException(Argument.count);
-            int result = str.LastIndexOf(c, offset + startIndex, count);
-            return result >= 0 ? result - offset : -1;
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.s);
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+
+            int len = value.length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+            StringSegment segment = len == length ? this : SubstringInternal(length - len, len);
+            return Equals(segment, value, comparison);
         }
 
-        public int IndexOfAny(params char[] anyOf) => IndexOfAny(anyOf, 0, length);
-
-        public int IndexOfAny(char[] anyOf, int startIndex) => IndexOfAny(anyOf, startIndex, length - startIndex);
-
-        public int IndexOfAny(char[] anyOf, int startIndex, int count)
+        public bool EndsWith(char value)
         {
-            if (str == null)
+            if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if ((uint)startIndex > (uint)length)
-                Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
-                Throw.ArgumentOutOfRangeException(Argument.count);
-            int result = str.IndexOfAny(anyOf, offset + startIndex, count);
-            return result >= 0 ? result - offset : -1;
+            return length > 0 && GetCharInternal(offset + length - 1) == value;
+        }
+
+        public IEnumerable<StringSegment> Split(params char[] separator) => Split(separator, true);
+
+        public IEnumerable<StringSegment> Split(char[] separator, bool allowEmptySegments)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (separator == null)
+                Throw.ArgumentNullException(Argument.separator);
+            if (separator.Length == 0 || length == 0)
+                return length == 0 && !allowEmptySegments ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            if (separator.Length == 1)
+                return SplitInternal(separator[0], allowEmptySegments);
+            return SplitInternal(separator, allowEmptySegments);
+        }
+
+        public IEnumerable<StringSegment> Split(char separator, bool allowEmptySegments = true)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (length == 0)
+                return allowEmptySegments ? new[] { Empty } : Reflector.EmptyArray<StringSegment>();
+            return SplitInternal(separator, allowEmptySegments);
+        }
+
+        public IEnumerable<StringSegment> Split(in StringSegment separator, bool allowEmptySegments = true)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (separator.IsNull)
+                Throw.ArgumentNullException(Argument.separator);
+            if (separator.length == 0 || length == 0)
+                return length == 0 && !allowEmptySegments ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            return SplitInternal(separator, allowEmptySegments);
         }
 
         /// <summary>
@@ -728,7 +835,18 @@ namespace KGySoft.CoreLibraries
         internal StringSegment SubstringInternal(int start) =>
             new StringSegment(str, offset + start, length - start);
 
-        internal int IndexOfInternal(in StringSegment s, int startIndex, int count)
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private int IndexOfInternal(char c, int startIndex, int count)
+        {
+            int result = str.IndexOf(c, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        private int IndexOfInternal(in StringSegment s, int startIndex, int count)
         {
             // this is the less optimized version than the IndexOfInternal(string) method but it is still faster than str.IndexOf
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
@@ -790,6 +908,116 @@ namespace KGySoft.CoreLibraries
             }
 
             return -1;
+        }
+
+        private int IndexOfAnyInternal(char[] values, int startIndex, in int count)
+        {
+            int result = str.IndexOfAny(values, offset + startIndex, count);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        private IEnumerable<StringSegment> SplitInternal(char separator, bool allowEmptySegments)
+        {
+            int pos = offset;
+            int end = offset + length;
+
+            while (pos < end)
+            {
+                Debug.Assert(pos < end, "Empty segment is not expected here");
+                int sepPos = IndexOfInternal(separator, pos, end - pos);
+
+                // last segment
+                if (sepPos < 0)
+                {
+                    yield return pos == offset ? this : Substring(pos);
+                    yield break;
+                }
+
+                // empty segment before separator
+                if (sepPos == pos)
+                {
+                    if (allowEmptySegments)
+                        yield return Empty;
+                }
+                else
+                    yield return Substring(pos, sepPos - pos);
+
+                pos = sepPos + 1;
+            }
+
+            // if we are here the string ends with a separator
+            Debug.Assert(EndsWith(separator));
+            if (allowEmptySegments)
+                yield return Empty;
+        }
+
+        private IEnumerable<StringSegment> SplitInternal(char[] separator, bool allowEmptySegments)
+        {
+            int pos = offset;
+            int end = offset + length;
+
+            while (pos < end)
+            {
+                Debug.Assert(pos < end, "Empty segment is not expected here");
+                int sepPos = IndexOfAnyInternal(separator, pos, end - pos);
+
+                // last segment
+                if (sepPos < 0)
+                {
+                    yield return pos == offset ? this : Substring(pos);
+                    yield break;
+                }
+
+                // empty segment before separator
+                if (sepPos == pos)
+                {
+                    if (allowEmptySegments)
+                        yield return Empty;
+                }
+                else
+                    yield return Substring(pos, sepPos - pos);
+
+                pos = sepPos + 1;
+            }
+
+            // if we are here the string ends with a separator
+            if (allowEmptySegments)
+                yield return Empty;
+        }
+
+        private IEnumerable<StringSegment> SplitInternal(StringSegment separator, bool allowEmptySegments)
+        {
+            int pos = offset;
+            int end = offset + length;
+
+            while (pos < end)
+            {
+                Debug.Assert(pos < end, "Empty segment is not expected here");
+                int sepPos = IndexOfInternal(separator, pos, end - pos);
+
+                // last segment
+                if (sepPos < 0)
+                {
+                    yield return pos == offset ? this : Substring(pos);
+                    yield break;
+                }
+
+                // empty segment before separator
+                if (sepPos == pos)
+                {
+                    if (allowEmptySegments)
+                        yield return Empty;
+                }
+                else
+                    yield return Substring(pos, sepPos - pos);
+
+                pos = sepPos + separator.length;
+            }
+
+            // if we are here the string ends with a separator
+            Debug.Assert(EndsWith(separator));
+            if (allowEmptySegments)
+                yield return Empty;
         }
 
         #endregion
