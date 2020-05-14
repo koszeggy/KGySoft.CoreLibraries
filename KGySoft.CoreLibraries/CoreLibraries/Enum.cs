@@ -57,8 +57,8 @@ namespace KGySoft.CoreLibraries
         private static Dictionary<TEnum, string> valueNamePairs;
         private static Dictionary<string, TEnum> nameValuePairs;
         private static (ulong[] RawValues, string[] Names) rawValueNamePairs;
-        private static Dictionary<StringSegment, ulong> nameRawValuePairs;
-        private static Dictionary<StringSegment, ulong> nameRawValuePairsIgnoreCase;
+        private static Dictionary<MutableStringSegment, ulong> nameRawValuePairs;
+        private static Dictionary<MutableStringSegment, ulong> nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
         // ReSharper restore StaticMemberInGenericType
 
@@ -70,8 +70,8 @@ namespace KGySoft.CoreLibraries
         private static TEnum[] Values => values ?? InitValues();
         private static Dictionary<TEnum, string> ValueNamePairs => valueNamePairs ?? InitValueNamePairs();
         private static Dictionary<string, TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
-        private static Dictionary<StringSegment, ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
-        private static Dictionary<StringSegment, ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
+        private static Dictionary<MutableStringSegment, ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
+        private static Dictionary<MutableStringSegment, ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
 
         private static string Zero =>
             rawValueNamePairs.RawValues.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
@@ -380,14 +380,14 @@ namespace KGySoft.CoreLibraries
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
 
-            var s = new StringSegment(value);
-            s.TrimInternal();
+            var s = new MutableStringSegment(value);
+            s.Trim();
             result = default(TEnum);
             if (s.Length == 0)
                 return false;
 
             // simple numeric value
-            char c = s.GetCharInternal(0);
+            char c = s[0];
             if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
                 result = converter.ToEnum(numericValue);
@@ -399,9 +399,9 @@ namespace KGySoft.CoreLibraries
                 separator = EnumExtensions.DefaultParseSeparator;
 
             ulong acc = 0UL;
-            while (s.TryGetNextSegment(separator, out StringSegment token))
+            while (s.TryGetNextSegment(separator, out MutableStringSegment token))
             {
-                token.TrimInternal();
+                token.Trim();
                 if (token.Length == 0)
                     return false;
 
@@ -420,7 +420,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // checking if is numeric token
-                c = token.GetCharInternal(0);
+                c = token[0];
                 if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
@@ -701,37 +701,37 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static Dictionary<StringSegment, ulong> InitNameRawValuePairs()
+        private static Dictionary<MutableStringSegment, ulong> InitNameRawValuePairs()
         {
             lock (syncRoot)
             {
-                Dictionary<StringSegment, ulong> result = nameRawValuePairs;
+                Dictionary<MutableStringSegment, ulong> result = nameRawValuePairs;
 
                 // lost race
                 if (result != null)
                     return result;
 
-                result = new Dictionary<StringSegment, ulong>(Names.Length);
+                result = new Dictionary<MutableStringSegment, ulong>(Names.Length);
                 for (int i = 0; i < Values.Length; i++)
-                    result.Add(new StringSegment(names[i]), converter.ToUInt64(values[i]));
+                    result.Add(new MutableStringSegment(names[i]), converter.ToUInt64(values[i]));
 
                 return nameRawValuePairs = result;
             }
         }
 
-        private static Dictionary<StringSegment, ulong> InitNameRawValuePairsIgnoreCase()
+        private static Dictionary<MutableStringSegment, ulong> InitNameRawValuePairsIgnoreCase()
         {
             lock (syncRoot)
             {
-                Dictionary<StringSegment, ulong> result = nameRawValuePairsIgnoreCase;
+                Dictionary<MutableStringSegment, ulong> result = nameRawValuePairsIgnoreCase;
 
                 // lost race
                 if (result != null)
                     return result;
 
-                result = new Dictionary<StringSegment, ulong>(Names.Length, StringSegmentComparer.OrdinalIgnoreCase);
-                Dictionary<StringSegment, ulong> refDict = NameRawValuePairs;
-                foreach (KeyValuePair<StringSegment, ulong> pair in refDict)
+                result = new Dictionary<MutableStringSegment, ulong>(Names.Length, MutableStringSegment.IgnoreCaseComparer);
+                Dictionary<MutableStringSegment, ulong> refDict = NameRawValuePairs;
+                foreach (KeyValuePair<MutableStringSegment, ulong> pair in refDict)
                     result[pair.Key] = pair.Value;
 
                 return nameRawValuePairsIgnoreCase = result;
