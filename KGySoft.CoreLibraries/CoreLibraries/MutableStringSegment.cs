@@ -202,7 +202,7 @@ namespace KGySoft.CoreLibraries
         internal void TrimStart()
         {
             int start = 0;
-            while (start < Length && Char.IsWhiteSpace(this[start]))
+            while (start < Length && this[start].IsWhiteSpace())
                 start += 1;
 
             Slice(start);
@@ -211,7 +211,7 @@ namespace KGySoft.CoreLibraries
         internal void TrimEnd()
         {
             int end = Length - 1;
-            while (end >= 0 && Char.IsWhiteSpace(this[end]))
+            while (end >= 0 && this[end].IsWhiteSpace())
                 end -= 1;
 
             Slice(0, end + 1);
