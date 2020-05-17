@@ -23,7 +23,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices; 
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.Annotations;
@@ -427,10 +427,6 @@ namespace KGySoft.Collections
 
         private static readonly Type typeOfT = typeof(T);
 
-        // ReSharper disable StaticMemberInGenericType
-        private static readonly bool isPrimitive = typeOfT.IsPrimitive;
-        private static readonly int elementSizeExponent = isPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
-
 #if NETFRAMEWORK || NETSTANDARD2_0
         private static readonly bool isManaged = !typeOfT.IsUnmanaged(); 
 #endif
@@ -662,18 +658,6 @@ namespace KGySoft.Collections
 
         #region Static Methods
 
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static void CopyElements(T[] source, int sourceIndex, T[] dest, int destIndex, int count)
-        {
-            if (isPrimitive)
-            {
-                Buffer.BlockCopy(source, sourceIndex << elementSizeExponent, dest, destIndex << elementSizeExponent, count << elementSizeExponent);
-                return;
-            }
-
-            Array.Copy(source, sourceIndex, dest, destIndex, count);
-        }
-
         private static bool CanAccept(object value) => value is T || value == null && default(T) == null;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -890,9 +874,9 @@ namespace KGySoft.Collections
                 if (asArray == null)
                     asArray = collection.ToArray();
                 int carry = pos + collectionSize - capacity;
-                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
+                asArray.CopyElements(0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
+                    asArray.CopyElements(collectionSize - carry, items, 0, carry);
             }
             // ReSharper restore PossibleMultipleEnumeration
 
@@ -1860,9 +1844,9 @@ namespace KGySoft.Collections
             if (size <= 0)
                 return;
             int carry = startIndex + size - items.Length;
-            CopyElements(items, startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
+            items.CopyElements(startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
             if (carry > 0)
-                CopyElements(items, 0, array, size - carry + arrayIndex, carry);
+                items.CopyElements(0, array, size - carry + arrayIndex, carry);
         }
 
         /// <summary>
@@ -1902,15 +1886,15 @@ namespace KGySoft.Collections
             if (start >= items.Length)
             {
                 start -= items.Length;
-                CopyElements(items, start, array, arrayIndex, count);
+                items.CopyElements(start, array, arrayIndex, count);
                 return;
             }
 
             // there are also not carried elements to copy
             int carry = start + count - items.Length;
-            CopyElements(items, start, array, arrayIndex, carry <= 0 ? count : count - carry);
+            items.CopyElements(start, array, arrayIndex, carry <= 0 ? count : count - carry);
             if (carry > 0)
-                CopyElements(items, 0, array, count - carry + arrayIndex, carry);
+                items.CopyElements(0, array, count - carry + arrayIndex, carry);
         }
 
         #endregion
@@ -2081,7 +2065,7 @@ namespace KGySoft.Collections
                         // moving down the elements from the end
                         if (nonWrapped <= carry)
                         {
-                            CopyElements(items, startIndex, items, carry, nonWrapped);
+                            items.CopyElements(startIndex, items, carry, nonWrapped);
                             Array.Clear(items, capacity - nonWrapped, nonWrapped);
                             startIndex = 0;
                             start = index;
@@ -2089,7 +2073,7 @@ namespace KGySoft.Collections
                         // moving up the elements from the start
                         else
                         {
-                            CopyElements(items, 0, items, capacity - count, carry);
+                            items.CopyElements(0, items, capacity - count, carry);
                             Array.Clear(items, 0, carry);
                             startIndex = capacity - count;
                             start = startIndex + index;
@@ -2192,15 +2176,15 @@ namespace KGySoft.Collections
             if (start >= items.Length)
             {
                 start -= items.Length;
-                CopyElements(items, start, result.items, 0, count);
+                items.CopyElements(start, result.items, 0, count);
                 return result;
             }
 
             // there are also not carried elements to copy
             int carry = start + count - items.Length;
-            CopyElements(items, start, result.items, 0, carry <= 0 ? count : count - carry);
+            items.CopyElements(start, result.items, 0, carry <= 0 ? count : count - carry);
             if (carry > 0)
-                CopyElements(items, 0, result.items, count - carry, carry);
+                items.CopyElements(0, result.items, count - carry, carry);
 
             return result;
         }
@@ -2300,9 +2284,9 @@ namespace KGySoft.Collections
                 if (asArray == null)
                     asArray = collection.ToArray();
                 int carry = pos + collectionSize - items.Length;
-                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
+                asArray.CopyElements(0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
+                    asArray.CopyElements(collectionSize - carry, items, 0, carry);
             }
 
             size += collectionSize;
@@ -2343,9 +2327,9 @@ namespace KGySoft.Collections
                 if (asArray == null)
                     asArray = collection.ToArray();
                 int carry = pos + collectionSize - items.Length;
-                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
+                asArray.CopyElements(0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
+                    asArray.CopyElements(collectionSize - carry, items, 0, carry);
             }
             // ReSharper restore PossibleMultipleEnumeration
 
@@ -2414,7 +2398,7 @@ namespace KGySoft.Collections
             version += 1;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)] 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private void EnsureCapacity(int min)
         {
             if (items.Length >= min)
@@ -2477,9 +2461,9 @@ namespace KGySoft.Collections
 
             // elements before item
             int carry = startIndex + index - items.Length;
-            CopyElements(items, startIndex, newItems, 0, carry <= 0 ? index : index - carry);
+            items.CopyElements(startIndex, newItems, 0, carry <= 0 ? index : index - carry);
             if (carry > 0)
-                CopyElements(items, 0, newItems, index - carry, carry);
+                items.CopyElements(0, newItems, index - carry, carry);
 
             // item
             newItems[index] = item;
@@ -2491,9 +2475,9 @@ namespace KGySoft.Collections
 
             int restCount = size - index;
             carry = pos + restCount - items.Length;
-            CopyElements(items, pos, newItems, index + 1, carry <= 0 ? restCount : restCount - carry);
+            items.CopyElements(pos, newItems, index + 1, carry <= 0 ? restCount : restCount - carry);
             if (carry > 0)
-                CopyElements(items, 0, newItems, newSize - carry, carry);
+                items.CopyElements(0, newItems, newSize - carry, carry);
 
             items = newItems;
             size = newSize;
@@ -2513,13 +2497,13 @@ namespace KGySoft.Collections
 
             // elements before collection items
             int carry = startIndex + index - items.Length;
-            CopyElements(items, startIndex, newItems, 0, carry <= 0 ? index : index - carry);
+            items.CopyElements(startIndex, newItems, 0, carry <= 0 ? index : index - carry);
             if (carry > 0)
-                CopyElements(items, 0, newItems, index - carry, carry);
+                items.CopyElements(0, newItems, index - carry, carry);
 
             // collection items
             if (collection is T[] array)
-                CopyElements(array, 0, newItems, index, array.Length);
+                array.CopyElements(0, newItems, index, array.Length);
             else
                 collection.CopyTo(newItems, index);
 
@@ -2530,9 +2514,9 @@ namespace KGySoft.Collections
 
             int restCount = size - index;
             carry = pos + restCount - items.Length;
-            CopyElements(items, pos, newItems, index + collection.Count, carry <= 0 ? restCount : restCount - carry);
+            items.CopyElements(pos, newItems, index + collection.Count, carry <= 0 ? restCount : restCount - carry);
             if (carry > 0)
-                CopyElements(items, 0, newItems, newSize - carry, carry);
+                items.CopyElements(0, newItems, newSize - carry, carry);
 
             items = newItems;
             size = newSize;
@@ -2629,7 +2613,7 @@ namespace KGySoft.Collections
                 // if needed, moving them up by one
                 if (carry != 0)
                 {
-                    CopyElements(items, 0, items, 1, carry);
+                    items.CopyElements(0, items, 1, carry);
                     elemCount -= carry;
                 }
 
@@ -2640,7 +2624,7 @@ namespace KGySoft.Collections
 
             // moving the rest of the items normally
             if (elemCount > 0)
-                CopyElements(items, index, items, index + 1, elemCount);
+                items.CopyElements(index, items, index + 1, elemCount);
         }
 
         /// <summary>
@@ -2656,7 +2640,7 @@ namespace KGySoft.Collections
             // 1.) Moving up wrapped elements at the beginning of the physical array by shiftCount
             if (carry > 0)
             {
-                CopyElements(items, 0, items, shiftCount, carry);
+                items.CopyElements(0, items, shiftCount, carry);
                 elemCount -= carry;
                 carry = 0;
             }
@@ -2666,13 +2650,13 @@ namespace KGySoft.Collections
             if (carry > 0)
             {
                 int carryActual = Math.Min(carry, elemCount);
-                CopyElements(items, index + elemCount - carryActual, items, carry - carryActual, carryActual);
+                items.CopyElements(index + elemCount - carryActual, items, carry - carryActual, carryActual);
                 elemCount -= carryActual;
             }
 
             // 3.) Moving rest of the items up normally
             if (elemCount > 0)
-                CopyElements(items, index, items, index + shiftCount, elemCount);
+                items.CopyElements(index, items, index + shiftCount, elemCount);
         }
 
         /// <summary>
@@ -2690,7 +2674,7 @@ namespace KGySoft.Collections
                 // if needed, moving them down by one
                 if (carry != 0)
                 {
-                    CopyElements(items, items.Length - carry, items, items.Length - carry - 1, carry);
+                    items.CopyElements(items.Length - carry, items, items.Length - carry - 1, carry);
                     elemCount -= carry;
                 }
 
@@ -2701,7 +2685,7 @@ namespace KGySoft.Collections
 
             // moving the rest of the items normally
             if (elemCount > 0)
-                CopyElements(items, index - elemCount + 1, items, index - elemCount, elemCount);
+                items.CopyElements(index - elemCount + 1, items, index - elemCount, elemCount);
         }
 
         /// <summary>
@@ -2719,7 +2703,7 @@ namespace KGySoft.Collections
             if (carry > 0)
             {
                 sourceIndex = items.Length - carry;
-                CopyElements(items, sourceIndex, items, sourceIndex - shiftCount, carry);
+                items.CopyElements(sourceIndex, items, sourceIndex - shiftCount, carry);
                 elemCount -= carry;
                 carry = 0;
             }
@@ -2729,7 +2713,7 @@ namespace KGySoft.Collections
             if (carry > 0)
             {
                 int carryActual = Math.Min(carry, elemCount);
-                CopyElements(items, index - elemCount + 1, items, items.Length - carry, carryActual);
+                items.CopyElements(index - elemCount + 1, items, items.Length - carry, carryActual);
                 elemCount -= carryActual;
             }
 
@@ -2737,7 +2721,7 @@ namespace KGySoft.Collections
             if (elemCount > 0)
             {
                 sourceIndex = index - elemCount + 1;
-                CopyElements(items, sourceIndex, items, sourceIndex - shiftCount, elemCount);
+                items.CopyElements(sourceIndex, items, sourceIndex - shiftCount, elemCount);
             }
         }
 
