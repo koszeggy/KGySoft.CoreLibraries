@@ -9,14 +9,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     [TestFixture]
     public class StringSegmentPerformanceTest
     {
-        private const string testStringShort = "short";
-        private const string testStringLonger = "longer: 01234567890123456789012345678901234567890123456789";
+        private const string testStringShort = "short: 0123456789";
         private const string testStringLong = "long: 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
 
         [TestCase(testStringShort)]
-        [TestCase(testStringLonger)]
         [TestCase(testStringLong)]
-        public void SubstringTest(string s) => new PerformanceTest { TestName = $"Length = {s.Length}", Iterations = 1_000_000 }
+        public void SubstringTest(string s) => new PerformanceTest
+            {
+                TestName = $"Length = {s.Length}",
+                Iterations = 1_000_000
+            }
             .AddCase(() => s.Substring(1), "String.Substring")
             .AddCase(() => s.AsSegment().Substring(1), "StringSegment.Substring")
             .AddCase(() => s.AsSegment().SubstringInternal(1), "StringSegment.SubstringInternal")
@@ -25,48 +27,100 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             .DoTest()
             .DumpResults(Console.Out);
 
-        [TestCase(testStringShort, '0')]
-        [TestCase(testStringLonger, '0')]
-        [TestCase(testStringLong, '0')]
-        public void SplitCharWholeTest(string s, char sep) => new KGySoft.Diagnostics.PerformanceTest { TestName = $"Length = {s.Length}", Iterations = 1_000_000, Repeat = 3 }
+        [TestCase('0', testStringShort)]
+        [TestCase('0', testStringLong)]
+        [TestCase(':', testStringShort)]
+        [TestCase(':', testStringLong)]
+        public void SplitWholeStringByCharTest(char sep, string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: '{sep}'",
+                Iterations = 1_000_000
+            }
             .AddCase(() => s.Split(sep), "String.Split(char)")
-            .AddCase(() => s.AsSegment().Split(sep).ToList(), "StringSegment.Split(char).ToList")
-            .AddCase(() => s.AsSegment().Split(sep).ToArray(), "StringSegment.Split(char).ToArray")
-            .AddCase(() => Enumerable.ToList(s.AsSegment().Split(sep)), "Enumerable.ToList(StringSegment.Split(char))")
+            .AddCase(() => s.AsSegment().Split(sep), "StringSegment.Split(char)")
             .AddCase(() =>
             {
                 var rest = s.AsSegment();
                 while (!rest.IsNull)
-                    StringSegment.GetNextSegment(ref rest, sep);
-            }, "StringSegment.GetNextSegment")
-            .AddCase(() =>
-            {
-                foreach (StringSegment stringSegment in s.AsSegment().Split(sep))
-                {
-                }
-            }, "foreach on StringSplitter")
+                    rest.ReadToSeparator(sep);
+            }, "StringSegmentExtensions.ReadToSeparator(char)")
             .DoTest()
             .DumpResults(Console.Out);
 
-        [TestCase(testStringShort, '0', 1)]
-        [TestCase(testStringShort, '0', 2)]
-        [TestCase(testStringLonger, '0', 1)]
-        [TestCase(testStringLonger, '0', 2)]
-        [TestCase(testStringLong, '0', 1)]
-        [TestCase(testStringLong, '0', 2)]
-        public void SplitCharFirstTest(string s, char sep, int count) => new KGySoft.Diagnostics.PerformanceTest { TestName = $"Length = {s.Length}; Count = {count}", Iterations = 1_000_000, Repeat = 3 }
-            .AddCase(() => s.Split(new[] { sep }, count), "String.Split(char, count)")
-            .AddCase(() => s.AsSegment().Split(sep).Take(count), "StringSegment.Split(char).Take(count) (enumerator)")
-            .AddCase(() => s.AsSegment().Split(sep).ToList(count), "StringSegment.Split(char).ToList(count)")
-            .AddCase(() => s.AsSegment().Split(sep).ToArray(count), "StringSegment.Split(char).ToArray(count)")
+        [TestCase('0', testStringShort)]
+        [TestCase('0', testStringLong)]
+        [TestCase(':', testStringShort)]
+        [TestCase(':', testStringLong)]
+        public void SplitLimitedByCharTest(char sep, string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: 2",
+                Iterations = 1_000_000
+            }
+            .AddCase(() => s.Split(sep, 2), "String.Split(char, count)")
+            .AddCase(() => s.AsSegment().Split(sep, 2), "StringSegment.Split(char, count)")
             .AddCase(() =>
             {
                 var rest = s.AsSegment();
-                for (int i = 0; i < count && !rest.IsNull; i++)
-                    StringSegment.GetNextSegment(ref rest, sep);
-            }, "for, StringSegment.GetNextSegment")
+                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                    rest.ReadToSeparator(sep);
+            }, "StringSegmentExtensions.ReadToSeparator(char)")
             .DoTest()
             .DumpResults(Console.Out);
 
+        [TestCase("01", testStringShort)]
+        [TestCase("01", testStringLong)]
+        [TestCase(": ", testStringShort)]
+        [TestCase(": ", testStringLong)]
+        public void SplitWholeStringByStringTest(string sep, string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: \"{sep}\"",
+                Iterations = 1_000_000
+            }
+            .AddCase(() => s.Split(sep), "String.Split(string)")
+            .AddCase(() => s.AsSegment().Split(sep.AsSegment()), "StringSegment.Split(StringSegment)")
+            .AddCase(() => s.AsSegment().Split(sep), "StringSegment.Split(string)")
+            .AddCase(() =>
+            {
+                StringSegment separator = sep;
+                var rest = s.AsSegment();
+                while (!rest.IsNull)
+                    rest.ReadToSeparator(separator);
+            }, "StringSegmentExtensions.ReadToSeparator(StringSegment)")
+            .AddCase(() =>
+            {
+                var rest = s.AsSegment();
+                while (!rest.IsNull)
+                    rest.ReadToSeparator(sep);
+            }, "StringSegmentExtensions.ReadToSeparator(string)")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        [TestCase("01", testStringShort)]
+        [TestCase("01", testStringLong)]
+        [TestCase(": ", testStringShort)]
+        [TestCase(": ", testStringLong)]
+        public void SplitLimitedByStringTest(string sep, string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: 2",
+                Iterations = 1_000_000
+            }
+            .AddCase(() => s.Split(sep, 2), "String.Split(string, count)")
+            .AddCase(() => s.AsSegment().Split(sep.AsSegment(), 2), "StringSegment.Split(StringSegment, count)")
+            .AddCase(() => s.AsSegment().Split(sep, 2), "StringSegment.Split(string, count)")
+            .AddCase(() =>
+            {
+                StringSegment separator = sep;
+                var rest = s.AsSegment();
+                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                    rest.ReadToSeparator(separator);
+            }, "StringSegmentExtensions.ReadToSeparator(StringSegment)")
+            .AddCase(() =>
+            {
+                var rest = s.AsSegment();
+                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                    rest.ReadToSeparator(sep);
+            }, "StringSegmentExtensions.ReadToSeparator(string)")
+            .DoTest()
+            .DumpResults(Console.Out);
     }
 }

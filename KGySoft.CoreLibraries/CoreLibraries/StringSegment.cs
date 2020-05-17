@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -41,7 +40,7 @@ namespace KGySoft.CoreLibraries
     /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="StringExtensions.AsSegment">AsSegment</see>
     /// and <see cref="O:KGySoft.CoreLibraries.StringExtensions.GetSegment"/> extension methods.</para>
     /// <para>To convert a <see cref="StringSegment"/> instance to <see cref="string">string</see> use an explicit cast or the <see cref="ToString()">ToString</see> method.</para>
-    /// 
+    ///
     /// TODO: .NET 3.5/4.0/4.5 .NET Standard 2.0/2.1 .NET Core 2.0: Non-ordinal GetHashCode may allocate a new string
     /// TODO: All but .NET Core 3: Non-ordinal IndexOf may allocate a new string
     /// TODO: CompareTo, [Last]IndexOf/StartsWith/EndsWith: As opposed to string default is by ordinal in these methods
@@ -50,11 +49,11 @@ namespace KGySoft.CoreLibraries
     /// </remarks>
     [Serializable]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
-        Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
-    [DebuggerDisplay("{" + nameof(ToString) + "()}")]
+            Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
+    [DebuggerDisplay("{" + nameof(ToString) + "()}")] // to display quotes and even the null value properly
     public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable, IEnumerable<char>
     {
-        #region Nested Types
+        #region Enumerator struct
 
         /// <summary>
         /// Enumerates the characters of a <see cref="StringSegment"/>.
@@ -182,6 +181,16 @@ namespace KGySoft.CoreLibraries
         public int Length => length;
 
         /// <summary>
+        /// Gets the underlying string of this <see cref="StringSegment"/>.
+        /// </summary>
+        public string UnderlyingString => str;
+
+        /// <summary>
+        /// Gets the offset, which denotes the start position of this <see cref="StringSegment"/> within the <see cref="UnderlyingString"/>.
+        /// </summary>
+        public int Offset => offset;
+
+        /// <summary>
         /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string"/>.
         /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
@@ -195,7 +204,7 @@ namespace KGySoft.CoreLibraries
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         public ReadOnlySpan<char> AsSpan => str.AsSpan(offset, length);
 
-        public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length); 
+        public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length);
 #endif
 
         #endregion
@@ -284,6 +293,7 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static bool Equals(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
             => comparison switch
             {
@@ -361,6 +371,204 @@ namespace KGySoft.CoreLibraries
             return compareInfo.Compare(a.str, a.offset, a.length, b.str, b.offset, b.length, options);
         }
 
+        /// <summary>
+        /// Reads until next whitespace.
+        /// </summary>
+        internal static StringSegment GetNextSegment(ref StringSegment rest)
+        {
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = -1;
+            int end = rest.offset + rest.length;
+            for (int i = rest.offset; i < end; i++)
+            {
+                if (rest.str[i].IsWhiteSpace())
+                {
+                    pos = i - rest.offset;
+                    break;
+                }
+            }
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + 1);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, char separator)
+        {
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + 1);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, char[] separators)
+        {
+            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfAnyInternal(separators, 0, rest.length);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + 1);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, in StringSegment separator)
+        {
+            Debug.Assert(!separator.IsNullOrEmpty, "Non-empty separator is expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + separator.length);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, string separator)
+        {
+            Debug.Assert(!separator.IsNullOrEmpty(), "Non-empty separator is expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + separator.Length);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, string[] separators)
+        {
+            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfAnyInternal(separators, 0, rest.length, out int separatorIndex);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + separators[separatorIndex].Length);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, StringSegment[] separators)
+        {
+            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : Empty;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfAnyInternal(separators, 0, rest.length, out int separatorIndex);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + separators[separatorIndex].length);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
         #endregion
 
         #endregion
@@ -376,9 +584,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public bool Equals(StringSegment other)
         {
+            if (length != other.length)
+                return false;
             if (ReferenceEquals(str, other.str) && offset == other.offset)
                 return true;
-            if (length != other.length || str == null || other.str == null)
+            if (str == null || other.str == null)
                 return false;
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
@@ -394,6 +604,35 @@ namespace KGySoft.CoreLibraries
             return String.Compare(str, offset, other.str, other.offset, length, StringComparison.Ordinal) == 0;
 #endif
         }
+
+        /// <summary>
+        /// Indicates whether the current <see cref="StringSegment"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
+        /// </summary>
+        /// <param name="other">A <see cref="StringSegment"/> instance to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        public bool Equals(string other)
+        {
+            if (ReferenceEquals(str, other) && offset == 0)
+                return true;
+            if (str == null || other == null)
+                return false;
+            if (length != other.Length)
+                return false;
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            for (int i = 0; i < length; i++)
+            {
+                if (GetCharInternal(i) != other[i])
+                    return false;
+            }
+
+            return true;
+#else
+            // for ordinal String.Compare is faster than Span.[Sequence]Equals
+            return String.Compare(str, offset, other, 0, length, StringComparison.Ordinal) == 0;
+#endif
+        }
+
 
         /// <summary>
         /// Determines whether the specified <see cref="object" /> is equal to this instance.
@@ -426,6 +665,7 @@ namespace KGySoft.CoreLibraries
 #else
             return String.GetHashCode(AsSpan);
 #endif
+
         }
 
         public int GetHashCode(StringComparison comparison)
@@ -485,8 +725,8 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         public override string ToString()
             => str == null ? null
-                : length == str.Length ? str
-                : str.Substring(offset, length);
+            : length == str.Length ? str
+            : str.Substring(offset, length);
 
         /// <summary>
         /// Removes all leading and trailing white-space characters from the current <see cref="StringSegment"/>.
@@ -505,7 +745,7 @@ namespace KGySoft.CoreLibraries
             if (str == null)
                 return this;
             int start = 0;
-            while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
+            while (start < length && GetCharInternal(start).IsWhiteSpace())
                 start += 1;
 
             return SubstringInternal(start);
@@ -521,7 +761,7 @@ namespace KGySoft.CoreLibraries
             if (str == null)
                 return this;
             int end = length - 1;
-            while (end >= 0 && Char.IsWhiteSpace(GetCharInternal(end)))
+            while (end >= 0 && GetCharInternal(end).IsWhiteSpace())
                 end -= 1;
 
             return SubstringInternal(0, end + 1);
@@ -569,15 +809,23 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(string value)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            return IndexOfInternal(value, 0, length);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(in StringSegment value, StringComparison comparison)
             => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
 
-        // note: new string allocation may occur in <.NET Core 3
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => IndexOf(value, startIndex, length - startIndex, comparison);
 
-        // note: new string allocation may occur in <.NET Core 3
         public int IndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
             if (IsNull)
@@ -602,6 +850,7 @@ namespace KGySoft.CoreLibraries
             int result = AsSpan.Slice(startIndex, count).IndexOf(value.AsSpan, comparison);
             return result >= 0 ? result + startIndex : -1;
 #endif
+
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -632,12 +881,10 @@ namespace KGySoft.CoreLibraries
         public int LastIndexOf(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, 0, length, comparison);
 
-        // note: new string allocation may occur in <.NET Core 3
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
-        // note: new string allocation may occur in <.NET Core 3
         public int LastIndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
             if (IsNull)
@@ -659,6 +906,7 @@ namespace KGySoft.CoreLibraries
             int result = AsSpan.Slice(startIndex, count).LastIndexOf(value.AsSpan, comparison);
             return result >= 0 ? result + startIndex : -1;
 #endif
+
         }
 
         public int LastIndexOf(char value)
@@ -733,8 +981,35 @@ namespace KGySoft.CoreLibraries
                 return false;
             if (len == 0)
                 return true;
-            StringSegment segment = len == length ? this : SubstringInternal(0, len);
-            return Equals(segment, value, comparison);
+            return length == len
+                ? Equals(this, value, comparison)
+                : Equals(SubstringInternal(0, len), value, comparison);
+        }
+
+        public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (comparison != StringComparison.Ordinal)
+                return StartsWith(new StringSegment(value), comparison);
+
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (value == null)
+                Throw.ArgumentNullException(Argument.s);
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+
+            int len = value.Length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+
+            if (comparison == StringComparison.Ordinal)
+                return StartsWithInternal(value);
+
+            return length == len
+                ? Equals(this, value, comparison)
+                : Equals(SubstringInternal(0, len), value, comparison);
         }
 
         public bool StartsWith(char value)
@@ -758,8 +1033,9 @@ namespace KGySoft.CoreLibraries
                 return false;
             if (len == 0)
                 return true;
-            StringSegment segment = len == length ? this : SubstringInternal(length - len, len);
-            return Equals(segment, value, comparison);
+            return length == len
+                ? Equals(this, value, comparison)
+                : Equals(SubstringInternal(length - len, len), value, comparison);
         }
 
         public bool EndsWith(char value)
@@ -769,176 +1045,381 @@ namespace KGySoft.CoreLibraries
             return length > 0 && GetCharInternal(offset + length - 1) == value;
         }
 
-        public StringSplitter Split(params char[] separator) => Split(separator, true);
-
-        public StringSplitter Split(char[] separator, bool allowEmptySegments)
+        // TODO: remarks: use maxLength if you are not interested in all segments
+        public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = true)
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (separator == null)
-                Throw.ArgumentNullException(Argument.separator);
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0 && rest[0].IsWhiteSpace())
+                    rest = rest.SubstringInternal(1);
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(bool removeEmptyEntries) => Split(default(int?), removeEmptyEntries);
+
+        public IList<StringSegment> Split(char separator, int? maxLength = default, bool removeEmptyEntries = false)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0 && rest[0] == separator)
+                    rest = rest.SubstringInternal(1);
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(char separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+
+        public IList<StringSegment> Split(char[] separator, int? maxLength, bool removeEmptyEntries = false)
+        {
+            // No separator: splitting by white spaces (compatibility with String.Split)
+            if (separator.IsNullOrEmpty())
+                return Split(maxLength, removeEmptyEntries);
             if (separator.Length == 1)
-                return new StringSplitter(this, separator[0], allowEmptySegments);
-            throw new NotImplementedException("TODO");
-        }
+                return Split(separator[0], maxLength, removeEmptyEntries);
 
-        public StringSplitter Split(char separator, bool allowEmptySegments = true)
-        {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            return new StringSplitter(this, separator, allowEmptySegments);
-        }
 
-        public StringSplitter Split(in StringSegment separator, bool allowEmptySegments = true)
-        {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (separator.IsNull)
-                Throw.ArgumentNullException(Argument.separator);
-            if (separator.length == 1)
-                return new StringSplitter(this, separator[0], allowEmptySegments);
-            throw new NotImplementedException("TODO");
-        }
-
-        #region TEST
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static StringSegment GetNextSegment(ref StringSegment rest, char separator)
-        {
-            if (rest.length == 0)
+            if (maxLength <= 1)
             {
-                rest = default;
-                return rest.IsNull ? default : Empty;
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
             }
 
-            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
 
-            // last segment
-            if (pos == -1)
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment result = rest;
-                rest = default;
-                return result;
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
             }
 
-            // returning next segment and advance
-            int offset = rest.offset;
-            rest = rest.SubstringInternal(pos + 1);
-            return new StringSegment(rest.str, offset, pos);
-        }
-
-        public readonly struct StringSplitter : IEnumerable<StringSegment>
-        {
-            private readonly StringSegment stringSegment;
-            private readonly char separator;
-            private readonly bool allowEmptySegments;
-
-            internal StringSplitter(in StringSegment stringSegment, char separator, bool allowEmptySegments)
+            if (!rest.IsNull)
             {
-                Debug.Assert(!stringSegment.IsNull);
-                this.stringSegment = stringSegment;
-                this.separator = separator;
-                this.allowEmptySegments = allowEmptySegments;
-            }
-
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            public IList<StringSegment> ToList(int? maxLength = default)
-            {
-                if (maxLength <= 1)
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
-                    if (maxLength < 0)
-                        Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                    return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { stringSegment };
-                }
-
-                if (stringSegment.length == 0)
-                    return allowEmptySegments ? new[] { stringSegment } : Reflector.EmptyArray<StringSegment>();
-
-                int count = maxLength.GetValueOrDefault(Int32.MaxValue);
-                var result = new List<StringSegment>(Math.Min(count, 16));
-                StringSegment rest = stringSegment;
-                count -= 1; // so the last segment is not searched if there are too many of them
-
-                while (!rest.IsNull && result.Count < count)
-                {
-                    StringSegment segment = GetNextSegment(ref rest, separator);
-                    if (segment.length > 0 || allowEmptySegments)
-                        result.Add(segment);
-                    else
-                        count -= 1;
-                }
-
-                if (!rest.IsNull)
-                {
-                    // if we reached limit but TODO
-                    if (!allowEmptySegments && result.Count == count && rest.length > 0 && rest[0] == separator)
-                        rest = rest.Substring(1);
-
-                    if (rest.length > 0 || allowEmptySegments)
-                        result.Add(rest);
-                }
-
-                return result;
-            }
-
-            public StringSegment[] ToArray(int? maxLength = default)
-            {
-                IList<StringSegment> list = ToList(maxLength);
-                if (list is StringSegment[] array)
-                    return array;
-                array = new StringSegment[list.Count];
-                list.CopyTo(array, 0);
-                return array;
-            }
-
-            public StringSplitterEnumerator GetEnumerator() => new StringSplitterEnumerator(this);
-
-            IEnumerator<StringSegment> IEnumerable<StringSegment>.GetEnumerator() => GetEnumerator();
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-            public struct StringSplitterEnumerator : IEnumerator<StringSegment>
-            {
-                private readonly StringSplitter splitter;
-                private StringSegment rest;
-                private StringSegment current;
-
-                public StringSplitterEnumerator(in StringSplitter stringSplitter)
-                {
-                    splitter = stringSplitter;
-                    rest = splitter.stringSegment;
-                    current = default;
-                }
-
-                public bool MoveNext()
-                {
-                    while (!rest.IsNull)
+                    for (int i = 0; i < separator.Length; i++)
                     {
-                        current = GetNextSegment(ref rest, splitter.separator);
-                        if (current.length != 0 || splitter.allowEmptySegments)
-                            return true;
+                        if (rest[0] == separator[i])
+                        {
+                            rest = rest.SubstringInternal(1);
+                            break;
+                        }
                     }
-
-                    return false;
                 }
 
-                public void Reset()
-                {
-                    rest = splitter.stringSegment;
-                    current = default;
-                }
-
-                public void Dispose()
-                {
-                }
-
-                public StringSegment Current => current;
-
-                object IEnumerator.Current => Current;
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
             }
+
+            return result;
         }
 
-        #endregion
+        public IList<StringSegment> Split(params char[] separator) => Split(separator, default, false);
+
+        public IList<StringSegment> Split(char[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+
+        public IList<StringSegment> Split(in StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
+        {
+            if (separator.length == 1)
+                return Split(separator[0], maxLength, removeEmptyEntries);
+
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+            
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            // null or empty string separator: returning whole string (compatibility with String.Split)
+            if (separator.length == 0)
+                return new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length >= separator.length && rest.StartsWith(separator))
+                    rest = rest.SubstringInternal(separator.length);
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(in StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+
+        public IList<StringSegment> Split(StringSegment[] separator, int? maxLength, bool removeEmptyEntries = false)
+        {
+            // No separator: splitting by white spaces (compatibility with String.Split)
+            if (separator.IsNullOrEmpty())
+                return Split(maxLength, removeEmptyEntries);
+            if (separator.Length == 1)
+                return Split(separator[0], maxLength, removeEmptyEntries);
+
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0)
+                {
+                    foreach (StringSegment sep in separator)
+                    {
+                        if (sep.length == 0 || sep.length > rest.length)
+                            continue;
+                        if (rest.StartsWith(sep))
+                        {
+                            rest = rest.SubstringInternal(sep.length);
+                            break;
+                        }
+                    }
+                }
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(params StringSegment[] separator) => Split(separator, default, false);
+
+        public IList<StringSegment> Split(StringSegment[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+
+        public IList<StringSegment> Split(string separator, int? maxLength = default, bool removeEmptyEntries = false)
+        {
+            if (separator?.Length == 1)
+                return Split(separator[0], maxLength, removeEmptyEntries);
+
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            // null or empty string separator: returning whole string (compatibility with String.Split)
+            if (String.IsNullOrEmpty(separator))
+                return new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length >= separator.Length && rest.StartsWithInternal(separator))
+                    rest = rest.SubstringInternal(separator.Length);
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(string separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+
+        public IList<StringSegment> Split(string[] separator, int? maxLength, bool removeEmptyEntries = false)
+        {
+            // No separator: splitting by white spaces (compatibility with String.Split)
+            if (separator.IsNullOrEmpty())
+                return Split(maxLength, removeEmptyEntries);
+            if (separator.Length == 1)
+                return Split(separator[0], maxLength, removeEmptyEntries);
+
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+
+            var result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0)
+                {
+                    foreach (string sep in separator)
+                    {
+                        if (String.IsNullOrEmpty(sep) || sep.Length > rest.length)
+                            continue;
+                        if (rest.StartsWithInternal(sep))
+                        {
+                            rest = rest.SubstringInternal(sep.Length);
+                            break;
+                        }
+                    }
+                }
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        public IList<StringSegment> Split(params string[] separator) => Split(separator, default, false);
+
+        public IList<StringSegment> Split(string[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="StringSegment"/> characters.
@@ -970,6 +1451,7 @@ namespace KGySoft.CoreLibraries
 #else
             return String.GetHashCode(AsSpan, StringComparison.OrdinalIgnoreCase);
 #endif
+
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -991,9 +1473,75 @@ namespace KGySoft.CoreLibraries
             return result >= 0 ? result - offset : -1;
         }
 
+        private int IndexOfInternal(string s, int startIndex, int count)
+        {
+            Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
+
+            int len = s.Length;
+            if (len == 0)
+                return startIndex;
+
+            if (len >= count)
+            {
+                if (len != count)
+                    return -1;
+
+                // possible shortcut if s.Length == count == this.Length
+                if (count == length)
+                {
+                    Debug.Assert(startIndex == 0);
+                    return str.Length == len
+                        ? str == s ? 0 : -1
+                        : Equals(s) ? 0 : -1;
+                }
+            }
+
+            char first = s[0];
+            int start = offset + startIndex;
+            int end;
+
+            // searching for a single char: the simple way
+            if (len == 1)
+            {
+                end = start + count;
+                for (int i = offset + startIndex; i < end; i++)
+                {
+                    if (str[i] == first)
+                        return i - offset;
+                }
+
+                return -1;
+            }
+
+            end = start + count - len + 1;
+            for (int i = offset + startIndex; i < end; i++)
+            {
+                if (str[i] != first)
+                    continue;
+
+                // first char matches: looking for difference in other chars if any
+                for (int j = 1; j < len; j++)
+                {
+                    if (str[i + j] == s[j])
+                        continue;
+
+                    // here we have a difference: continuing with skipping the matched characters
+                    i += j - 1;
+                    goto continueOuter; // yes, a dreadful goto which is actually a continue
+                }
+
+                // Here we have full match. As single char patterns are not handled here we could have
+                // check this into the inner loop to avoid goto but that requires an extra condition.
+                return i - offset;
+
+            continueOuter:;
+            }
+
+            return -1;
+        }
+
         private int IndexOfInternal(in StringSegment s, int startIndex, int count)
         {
-            // this is the less optimized version than the IndexOfInternal(string) method but it is still faster than str.IndexOf
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
 
             int len = s.length;
@@ -1004,6 +1552,8 @@ namespace KGySoft.CoreLibraries
             {
                 if (len != count)
                     return -1;
+
+                // possible shortcut if s.Length == count == this.Length
                 if (count == length)
                 {
                     Debug.Assert(startIndex == 0);
@@ -1055,10 +1605,83 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
-        private int IndexOfAnyInternal(char[] values, int startIndex, in int count)
+        private int IndexOfAnyInternal(char[] values, int startIndex, int count)
         {
             int result = str.IndexOfAny(values, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
+        }
+
+        private int IndexOfAnyInternal(StringSegment[] separators, int startIndex, int count, out int separatorIndex)
+        {
+            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+
+            for (int i = startIndex; i < count; i++)
+            {
+                for (int j = 0; j < separators.Length; j++)
+                {
+                    StringSegment separator = separators[j];
+                    if (separator.IsNullOrEmpty)
+                        continue;
+
+                    int sepLength = separator.length;
+                    if (GetCharInternal(i) != separator.GetCharInternal(0) || sepLength > count - i)
+                        continue;
+                    if (sepLength == 1 || SubstringInternal(i, sepLength).Equals(separator))
+                    {
+                        separatorIndex = j;
+                        return i;
+                    }
+                }
+            }
+
+            separatorIndex = -1;
+            return -1;
+        }
+
+        private int IndexOfAnyInternal(string[] separators, int startIndex, int count, out int separatorIndex)
+        {
+            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+
+            for (int i = startIndex; i < count; i++)
+            {
+                for (int j = 0; j < separators.Length; j++)
+                {
+                    string separator = separators[j];
+                    if (String.IsNullOrEmpty(separator))
+                        continue;
+
+                    int sepLength = separator.Length;
+                    if (GetCharInternal(i) != separator[0] || sepLength > count - i)
+                        continue;
+                    if (sepLength == 1 || SubstringInternal(i, sepLength).Equals(separator))
+                    {
+                        separatorIndex = j;
+                        return i;
+                    }
+                }
+            }
+
+            separatorIndex = -1;
+            return -1;
+        }
+
+        private bool StartsWithInternal(string value)
+        {
+            Debug.Assert(!String.IsNullOrEmpty(value) && value.Length <= length);
+            if (length == value.Length)
+                return Equals(value);
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (GetCharInternal(i) != value[i])
+                    return false;
+            }
+
+            return true;
+#else
+            // for ordinal String.Compare is faster than Span.[Sequence]Equals
+            return String.Compare(str, offset, value, 0, value.Length, StringComparison.Ordinal) == 0;
+#endif
         }
 
         #endregion

@@ -171,95 +171,175 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
         }
 
-        [TestCase("", "x", true, 1)]
-        [TestCase("", "x", false, 0)]
-        [TestCase("x", "", true, 1)]
-        [TestCase("x", "", false, 1)]
-        [TestCase("alpha", ",", true, 1)]
-        [TestCase("alpha", ",", false, 1)]
-        [TestCase("alpha, beta", ",", true, 2)]
-        [TestCase("alpha, beta", ",", false, 2)]
-        [TestCase("alpha, beta", ", ", true, 2)]
-        [TestCase("alpha, beta", ", ", false, 2)]
-        [TestCase("alpha,beta", ", ", true, 1)]
-        [TestCase("alpha,beta", ", ", false, 1)]
-        [TestCase("alpha,", ",", true, 2)]
-        [TestCase("alpha,", ",", false, 1)]
-        [TestCase(",alpha", ",", true, 2)]
-        [TestCase(",alpha", ",", false, 1)]
-        [TestCase(",alpha,", ",", true, 3)]
-        [TestCase(",alpha,", ",", false, 1)]
-        [TestCase(",,", ",", true, 3)]
-        [TestCase(",,", ",", false, 0)]
-        public void SplitTest(string s, string separator, bool allowEmpty, int expectedCount)
+        [TestCase("", "x")]
+        [TestCase("x", "")]
+        [TestCase("alpha", ",")]
+        [TestCase("alpha,  beta", null)]
+        [TestCase("alpha,  beta", "")]
+        [TestCase("alpha,  beta", " ")]
+        [TestCase("alpha,  beta", ",")]
+        [TestCase("alpha,  beta", ", ")]
+        [TestCase("alpha,  beta", "  ")]
+        [TestCase("alpha,", ",")]
+        [TestCase(",alpha", ",")]
+        [TestCase(",alpha,", ",")]
+        [TestCase("  ,,  ", null)]
+        [TestCase("  ,,  ", "")]
+        [TestCase("  ,,  ", " ")]
+        [TestCase("  ,,  ", "  ")]
+        [TestCase("  ,,  ", ",")]
+        [TestCase("  ,,  ", ",,")]
+        public void SplitTest(string s, string separator)
         {
-            StringSegment[] segments = s.AsSegment().Split(separator, allowEmpty).ToArray();
-            Console.WriteLine($@"""{s}"" vs ""{separator}"" ({(allowEmpty ? "allow empty" : "remove empty")}) => ""{String.Join('|', segments)}""");
-            Assert.AreEqual(expectedCount, segments.Length);
-            
-            if (separator.Length == 1)
+            foreach (bool removeEmpty in new[] { false, true })
             {
-                Assert.AreEqual(expectedCount, s.AsSegment().Split(separator[0], allowEmpty).ToCircularList().Count); // enumerable
-                Assert.AreEqual(expectedCount, s.AsSegment().Split(separator[0], allowEmpty).ToList().Count);
+                // as string
+                string[] strings = s.Split(new[] { separator }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                string expected = String.Join('|', strings);
+
+                IList<StringSegment> segments = s.AsSegment().Split(separator, removeEmpty);
+                string actual = String.Join('|', segments);
+
+                Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (remove empty: {removeEmpty}) => ""{actual}""");
+                Assert.AreEqual(expected, actual);
+
+                // as StringSegment
+                segments = s.AsSegment().Split(separator.AsSegment(), removeEmpty);
+                actual = String.Join('|', segments);
+                Assert.AreEqual(expected, actual);
+
+                // as string array with multiple values
+                strings = s.Split(new[] { separator, null }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                expected = String.Join('|', strings);
+
+                segments = s.AsSegment().Split(new[] { separator, null }, removeEmpty);
+                actual = String.Join('|', segments);
+                Assert.AreEqual(expected, actual);
+
+                // as StringSegment array with multiple values
+                segments = s.AsSegment().Split(new StringSegment[] { separator, null }, removeEmpty);
+                actual = String.Join('|', segments);
+                Assert.AreEqual(expected, actual);
+
+                // no separator (splitting by whitespaces)
+                strings = s.Split(default(string[]), removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                expected = String.Join('|', strings);
+
+                segments = s.AsSegment().Split(removeEmpty);
+                actual = String.Join('|', segments);
+
+                Console.WriteLine($@"""{s}"" no separator (remove empty: {removeEmpty}) => ""{actual}""");
+                Assert.AreEqual(expected, actual);
+
+                if (separator?.Length == 1)
+                {
+                    // as char
+                    strings = s.Split(new[] { separator[0] }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                    expected = String.Join('|', strings);
+
+                    segments = s.AsSegment().Split(separator[0], removeEmpty);
+                    actual = String.Join('|', segments);
+
+                    Console.WriteLine($@"""{s}"" vs '{separator[0]}' (remove empty: {removeEmpty}) => ""{actual}""");
+                    Assert.AreEqual(expected, actual);
+
+                    // as char array
+                    strings = s.Split(new[] { separator[0], '\0' }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                    expected = String.Join('|', strings);
+
+                    segments = s.AsSegment().Split(new[] { separator[0], '\0' }, removeEmpty);
+                    actual = String.Join('|', segments);
+
+                    Assert.AreEqual(expected, actual);
+                }
             }
         }
 
-        [TestCase("", "x", true, 1)]
-        [TestCase("", "x", false, 2)]
-        //[TestCase("x", "", true, 1)]
-        //[TestCase("x", "", false, 2)]
-        [TestCase("alpha", ",", true, 0)]
-        [TestCase("alpha", ",", false, 1)]
-        [TestCase("alpha, beta", ",", true, 0)]
-        [TestCase("alpha, beta", ",", false, 1)]
-        //[TestCase("alpha, beta", ", ", true, 2)]
-        //[TestCase("alpha, beta", ", ", false, 3)]
-        //[TestCase("alpha,beta", ", ", true, 0)]
-        //[TestCase("alpha,beta", ", ", true, 1)]
-        //[TestCase("alpha,beta", ", ", false, 0)]
-        //[TestCase("alpha,beta", ", ", false, 1)]
-        [TestCase("alpha,,", ",", true, 0)]
-        [TestCase("alpha,,", ",", true, 1)]
-        [TestCase("alpha,,", ",", true, 2)]
-        [TestCase("alpha,,", ",", true, 3)]
-        [TestCase("alpha,,", ",", false, 0)]
-        [TestCase("alpha,,", ",", false, 1)]
-        [TestCase("alpha,,", ",", false, 2)]
-        [TestCase("alpha,,", ",", false, 3)]
-        [TestCase(",,", ",", true, 0)]
-        [TestCase(",,", ",", true, 1)]
-        [TestCase(",,", ",", true, 2)]
-        [TestCase(",,", ",", true, 3)]
-        [TestCase(",,", ",", true, 4)]
-        [TestCase(",,", ",", false, 0)]
-        [TestCase(",,", ",", false, 1)]
-        [TestCase(",,", ",", false, 2)]
-        [TestCase(",,", ",", false, 3)]
-        [TestCase(",,", ",", false, 4)]
-        [TestCase(",,alpha", ",", false, 0)]
-        [TestCase(",,alpha", ",", false, 1)]
-        [TestCase(",,alpha", ",", false, 2)]
-        [TestCase(",,alpha", ",", false, 3)]
-        [TestCase(",,alpha", ",", false, 4)]
-        [TestCase(",,alpha", ",", true, 0)]
-        [TestCase(",,alpha", ",", true, 1)]
-        [TestCase(",,alpha", ",", true, 2)]
-        [TestCase(",,alpha", ",", true, 3)]
-        [TestCase(",,alpha", ",", true, 4)]
-        public void SplitTestWithLength(string s, string separator, bool allowEmpty, int count)
+        [TestCase("", "x")]
+        [TestCase("x", "")]
+        [TestCase("alpha", ",")]
+        [TestCase("alpha,  beta", null)]
+        [TestCase("alpha,  beta", "")]
+        [TestCase("alpha,  beta", " ")]
+        [TestCase("alpha,  beta", ",")]
+        [TestCase("alpha,  beta", ", ")]
+        [TestCase("alpha,  beta", "  ")]
+        [TestCase("alpha,", ",")]
+        [TestCase(",alpha", ",")]
+        [TestCase(",alpha,", ",")]
+        [TestCase(",,alpha", ",")]
+        [TestCase("  ,,  ", null)]
+        [TestCase("  ,,  ", "")]
+        [TestCase("  ,,  ", " ")]
+        [TestCase("  ,,  ", "  ")]
+        [TestCase("  ,,  ", ",")]
+        [TestCase("  ,,  ", ",,")]
+        public void SplitTestWithLength(string s, string separator)
         {
-            string[] strings = s.Split(new[] { separator }, count, allowEmpty ? StringSplitOptions.None : StringSplitOptions.RemoveEmptyEntries);
-            string expected = String.Join('|', strings);
-            StringSegment[] segments = s.AsSegment().Split(separator, allowEmpty).ToArray(count);
-            string actual = String.Join('|', segments);
-            Console.WriteLine($@"""{s}"" vs ""{separator}"" count={count} ({(allowEmpty ? "allow empty" : "remove empty")}) => ""{actual}""");
-            Assert.AreEqual(expected, actual);
-
-            if (separator.Length == 1)
+            for (int count = 0; count < 4; count++)
             {
-                segments = s.AsSegment().Split(separator[0], allowEmpty).ToArray(count);
-                actual = String.Join('|', segments);
-                Assert.AreEqual(expected, actual);
+                foreach (bool removeEmpty in new[] { false, true })
+                {
+                    // as string
+                    string[] strings = s.Split(new[] { separator }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                    string expected = String.Join('|', strings);
+
+                    IList<StringSegment> segments = s.AsSegment().Split(separator, count, removeEmpty);
+                    string actual = String.Join('|', segments);
+
+                    Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
+                    Assert.AreEqual(expected, actual);
+
+                    // as StringSegment
+                    segments = s.AsSegment().Split(separator.AsSegment(), count, removeEmpty);
+                    actual = String.Join('|', segments);
+                    Assert.AreEqual(expected, actual);
+
+                    // as string array with multiple values
+                    strings = s.Split(new[] { separator, null }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                    expected = String.Join('|', strings);
+
+                    segments = s.AsSegment().Split(new[] { separator, null }, count, removeEmpty);
+                    actual = String.Join('|', segments);
+
+                    Assert.AreEqual(expected, actual);
+
+                    // as StringSegment array with multiple values
+                    segments = s.AsSegment().Split(new StringSegment[] { separator, null }, count, removeEmpty);
+                    actual = String.Join('|', segments);
+                    Assert.AreEqual(expected, actual);
+
+                    // no separator (splitting by whitespaces)
+                    strings = s.Split(default(string[]), count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                    expected = String.Join('|', strings);
+
+                    segments = s.AsSegment().Split(count, removeEmpty);
+                    actual = String.Join('|', segments);
+
+                    Console.WriteLine($@"""{s}"" no separator (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
+                    Assert.AreEqual(expected, actual);
+
+                    if (separator?.Length == 1)
+                    {
+                        // as char
+                        strings = s.Split(new[] { separator[0] }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                        expected = String.Join('|', strings);
+
+                        segments = s.AsSegment().Split(separator[0], count, removeEmpty);
+                        actual = String.Join('|', segments);
+                        Console.WriteLine($@"""{s}"" vs '{separator[0]}' (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
+                        Assert.AreEqual(expected, actual);
+
+                        // as char array
+                        strings = s.Split(new[] { separator[0], '\0' }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
+                        expected = String.Join('|', strings);
+
+                        segments = s.AsSegment().Split(new[] { separator[0], '\0' }, count, removeEmpty);
+                        actual = String.Join('|', segments);
+
+                        Assert.AreEqual(expected, actual);
+                    }
+                }
             }
         }
 
