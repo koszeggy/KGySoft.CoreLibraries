@@ -2863,10 +2863,14 @@ namespace KGySoft.Reflection
 
         internal static int SizeOf<T>()
         {
+#if NETFRAMEWORK
             var type = typeof(T);
             if (type.IsPrimitive)
                 return Buffer.ByteLength(new T[1]);
             return type.SizeOf();
+#else
+            return Unsafe.SizeOf<T>();
+#endif
         }
 
         #endregion
