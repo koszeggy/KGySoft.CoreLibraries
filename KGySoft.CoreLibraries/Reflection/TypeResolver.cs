@@ -149,7 +149,7 @@ namespace KGySoft.Reflection
 
             internal bool IsBufEmpty => buf.Length == 0;
 
-            internal bool IsWhiteSpace => Char.IsWhiteSpace();
+            internal bool IsWhiteSpace => Char.IsWhiteSpace(Char);
 
             #endregion
 

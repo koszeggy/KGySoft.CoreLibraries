@@ -390,7 +390,7 @@ namespace KGySoft.CoreLibraries
             int end = rest.offset + rest.length;
             for (int i = rest.offset; i < end; i++)
             {
-                if (rest.str[i].IsWhiteSpace())
+                if (Char.IsWhiteSpace(rest.str[i]))
                 {
                     pos = i - rest.offset;
                     break;
@@ -748,7 +748,7 @@ namespace KGySoft.CoreLibraries
             if (str == null)
                 return this;
             int start = 0;
-            while (start < length && GetCharInternal(start).IsWhiteSpace())
+            while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
                 start += 1;
 
             return SubstringInternal(start);
@@ -764,7 +764,7 @@ namespace KGySoft.CoreLibraries
             if (str == null)
                 return this;
             int end = length - 1;
-            while (end >= 0 && GetCharInternal(end).IsWhiteSpace())
+            while (end >= 0 && Char.IsWhiteSpace(GetCharInternal(end)))
                 end -= 1;
 
             return SubstringInternal(0, end + 1);
@@ -1080,7 +1080,7 @@ namespace KGySoft.CoreLibraries
             {
                 // if we reached limit but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
-                if (removeEmptyEntries && result.Count == limit && rest.length > 0 && rest[0].IsWhiteSpace())
+                if (removeEmptyEntries && result.Count == limit && rest.length > 0 && Char.IsWhiteSpace(rest[0]))
                     rest = rest.SubstringInternal(1);
 
                 if (rest.length > 0 || !removeEmptyEntries)
