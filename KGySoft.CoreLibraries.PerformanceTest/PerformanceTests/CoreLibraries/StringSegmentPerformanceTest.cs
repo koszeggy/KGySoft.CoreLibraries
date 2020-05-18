@@ -52,6 +52,24 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             .DoTest()
             .DumpResults(Console.Out);
 
+        [TestCase(testStringShort)]
+        [TestCase(testStringLong)]
+        public void SplitWholeStringByWhitespacesTest(string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: White spaces",
+                Iterations = 1_000_000
+            }
+            .AddCase(() => s.Split(), "String.Split(char)")
+            .AddCase(() => s.AsSegment().Split(), "StringSegment.Split(char)")
+            .AddCase(() =>
+            {
+                var rest = s.AsSegment();
+                while (!rest.IsNull)
+                    rest.ReadToWhiteSpace();
+            }, "StringSegmentExtensions.ReadToWhiteSpace(char)")
+            .DoTest()
+            .DumpResults(Console.Out);
+
         [TestCase('0', testStringShort)]
         [TestCase('0', testStringLong)]
         [TestCase(':', testStringShort)]
