@@ -16,7 +16,6 @@
 
 #region Usings
 
-using System;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -58,6 +57,21 @@ namespace KGySoft.CoreLibraries
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, string separator)
+            // TODO: handle trivial cases here (see asserts and conditions from Split)
+            => StringSegment.GetNextSegment(ref rest, separator);
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static StringSegment ReadToSeparator(ref this StringSegment rest, char[] separator)
+            // TODO: handle trivial cases here (see asserts and conditions from Split)
+            => StringSegment.GetNextSegment(ref rest, separator);
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static StringSegment ReadToSeparator(ref this StringSegment rest, string[] separator)
+            // TODO: handle trivial cases here (see asserts and conditions from Split)
+            => StringSegment.GetNextSegment(ref rest, separator);
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static StringSegment ReadToSeparator(ref this StringSegment rest, StringSegment[] separator)
             // TODO: handle trivial cases here (see asserts and conditions from Split)
             => StringSegment.GetNextSegment(ref rest, separator);
 

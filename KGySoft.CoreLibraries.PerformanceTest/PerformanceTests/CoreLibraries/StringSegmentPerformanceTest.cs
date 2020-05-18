@@ -54,19 +54,19 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         [TestCase(testStringShort)]
         [TestCase(testStringLong)]
-        public void SplitWholeStringByWhitespacesTest(string s) => new PerformanceTest
+        public void SplitLimitedByWhitespacesTest(string s) => new PerformanceTest
             {
-                TestName = $"Length: {s.Length}; Separator: White spaces",
+                TestName = $"Length: {s.Length}; Separator: White spaces; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(), "String.Split(char)")
-            .AddCase(() => s.AsSegment().Split(), "StringSegment.Split(char)")
+            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(count)")
+            .AddCase(() => s.AsSegment().Split(limitCount), "StringSegment.Split(count)")
             .AddCase(() =>
             {
-                var rest = s.AsSegment();
-                while (!rest.IsNull)
+                StringSegment rest = s.AsSegment();
+                for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToWhiteSpace();
-            }, "StringSegmentExtensions.ReadToWhiteSpace(char)")
+            }, "StringSegmentExtensions.ReadToSeparator(char)")
             .DoTest()
             .DumpResults(Console.Out);
 
@@ -96,7 +96,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         [TestCase(':', testStringLong)]
         public void SplitLimitedByCharTest(char sep, string s) => new PerformanceTest
             {
-                TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: 2",
+                TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: {limitCount}",
                 Iterations = 1_000_000
             }
             .AddCase(() => s.Split(sep, limitCount), "String.Split(char, count)")
@@ -144,7 +144,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         [TestCase(": ", testStringLong)]
         public void SplitLimitedByStringTest(string sep, string s) => new PerformanceTest
             {
-                TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: 2",
+                TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: {limitCount}",
                 Iterations = 1_000_000
             }
             .AddCase(() => s.Split(sep, limitCount), "String.Split(string, count)")
