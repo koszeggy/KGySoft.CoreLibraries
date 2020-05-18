@@ -2863,7 +2863,7 @@ namespace KGySoft.Reflection
 
         internal static int SizeOf<T>()
         {
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
             var type = typeof(T);
             if (type.IsPrimitive)
                 return Buffer.ByteLength(new T[1]);

@@ -902,7 +902,7 @@ namespace KGySoft.CoreLibraries
             if (!comparison.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
             int result = str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else

@@ -18,11 +18,12 @@
 #region Usings
 
 using System;
-using KGySoft.CoreLibraries;
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
 using System.Buffers;
-using KGySoft.Reflection;
 #endif
+
+using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -41,17 +42,17 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
         private static readonly int poolingThreshold = Math.Min(2, 1024 / Reflector.SizeOf<T>());
 #endif
 
         #endregion
 
         #region Instance Fields
-        
+
         private readonly int offset;
         private readonly int length;
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
         private readonly bool poolArray;
 #endif
 
@@ -74,7 +75,7 @@ namespace KGySoft.Collections
             offset = 0;
             this.length = length;
 
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
             poolArray = length >= poolingThreshold;
             if (poolArray)
             {
@@ -95,7 +96,7 @@ namespace KGySoft.Collections
             this.array = array;
             this.offset = offset;
             this.length = length;
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
             poolArray = false;
 #endif
         }
@@ -123,7 +124,7 @@ namespace KGySoft.Collections
 
         public void Dispose()
         {
-#if !NETFRAMEWORK
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
             if (array != null && poolArray)
                 ArrayPool<T>.Shared.Return(array);
 #endif
