@@ -19,11 +19,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
+using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 
 #endregion
@@ -48,6 +50,7 @@ namespace KGySoft.CoreLibraries
     /// TODO example: assign works even with null, IsNull is true, Length is 0
     /// </remarks>
     [Serializable]
+    [TypeConverter(typeof(StringSegmentConverter))]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
             Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "()}")] // to display quotes and even the null value properly

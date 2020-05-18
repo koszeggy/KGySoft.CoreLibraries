@@ -12,20 +12,21 @@
 + KGySoft.CoreLibraries namespace:
 ==================================
 + The StringSegment type has been made public. It offers a sort of string operations without allocating new strings.
-  The old internal version has been expanded with many new public members such as:
+  Several new public members were added such as:
   + [Last]IndexOf[Any]
   + Substring
   + Trim[Start/End]
   + Split
-  + Conversion and comparison members (compatible with string)
+  + Conversion and comparison members (numerous Equals/Compare/StartsWith/EndsWith overloads)
   + AsSpan, AsMemory (only in .NET Core 3.0 and .NET Standard 2.1)
 + New StringSegmentExtensions class with various Read... methods
 + ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
 + CharExtensions class: New IsWhiteSpace method, which is faster than Char.IsWhiteSpace
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 
-* KGySoft.ComponentModel namespace:
++ KGySoft.ComponentModel namespace:
 ===================================
++ New StringSegmentConverter class
 * ObservableObjectBase class: Performance improvement: AffectsModifiedState is not called in a modified state.
 
 
