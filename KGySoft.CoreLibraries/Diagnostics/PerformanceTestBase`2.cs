@@ -198,6 +198,8 @@ namespace KGySoft.Diagnostics
 
                 writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
                 DumpConfig();
+                if (Items.Count == 0)
+                    return;
                 var baseLine = (TestResult)Items[0];
                 int baseLength = test.GetLength(baseLine.Result);
                 for (int i = 0; i < Items.Count; i++)
