@@ -1,16 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: StringSegmentPerformanceTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2020 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 {
     [TestFixture]
     public class StringSegmentPerformanceTest
     {
+        #region Constants
+
         private const string testStringShort = "short: 0123456789";
         private const string testStringLong = "long: 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+        private const int limitCount = 2;
+
+        #endregion
+
+        #region Methods
 
         [TestCase(testStringShort)]
         [TestCase(testStringLong)]
@@ -56,12 +81,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: 2",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, 2), "String.Split(char, count)")
-            .AddCase(() => s.AsSegment().Split(sep, 2), "StringSegment.Split(char, count)")
+            .AddCase(() => s.Split(sep, limitCount), "String.Split(char, count)")
+            .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(char, count)")
             .AddCase(() =>
             {
-                var rest = s.AsSegment();
-                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                StringSegment rest = s.AsSegment();
+                for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToSeparator(sep);
             }, "StringSegmentExtensions.ReadToSeparator(char)")
             .DoTest()
@@ -104,23 +129,25 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: 2",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, 2), "String.Split(string, count)")
-            .AddCase(() => s.AsSegment().Split(sep.AsSegment(), 2), "StringSegment.Split(StringSegment, count)")
-            .AddCase(() => s.AsSegment().Split(sep, 2), "StringSegment.Split(string, count)")
+            .AddCase(() => s.Split(sep, limitCount), "String.Split(string, count)")
+            .AddCase(() => s.AsSegment().Split(sep.AsSegment(), limitCount), "StringSegment.Split(StringSegment, count)")
+            .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(string, count)")
             .AddCase(() =>
             {
                 StringSegment separator = sep;
-                var rest = s.AsSegment();
-                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                StringSegment rest = s.AsSegment();
+                for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToSeparator(separator);
             }, "StringSegmentExtensions.ReadToSeparator(StringSegment)")
             .AddCase(() =>
             {
-                var rest = s.AsSegment();
-                for (int i = 0; i < 2 && !rest.IsNull; i++)
+                StringSegment rest = s.AsSegment();
+                for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToSeparator(sep);
             }, "StringSegmentExtensions.ReadToSeparator(string)")
             .DoTest()
             .DumpResults(Console.Out);
     }
+
+    #endregion
 }

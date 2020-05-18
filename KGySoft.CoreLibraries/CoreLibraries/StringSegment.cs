@@ -23,7 +23,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using KGySoft.Collections;
+
 using KGySoft.Reflection;
 
 #endregion
