@@ -102,9 +102,7 @@ namespace KGySoft.Collections.ObjectModel
 
         #region Private Protected Methods
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private protected static HashSet<T> CreateAdjustSet(int length)
         {
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0

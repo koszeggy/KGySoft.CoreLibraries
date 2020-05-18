@@ -1206,6 +1206,8 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.target);
             if (collection == null)
                 Throw.ArgumentNullException(Argument.collection);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             try
             {
@@ -1277,6 +1279,8 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.target);
             if (collection == null)
                 Throw.ArgumentNullException(Argument.collection);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
 
             try
             {

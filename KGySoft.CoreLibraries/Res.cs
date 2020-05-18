@@ -111,6 +111,9 @@ namespace KGySoft
         /// <summary>ms</summary>
         internal static string Millisecond => Get("General_Millisecond");
 
+        /// <summary>Offset and length were out of bounds.</summary>
+        internal static string InvalidOffsLen => Get("General_InvalidOffsLen");
+
         /// <summary>Offset and length were out of bounds for the array.</summary>
         internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
 
@@ -411,6 +414,13 @@ namespace KGySoft
 
         /// <summary>Source length must consist of even amount of hex digits.</summary>
         internal static string StringExtensionsSourceLengthNotEven => Get("StringExtensions_SourceLengthNotEven");
+
+        #endregion
+
+        #region StringSegment
+
+        /// <summary>The string segment represents a null string.</summary>
+        internal static string StringSegmentNull => Get("StringSegment_Null");
 
         #endregion
 

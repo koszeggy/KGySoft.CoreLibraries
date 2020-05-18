@@ -27,13 +27,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 using System.Runtime.Serialization;
-#if !NET35
 using System.Security; 
-#endif
 #if !NETCOREAPP2_0
 using System.Text;
 #endif
@@ -786,12 +782,8 @@ namespace KGySoft.Reflection
 #endif
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe object Get(this FieldInfo field, object instance)
         {
             if (field.FieldType.IsPointer)
@@ -800,12 +792,8 @@ namespace KGySoft.Reflection
             return FieldAccessor.GetAccessor(field).Get(instance);
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe void Set(this FieldInfo field, object instance, object value)
         {
             Debug.Assert(!field.IsLiteral);
@@ -827,12 +815,8 @@ namespace KGySoft.Reflection
             FieldAccessor.GetAccessor(field).Set(instance, value);
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe object Get(this PropertyInfo property, object instance)
         {
             Debug.Assert(property.CanRead);
@@ -847,12 +831,8 @@ namespace KGySoft.Reflection
             return PropertyAccessor.GetAccessor(property).Get(instance);
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
         {
             Debug.Assert(property.CanWrite);
@@ -874,9 +854,7 @@ namespace KGySoft.Reflection
             PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParams);
         }
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object Invoke(this MethodInfo method, object instance, params object[] parameters)
         {
 #if NETSTANDARD2_0

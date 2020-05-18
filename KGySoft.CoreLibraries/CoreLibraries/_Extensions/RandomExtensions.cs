@@ -21,9 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-#if !NET35 && !NET40
 using System.Runtime.CompilerServices;
-#endif
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
@@ -345,9 +343,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>Similarly to the <see cref="Random.Next()">Random.Next()</see> method this one returns an <see cref="int"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe int NextInt32(this Random random)
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -429,9 +425,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe uint NextUInt32(this Random random)
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -510,9 +504,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe long NextInt64(this Random random)
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -595,9 +587,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe ulong NextUInt64(this Random random)
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -953,9 +943,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
         {
             if (random == null)
@@ -992,9 +980,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe string NextString(this Random random, int minLength, int maxLength, char[] allowedCharacters)
         {
             if (random == null)
@@ -1070,9 +1056,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/>
         /// <br/>-or-
         /// <br/><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe string NextString(this Random random, int minLength, int maxLength, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
@@ -1131,9 +1115,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe char[] NextChars(this Random random, int length, string allowedCharacters)
         {
             if (random == null)
@@ -1165,9 +1147,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe char[] NextChars(this Random random, int length, char[] allowedCharacters)
         {
             if (random == null)
@@ -1233,9 +1213,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0
         /// <br/>-or-
         /// <br/><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe char[] NextChars(this Random random, int length, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
@@ -1262,9 +1240,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="allowedCharacters">A string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
         /// <exception cref="ArgumentNullException"><paramref name="random"/>, <paramref name="buffer"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe void NextChars(this Random random, char[] buffer, string allowedCharacters)
         {
             if (random == null)
@@ -1292,9 +1268,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="allowedCharacters">An array of the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
         /// <exception cref="ArgumentNullException"><paramref name="random"/>, <paramref name="buffer"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe void NextChars(this Random random, char[] buffer, char[] allowedCharacters)
         {
             if (random == null)
@@ -1323,9 +1297,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="StringCreation.Ascii"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="buffer"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="strategy"/> is not a valid value of <see cref="StringCreation"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static unsafe void NextChars(this Random random, char[] buffer, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
@@ -1605,9 +1577,7 @@ namespace KGySoft.CoreLibraries
         /// </para>
         /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="RandomExtensions"/> class for some examples.</note>
         /// </remarks>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
@@ -1628,9 +1598,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An instance of <paramref name="type"/> or <see langword="null"/>&#160;if the type cannot be
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)
         {
             if (random == null)
@@ -1701,9 +1669,7 @@ namespace KGySoft.CoreLibraries
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static double NextDoubleLinear(Random random, double minValue, double maxValue)
         {
             double sample = random.NextDouble();
@@ -1713,9 +1679,7 @@ namespace KGySoft.CoreLibraries
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
         {
             decimal sample = random.NextDecimal();

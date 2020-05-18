@@ -27,9 +27,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
-#if !NET35
 using System.Security; 
-#endif
 
 using KGySoft.Serialization.Binary;
 
@@ -185,6 +183,29 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
+        /// Gets whether <paramref name="item"/> is among the results of <paramref name="set"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="In{T}(T,T[])"/> overload for an example.
+        /// </summary>
+        /// <param name="item">The item to search for in the results of <paramref name="set"/>.</param>
+        /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
+        /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        public static bool In<T>(this T item, IEnumerable<T> set)
+        {
+            if (set == null)
+                return false;
+
+            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+            foreach (T element in set)
+            {
+                if (comparer.Equals(item, element))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Clones an object by deep cloning.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
@@ -208,9 +229,7 @@ namespace KGySoft.CoreLibraries
         /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             ISurrogateSelector surrogate = null;

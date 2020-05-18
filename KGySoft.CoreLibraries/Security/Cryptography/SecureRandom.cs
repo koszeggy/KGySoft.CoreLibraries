@@ -24,9 +24,7 @@ using System.Runtime.CompilerServices;
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
-#if !NET35
 using System.Security; 
-#endif
 using System.Security.Cryptography;
 
 #endregion
@@ -180,9 +178,7 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         protected override unsafe double Sample()
         {
             // ReSharper disable once JoinDeclarationAndInitializer - due to #if
@@ -222,9 +218,7 @@ namespace KGySoft.Security.Cryptography
 
         #region Private Methods
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         private unsafe uint SampleUInt32()
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)

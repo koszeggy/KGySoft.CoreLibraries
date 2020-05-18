@@ -79,9 +79,7 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public override string ToString() => new String(head, 0, Length).Replace('\0', '□');
 
         #endregion

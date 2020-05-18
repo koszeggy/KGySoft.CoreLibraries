@@ -26,6 +26,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+
 using NUnit.Framework;
 
 #endregion
@@ -97,8 +98,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             void Test<TTarget>(object source, TTarget expectedResult)
             {
+                Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({source}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
                 TTarget actualResult = source.Convert<TTarget>();
                 AssertDeepEquals(expectedResult, actualResult);
+                Console.WriteLine($"({actualResult?.ToString() ?? "<null>"})");
             }
 
             // IConvertible
@@ -115,6 +118,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             typeof(long).RegisterConversion(typeof(IntPtr), (obj, type, culture) => new IntPtr((long)obj));
             Test(1L, new IntPtr(1));
             Test(1, new IntPtr(1)); // int -> long -> IntPtr
+            Test("1", "1".AsSegment());
+            Test("1".AsSegment(), "1");
 
             // to array
             Test(new int[] { 1, 2, 3 }, new long[] { 1, 2, 3 }); // between arrays

@@ -23,9 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-#if !NET35
 using System.Security;
-#endif
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -244,9 +242,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
             Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
         private static Assembly LoadAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)

@@ -656,7 +656,7 @@ namespace KGySoft.ComponentModel
         {
             if (e == null)
                 Throw.ArgumentNullException(Argument.e);
-            if (AffectsModifiedState(e.PropertyName))
+            if (!isModified && AffectsModifiedState(e.PropertyName))
                 SetModified(true);
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, e);

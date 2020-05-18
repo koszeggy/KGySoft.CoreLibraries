@@ -24,9 +24,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-#if !(NET35 || NET40)
 using System.Runtime.CompilerServices; 
-#endif
 #if !NETSTANDARD2_0
 using System.Reflection.Emit; 
 #else
@@ -254,9 +252,7 @@ namespace KGySoft.CoreLibraries
         /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
         /// after the registering may continue to return the original converter. So make sure you register your custom converters
         /// at the start of your application.</note></remarks>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter",
             Justification = "Intended. Method<T>() is more simple than Method(Type)")]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
@@ -649,9 +645,7 @@ namespace KGySoft.CoreLibraries
 
         internal static bool IsRuntimeType(this Type type) => type?.GetType() == Reflector.RuntimeType;
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsConstructedGenericType(this Type type) =>
 #if NET35 || NET40
             type.IsGenericType && !type.IsGenericTypeDefinition;

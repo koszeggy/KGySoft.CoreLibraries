@@ -124,6 +124,7 @@ namespace KGySoft
         source,
         sourcePropertyName,
         sourceType,
+        startIndex,
         strategy,
         stream,
         stringValue,
@@ -136,8 +137,11 @@ namespace KGySoft
         types,
         upperBound,
         value,
+        values,
         way,
-        writer
+        writer,
+        x,
+        y
         // ReSharper restore InconsistentNaming
     }
 }

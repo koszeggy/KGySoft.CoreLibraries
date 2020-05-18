@@ -2152,9 +2152,7 @@ namespace KGySoft.Collections
             GetObjectData(info, context);
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         void IDeserializationCallback.OnDeserialization(object sender)
         {
             SerializationInfo info = deserializationInfo;

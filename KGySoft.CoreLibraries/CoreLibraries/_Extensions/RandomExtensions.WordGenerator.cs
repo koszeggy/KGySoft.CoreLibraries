@@ -111,9 +111,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Public Methods
 
-#if !NET35
                 [SecuritySafeCritical] 
-#endif
                 public override string ToString() => result.ToString();
 
                 #endregion

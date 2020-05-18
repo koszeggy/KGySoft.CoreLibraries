@@ -1082,38 +1082,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
-        public void ElementSizeExponent()
-        {
-            const string es = "elementSizeExponent";
-            // non-primitive type
-            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<string>), es));
-
-            // bool, byte, sbyte: 0
-            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<bool>), es));
-            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<byte>), es));
-            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<sbyte>), es));
-
-            // short, ushort, char: 1
-            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<short>), es));
-            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<ushort>), es));
-            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<char>), es));
-
-            // int, uint, float: 2
-            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<int>), es));
-            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<uint>), es));
-            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<float>), es));
-
-            // long, ulong, double: 3
-            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<long>), es));
-            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<ulong>), es));
-            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<double>), es));
-
-            // intptr, uintptr: 2 or 3, depending on platform
-            Assert.AreEqual(IntPtr.Size == 4 ? 2 : 3, Reflector.GetField(typeof(CircularList<IntPtr>), es));
-            Assert.AreEqual(UIntPtr.Size == 4 ? 2 : 3, Reflector.GetField(typeof(CircularList<UIntPtr>), es));
-        }
-
-        [Test]
         public void Reverse()
         {
             // normal reversing

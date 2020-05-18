@@ -410,9 +410,7 @@ namespace KGySoft.Serialization.Xml
             return false;
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
             byte[] data = Convert.FromBase64String(ctx.Element.Value);

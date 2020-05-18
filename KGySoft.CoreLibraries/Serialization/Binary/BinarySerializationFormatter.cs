@@ -30,8 +30,8 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 #if !NET35
 using System.Collections.Concurrent;
-using System.Security;
 #endif
+using System.Security;
 using System.Text;
 
 using KGySoft.Collections;
@@ -1158,9 +1158,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryWriter constructor will not leave the stream open.")]
         public byte[] Serialize(object data)
         {
@@ -1193,9 +1191,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
             Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
         public void SerializeToStream(Stream stream, object data) => SerializeByWriter(new BinaryWriter(stream), data);
@@ -1218,9 +1214,7 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public void SerializeByWriter(BinaryWriter writer, object data)
         {
             if (writer == null)
@@ -1238,9 +1232,7 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         public object DeserializeByReader(BinaryReader reader)
         {
             if (reader == null)

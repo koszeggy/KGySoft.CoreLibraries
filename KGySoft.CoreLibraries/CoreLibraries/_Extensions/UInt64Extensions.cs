@@ -21,9 +21,7 @@ using System;
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
-#if !NET35
 using System.Security; 
-#endif
 
 #endregion
 
@@ -33,14 +31,10 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsSingleFlag(this ulong value) => value != 0 && (value & (value - 1UL)) == 0UL;
 
-#if !(NET35 || NET40)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetFlagsCount(this ulong value)
         {
 #if NET35 || NET40 || NET45 || NET472 || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
@@ -59,9 +53,7 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
-#if !NET35
         [SecuritySafeCritical]
-#endif
         internal static unsafe string QuickToString(this ulong value, bool isNegative)
         {
             if (value == 0)

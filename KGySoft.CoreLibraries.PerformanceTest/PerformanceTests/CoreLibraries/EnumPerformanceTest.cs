@@ -139,9 +139,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             .AddCase(() => Enum.Parse(typeof(FlagsEnum), nameof(FlagsEnum.Gamma) + ", " + nameof(FlagsEnum.AlphaBeta) + ", " + nameof(FlagsEnum.Delta)), $"System.Enum.Parse(typeof({nameof(FlagsEnum)}), \"{nameof(FlagsEnum.Gamma)}, {nameof(FlagsEnum.AlphaBeta)}, {nameof(FlagsEnum.Delta)}\")")
             .AddCase(() => Enum<FlagsEnum>.Parse(nameof(FlagsEnum.Gamma) + ", " + nameof(FlagsEnum.AlphaBeta) + ", " + nameof(FlagsEnum.Delta)), $"KGySoft.CoreLibraries.Enum<{nameof(FlagsEnum)}>.Parse(\"{nameof(FlagsEnum.Gamma)}, {nameof(FlagsEnum.AlphaBeta)}, {nameof(FlagsEnum.Delta)}\")")
 
-            .AddCase(() => Enum.Parse(typeof(FlagsEnum), "gamma, aLPHAbETA, DELTA", true), $"System.Enum.Parse(typeof({nameof(FlagsEnum)}), \"gamma, aLPHAbETA, DELTA\", ignoreCase: true)")
-            .AddCase(() => Enum<FlagsEnum>.Parse("gamma, aLPHAbETA, DELTA", true), $"KGySoft.CoreLibraries.Enum<{nameof(FlagsEnum)}>.Parse(\"gamma, aLPHAbETA, DELTA\", ignoreCase: true)")
-
             .AddCase(() => Enum<FlagsEnum>.Parse("Alpha, 16, Beta"), $"KGySoft.CoreLibraries.Enum<{nameof(FlagsEnum)}>.Parse(\"Alpha, 16, Beta\")")
             .AddCase(() => Enum<FlagsEnum>.Parse("Alpha | 16 | Beta", "|"), $"KGySoft.CoreLibraries.Enum<{nameof(FlagsEnum)}>.Parse(\"Alpha | 16 | Beta\", \"|\")")
 
