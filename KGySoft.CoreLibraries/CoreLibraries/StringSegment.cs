@@ -148,6 +148,9 @@ namespace KGySoft.CoreLibraries
             Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "()}")]
     public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable, IEnumerable<char>
+#if !(NET35 || NET40)
+        , IReadOnlyList<char>
+#endif
     {
         #region Enumerator struct
 
@@ -271,6 +274,8 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
+        #region Public Properties
+
         /// <summary>
         /// Gets the length of this <see cref="StringSegment"/>.
         /// </summary>
@@ -298,7 +303,6 @@ namespace KGySoft.CoreLibraries
         public bool IsNullOrEmpty => length == 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlySpan{T}"/> of characters.
         /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above
@@ -311,6 +315,16 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length);
 #endif
+
+        #endregion
+
+        #region Explicitly Implemented Properties
+
+#if !(NET35 || NET40)
+        int IReadOnlyCollection<char>.Count => length;
+#endif
+
+        #endregion
 
         #endregion
 

@@ -70,8 +70,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            CheckComparison(comparison);
 
             if (length == 0)
                 return IsNull || value.length > 0 ? -1 : 0;
@@ -122,9 +121,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             if (count < 0 || startIndex + count > length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
-
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            CheckComparison(comparison);
 
             if (length == 0)
                 return IsNull || value.length > 0 ? -1 : 0;
@@ -212,8 +209,7 @@ namespace KGySoft.CoreLibraries
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            CheckComparison(comparison);
             if (IsNull)
                 return false;
 
@@ -253,8 +249,7 @@ namespace KGySoft.CoreLibraries
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.s);
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            CheckComparison(comparison);
             if (IsNull)
                 return false;
 

@@ -54,9 +54,7 @@ namespace KGySoft.CoreLibraries
             if (comparison == StringComparison.Ordinal)
                 return a.CompareTo(b);
 
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
-
+            CheckComparison(comparison);
             if (a.str == null || b.str == null)
             {
                 // They are both null
@@ -117,6 +115,16 @@ namespace KGySoft.CoreLibraries
             }
 
             return compareInfo.Compare(a.str, a.offset, a.length, b.str, b.offset, b.length, options);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private static void CheckComparison(StringComparison comparison)
+        {
+            if ((uint)comparison > (uint)StringComparison.OrdinalIgnoreCase)
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
         }
 
         #endregion
