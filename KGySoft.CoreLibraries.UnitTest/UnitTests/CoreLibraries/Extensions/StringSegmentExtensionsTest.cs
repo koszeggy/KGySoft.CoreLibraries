@@ -17,8 +17,9 @@
 #region Usings
 
 using System;
-using KGySoft.Diagnostics;
+
 using KGySoft.Reflection;
+
 using NUnit.Framework;
 
 #endregion

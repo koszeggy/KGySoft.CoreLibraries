@@ -543,7 +543,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.s);
             if ((uint)offset > (uint)s.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
-            return new StringSegment(s, offset);
+            return new StringSegment(s, offset, s.Length - offset);
         }
 
         /// <summary>

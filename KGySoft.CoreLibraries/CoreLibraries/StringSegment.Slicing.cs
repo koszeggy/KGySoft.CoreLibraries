@@ -152,7 +152,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, string separator)
         {
-            Debug.Assert(String.IsNullOrEmpty(separator), "Non-empty separator is expected here");
+            Debug.Assert(!String.IsNullOrEmpty(separator), "Non-empty separator is expected here");
             if (rest.length == 0)
             {
                 StringSegment result = rest.IsNull ? default : rest;
@@ -276,37 +276,38 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="offset"/> and <paramref name="length"/>.
+        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
         /// </summary>
-        /// <param name="offset">The offset that points to the first character of the returned segment.</param>
+        /// <param name="startIndex">The offset that points to the first character of the returned segment.</param>
         /// <param name="length">The desired length of the returned segment.</param>
-        /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="offset"/> and <paramref name="length"/>.</returns>
+        /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public StringSegment Substring(int offset, int length)
+        public StringSegment Substring(int startIndex, int length)
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if ((uint)offset > (uint)Length)
-                Throw.ArgumentOutOfRangeException(Argument.offset);
-            if ((uint)(offset + length) > (uint)Length)
+            if ((uint)startIndex > (uint)Length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if ((uint)(startIndex + length) > (uint)Length)
                 Throw.ArgumentOutOfRangeException(Argument.length);
 
-            return SubstringInternal(offset, length);
+            return new StringSegment(str, offset + startIndex, length);
         }
 
         /// <summary>
-        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="offset"/>.
+        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="startIndex"/>.
         /// </summary>
-        /// <param name="offset">The offset that points to the first character of the returned segment.</param>
-        /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="offset"/>.</returns>
+        /// <param name="startIndex">The offset that points to the first character of the returned segment.</param>
+        /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public StringSegment Substring(int offset)
+        public StringSegment Substring(int startIndex)
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if ((uint)offset > (uint)Length)
-                Throw.ArgumentOutOfRangeException(Argument.offset);
-            return SubstringInternal(offset);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            int start = offset + startIndex;
+            return new StringSegment(str, start, length - startIndex);
         }
 
         public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = true)

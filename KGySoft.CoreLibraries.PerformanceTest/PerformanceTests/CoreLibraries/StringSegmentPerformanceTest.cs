@@ -42,13 +42,44 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         public void SubstringTest(string s) => new PerformanceTest
             {
                 TestName = $"Length = {s.Length}",
-                Iterations = 1_000_000
+                Iterations = 1_000_000,
             }
             .AddCase(() => s.Substring(1), "String.Substring")
             .AddCase(() => s.AsSegment().Substring(1), "StringSegment.Substring")
-            .AddCase(() => s.AsSegment().SubstringInternal(1), "StringSegment.SubstringInternal")
             .AddCase(() => new MutableStringSegment(s).Substring(1), "MutableStringSegment.Substring")
             .AddCase(() => new MutableStringSegment(s).Slice(1), "MutableStringSegment.Slice")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        [TestCase(testStringShort)]
+        [TestCase(testStringLong)]
+        public void SubstringTestWithLength(string s) => new PerformanceTest
+            {
+                TestName = $"Length = {s.Length}",
+                Iterations = 1_000_000,
+            }
+            .AddCase(() => s.Substring(1, 2), "String.Substring")
+            .AddCase(() => s.AsSegment().Substring(1, 2), "StringSegment.Substring")
+            .AddCase(() => new MutableStringSegment(s).Substring(1, 2), "MutableStringSegment.Substring")
+            .AddCase(() => new MutableStringSegment(s).Slice(1, 2), "MutableStringSegment.Slice")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        [TestCase(testStringShort)]
+        [TestCase(testStringLong)]
+        public void SplitWholeByWhitespacesTest(string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: White spaces",
+                Iterations = 1_000_000,
+            }
+            .AddCase(() => s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, RemoveEmptyEntries)")
+            .AddCase(() => s.AsSegment().Split(), "StringSegment.Split()")
+            .AddCase(() =>
+            {
+                StringSegment rest = s.AsSegment();
+                while (!rest.IsNull)
+                    rest.ReadToWhiteSpace();
+            }, "StringSegmentExtensions.ReadToWhiteSpace()")
             .DoTest()
             .DumpResults(Console.Out);
 
@@ -59,14 +90,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: White spaces; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(count)")
+            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, count)")
             .AddCase(() => s.AsSegment().Split(limitCount), "StringSegment.Split(count)")
             .AddCase(() =>
             {
                 StringSegment rest = s.AsSegment();
                 for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToWhiteSpace();
-            }, "StringSegmentExtensions.ReadToSeparator(char)")
+            }, "StringSegmentExtensions.ReadToWhiteSpace(char)")
             .DoTest()
             .DumpResults(Console.Out);
 

@@ -387,10 +387,6 @@ namespace KGySoft.CoreLibraries
             this.length = length;
         }
 
-        internal StringSegment(string s, int offset) : this(s, offset, s.Length - offset)
-        {
-        }
-
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal StringSegment(string s)
         {
