@@ -118,6 +118,7 @@ namespace KGySoft
         s,
         scale,
         separator,
+        separators,
         serializedType,
         set,
         severity,

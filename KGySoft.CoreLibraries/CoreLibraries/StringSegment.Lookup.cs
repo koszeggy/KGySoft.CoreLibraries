@@ -349,6 +349,7 @@ namespace KGySoft.CoreLibraries
         private int IndexOfInternal(in StringSegment s, int startIndex, int count)
         {
             Debug.Assert(!IsNull);
+            Debug.Assert(!s.IsNull);
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
 
             int len = s.length;
@@ -422,7 +423,7 @@ namespace KGySoft.CoreLibraries
 
         private int IndexOfAnyInternal(StringSegment[] separators, int startIndex, int count, out int separatorIndex)
         {
-            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
 
             for (int i = startIndex; i < count; i++)
             {
@@ -449,7 +450,7 @@ namespace KGySoft.CoreLibraries
 
         private int IndexOfAnyInternal(string[] separators, int startIndex, int count, out int separatorIndex)
         {
-            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
 
             for (int i = startIndex; i < count; i++)
             {

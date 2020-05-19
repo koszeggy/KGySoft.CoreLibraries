@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries
         {
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
         {
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -98,10 +98,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, char[] separators)
         {
-            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -128,7 +128,7 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(!separator.IsNullOrEmpty, "Non-empty separator is expected here");
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -152,10 +152,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, string separator)
         {
-            Debug.Assert(!separator.IsNullOrEmpty(), "Non-empty separator is expected here");
+            Debug.Assert(String.IsNullOrEmpty(separator), "Non-empty separator is expected here");
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -179,10 +179,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, string[] separators)
         {
-            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -206,10 +206,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, StringSegment[] separators)
         {
-            Debug.Assert(separators != null && separators.Length > 0, "Non-empty separators are expected here");
+            Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
             if (rest.length == 0)
             {
-                StringSegment result = rest.IsNull ? default : Empty;
+                StringSegment result = rest.IsNull ? default : rest;
                 rest = default;
                 return result;
             }
@@ -311,21 +311,13 @@ namespace KGySoft.CoreLibraries
 
         public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = true)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
 
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
@@ -354,21 +346,12 @@ namespace KGySoft.CoreLibraries
 
         public IList<StringSegment> Split(char separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
-
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
@@ -395,36 +378,26 @@ namespace KGySoft.CoreLibraries
 
         public IList<StringSegment> Split(char separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
-        public IList<StringSegment> Split(char[] separator, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(char[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
-            if (separator.IsNullOrEmpty())
+            if (separators == null || separators.Length == 0)
                 return Split(maxLength, removeEmptyEntries);
-            if (separator.Length == 1)
-                return Split(separator[0], maxLength, removeEmptyEntries);
+            if (separators.Length == 1)
+                return Split(separators[0], maxLength, removeEmptyEntries);
 
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
-
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
             while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment segment = GetNextSegment(ref rest, separator);
+                StringSegment segment = GetNextSegment(ref rest, separators);
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
             }
@@ -435,9 +408,9 @@ namespace KGySoft.CoreLibraries
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
-                    for (int i = 0; i < separator.Length; i++)
+                    for (int i = 0; i < separators.Length; i++)
                     {
-                        if (rest[0] == separator[i])
+                        if (rest[0] == separators[i])
                         {
                             rest = rest.SubstringInternal(1);
                             break;
@@ -452,35 +425,25 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        public IList<StringSegment> Split(params char[] separator) => Split(separator, default, false);
+        public IList<StringSegment> Split(params char[] separators) => Split(separators, default, false);
 
-        public IList<StringSegment> Split(char[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(char[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
         public IList<StringSegment> Split(in StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator.length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             // null or empty string separator: returning whole string (compatibility with String.Split)
             if (separator.length == 0)
                 return new[] { this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
-
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
@@ -507,36 +470,26 @@ namespace KGySoft.CoreLibraries
 
         public IList<StringSegment> Split(in StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
-        public IList<StringSegment> Split(StringSegment[] separator, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(StringSegment[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
-            if (separator.IsNullOrEmpty())
+            if (separators == null || separators.Length == 0)
                 return Split(maxLength, removeEmptyEntries);
-            if (separator.Length == 1)
-                return Split(separator[0], maxLength, removeEmptyEntries);
+            if (separators.Length == 1)
+                return Split(separators[0], maxLength, removeEmptyEntries);
 
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
-
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
             while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment segment = GetNextSegment(ref rest, separator);
+                StringSegment segment = GetNextSegment(ref rest, separators);
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
             }
@@ -547,7 +500,7 @@ namespace KGySoft.CoreLibraries
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
-                    foreach (StringSegment sep in separator)
+                    foreach (StringSegment sep in separators)
                     {
                         if (sep.length == 0 || sep.length > rest.length)
                             continue;
@@ -566,35 +519,25 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        public IList<StringSegment> Split(params StringSegment[] separator) => Split(separator, default, false);
+        public IList<StringSegment> Split(params StringSegment[] separators) => Split(separators, default, false);
 
-        public IList<StringSegment> Split(StringSegment[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(StringSegment[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
         public IList<StringSegment> Split(string separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator?.Length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-
-            if (maxLength <= 1)
-            {
-                if (maxLength < 0)
-                    Throw.ArgumentException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
-            }
-
-            if (length == 0)
-                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
 
             // null or empty string separator: returning whole string (compatibility with String.Split)
             if (String.IsNullOrEmpty(separator))
                 return new[] { this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
-
-            var result = new List<StringSegment>(Math.Min(limit, 16));
+            result = new List<StringSegment>(Math.Min(limit, 16));
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
 
@@ -621,13 +564,13 @@ namespace KGySoft.CoreLibraries
 
         public IList<StringSegment> Split(string separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
-        public IList<StringSegment> Split(string[] separator, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(string[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
-            if (separator.IsNullOrEmpty())
+            if (separators == null || separators.Length == 0)
                 return Split(maxLength, removeEmptyEntries);
-            if (separator.Length == 1)
-                return Split(separator[0], maxLength, removeEmptyEntries);
+            if (separators.Length == 1)
+                return Split(separators[0], maxLength, removeEmptyEntries);
 
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
@@ -650,7 +593,7 @@ namespace KGySoft.CoreLibraries
 
             while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment segment = GetNextSegment(ref rest, separator);
+                StringSegment segment = GetNextSegment(ref rest, separators);
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
             }
@@ -661,7 +604,7 @@ namespace KGySoft.CoreLibraries
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
-                    foreach (string sep in separator)
+                    foreach (string sep in separators)
                     {
                         if (String.IsNullOrEmpty(sep) || sep.Length > rest.length)
                             continue;
@@ -680,9 +623,9 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        public IList<StringSegment> Split(params string[] separator) => Split(separator, default, false);
+        public IList<StringSegment> Split(params string[] separators) => Split(separators, default, false);
 
-        public IList<StringSegment> Split(string[] separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(string[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
         #endregion
 
@@ -695,6 +638,29 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal StringSegment SubstringInternal(int start) =>
             new StringSegment(str, offset + start, length - start);
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private StringSegment[] SplitShortPath(int? maxLength, bool removeEmptyEntries)
+        {
+            if (IsNull)
+                Throw.InvalidOperationException(Res.StringSegmentNull);
+
+            if (maxLength <= 1)
+            {
+                if (maxLength < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.maxLength);
+                return maxLength == 0 ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+            }
+
+            if (length == 0)
+                return removeEmptyEntries ? Reflector.EmptyArray<StringSegment>() : new[] { this };
+
+            return null;
+        }
 
         #endregion
 
