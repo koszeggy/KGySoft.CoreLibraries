@@ -103,6 +103,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
 
+        [TestCase(-1, null, "")]
+        [TestCase(0, "", "")]
+        [TestCase(0, "x", "")]
         [TestCase(0, " ", " ")]
         [TestCase(1, " ,, ", ",")]
         [TestCase(2, " ,, ", ", ")]
@@ -111,14 +114,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase(-1, " ,.", ", ")]
         public void IndexOf(int expectedResult, string s, string toSearch)
         {
-            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch));
-            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch, 0, s.Length));
-            Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
+            if (s == null)
+                return;
 
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch));
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch, 0, s.Length, stringComparison));
-                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, new StringSegment(" " + s + " ").IndexOf(toSearch, 1, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch, 0, s?.Length ?? 0, stringComparison));
+                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, (" " + s + " ").AsSegment(1).IndexOf(toSearch, 1, s.Length, stringComparison));
             }
         }
 

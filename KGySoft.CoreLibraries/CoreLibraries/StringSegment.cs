@@ -33,13 +33,11 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Represents a segment of a <see cref="string"/>. This type is similar to <see cref="ReadOnlyMemory{T}"/>/<see cref="ArraySegment{T}"/>/<see cref="Span{T}"/> of <see cref="char">char</see>
     /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.
-    /// <br/>To create an instance use the <see cref="StringExtensions.AsSegment">AsSegment</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.GetSegment"/>
-    /// extension methods or just cast a string instance to <see cref="StringSegment"/>.
+    /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment"/> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
-    /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="StringExtensions.AsSegment">AsSegment</see>
-    /// and <see cref="O:KGySoft.CoreLibraries.StringExtensions.GetSegment"/> extension methods.</para>
+    /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment"/> extension methods.</para>
     /// <para>To convert a <see cref="StringSegment"/> instance to <see cref="string">string</see> use an explicit cast or the <see cref="ToString()">ToString</see> method.</para>
     /// <note>The <see cref="StringSegment"/> type <em>may</em> outperform <see cref="string">string</see> in scenarios when usual string splitting/trimming operations would allocate long strings.
     /// <br/>See a live example with performance test <a href="https://dotnetfiddle.net/Byk0YM" target="_blank">here</a>.</note>
@@ -68,8 +66,8 @@ namespace KGySoft.CoreLibraries
     /// 
     ///         // Or by extension methods:
     ///         segment = "Some string literal".AsSegment(); // "Some string literal"
-    ///         segment = "Some string literal".GetSegment(0, 4); // "Some"
-    ///         segment = "Some string literal".GetSegment(5, 6); // "string"
+    ///         segment = "Some string literal".AsSegment(0, 4); // "Some"
+    ///         segment = "Some string literal".AsSegment(5, 6); // "string"
     /// 
     ///         // Null assignment: all the following lines have the same effect:
     ///         segment = default(StringSegment); // the fastest way
@@ -328,10 +326,10 @@ namespace KGySoft.CoreLibraries
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
+                // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
+                // would come otherwise, and let the ArgumentOutOfRangeException come from string, even if a not localized one.
                 if (str == null)
-                    Throw.InvalidOperationException(Res.StringSegmentNull);
-
-                // we let the ArgumentOutOfRangeException come from string, even if not localized
+                    Throw.ArgumentOutOfRangeException(Argument.index);
                 return GetCharInternal(index);
             }
         }

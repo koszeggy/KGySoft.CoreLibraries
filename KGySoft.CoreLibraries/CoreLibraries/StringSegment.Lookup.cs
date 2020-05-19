@@ -32,21 +32,17 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(in StringSegment value)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
-            return IndexOfInternal(value, 0, length);
+            return IsNull ? -1 : IndexOfInternal(value, 0, length);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(string value)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value == null)
                 Throw.ArgumentNullException(Argument.value);
-            return IndexOfInternal(value, 0, length);
+            return IsNull ? -1 : IndexOfInternal(value, 0, length);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -65,22 +61,23 @@ namespace KGySoft.CoreLibraries
         /// <param name="count">The count.</param>
         /// <param name="comparison">The comparison.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
+            if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
+            if (!comparison.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+
+            if (length == 0)
+                return IsNull || value.length > 0 ? -1 : 0;
 
             if (comparison == StringComparison.Ordinal)
                 return IndexOfInternal(value, startIndex, count);
-
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
             int result = str.IndexOf(value.ToString(), offset + startIndex, count, comparison);
@@ -92,12 +89,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(char value)
-        {
-            if (str == null)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            return IndexOfInternal(value, 0, length);
-        }
+        public int IndexOf(char value) => IndexOfInternal(value, 0, length);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value, int startIndex)
@@ -106,11 +98,9 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value, int startIndex, int count)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
+            if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
             return IndexOfInternal(value, startIndex, count);
         }
@@ -123,10 +113,9 @@ namespace KGySoft.CoreLibraries
         public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
             if ((uint)startIndex > (uint)length)
@@ -137,6 +126,9 @@ namespace KGySoft.CoreLibraries
             if (!comparison.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
+            if (length == 0)
+                return IsNull || value.length > 0 ? -1 : 0;
+
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
             int result = str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
@@ -146,72 +138,84 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(char value)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
+            if (length == 0)
+                return -1;
             int result = str.LastIndexOf(value, offset, length);
             return result >= 0 ? result - offset : -1;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(char value, int startIndex)
             => LastIndexOf(value, startIndex, length - startIndex);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(char value, int startIndex, int count)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
+            if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
+
+            if (length == 0)
+                return -1;
             int result = str.LastIndexOf(value, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOfAny(params char[] values) => IndexOfAny(values, 0, length);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOfAny(char[] values, int startIndex) => IndexOfAny(values, startIndex, length - startIndex);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOfAny(char[] values, int startIndex, int count)
         {
-            if (str == null)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (values == null)
                 Throw.ArgumentNullException(Argument.values);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
+            if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
+            
+            if (length == 0)
+                return -1;
             return IndexOfAnyInternal(values, offset + startIndex, count);
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOfAny(params char[] values) => LastIndexOfAny(values, 0, length);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOfAny(char[] values, int startIndex) => LastIndexOfAny(values, startIndex, length - startIndex);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOfAny(char[] values, int startIndex, int count)
         {
-            if (str == null)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (values == null)
                 Throw.ArgumentNullException(Argument.values);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if (count < 0 || startIndex + count > length)
+            if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
+
+            if (length == 0)
+                return -1;
             int result = str.LastIndexOfAny(values, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
         public bool StartsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value.IsNull)
-                Throw.ArgumentNullException(Argument.s);
+                Throw.ArgumentNullException(Argument.value);
             if (!comparison.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            if (IsNull)
+                return false;
 
             int len = value.length;
             if (len > length)
@@ -225,45 +229,34 @@ namespace KGySoft.CoreLibraries
 
         public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
         {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+
+            // this must come after null check
             if (comparison != StringComparison.Ordinal)
                 return StartsWith(new StringSegment(value), comparison);
 
             if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (value == null)
-                Throw.ArgumentNullException(Argument.s);
-            if (!comparison.IsDefined())
-                Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
-
+                return false;
             int len = value.Length;
             if (len > length)
                 return false;
             if (len == 0)
                 return true;
 
-            if (comparison == StringComparison.Ordinal)
-                return StartsWithInternal(value);
-
-            return length == len
-                ? Equals(this, value, comparison)
-                : Equals(SubstringInternal(0, len), value, comparison);
+            return StartsWithInternal(value);
         }
 
-        public bool StartsWith(char value)
-        {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            return length > 0 && GetCharInternal(offset) == value;
-        }
+        public bool StartsWith(char value) => length > 0 && GetCharInternal(offset) == value;
 
         public bool EndsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.s);
             if (!comparison.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
+            if (IsNull)
+                return false;
 
             int len = value.length;
             if (len > length)
@@ -275,12 +268,7 @@ namespace KGySoft.CoreLibraries
                 : Equals(SubstringInternal(length - len, len), value, comparison);
         }
 
-        public bool EndsWith(char value)
-        {
-            if (IsNull)
-                Throw.InvalidOperationException(Res.StringSegmentNull);
-            return length > 0 && GetCharInternal(offset + length - 1) == value;
-        }
+        public bool EndsWith(char value) => length > 0 && GetCharInternal(offset + length - 1) == value;
 
         #endregion
 
@@ -289,12 +277,15 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfInternal(char c, int startIndex, int count)
         {
+            if (length == 0)
+                return -1;
             int result = str.IndexOf(c, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
         private int IndexOfInternal(string s, int startIndex, int count)
         {
+            Debug.Assert(!IsNull);
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
 
             int len = s.Length;
@@ -362,6 +353,7 @@ namespace KGySoft.CoreLibraries
 
         private int IndexOfInternal(in StringSegment s, int startIndex, int count)
         {
+            Debug.Assert(!IsNull);
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
 
             int len = s.length;
@@ -425,8 +417,10 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfAnyInternal(char[] values, int startIndex, int count)
         {
+            Debug.Assert(length != 0);
             int result = str.IndexOfAny(values, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
@@ -485,6 +479,7 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool StartsWithInternal(string value)
         {
             Debug.Assert(!String.IsNullOrEmpty(value) && value.Length <= length);

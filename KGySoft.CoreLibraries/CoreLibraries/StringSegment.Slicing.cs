@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries
                 return result;
             }
 
-            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+            int pos = rest.IndexOf(separator);
 
             // last segment
             if (pos == -1)
@@ -286,9 +286,12 @@ namespace KGySoft.CoreLibraries
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (offset < 0)
+            if ((uint)offset > (uint)Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
-            return str.GetSegment(this.offset + offset, length);
+            if ((uint)(offset + length) > (uint)Length)
+                Throw.ArgumentOutOfRangeException(Argument.length);
+
+            return SubstringInternal(offset, length);
         }
 
         /// <summary>
@@ -301,9 +304,9 @@ namespace KGySoft.CoreLibraries
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if (offset < 0)
+            if ((uint)offset > (uint)Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
-            return str.GetSegment(this.offset + offset, length - offset);
+            return SubstringInternal(offset);
         }
 
         public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = true)

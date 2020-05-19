@@ -111,9 +111,6 @@ namespace KGySoft
         /// <summary>ms</summary>
         internal static string Millisecond => Get("General_Millisecond");
 
-        /// <summary>Offset and length were out of bounds.</summary>
-        internal static string InvalidOffsLen => Get("General_InvalidOffsLen");
-
         /// <summary>Offset and length were out of bounds for the array.</summary>
         internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
 
