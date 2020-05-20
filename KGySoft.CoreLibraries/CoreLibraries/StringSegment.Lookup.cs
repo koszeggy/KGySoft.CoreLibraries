@@ -29,14 +29,15 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value)
-        {
-            if (value.IsNull)
-                Throw.ArgumentNullException(Argument.value);
-            return IsNull ? -1 : IndexOfInternal(value, 0, length);
-        }
+        #region IndexOf
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using ordinal comparison.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(string value)
         {
@@ -45,22 +46,90 @@ namespace KGySoft.CoreLibraries
             return IsNull ? -1 : IndexOfInternal(value, 0, length);
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value, StringComparison comparison)
-            => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
+        public int IndexOf(string value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if ((uint)startIndex + count > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
 
+            if (length == 0)
+                return IsNull || value.Length > 0 ? -1 : 0;
+
+            if (comparison == StringComparison.Ordinal)
+                return IndexOfInternal(value, startIndex, count);
+
+            int result = str.IndexOf(value, offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+        public int IndexOf(string value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => IndexOf(value, startIndex, length - startIndex, comparison);
 
         /// <summary>
-        /// Indexes the of.
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
         /// </summary>
-        /// <param name="value">The value.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="count">The count.</param>
-        /// <param name="comparison">The comparison.</param>
-        /// <returns></returns>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is 0.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(string value, StringComparison comparison)
+            => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using ordinal comparison.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is 0.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(in StringSegment value)
+        {
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return IsNull ? -1 : IndexOfInternal(value, 0, length);
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
@@ -87,13 +156,40 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(char value) => IndexOfInternal(value, 0, length);
+        public int IndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => IndexOf(value, startIndex, length - startIndex, comparison);
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(char value, int startIndex)
-            => IndexOf(value, startIndex, length - startIndex);
+        public int IndexOf(in StringSegment value, StringComparison comparison)
+            => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="count"/> values.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value, int startIndex, int count)
         {
@@ -104,14 +200,96 @@ namespace KGySoft.CoreLibraries
             return IndexOfInternal(value, startIndex, count);
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
-            => LastIndexOf(value, 0, length, comparison);
+        public int IndexOf(char value, int startIndex)
+            => IndexOf(value, startIndex, length - startIndex);
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+        public int IndexOf(char value) => IndexOfInternal(value, 0, length);
+
+        #endregion
+
+        #region LastIndexOf
+        
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(string value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
+
+            if (length == 0)
+                return IsNull || value.Length > 0 ? -1 : 0;
+
+            int result = str.LastIndexOf(value, offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(string value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that string is found, or -1 if it is not.
+        /// If value is <see cref="String.Empty"/>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(string value, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, 0, length, comparison);
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
@@ -135,19 +313,41 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(char value)
-        {
-            if (length == 0)
-                return -1;
-            int result = str.LastIndexOf(value, offset, length);
-            return result >= 0 ? result - offset : -1;
-        }
+        public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
+        /// If value is <see cref="Empty"/>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(char value, int startIndex)
-            => LastIndexOf(value, startIndex, length - startIndex);
+        public int LastIndexOf(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, 0, length, comparison);
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="count"/> values.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(char value, int startIndex, int count)
         {
@@ -162,12 +362,43 @@ namespace KGySoft.CoreLibraries
             return result >= 0 ? result - offset : -1;
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOfAny(params char[] values) => IndexOfAny(values, 0, length);
+        public int LastIndexOf(char value, int startIndex)
+            => LastIndexOf(value, startIndex, length - startIndex);
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOfAny(char[] values, int startIndex) => IndexOfAny(values, startIndex, length - startIndex);
+        public int LastIndexOf(char value)
+        {
+            if (length == 0)
+                return -1;
+            int result = str.LastIndexOf(value, offset, length);
+            return result >= 0 ? result - offset : -1;
+        }
 
+        #endregion
+
+        #region IndexOfAny
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence in this <see cref="StringSegment"/> of any character in the specified array
+        /// using the specified <paramref name="startIndex"/> and <paramref name="count"/> values.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOfAny(char[] values, int startIndex, int count)
         {
@@ -177,18 +408,42 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             if ((uint)startIndex + count > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
-            
+
             if (length == 0)
                 return -1;
             return IndexOfAnyInternal(values, offset + startIndex, count);
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence in this <see cref="StringSegment"/> of any character in the specified array
+        /// using the specified <paramref name="startIndex"/>.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOfAny(params char[] values) => LastIndexOfAny(values, 0, length);
+        public int IndexOfAny(char[] values, int startIndex) => IndexOfAny(values, startIndex, length - startIndex);
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence in this <see cref="StringSegment"/> of any character in the specified array.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOfAny(char[] values, int startIndex) => LastIndexOfAny(values, startIndex, length - startIndex);
+        public int IndexOfAny(params char[] values) => IndexOfAny(values, 0, length);
 
+        #endregion
+
+        #region LastIndexOfAny
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence in this <see cref="StringSegment"/> of any character in the specified array
+        /// using the specified <paramref name="startIndex"/> and <paramref name="count"/> values.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOfAny(char[] values, int startIndex, int count)
         {
@@ -205,6 +460,63 @@ namespace KGySoft.CoreLibraries
             return result >= 0 ? result - offset : -1;
         }
 
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence in this <see cref="StringSegment"/> of any character in the specified array
+        /// using the specified <paramref name="startIndex"/>.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOfAny(char[] values, int startIndex) => LastIndexOfAny(values, startIndex, length - startIndex);
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence in this <see cref="StringSegment"/> of any character in the specified array.
+        /// </summary>
+        /// <param name="values">The character values to search.</param>
+        /// <returns>The zero-based index position of the first occurrence in this <see cref="StringSegment"/> where any character in the specified array was found; otherwise, -1.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOfAny(params char[] values) => LastIndexOfAny(values, 0, length);
+
+        #endregion
+
+        #region StartsWith
+
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The string to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+
+            if (comparison != StringComparison.Ordinal)
+                return StartsWith(new StringSegment(value), comparison);
+
+            if (IsNull)
+                return false;
+            int len = value.Length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+
+            return StartsWithInternal(value);
+        }
+
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
@@ -223,28 +535,25 @@ namespace KGySoft.CoreLibraries
                 : Equals(SubstringInternal(0, len), value, comparison);
         }
 
-        public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
-        {
-            if (value == null)
-                Throw.ArgumentNullException(Argument.value);
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The character to compare.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool StartsWith(char value) => length > 0 && GetCharInternal(0) == value;
 
-            // this must come after null check
-            if (comparison != StringComparison.Ordinal)
-                return StartsWith(new StringSegment(value), comparison);
+        #endregion
 
-            if (IsNull)
-                return false;
-            int len = value.Length;
-            if (len > length)
-                return false;
-            if (len == 0)
-                return true;
+        #region EndsWith
 
-            return StartsWithInternal(value);
-        }
-
-        public bool StartsWith(char value) => length > 0 && GetCharInternal(offset) == value;
-
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance ends with the specified <paramref name="value"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
@@ -263,7 +572,14 @@ namespace KGySoft.CoreLibraries
                 : Equals(SubstringInternal(length - len, len), value, comparison);
         }
 
-        public bool EndsWith(char value) => length > 0 && GetCharInternal(offset + length - 1) == value;
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance ends with the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The character to compare.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool EndsWith(char value) => length > 0 && GetCharInternal(length - 1) == value;
+
+        #endregion
 
         #endregion
 
@@ -493,7 +809,6 @@ namespace KGySoft.CoreLibraries
             // for ordinal String.Compare is faster than Span.[Sequence]Equals
             return String.Compare(str, offset, value, 0, value.Length, StringComparison.Ordinal) == 0;
 #endif
-
         }
 
         #endregion

@@ -16,11 +16,12 @@
 
 #region Usings
 
-using KGySoft.Reflection;
-
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+
+using KGySoft.Reflection;
 
 #endregion
 
@@ -236,6 +237,8 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+        #region Trim
+
         /// <summary>
         /// Removes all leading and trailing white-space characters from the current <see cref="StringSegment"/>.
         /// </summary>
@@ -275,6 +278,10 @@ namespace KGySoft.CoreLibraries
             return SubstringInternal(0, end + 1);
         }
 
+        #endregion
+
+        #region Substring
+
         /// <summary>
         /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
         /// </summary>
@@ -282,6 +289,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="length">The desired length of the returned segment.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because of compatibility with string and because it will be the new length of the returned instance")]
         public StringSegment Substring(int startIndex, int length)
         {
             if (IsNull)
@@ -310,9 +318,24 @@ namespace KGySoft.CoreLibraries
             return new StringSegment(str, start, length - startIndex);
         }
 
-        public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = true)
+        #endregion
+
+        #region Split
+
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// This overload uses the whitespace characters as separators. Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToWhiteSpace">ReadToWhiteSpace</see> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by whitespace characters.</returns>
+        public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = false)
         {
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -343,11 +366,31 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// This overload uses the whitespace characters as separators. Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToWhiteSpace">ReadToWhiteSpace</see> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by whitespace characters.</returns>
         public IList<StringSegment> Split(bool removeEmptyEntries) => Split(default(int?), removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A character that delimits the segments in this <see cref="StringSegment"/>.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(char separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -377,8 +420,30 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A character that delimits the segments in this <see cref="StringSegment"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(char separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(char[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
@@ -387,7 +452,7 @@ namespace KGySoft.CoreLibraries
             if (separators.Length == 1)
                 return Split(separators[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -426,16 +491,47 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        public IList<StringSegment> Split(params char[] separators) => Split(separators, default, false);
-
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(char[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
+        public IList<StringSegment> Split(params char[] separators) => Split(separators, default, false);
+
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(in StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator.length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -469,8 +565,30 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(in StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(StringSegment[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
@@ -479,7 +597,7 @@ namespace KGySoft.CoreLibraries
             if (separators.Length == 1)
                 return Split(separators[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -520,16 +638,47 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        public IList<StringSegment> Split(params StringSegment[] separators) => Split(separators, default, false);
-
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(StringSegment[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
+        public IList<StringSegment> Split(params StringSegment[] separators) => Split(separators, default, false);
+
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(string separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator?.Length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitShortPath(maxLength, removeEmptyEntries);
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -563,8 +712,30 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string)"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(string separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(string[] separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
@@ -624,15 +795,37 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
+        public IList<StringSegment> Split(string[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
+
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(params string[] separators) => Split(separators, default, false);
 
-        public IList<StringSegment> Split(string[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
+        #endregion
 
         #endregion
 
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
         internal StringSegment SubstringInternal(int start, int length) =>
             new StringSegment(str, offset + start, length);
 
@@ -645,7 +838,7 @@ namespace KGySoft.CoreLibraries
         #region Private Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private StringSegment[] SplitShortPath(int? maxLength, bool removeEmptyEntries)
+        private StringSegment[] SplitCommon(int? maxLength, bool removeEmptyEntries)
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);

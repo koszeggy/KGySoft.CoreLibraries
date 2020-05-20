@@ -433,9 +433,7 @@ namespace KGySoft.CoreLibraries
                 result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
 
             // collection elements
-            var collSrc = reference as IEnumerable;
-            var collTarget = check as IEnumerable;
-            if (collSrc != null && collTarget != null && !(reference is string || check is string))
+            if (reference is IEnumerable collSrc && check is IEnumerable collTarget && !(reference is string || check is string))
                 result &= CheckItemsEqual(collSrc, collTarget, true, errors, checkedObjects);
             return result;
         }

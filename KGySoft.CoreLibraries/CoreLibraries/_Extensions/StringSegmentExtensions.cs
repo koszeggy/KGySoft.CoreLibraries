@@ -23,6 +23,9 @@ using System.Runtime.CompilerServices;
 
 namespace KGySoft.CoreLibraries
 {
+    /// <summary>
+    /// Contains extension methods for the <see cref="StringSegment"/> type.
+    /// </summary>
     public static class StringSegmentExtensions
     {
         #region Fields
@@ -36,19 +39,43 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Advances the specified <paramref name="rest"/> parameter after the next whitespace character and returns
         /// the consumed part without the whitespace. If the first character of <paramref name="rest"/> was a whitespace
-        /// before the call, then an empty segment is returned. If the whole string is consumed, then <paramref name="rest"/>
-        /// will be <see cref="StringSegment.Null"/>.
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
         /// </summary>
-        /// <param name="rest">The rest.</param>
-        /// <returns></returns>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by whitespace characters,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more whitespace characters.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToWhiteSpace(ref this StringSegment rest)
             => StringSegment.GetNextSegment(ref rest);
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> character and returns
+        /// the consumed part without the <paramref name="separator"/>. If the first character of <paramref name="rest"/> was a <paramref name="separator"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separator">The separator character to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, char separator)
             => StringSegment.GetNextSegment(ref rest, separator);
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> and returns
+        /// the consumed part without the <paramref name="separator"/>. If <paramref name="rest"/> started with <paramref name="separator"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separator">The separator segment to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, StringSegment separator)
         {
@@ -64,6 +91,17 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separator);
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> and returns
+        /// the consumed part without the <paramref name="separator"/>. If <paramref name="rest"/> started with <paramref name="separator"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separator">The separator string to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, string separator)
         {
@@ -79,6 +117,17 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separator);
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next separator and returns
+        /// the consumed part without the separator. If <paramref name="rest"/> started with one of the <paramref name="separators"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separators">The separators to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by any of the specified <paramref name="separators"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, params char[] separators)
         {
@@ -97,6 +146,17 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separators);
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next separator and returns
+        /// the consumed part without the separator. If <paramref name="rest"/> started with one of the <paramref name="separators"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separators">The separators to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by any of the specified <paramref name="separators"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, params string[] separators)
         {
@@ -119,6 +179,17 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separators);
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next separator and returns
+        /// the consumed part without the separator. If <paramref name="rest"/> started with one of the <paramref name="separators"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separators">The separators to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by any of the specified <paramref name="separators"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, params StringSegment[] separators)
         {
@@ -141,6 +212,20 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separators);
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the current line and returns
+        /// the consumed part without the newline character(s). If <paramref name="rest"/> started with a new line
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first line of the original value of the <paramref name="rest"/> parameter,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more lines.</returns>
+        /// <remarks>
+        /// <para>The effect of this method is the same as calling the <see cref="ReadToSeparator(ref StringSegment, string[])"/> method with <c><![CDATA["\r\n", "\r", "\n"]]></c>
+        /// parameters but it is implemented a bit more optimized way.</para>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadLine(ref this StringSegment rest)
         {
@@ -154,10 +239,21 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter consuming up to <paramref name="maxLength"/> characters and returns
+        /// the consumed part. If <paramref name="rest"/> started with a new line
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="maxLength">The maximum number of characters to read.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first line of the original value of the <paramref name="rest"/> parameter,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more than <paramref name="maxLength"/> characters.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment Read(ref this StringSegment rest, int maxLength)
         {
-            if (maxLength < 0)
+            if (maxLength <= 0)
                 Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.ArgumentMustBeLessThanOrEqualTo(0));
 
             StringSegment result;

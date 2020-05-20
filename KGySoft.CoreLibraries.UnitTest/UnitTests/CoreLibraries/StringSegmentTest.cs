@@ -115,7 +115,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void IndexOf(int expectedResult, string s, string toSearch)
         {
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
             if (s == null)
                 return;
 
@@ -123,7 +125,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
             }
         }
 
@@ -136,13 +140,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void LastIndexOf(int expectedResult, string s, string toSearch)
         {
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch, 0, s.Length));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment(), 0, s.Length));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment()));
 
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
             }
         }
 

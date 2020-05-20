@@ -28,8 +28,20 @@ namespace KGySoft.CoreLibraries
     {
         #region Operators
 
+        /// <summary>
+        /// Determines whether two specified <see cref="StringSegment"/> instances have the same value.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the equality check.</returns>
         public static bool operator ==(in StringSegment a, in StringSegment b) => a.Equals(b);
 
+        /// <summary>
+        /// Determines whether two specified <see cref="StringSegment"/> instances have different values.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(in StringSegment a, in StringSegment b) => !(a == b);
 
         #endregion
@@ -40,6 +52,15 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+        /// <summary>
+        /// Determines whether two specified <see cref="StringSegment"/> instances have the same value
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="a">The first <see cref="StringSegment"/> to compare.</param>
+        /// <param name="b">The second <see cref="StringSegment"/> to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if the specified <see cref="StringSegment"/> instances are equal; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static bool Equals(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
             => comparison switch
@@ -49,6 +70,15 @@ namespace KGySoft.CoreLibraries
                 _ => Compare(a, b, comparison) == 0
             };
 
+        /// <summary>
+        /// Compares two specified <see cref="StringSegment"/> instances using the specified <paramref name="comparison"/>,
+        /// and returns an integer that indicates their relative position in the sort order.
+        /// </summary>
+        /// <param name="a">The first string to compare.</param>
+        /// <param name="b">The second string to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
         public static int Compare(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
         {
             if (comparison == StringComparison.Ordinal)
@@ -71,6 +101,16 @@ namespace KGySoft.CoreLibraries
             return result == 0 ? a.length - b.length : result;
         }
 
+        /// <summary>
+        /// Compares two specified <see cref="StringSegment"/> instances, ignoring or honoring their case, and using the specified <paramref name="culture"/>,
+        /// and returns an integer that indicates their relative position in the sort order.
+        /// </summary>
+        /// <param name="a">The first string to compare.</param>
+        /// <param name="b">The second string to compare.</param>
+        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case during the comparison; otherwise, <see langword="false"/>.</param>
+        /// <param name="culture">An object that supplies culture-specific comparison information.
+        /// if <see langword="null"/>, then <see cref="CultureInfo.CurrentCulture">CultureInfo.CurrentCulture</see> will be used.</param>
+        /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
         public static int Compare(in StringSegment a, in StringSegment b, bool ignoreCase, CultureInfo culture)
             => Compare(a, b, (culture ?? CultureInfo.CurrentCulture).CompareInfo, ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None);
 
@@ -203,12 +243,12 @@ namespace KGySoft.CoreLibraries
             : obj is string s && Equals(s);
 
         /// <summary>
-        /// Compares this instance to a specified <see cref="StringSegment"/> using ordinal comparison, and indicates whether this instance precedes, follows, or appears in the same position in the sort order as the specified <see cref="StringSegment"/>.
+        /// Compares this instance to the specified <see cref="StringSegment"/> using ordinal comparison, and indicates whether this instance precedes, follows, or appears in the same position in the sort order as the specified <see cref="StringSegment"/>.
         /// </summary>
         /// <param name="other">The <see cref="StringSegment"/> to compare with this instance.</param>
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="other"/> parameter.</returns>
         /// <remarks><note>Unlike the <see cref="string.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
-        /// Use the <see cref="Compare(StringSegment, StringSegment, StringComparison)"/> method to perform a custom comparison.</remarks>
+        /// Use the <see cref="Compare(in StringSegment, in StringSegment, StringComparison)"/> method to perform a custom comparison.</remarks>
         public int CompareTo(StringSegment other)
         {
             if (str == null || other.str == null)
@@ -224,6 +264,13 @@ namespace KGySoft.CoreLibraries
             return result == 0 ? length - other.length : result;
         }
 
+        /// <summary>
+        /// Compares this instance to the specified object using ordinal comparison, and indicates whether this instance precedes, follows, or appears in the same position in the sort order as the specified <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
+        /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="obj"/> parameter.</returns>
+        /// <remarks><note>Unlike the <see cref="String.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
+        /// Use the <see cref="O:Compare"/> methods to perform a custom comparison.</remarks>
         public int CompareTo(object obj)
             => obj switch
             {

@@ -7,6 +7,8 @@
     <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>-->
+    <!--For help-->
+    <!--<TargetFramework>netstandard2.1</TargetFramework>-->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft</RootNamespace>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

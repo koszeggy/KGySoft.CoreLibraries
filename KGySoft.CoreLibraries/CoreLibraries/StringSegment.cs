@@ -45,8 +45,8 @@ namespace KGySoft.CoreLibraries
     /// The affected members are:
     /// <list type="bullet">
     /// <item><see cref="GetHashCode(StringComparison)"/>: if comparison is not <see cref="StringComparison.Ordinal"/> or <see cref="StringComparison.OrdinalIgnoreCase"/>.</item>
-    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf"/> overloads with <see cref="StringComparison"/> parameter: if comparison is not <see cref="StringComparison.Ordinal"/>.</item>
-    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.LastIndexOf"/> overloads: affects all comparisons.</item>
+    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf"/> overloads with <see cref="StringSegment"/> and <see cref="StringComparison"/> parameter: if comparison is not <see cref="StringComparison.Ordinal"/>.</item>
+    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.LastIndexOf"/> overloads with <see cref="StringSegment"/> parameter: affects all comparisons.</item>
     /// </list>
     /// <note>On .NET Core 3.0 and newer platforms none of the members above allocate a new string.
     /// On .NET Standard 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf"/> overloads are not affected.</note></para>
@@ -138,6 +138,29 @@ namespace KGySoft.CoreLibraries
     ///
     ///     // key not found
     ///     return null;
+    /// }
+    ///
+    /// // An alternative StringSegment way: uses Split only if we need all segments or we can limit max counts.
+    /// public static IList<StringSegment> ByStringSegmentAlternative(string content, string key)
+    /// {
+    ///     StringSegment rest = content; // same as content.AsSegment()
+    ///     while (!rest.IsNull)
+    ///     {
+    ///         // Advancing to the next line (StringSegment is immutable but the extension uses ref this parameter)
+    ///         StringSegment line = rest.ReadLine(); // or ReadToSeparator(Environment.NewLine, "\r", "\n")
+    ///         if (line.Length == 0)
+    ///             continue;
+    /// 
+    ///         // Separating key from values. We can use maxLength: 2 because we split at the first '=' only.
+    ///         IList<StringSegment> keyValues = line.Split('=', maxLength: 2);
+    /// 
+    ///         // Removing white spaces and returning values if the key matches
+    ///         if (keyValues[0].TrimStart() == key)
+    ///             return keyValues[1].Split(';');
+    ///     }
+    /// 
+    ///     // key not found
+    ///     return null;
     /// }]]></code>
     /// </para>
     /// </example>
@@ -147,9 +170,11 @@ namespace KGySoft.CoreLibraries
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
             Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "()}")]
-    public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable, IEnumerable<char>
-#if !(NET35 || NET40)
-        , IReadOnlyList<char>
+    public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable,
+#if NET35 || NET40
+        IEnumerable<char>
+#else
+        IReadOnlyList<char>
 #endif
     {
         #region Enumerator struct
@@ -162,7 +187,8 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            private StringSegment segment;
+            private readonly StringSegment segment;
+
             private int index;
             private char current;
 
@@ -254,8 +280,14 @@ namespace KGySoft.CoreLibraries
 
         #region Static Fields
 
+        /// <summary>
+        /// Represents the empty <see cref="StringSegment"/>. This field is read-only.
+        /// </summary>
         public static readonly StringSegment Empty = String.Empty;
 
+        /// <summary>
+        /// Represents the <see langword="null"/>&#160;<see cref="StringSegment"/>. This field is read-only.
+        /// </summary>
         public static readonly StringSegment Null = default;
 
         #endregion
@@ -427,6 +459,16 @@ namespace KGySoft.CoreLibraries
 
         }
 
+        /// <summary>
+        /// Returns the hash code for this <see cref="StringSegment"/> using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies the way of generating the hash code.</param>
+        /// <returns>A 32-bit signed integer hash code.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="comparison"/> is <see cref="StringComparison.Ordinal"/> or <see cref="StringComparison.OrdinalIgnoreCase"/>, then no new string allocation occurs on any platforms.</para>
+        /// <para>If <paramref name="comparison"/> is culture dependent (including the invariant culture), then depending on the targeted platform a new string allocation may occur.
+        /// The .NET Core 3.0 and newer builds do not allocate a new string with any <paramref name="comparison"/> values.</para>
+        /// </remarks>
         public int GetHashCode(StringComparison comparison)
         {
             switch (comparison)

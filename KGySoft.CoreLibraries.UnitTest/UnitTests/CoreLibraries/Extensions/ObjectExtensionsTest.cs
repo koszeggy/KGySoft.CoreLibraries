@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Fields
 
-        private static unsafe object[] deepCloneTestSource =
+        private static readonly unsafe object[] deepCloneTestSource =
         {
             // natively supported types
             null,
@@ -96,7 +96,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void ConvertTest()
         {
-            void Test<TTarget>(object source, TTarget expectedResult)
+            static void Test<TTarget>(object source, TTarget expectedResult)
             {
                 Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({source}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
                 TTarget actualResult = source.Convert<TTarget>();

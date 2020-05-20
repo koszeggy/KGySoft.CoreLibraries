@@ -73,7 +73,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 Iterations = 1_000_000,
             }
             .AddCase(() => s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, RemoveEmptyEntries)")
-            .AddCase(() => s.AsSegment().Split(), "StringSegment.Split()")
+            .AddCase(() => s.AsSegment().Split(true), "StringSegment.Split(true)")
             .AddCase(() =>
             {
                 StringSegment rest = s.AsSegment();
@@ -91,7 +91,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 Iterations = 1_000_000
             }
             .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, count)")
-            .AddCase(() => s.AsSegment().Split(limitCount), "StringSegment.Split(count)")
+            .AddCase(() => s.AsSegment().Split(limitCount, true), "StringSegment.Split(count, true)")
             .AddCase(() =>
             {
                 StringSegment rest = s.AsSegment();
