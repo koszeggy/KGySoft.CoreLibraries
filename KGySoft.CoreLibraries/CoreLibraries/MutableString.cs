@@ -32,19 +32,11 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        #region Internal Fields
-
-        internal readonly int Length;
-
-        #endregion
-
-        #region Private Fields
-
         [SecurityCritical]
         [SuppressMessage("Microsoft.Security", "CA2151:Fields with critical types should be security critical", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         private readonly char* head;
-        
-        #endregion
+
+        internal readonly int Length;
 
         #endregion
 
@@ -91,6 +83,9 @@ namespace KGySoft.CoreLibraries
 
         [SecurityCritical]
         internal MutableString Substring(int start) => new MutableString(head + start, Length - start);
+
+        [SecurityCritical]
+        internal char* AddressOf(int index) => head + index;
 
         [SecurityCritical]
         internal void ToUpper()

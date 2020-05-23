@@ -16,7 +16,7 @@
 
 #region Usings
 
-using System.Diagnostics;
+using System;
 using System.Runtime.CompilerServices;
 using System.Security; 
 
@@ -31,7 +31,7 @@ namespace KGySoft.CoreLibraries
 
         private readonly MutableString str;
 
-        private int usedLen;
+        private int pos;
 
         #endregion
 
@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
 
         internal int Capacity => str.Length;
 
-        internal int Length => usedLen;
+        internal int Length => pos;
 
         #endregion
 
@@ -70,13 +70,13 @@ namespace KGySoft.CoreLibraries
         internal MutableStringBuilder(in MutableString s)
         {
             str = s;
-            usedLen = 0;
+            pos = 0;
         }
 
         internal unsafe MutableStringBuilder(char* s, int len)
         {
             str = new MutableString(s, len);
-            usedLen = 0;
+            pos = 0;
         }
 
 
@@ -97,16 +97,25 @@ namespace KGySoft.CoreLibraries
         internal void Append(char c)
         {
             Debug.Assert(Length < Capacity, "Not enough capacity");
-            str[usedLen] = c;
-            usedLen += 1;
+            str[pos] = c;
+            pos += 1;
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(string s)
         {
             Debug.Assert(Length + s.Length <= Capacity, "Not enough capacity");
-            CopyTo(usedLen, s);
-            usedLen += s.Length;
+            WriteString(pos, s);
+            pos += s.Length;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal void Append(string s, int startIndex, int count)
+        {
+            Debug.Assert(Length + count <= Capacity, "Not enough capacity");
+            Debug.Assert(startIndex + count <= s.Length, "Invalid arguments");
+            WriteString(pos, s, startIndex, count);
+            pos += count;
         }
 
         internal void Append(ulong value, bool isNegative, int size)
@@ -118,7 +127,7 @@ namespace KGySoft.CoreLibraries
                 return;
             }
 
-            int i = size + usedLen;
+            int i = size + pos;
             while (value > 0)
             {
                 str[--i] = (char)(value % 10 + '0');
@@ -128,51 +137,74 @@ namespace KGySoft.CoreLibraries
             if (isNegative)
                 str[--i] = '-';
 
-            Debug.Assert(i == usedLen, "Invalid size");
-            usedLen += size;
+            Debug.Assert(i == pos, "Invalid size");
+            pos += size;
         }
 
         internal void Insert(int index, char c)
         {
             Debug.Assert(index <= Length, "Invalid index");
-            if (index == usedLen)
+            if (index == pos)
             {
                 Append(c);
                 return;
             }
 
-            for (int i = usedLen - 1; i >= index; i--)
+            for (int i = pos - 1; i >= index; i--)
                 str[i + 1] = str[i];
             str[index] = c;
-            usedLen += 1;
+            pos += 1;
         }
 
         internal void Insert(int index, string s)
         {
             Debug.Assert(index <= Length, "Invalid index");
-            if (index == usedLen)
+            if (index == pos)
             {
                 Append(s);
                 return;
             }
 
             int len = s.Length;
-            for (int i = usedLen - 1; i >= index; i--)
+            for (int i = pos - 1; i >= index; i--)
                 str[i + len] = str[i];
-            CopyTo(index, s);
-            usedLen += s.Length;
+            WriteString(index, s);
+            pos += s.Length;
         }
 
         #endregion
 
         #region Private Methods
 
+        [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal void CopyTo(int index, string s)
+        private unsafe void WriteString(int index, string s)
         {
             int len = s.Length;
+            if (len > 8)
+            {
+                fixed (char* ptr = s)
+                    Buffer.MemoryCopy(ptr, str.AddressOf(pos), (Capacity - pos) << 1, len << 1);
+                return;
+            }
+
             for (int i = 0; i < len; i++)
                 str[index + i] = s[i];
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe void WriteString(int targetIndex, string s, int sourceIndex, int count)
+        {
+            if (count > 8)
+            {
+                fixed (char* ptr = s)
+                    Buffer.MemoryCopy(ptr + sourceIndex, str.AddressOf(pos), (Capacity - pos) << 1, count << 1);
+                return;
+            }
+
+            for (int i = 0; i < count; i++)
+                str[targetIndex + i] = s[sourceIndex + i];
         }
 
         #endregion
