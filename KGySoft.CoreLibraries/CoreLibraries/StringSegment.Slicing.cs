@@ -283,7 +283,7 @@ namespace KGySoft.CoreLibraries
         #region Substring
 
         /// <summary>
-        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
+        /// Gets a <see cref="StringSegment"/> instance, which represents a substring of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
         /// </summary>
         /// <param name="startIndex">The offset that points to the first character of the returned segment.</param>
         /// <param name="length">The desired length of the returned segment.</param>
@@ -303,7 +303,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets a new <see cref="StringSegment"/> instance, which represents a subsegment of the current instance with the specified <paramref name="startIndex"/>.
+        /// Gets a new <see cref="StringSegment"/> instance, which represents a substring of the current instance with the specified <paramref name="startIndex"/>.
         /// </summary>
         /// <param name="startIndex">The offset that points to the first character of the returned segment.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/>.</returns>

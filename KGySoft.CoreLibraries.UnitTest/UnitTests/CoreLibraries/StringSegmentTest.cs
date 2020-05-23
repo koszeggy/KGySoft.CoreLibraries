@@ -362,6 +362,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             Assert.AreEqual(s.Substring(1), s.AsSegment().Substring(1).ToString());
             Assert.AreEqual(s.Substring(1).Substring(1), s.AsSegment().Substring(1).Substring(1).ToString());
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(s[1..^1], s.AsSegment()[1..^1]);
+#endif
         }
 
         #endregion

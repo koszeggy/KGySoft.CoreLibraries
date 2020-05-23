@@ -87,8 +87,13 @@ namespace KGySoft.CoreLibraries
     /// 
     ///         // Slicing operations do not allocate new strings:
     ///         StringSegment subsegment = segment.Substring(5);
+    ///         subsegment = segment[5..]; // Range indexer can be also used
     ///         Console.WriteLine(subsegment); // "string literal"
     ///         Console.WriteLine(subsegment.UnderlyingString); // "Some string literal"
+    ///
+    ///         // As StringSegment can be implicitly converted to ReadOnlySpan<char> it can be passed
+    ///         // to many already existing API accepting spans (in .NET Core 3.0/.NET Standard 2.1 and above):
+    ///         int parsedResult = Int32.Parse("Value=42".AsSegment().Split('=')[1]);
     ///     }
     /// }]]></code></para>
     /// <para>The following example demonstrates a possible usage of the <see cref="StringSegment"/> type:
@@ -169,7 +174,7 @@ namespace KGySoft.CoreLibraries
     [TypeConverter(typeof(StringSegmentConverter))]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
             Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
-    [DebuggerDisplay("{" + nameof(ToString) + "()}")]
+    [DebuggerDisplay("{" + nameof(ToString) + "()}")] // to display quotes and even the null value properly
     public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable,
 #if NET35 || NET40
         IEnumerable<char>
@@ -380,6 +385,24 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets the <see cref="StringSegment"/> from this instance that represents the substring of the specified <paramref name="range"/>.
+        /// </summary>
+        /// <param name="range">The range to get.</param>
+        /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="range"/>.</returns>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
+        public StringSegment this[Range range]
+        {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get
+            {
+                int startIndex = range.Start.GetOffset(length);
+                return Substring(startIndex, range.End.GetOffset(length) - startIndex);
+            }
+        }
+#endif
+
         #endregion
 
         #endregion
@@ -405,6 +428,19 @@ namespace KGySoft.CoreLibraries
         /// A <see cref="string">string</see> instance that represents the specified <see cref="StringSegment"/>.
         /// </returns>
         public static explicit operator string(in StringSegment stringSegment) => stringSegment.ToString();
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="StringSegment"/> to <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>.
+        /// </summary>
+        /// <param name="stringSegment">The <see cref="StringSegment"/> to be converted to a <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>.</param>
+        /// <returns>
+        /// A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instance that represents the specified <see cref="StringSegment"/>.
+        /// </returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "False alarm, see AsSpan")]
+        public static implicit operator ReadOnlySpan<char>(in StringSegment stringSegment) => stringSegment.AsSpan;
+#endif
 
         #endregion
 
@@ -504,8 +540,8 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         public override string ToString()
             => str == null ? null
-            : length == str.Length ? str
-            : str.Substring(offset, length);
+                : length == str.Length ? str
+                : str.Substring(offset, length);
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="StringSegment"/> characters.

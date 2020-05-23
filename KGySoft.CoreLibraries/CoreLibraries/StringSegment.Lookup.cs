@@ -492,11 +492,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (value == null)
-                Throw.ArgumentNullException(Argument.value);
-
             if (comparison != StringComparison.Ordinal)
                 return StartsWith(new StringSegment(value), comparison);
+
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
 
             if (IsNull)
                 return false;

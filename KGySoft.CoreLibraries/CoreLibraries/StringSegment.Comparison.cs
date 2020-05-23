@@ -270,7 +270,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="obj"/> parameter.</returns>
         /// <remarks><note>Unlike the <see cref="String.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
-        /// Use the <see cref="O:Compare"/> methods to perform a custom comparison.</remarks>
+        /// Use the <see cref="O:KGySoft.CoreLibraries.StringSegment.Compare"/> methods to perform a custom comparison.</remarks>
         public int CompareTo(object obj)
             => obj switch
             {
