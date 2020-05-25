@@ -44,9 +44,9 @@ namespace KGySoft.Collections
     /// <para>The <see cref="ArraySection{T}"/> type is similar to the combination of the <see cref="Memory{T}"/> type and the .NET Core version of the <see cref="ArraySegment{T}"/> type.</para>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
     /// which is much faster than using the <see cref="Memory{T}.Span"/> property of a <see cref="Memory{T}"/> instance.</para>
-    /// <para>If an <see cref="ArraySection{T}"/> is created by the <see cref="ArraySection{T}(int)">constructor with a specified size</see>, then depending on the size and the
-    /// current platform the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
-    /// <note>An <see cref="ArraySection{T}"/> instance that was instantiated by the <see cref="ArraySection{T}(int)">self allocating constructor</see> must be released by calling the <see cref="Release">Release</see>
+    /// <para>If an <see cref="ArraySection{T}"/> is created by the <see cref="ArraySection{T}(int,bool)">constructor with a specified size</see>, then depending on the size and the
+    /// current platform the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>. 
+    /// <note>An <see cref="ArraySection{T}"/> instance that was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see> must be released by calling the <see cref="Release">Release</see>
     /// method when it is not used anymore. The <see cref="ArraySection{T}"/> type does not implement <see cref="IDisposable"/> because releasing is required only in such case
     /// but not calling it when it is needed may lead to decreased application performance.</note></para>
     /// <para>As <see cref="ArraySection{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
@@ -60,6 +60,9 @@ namespace KGySoft.Collections
     {
         #region Enumerator Struct
 
+        /// <summary>
+        /// Enumerates the elements of an <see cref="ArraySection{T}"/>.
+        /// </summary>
         public struct Enumerator : IEnumerator<T>
         {
             #region Fields
@@ -76,6 +79,9 @@ namespace KGySoft.Collections
 
             #region Public Properties
 
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
             public T Current => index >= start && index < end ? array[index] : default;
 
             #endregion
@@ -113,6 +119,12 @@ namespace KGySoft.Collections
 
             #region Public Methods
 
+            /// <summary>
+            /// Advances the enumerator to the next element of the collection.
+            /// </summary>
+            /// <returns>
+            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// </returns>
             public bool MoveNext()
             {
                 if (index >= end)
@@ -122,6 +134,9 @@ namespace KGySoft.Collections
                 return index < end;
             }
 
+            /// <summary>
+            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// </summary>
             public void Reset() => index = start - 1;
 
             #endregion
@@ -143,9 +158,27 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
+        #region Public Fields
+
+        /// <summary>
+        /// Represents the <see langword="null"/>&#160;<see cref="ArraySection{T}"/>. This field is read-only.
+        /// </summary>
+        public static readonly ArraySection<T> Null = default;
+
+        /// <summary>
+        /// Represents the empty <see cref="ArraySection{T}"/>. This field is read-only.
+        /// </summary>
+        public static readonly ArraySection<T> Empty = new ArraySection<T>(Reflector.EmptyArray<T>());
+
+        #endregion
+
+        #region Private Fields
+
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
         private static readonly int poolingThreshold = Math.Min(2, 1024 / Reflector.SizeOf<T>());
 #endif
+
+        #endregion
 
         #endregion
 
@@ -166,26 +199,41 @@ namespace KGySoft.Collections
 
         #region Properties
 
-        #region Static Properties
-
-        public static ArraySection<T> Null => default;
-
-        public static ArraySection<T> Empty => new ArraySection<T>(Reflector.EmptyArray<T>());
-
-        #endregion
-
-        #region Instance Properties
-
         #region Public Properties
 
+        /// <summary>
+        /// Gets the number of elements in this <see cref="ArraySection{T}"/>.
+        /// </summary>
         public int Count => length;
 
+        /// <summary>
+        /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/>&#160;array.
+        /// <br/>Please note that the <see cref="ToArray">ToArray</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
+        /// </summary>
+        public bool IsNull => array == null;
+
+        /// <summary>
+        /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty section or a <see langword="null"/>&#160;array.
+        /// </summary>
+        public bool IsNullOrEmpty => length == 0;
+
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/>.
+        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.
+        /// </summary>
         public Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
+        /// <summary>
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/>.
+        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.
+        /// </summary>
         public Span<T> AsSpan => new Span<T>(array, offset, length);
 #endif
 
+        /// <summary>
+        /// Returns the current <see cref="ArraySection{T}"/> instance as an <see cref="ArraySegment{T}"/>.
+        /// </summary>
         public ArraySegment<T> AsSegment => new ArraySegment<T>(array, offset, length);
 
         #endregion
@@ -205,12 +253,16 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
-
         #region Indexers
 
         #region Public Indexers
-        
+
+        /// <summary>
+        /// Gets or sets the element at the specified <paramref name="index"/>.
+        /// <br/>To return a reference to an element use the <see cref="GetElementRef">GetElementRef</see> method instead.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get or set.</param>
+        /// <returns>The element at the specified index.</returns>
         public T this[int index]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -264,7 +316,9 @@ namespace KGySoft.Collections
         /// by the <see cref="Release">Release</see> method if it is not used anymore.
         /// </summary>
         /// <param name="length">The length of the <see cref="ArraySection{T}"/> to be created.</param>
-        public ArraySection(int length)
+        /// <param name="assureClean"><see langword="true"/>&#160;to make sure the allocated array is zero-initialized;
+        /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>.</param>
+        public ArraySection(int length, bool assureClean = true)
         {
             if (length < 0)
                 Throw.ArgumentOutOfRangeException(Argument.length);
@@ -276,6 +330,8 @@ namespace KGySoft.Collections
             if (poolArray)
             {
                 array = ArrayPool<T>.Shared.Rent(length);
+                if (assureClean)
+                    Clear();
                 return;
             }
 #endif
@@ -291,6 +347,13 @@ namespace KGySoft.Collections
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>
+        /// using the specified <paramref name="offset"/> and <paramref name="length"/>.
+        /// </summary>
+        /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
+        /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
+        /// <param name="length">The number of items to include in the new <see cref="ArraySection{T}"/>.</param>
         public ArraySection(T[] array, int offset, int length)
         {
             if (array == null)
@@ -321,12 +384,57 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        public ArraySection<T> Slice(int start) => new ArraySection<T>(array, offset + start, length - start);
+        /// <summary>
+        /// Clears the items in this <see cref="ArraySection{T}"/> instance so all elements will have the default value of type <typeparamref name="T"/>.
+        /// </summary>
+        public void Clear()
+        {
+            if (length == 0)
+                return;
+            Array.Clear(array, offset, length);
+        }
 
-        public ArraySection<T> Slice(int start, int length) => new ArraySection<T>(array, offset + start, length);
+        /// <summary>
+        /// Gets a new <see cref="ArraySection{T}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/>.
+        /// </summary>
+        /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
+        /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/>.</returns>
+        public ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array, offset + startIndex, length - startIndex);
 
-        public ref T GetPinnableReference() => ref GetElementRef(0);
+        /// <summary>
+        /// Gets a new <see cref="ArraySection{T}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
+        /// </summary>
+        /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
+        /// <param name="length">The desired length of the returned section.</param>
+        /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
+        public ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array, offset + startIndex, length);
 
+        /// <summary>
+        /// Returns a reference to the first element in this <see cref="ArraySection{T}"/>.
+        /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/>&#160;statement.
+        /// </summary>
+        /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/>&#160;if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
+        public unsafe ref T GetPinnableReference()
+        {
+            if (IsNullOrEmpty)
+            { 
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1
+                Throw.InvalidOperationException(Res.ArraySectionEmpty);
+#else
+                // This is the workaround to return ref null. Unfortunately this works only for .NET Core.
+                return ref Unsafe.AsRef<T>(null);
+#endif
+            }
+
+            return ref GetElementRef(0);
+        }
+
+        /// <summary>
+        /// Copies the elements of this <see cref="ArraySection{T}"/> to a new array.
+        /// </summary>
+        /// <returns>An array containing copies of the elements of this <see cref="ArraySection{T}"/>,
+        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public T[] ToArray()
         {
             if (length == 0)
@@ -336,6 +444,11 @@ namespace KGySoft.Collections
             return result;
         }
 
+        /// <summary>
+        /// Gets the reference to the element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The index of the element to get the reference for.</param>
+        /// <returns></returns>
         public ref T GetElementRef(int index)
         {
             if ((uint)index >= (uint)length)
@@ -343,18 +456,38 @@ namespace KGySoft.Collections
             return ref array[offset + index];
         }
 
-        public int IndexOf(T value)
+        /// <summary>
+        /// Determines the index of a specific item in this <see cref="ArraySection{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="ArraySection{T}"/>.</param>
+        /// <returns>
+        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
+        /// </returns>
+        public int IndexOf(T item)
         {
             if (length == 0)
                 return -1;
-            int result = Array.IndexOf(array, value, offset, length);
+            int result = Array.IndexOf(array, item, offset, length);
             return result < 0 ? result : result - offset;
         }
 
-        public bool Contains(T value) => IndexOf(value) >= 0;
+        /// <summary>
+        /// Determines whether this <see cref="ArraySection{T}"/> contains the specific <paramref name="item"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>&#160;if <paramref name="item"/> is found in this <see cref="ArraySection{T}"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="item">The object to locate in this <see cref="ArraySection{T}"/>.</param>
+        public bool Contains(T item) => IndexOf(item) >= 0;
 
+        /// <summary>
+        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible one-dimensional array, starting at a particular array index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="ArraySection{T}"/>.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
         [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
         [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "array is the name of the parameter also in the interface")]
         public void CopyTo(T[] array, int arrayIndex)
         {
             if (this.array == null)
@@ -368,10 +501,17 @@ namespace KGySoft.Collections
             this.array.CopyElements(offset, array, arrayIndex, length);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the items of this <see cref="ArraySection{T}"/>.
+        /// </summary>
+        /// <returns>An <see cref="Enumerator"/> instance that can be used to iterate though the elements of this <see cref="ArraySection{T}"/>.</returns>
+        /// <remarks>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public Enumerator GetEnumerator() => new Enumerator(this);
 
         /// <summary>
-        /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int)">self allocating constructor</see>,
+        /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
         /// then this method must be called when the <see cref="ArraySection{T}"/> is not used anymore.
         /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the underlying array.
         /// </summary>
@@ -399,7 +539,6 @@ namespace KGySoft.Collections
         void IList<T>.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
         void ICollection<T>.Add(T item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void ICollection<T>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         bool ICollection<T>.Remove(T item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
@@ -408,25 +547,27 @@ namespace KGySoft.Collections
         int IList.IndexOf(object value) => CanAccept(value) ? IndexOf((T)value) : -1;
         bool IList.Contains(object value) => CanAccept(value) && Contains((T)value);
 
-        void ICollection.CopyTo(Array array, int index)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection.CopyTo(Array targetArray, int index)
         {
-            if (array == null)
+            if (targetArray == null)
                 Throw.ArgumentNullException(Argument.array);
 
-            if (array is T[] typedArray)
+            if (targetArray is T[] typedArray)
             {
                 CopyTo(typedArray, index);
                 return;
             }
 
-            if (index < 0 || index > array.Length)
+            if (index < 0 || index > targetArray.Length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
-            if (array.Length - index < length)
+            if (targetArray.Length - index < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
-            if (array.Rank != 1)
+            if (targetArray.Rank != 1)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
-            if (array is object[] objectArray)
+            if (targetArray is object[] objectArray)
             {
                 for (int i = 0; i < length; i++)
                 {
@@ -442,7 +583,6 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.Remove(object item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
         #endregion
 
