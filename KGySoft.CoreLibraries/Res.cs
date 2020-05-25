@@ -145,6 +145,13 @@ namespace KGySoft
 
         #endregion
 
+        #region ArraySection
+
+        /// <summary>The underlying array is null.</summary>
+        internal static string ArraySectionNull => Get("ArraySection_Null");
+
+        #endregion
+
         #region BinarySerialization
 
         /// <summary>Invalid stream data.</summary>
