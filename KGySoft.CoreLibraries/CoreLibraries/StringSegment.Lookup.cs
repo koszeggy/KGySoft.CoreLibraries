@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 #endregion

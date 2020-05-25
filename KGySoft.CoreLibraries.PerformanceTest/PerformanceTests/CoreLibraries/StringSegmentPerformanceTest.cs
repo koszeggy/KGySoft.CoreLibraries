@@ -17,7 +17,8 @@
 #region Usings
 
 using System;
-
+using System.Collections.Generic;
+using KGySoft.Collections;
 using NUnit.Framework;
 
 #endregion
@@ -130,7 +131,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, limitCount), "String.Split(char, count)")
+            .AddCase(() => s.Split(new[] { sep }, limitCount), "String.Split(char, count)")
             .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(char, count)")
             .AddCase(() =>
             {
@@ -150,7 +151,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: \"{sep}\"",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep), "String.Split(string)")
+            .AddCase(() => s.Split(new[] { sep }, StringSplitOptions.None), "String.Split(string)")
             .AddCase(() => s.AsSegment().Split(sep.AsSegment()), "StringSegment.Split(StringSegment)")
             .AddCase(() => s.AsSegment().Split(sep), "StringSegment.Split(string)")
             .AddCase(() =>
@@ -178,7 +179,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, limitCount), "String.Split(string, count)")
+            .AddCase(() => s.Split(new[] { sep }, limitCount, StringSplitOptions.None), "String.Split(string, count)")
             .AddCase(() => s.AsSegment().Split(sep.AsSegment(), limitCount), "StringSegment.Split(StringSegment, count)")
             .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(string, count)")
             .AddCase(() =>

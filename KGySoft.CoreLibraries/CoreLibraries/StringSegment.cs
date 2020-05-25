@@ -173,7 +173,7 @@ namespace KGySoft.CoreLibraries
     [Serializable]
     [TypeConverter(typeof(StringSegmentConverter))]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",
-            Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
+        Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "()}")] // to display quotes and even the null value properly
     public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable,
 #if NET35 || NET40

@@ -525,7 +525,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.s);
             if ((uint)offset > (uint)s.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
-            if ((uint)(offset + length) > (uint)s.Length)
+            if ((uint)length > (uint)s.Length - offset)
                 Throw.ArgumentOutOfRangeException(Argument.length);
             return new StringSegment(s, offset, length);
         }

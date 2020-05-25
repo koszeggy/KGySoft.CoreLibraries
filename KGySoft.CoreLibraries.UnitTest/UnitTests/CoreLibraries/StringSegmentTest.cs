@@ -209,38 +209,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             {
                 // as string
                 string[] strings = s.Split(new[] { separator }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                string expected = String.Join('|', strings);
+                string expected = String.Join("|", strings);
 
                 IList<StringSegment> segments = s.AsSegment().Split(separator, removeEmpty);
-                string actual = String.Join('|', segments);
+                string actual = String.Join("|", segments);
 
                 Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (remove empty: {removeEmpty}) => ""{actual}""");
                 Assert.AreEqual(expected, actual);
 
                 // as StringSegment
                 segments = s.AsSegment().Split(separator.AsSegment(), removeEmpty);
-                actual = String.Join('|', segments);
+                actual = String.Join("|", segments);
                 Assert.AreEqual(expected, actual);
 
                 // as string array with multiple values
                 strings = s.Split(new[] { separator, null }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                expected = String.Join('|', strings);
+                expected = String.Join("|", strings);
 
                 segments = s.AsSegment().Split(new[] { separator, null }, removeEmpty);
-                actual = String.Join('|', segments);
+                actual = String.Join("|", segments);
                 Assert.AreEqual(expected, actual);
 
                 // as StringSegment array with multiple values
                 segments = s.AsSegment().Split(new StringSegment[] { separator, null }, removeEmpty);
-                actual = String.Join('|', segments);
+                actual = String.Join("|", segments);
                 Assert.AreEqual(expected, actual);
 
                 // no separator (splitting by whitespaces)
                 strings = s.Split(default(string[]), removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                expected = String.Join('|', strings);
+                expected = String.Join("|", strings);
 
                 segments = s.AsSegment().Split(removeEmpty);
-                actual = String.Join('|', segments);
+                actual = String.Join("|", segments);
 
                 Console.WriteLine($@"""{s}"" no separator (remove empty: {removeEmpty}) => ""{actual}""");
                 Assert.AreEqual(expected, actual);
@@ -249,20 +249,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 {
                     // as char
                     strings = s.Split(new[] { separator[0] }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = String.Join("|", strings);
 
                     segments = s.AsSegment().Split(separator[0], removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
 
                     Console.WriteLine($@"""{s}"" vs '{separator[0]}' (remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
 
                     // as char array
                     strings = s.Split(new[] { separator[0], '\0' }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = String.Join("|", strings);
 
                     segments = s.AsSegment().Split(new[] { separator[0], '\0' }, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
 
                     Assert.AreEqual(expected, actual);
                 }
@@ -296,39 +296,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 {
                     // as string
                     string[] strings = s.Split(new[] { separator }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    string expected = String.Join('|', strings);
+                    string expected = String.Join("|", strings);
 
                     IList<StringSegment> segments = s.AsSegment().Split(separator, count, removeEmpty);
-                    string actual = String.Join('|', segments);
+                    string actual = String.Join("|", segments);
 
                     Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
 
                     // as StringSegment
                     segments = s.AsSegment().Split(separator.AsSegment(), count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
                     Assert.AreEqual(expected, actual);
 
                     // as string array with multiple values
                     strings = s.Split(new[] { separator, null }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = String.Join("|", strings);
 
                     segments = s.AsSegment().Split(new[] { separator, null }, count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
 
                     Assert.AreEqual(expected, actual);
 
                     // as StringSegment array with multiple values
                     segments = s.AsSegment().Split(new StringSegment[] { separator, null }, count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
                     Assert.AreEqual(expected, actual);
 
                     // no separator (splitting by whitespaces)
                     strings = s.Split(default(string[]), count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = String.Join("|", strings);
 
                     segments = s.AsSegment().Split(count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = String.Join("|", segments);
 
                     Console.WriteLine($@"""{s}"" no separator (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
@@ -337,19 +337,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     {
                         // as char
                         strings = s.Split(new[] { separator[0] }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                        expected = String.Join('|', strings);
+                        expected = String.Join("|", strings);
 
                         segments = s.AsSegment().Split(separator[0], count, removeEmpty);
-                        actual = String.Join('|', segments);
+                        actual = String.Join("|", segments);
                         Console.WriteLine($@"""{s}"" vs '{separator[0]}' (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                         Assert.AreEqual(expected, actual);
 
                         // as char array
                         strings = s.Split(new[] { separator[0], '\0' }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                        expected = String.Join('|', strings);
+                        expected = String.Join("|", strings);
 
                         segments = s.AsSegment().Split(new[] { separator[0], '\0' }, count, removeEmpty);
-                        actual = String.Join('|', segments);
+                        actual = String.Join("|", segments);
 
                         Assert.AreEqual(expected, actual);
                     }

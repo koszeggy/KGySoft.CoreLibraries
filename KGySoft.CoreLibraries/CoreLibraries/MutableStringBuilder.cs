@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security; 
 
@@ -181,12 +182,14 @@ namespace KGySoft.CoreLibraries
         private unsafe void WriteString(int index, string s)
         {
             int len = s.Length;
+#if !(NET35 || NET40 || NET45)
             if (len > 8)
             {
                 fixed (char* ptr = s)
                     Buffer.MemoryCopy(ptr, str.AddressOf(pos), (Capacity - pos) << 1, len << 1);
                 return;
-            }
+            } 
+#endif
 
             for (int i = 0; i < len; i++)
                 str[index + i] = s[i];
@@ -196,12 +199,14 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe void WriteString(int targetIndex, string s, int sourceIndex, int count)
         {
+#if !(NET35 || NET40 || NET45)
             if (count > 8)
             {
                 fixed (char* ptr = s)
                     Buffer.MemoryCopy(ptr + sourceIndex, str.AddressOf(pos), (Capacity - pos) << 1, count << 1);
                 return;
-            }
+            } 
+#endif
 
             for (int i = 0; i < count; i++)
                 str[targetIndex + i] = s[sourceIndex + i];

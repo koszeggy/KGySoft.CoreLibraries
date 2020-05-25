@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -294,9 +295,9 @@ namespace KGySoft.CoreLibraries
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);
-            if ((uint)startIndex > (uint)Length)
+            if ((uint)startIndex > (uint)this.length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
-            if ((uint)(startIndex + length) > (uint)Length)
+            if ((uint)length > (uint)this.length - startIndex)
                 Throw.ArgumentOutOfRangeException(Argument.length);
 
             return new StringSegment(str, offset + startIndex, length);
