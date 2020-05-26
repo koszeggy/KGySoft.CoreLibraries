@@ -70,6 +70,7 @@ namespace KGySoft
         genericTypeDefinition,
         getParam,
         handle,
+        height,
         index,
         indexParameters,
         info,
@@ -140,6 +141,7 @@ namespace KGySoft
         value,
         values,
         way,
+        width,
         writer,
         x,
         y

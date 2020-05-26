@@ -58,102 +58,6 @@ namespace KGySoft.Collections
         , IReadOnlyList<T>
 #endif
     {
-        #region Enumerator Struct
-
-        /// <summary>
-        /// Enumerates the elements of an <see cref="ArraySection{T}"/>.
-        /// </summary>
-        public struct Enumerator : IEnumerator<T>
-        {
-            #region Fields
-
-            private readonly T[] array;
-            private readonly int start;
-            private readonly int end;
-
-            private int index;
-
-            #endregion
-
-            #region Properties
-
-            #region Public Properties
-
-            /// <summary>
-            /// Gets the element at the current position of the enumerator.
-            /// </summary>
-            public T Current => index >= start && index < end ? array[index] : default;
-
-            #endregion
-
-            #region Explicitly Implemented Interface Properties
-
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (index < start || index >= end)
-                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return Current;
-                }
-            }
-
-            #endregion
-
-            #endregion
-
-            #region Constructors
-
-            internal Enumerator(ArraySection<T> arraySection)
-            {
-                Debug.Assert(arraySection.array != null, "null section is not expected here");
-                array = arraySection.array;
-                start = arraySection.offset;
-                end = arraySection.offset + arraySection.length;
-                index = start - 1;
-            }
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            /// <summary>
-            /// Advances the enumerator to the next element of the collection.
-            /// </summary>
-            /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
-            /// </returns>
-            public bool MoveNext()
-            {
-                if (index >= end)
-                    return false;
-
-                index += 1;
-                return index < end;
-            }
-
-            /// <summary>
-            /// Sets the enumerator to its initial position, which is before the first element in the collection.
-            /// </summary>
-            public void Reset() => index = start - 1;
-
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
-            void IDisposable.Dispose()
-            {
-            }
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
         #region Fields
 
         #region Static Fields
@@ -204,7 +108,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the number of elements in this <see cref="ArraySection{T}"/>.
         /// </summary>
-        public int Count => length;
+        public int Length => length;
 
         /// <summary>
         /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/>&#160;array.
@@ -220,14 +124,14 @@ namespace KGySoft.Collections
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/>.
-        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.
         /// </summary>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/>.
-        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.
         /// </summary>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => new Span<T>(array, offset, length);
 #endif
 
@@ -241,13 +145,19 @@ namespace KGySoft.Collections
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<T>.IsReadOnly => true;
+        int ICollection<T>.Count => length;
 
         // It actually should use a private field but as we never lock on this we will never cause a deadlock with this.
         object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull); // would be better to allocate a new field for this but 
         bool ICollection.IsSynchronized => false;
 
+        int ICollection.Count => length;
         bool IList.IsReadOnly => false;
         bool IList.IsFixedSize => true;
+
+#if !(NET35 || NET40)
+        int IReadOnlyCollection<T>.Count => length;
+#endif
 
         #endregion
 
@@ -259,7 +169,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Gets or sets the element at the specified <paramref name="index"/>.
-        /// <br/>To return a reference to an element use the <see cref="GetElementRef">GetElementRef</see> method instead.
+        /// <br/>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
@@ -380,7 +290,7 @@ namespace KGySoft.Collections
             }
 #endif
 
-            array = new T[length];
+            array = length == 0 ? Reflector.EmptyArray<T>() : new T[length];
         }
 
         /// <summary>
@@ -471,7 +381,7 @@ namespace KGySoft.Collections
 #endif
             }
 
-            return ref GetElementRef(0);
+            return ref GetElementReferenceInternal(0);
         }
 
         /// <summary>
@@ -492,12 +402,13 @@ namespace KGySoft.Collections
         /// Gets the reference to the element at the specified <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The index of the element to get the reference for.</param>
-        /// <returns></returns>
-        public ref T GetElementRef(int index)
+        /// <returns>The reference to the element at the specified index.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref T GetElementReference(int index)
         {
             if ((uint)index >= (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
-            return ref array[offset + index];
+            return ref GetElementReferenceInternal(index);
         }
 
         /// <summary>
@@ -548,11 +459,11 @@ namespace KGySoft.Collections
         /// <summary>
         /// Returns an enumerator that iterates through the items of this <see cref="ArraySection{T}"/>.
         /// </summary>
-        /// <returns>An <see cref="Enumerator"/> instance that can be used to iterate though the elements of this <see cref="ArraySection{T}"/>.</returns>
+        /// <returns>An <see cref="ArraySectionEnumerator{T}"/> instance that can be used to iterate though the elements of this <see cref="ArraySection{T}"/>.</returns>
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public Enumerator GetEnumerator() => new Enumerator(this);
+        public ArraySectionEnumerator<T> GetEnumerator() => new ArraySectionEnumerator<T>(array, offset, length);
 
         /// <summary>
         /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
@@ -577,10 +488,10 @@ namespace KGySoft.Collections
             => array == other.array && offset == other.offset && length == other.length;
 
         /// <summary>
-        /// Determines whether the specified <see cref="object" /> is equal to this instance.
+        /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
-        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <param name="obj">The object to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
             => obj == null ? IsNull : obj is ArraySection<T> other && Equals(other);
 
@@ -598,6 +509,12 @@ namespace KGySoft.Collections
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal T GetItemInternal(int index) => array[offset + index];
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal void SetItemInternal(int index, T value) => array[offset + index] = value;
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal ref T GetElementReferenceInternal(int index) => ref array[offset + index];
 
         #endregion
 

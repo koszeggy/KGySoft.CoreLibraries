@@ -26,6 +26,8 @@
 + KGySoft.Collections namespace:
 ================================
 + New ArraySection struct
++ New ArraySectionEnumerator struct
++ New Array2D struct
 
 + KGySoft.ComponentModel namespace:
 ===================================
