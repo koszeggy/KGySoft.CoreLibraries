@@ -53,7 +53,7 @@ namespace KGySoft.Collections
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
-    public struct ArraySection<T> : IList<T>, IList
+    public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
@@ -308,6 +308,50 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Operators
+
+        /// <summary>
+        /// Performs an implicit conversion from array of <typeparamref name="T"/> to <see cref="ArraySection{T}"/>.
+        /// </summary>
+        /// <param name="array">The array to be converted to an <see cref="ArraySection{T}"/>.</param>
+        /// <returns>
+        /// An <see cref="ArraySection{T}"/> instance that represents the original array.
+        /// </returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "The alternative exists as a constructor")]
+        public static implicit operator ArraySection<T>(T[] array) => array == null ? Null : new ArraySection<T>(array);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
+        /// </summary>
+        /// <param name="arraySection">The <see cref="ArraySection{T}"/> to be converted to a <see cref="Span{T}"><![CDATA[Span<T>]]></see>.</param>
+        /// <returns>
+        /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="ArraySection{T}"/>.
+        /// </returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "False alarm, see AsSpan")]
+        public static implicit operator Span<T>(in ArraySection<T> arraySection) => arraySection.AsSpan;
+#endif
+
+        /// <summary>
+        /// Determines whether two specified <see cref="ArraySection{T}"/> instances have the same value.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the equality check.</returns>
+        public static bool operator ==(in ArraySection<T> a, in ArraySection<T> b) => a.Equals(b);
+
+        /// <summary>
+        /// Determines whether two specified <see cref="ArraySection{T}"/> instances have different values.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the inequality check.</returns>
+        public static bool operator !=(in ArraySection<T> a, in ArraySection<T> b) => !(a == b);
+
+        #endregion
+
         #region Constructors
 
         /// <summary>
@@ -523,6 +567,30 @@ namespace KGySoft.Collections
 #endif
             this = Null;
         }
+
+        /// <summary>
+        /// Indicates whether the current <see cref="ArraySection{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
+        /// </summary>
+        /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        public bool Equals(ArraySection<T> other)
+            => array == other.array && offset == other.offset && length == other.length;
+
+        /// <summary>
+        /// Determines whether the specified <see cref="object" /> is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        public override bool Equals(object obj)
+            => obj == null ? IsNull : obj is ArraySection<T> other && Equals(other);
+
+        /// <summary>
+        /// Returns a hash code for this <see cref="ArraySection{T}"/> instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public override int GetHashCode() => array == null ? 0 : (array, offset, length).GetHashCode();
 
         #endregion
 
