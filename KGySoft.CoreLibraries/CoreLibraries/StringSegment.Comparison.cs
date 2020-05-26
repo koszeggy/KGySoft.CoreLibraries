@@ -229,14 +229,13 @@ namespace KGySoft.CoreLibraries
             // for ordinal String.Compare is faster than Span.[Sequence]Equals
             return String.Compare(str, offset, other, 0, length, StringComparison.Ordinal) == 0;
 #endif
-
         }
 
         /// <summary>
-        /// Determines whether the specified <see cref="object" /> is equal to this instance.
+        /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
-        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <param name="obj">The object to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
             => obj == null ? IsNull
             : obj is StringSegment other ? Equals(other)

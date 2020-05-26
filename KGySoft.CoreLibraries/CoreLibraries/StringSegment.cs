@@ -342,14 +342,14 @@ namespace KGySoft.CoreLibraries
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlySpan{T}"/> of characters.
-        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above
         /// </summary>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public ReadOnlySpan<char> AsSpan => str.AsSpan(offset, length);
 
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlyMemory{T}"/> of characters.
-        /// <br/>This member is available in .NET Core 3.0/.NET Standard 2.1 and above
         /// </summary>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length);
 #endif
 
