@@ -20,6 +20,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
@@ -27,6 +28,7 @@ using System.Buffers;
 #endif
 
 using KGySoft.CoreLibraries;
+using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 
 #endregion
@@ -53,6 +55,8 @@ namespace KGySoft.Collections
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
     public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
@@ -445,15 +449,13 @@ namespace KGySoft.Collections
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "array is the name of the parameter also in the interface")]
         public void CopyTo(T[] array, int arrayIndex)
         {
-            if (this.array == null)
-                Throw.InvalidOperationException(Res.ArraySectionNull);
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
-            this.array.CopyElements(offset, array, arrayIndex, length);
+            this.array?.CopyElements(offset, array, arrayIndex, length);
         }
 
         /// <summary>
@@ -493,7 +495,9 @@ namespace KGySoft.Collections
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
-            => obj == null ? IsNull : obj is ArraySection<T> other && Equals(other);
+            => obj == null ? IsNull
+                : obj is ArraySection<T> other ? Equals(other)
+                : obj is T[] arr && Equals(new ArraySection<T>(arr)); // must check array because == operator supports it as well
 
         /// <summary>
         /// Returns a hash code for this <see cref="ArraySection{T}"/> instance.
