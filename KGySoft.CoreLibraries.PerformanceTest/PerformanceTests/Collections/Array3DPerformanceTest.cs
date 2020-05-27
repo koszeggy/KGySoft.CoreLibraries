@@ -147,7 +147,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             new PerformanceTest<int>
                 {
                     TestName = nameof(EnumerationTest),
-                    Iterations = 1000
+                    Iterations = 100
                 }
                 .AddCase(() =>
                 {

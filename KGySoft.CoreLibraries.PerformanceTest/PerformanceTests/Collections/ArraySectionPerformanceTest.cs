@@ -120,12 +120,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             arraySection.Release();
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         [Test]
         public void AsSpanTest()
         {
             const int size = 1 << 8;
             var array = new int[size];
-            Memory<int> memory = array;
+            Memory<int> memory = array; 
             ArraySegment<int> arraySegment = array;
             ArraySection<int> arraySection = array;
 
@@ -141,6 +142,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .DoTest()
                 .DumpResults(Console.Out);
         }
+#endif
 
         #endregion
     }

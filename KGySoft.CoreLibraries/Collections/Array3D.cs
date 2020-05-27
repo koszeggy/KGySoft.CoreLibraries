@@ -17,7 +17,9 @@
 #region Usings
 
 using System;
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
 using System.Buffers;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -115,28 +117,11 @@ namespace KGySoft.Collections
         /// <returns>The element at the specified indices.</returns>
         public T this[int z, int y, int x]
         {
+            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                if ((uint)z >= (uint)depth)
-                    Throw.ArgumentOutOfRangeException(Argument.z);
-                if ((uint)y >= (uint)height)
-                    Throw.ArgumentOutOfRangeException(Argument.y);
-                if ((uint)x >= (uint)width)
-                    Throw.ArgumentOutOfRangeException(Argument.x);
-                return buffer.GetItemInternal(z * planeSize + y * width + x);
-            }
+            get => buffer[z * planeSize + y * width + x];
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            set
-            {
-                if ((uint)z >= (uint)depth)
-                    Throw.ArgumentOutOfRangeException(Argument.z);
-                if ((uint)y >= (uint)height)
-                    Throw.ArgumentOutOfRangeException(Argument.y);
-                if ((uint)x >= (uint)width)
-                    Throw.ArgumentOutOfRangeException(Argument.x);
-                buffer.SetItemInternal(z * planeSize + y * width + x, value);
-            }
+            set => buffer[z * planeSize + y * width + x] = value;
         }
 
         /// <summary>
@@ -325,13 +310,8 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref T GetElementReference(int z, int y, int x)
         {
-            if ((uint)z >= (uint)depth)
-                Throw.ArgumentOutOfRangeException(Argument.y);
-            if ((uint)y >= (uint)height)
-                Throw.ArgumentOutOfRangeException(Argument.y);
-            if ((uint)x >= (uint)width)
-                Throw.ArgumentOutOfRangeException(Argument.x);
-            return ref buffer.GetElementReferenceInternal(z * planeSize + y * width + x);
+            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
+            return ref buffer.GetElementReference(z * planeSize + y * width + x);
         }
 
         /// <summary>

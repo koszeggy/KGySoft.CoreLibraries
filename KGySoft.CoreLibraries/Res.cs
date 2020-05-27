@@ -150,6 +150,9 @@ namespace KGySoft
         /// <summary>The underlying array is null.</summary>
         internal static string ArraySectionNull => Get("ArraySection_Null");
 
+        /// <summary>The array section has no elements.</summary>
+        internal static string ArraySectionEmpty => Get("ArraySection_Empty");
+
         /// <summary>The array section has insufficient capacity.</summary>
         internal static string ArraySectionInsufficientCapacity => Get("ArraySection_InsufficientCapacity");
 

@@ -17,7 +17,9 @@
 #region Usings
 
 using System;
-using System.Buffers;
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+using System.Buffers; 
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -107,24 +109,11 @@ namespace KGySoft.Collections
         /// <returns>The element at the specified indices.</returns>
         public T this[int y, int x]
         {
+            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                if ((uint)y >= (uint)height)
-                    Throw.ArgumentOutOfRangeException(Argument.y);
-                if ((uint)x >= (uint)width)
-                    Throw.ArgumentOutOfRangeException(Argument.x);
-                return buffer.GetItemInternal(y * width + x);
-            }
+            get => buffer[y * width + x];
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            set
-            {
-                if ((uint)y >= (uint)height)
-                    Throw.ArgumentOutOfRangeException(Argument.y);
-                if ((uint)x >= (uint)width)
-                    Throw.ArgumentOutOfRangeException(Argument.x);
-                buffer.SetItemInternal(y * width + x, value);
-            }
+            set => buffer[y * width + x] = value;
         }
 
         /// <summary>
@@ -304,11 +293,8 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref T GetElementReference(int y, int x)
         {
-            if ((uint)y >= (uint)height)
-                Throw.ArgumentOutOfRangeException(Argument.y);
-            if ((uint)x >= (uint)width)
-                Throw.ArgumentOutOfRangeException(Argument.x);
-            return ref buffer.GetElementReferenceInternal(y * width + x);
+            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
+            return ref buffer.GetElementReference(y * width + x);
         }
 
         /// <summary>

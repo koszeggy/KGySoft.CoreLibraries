@@ -182,14 +182,18 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if ((uint)index >= (uint)length)
+                // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
+                // would come otherwise, and let the ArgumentOutOfRangeException come from array, even if a not localized one.
+                if (array == null)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 return GetItemInternal(index);
             }
             [MethodImpl(MethodImpl.AggressiveInlining)]
             set
             {
-                if ((uint)index >= (uint)length)
+                // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
+                // would come otherwise, and let the ArgumentOutOfRangeException come from array, even if a not localized one.
+                if (array == null)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 array[offset + index] = value;
             }
@@ -410,7 +414,9 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref T GetElementReference(int index)
         {
-            if ((uint)index >= (uint)length)
+            // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
+            // would come otherwise, and let the ArgumentOutOfRangeException come from array, even if a not localized one.
+            if (array == null)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             return ref GetElementReferenceInternal(index);
         }

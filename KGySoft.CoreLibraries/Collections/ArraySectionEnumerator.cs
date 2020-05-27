@@ -26,7 +26,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Enumerates the elements of an <see cref="ArraySection{T}"/>.
+    /// Enumerates the elements of an <see cref="ArraySection{T}"/>, <see cref="Array2D{T}"/> or <see cref="Array3D{T}"/> instance.
     /// </summary>
     public struct ArraySectionEnumerator<T> : IEnumerator<T>
     {
