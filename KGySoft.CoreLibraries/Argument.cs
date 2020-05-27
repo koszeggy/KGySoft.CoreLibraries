@@ -55,6 +55,7 @@ namespace KGySoft
         culture,
         data,
         destination,
+        depth,
         dictionary,
         direction,
         e,
@@ -145,7 +146,8 @@ namespace KGySoft
         width,
         writer,
         x,
-        y
+        y,
+        z
         // ReSharper restore InconsistentNaming
     }
 }
