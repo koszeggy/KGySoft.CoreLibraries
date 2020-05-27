@@ -236,9 +236,9 @@ namespace KGySoft.Collections
         public Array2D(int height, int width)
         {
             if (height < 0)
-                Throw.ArgumentOutOfRangeException(Argument.width);
-            if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.height);
+            if (width < 0)
+                Throw.ArgumentOutOfRangeException(Argument.width);
             this.height = height;
             this.width = width;
             buffer = new ArraySection<T>(height * width);
@@ -259,9 +259,9 @@ namespace KGySoft.Collections
             if (buffer.IsNull)
                 Throw.ArgumentNullException(Argument.buffer);
             if (height < 0)
-                Throw.ArgumentOutOfRangeException(Argument.width);
-            if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.height);
+            if (width < 0)
+                Throw.ArgumentOutOfRangeException(Argument.width);
             int size = height * width;
             if (buffer.Length < size)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
@@ -280,7 +280,7 @@ namespace KGySoft.Collections
         #region Public Methods
 
         /// <summary>
-        /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance indicated by the specified <paramref name="startRowIndex"/>.
+        /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance starting with the specified <paramref name="startRowIndex"/>.
         /// </summary>
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance starting with the specified <paramref name="startRowIndex"/>.</returns>
@@ -296,7 +296,7 @@ namespace KGySoft.Collections
         public Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
         /// <summary>
-        /// Gets the reference to the element at the specified indices.
+        /// Gets the reference to the element at the specified indices. Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
         /// <param name="y">The row index of the item to get the reference for.</param>
         /// <param name="x">The column index of the item to get the reference for.</param>
