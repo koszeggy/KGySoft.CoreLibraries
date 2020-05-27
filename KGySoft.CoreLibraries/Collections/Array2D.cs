@@ -127,6 +127,54 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Gets a row of the <see cref="Array2D{T}"/> as an <see cref="ArraySection{T}"/> instance.
+        /// </summary>
+        /// <param name="y">The index of the row to obtain.</param>
+        /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
+        public ArraySection<T> this[int y]
+        {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get
+            {
+                if ((uint)y >= (uint)height)
+                    Throw.ArgumentOutOfRangeException(Argument.y);
+                return buffer.Slice(y * width, width);
+            }
+        }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets a row of the <see cref="Array2D{T}"/> as an <see cref="ArraySection{T}"/> instance.
+        /// </summary>
+        /// <param name="y">The index of the row to obtain.</param>
+        /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Index is a typical indexer argument")]
+        public ArraySection<T> this[Index y]
+        {
+            // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get => this[y.GetOffset(height)];
+        }
+
+        /// <summary>
+        /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance indicated by the specified <paramref name="range"/>.
+        /// </summary>
+        /// <param name="range">The range of rows to get.</param>
+        /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
+        public Array2D<T> this[Range range]
+        {
+            // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get
+            {
+                int startIndex = range.Start.GetOffset(height);
+                return Slice(startIndex, range.End.GetOffset(height) - startIndex);
+            }
+        }
+#endif
+
         #endregion
 
         #endregion
@@ -230,6 +278,22 @@ namespace KGySoft.Collections
         #region Methods
 
         #region Public Methods
+
+        /// <summary>
+        /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance indicated by the specified <paramref name="startRowIndex"/>.
+        /// </summary>
+        /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
+        /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance starting with the specified <paramref name="startRowIndex"/>.</returns>
+        public Array2D<T> Slice(int startRowIndex) => new Array2D<T>(buffer.Slice(startRowIndex * width), height - startRowIndex, width);
+
+        /// <summary>
+        /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.
+        /// </summary>
+        /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
+        /// <param name="rowCount">The desired number of rows of the returned <see cref="Array2D{T}"/>.</param>
+        /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.</returns>
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
+        public Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
         /// <summary>
         /// Gets the reference to the element at the specified indices.

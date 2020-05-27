@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-
+using System.Linq;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -57,6 +57,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(Reflector.EmptyArray<int>(), array2d.Buffer.ToArray());
             int _;
             Assert.Throws<ArgumentOutOfRangeException>(() => _ = array2d.Buffer[0]);
+        }
+
+        [Test]
+        public void SliceTest()
+        {
+            const int width = 4;
+            const int height = 3;
+            ArraySection<int> section = Enumerable.Range(0, width * height).ToArray();
+            Array2D<int> array = new Array2D<int>(section, height, width);
+
+            Assert.AreEqual(1, array[0][1]);
+            Assert.AreEqual(width, array[0].Length);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Index from = 1;
+            Index to = ^1;
+            Span<int> span = section.AsSpan;
+            Assert.AreEqual(span.Slice(1, 2).ToArray(), array[0].Slice(1, 2));
+            Assert.AreEqual(span[(from.Value * width)..^(to.Value * width)].ToArray(), array[from..to].AsSpan.ToArray());
+#endif
         }
 
         #endregion
