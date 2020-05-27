@@ -131,6 +131,7 @@ namespace KGySoft
         stream,
         stringValue,
         target,
+        targetIndex,
         targetPropertyName,
         targetType,
         testCase,

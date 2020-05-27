@@ -358,6 +358,9 @@ Hit rate: {8:P2}</value>
   <data name="ArraySection_Null" xml:space="preserve">
     <value>The underlying array is null.</value>
   </data>
+  <data name="ArraySection_InsufficientCapacity" xml:space="preserve">
+    <value>The array section has insufficient capacity.</value>
+  </data>
   <data name="IDictionary_NonGenericKeyTypeInvalidFormat" xml:space="preserve">
     <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>

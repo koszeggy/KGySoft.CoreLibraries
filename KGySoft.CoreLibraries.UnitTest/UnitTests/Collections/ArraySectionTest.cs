@@ -16,6 +16,8 @@
 
 #region Usings
 
+using System;
+using System.Linq;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -65,6 +67,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void GetHashCodeTest()
         {
             Assert.AreNotEqual(ArraySection<_>.Null.GetHashCode(), ArraySection<_>.Empty.GetHashCode());
+        }
+
+        [Test]
+        public void SliceTest()
+        {
+            ArraySection<int> section = Enumerable.Range(0, 10).ToArray();
+            ArraySection<int> subsection = section.Slice(1, 2);
+
+            Assert.AreEqual(1, subsection[0]);
+            Assert.AreEqual(2, subsection.Length);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Span<int> span = section.AsSpan;
+            Assert.AreEqual(span.Slice(1, 2).ToArray(), subsection);
+            Assert.AreEqual(span[1..^1].ToArray(), section[1..^1]);
+#endif
         }
 
         #endregion

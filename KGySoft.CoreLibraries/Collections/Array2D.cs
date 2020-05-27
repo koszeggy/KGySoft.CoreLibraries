@@ -28,16 +28,17 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a rectangular array. It supports accessing its rows or the whole content as a single dimension <see cref="ArraySection{T}"/> or <see cref="Span{T}"/> (if supported on the targeted platform).
-    /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
+    /// Represents a rectangular array. It supports accessing its rows or the whole content as a single dimension <see cref="ArraySection{T}"/>.
+    /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of the element in the collection.</typeparam>
     /// <remarks>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="Array2D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
     /// <para>If the current platform supports it, the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
-    /// <note>The <see cref="Array2D{T}"/> implements the <see cref="IDisposable"/> interface because it internally uses a self allocated <see cref="ArraySection{T}"/> instance, which must be released when it is not used anymore.
-    /// Not calling the <see cref="Dispose">Dispose</see> method may lead to decreased application performance.</note></para>
+    /// <note>Unlike the underlying <see cref="ArraySection{T}"/>, the <see cref="Array2D{T}"/> implements the <see cref="IDisposable"/> interface.
+    /// Calling the <see cref="Dispose">Dispose</see> method is required if the <see cref="Array2D{T}"/> was not created from an existing <see cref="ArraySection{T}"/>
+    /// instance. Not calling the <see cref="Dispose">Dispose</see> method may lead to decreased application performance.</note></para>
     /// <para>As <see cref="Array2D{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
@@ -179,6 +180,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="Array2D{T}"/> struct using the specified <paramref name="height"/> and <paramref name="width"/>.
         /// Parameter order is the same as in case of instantiating a regular two-dimensional array.
+        /// <br/>If the created <see cref="Array2D{T}"/> is not used anymore the <see cref="Dispose">Dispose</see> method should be called to
+        /// return the possibly <see cref="ArrayPool{T}"/>-allocated underlying buffer to the pool.
         /// </summary>
         /// <param name="height">The height of the array to be created.</param>
         /// <param name="width">The width of the array to be created.</param>
@@ -193,23 +196,40 @@ namespace KGySoft.Collections
             buffer = new ArraySection<T>(height * width);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Array2D{T}"/> struct from an existing <see cref="ArraySection{T}"/>
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// </summary>
+        /// <param name="buffer">The desired underlying buffer for the <see cref="Array2D{T}"/> instance to be created.
+        /// It must have sufficient capacity for the specified dimensions. Even if <paramref name="buffer"/> owns an array rented from
+        /// the <see cref="ArrayPool{T}"/>, calling the <see cref="Dispose">Dispose</see> method on the created <see cref="Array2D{T}"/>
+        /// instance does not return the underlying array to the pool. In such case it is the caller's responsibility to release the <paramref name="buffer"/>.</param>
+        /// <param name="height">The height of the array to be created.</param>
+        /// <param name="width">The width of the array to be created.</param>
+        public Array2D(ArraySection<T> buffer, int height, int width)
+        {
+            if (buffer.IsNull)
+                Throw.ArgumentNullException(Argument.buffer);
+            if (height < 0)
+                Throw.ArgumentOutOfRangeException(Argument.width);
+            if (width < 0)
+                Throw.ArgumentOutOfRangeException(Argument.height);
+            int size = height * width;
+            if (buffer.Length < size)
+                Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
+
+            this.height = height;
+            this.width = width;
+
+            // slicing even if length matches size to prevent Dispose returning the backing array to the pool
+            this.buffer = buffer.Slice(0, size);
+        }
+
         #endregion
 
         #region Methods
 
         #region Public Methods
-
-        /// <summary>
-        /// Gets a row of the <see cref="Array2D{T}"/> as an <see cref="ArraySection{T}"/> instance.
-        /// </summary>
-        /// <param name="y">The index of the row to obtain.</param>
-        /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
-        public ArraySection<T> GetRow(int y)
-        {
-            if ((uint)y >= (uint)height)
-                Throw.ArgumentOutOfRangeException(Argument.y);
-            return buffer.Slice(y * width, width);
-        }
 
         /// <summary>
         /// Gets the reference to the element at the specified indices.

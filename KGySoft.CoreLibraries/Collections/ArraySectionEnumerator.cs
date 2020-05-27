@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -46,7 +47,11 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the element at the current position of the enumerator.
         /// </summary>
-        public T Current => index >= start && index < end ? array[index] : default;
+        public T Current
+        {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get => index >= start && index < end ? array[index] : default;
+        }
 
         #endregion
 
@@ -88,6 +93,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
         /// </returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public bool MoveNext()
         {
             if (index >= end)

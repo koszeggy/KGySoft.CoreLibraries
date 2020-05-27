@@ -1,14 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Array2DTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2020 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+
 using KGySoft.Collections;
+using KGySoft.Reflection;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
     public class Array2DTest
     {
+        #region Methods
+
         [Test]
         public void ArrayCompatibilityTest()
         {
@@ -24,5 +47,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             Assert.AreEqual(array, array2d);
         }
+
+        [Test]
+        public void ZeroDimensionTest()
+        {
+            var array2d = new Array2D<int>(2, 0);
+
+            Assert.IsTrue(array2d.IsNullOrEmpty());
+            Assert.AreEqual(Reflector.EmptyArray<int>(), array2d.Buffer.ToArray());
+            int _;
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = array2d.Buffer[0]);
+        }
+
+        #endregion
     }
 }

@@ -49,8 +49,8 @@ namespace KGySoft.Collections
     /// <para>If an <see cref="ArraySection{T}"/> is created by the <see cref="ArraySection{T}(int,bool)">constructor with a specified size</see>, then depending on the size and the
     /// current platform the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>. 
     /// <note>An <see cref="ArraySection{T}"/> instance that was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see> must be released by calling the <see cref="Release">Release</see>
-    /// method when it is not used anymore. The <see cref="ArraySection{T}"/> type does not implement <see cref="IDisposable"/> because releasing is required only in such case
-    /// but not calling it when it is needed may lead to decreased application performance.</note></para>
+    /// method when it is not used anymore. The <see cref="ArraySection{T}"/> type does not implement <see cref="IDisposable"/> because releasing is not required when <see cref="ArraySection{T}"/> is created
+    /// from an existing array but not calling it when it is needed may lead to decreased application performance.</note></para>
     /// <para>As <see cref="ArraySection{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
@@ -121,7 +121,7 @@ namespace KGySoft.Collections
         public bool IsNull => array == null;
 
         /// <summary>
-        /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty section or a <see langword="null"/>&#160;array.
+        /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty array section or a <see langword="null"/>&#160;array.
         /// </summary>
         public bool IsNullOrEmpty => length == 0;
 
@@ -142,7 +142,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as an <see cref="ArraySegment{T}"/>.
         /// </summary>
-        public ArraySegment<T> AsSegment => new ArraySegment<T>(array, offset, length);
+        public ArraySegment<T> AsArraySegment => new ArraySegment<T>(array, offset, length);
 
         #endregion
 
@@ -319,7 +319,7 @@ namespace KGySoft.Collections
             if ((uint)offset > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
             if ((uint)length > (uint)(array.Length - offset))
-                Throw.ArgumentOutOfRangeException(Argument.offset);
+                Throw.ArgumentOutOfRangeException(Argument.length);
             this.array = array;
             this.offset = offset;
             this.length = length;
@@ -440,22 +440,38 @@ namespace KGySoft.Collections
         public bool Contains(T item) => IndexOf(item) >= 0;
 
         /// <summary>
-        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible one-dimensional array, starting at a particular array index.
+        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible one-dimensional array, starting at a particular index.
         /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="ArraySection{T}"/>.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
+        /// <param name="target">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="ArraySection{T}"/>.</param>
+        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
+        /// <br/>Default value: 0.</param>
         [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
         [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
-        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "array is the name of the parameter also in the interface")]
-        public void CopyTo(T[] array, int arrayIndex)
+        public void CopyTo(T[] target, int targetIndex = 0)
         {
-            if (array == null)
-                Throw.ArgumentNullException(Argument.array);
-            if (arrayIndex < 0 || arrayIndex > array.Length)
-                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
-            if (array.Length - arrayIndex < length)
-                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
-            this.array?.CopyElements(offset, array, arrayIndex, length);
+            if (target == null)
+                Throw.ArgumentNullException(Argument.target);
+            if (targetIndex < 0 || targetIndex > target.Length)
+                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
+            if (target.Length - targetIndex < length)
+                Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
+            array?.CopyElements(offset, target, targetIndex, length);
+        }
+
+        /// <summary>
+        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible instance, starting at a particular index.
+        /// </summary>
+        /// <param name="target">The <see cref="ArraySection{T}"/> that is the destination of the elements copied from this instance.</param>
+        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins.</param>
+        public void CopyTo(ArraySection<T> target, int targetIndex = 0)
+        {
+            if (target.IsNull)
+                Throw.ArgumentNullException(Argument.target);
+            if (targetIndex < 0 || targetIndex > target.Length)
+                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
+            if (target.length - targetIndex < length)
+                Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
+            array?.CopyElements(offset, target.array, target.offset + targetIndex, length);
         }
 
         /// <summary>
