@@ -83,7 +83,7 @@ namespace KGySoft.Collections
         #region Private Fields
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
-        private static readonly int poolingThreshold = Math.Min(2, 1024 / Reflector.SizeOf<T>());
+        private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector.SizeOf<T>());
 #endif
 
         #endregion
@@ -492,7 +492,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
         /// then this method must be called when the <see cref="ArraySection{T}"/> is not used anymore.
-        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the underlying array.
+        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the self instance.
         /// </summary>
         public void Release()
         {

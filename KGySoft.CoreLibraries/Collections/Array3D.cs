@@ -22,6 +22,7 @@ using System.Buffers;
 #endif
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -30,7 +31,8 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a cubic array. It supports accessing its planes as <see cref="Array2D{T}"/> instances, or the whole content as a single dimension <see cref="ArraySection{T}"/>.
+    /// Represents a cubic array, whose indexer access is faster than a regular 3D array.
+    /// It supports accessing its planes as <see cref="Array2D{T}"/> instances, or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
@@ -45,8 +47,38 @@ namespace KGySoft.Collections
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
+    [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Depth) + "}, {" + nameof(Height) + "}, {" + nameof(Width) + "}]")]
+    [DebuggerTypeProxy(typeof(Array3D<>.Array3DDebugView))]
     public struct Array3D<T> : IDisposable, IEquatable<Array3D<T>>, IEnumerable<T>
     {
+        #region Nested Types
+
+        private sealed class Array3DDebugView
+        {
+            #region Fields
+
+            private Array3D<T> array;
+
+            #endregion
+
+            #region Properties
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 3D array debug items")]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+            public T[,,] Items => array.To3DArray();
+
+            #endregion
+
+            #region Constructors
+
+            internal Array3DDebugView(Array3D<T> array) => this.array = array;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Fields
 
         private readonly int width;
@@ -103,6 +135,18 @@ namespace KGySoft.Collections
         public Span<T> AsSpan => buffer.AsSpan;
 #endif
 
+        /// <summary>
+        /// Gets whether this <see cref="Array3D{T}"/> instance represents a <see langword="null"/>&#160;array.
+        /// <br/>Please note that the <see cref="ToArray">ToArray</see>/<see cref="To3DArray">To3DArray</see>/<see cref="ToJaggedArray">ToJaggedArray</see> methods
+        /// return <see langword="null"/>&#160;when this property returns <see langword="true"/>.
+        /// </summary>
+        public bool IsNull => buffer.IsNull;
+
+        /// <summary>
+        /// Gets whether this <see cref="Array3D{T}"/> instance represents an empty or a <see langword="null"/>&#160;array.
+        /// </summary>
+        public bool IsNullOrEmpty => buffer.IsNullOrEmpty;
+
         #endregion
 
         #region Indexers
@@ -111,9 +155,9 @@ namespace KGySoft.Collections
         /// Gets or sets the element at the specified indices. Parameter order is the same as in case of a regular three-dimensional array.
         /// <br/>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// </summary>
-        /// <param name="z">The depth index of the item to get or set.</param>
-        /// <param name="y">The row index of the item to get or set.</param>
-        /// <param name="x">The column index of the item to get or set.</param>
+        /// <param name="z">The Z-coordinate (depth index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
+        /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The element at the specified indices.</returns>
         public T this[int z, int y, int x]
         {
@@ -303,9 +347,9 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the reference to the element at the specified indices. Parameter order is the same as in case of a regular three-dimensional array.
         /// </summary>
-        /// <param name="z">The depth index of the item to get or set.</param>
-        /// <param name="y">The row index of the item to get the reference for.</param>
-        /// <param name="x">The column index of the item to get the reference for.</param>
+        /// <param name="z">The Z-coordinate (depth index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
+        /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref T GetElementReference(int z, int y, int x)
@@ -324,7 +368,9 @@ namespace KGySoft.Collections
         public ArraySectionEnumerator<T> GetEnumerator() => buffer.GetEnumerator();
 
         /// <summary>
-        /// Releases the underlying buffer.
+        /// Releases the underlying buffer. If this <see cref="Array3D{T}"/> instance was instantiated by the <see cref="Array3D{T}(int,int,int)">self allocating constructor</see>,
+        /// then this method must be called when the <see cref="Array3D{T}"/> is not used anymore.
+        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the self instance.
         /// </summary>
         public void Dispose()
         {
@@ -370,6 +416,71 @@ namespace KGySoft.Collections
 #else
             return (buffer, width, height, depth).GetHashCode();
 #endif
+        }
+
+        /// <summary>
+        /// Copies the elements of this <see cref="Array3D{T}"/> to a new single dimensional array.
+        /// </summary>
+        /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
+        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        public T[] ToArray() => buffer.ToArray();
+
+        /// <summary>
+        /// Copies the elements of this <see cref="Array3D{T}"/> to a new three dimensional array.
+        /// </summary>
+        /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
+        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "See ToJaggedArray")]
+        public T[,,] To3DArray()
+        {
+            if (buffer.IsNull)
+                return null;
+            var result = new T[depth, height, width];
+            int i = 0;
+            for (int z = 0; z < depth; z++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        result[z, y, x] = buffer.GetItemInternal(i);
+                        i += 1;
+                    }
+                }
+
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Copies the elements of this <see cref="Array3D{T}"/> to a new jagged array.
+        /// </summary>
+        /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
+        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        public T[][][] ToJaggedArray()
+        {
+            if (buffer.IsNull)
+                return null;
+            T[][][] result = new T[depth][][];
+            int i = 0;
+            for (int z = 0; z < depth; z++)
+            {
+                T[][] plane = new T[height][];
+                result[z] = plane;
+                for (int y = 0; y < height; y++)
+                {
+                    T[] row = new T[width];
+                    plane[y] = row;
+                    for (int x = 0; x < width; x++)
+                    {
+                        row[x] = buffer.GetItemInternal(i);
+                        i += 1;
+                    }
+                }
+            }
+
+            return result;
         }
 
         #endregion
