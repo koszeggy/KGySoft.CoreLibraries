@@ -446,16 +446,36 @@ namespace KGySoft.CoreLibraries
             if (!Enum<StringComparison>.IsDefined(comparison))
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
-            var index = -1;
-            foreach (var str in set)
+            int len = s.Length;
+            if (len == 0)
             {
-                if (str == null)
-                    Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
-                int pos = s.IndexOf(str, comparison);
-                if (pos == 0)
-                    return 0;
-                if (pos >= 0 && pos < index)
-                    index = pos;
+                foreach (string str in set)
+                {
+                    if (str == null)
+                        Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                    if (str.Length == 0)
+                        return 0;
+                }
+
+                return -1;
+            }
+
+            var index = -1;
+            for (int i = 0; i < len; i++)
+            {
+                foreach (string str in set)
+                {
+                    if (str == null)
+                        Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                    if (str.Length == 0)
+                        return 0;
+
+                    int strLen = str.Length;
+                    if (s[i] != str[0] || strLen > len - i)
+                        continue;
+                    if (strLen == 1 || String.Compare(s, i, str, 0, strLen, comparison) == 0)
+                        return i;
+                }
             }
 
             return index;
