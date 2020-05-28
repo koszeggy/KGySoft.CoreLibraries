@@ -16,24 +16,20 @@
 
 #region Usings
 
-#if !NET35
-using System.Dynamic;
-#endif
-using KGySoft.Annotations;
-
-#region Used Namespaces
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+#if !NET35
+using System.Dynamic;
+#endif
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-
-#endregion
 
 #endregion
 
@@ -270,7 +266,9 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The value of the state to set.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool TrySetMember([CanBeNull]SetMemberBinder binder, object value)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, binder CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, binder CAN be null so the Throw is reachable")]
+        public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             if (binder == null)
                 Throw.ArgumentNullException(Argument.binder);
@@ -285,7 +283,9 @@ namespace KGySoft.ComponentModel
         /// <param name="result">The value associated with the specified <see cref="GetMemberBinder.Name"/>.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public override bool TryGetMember([CanBeNull]GetMemberBinder binder, out object result)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, binder CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, binder CAN be null so the Throw is reachable")]
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             if (binder == null)
                 Throw.ArgumentNullException(Argument.binder);

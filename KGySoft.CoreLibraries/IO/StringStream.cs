@@ -132,7 +132,9 @@ namespace KGySoft.IO
             return position;
         }
 
-        public override int Read([CanBeNull]byte[] buffer, int offset, int count)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, buffer CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key buffer be null so the Throw is reachable")]
+        public override int Read(byte[] buffer, int offset, int count)
         {
             if (position < 0)
                 Throw.ObjectDisposedException();
