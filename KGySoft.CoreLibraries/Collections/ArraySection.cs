@@ -35,6 +35,10 @@ using KGySoft.Reflection;
 
 namespace KGySoft.Collections
 {
+#if NETFRAMEWORK || NETSTANDARD2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a one dimensional array or a section of an array.
     /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"/> types but can be used on every platform in the same way
@@ -280,6 +284,7 @@ namespace KGySoft.Collections
         /// <param name="length">The length of the <see cref="ArraySection{T}"/> to be created.</param>
         /// <param name="assureClean"><see langword="true"/>&#160;to make sure the allocated array is zero-initialized;
         /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>.</param>
+        [SuppressMessage("Microsoft.Usage", "CA1801:Review unused parameters", Justification = "Used in .NET Core 3.0/Standard 2.1")]
         public ArraySection(int length, bool assureClean = true)
         {
             if (length < 0)
@@ -370,6 +375,7 @@ namespace KGySoft.Collections
         /// <param name="length">The desired length of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
         public ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array, offset + startIndex, length);
 
         /// <summary>
@@ -381,7 +387,7 @@ namespace KGySoft.Collections
         {
             if (IsNullOrEmpty)
             { 
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
 #else
                 // This is the workaround to return ref null. Unfortunately this works only for .NET Core.

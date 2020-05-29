@@ -30,6 +30,10 @@ using KGySoft.ComponentModel;
 
 namespace KGySoft.CoreLibraries
 {
+#if NETFRAMEWORK || NETSTANDARD2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a segment of a <see cref="string"/>. This type is similar to <see cref="ReadOnlyMemory{T}"/>/<see cref="ArraySegment{T}"/>/<see cref="Span{T}"/> of <see cref="char">char</see>
     /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.

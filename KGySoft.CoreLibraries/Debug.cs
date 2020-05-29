@@ -27,7 +27,9 @@ namespace KGySoft
     {
         #region Methods
 
-        private static bool everAttached;
+#if !NETFRAMEWORK
+        private static bool everAttached; 
+#endif
 
         [Conditional("DEBUG")]
         internal static void Assert(bool condition, string message = null)

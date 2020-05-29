@@ -171,11 +171,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Alpha, Beta, Gamma, 16"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet"));
 
-            Assert.IsFalse(Enum<TestLongEnum>.TryParse(UInt64.MaxValue.ToString(), out e));
-            Assert.IsFalse(Enum<TestLongEnum>.TryParse("Beta, Gamma, , Delta, 16", out e));
-            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" ", out e));
-            Assert.IsFalse(Enum<TestLongEnum>.TryParse("9223372036854775808", out e));
-            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" -9223372036854775809 ", out e));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse(UInt64.MaxValue.ToString(), out var _));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse("Beta, Gamma, , Delta, 16", out var _));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" ", out var _));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse("9223372036854775808", out var _));
+            Assert.IsFalse(Enum<TestLongEnum>.TryParse(" -9223372036854775809 ", out var _));
 
             TestIntEnum ie = TestIntEnum.Simple | TestIntEnum.Normal | TestIntEnum.Risky;
             Assert.AreEqual(ie, Enum<TestIntEnum>.Parse(ie.ToString(EnumFormattingOptions.Auto)));

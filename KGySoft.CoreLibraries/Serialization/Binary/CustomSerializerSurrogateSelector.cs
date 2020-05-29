@@ -256,6 +256,21 @@ namespace KGySoft.Serialization.Binary
 
         #region Methods
 
+        #region Static Methods
+
+        [SecurityCritical]
+        private static void GetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context) => serializable.GetObjectData(info, context);
+
+        private static void SetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context)
+        {
+            if (!Accessors.TryInvokeCtor(serializable, info, context))
+                Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(serializable.GetType()));
+        }
+
+        #endregion
+
+        #region Instance Methods
+
         #region Public Methods
 
         /// <summary>
@@ -327,15 +342,6 @@ namespace KGySoft.Serialization.Binary
         #endregion
 
         #region Private Methods
-
-        [SecurityCritical]
-        private void GetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context) => serializable.GetObjectData(info, context);
-
-        private void SetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context)
-        {
-            if (!Accessors.TryInvokeCtor(serializable, info, context))
-                Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(serializable.GetType()));
-        }
 
         private void GetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
@@ -507,6 +513,8 @@ namespace KGySoft.Serialization.Binary
             OnObjectDataRestored(new ObjectDataRestoredEventArgs(obj, context, info));
             return obj;
         }
+
+        #endregion
 
         #endregion
 

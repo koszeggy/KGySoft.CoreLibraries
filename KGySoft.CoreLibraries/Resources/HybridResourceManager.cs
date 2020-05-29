@@ -268,6 +268,8 @@ namespace KGySoft.Resources
             /// </summary>
             internal CultureInfo WrappedCulture { get; }
 
+            [SuppressMessage("Reliability", "CA2002:Do not lock on objects with weak identity",
+                Justification = "False alarm, this is not accessible as a public reference")]
             internal bool HierarchyLoaded
             {
                 get

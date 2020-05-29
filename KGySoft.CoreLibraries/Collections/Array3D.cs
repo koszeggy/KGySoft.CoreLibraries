@@ -30,6 +30,10 @@ using System.Runtime.CompilerServices;
 
 namespace KGySoft.Collections
 {
+#if NETFRAMEWORK || NETSTANDARD2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a cubic array, whose indexer access is faster than a regular 3D array.
     /// It supports accessing its planes as <see cref="Array2D{T}"/> instances, or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
@@ -159,6 +163,7 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The element at the specified indices.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1023:Indexers should not be multidimensional", Justification = "The type represents a multidimensional array")]
         public T this[int z, int y, int x]
         {
             // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)

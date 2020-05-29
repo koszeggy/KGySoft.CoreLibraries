@@ -291,6 +291,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because of compatibility with string and because it will be the new length of the returned instance")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
         public StringSegment Substring(int startIndex, int length)
         {
             if (IsNull)
@@ -827,6 +828,7 @@ namespace KGySoft.CoreLibraries
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
         internal StringSegment SubstringInternal(int start, int length) =>
             new StringSegment(str, offset + start, length);
 

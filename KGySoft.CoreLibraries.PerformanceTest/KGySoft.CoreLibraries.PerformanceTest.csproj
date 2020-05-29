@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
-    <TargetFramework>net45</TargetFramework>
+    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <!--<TargetFrameworks>net45</TargetFrameworks>-->
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
