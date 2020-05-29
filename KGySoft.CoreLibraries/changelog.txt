@@ -20,7 +20,9 @@
   + Conversion and comparison members (numerous Equals/Compare/StartsWith/EndsWith overloads)
   + AsSpan, AsMemory (only in .NET Core 3.0 and .NET Standard 2.1)
 + New StringSegmentExtensions class with various Read... methods
-+ ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
+* ObjectExtensions class:
+  + New In<T> overload with IEnumerable<T> parameter type.
+  - Convert/TryConvert methods: Fixing some edge-cases for type converters and fixed-size collections
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 
 + KGySoft.Collections namespace:
@@ -33,7 +35,7 @@
 + KGySoft.ComponentModel namespace:
 ===================================
 + New StringSegmentConverter class
-* ObservableObjectBase class: Performance improvement: AffectsModifiedState is not called in a modified state.
+* ObservableObjectBase class performance: AffectsModifiedState is not queried if IsModified is already true.
 
 
 ~~~~~~~~~

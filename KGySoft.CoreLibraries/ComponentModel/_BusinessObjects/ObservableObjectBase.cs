@@ -115,7 +115,7 @@ namespace KGySoft.ComponentModel
 
         // This dictionary is never expanded though existing values may be overwritten. New properties are
         // added to lockingStorage, and a merged dictionary is assigned to the lock free instance from time to time
-        private Dictionary<string, object> lockFreeStorage = new Dictionary<string, object>();
+        private volatile Dictionary<string, object> lockFreeStorage = new Dictionary<string, object>();
 
         [NonSerialized] private Dictionary<string, Type> reflectedProperties;
         [NonSerialized] private Dictionary<string, object> lockingStorage;

@@ -168,9 +168,9 @@ namespace KGySoft.CoreLibraries
                     // if it fails, then trying to parse from string...
                     || obj is string strValue && strValue.TryParse(targetType, context.Culture, out value)
                     // ...between IConvertibles...
-                    || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(ref context, convertible, targetType, out value)
-                    // ...by TypeConverter...
-                    || TryConvertByTypeConverter(ref context, obj, targetType, out value)
+                    || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertConvertible(ref context, convertible, targetType, out value)
+                    // ...by TypeConverter, except if target type is string (some type converters do some ToString, might be wrong)...
+                    || targetType != Reflector.StringType && TryConvertByTypeConverter(ref context, obj, targetType, out value)
                     // ...or by non-direct conversions between source and target types (by base class/interface/generic type)
                     || TryConvertByRegisteredConversion(ref context, obj, targetType, out value, false);
 
@@ -181,8 +181,11 @@ namespace KGySoft.CoreLibraries
                 if (obj is IEnumerable collection && Reflector.IEnumerableType.IsAssignableFrom(targetType) && TryConvertCollection(ref context, collection, targetType, out value))
                     return true;
 
+                // string target: now we try TypeConverter also for strings but as an ultimate fallback we return ToString
                 if (targetType == Reflector.StringType)
                 {
+                    if (TryConvertByTypeConverter(ref context, obj, targetType, out value))
+                        return true;
                     value = obj.ToString();
                     return true;
                 }
@@ -246,7 +249,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static bool TryConvertCovertible(ref ConversionContext context, IConvertible convertible, Type targetType, out object value)
+            private static bool TryConvertConvertible(ref ConversionContext context, IConvertible convertible, Type targetType, out object value)
             {
                 try
                 {
@@ -296,6 +299,7 @@ namespace KGySoft.CoreLibraries
                     try
                     {
                         value = converter.ConvertTo(null, context.Culture, source, targetType);
+                        return true;
                     }
                     catch (Exception e) when (!e.IsCritical())
                     {

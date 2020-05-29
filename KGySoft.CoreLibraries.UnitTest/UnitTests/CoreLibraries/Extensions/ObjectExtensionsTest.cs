@@ -26,7 +26,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+using KGySoft.Collections;
 using NUnit.Framework;
 
 #endregion
@@ -133,6 +133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if !NET35
             Test(new int[] { 1, 2, 3 }, new ArraySegment<string>(new[] { "1", "2", "3" })); // by ctor, accepts array
 #endif
+            Test(new int[] { 1, 2, 3 }, new ArraySection<string>(new[] { "1", "2", "3" })); // by ctor, accepts array
             Test(new List<int> { 1, 2, 3 }, new ArrayList { 1, 2, 3 }); // gen -> non-gen
             Test(new ArrayList { 1, 2, 3 }, new List<int> { 1, 2, 3 }); // non-gen -> gen
 

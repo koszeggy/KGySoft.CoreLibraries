@@ -483,9 +483,9 @@ namespace KGySoft.CoreLibraries
             if (!type.IsInstanceOfType(instance))
                 Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(type));
 
-            // not instance is IList test because then type could be even object
-            if (Reflector.IListType.IsAssignableFrom(type))
-                return !((IList)instance).IsReadOnly;
+            // not instance is IList test because type could be even object
+            if (Reflector.IListType.IsAssignableFrom(type) && instance is IList list)
+                return !list.IsReadOnly && !list.IsFixedSize;
             if (Reflector.IDictionaryType.IsAssignableFrom(type))
                 return !((IDictionary)instance).IsReadOnly;
 
