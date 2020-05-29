@@ -240,7 +240,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            protected string GetStack() => String.Join(" < ", new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "SerializeByWriter").ToArray());
+            protected string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "SerializeByWriter").Join(" < ");
 
             #endregion
 
@@ -481,7 +481,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            protected string GetStack() => String.Join(" < ", new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "Deserialize").ToArray());
+            protected string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "Deserialize").Join(" < ");
 
             #endregion
 

@@ -23,6 +23,7 @@
 * ObjectExtensions class:
   + New In<T> overload with IEnumerable<T> parameter type.
   - Convert/TryConvert methods: Fixing some edge-cases for type converters and fixed-size collections
++ EnumerableExtensions class: New Join method.
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
 
 + KGySoft.Collections namespace:

@@ -1040,18 +1040,10 @@ namespace KGySoft
         }
 
         private static string FormatEnumValues<TEnum>() where TEnum : struct, Enum
-            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd)
-#if NET35
-                    .ToArray()
-#endif
-            );
+            => Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd).Join(", ");
 
         private static string FormatEnumFlags<TEnum>() where TEnum : struct, Enum
-            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd)
-#if NET35
-                    .ToArray()
-#endif
-            );
+            => Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd).Join(", ");
 
         private static string FormatBool(bool value) => value ? Yes : No;
 

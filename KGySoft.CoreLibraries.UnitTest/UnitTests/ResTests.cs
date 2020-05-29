@@ -137,7 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests
                     uncovered.Add((string)enumerator.Key);
             }
 
-            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered.ToArray())}");
+            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{uncovered.Join(Environment.NewLine)}");
         }
 
         #endregion

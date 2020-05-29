@@ -98,7 +98,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40
                 public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Count.ToString(CultureInfo.InvariantCulture)}]";
 #else
-                public override string ToString() => $"{GenericType.Name}[{String.Join(", ", SuggestedArguments)}]";
+                public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Join(", ")}]";
 #endif
 
                 #endregion

@@ -108,11 +108,7 @@ namespace KGySoft.CoreLibraries
 
             #region Methods
 
-            public override string ToString() => String.Join("; ", sets.Select(set => $"[{set.First}..{(char)(set.First + set.Count - 1)}]")
-#if NET35
-                .ToArray()
-#endif
-            );
+            public override string ToString() => sets.Select(set => $"[{set.First}..{(char)(set.First + set.Count - 1)}]").Join("; ");
 
             #endregion
         }
