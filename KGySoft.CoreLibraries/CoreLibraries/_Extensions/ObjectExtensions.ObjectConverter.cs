@@ -324,7 +324,7 @@ namespace KGySoft.CoreLibraries
                     return TryPopulateByInitializerCollection(ref context, collection, collectionCtor, targetElementType, isDictionary, out value);
 
                 var targetCollection = (IEnumerable)(targetType.IsValueType ? Activator.CreateInstance(targetType) : CreateInstanceAccessor.GetAccessor(targetType).CreateInstance());
-                if (!targetType.IsReadWriteCollection(targetCollection))
+                if (!targetType.IsPopulatableCollection(targetCollection))
                 {
                     // read-only collection: trying again by initializer collection
                     if (collectionCtor != null)

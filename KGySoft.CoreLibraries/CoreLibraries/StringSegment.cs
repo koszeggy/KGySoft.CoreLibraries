@@ -30,7 +30,7 @@ using KGySoft.ComponentModel;
 
 namespace KGySoft.CoreLibraries
 {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
@@ -396,6 +396,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="range">The range to get.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="range"/>.</returns>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
+        [SuppressMessage("Style", "IDE0057:Use range operator", Justification = "False alarm, causes recursion")]
         public StringSegment this[Range range]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]

@@ -249,7 +249,7 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return IsNull || value.Length > 0 ? -1 : 0;
 
-            int result = str.LastIndexOf(value, offset + startIndex, count, comparison);
+            int result = str.LastIndexOf(value, offset + startIndex + count - 1, count, comparison);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -306,7 +306,7 @@ namespace KGySoft.CoreLibraries
                 return IsNull || value.length > 0 ? -1 : 0;
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            int result = str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
+            int result = str.LastIndexOf(value.ToString(), offset + startIndex + count - 1, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
             int result = AsSpan.Slice(startIndex, count).LastIndexOf(value.AsSpan, comparison);

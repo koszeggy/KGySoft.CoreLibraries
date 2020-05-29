@@ -485,24 +485,28 @@ namespace KGySoft.CoreLibraries
 
             // not instance is IList test because type could be even object
             if (Reflector.IListType.IsAssignableFrom(type) && instance is IList list)
+                return !list.IsReadOnly;
+            if (Reflector.IDictionaryType.IsAssignableFrom(type))
+                return !((IDictionary)instance).IsReadOnly;
+
+            return IsGenericReadWriteCollection(type, instance);
+        }
+
+        internal static bool IsPopulatableCollection(this Type type, object instance)
+        {
+            if (instance == null)
+                return false;
+
+            if (!type.IsInstanceOfType(instance))
+                Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(type));
+
+            // not instance is IList test because type could be even object
+            if (Reflector.IListType.IsAssignableFrom(type) && instance is IList list)
                 return !list.IsReadOnly && !list.IsFixedSize;
             if (Reflector.IDictionaryType.IsAssignableFrom(type))
                 return !((IDictionary)instance).IsReadOnly;
 
-            foreach (Type i in new[] { type }.Concat(type.GetInterfaces())) // including self type
-            {
-                if (i.Name != collectionGenTypeName)
-                    continue;
-                if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
-                {
-                    if (instance is Array) // checked just here because type can be a non-collection
-                        return true;
-                    PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
-                    return !(bool)pi.Get(instance);
-                }
-            }
-
-            return false;
+            return IsGenericReadWriteCollection(type, instance);
         }
 
         internal static ConstructorInfo GetDefaultConstructor(this Type type)
@@ -711,6 +715,22 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Private Methods
+
+        private static bool IsGenericReadWriteCollection(Type type, object instance)
+        {
+            foreach (Type i in new[] { type }.Concat(type.GetInterfaces())) // including self type
+            {
+                if (i.Name != collectionGenTypeName)
+                    continue;
+                if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
+                {
+                    PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
+                    return !(bool)pi.Get(instance);
+                }
+            }
+
+            return false;
+        }
 
         [SuppressMessage("Style", "IDE0016:Use 'throw' expression", Justification = "Throwing at the beginning may spare a lot of calculations")]
         private static void DoRegisterConversion(Type sourceType, Type targetType, Delegate conversion)

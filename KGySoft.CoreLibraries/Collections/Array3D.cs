@@ -30,7 +30,7 @@ using System.Runtime.CompilerServices;
 
 namespace KGySoft.Collections
 {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
