@@ -9,6 +9,10 @@
 * v5.2.0:
 ~~~~~~~~~
 
++ KGySoft namespace:
+====================
++ PublicResources class: New IndexOutOfRange property
+
 + KGySoft.CoreLibraries namespace:
 ==================================
 + The StringSegment type has been made public. It offers a sort of string operations without allocating new strings.

@@ -59,6 +59,8 @@ namespace KGySoft
         [ContractAnnotation("=> halt")]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
         [ContractAnnotation("=> halt")]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
 
+        [ContractAnnotation("=> halt")] internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
+
         [ContractAnnotation("=> halt")]
         internal static void EnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum 
             => throw CreateArgumentOutOfRangeException(arg, Res.EnumOutOfRange(value));
@@ -116,6 +118,7 @@ namespace KGySoft
         private static Exception CreateArgumentNullException(Argument arg, string message) => new ArgumentNullException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateArgumentException(Argument? arg, string message, Exception inner = null) => arg.HasValue ? new ArgumentException(message, Enum<Argument>.ToString(arg.Value), inner) : new ArgumentException(message, inner);
         private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => new ArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
+        private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);
         private static Exception CreateKeyNotFoundException(string message) => new KeyNotFoundException(message);
         private static Exception CreateInvalidOperationException(string message, Exception inner = null) => new InvalidOperationException(message, inner);
         private static Exception CreateNotSupportedException(string message, Exception inner = null) => new NotSupportedException(message, inner);

@@ -35,7 +35,7 @@ using KGySoft.Reflection;
 
 namespace KGySoft.Collections
 {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
@@ -189,7 +189,7 @@ namespace KGySoft.Collections
                 // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
                 // would come otherwise, and let the ArgumentOutOfRangeException come from array, even if a not localized one.
                 if (array == null)
-                    Throw.ArgumentOutOfRangeException(Argument.index);
+                    Throw.IndexOutOfRangeException();
                 return GetItemInternal(index);
             }
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -198,7 +198,7 @@ namespace KGySoft.Collections
                 // For better performance we throw an ArgumentOutOfRangeException only when a NullReferenceException
                 // would come otherwise, and let the ArgumentOutOfRangeException come from array, even if a not localized one.
                 if (array == null)
-                    Throw.ArgumentOutOfRangeException(Argument.index);
+                    Throw.IndexOutOfRangeException();
                 array[offset + index] = value;
             }
         }

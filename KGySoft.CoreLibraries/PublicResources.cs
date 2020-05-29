@@ -59,6 +59,10 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Specified argument was out of the range of valid values.</c></returns>
         public static string ArgumentOutOfRange => Res.ArgumentOutOfRange;
 
+        /// <summary>Looks up a localized string similar to <c>Index was outside the bounds of the array.</c></summary>
+        /// <returns>A localized string similar to <c>Index was outside the bounds of the array.</c></returns>
+        public static string IndexOutOfRange => Res.IndexOutOfRange;
+
         /// <summary>Looks up a localized string similar to <c>Cannot access a disposed object.</c></summary>
         /// <returns>A localized string similar to <c>Cannot access a disposed object.</c></returns>
         public static string ObjectDisposed => Res.ObjectDisposed;

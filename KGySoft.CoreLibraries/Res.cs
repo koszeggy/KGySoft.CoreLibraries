@@ -81,6 +81,9 @@ namespace KGySoft
         /// <summary>Specified argument was out of the range of valid values.</summary>
         internal static string ArgumentOutOfRange => Get("General_ArgumentOutOfRange");
 
+        /// <summary>Index was outside the bounds of the array.</summary>
+        internal static string IndexOutOfRange => Get("General_IndexOutOfRange");
+
         /// <summary>Cannot access a disposed object.</summary>
         internal static string ObjectDisposed => Get("General_ObjectDisposed");
 

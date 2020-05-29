@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(array2d.IsNullOrEmpty());
             Assert.AreEqual(Reflector.EmptyArray<int>(), array2d.Buffer.ToArray());
             int _;
-            Assert.Throws<ArgumentOutOfRangeException>(() => _ = array2d.Buffer[0]);
+            Assert.Throws<IndexOutOfRangeException>(() => _ = array2d.Buffer[0]);
         }
 
         [Test]

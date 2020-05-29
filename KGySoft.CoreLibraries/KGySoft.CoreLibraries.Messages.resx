@@ -126,6 +126,9 @@
   <data name="General_ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
   </data>
+  <data name="General_IndexOutOfRange" xml:space="preserve">
+    <value>Index was outside the bounds of the array.</value>
+  </data>
   <data name="General_ArgumentMustBeGreaterThanFormat" xml:space="preserve">
     <value>Specified argument must be greater than {0}.</value>
   </data>
