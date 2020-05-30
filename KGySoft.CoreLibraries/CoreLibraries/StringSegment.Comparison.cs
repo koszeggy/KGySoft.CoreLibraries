@@ -234,7 +234,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
-        /// <param name="obj">The object to compare with this instance.</param>
+        /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
             => obj == null ? IsNull
@@ -246,8 +246,8 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="other">The <see cref="StringSegment"/> to compare with this instance.</param>
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="other"/> parameter.</returns>
-        /// <remarks><note>Unlike the <see cref="string.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
-        /// Use the <see cref="Compare(in StringSegment, in StringSegment, StringComparison)"/> method to perform a custom comparison.</remarks>
+        /// <remarks><note>Unlike the <see cref="string.CompareTo(string)">String.CompareTo</see> method, this one performs an ordinal comparison.
+        /// Use the <see cref="O:KGySoft.CoreLibraries.StringSegment.Compare">Compare</see> methods to perform a custom comparison.</note></remarks>
         public int CompareTo(StringSegment other)
         {
             if (str == null || other.str == null)
@@ -268,8 +268,8 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="obj"/> parameter.</returns>
-        /// <remarks><note>Unlike the <see cref="String.CompareTo(string)">String.CompareTo</see></note> method, this one performs an ordinal comparison.
-        /// Use the <see cref="O:KGySoft.CoreLibraries.StringSegment.Compare"/> methods to perform a custom comparison.</remarks>
+        /// <remarks><note>Unlike the <see cref="String.CompareTo(object)">String.CompareTo</see> method, this one performs an ordinal comparison.
+        /// Use the <see cref="O:KGySoft.CoreLibraries.StringSegment.Compare">Compare</see> methods to perform a custom comparison.</note></remarks>
         public int CompareTo(object obj)
             => obj switch
             {

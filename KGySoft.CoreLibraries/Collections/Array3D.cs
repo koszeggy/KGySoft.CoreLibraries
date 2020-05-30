@@ -90,8 +90,7 @@ namespace KGySoft.Collections
         private readonly int depth;
         private readonly int planeSize; // cached value of height * width
 
-        [SuppressMessage("Style", "IDE0044:Add readonly modifier",
-                Justification = "Must not be readonly to prevent defensive copy when accessing members")]
+        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly to prevent defensive copy when accessing members")]
         private ArraySection<T> buffer;
 
         #endregion
@@ -195,6 +194,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="z">The depth index of the plane to obtain.</param>
         /// <returns>An <see cref="Array2D{T}"/> instance that represents a plane of this <see cref="Array3D{T}"/> instance.</returns>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Index is a typical indexer argument")]
         public Array2D<T> this[Index z]
         {
@@ -208,6 +208,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="range">The range of planes to get.</param>
         /// <returns>The subrange of planes of the current <see cref="Array3D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         public Array3D<T> this[Range range]
         {
@@ -375,7 +376,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Releases the underlying buffer. If this <see cref="Array3D{T}"/> instance was instantiated by the <see cref="Array3D{T}(int,int,int)">self allocating constructor</see>,
         /// then this method must be called when the <see cref="Array3D{T}"/> is not used anymore.
-        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the self instance.
+        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply clears the self instance.
         /// </summary>
         public void Dispose()
         {

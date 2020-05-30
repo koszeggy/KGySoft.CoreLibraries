@@ -4,7 +4,7 @@
     <!--.NET Core 2.0 is needed because .NET Standard 2.0 lacks many features.-->
     <!--.NET Core 3.0 is needed because if .NET Core 2.0 version exists, then a .NET Core 3.0 consumer references that instead of the .NET Standard 2.1 version.-->
     <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;netstandard2.0;netstandard2.1</TargetFrameworks>
-    <!--<TargetFrameworks>netcoreapp3.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>net45</TargetFrameworks>-->
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>-->
     <!--For help-->

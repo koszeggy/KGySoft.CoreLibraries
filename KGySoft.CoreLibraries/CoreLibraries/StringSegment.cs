@@ -35,13 +35,13 @@ namespace KGySoft.CoreLibraries
 #endif
 
     /// <summary>
-    /// Represents a segment of a <see cref="string"/>. This type is similar to <see cref="ReadOnlyMemory{T}"/>/<see cref="ArraySegment{T}"/>/<see cref="Span{T}"/> of <see cref="char">char</see>
+    /// Represents a segment of a <see cref="string"/>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.
-    /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment"/> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
+    /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
-    /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment"/> extension methods.</para>
+    /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension methods.</para>
     /// <para>To convert a <see cref="StringSegment"/> instance to <see cref="string">string</see> use an explicit cast or the <see cref="ToString()">ToString</see> method.</para>
     /// <note>The <see cref="StringSegment"/> type <em>may</em> outperform <see cref="string">string</see> in scenarios when usual string splitting/trimming operations would allocate long strings.
     /// <br/>See a live example with performance test <a href="https://dotnetfiddle.net/Byk0YM" target="_blank">here</a>.</note>
@@ -49,11 +49,11 @@ namespace KGySoft.CoreLibraries
     /// The affected members are:
     /// <list type="bullet">
     /// <item><see cref="GetHashCode(StringComparison)"/>: if comparison is not <see cref="StringComparison.Ordinal"/> or <see cref="StringComparison.OrdinalIgnoreCase"/>.</item>
-    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf"/> overloads with <see cref="StringSegment"/> and <see cref="StringComparison"/> parameter: if comparison is not <see cref="StringComparison.Ordinal"/>.</item>
-    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.LastIndexOf"/> overloads with <see cref="StringSegment"/> parameter: affects all comparisons.</item>
+    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf">IndexOf</see> overloads with <see cref="StringSegment"/> and <see cref="StringComparison"/> parameter: if comparison is not <see cref="StringComparison.Ordinal"/>.</item>
+    /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.LastIndexOf">LastIndexOf</see> overloads with <see cref="StringSegment"/> parameter: affects all comparisons.</item>
     /// </list>
     /// <note>On .NET Core 3.0 and newer platforms none of the members above allocate a new string.
-    /// On .NET Standard 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf"/> overloads are not affected.</note></para>
+    /// On .NET Standard 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf">IndexOf</see> overloads are not affected.</note></para>
     /// <para>As opposed to the <see cref="String"/> class, the default comparison strategy in <see cref="StringSegment"/> members is <see cref="StringComparison.Ordinal"/>.</para>
     /// <example>
     /// <para>The following example demonstrates how to use the <see cref="StringSegment"/> type:
@@ -91,7 +91,7 @@ namespace KGySoft.CoreLibraries
     /// 
     ///         // Slicing operations do not allocate new strings:
     ///         StringSegment subsegment = segment.Substring(5);
-    ///         subsegment = segment[5..]; // Range indexer can be also used
+    ///         subsegment = segment[5..]; // Range indexer is also supported
     ///         Console.WriteLine(subsegment); // "string literal"
     ///         Console.WriteLine(subsegment.UnderlyingString); // "Some string literal"
     ///
@@ -208,7 +208,7 @@ namespace KGySoft.CoreLibraries
             #region Public Properties
 
             /// <summary>
-            /// Gets the element at the current position of the enumerator.
+            /// Gets the character at the current position of the <see cref="Enumerator"/>.
             /// </summary>
             public char Current => current;
 
@@ -243,20 +243,14 @@ namespace KGySoft.CoreLibraries
 
             #region Methods
 
-            /// <summary>
-            /// Releases the enumerator
-            /// </summary>
-            public void Dispose()
-            {
-            }
+            #region Public Methods
 
             /// <summary>
-            /// Advances the enumerator to the next element of the collection.
+            /// Advances the <see cref="Enumerator"/> to the next character of the <see cref="StringSegment"/>.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next character; <see langword="false"/>&#160;if the enumerator has passed the end of the <see cref="StringSegment"/>.
             /// </returns>
-            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
             {
                 if (index < segment.Length)
@@ -271,14 +265,23 @@ namespace KGySoft.CoreLibraries
             }
 
             /// <summary>
-            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// Sets the <see cref="Enumerator"/> to its initial position, which is before the first character in the <see cref="StringSegment"/>.
             /// </summary>
-            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public void Reset()
             {
                 index = 0;
                 current = default;
             }
+
+            #endregion
+
+            #region Explicitly Implemented Interface Methods
+
+            void IDisposable.Dispose()
+            {
+            }
+
+            #endregion
 
             #endregion
         }
@@ -395,6 +398,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="range">The range to get.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="range"/>.</returns>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         [SuppressMessage("Style", "IDE0057:Use range operator", Justification = "False alarm, causes recursion")]
         public StringSegment this[Range range]

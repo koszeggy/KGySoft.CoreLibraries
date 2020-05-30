@@ -89,8 +89,7 @@ namespace KGySoft.Collections
         private readonly int width;
         private readonly int height;
 
-        [SuppressMessage("Style", "IDE0044:Add readonly modifier",
-                Justification = "Must not be readonly to prevent defensive copy when accessing members")]
+        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly to prevent defensive copy when accessing members")]
         private ArraySection<T> buffer;
 
         #endregion
@@ -188,6 +187,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="y">The index of the row to obtain.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Index is a typical indexer argument")]
         public ArraySection<T> this[Index y]
         {
@@ -201,6 +201,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="range">The range of rows to get.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
+        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         public Array2D<T> this[Range range]
         {
@@ -359,7 +360,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Releases the underlying buffer. If this <see cref="Array2D{T}"/> instance was instantiated by the <see cref="Array2D{T}(int,int)">self allocating constructor</see>,
         /// then this method must be called when the <see cref="Array2D{T}"/> is not used anymore.
-        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the self instance.
+        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply clears the self instance.
         /// </summary>
         public void Dispose()
         {

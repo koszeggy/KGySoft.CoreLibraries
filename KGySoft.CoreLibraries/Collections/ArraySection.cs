@@ -49,13 +49,15 @@ namespace KGySoft.Collections
     /// <remarks>
     /// <para>The <see cref="ArraySection{T}"/> type is similar to the combination of the <see cref="Memory{T}"/> type and the .NET Core version of the <see cref="ArraySegment{T}"/> type.</para>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
-    /// which is much faster than using the <see cref="Memory{T}.Span"/> property of a <see cref="Memory{T}"/> instance.</para>
+    /// which is much faster than using the <see cref="Memory{T}.Span">Span</see> property of a <see cref="Memory{T}"/> instance.</para>
     /// <para>If an <see cref="ArraySection{T}"/> is created by the <see cref="ArraySection{T}(int,bool)">constructor with a specified size</see>, then depending on the size and the
     /// current platform the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>. 
     /// <note>An <see cref="ArraySection{T}"/> instance that was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see> must be released by calling the <see cref="Release">Release</see>
     /// method when it is not used anymore. The <see cref="ArraySection{T}"/> type does not implement <see cref="IDisposable"/> because releasing is not required when <see cref="ArraySection{T}"/> is created
-    /// from an existing array but not calling it when it is needed may lead to decreased application performance.</note></para>
-    /// <para>As <see cref="ArraySection{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
+    /// from an existing array but not calling it when it would be needed may lead to decreased application performance.</note></para>
+    /// <para>Though <see cref="ArraySection{T}"/> is practically immutable (has only <see langword="readonly"/>&#160;fields) it is not marked as <c>readonly</c>,
+    /// which is needed for the <see cref="Release">Release</see> method to work properly. As <see cref="ArraySection{T}"/> is a
+    /// non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
@@ -283,7 +285,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="length">The length of the <see cref="ArraySection{T}"/> to be created.</param>
         /// <param name="assureClean"><see langword="true"/>&#160;to make sure the allocated array is zero-initialized;
-        /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>.</param>
+        /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
         [SuppressMessage("Microsoft.Usage", "CA1801:Review unused parameters", Justification = "Used in .NET Core 3.0/Standard 2.1")]
         public ArraySection(int length, bool assureClean = true)
         {
@@ -390,7 +393,7 @@ namespace KGySoft.Collections
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
 #else
-                // This is the workaround to return ref null. Unfortunately this works only for .NET Core.
+                // This is the workaround to return ref null. Unfortunately this works only for .NET Core 3.0 and above
                 return ref Unsafe.AsRef<T>(null);
 #endif
             }
@@ -498,7 +501,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
         /// then this method must be called when the <see cref="ArraySection{T}"/> is not used anymore.
-        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply nullifies the self instance.
+        /// On platforms that do not support the <see cref="ArrayPool{T}"/> class this method simply sets the self instance to <see cref="Null"/>.
         /// </summary>
         public void Release()
         {
@@ -506,6 +509,7 @@ namespace KGySoft.Collections
             if (array != null && poolArray)
                 ArrayPool<T>.Shared.Return(array);
 #endif
+            // this is required to prevent possible multiple returns to ArrayPool
             this = Null;
         }
 

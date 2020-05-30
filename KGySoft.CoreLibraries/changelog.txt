@@ -23,7 +23,10 @@
   + Split
   + Conversion and comparison members (numerous Equals/Compare/StartsWith/EndsWith overloads)
   + AsSpan, AsMemory (only in .NET Core 3.0 and .NET Standard 2.1)
-+ New StringSegmentExtensions class with various Read... methods
++ New StringSegmentComparer class: provides equality and lexical comparers for the StringSegment type
++ New StringSegmentEnumerator struct
++ New StringSegmentExtensions class: provides various reader methods for the StringSegment struct, which behave
+  as if they mutated (consume) a StringSegment instance, similarly to a StringReader.
 * ObjectExtensions class:
   + New In<T> overload with IEnumerable<T> parameter type.
   - Convert/TryConvert methods: Fixing some edge-cases for type converters and fixed-size collections

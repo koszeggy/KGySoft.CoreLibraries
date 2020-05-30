@@ -1658,7 +1658,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
         /// <param name="separator">The separator to be used between the members.</param>
-        /// <returns></returns>
+        /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static string Join<T>(this IEnumerable<T> source, string separator)
         {

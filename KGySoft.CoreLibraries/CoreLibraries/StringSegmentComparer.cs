@@ -196,9 +196,9 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Creates a <see cref="StringSegmentComparer"/> object that compares strings according to the rules of a specified <paramref name="culture"/>.
+        /// Creates a <see cref="StringSegmentComparer"/> object that compares <see cref="StringSegment"/> instances according to the rules of a specified <paramref name="culture"/>.
         /// </summary>
-        /// <param name="culture">A culture whose linguistic rules are used to perform a string comparison.</param>
+        /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
         /// <param name="ignoreCase"><see langword="true"/>&#160;to specify that comparison operations be case-insensitive;
         /// <see langword="false"/>&#160;to specify that comparison operations be case-sensitive.</param>
         /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
