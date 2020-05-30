@@ -809,7 +809,9 @@ namespace KGySoft.Collections
         /// is at the first or last position. Otherwise, setting this property is an O(log n) operation, if the <paramref name="key"/> already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// If the <paramref name="key"/> is not in the list, and the new element is not at the first or last position, setting the property is an O(n) operation. If insertion causes a resize, the operation is O(n).</para>
         /// </remarks>
-        public TValue this[[CanBeNull]TKey key]
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        public TValue this[TKey key]
         {
             [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, KeyNotFoundException is expected")]
             get
@@ -843,7 +845,9 @@ namespace KGySoft.Collections
             set => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
-        object IDictionary.this[[CanBeNull]object key]
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        object IDictionary.this[object key]
         {
             get
             {
@@ -1329,7 +1333,9 @@ namespace KGySoft.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => IndexOf(item) >= 0;
 
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);
@@ -1361,7 +1367,9 @@ namespace KGySoft.Collections
         /// <filterpriority>2</filterpriority>
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
-        void IDictionary.Add([CanBeNull]object key, object value)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        void IDictionary.Add(object key, object value)
         {
             if (key == null)
                 Throw.ArgumentNullException(Argument.key);
@@ -1396,7 +1404,9 @@ namespace KGySoft.Collections
                 Remove((TKey)key);
         }
 
-        void ICollection.CopyTo([CanBeNull]Array array, int index)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);

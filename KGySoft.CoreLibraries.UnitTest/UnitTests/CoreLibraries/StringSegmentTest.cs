@@ -103,6 +103,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
 
+        [TestCase(-1, null, "")]
+        [TestCase(0, "", "")]
+        [TestCase(0, "x", "")]
         [TestCase(0, " ", " ")]
         [TestCase(1, " ,, ", ",")]
         [TestCase(2, " ,, ", ", ")]
@@ -111,14 +114,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase(-1, " ,.", ", ")]
         public void IndexOf(int expectedResult, string s, string toSearch)
         {
-            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch));
-            Assert.AreEqual(expectedResult, new StringSegment(s).IndexOf(toSearch, 0, s.Length));
-            Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
+            if (s == null)
+                return;
 
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch));
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).IndexOf(toSearch, 0, s.Length, stringComparison));
-                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, new StringSegment(" " + s + " ").IndexOf(toSearch, 1, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
             }
         }
 
@@ -130,14 +139,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase(-1, " ,.", ", ")]
         public void LastIndexOf(int expectedResult, string s, string toSearch)
         {
-            Assert.AreEqual(expectedResult, new StringSegment(s).LastIndexOf(toSearch));
-            Assert.AreEqual(expectedResult, new StringSegment(s).LastIndexOf(toSearch, 0, s.Length));
-            Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment()));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch, 0, s.Length));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment(), 0, s.Length));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment()));
 
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(expectedResult, new StringSegment(" " + s, 1).LastIndexOf(toSearch, 0, s.Length, stringComparison));
-                Assert.AreEqual(expectedResult < 0 ? expectedResult : expectedResult + 1, new StringSegment(" " + s + " ").LastIndexOf(toSearch, 1, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch, 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
             }
         }
 
@@ -195,38 +209,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             {
                 // as string
                 string[] strings = s.Split(new[] { separator }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                string expected = String.Join('|', strings);
+                string expected = strings.Join("|");
 
                 IList<StringSegment> segments = s.AsSegment().Split(separator, removeEmpty);
-                string actual = String.Join('|', segments);
+                string actual = segments.Join("|");
 
                 Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (remove empty: {removeEmpty}) => ""{actual}""");
                 Assert.AreEqual(expected, actual);
 
                 // as StringSegment
                 segments = s.AsSegment().Split(separator.AsSegment(), removeEmpty);
-                actual = String.Join('|', segments);
+                actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
 
                 // as string array with multiple values
                 strings = s.Split(new[] { separator, null }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                expected = String.Join('|', strings);
+                expected = strings.Join("|");
 
                 segments = s.AsSegment().Split(new[] { separator, null }, removeEmpty);
-                actual = String.Join('|', segments);
+                actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
 
                 // as StringSegment array with multiple values
                 segments = s.AsSegment().Split(new StringSegment[] { separator, null }, removeEmpty);
-                actual = String.Join('|', segments);
+                actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
 
                 // no separator (splitting by whitespaces)
                 strings = s.Split(default(string[]), removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                expected = String.Join('|', strings);
+                expected = strings.Join("|");
 
                 segments = s.AsSegment().Split(removeEmpty);
-                actual = String.Join('|', segments);
+                actual = segments.Join("|");
 
                 Console.WriteLine($@"""{s}"" no separator (remove empty: {removeEmpty}) => ""{actual}""");
                 Assert.AreEqual(expected, actual);
@@ -235,20 +249,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 {
                     // as char
                     strings = s.Split(new[] { separator[0] }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(separator[0], removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
 
                     Console.WriteLine($@"""{s}"" vs '{separator[0]}' (remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
 
                     // as char array
                     strings = s.Split(new[] { separator[0], '\0' }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(new[] { separator[0], '\0' }, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
 
                     Assert.AreEqual(expected, actual);
                 }
@@ -282,39 +296,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 {
                     // as string
                     string[] strings = s.Split(new[] { separator }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    string expected = String.Join('|', strings);
+                    string expected = strings.Join("|");
 
                     IList<StringSegment> segments = s.AsSegment().Split(separator, count, removeEmpty);
-                    string actual = String.Join('|', segments);
+                    string actual = segments.Join("|");
 
                     Console.WriteLine($@"""{s}"" vs ""{separator ?? "null"}"" (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
 
                     // as StringSegment
                     segments = s.AsSegment().Split(separator.AsSegment(), count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
                     Assert.AreEqual(expected, actual);
 
                     // as string array with multiple values
                     strings = s.Split(new[] { separator, null }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(new[] { separator, null }, count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
 
                     Assert.AreEqual(expected, actual);
 
                     // as StringSegment array with multiple values
                     segments = s.AsSegment().Split(new StringSegment[] { separator, null }, count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
                     Assert.AreEqual(expected, actual);
 
                     // no separator (splitting by whitespaces)
                     strings = s.Split(default(string[]), count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                    expected = String.Join('|', strings);
+                    expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(count, removeEmpty);
-                    actual = String.Join('|', segments);
+                    actual = segments.Join("|");
 
                     Console.WriteLine($@"""{s}"" no separator (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                     Assert.AreEqual(expected, actual);
@@ -323,19 +337,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     {
                         // as char
                         strings = s.Split(new[] { separator[0] }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                        expected = String.Join('|', strings);
+                        expected = strings.Join("|");
 
                         segments = s.AsSegment().Split(separator[0], count, removeEmpty);
-                        actual = String.Join('|', segments);
+                        actual = segments.Join("|");
                         Console.WriteLine($@"""{s}"" vs '{separator[0]}' (count: {count}; remove empty: {removeEmpty}) => ""{actual}""");
                         Assert.AreEqual(expected, actual);
 
                         // as char array
                         strings = s.Split(new[] { separator[0], '\0' }, count, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
-                        expected = String.Join('|', strings);
+                        expected = strings.Join("|");
 
                         segments = s.AsSegment().Split(new[] { separator[0], '\0' }, count, removeEmpty);
-                        actual = String.Join('|', segments);
+                        actual = segments.Join("|");
 
                         Assert.AreEqual(expected, actual);
                     }
@@ -348,6 +362,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             Assert.AreEqual(s.Substring(1), s.AsSegment().Substring(1).ToString());
             Assert.AreEqual(s.Substring(1).Substring(1), s.AsSegment().Substring(1).Substring(1).ToString());
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(s[1..^1], s.AsSegment()[1..^1]);
+#endif
         }
 
         #endregion

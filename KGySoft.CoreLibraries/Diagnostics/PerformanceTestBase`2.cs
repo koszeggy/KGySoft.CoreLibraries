@@ -198,6 +198,8 @@ namespace KGySoft.Diagnostics
 
                 writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
                 DumpConfig();
+                if (Items.Count == 0)
+                    return;
                 var baseLine = (TestResult)Items[0];
                 int baseLength = test.GetLength(baseLine.Result);
                 for (int i = 0; i < Items.Count; i++)
@@ -426,11 +428,7 @@ namespace KGySoft.Diagnostics
                     s = str;
                     break;
                 case IEnumerable e:
-                    s = String.Join(", ", e.Cast<object>()
-#if NET35
-                            .Select(o => o.ToString()).ToArray()
-#endif
-                    );
+                    s = e.Cast<object>().Join(", ");
                     break;
                 default:
                     s = result?.ToString() ?? Res.Null;

@@ -487,7 +487,9 @@ namespace KGySoft.Collections
                 return owner.ContainsKey(item);
             }
 
-            public void CopyTo([CanBeNull]TKey[] array, int arrayIndex)
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+            public void CopyTo(TKey[] array, int arrayIndex)
             {
                 if (array == null)
                     Throw.ArgumentNullException(Argument.array);
@@ -530,7 +532,9 @@ namespace KGySoft.Collections
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            void ICollection.CopyTo([CanBeNull]Array array, int index)
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+            void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
                     Throw.ArgumentNullException(Argument.array);
@@ -621,7 +625,9 @@ namespace KGySoft.Collections
 
             public bool Contains(TValue item) => owner.ContainsValue(item);
 
-            public void CopyTo([CanBeNull]TValue[] array, int arrayIndex)
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+            public void CopyTo(TValue[] array, int arrayIndex)
             {
                 if (array == null)
                     Throw.ArgumentNullException(Argument.array);
@@ -664,7 +670,9 @@ namespace KGySoft.Collections
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            void ICollection.CopyTo([CanBeNull]Array array, int index)
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+            void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
                     Throw.ArgumentNullException(Argument.array);
@@ -1119,7 +1127,9 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})"/>
         /// <seealso cref="Behavior"/>
         /// <seealso cref="GetThreadSafeAccessor"/>
-        public TValue this[[CanBeNull]TKey key]
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        public TValue this[TKey key]
         {
             [CollectionAccess(CollectionAccessType.UpdatedContent)]
             get
@@ -1150,7 +1160,9 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        object IDictionary.this[[CanBeNull]object key]
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        object IDictionary.this[object key]
         {
             get
             {
@@ -1550,7 +1562,9 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public void Add([CanBeNull]TKey key, TValue value)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        public void Add(TKey key, TValue value)
         {
             if (key == null)
                 Throw.ArgumentNullException(Argument.key);
@@ -1567,7 +1581,9 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        public bool Remove([CanBeNull]TKey key)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        public bool Remove(TKey key)
         {
             if (key == null)
                 Throw.ArgumentNullException(Argument.key);
@@ -1597,7 +1613,7 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public bool TryGetValue([CanBeNull]TKey key, out TValue value)
+        public bool TryGetValue(TKey key, out TValue value)
         {
             int i = GetItemIndex(key);
             cacheReads += 1;
@@ -2011,7 +2027,9 @@ namespace KGySoft.Collections
             return i >= 0 && ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, items[i].Value);
         }
 
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);
@@ -2036,7 +2054,9 @@ namespace KGySoft.Collections
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, true);
 
-        void IDictionary.Add([CanBeNull]object key, object value)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        void IDictionary.Add(object key, object value)
         {
             if (key == null)
                 Throw.ArgumentNullException(Argument.key);
@@ -2071,7 +2091,9 @@ namespace KGySoft.Collections
                 Remove((TKey)key);
         }
 
-        void ICollection.CopyTo([CanBeNull]Array array, int index)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);

@@ -1831,7 +1831,9 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
         /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
-        public void CopyTo([CanBeNull]T[] array, int arrayIndex = 0)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        public void CopyTo(T[] array, int arrayIndex = 0)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);
@@ -2834,7 +2836,9 @@ namespace KGySoft.Collections
             }
         }
 
-        void ICollection.CopyTo([CanBeNull]Array array, int index)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
+        void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
                 Throw.ArgumentNullException(Argument.array);

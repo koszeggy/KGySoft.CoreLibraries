@@ -9,6 +9,10 @@
 * v5.2.0:
 ~~~~~~~~~
 
++ KGySoft namespace:
+====================
++ PublicResources class: New IndexOutOfRange property
+
 + KGySoft.CoreLibraries namespace:
 ==================================
 + The StringSegment type has been made public. It offers a sort of string operations without allocating new strings.
@@ -19,14 +23,27 @@
   + Split
   + Conversion and comparison members (numerous Equals/Compare/StartsWith/EndsWith overloads)
   + AsSpan, AsMemory (only in .NET Core 3.0 and .NET Standard 2.1)
-+ New StringSegmentExtensions class with various Read... methods
-+ ObjectExtensions class: New In<T> overload with IEnumerable<T> parameter type.
++ New StringSegmentComparer class: provides equality and lexical comparers for the StringSegment type
++ New StringSegmentEnumerator struct
++ New StringSegmentExtensions class: provides various reader methods for the StringSegment struct, which behave
+  as if they mutated (consume) a StringSegment instance, similarly to a StringReader.
+* ObjectExtensions class:
+  + New In<T> overload with IEnumerable<T> parameter type.
+  - Convert/TryConvert methods: Fixing some edge-cases for type converters and fixed-size collections
++ EnumerableExtensions class: New Join method.
 - WaitHandleExtensions: Fixing ambiguity when WaitOneAsync is called without additional parameters.
+
++ KGySoft.Collections namespace:
+================================
++ New ArraySection struct
++ New ArraySectionEnumerator struct
++ New Array2D struct
++ New Array3D struct
 
 + KGySoft.ComponentModel namespace:
 ===================================
 + New StringSegmentConverter class
-* ObservableObjectBase class: Performance improvement: AffectsModifiedState is not called in a modified state.
+* ObservableObjectBase class performance: AffectsModifiedState is not queried if IsModified is already true.
 
 
 ~~~~~~~~~

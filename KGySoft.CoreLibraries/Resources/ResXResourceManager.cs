@@ -318,10 +318,13 @@ namespace KGySoft.Resources
             /// </summary>
             internal CultureInfo WrappedCulture { get; }
 
+
             /// <summary>
             /// Gets whether this proxy has been loaded by <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and trying parents.
             /// In this case there might be unloaded parents for this resource set.
             /// </summary>
+            [SuppressMessage("Reliability", "CA2002:Do not lock on objects with weak identity",
+                Justification = "False alarm, this is not accessible as a public reference")]
             internal bool CanHaveLoadableParent
             {
                 get

@@ -126,6 +126,9 @@
   <data name="General_ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
   </data>
+  <data name="General_IndexOutOfRange" xml:space="preserve">
+    <value>Index was outside the bounds of the array.</value>
+  </data>
   <data name="General_ArgumentMustBeGreaterThanFormat" xml:space="preserve">
     <value>Specified argument must be greater than {0}.</value>
   </data>
@@ -352,11 +355,17 @@ Hit rate: {8:P2}</value>
   <data name="IList_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="General_InvalidOffsLen" xml:space="preserve">
-    <value>Offset and length were out of bounds.</value>
-  </data>
   <data name="Array_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the array.</value>
+  </data>
+  <data name="ArraySection_Null" xml:space="preserve">
+    <value>The underlying array is null.</value>
+  </data>
+  <data name="ArraySection_Empty" xml:space="preserve">
+    <value>The array section has no elements.</value>
+  </data>
+  <data name="ArraySection_InsufficientCapacity" xml:space="preserve">
+    <value>The array section has insufficient capacity.</value>
   </data>
   <data name="IDictionary_NonGenericKeyTypeInvalidFormat" xml:space="preserve">
     <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>

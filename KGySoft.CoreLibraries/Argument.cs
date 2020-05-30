@@ -55,6 +55,7 @@ namespace KGySoft
         culture,
         data,
         destination,
+        depth,
         dictionary,
         direction,
         e,
@@ -70,6 +71,7 @@ namespace KGySoft
         genericTypeDefinition,
         getParam,
         handle,
+        height,
         index,
         indexParameters,
         info,
@@ -118,6 +120,7 @@ namespace KGySoft
         s,
         scale,
         separator,
+        separators,
         serializedType,
         set,
         severity,
@@ -129,6 +132,7 @@ namespace KGySoft
         stream,
         stringValue,
         target,
+        targetIndex,
         targetPropertyName,
         targetType,
         testCase,
@@ -139,9 +143,11 @@ namespace KGySoft
         value,
         values,
         way,
+        width,
         writer,
         x,
-        y
+        y,
+        z
         // ReSharper restore InconsistentNaming
     }
 }

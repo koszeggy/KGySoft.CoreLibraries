@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -44,6 +45,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">The string to be extracted from quotes.</param>
         /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
+        [SuppressMessage("Style", "IDE0057:Use range operator", Justification = "Performance")]
         public static string RemoveQuotes(this string s)
         {
             if (String.IsNullOrEmpty(s))
@@ -446,16 +448,36 @@ namespace KGySoft.CoreLibraries
             if (!Enum<StringComparison>.IsDefined(comparison))
                 Throw.EnumArgumentOutOfRange(Argument.comparison, comparison);
 
-            var index = -1;
-            foreach (var str in set)
+            int len = s.Length;
+            if (len == 0)
             {
-                if (str == null)
-                    Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
-                int pos = s.IndexOf(str, comparison);
-                if (pos == 0)
-                    return 0;
-                if (pos >= 0 && pos < index)
-                    index = pos;
+                foreach (string str in set)
+                {
+                    if (str == null)
+                        Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                    if (str.Length == 0)
+                        return 0;
+                }
+
+                return -1;
+            }
+
+            var index = -1;
+            for (int i = 0; i < len; i++)
+            {
+                foreach (string str in set)
+                {
+                    if (str == null)
+                        Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
+                    if (str.Length == 0)
+                        return 0;
+
+                    int strLen = str.Length;
+                    if (s[i] != str[0] || strLen > len - i)
+                        continue;
+                    if (strLen == 1 || String.Compare(s, i, str, 0, strLen, comparison) == 0)
+                        return i;
+                }
             }
 
             return index;
@@ -519,17 +541,15 @@ namespace KGySoft.CoreLibraries
         /// <param name="length">The desired length of the returned segment.</param>
         /// <returns>A <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static StringSegment GetSegment(this string s, int offset, int length)
+        public static StringSegment AsSegment(this string s, int offset, int length)
         {
             if (s == null)
                 Throw.ArgumentNullException(Argument.s);
             if ((uint)offset > (uint)s.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
-            if (length < 0)
+            if ((uint)length > (uint)s.Length - offset)
                 Throw.ArgumentOutOfRangeException(Argument.length);
-            if (offset + length > s.Length)
-                Throw.ArgumentException(Res.InvalidOffsLen);
-            return length == 0 ? StringSegment.Empty : new StringSegment(s, offset, length);
+            return new StringSegment(s, offset, length);
         }
 
         /// <summary>
@@ -539,14 +559,21 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
         /// <param name="offset">The offset that points to the first character of the returned segment.</param>
         /// <returns>A <see cref="StringSegment"/> instance, which represents a segment of the specified <see cref="string">string</see>.</returns>
-        public static StringSegment GetSegment(this string s, int offset) => GetSegment(s, offset, (s?.Length).GetValueOrDefault() - offset);
+        public static StringSegment AsSegment(this string s, int offset)
+        {
+            if (s == null)
+                Throw.ArgumentNullException(Argument.s);
+            if ((uint)offset > (uint)s.Length)
+                Throw.ArgumentOutOfRangeException(Argument.offset);
+            return new StringSegment(s, offset, s.Length - offset);
+        }
 
         /// <summary>
         /// Gets the specified string as a <see cref="StringSegment"/> instance.
         /// </summary>
         /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
         /// <returns>A <see cref="StringSegment"/> instance for the specified string.</returns>
-        public static StringSegment AsSegment(this string s) => s == null ? StringSegment.Null : new StringSegment(s);
+        public static StringSegment AsSegment(this string s) => s == null ? default : new StringSegment(s);
 
         #endregion
 

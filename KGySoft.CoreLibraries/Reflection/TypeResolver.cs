@@ -119,6 +119,8 @@ namespace KGySoft.Reflection
 
         #region ParseContext struct
 
+        [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
+            Justification = "False alarm starting with FxCopAnalyzers 3.0 - it IS disposable and reader is also disposed")]
         private struct ParseContext : IDisposable
         {
             #region Fields

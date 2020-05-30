@@ -120,12 +120,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Properties
 
-        string IDataErrorInfo.Error => String.Join(Environment.NewLine, ValidationResults.Errors.Select(e => e.Message)
-#if NET35
-                .ToArray()
-#endif
-
-        );
+        string IDataErrorInfo.Error => ValidationResults.Errors.Select(e => e.Message).Join(Environment.NewLine);
 
         #endregion
 
@@ -133,12 +128,7 @@ namespace KGySoft.ComponentModel
 
         #region Indexers
 
-        string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, ValidationResults[propertyName, ValidationSeverity.Error].Select(e => e.Message)
-#if NET35
-                .ToArray()
-#endif
-
-        );
+        string IDataErrorInfo.this[string propertyName] => ValidationResults[propertyName, ValidationSeverity.Error].Select(e => e.Message).Join(Environment.NewLine);
 
         #endregion
 

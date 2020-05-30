@@ -18,17 +18,18 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using KGySoft.Annotations;
-using KGySoft.Collections;
-using KGySoft.Reflection;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
+
+using KGySoft.Annotations;
+using KGySoft.Collections;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -1648,6 +1649,29 @@ namespace KGySoft.CoreLibraries
             if (source == null)
                 Throw.ArgumentNullException(Argument.source);
             return new CircularList<T>(source);
+        }
+
+        /// <summary>
+        /// Concatenates the items of the <paramref name="source"/> collection into a new <see cref="string">string</see> instance
+        /// using the specified <paramref name="separator"/> between the items.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
+        /// <param name="separator">The separator to be used between the members.</param>
+        /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static string Join<T>(this IEnumerable<T> source, string separator)
+        {
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+            if (separator == null)
+                Throw.ArgumentNullException(Argument.separator);
+
+#if NET35
+            return String.Join(separator, source is string[] strArray ? strArray : source.Select(i => i.ToString()).ToArray());
+#else
+            return String.Join(separator, source);
+#endif
         }
 
         #endregion

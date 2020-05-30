@@ -17,7 +17,8 @@
 #region Usings
 
 using System;
-
+using System.Collections.Generic;
+using KGySoft.Collections;
 using NUnit.Framework;
 
 #endregion
@@ -42,11 +43,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         public void SubstringTest(string s) => new PerformanceTest
             {
                 TestName = $"Length = {s.Length}",
-                Iterations = 1_000_000
+                Iterations = 1_000_000,
             }
             .AddCase(() => s.Substring(1), "String.Substring")
             .AddCase(() => s.AsSegment().Substring(1), "StringSegment.Substring")
-            .AddCase(() => s.AsSegment().SubstringInternal(1), "StringSegment.SubstringInternal")
             .AddCase(() => new MutableStringSegment(s).Substring(1), "MutableStringSegment.Substring")
             .AddCase(() => new MutableStringSegment(s).Slice(1), "MutableStringSegment.Slice")
             .DoTest()
@@ -54,17 +54,49 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         [TestCase(testStringShort)]
         [TestCase(testStringLong)]
-        public void SplitWholeStringByWhitespacesTest(string s) => new PerformanceTest
+        public void SubstringTestWithLength(string s) => new PerformanceTest
+            {
+                TestName = $"Length = {s.Length}",
+                Iterations = 1_000_000,
+            }
+            .AddCase(() => s.Substring(1, 2), "String.Substring")
+            .AddCase(() => s.AsSegment().Substring(1, 2), "StringSegment.Substring")
+            .AddCase(() => new MutableStringSegment(s).Substring(1, 2), "MutableStringSegment.Substring")
+            .AddCase(() => new MutableStringSegment(s).Slice(1, 2), "MutableStringSegment.Slice")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        [TestCase(testStringShort)]
+        [TestCase(testStringLong)]
+        public void SplitWholeByWhitespacesTest(string s) => new PerformanceTest
             {
                 TestName = $"Length: {s.Length}; Separator: White spaces",
-                Iterations = 1_000_000
+                Iterations = 1_000_000,
             }
-            .AddCase(() => s.Split(), "String.Split(char)")
-            .AddCase(() => s.AsSegment().Split(), "StringSegment.Split(char)")
+            .AddCase(() => s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, RemoveEmptyEntries)")
+            .AddCase(() => s.AsSegment().Split(true), "StringSegment.Split(true)")
             .AddCase(() =>
             {
-                var rest = s.AsSegment();
+                StringSegment rest = s.AsSegment();
                 while (!rest.IsNull)
+                    rest.ReadToWhiteSpace();
+            }, "StringSegmentExtensions.ReadToWhiteSpace()")
+            .DoTest()
+            .DumpResults(Console.Out);
+
+        [TestCase(testStringShort)]
+        [TestCase(testStringLong)]
+        public void SplitLimitedByWhitespacesTest(string s) => new PerformanceTest
+            {
+                TestName = $"Length: {s.Length}; Separator: White spaces; Count: {limitCount}",
+                Iterations = 1_000_000
+            }
+            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, count)")
+            .AddCase(() => s.AsSegment().Split(limitCount, true), "StringSegment.Split(count, true)")
+            .AddCase(() =>
+            {
+                StringSegment rest = s.AsSegment();
+                for (int i = 0; i < limitCount - 1 && !rest.IsNull; i++)
                     rest.ReadToWhiteSpace();
             }, "StringSegmentExtensions.ReadToWhiteSpace(char)")
             .DoTest()
@@ -96,10 +128,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         [TestCase(':', testStringLong)]
         public void SplitLimitedByCharTest(char sep, string s) => new PerformanceTest
             {
-                TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: 2",
+                TestName = $"Length: {s.Length}; Separator: '{sep}'; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, limitCount), "String.Split(char, count)")
+            .AddCase(() => s.Split(new[] { sep }, limitCount), "String.Split(char, count)")
             .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(char, count)")
             .AddCase(() =>
             {
@@ -119,7 +151,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: \"{sep}\"",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep), "String.Split(string)")
+            .AddCase(() => s.Split(new[] { sep }, StringSplitOptions.None), "String.Split(string)")
             .AddCase(() => s.AsSegment().Split(sep.AsSegment()), "StringSegment.Split(StringSegment)")
             .AddCase(() => s.AsSegment().Split(sep), "StringSegment.Split(string)")
             .AddCase(() =>
@@ -144,10 +176,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         [TestCase(": ", testStringLong)]
         public void SplitLimitedByStringTest(string sep, string s) => new PerformanceTest
             {
-                TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: 2",
+                TestName = $"Length: {s.Length}; Separator: \"{sep}\"; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split(sep, limitCount), "String.Split(string, count)")
+            .AddCase(() => s.Split(new[] { sep }, limitCount, StringSplitOptions.None), "String.Split(string, count)")
             .AddCase(() => s.AsSegment().Split(sep.AsSegment(), limitCount), "StringSegment.Split(StringSegment, count)")
             .AddCase(() => s.AsSegment().Split(sep, limitCount), "StringSegment.Split(string, count)")
             .AddCase(() =>

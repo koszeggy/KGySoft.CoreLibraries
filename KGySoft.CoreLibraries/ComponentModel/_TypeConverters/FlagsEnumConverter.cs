@@ -18,9 +18,10 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using KGySoft.Annotations;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -178,7 +179,9 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
-        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, [CanBeNull]object value, Attribute[] attributes)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, value CAN be null so it must be checked")]
+        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, value CAN be null so the Throw is reachable")]
+        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
         {
             if (value == null)
                 Throw.ArgumentNullException(Argument.value);

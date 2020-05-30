@@ -81,6 +81,9 @@ namespace KGySoft
         /// <summary>Specified argument was out of the range of valid values.</summary>
         internal static string ArgumentOutOfRange => Get("General_ArgumentOutOfRange");
 
+        /// <summary>Index was outside the bounds of the array.</summary>
+        internal static string IndexOutOfRange => Get("General_IndexOutOfRange");
+
         /// <summary>Cannot access a disposed object.</summary>
         internal static string ObjectDisposed => Get("General_ObjectDisposed");
 
@@ -110,9 +113,6 @@ namespace KGySoft
 
         /// <summary>ms</summary>
         internal static string Millisecond => Get("General_Millisecond");
-
-        /// <summary>Offset and length were out of bounds.</summary>
-        internal static string InvalidOffsLen => Get("General_InvalidOffsLen");
 
         /// <summary>Offset and length were out of bounds for the array.</summary>
         internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
@@ -145,6 +145,19 @@ namespace KGySoft
         /// <summary>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</summary>
         internal static string IListInvalidOffsLen => Get("IList_InvalidOffsLen");
         // ReSharper restore InconsistentNaming
+
+        #endregion
+
+        #region ArraySection
+
+        /// <summary>The underlying array is null.</summary>
+        internal static string ArraySectionNull => Get("ArraySection_Null");
+
+        /// <summary>The array section has no elements.</summary>
+        internal static string ArraySectionEmpty => Get("ArraySection_Empty");
+
+        /// <summary>The array section has insufficient capacity.</summary>
+        internal static string ArraySectionInsufficientCapacity => Get("ArraySection_InsufficientCapacity");
 
         #endregion
 
@@ -1030,18 +1043,10 @@ namespace KGySoft
         }
 
         private static string FormatEnumValues<TEnum>() where TEnum : struct, Enum
-            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd)
-#if NET35
-                    .ToArray()
-#endif
-            );
+            => Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd).Join(", ");
 
         private static string FormatEnumFlags<TEnum>() where TEnum : struct, Enum
-            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd)
-#if NET35
-                    .ToArray()
-#endif
-            );
+            => Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd).Join(", ");
 
         private static string FormatBool(bool value) => value ? Yes : No;
 

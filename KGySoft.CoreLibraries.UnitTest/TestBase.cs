@@ -381,12 +381,7 @@ namespace KGySoft.CoreLibraries
                 var subErrors = new List<string>();
                 result &= CheckDeepEquals(enumRef.Current, enumChk.Current, forceEqualityByMembers, subErrors, checkedObjects);
                 if (subErrors.Count > 0)
-#if NET35
-                    errors?.Add($"{type.GetName(TypeNameKind.ShortName)}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
-#else
-                    errors?.Add($"{type.GetName(TypeNameKind.ShortName)}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
-#endif
-
+                    errors?.Add($"{type.GetName(TypeNameKind.ShortName)}[{index}]:{Environment.NewLine}\t{subErrors.Join($"{Environment.NewLine}\t")}");
 
                 index++;
             }
@@ -400,11 +395,7 @@ namespace KGySoft.CoreLibraries
             var subErrors = new List<string>();
             bool result = CheckDeepEquals(reference, check, forceEqualityByMembers, subErrors, checkedObjects);
             if (subErrors.Count > 0)
-#if NET35
-                errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
-#else
-                errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
-#endif
+                errors?.Add($"{name}:{Environment.NewLine}\t{subErrors.Join($"{Environment.NewLine}\t")}");
 
             return result;
         }
@@ -433,9 +424,7 @@ namespace KGySoft.CoreLibraries
                 result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
 
             // collection elements
-            var collSrc = reference as IEnumerable;
-            var collTarget = check as IEnumerable;
-            if (collSrc != null && collTarget != null && !(reference is string || check is string))
+            if (reference is IEnumerable collSrc && check is IEnumerable collTarget && !(reference is string || check is string))
                 result &= CheckItemsEqual(collSrc, collTarget, true, errors, checkedObjects);
             return result;
         }
@@ -511,19 +500,9 @@ namespace KGySoft.CoreLibraries
         private static void AssertResult(bool result, List<string> errors)
         {
             if (!result)
-                Assert.Fail(String.Join(Environment.NewLine, errors
-#if NET35
-                        .ToArray()
-#endif
-
-                ));
+                Assert.Fail(errors.Join(Environment.NewLine));
             else if (errors.Count > 0)
-                Assert.Inconclusive(String.Join(Environment.NewLine, errors
-#if NET35
-                        .ToArray()
-#endif
-
-                ));
+                Assert.Inconclusive(errors.Join(Environment.NewLine));
         }
 
         private static bool Check(bool condition, string message, List<string> errors)

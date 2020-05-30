@@ -179,7 +179,7 @@ namespace KGySoft.ComponentModel
         /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
         /// <param name="item">The object to insert.</param>
         /// <exception cref="ArgumentNullException"><paramref name="item"/> cannot be <see langword="null"/>.</exception>
-        protected override void InsertItem(int index, [CanBeNull]ValidationResult item)
+        protected override void InsertItem(int index, ValidationResult item)
         {
             if (item == null)
                 Throw.ArgumentNullException(Argument.item);
@@ -193,7 +193,7 @@ namespace KGySoft.ComponentModel
         /// <param name="index">The zero-based index of the element to replace.</param>
         /// <param name="item">The new value for the element at the specified index.</param>
         /// <exception cref="ArgumentNullException"><paramref name="item"/> cannot be <see langword="null"/>.</exception>
-        protected override void SetItem(int index, [CanBeNull]ValidationResult item)
+        protected override void SetItem(int index, ValidationResult item)
         {
             if (item == null)
                 Throw.ArgumentNullException(Argument.item);

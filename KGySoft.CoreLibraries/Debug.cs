@@ -1,5 +1,4 @@
-﻿#if !NETFRAMEWORK
-#region Copyright
+﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: Debug.cs
@@ -28,18 +27,27 @@ namespace KGySoft
     {
         #region Methods
 
-        private static bool everAttached;
+#if !NETFRAMEWORK
+        private static bool everAttached; 
+#endif
 
         [Conditional("DEBUG")]
         internal static void Assert(bool condition, string message = null)
         {
+#if NETFRAMEWORK
+            SystemDebug.Assert(condition, message);
+#else
             if (!condition)
                 Fail(message);
+#endif
         }
 
         [Conditional("DEBUG")]
         internal static void Fail(string message)
         {
+#if NETFRAMEWORK
+            SystemDebug.Fail(message);
+#else
             SystemDebug.WriteLine("Debug failure occurred - " + (message ?? "No message"));
 
             // preventing the attach dialog come up if already attached it once
@@ -52,6 +60,7 @@ namespace KGySoft
             }
             else
                 Debugger.Break();
+#endif
         }
 
         [Conditional("DEBUG")]
@@ -60,4 +69,3 @@ namespace KGySoft
         #endregion
     }
 }
-#endif
