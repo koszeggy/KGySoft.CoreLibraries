@@ -237,7 +237,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
                 Justification = "See the Buffer property")]
-        public static implicit operator ArraySection<T>(in Array3D<T> array) => array.buffer;
+        public static implicit operator ArraySection<T>(Array3D<T> array) => array.buffer;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -249,7 +249,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
                 Justification = "False alarm, see AsSpan")]
-        public static implicit operator Span<T>(in Array3D<T> array) => array.AsSpan;
+        public static implicit operator Span<T>(Array3D<T> array) => array.AsSpan;
 #endif
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the equality check.</returns>
-        public static bool operator ==(in Array3D<T> a, in Array3D<T> b) => a.Equals(b);
+        public static bool operator ==(Array3D<T> a, Array3D<T> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified <see cref="Array3D{T}"/> instances have different values.
@@ -266,7 +266,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(in Array3D<T> a, in Array3D<T> b) => !(a == b);
+        public static bool operator !=(Array3D<T> a, Array3D<T> b) => !(a == b);
 
         #endregion
 

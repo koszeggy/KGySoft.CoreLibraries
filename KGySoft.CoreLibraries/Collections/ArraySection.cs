@@ -61,13 +61,42 @@ namespace KGySoft.Collections
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
-    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
     public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
     {
+        #region Nested Types
+
+        private struct ArraySectionDebugView // strange error in VS2019: this must be a struct; otherwise, debug values will be completely misinterpreted
+        {
+            #region Fields
+
+            private ArraySection<T> array;
+
+            #endregion
+
+            #region Properties
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 2D array debug items")]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+            public T[] Items => array.ToArray();
+
+            #endregion
+
+            #region Constructors
+
+            internal ArraySectionDebugView(ArraySection<T> array) => this.array = array;
+
+            #endregion
+
+        }
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
@@ -255,7 +284,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "False alarm, see AsSpan")]
-        public static implicit operator Span<T>(in ArraySection<T> arraySection) => arraySection.AsSpan;
+        public static implicit operator Span<T>(ArraySection<T> arraySection) => arraySection.AsSpan;
 #endif
 
         /// <summary>
@@ -264,7 +293,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the equality check.</returns>
-        public static bool operator ==(in ArraySection<T> a, in ArraySection<T> b) => a.Equals(b);
+        public static bool operator ==(ArraySection<T> a, ArraySection<T> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified <see cref="ArraySection{T}"/> instances have different values.
@@ -272,7 +301,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(in ArraySection<T> a, in ArraySection<T> b) => !(a == b);
+        public static bool operator !=(ArraySection<T> a, ArraySection<T> b) => !(a == b);
 
         #endregion
 
