@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -152,7 +151,7 @@ namespace KGySoft.CoreLibraries
             int result = str.IndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
-            int result = AsSpan.Slice(startIndex, count).IndexOf(value.AsSpan, comparison);
+            int result = str.AsSpan(offset + startIndex, count).IndexOf(value, comparison);
             return result >= 0 ? result + startIndex : -1;
 #endif
         }
@@ -220,10 +219,78 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value) => IndexOfInternal(value, 0, length);
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using ordinal comparison.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is 0.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(ReadOnlySpan<char> value) => IsNull ? -1 : IndexOfInternal(value, 0, length);
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(ReadOnlySpan<char> value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if ((uint)startIndex + count > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
+
+            if (length == 0)
+                return IsNull || value.Length > 0 ? -1 : 0;
+
+            if (comparison == StringComparison.Ordinal)
+                return IndexOfInternal(value, startIndex, count);
+
+            int result = str.AsSpan(offset + startIndex, count).IndexOf(value, comparison);
+            return result >= 0 ? result + startIndex : -1;
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(ReadOnlySpan<char> value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => IndexOf(value, startIndex, length - startIndex, comparison);
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(ReadOnlySpan<char> value, StringComparison comparison)
+            => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
+#endif
+
         #endregion
 
         #region LastIndexOf
-        
+
         /// <summary>
         /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
         /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
@@ -309,7 +376,7 @@ namespace KGySoft.CoreLibraries
             int result = str.LastIndexOf(value.ToString(), offset + startIndex + count - 1, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
-            int result = AsSpan.Slice(startIndex, count).LastIndexOf(value.AsSpan, comparison);
+            int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
             return result >= 0 ? result + startIndex : -1;
 #endif
         }
@@ -387,6 +454,62 @@ namespace KGySoft.CoreLibraries
             int result = str.LastIndexOf(value, offset, length);
             return result >= 0 ? result - offset : -1;
         }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(ReadOnlySpan<char> value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if (count < 0 || startIndex + count > length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
+
+            if (length == 0)
+                return IsNull || value.Length > 0 ? -1 : 0;
+
+            int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
+            return result >= 0 ? result + startIndex : -1;
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(ReadOnlySpan<char> value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, startIndex, length - startIndex, comparison);
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
+            => LastIndexOf(value, 0, length, comparison);
+#endif
 
         #endregion
 
@@ -543,6 +666,32 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(char value) => length > 0 && GetCharInternal(0) == value;
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool StartsWith(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
+        {
+            CheckComparison(comparison);
+            if (IsNull)
+                return false;
+
+            int len = value.Length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+            return length == len
+                ? value.Equals(this, comparison)
+                : value.Equals(SubstringInternal(0, len), comparison);
+        }
+#endif
+
         #endregion
 
         #region EndsWith
@@ -579,6 +728,32 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The character to compare.</param>
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(char value) => length > 0 && GetCharInternal(length - 1) == value;
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance ends with the specified <paramref name="value"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
+        /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
+        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool EndsWith(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
+        {
+            CheckComparison(comparison);
+            if (IsNull)
+                return false;
+
+            int len = value.Length;
+            if (len > length)
+                return false;
+            if (len == 0)
+                return true;
+            return length == len
+                ? value.Equals(this, comparison)
+                : value.Equals(SubstringInternal(length - len, len), comparison);
+        }
+#endif
 
         #endregion
 
@@ -729,6 +904,18 @@ namespace KGySoft.CoreLibraries
 
             return -1;
         }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private int IndexOfInternal(ReadOnlySpan<char> s, int startIndex, int count)
+        {
+            Debug.Assert(!IsNull);
+            Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
+
+            int result = str.AsSpan(offset + startIndex, count).IndexOf(s);
+            return result >= 0 ? result + startIndex : -1;
+        }
+#endif
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfAnyInternal(char[] values, int startIndex, int count)

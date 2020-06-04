@@ -212,6 +212,32 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separators);
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> and returns
+        /// the consumed part without the <paramref name="separator"/>. If <paramref name="rest"/> started with <paramref name="separator"/>
+        /// before the call, then an empty segment is returned. If the whole <see cref="StringSegment"/> has been processed, then <paramref name="rest"/>
+        /// will be <see cref="StringSegment.Null">StringSegment.Null</see> after returning.
+        /// </summary>
+        /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
+        /// parameter will be the remaining unprocessed part, or <see cref="StringSegment.Null">StringSegment.Null</see> if the whole segment has been processed.</param>
+        /// <param name="separator">The separator segment to search in the specified <see cref="StringSegment"/>.</param>
+        /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
+        /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static StringSegment ReadToSeparator(ref this StringSegment rest, ReadOnlySpan<char> separator)
+        {
+            if (separator.Length == 0)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            return StringSegment.GetNextSegment(ref rest, separator);
+        }
+#endif
+
         /// <summary>
         /// Advances the specified <paramref name="rest"/> parameter after the current line and returns
         /// the consumed part without the newline character(s). If <paramref name="rest"/> started with a new line

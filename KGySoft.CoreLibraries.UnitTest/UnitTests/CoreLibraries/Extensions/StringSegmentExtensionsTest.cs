@@ -222,6 +222,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [Test]
+        public void ReadToSeparatorSpanTest()
+        {
+            StringSegment ss = null;
+            Assert.AreEqual(StringSegment.Null, ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.AreEqual(StringSegment.Null, ss.ReadToSeparator(" ".AsSpan()));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = StringSegment.Empty;
+            Assert.AreEqual(StringSegment.Empty, ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = " ".AsSegment();
+            Assert.AreEqual(" ", ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = "alpha, beta gamma  delta ";
+            ReadOnlySpan<char> sep = ", ";
+            Assert.AreEqual("alpha", ss.ReadToSeparator(sep));
+            Assert.AreEqual("beta gamma  delta ", ss.ReadToSeparator(sep));
+            Assert.IsTrue(ss.IsNull);
+        } 
+#endif
+
         [Test]
         public void ReadLineTest()
         {

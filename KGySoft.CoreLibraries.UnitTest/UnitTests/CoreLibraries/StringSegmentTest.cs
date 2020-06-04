@@ -118,6 +118,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf((" " + toSearch).AsSegment(1), 0, s?.Length ?? 0));
+            if (s != null)
+            {
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment()));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf((" " + toSearch).AsSegment(1)));
+            }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+            if (s != null)
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+#endif
             if (s == null)
                 return;
 
@@ -143,8 +156,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch, 0, s.Length));
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment(), 0, s.Length));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf((" " + toSearch).AsSegment(1), 0, s.Length));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment()));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf((" " + toSearch).AsSegment(1)));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+#endif
 
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
@@ -164,7 +183,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void StartsWith(bool expectedResult, string s, string value)
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+            {
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value.AsSpan(), stringComparison));
+#endif
+            }
 
             if (value.Length == 1)
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value[0]));
@@ -179,7 +203,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void EndsWith(bool expectedResult, string s, string value)
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
-                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value, stringComparison));
+            {
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSegment(), stringComparison));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSpan(), stringComparison));
+#endif
+            }
 
             if (value.Length == 1)
                 Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
@@ -221,6 +250,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 segments = s.AsSegment().Split(separator.AsSegment(), removeEmpty);
                 actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                // as span
+                segments = s.AsSegment().Split(separator.AsSpan(), removeEmpty);
+                actual = segments.Join("|");
+                Assert.AreEqual(expected, actual);
+#endif
 
                 // as string array with multiple values
                 strings = s.Split(new[] { separator, null }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
