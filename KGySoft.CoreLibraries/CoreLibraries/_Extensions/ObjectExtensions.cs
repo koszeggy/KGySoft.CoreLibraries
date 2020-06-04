@@ -36,7 +36,7 @@ using KGySoft.Serialization.Binary;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Object"/> type.
+    /// Provides extension methods for the <see cref="Object"/> type.
     /// </summary>
     public static partial class ObjectExtensions
     {

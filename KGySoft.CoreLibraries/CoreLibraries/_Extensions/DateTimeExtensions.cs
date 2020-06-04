@@ -23,7 +23,7 @@ using System;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="DateTime"/> type.
+    /// Provides extension methods for the <see cref="DateTime"/> type.
     /// </summary>
     public static class DateTimeExtensions
     {

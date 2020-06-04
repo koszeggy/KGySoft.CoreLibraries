@@ -25,7 +25,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="float">float</see> type.
+    /// Provides extension methods for the <see cref="float">float</see> type.
     /// </summary>
     public static class FloatExtensions
     {

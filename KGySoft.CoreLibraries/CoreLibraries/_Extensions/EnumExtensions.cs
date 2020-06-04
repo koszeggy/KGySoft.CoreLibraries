@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Enum"/> type.
+    /// Provides extension methods for the <see cref="Enum"/> type.
     /// </summary>
     public static class EnumExtensions
     {

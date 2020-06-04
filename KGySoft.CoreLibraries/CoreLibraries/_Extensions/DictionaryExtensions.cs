@@ -26,7 +26,7 @@ using KGySoft.Collections;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="IDictionary{TKey,TValue}"/> type.
+    /// Provides extension methods for the <see cref="IDictionary{TKey,TValue}"/> type.
     /// </summary>
     public static class DictionaryExtensions
     {

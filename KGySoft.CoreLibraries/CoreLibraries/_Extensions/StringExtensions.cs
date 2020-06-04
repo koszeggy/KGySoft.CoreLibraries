@@ -32,7 +32,7 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="string">string</see> type.
+    /// Provides extension methods for the <see cref="string">string</see> type.
     /// </summary>
     public static partial class StringExtensions
     {

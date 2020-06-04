@@ -25,7 +25,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="double">double</see> type.
+    /// Provides extension methods for the <see cref="double">double</see> type.
     /// </summary>
     public static class DoubleExtensions
     {

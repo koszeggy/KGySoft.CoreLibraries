@@ -30,7 +30,7 @@ using System.Text;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Array">byte[]</see> type.
+    /// Provides extension methods for the <see cref="Array">byte[]</see> type.
     /// </summary>
     public static class ByteArrayExtensions
     {

@@ -40,7 +40,7 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="IEnumerable{T}"/> type.
+    /// Provides extension methods for the <see cref="IEnumerable{T}"/> type.
     /// </summary>
     public static class EnumerableExtensions
     {

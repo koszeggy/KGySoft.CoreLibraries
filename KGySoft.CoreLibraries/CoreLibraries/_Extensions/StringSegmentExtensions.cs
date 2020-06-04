@@ -24,7 +24,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="StringSegment"/> type.
+    /// Provides extension methods for the <see cref="StringSegment"/> type.
     /// </summary>
     public static class StringSegmentExtensions
     {

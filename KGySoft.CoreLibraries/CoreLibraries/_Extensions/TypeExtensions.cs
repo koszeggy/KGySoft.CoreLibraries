@@ -41,7 +41,7 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Type"/> type.
+    /// Provides extension methods for the <see cref="Type"/> type.
     /// </summary>
     public static class TypeExtensions
     {

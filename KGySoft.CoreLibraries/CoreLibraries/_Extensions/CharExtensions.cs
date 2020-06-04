@@ -24,7 +24,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="char">char</see> type.
+    /// Provides extension methods for the <see cref="char">char</see> type.
     /// </summary>
     public static class CharExtensions
     {
