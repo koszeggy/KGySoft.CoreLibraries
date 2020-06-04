@@ -369,6 +369,16 @@ namespace KGySoft.Collections
 #endif
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>
+        /// using the specified <paramref name="offset"/>.
+        /// </summary>
+        /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
+        /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
+        public ArraySection(T[] array, int offset) : this(array, offset, array?.Length ?? 0 - offset)
+        {
+        }
+
         #endregion
 
         #region Methods
@@ -443,6 +453,27 @@ namespace KGySoft.Collections
             array.CopyElements(offset, result, 0, length);
             return result;
         }
+
+        /// <summary>
+        /// Gets this <see cref="ArraySection{T}"/> as an <see cref="Array2D{T}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="ArraySection{T}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>An <see cref="Array2D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public Array2D<T> AsArray2D(int height, int width) => new Array2D<T>(this, height, width);
+
+        /// <summary>
+        /// Gets this <see cref="ArraySection{T}"/> as an <see cref="Array3D{T}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="ArraySection{T}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>An <see cref="Array3D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public Array3D<T> AsArray3D(int depth, int height, int width) => new Array3D<T>(this, depth, height, width);
 
         /// <summary>
         /// Gets the reference to the element at the specified <paramref name="index"/>.

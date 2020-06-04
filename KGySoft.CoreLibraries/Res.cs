@@ -156,7 +156,7 @@ namespace KGySoft
         /// <summary>The array section has no elements.</summary>
         internal static string ArraySectionEmpty => Get("ArraySection_Empty");
 
-        /// <summary>The array section has insufficient capacity.</summary>
+        /// <summary>The specified buffer has insufficient capacity.</summary>
         internal static string ArraySectionInsufficientCapacity => Get("ArraySection_InsufficientCapacity");
 
         #endregion

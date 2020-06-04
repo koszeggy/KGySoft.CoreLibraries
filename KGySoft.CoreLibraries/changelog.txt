@@ -17,14 +17,20 @@
     2.1 and above)
 + StringSegmentExtensions class:
   + New ReadToSeparator overload with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
++ The ArrayExtensions class has been made public along with some new members:
+  + New AsSection methods
+  + New AsArray2D/AsArray3D methods
 + FloatExtensions class:
   + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 + DoubleExtensions class:
   + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 
-- KGySoft.Collections namespace:
+* KGySoft.Collections namespace:
 ================================
-- ArraySection struct: Fixing strange debugger display issue for VS2019
+* ArraySection struct:
+  - Fixing strange debugger display issue for VS2019
+  + New constructor overload
+  + New AsArray2D/AsArray3D methods
 
 
 ~~~~~~~~~
