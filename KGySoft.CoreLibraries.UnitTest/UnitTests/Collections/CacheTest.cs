@@ -20,7 +20,7 @@ using System;
 using System.Linq;
 
 using KGySoft.Collections;
-
+using KGySoft.Reflection;
 using NUnit.Framework;
 
 #endregion

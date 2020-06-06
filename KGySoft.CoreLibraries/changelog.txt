@@ -31,6 +31,8 @@
   - Fixing strange debugger display issue for VS2019
   + New constructor overload
   + New AsArray2D/AsArray3D methods
+* Cache<TKey, TValue> class:
+  * Improving performance (using a different hashing)
 
 
 ~~~~~~~~~
