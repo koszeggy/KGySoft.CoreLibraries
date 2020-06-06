@@ -263,8 +263,7 @@ namespace KGySoft.Collections
             private readonly int version;
             private readonly bool isGeneric;
 
-            private int position;
-            private int currentIndex;
+            private int index;
 
             [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
@@ -285,7 +284,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     if (isGeneric)
                         return current;
@@ -297,7 +296,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return new DictionaryEntry(current.Key, current.Value);
                 }
@@ -307,7 +306,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Key;
                 }
@@ -317,7 +316,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Value;
                 }
@@ -334,8 +333,7 @@ namespace KGySoft.Collections
                 this.cache = cache;
                 version = cache.version;
                 this.isGeneric = isGeneric;
-                position = -1;
-                currentIndex = -1;
+                index = -1;
             }
 
             #endregion
@@ -351,24 +349,22 @@ namespace KGySoft.Collections
                 if (version != cache.version)
                     Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
-                if (position < cache.Count)
-                    position += 1;
-
-                if (position == cache.Count)
+                if (index == -1)
+                    index = cache.first;
+                else if (index == cache.usedCount)
                     return false;
-
-                if (position == 0)
-                {
-                    Debug.Assert(cache.first >= 0);
-                    currentIndex = cache.first;
-                }
                 else
+                    index = cache.items[index].NextInOrder;
+
+                if (index == -1)
                 {
-                    Debug.Assert(cache.items[currentIndex].NextInOrder >= 0, "Next element not found");
-                    currentIndex = cache.items[currentIndex].NextInOrder;
+                    index = cache.usedCount;
+                    current = default;
+                    return false;
                 }
 
-                current = new KeyValuePair<TKey, TValue>(cache.items[currentIndex].Key, cache.items[currentIndex].Value);
+                ref CacheItem item = ref cache.items[index];
+                current = new KeyValuePair<TKey, TValue>(item.Key, item.Value);
                 return true;
             }
 
@@ -376,8 +372,7 @@ namespace KGySoft.Collections
             {
                 if (version != cache.version)
                     Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
-                position = -1;
-                currentIndex = -1;
+                index = -1;
                 current = default;
             }
 
