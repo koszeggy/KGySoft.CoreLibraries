@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public override int GetHashCode() => ((comparer.GetHashCode(UpperBound) & 0xFFFF) << 16) | (comparer.GetHashCode(LowerBound) & 0xFFFF);
+        public override int GetHashCode() => (LowerBound, UpperBound).GetHashCode();
 
         /// <summary>
         /// Gets the string representation of this <see cref="Range{T}"/> instance.

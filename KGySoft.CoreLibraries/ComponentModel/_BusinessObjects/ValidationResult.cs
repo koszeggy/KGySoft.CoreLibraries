@@ -99,7 +99,7 @@ namespace KGySoft.ComponentModel
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>A hash code for this instance.</returns>
-        public override int GetHashCode() => ((int)Severity | (PropertyName.GetHashCode() & 0b11111111_11111100) << 16) | Message.GetHashCode();
+        public override int GetHashCode() => ((int)Severity, PropertyName, Message).GetHashCode();
 
         #endregion
     }
