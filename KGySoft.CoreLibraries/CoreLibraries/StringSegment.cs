@@ -485,23 +485,14 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int GetHashCode()
         {
             if (str == null)
                 return 0;
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            // This does not use a randomized hash but at least this way we don't allocate a new string
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + GetCharInternal(i);
-
-            return result;
-#else
-            return String.GetHashCode(AsSpan);
-#endif
-
-
+            return length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinal(str)
+                : StringSegmentComparer.GetHashCodeOrdinal(str, offset, length);
         }
 
         /// <summary>
@@ -572,16 +563,9 @@ namespace KGySoft.CoreLibraries
         {
             if (str == null)
                 return 0;
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + Char.ToUpperInvariant(GetCharInternal(i));
-
-            return result;
-#else
-            return String.GetHashCode(AsSpan, StringComparison.OrdinalIgnoreCase);
-#endif
+            return length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str)
+                : StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str, offset, length);
         }
 
         #endregion

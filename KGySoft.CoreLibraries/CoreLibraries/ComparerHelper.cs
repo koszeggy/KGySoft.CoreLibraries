@@ -16,15 +16,7 @@
 
 #region Usings
 
-#if NET40 || NET45
-using System;
-# endif
 using System.Collections.Generic;
-using System.Runtime.CompilerServices; 
-
-#if NET40 || NET45
-using KGySoft.Reflection;
-#endif
 
 #endregion
 
@@ -32,42 +24,21 @@ namespace KGySoft.CoreLibraries
 {
     internal static class ComparerHelper<T>
     {
-        #region Fields
-
-        private static IEqualityComparer<T> equalityComparer;
-        private static IComparer<T> comparer;
-
-        #endregion
-
         #region Properties
 
-        internal static IEqualityComparer<T> EqualityComparer
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                return equalityComparer ??=
+        internal static IEqualityComparer<T> EqualityComparer { get; } =
 #if !NETSTANDARD2_0
-                    typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
 #else
-                    EqualityComparer<T>.Default;
+            EqualityComparer<T>.Default;
 #endif
-            }
-        }
 
-        internal static IComparer<T> Comparer
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                return comparer ??=
+        internal static IComparer<T> Comparer { get; } =
 #if !NETSTANDARD2_0
-                    typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
 #else
-                    Comparer<T>.Default;
+            Comparer<T>.Default;
 #endif
-            }
-        }
 
         #endregion
     }

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -173,18 +174,14 @@ namespace KGySoft.CoreLibraries
 
         public override bool Equals(object obj) => obj is MutableStringSegment other && Equals(other);
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int GetHashCode()
         {
-            if (Length == 0)
+            if (str == null)
                 return 0;
-
-            // This is a much cheaper hash code than the one used by string
-            // Of course, we utilize that StringSegment is internal and used in dictionaries for enums with typically short names.
-            var result = 13;
-            for (int i = 0; i < Length; i++)
-                result = result * 397 + this[i];
-
-            return result;
+            return Length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinal(str)
+                : StringSegmentComparer.GetHashCodeOrdinal(str, offset, Length);
         }
 
         public override string ToString() => Length == 0 ? String.Empty : str.Substring(offset, Length);
@@ -370,6 +367,86 @@ namespace KGySoft.CoreLibraries
             result = Substring(0, pos);
             Slice(pos + separator.Length);
             return true;
+        }
+
+        internal bool Equals(string other)
+        {
+            Debug.Assert(other != null);
+            if (Length != other.Length)
+                return false;
+            if (ReferenceEquals(str, other) && offset == 0)
+                return true;
+
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+            // It would be better by Vector but that needs a char->ushort conversion
+            if (Length >= 20)
+                return String.Compare(str, offset, other, 0, Length, StringComparison.Ordinal) == 0;
+#endif
+            for (int i = 0; i < Length; i++)
+            {
+                if (this[i] != other[i])
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal bool EqualsOrdinalIgnoreCase(string other)
+        {
+            Debug.Assert(other != null);
+            if (Length != other.Length)
+                return false;
+            if (ReferenceEquals(str, other) && offset == 0)
+                return true;
+
+            if (str.Length == other.Length)
+                return String.Equals(str, other, StringComparison.OrdinalIgnoreCase);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+                for (int i = 0; i < Length; i++)
+                {
+                    if (Char.ToUpperInvariant(this[i]) != Char.ToUpperInvariant(other[i]))
+                        return false;
+                }
+
+                return true;
+#else
+            return str.AsSpan(offset, Length).Equals(other.AsSpan(), StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        internal bool EqualsOrdinalIgnoreCase(MutableStringSegment other)
+        {
+            Debug.Assert(other.str != null);
+            if (Length != other.Length)
+                return false;
+            if (ReferenceEquals(str, other.str) && offset == other.offset)
+                return true;
+
+            if (str.Length == other.Length && other.str.Length == other.Length)
+                return String.Equals(str, other.str, StringComparison.OrdinalIgnoreCase);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+                for (int i = 0; i < Length; i++)
+                {
+                    if (Char.ToUpperInvariant(this[i]) != Char.ToUpperInvariant(other[i]))
+                        return false;
+                }
+
+                return true;
+#else
+            return str.AsSpan(offset, Length).Equals(other.str.AsSpan(other.offset, other.Length), StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal int GetHashCodeOrdinalIgnoreCase()
+        {
+            if (str == null)
+                return 0;
+            return Length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str)
+                : StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str, offset, Length);
         }
 
         #endregion

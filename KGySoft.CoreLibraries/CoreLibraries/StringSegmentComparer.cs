@@ -19,7 +19,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -29,7 +31,9 @@ namespace KGySoft.CoreLibraries
     /// Represents a <see cref="StringSegment"/> comparison operation that uses specific case and culture-based or ordinal comparison rules.
     /// </summary>
     [Serializable]
-    public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>, IEqualityComparer, IComparer
+    public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>,
+        IEqualityComparer<string>, IComparer<string>,
+        IEqualityComparer, IComparer
     {
         #region Nested classes
 
@@ -41,8 +45,28 @@ namespace KGySoft.CoreLibraries
             #region Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => x.Equals(y);
+            public override bool Equals(string x, string y) => x == y;
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
+
             public override int GetHashCode(StringSegment obj) => obj.GetHashCode();
+
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null)
+                    Throw.ArgumentNullException(Argument.obj);
+                return GetHashCodeOrdinal(obj);
+            }
+
+            public override int GetHashCode(ReadOnlySpan<char> obj) => String.GetHashCode(obj);
+
+            public override int Compare(string  x, string y) => String.CompareOrdinal(x, y);
             public override int Compare(StringSegment x, StringSegment y) => x.CompareTo(y);
+            public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.Ordinal);
+
+            internal override bool Equals(MutableStringSegment x, string y) => x.Equals(y);
+            internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCode();
 
             #endregion
         }
@@ -57,8 +81,28 @@ namespace KGySoft.CoreLibraries
             #region Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
+            public override bool Equals(string x, string y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
+
             public override int GetHashCode(StringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
+
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null)
+                    Throw.ArgumentNullException(Argument.obj);
+                return GetHashCodeOrdinalIgnoreCase(obj);
+            }
+
+            public override int GetHashCode(ReadOnlySpan<char> obj) => String.GetHashCode(obj, StringComparison.OrdinalIgnoreCase);
+
             public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            public override int Compare(string x, string y) => String.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.OrdinalIgnoreCase);
+
+            internal override bool Equals(MutableStringSegment x, string y) => x.EqualsOrdinalIgnoreCase(y);
+            internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
 
             #endregion
         }
@@ -77,6 +121,9 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
             private readonly StringComparer stringComparer;
 #endif
+#if NETSTANDARD2_1 || NETCOREAPP3_0
+            private StringComparison? knownComparison;
+#endif
 
             #endregion
 
@@ -91,6 +138,14 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
                 stringComparer = StringComparer.Create(culture, ignoreCase);
 #endif
+#if NETSTANDARD2_1 || NETCOREAPP3_0
+                // span comparison is not supported with a custom culture even in .NET Core 3 so using StringComparison when possible
+                knownComparison = culture.Equals(CultureInfo.InvariantCulture)
+                    ? ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture
+                    : culture.Equals(CultureInfo.CurrentCulture)
+                        ? ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture
+                        : default(StringComparison?);
+#endif
             }
 
             #endregion
@@ -98,7 +153,20 @@ namespace KGySoft.CoreLibraries
             #region Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
-            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options);
+            public override bool Equals(string x, string y) => compareInfo.Compare(x, y, options) == 0;
+
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
+            {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0
+                return knownComparison != null
+                    ? x.Equals(y, knownComparison.Value)
+                    : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
+#else
+                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
+                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
+                return compareInfo.Compare(x, y, options) == 0;
+#endif
+            }
 
             public override int GetHashCode(StringSegment obj)
             {
@@ -113,6 +181,36 @@ namespace KGySoft.CoreLibraries
                 return compareInfo.GetHashCode(obj.AsSpan, options);
 #endif
             }
+
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null)
+                    Throw.ArgumentNullException(Argument.obj);
+
+                return compareInfo.GetHashCode(obj, options);
+            }
+
+            public override int GetHashCode(ReadOnlySpan<char> obj) => compareInfo.GetHashCode(obj, options);
+
+            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options);
+            public override int Compare(string x, string y) => compareInfo.Compare(x, y, options);
+            public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
+            {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0
+                return knownComparison != null
+                    ? x.CompareTo(y, knownComparison.Value)
+                    : compareInfo.Compare(x.ToString(), y.ToString(), options);
+#else
+                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
+                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
+                return compareInfo.Compare(x, y, options);
+#endif
+            }
+
+            internal override int GetHashCode(MutableStringSegment obj) => Throw.InternalError<int>("Not expected to be called");
+            internal override bool Equals(MutableStringSegment x, string y) => Throw.InternalError<bool>("Not expected to be called");
 
             #endregion
         }
@@ -209,6 +307,8 @@ namespace KGySoft.CoreLibraries
 
         #region Instance Methods
 
+        #region StringSegment
+
         /// <summary>
         /// When overridden in a derived class, indicates whether two <see cref="StringSegment"/> instances are equal.
         /// </summary>
@@ -235,6 +335,43 @@ namespace KGySoft.CoreLibraries
         /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
         /// </returns>
         public abstract int Compare(StringSegment x, StringSegment y);
+
+        // TODO internal abstract bool Equals(StringSegment x, string y);
+
+        #endregion
+
+        #region String
+
+        /// <summary>
+        /// When overridden in a derived class, indicates whether two <see cref="string">string</see> instances are equal.
+        /// </summary>
+        /// <param name="x">A <see cref="string">string</see> to compare to <paramref name="y"/>.</param>
+        /// <param name="y">A <see cref="string">string</see> to compare to <paramref name="x"/>.</param>
+        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
+        public abstract bool Equals(string x, string y);
+
+        /// <summary>
+        /// When overridden in a derived class, gets the hash code for the specified <see cref="string">string</see>.
+        /// </summary>
+        /// <param name="obj">The <see cref="string">string</see> to get the hash code for.</param>
+        /// <returns>
+        /// A hash code for the <see cref="string">string</see>, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public abstract int GetHashCode(string obj);
+
+        /// <summary>
+        /// When overridden in a derived class, compares two <see cref="string">string</see> instances and returns an indication of their relative sort order.
+        /// </summary>
+        /// <param name="x">A <see cref="string">string</see> to compare to <paramref name="y"/>.</param>
+        /// <param name="y">A <see cref="string">string</see> to compare to <paramref name="x"/>.</param>
+        /// <returns>
+        /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
+        /// </returns>
+        public abstract int Compare(string x, string y);
+
+        #endregion
+
+        #region Object
 
         /// <summary>
         /// When overridden in a derived class, indicates whether two objects are equal.
@@ -330,6 +467,116 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Span
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+        /// <summary>
+        /// When overridden in a derived class, indicates whether two <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances are equal.
+        /// </summary>
+        /// <param name="x">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="y"/>.</param>
+        /// <param name="y">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="x"/>.</param>
+        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
+        public abstract bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y);
+
+        /// <summary>
+        /// When overridden in a derived class, gets the hash code for the specified <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>.
+        /// </summary>
+        /// <param name="obj">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to get the hash code for.</param>
+        /// <returns>
+        /// A hash code for the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public abstract int GetHashCode(ReadOnlySpan<char> obj);
+
+        /// <summary>
+        /// When overridden in a derived class, compares two <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances and returns an indication of their relative sort order.
+        /// </summary>
+        /// <param name="x">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="y"/>.</param>
+        /// <param name="y">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="x"/>.</param>
+        /// <returns>
+        /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
+        /// </returns>
+        public abstract int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y);
+
+#endif
         #endregion
+
+        #region MutableStringSegment
+
+        internal abstract bool Equals(MutableStringSegment x, string y);
+
+        internal abstract int GetHashCode(MutableStringSegment obj);
+
+        ///// <summary>
+        ///// When overridden in a derived class, compares two <see cref="StringSegment"/> instances and returns an indication of their relative sort order.
+        ///// </summary>
+        ///// <param name="x">A <see cref="StringSegment"/> to compare to <paramref name="y"/>.</param>
+        ///// <param name="y">A <see cref="StringSegment"/> to compare to <paramref name="x"/>.</param>
+        ///// <returns>
+        ///// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
+        ///// </returns>
+        //public abstract int Compare(StringSegment x, StringSegment y);
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinal(string s)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + s[i];
+
+            return result;
+#else
+            return s.GetHashCode();
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinal(string s, int offset, int length)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + s[i + offset];
+
+            return result;
+#else
+            return String.GetHashCode(s.AsSpan(offset, length));
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinalIgnoreCase(string s)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i]);
+
+            return result;
+#else
+            return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
+
+            return result;
+#else
+            return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
     }
 }
