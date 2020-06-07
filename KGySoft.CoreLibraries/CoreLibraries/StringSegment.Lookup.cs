@@ -251,7 +251,7 @@ namespace KGySoft.CoreLibraries
             CheckComparison(comparison);
 
             if (length == 0)
-                return IsNull || value.Length > 0 ? -1 : 0;
+                return IsNull || !value.IsEmpty ? -1 : 0;
 
             if (comparison == StringComparison.Ordinal)
                 return IndexOfInternal(value, startIndex, count);

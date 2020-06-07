@@ -45,17 +45,13 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">The string to be extracted from quotes.</param>
         /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
-        [SuppressMessage("Style", "IDE0057:Use range operator", Justification = "Performance")]
+        [SuppressMessage("ReSharper", "PossibleNullReferenceException", Justification = "False alarm, first line handles null")]
         public static string RemoveQuotes(this string s)
-        {
-            if (String.IsNullOrEmpty(s))
-                return s;
-            string result = s;
-            if (result.Length > 1 && ((result[0] == '"' && result[result.Length - 1] == '"') ||
-                    result[0] == '\'' && result[result.Length - 1] == '\''))
-                result = result.Substring(1, result.Length - 2);
-            return result;
-        }
+            => (s?.Length ?? 0) < 2
+                ? s
+                : s.Length > 1 && (s[0] == '"' && s[^1] == '"' || s[0] == '\'' && s[^1] == '\'')
+                    ? s[1..^1]
+                    : s;
 
         /// <summary>
         /// Converts the passed string to a <see cref="Regex"/> that matches wildcard characters (? and *).
@@ -180,7 +176,6 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
         /// <summary>
         /// Tries to convert the specified <see cref="string">string</see> to an <see cref="Enum"/> value of <typeparamref name="TEnum"/> type.
         /// </summary>
@@ -190,7 +185,6 @@ namespace KGySoft.CoreLibraries
         /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
         /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
-#pragma warning restore CS3024 // Constraint type is not CLS-compliant
             where TEnum : struct, Enum
         {
             if (s == null)
@@ -203,7 +197,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Parses an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Parses an object of type <typeparamref name="T"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section for details.
@@ -243,17 +237,17 @@ namespace KGySoft.CoreLibraries
         /// </list>
         /// </para>
         /// </remarks>
-        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
         public static T Parse<T>(this string s, CultureInfo culture = null)
         {
-            if (!Parser.TryParse(s, typeof(T), culture, out object value, out Exception error) || !typeof(T).CanAcceptValue(value))
+            if (!Parser.TryParse(s, culture, out T value, out Exception error))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s, typeof(T)), error);
-            return (T)value;
+            return value;
         }
 
         /// <summary>
-        /// Parses an object from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Parses an object from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> overload for details.
@@ -268,13 +262,13 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object Parse(this string s, Type type, CultureInfo culture = null)
         {
-            if (!Parser.TryParse(s, type, culture, out object value, out Exception error) || !type.CanAcceptValue(value))
+            if (!Parser.TryParse(s, type, culture, true, out object value, out Exception error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s, type), error);
             return value;
         }
 
         /// <summary>
-        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
@@ -285,17 +279,10 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse<T>(this string s, CultureInfo culture, out T value)
-        {
-            value = default;
-            if (!Parser.TryParse(s, typeof(T), culture, out object result, out var _) || !typeof(T).CanAcceptValue(result))
-                return false;
-
-            value = (T)result;
-            return true;
-        }
+            => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
-        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
@@ -307,7 +294,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryParse<T>(this string s, out T value) => TryParse(s, null, out value);
 
         /// <summary>
-        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
@@ -317,10 +304,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse(this string s, Type type, CultureInfo culture, out object value) => Parser.TryParse(s, type, culture, out value, out var _);
+        public static bool TryParse(this string s, Type type, CultureInfo culture, out object value)
+            => Parser.TryParse(s, type, culture, true, out value, out var _);
 
         /// <summary>
-        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
@@ -329,7 +317,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse(this string s, Type type, out object value) => Parser.TryParse(s, type, null, out value, out var _);
+        public static bool TryParse(this string s, Type type, out object value)
+            => Parser.TryParse(s, type, null, true, out value, out var _);
 
         #endregion
 

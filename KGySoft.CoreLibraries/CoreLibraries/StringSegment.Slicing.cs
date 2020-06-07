@@ -235,7 +235,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, ReadOnlySpan<char> separator)
         {
-            Debug.Assert(separator.Length > 0, "Non-empty separator is expected here");
+            Debug.Assert(!separator.IsEmpty, "Non-empty separator is expected here");
             if (rest.length == 0)
             {
                 StringSegment result = rest.IsNull ? default : rest;
@@ -871,8 +871,8 @@ namespace KGySoft.CoreLibraries
             if (result != null)
                 return result;
 
-            // null or empty string separator: returning whole string (compatibility with String.Split)
-            if (separator.Length == 0)
+            // empty string separator: returning whole string (compatibility with String.Split)
+            if (separator.IsEmpty)
                 return new[] { this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);

@@ -923,6 +923,15 @@ namespace KGySoft
 
         #endregion
 
+        #region SpanExtensions
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+        /// <summary>The specified span '{0}' cannot be parsed as type {1}.</summary>
+        internal static string SpanExtensionsCannotParseAsType(ReadOnlySpan<char> s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s.ToString(), type);
+
+#endif
+        #endregion
+
         #region StringExtensions
 
         /// <summary>The specified string '{0}' cannot be parsed as type {1}.</summary>

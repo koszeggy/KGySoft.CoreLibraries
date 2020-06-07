@@ -282,6 +282,32 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
         }
 
+        [TestCase(null, null)]
+        [TestCase("", "")]
+        [TestCase("a", "a")]
+        [TestCase("alpha", "alpha")]
+        [TestCase("\"", "\"")]
+        [TestCase("'", "'")]
+        [TestCase("'\"", "'\"")]
+        [TestCase("\"\"", "")]
+        [TestCase("''", "")]
+        [TestCase("'a'", "a")]
+        [TestCase("\"a\"", "a")]
+        public void RemoveQuotesTest(string s, string expectedResult)
+        {
+            Assert.AreEqual(expectedResult.AsSegment(), s.AsSegment().RemoveQuotes());
+        }
+
+        [TestCaseGeneric(null, null, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("x", null, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("Black", ConsoleColor.Black, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("-1", (ConsoleColor)(-1), TypeArguments = new[] { typeof(ConsoleColor) })]
+        public void ToEnumTest<TEnum>(string s, TEnum? expectedResult)
+            where TEnum : struct, Enum
+        {
+            Assert.AreEqual(s.AsSegment().ToEnum<TEnum>(), expectedResult);
+        }
+
         #endregion
     }
 }

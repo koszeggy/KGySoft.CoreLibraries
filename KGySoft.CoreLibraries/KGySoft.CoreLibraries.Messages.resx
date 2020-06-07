@@ -859,6 +859,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_InvalidDrmPropertyChange" xml:space="preserve">
     <value>Setting this property is invalid when UseLanguageSettings is true.</value>
   </data>
+  <data name="SpanExtensions_CannotParseAsTypeFormat" xml:space="preserve">
+    <value>The specified span '{0}' cannot be parsed as type {1}.</value>
+  </data>
   <data name="StringExtensions_CannotParseAsTypeFormat" xml:space="preserve">
     <value>The specified string '{0}' cannot be parsed as type {1}.</value>
   </data>

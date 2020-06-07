@@ -23,12 +23,19 @@
   + New IsDefined overload with ReadOnlySpan<char> parameter (.NET Core 3.0/.NET Standard 2.1 and above)
 + FloatExtensions class:
   + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
++ New SpanExtensions class (.NET Core 3.0/.NET Standard 2.1 and above):
+  + The same Parse/TryParse methods as are in StringExtensions
+  + The same Read/ReadToSeparator/ReadLine methods as are in StringSegmentExtensions
+  + ToEnum method
+  + RemoveQuoes methods
 + StringSegment struct:
   + New Split overloads with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
   + New IndexOf/LastIndexOf/StartsWith/EndsWith overloads with ReadOnlySpan<char> value (.NET Core 3.0/.NET Standard
     2.1 and above)
 + StringSegmentExtensions class:
   + New ReadToSeparator overload with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
+  + New ToEnum method
+  + New RemoveQuoes method
 
 * KGySoft.Collections namespace:
 ================================

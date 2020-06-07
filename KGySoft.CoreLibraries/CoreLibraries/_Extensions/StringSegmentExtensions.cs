@@ -36,6 +36,8 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
+        #region Read with Advance
+        
         /// <summary>
         /// Advances the specified <paramref name="rest"/> parameter after the next whitespace character and returns
         /// the consumed part without the whitespace. If the first character of <paramref name="rest"/> was a whitespace
@@ -227,7 +229,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, ReadOnlySpan<char> separator)
         {
-            if (separator.Length == 0)
+            if (separator.IsEmpty)
             {
                 StringSegment result = rest;
                 rest = default;
@@ -294,6 +296,49 @@ namespace KGySoft.CoreLibraries
             rest = rest.SubstringInternal(maxLength);
             return result;
         }
+
+        #endregion
+
+        #region Misc Tools
+        
+        /// <summary>
+        /// Extracts content of a single or double quoted string.
+        /// </summary>
+        /// <param name="segment">The span to be extracted from quotes.</param>
+        /// <returns>If <paramref name="segment"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="segment"/>.</returns>
+        public static StringSegment RemoveQuotes(this StringSegment segment)
+            => segment.Length < 2
+                ? segment
+                : segment.Length > 1 && (segment[0] == '"' && segment[^1] == '"' || segment[0] == '\'' && segment[^1] == '\'')
+                    ? segment[1..^1]
+                    : segment;
+
+        #endregion
+
+        #region Parsing
+
+        /// <summary>
+        /// Tries to convert the specified <see cref="StringSegment"/> to an <see cref="Enum"/> value of <typeparamref name="TEnum"/> type.
+        /// No string allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see cref="Enum"/>.</typeparam>
+        /// <param name="s">The <see cref="StringSegment"/> to convert.</param>
+        /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
+        /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
+        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        public static TEnum? ToEnum<TEnum>(this StringSegment s, bool definedOnly = false)
+            where TEnum : struct, Enum
+        {
+            if (s.IsNullOrEmpty)
+                return null;
+
+            if (!Enum<TEnum>.TryParse(s, out TEnum value))
+                return null;
+
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
+        }
+
+        #endregion
 
         #endregion
     }

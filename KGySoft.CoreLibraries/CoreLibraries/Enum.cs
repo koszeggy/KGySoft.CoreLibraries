@@ -42,6 +42,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
+        // ReSharper disable StaticMemberInGenericType - all fields in this class depend on TEnum
         private static readonly bool isFlags = typeof(TEnum).IsFlagsEnum();
 
         // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
