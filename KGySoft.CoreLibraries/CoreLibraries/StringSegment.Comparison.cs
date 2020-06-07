@@ -34,7 +34,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the equality check.</returns>
-        public static bool operator ==(in StringSegment a, in StringSegment b) => a.Equals(b);
+        public static bool operator ==(StringSegment a, StringSegment b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified <see cref="StringSegment"/> instances have different values.
@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(in StringSegment a, in StringSegment b) => !(a == b);
+        public static bool operator !=(StringSegment a, StringSegment b) => !(a == b);
 
         #endregion
 
@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns><see langword="true"/>&#160;if the specified <see cref="StringSegment"/> instances are equal; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static bool Equals(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
+        public static bool Equals(StringSegment a, StringSegment b, StringComparison comparison = StringComparison.Ordinal)
             => comparison switch
             {
                 StringComparison.Ordinal => a.Equals(b),
@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
-        public static int Compare(in StringSegment a, in StringSegment b, StringComparison comparison = StringComparison.Ordinal)
+        public static int Compare(StringSegment a, StringSegment b, StringComparison comparison = StringComparison.Ordinal)
         {
             if (comparison == StringComparison.Ordinal)
                 return a.CompareTo(b);
@@ -111,14 +111,14 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">An object that supplies culture-specific comparison information.
         /// if <see langword="null"/>, then <see cref="CultureInfo.CurrentCulture">CultureInfo.CurrentCulture</see> will be used.</param>
         /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
-        public static int Compare(in StringSegment a, in StringSegment b, bool ignoreCase, CultureInfo culture)
+        public static int Compare(StringSegment a, StringSegment b, bool ignoreCase, CultureInfo culture)
             => Compare(a, b, (culture ?? CultureInfo.CurrentCulture).CompareInfo, ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None);
 
         #endregion
 
         #region Internal Methods
 
-        internal static bool EqualsOrdinalIgnoreCase(in StringSegment a, in StringSegment b)
+        internal static bool EqualsOrdinalIgnoreCase(StringSegment a, StringSegment b)
         {
             if (ReferenceEquals(a.str, b.str) && a.offset == b.offset)
                 return true;
@@ -143,7 +143,7 @@ namespace KGySoft.CoreLibraries
 
         }
 
-        internal static int Compare(in StringSegment a, in StringSegment b, CompareInfo compareInfo, CompareOptions options)
+        internal static int Compare(StringSegment a, StringSegment b, CompareInfo compareInfo, CompareOptions options)
         {
             if (a.str == null || b.str == null)
             {

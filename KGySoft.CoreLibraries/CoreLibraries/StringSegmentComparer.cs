@@ -44,6 +44,8 @@ namespace KGySoft.CoreLibraries
         {
             #region Methods
 
+            #region Public Methods
+
             public override bool Equals(StringSegment x, StringSegment y) => x.Equals(y);
             public override bool Equals(string x, string y) => x == y;
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
@@ -61,12 +63,20 @@ namespace KGySoft.CoreLibraries
 
             public override int GetHashCode(ReadOnlySpan<char> obj) => String.GetHashCode(obj);
 
-            public override int Compare(string  x, string y) => String.CompareOrdinal(x, y);
+            public override int Compare(string x, string y) => String.CompareOrdinal(x, y);
             public override int Compare(StringSegment x, StringSegment y) => x.CompareTo(y);
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.Ordinal);
 
+            #endregion
+
+            #region Internal Methods
+
             internal override bool Equals(MutableStringSegment x, string y) => x.Equals(y);
             internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCode();
+
+            internal override bool Equals(StringSegment x, string y) => x.Equals(y);
+
+            #endregion
 
             #endregion
         }
@@ -80,6 +90,8 @@ namespace KGySoft.CoreLibraries
         {
             #region Methods
 
+            #region Public Methods
+            
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
             public override bool Equals(string x, string y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
@@ -101,8 +113,15 @@ namespace KGySoft.CoreLibraries
             public override int Compare(string x, string y) => String.Compare(x, y, StringComparison.OrdinalIgnoreCase);
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.OrdinalIgnoreCase);
 
+            #endregion
+
+            #region Internal Methods
+
+            internal override bool Equals(StringSegment x, string y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
             internal override bool Equals(MutableStringSegment x, string y) => x.EqualsOrdinalIgnoreCase(y);
             internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
+
+            #endregion
 
             #endregion
         }
@@ -151,6 +170,8 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Methods
+
+            #region Public Methods
 
             public override bool Equals(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             public override bool Equals(string x, string y) => compareInfo.Compare(x, y, options) == 0;
@@ -209,8 +230,15 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
+            #endregion
+
+            #region Internal Methods
+
+            internal override bool Equals(StringSegment x, string y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             internal override int GetHashCode(MutableStringSegment obj) => Throw.InternalError<int>("Not expected to be called");
             internal override bool Equals(MutableStringSegment x, string y) => Throw.InternalError<bool>("Not expected to be called");
+            
+            #endregion
 
             #endregion
         }
@@ -266,6 +294,8 @@ namespace KGySoft.CoreLibraries
 
         #region Static Methods
 
+        #region Public Methods
+        
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> instance based on the specified <paramref name="comparison"/>.
         /// </summary>
@@ -305,7 +335,71 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Internal Methods
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinal(string s)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + s[i];
+
+            return result;
+#else
+            return s.GetHashCode();
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinal(string s, int offset, int length)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + s[i + offset];
+
+            return result;
+#else
+            return String.GetHashCode(s.AsSpan(offset, length));
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinalIgnoreCase(string s)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i]);
+
+            return result;
+#else
+            return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
+        {
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
+
+            return result;
+#else
+            return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        #endregion
+
+        #endregion
+
         #region Instance Methods
+
+        #region Public Methods
 
         #region StringSegment
 
@@ -335,8 +429,6 @@ namespace KGySoft.CoreLibraries
         /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
         /// </returns>
         public abstract int Compare(StringSegment x, StringSegment y);
-
-        // TODO internal abstract bool Equals(StringSegment x, string y);
 
         #endregion
 
@@ -500,6 +592,16 @@ namespace KGySoft.CoreLibraries
 #endif
         #endregion
 
+        #endregion
+
+        #region Internal Methods
+
+        #region StringSegment
+
+        internal abstract bool Equals(StringSegment x, string y);
+
+        #endregion
+
         #region MutableStringSegment
 
         internal abstract bool Equals(MutableStringSegment x, string y);
@@ -522,61 +624,6 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static int GetHashCodeOrdinal(string s)
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < s.Length; i++)
-                result = result * 397 + s[i];
-
-            return result;
-#else
-            return s.GetHashCode();
-#endif
-        }
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static int GetHashCodeOrdinal(string s, int offset, int length)
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + s[i + offset];
-
-            return result;
-#else
-            return String.GetHashCode(s.AsSpan(offset, length));
-#endif
-        }
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static int GetHashCodeOrdinalIgnoreCase(string s)
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < s.Length; i++)
-                result = result * 397 + Char.ToUpperInvariant(s[i]);
-
-            return result;
-#else
-            return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
-#endif
-        }
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
-
-            return result;
-#else
-            return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
-#endif
-        }
-
+        #endregion
     }
 }

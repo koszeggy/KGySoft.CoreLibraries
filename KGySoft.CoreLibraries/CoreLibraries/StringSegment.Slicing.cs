@@ -124,7 +124,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static StringSegment GetNextSegment(ref StringSegment rest, in StringSegment separator)
+        internal static StringSegment GetNextSegment(ref StringSegment rest, StringSegment separator)
         {
             Debug.Assert(!separator.IsNullOrEmpty, "Non-empty separator is expected here");
             if (rest.length == 0)
@@ -557,7 +557,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(in StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator.length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
@@ -605,7 +605,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(in StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.

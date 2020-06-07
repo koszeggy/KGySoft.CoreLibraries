@@ -92,7 +92,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.IsFalse(Enum<TestLongEnum>.IsDefined(TestLongEnum.Gamma | TestLongEnum.Min));
 
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma"));
+            Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma".AsSpan()));
+#endif
             Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega"));
+            Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega".AsSpan()));
+#endif
 
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined((long)TestLongEnum.Max));
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined((long)TestLongEnum.Min));
@@ -144,7 +152,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void ParseTest()
         {
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0"));
+            Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0".AsSpan()));
+#endif
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max"));
+            Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max".AsSpan()));
+#endif
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse(UInt64.MaxValue.ToString()));
             Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.Parse("Min"));
             Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.Parse(Int64.MinValue.ToString()));
@@ -158,9 +174,17 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(TestLongEnum.AlphaRedefined, Enum<TestLongEnum>.Parse("Alpha"));
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("alpha", true));
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED", true));
+            Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED".AsSegment(), true));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED".AsSpan(), true));
+#endif
 
             TestLongEnum e = TestLongEnum.Gamma | TestLongEnum.Alphabet;
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet"));
+            Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet".AsSpan()));
+#endif
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("7"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Alpha, Beta, Gamma"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Alpha Beta Gamma", " "));
@@ -170,6 +194,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("23"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Alpha, Beta, Gamma, 16"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet"));
+            Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet".AsSegment()));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet".AsSpan()));
+#endif
 
             Assert.IsFalse(Enum<TestLongEnum>.TryParse(UInt64.MaxValue.ToString(), out var _));
             Assert.IsFalse(Enum<TestLongEnum>.TryParse("Beta, Gamma, , Delta, 16", out var _));

@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value)
+        public int IndexOf(StringSegment value)
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
@@ -131,7 +131,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        public int IndexOf(StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
@@ -167,7 +167,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+        public int IndexOf(StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => IndexOf(value, startIndex, length - startIndex, comparison);
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int IndexOf(in StringSegment value, StringComparison comparison)
+        public int IndexOf(StringSegment value, StringComparison comparison)
             => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
 
         /// <summary>
@@ -359,7 +359,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
+        public int LastIndexOf(StringSegment value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
@@ -392,7 +392,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
+        public int LastIndexOf(StringSegment value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, startIndex, length - startIndex, comparison);
 
         /// <summary>
@@ -405,7 +405,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="StringSegment"/> is found, or -1 if it is not.
         /// If value is <see cref="Empty"/>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public int LastIndexOf(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+        public int LastIndexOf(StringSegment value, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, 0, length, comparison);
 
         /// <summary>
@@ -641,7 +641,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
-        public bool StartsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+        public bool StartsWith(StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.value);
@@ -704,7 +704,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
-        public bool EndsWith(in StringSegment value, StringComparison comparison = StringComparison.Ordinal)
+        public bool EndsWith(StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
                 Throw.ArgumentNullException(Argument.s);
@@ -838,7 +838,7 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
-        private int IndexOfInternal(in StringSegment s, int startIndex, int count)
+        private int IndexOfInternal(StringSegment s, int startIndex, int count)
         {
             Debug.Assert(!IsNull);
             Debug.Assert(!s.IsNull);

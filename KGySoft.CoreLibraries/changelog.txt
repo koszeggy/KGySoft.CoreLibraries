@@ -11,19 +11,24 @@
 
 + KGySoft.CoreLibraries namespace:
 ==================================
++ The ArrayExtensions class has been made public along with some new members:
+  + New AsSection methods
+  + New AsArray2D/AsArray3D methods
++ DoubleExtensions class:
+  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
++ Enum<TEnum> class:
+  + New Parse/TryParse overloads with StringSegment parameters
+  + New Parse/TryParse overloads with ReadOnlySpan<char> parameters (.NET Core 3.0/.NET Standard 2.1 and above)
+  + New IsDefined overload with StringSegment parameter
+  + New IsDefined overload with ReadOnlySpan<char> parameter (.NET Core 3.0/.NET Standard 2.1 and above)
++ FloatExtensions class:
+  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 + StringSegment struct:
   + New Split overloads with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
   + New IndexOf/LastIndexOf/StartsWith/EndsWith overloads with ReadOnlySpan<char> value (.NET Core 3.0/.NET Standard
     2.1 and above)
 + StringSegmentExtensions class:
   + New ReadToSeparator overload with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
-+ The ArrayExtensions class has been made public along with some new members:
-  + New AsSection methods
-  + New AsArray2D/AsArray3D methods
-+ FloatExtensions class:
-  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
-+ DoubleExtensions class:
-  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 
 * KGySoft.Collections namespace:
 ================================

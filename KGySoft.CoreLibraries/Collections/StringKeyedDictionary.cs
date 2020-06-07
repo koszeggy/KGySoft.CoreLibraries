@@ -446,7 +446,7 @@ namespace KGySoft.Collections
                 int hashCode = String.GetHashCode(key);
                 for (int i = buckets[hashCode & mask] - 1; i >= 0; i = entries[i].Next)
                 {
-                    if (entries[i].Hash == hashCode && key.Equals(entries[i].Key))
+                    if (entries[i].Hash == hashCode && key.Equals(entries[i].Key.AsSpan(), StringComparison.Ordinal))
                         return i;
                 }
             }

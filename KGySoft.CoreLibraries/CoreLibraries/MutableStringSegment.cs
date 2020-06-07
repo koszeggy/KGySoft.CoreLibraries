@@ -137,10 +137,6 @@ namespace KGySoft.CoreLibraries
             Length = length;
         }
 
-        internal MutableStringSegment(string s, int offset) : this(s, offset, s.Length - offset)
-        {
-        }
-
         internal MutableStringSegment(string s) : this(s, 0, s.Length)
         {
         }
@@ -266,8 +262,6 @@ namespace KGySoft.CoreLibraries
                 if (digit > 9)
                     return false;
 
-                //value *= 10;
-                //value += digit;
                 ulong newValue = value * 10 + digit;
 
                 // overflow
@@ -286,66 +280,31 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
-        internal int IndexOf(string s)
+        internal bool TryGetNextSegment(string separator, out MutableStringSegment result)
         {
-            // This would be the native version, which is much slower even in .NET Core:
-            //int result = str.IndexOf(s, offset, Length, StringComparison.Ordinal);
-            //return result >= 0 ? result - offset : -1;
-
-            int len = s.Length;
-            if (len == 0)
-                return 0;
-
-            if (len >= Length)
+            if (Length == 0)
             {
-                if (len != Length)
-                    return -1;
-                if (offset == 0)
-                    return s == str ? 0 : -1;
+                result = default;
+                return false;
             }
 
-            char first = s[0];
+            int pos = IndexOf(separator);
 
-            // single char separator: the simple way
-            if (len == 1)
+            // last segment
+            if (pos == -1)
             {
-                for (int i = offset; i < offset + Length; i++)
-                {
-                    if (str[i] == first)
-                        return i - offset;
-                }
-
-                return -1;
+                result = this;
+                this = default;
+                return true;
             }
 
-            int end = offset + Length - len + 1;
-            for (int i = offset; i < end; i++)
-            {
-                if (str[i] != first)
-                    continue;
-
-                // first char matches: looking for difference in other chars if any
-                for (int j = 1; j < len; j++)
-                {
-                    if (str[i + j] == s[j])
-                        continue;
-
-                    // here we have a difference: continuing with skipping the matched characters
-                    i += j - 1;
-                    goto continueOuter; // yes, a dreadful goto which is actually a continue
-                }
-
-                // Here we have full match. As single char separators are not handled here we could have
-                // check this into the inner loop to avoid goto but that requires an extra condition.
-                return i - offset;
-
-            continueOuter:;
-            }
-
-            return -1;
+            // returning next segment and advance
+            result = Substring(0, pos);
+            Slice(pos + separator.Length);
+            return true;
         }
 
-        internal bool TryGetNextSegment(string separator, out MutableStringSegment result)
+        internal bool TryGetNextSegment(StringSegment separator, out MutableStringSegment result)
         {
             if (Length == 0)
             {
@@ -447,6 +406,127 @@ namespace KGySoft.CoreLibraries
             return Length == str.Length
                 ? StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str)
                 : StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str, offset, Length);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private int IndexOf(string s)
+        {
+            // This would be the native version, which is much slower even in .NET Core:
+            //int result = str.IndexOf(s, offset, Length, StringComparison.Ordinal);
+            //return result >= 0 ? result - offset : -1;
+
+            int len = s.Length;
+            if (len == 0)
+                return 0;
+
+            if (len >= Length)
+            {
+                if (len != Length)
+                    return -1;
+                if (offset == 0)
+                    return s == str ? 0 : -1;
+            }
+
+            char first = s[0];
+
+            // single char separator: the simple way
+            if (len == 1)
+            {
+                for (int i = offset; i < offset + Length; i++)
+                {
+                    if (str[i] == first)
+                        return i - offset;
+                }
+
+                return -1;
+            }
+
+            int end = offset + Length - len + 1;
+            for (int i = offset; i < end; i++)
+            {
+                if (str[i] != first)
+                    continue;
+
+                // first char matches: looking for difference in other chars if any
+                for (int j = 1; j < len; j++)
+                {
+                    if (str[i + j] == s[j])
+                        continue;
+
+                    // here we have a difference: continuing with skipping the matched characters
+                    i += j - 1;
+                    goto continueOuter; // yes, a dreadful goto which is actually a continue
+                }
+
+                // Here we have full match. As single char separators are not handled here we could have
+                // check this into the inner loop to avoid goto but that requires an extra condition.
+                return i - offset;
+
+                continueOuter:;
+            }
+
+            return -1;
+        }
+
+        private int IndexOf(StringSegment s)
+        {
+            Debug.Assert(!s.IsNull);
+
+            int len = s.Length;
+            if (len == 0)
+                return 0;
+
+            if (len >= Length)
+            {
+                if (len != Length)
+                    return -1;
+
+                if (offset == 0)
+                    return s.UnderlyingString == str ? 0 : -1;
+            }
+
+            char first = s.GetCharInternal(0);
+
+            // single char separator: the simple way
+            if (len == 1)
+            {
+                for (int i = offset; i < offset + Length; i++)
+                {
+                    if (str[i] == first)
+                        return i - offset;
+                }
+
+                return -1;
+            }
+
+            int end = offset + Length - len + 1;
+            for (int i = offset; i < end; i++)
+            {
+                if (str[i] != first)
+                    continue;
+
+                // first char matches: looking for difference in other chars if any
+                for (int j = 1; j < len; j++)
+                {
+                    if (str[i + j] == s.GetCharInternal(j))
+                        continue;
+
+                    // here we have a difference: continuing with skipping the matched characters
+                    i += j - 1;
+                    goto continueOuter; // yes, a dreadful goto which is actually a continue
+                }
+
+                // Here we have full match. As single char separators are not handled here we could have
+                // check this into the inner loop to avoid goto but that requires an extra condition.
+                return i - offset;
+
+                continueOuter:;
+            }
+
+            return -1;
         }
 
         #endregion

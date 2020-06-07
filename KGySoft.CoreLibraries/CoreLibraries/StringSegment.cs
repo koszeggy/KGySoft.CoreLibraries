@@ -232,7 +232,7 @@ namespace KGySoft.CoreLibraries
 
             #region Constructors
 
-            internal Enumerator(in StringSegment segment)
+            internal Enumerator(StringSegment segment)
             {
                 this.segment = segment;
                 index = 0;
@@ -436,7 +436,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="string">string</see> instance that represents the specified <see cref="StringSegment"/>.
         /// </returns>
-        public static explicit operator string(in StringSegment stringSegment) => stringSegment.ToString();
+        public static explicit operator string(StringSegment stringSegment) => stringSegment.ToString();
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -448,7 +448,7 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "False alarm, see AsSpan")]
-        public static implicit operator ReadOnlySpan<char>(in StringSegment stringSegment) => stringSegment.AsSpan;
+        public static implicit operator ReadOnlySpan<char>(StringSegment stringSegment) => stringSegment.AsSpan;
 #endif
 
         #endregion
