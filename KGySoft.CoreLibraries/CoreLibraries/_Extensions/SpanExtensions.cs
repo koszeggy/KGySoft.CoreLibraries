@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Provides extension methods for <see cref="Span{T}"/> and <see cref="ReadOnlySpan{T}"/> types.
     /// </summary>
-    /// <remarks><note>This class is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+    /// <remarks><note>This class is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
     public static partial class SpanExtensions
     {
         #region Fields

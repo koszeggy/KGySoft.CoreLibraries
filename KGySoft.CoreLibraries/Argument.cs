@@ -41,6 +41,7 @@ namespace KGySoft
         bufferSize,
         bytes,
         callback,
+        capacity,
         collection,
         command,
         commandSource,
