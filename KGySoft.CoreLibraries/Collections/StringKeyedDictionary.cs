@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Security;
@@ -46,6 +47,8 @@ namespace KGySoft.Collections
     /// - Non-generic IDictionary.Contains and indexer also allows StringSegment
     /// - Value type enumerator, when foreach-ed directly, but reference enumerator when used in LINQ to avoid boxing
     [Serializable]
+    [DebuggerTypeProxy(typeof(StringKeyedDictionary<>.StringKeyedDictionaryDebugView))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     public class StringKeyedDictionary<TValue> : IStringKeyedDictionary<TValue>, IDictionary,
 #if !(NET35 || NET40)
         IStringKeyedReadOnlyDictionary<TValue>,
@@ -53,8 +56,10 @@ namespace KGySoft.Collections
         ISerializable, IDeserializationCallback
     {
         #region Nested Types
-        
+
         #region Nested Classes
+
+        #region ReferenceEnumerator class
 
         [Serializable]
         private sealed class ReferenceEnumerator : IEnumerator<KeyValuePair<string, TValue>>, IDictionaryEnumerator
@@ -199,13 +204,69 @@ namespace KGySoft.Collections
             #endregion
         }
 
+        #endregion
+
+        #region StringKeyedDictionaryDebugView class
+
+        private sealed class StringKeyedDictionaryDebugView
+        {
+            #region Fields
+
+            private readonly StringKeyedDictionary<TValue> dictionary;
+
+            #endregion
+
+            #region Properties
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+            public KeyValuePair<string, TValue>[] Items => dictionary.ToArray();
+
+            #endregion
+
+            #region Constructors
+
+            internal StringKeyedDictionaryDebugView(StringKeyedDictionary<TValue> dictionary) => this.dictionary = dictionary;
+
+            #endregion
+        }
+
+        #endregion
+
         #region KeysCollection class
 
-        [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+        [DebuggerTypeProxy(typeof(StringKeyedDictionary<>.KeysCollection.KeysCollectionDebugView))]
         [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
         [Serializable]
         private sealed class KeysCollection : ICollection<string>, ICollection
         {
+            #region KeysCollectionDebugView class
+
+            private sealed class KeysCollectionDebugView
+            {
+                #region Fields
+
+                private readonly KeysCollection keys;
+
+                #endregion
+
+                #region Properties
+
+                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+                public string[] Items => keys.ToArray();
+
+                #endregion
+
+                #region Constructors
+
+                internal KeysCollectionDebugView(KeysCollection keys) => this.keys = keys;
+
+                #endregion
+            }
+
+            #endregion
+
             #region Fields
 
             private readonly StringKeyedDictionary<TValue> owner;
@@ -351,7 +412,7 @@ namespace KGySoft.Collections
         #region KeysCollection class
 
         [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ")}")]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
         [Serializable]
         private sealed class ValuesCollection : ICollection<TValue>, ICollection
         {
