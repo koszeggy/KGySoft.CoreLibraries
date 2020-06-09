@@ -781,7 +781,8 @@ namespace KGySoft.Collections
             }
         }
 
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.this[StringSegment]"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.this[StringSegment]" but that kills ReSharper
+        /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(KGySoft.CoreLibraries.StringSegment)"/>
         public TValue this[StringSegment key]
         {
             get
@@ -794,7 +795,8 @@ namespace KGySoft.Collections
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]" but that kills ReSharper
+        /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(System.ReadOnlySpan{System.Char})"/>
         public TValue this[ReadOnlySpan<char> key]
         {
             get
@@ -882,6 +884,40 @@ namespace KGySoft.Collections
             this.comparer = comparer;
             if (capacity > 0)
                 Initialize(capacity);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class from the specified <paramref name="dictionary"/>
+        /// using the specified <paramref name="comparer"/>.
+        /// </summary>
+        /// <param name="dictionary">The dictionary whose elements are added to the <see cref="StringKeyedDictionary{TValue}"/>.</param>
+        /// <param name="comparer">A <see cref="StringSegmentComparer"/> instance to use when comparing keys.
+        /// When <see langword="null"/>, ordinal comparison will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        public StringKeyedDictionary(IDictionary<string, TValue> dictionary, StringSegmentComparer comparer = null)
+            : this(dictionary?.Count ?? 0, comparer)
+        {
+            if (dictionary == null)
+                Throw.ArgumentNullException(Argument.dictionary);
+            foreach (KeyValuePair<string, TValue> item in dictionary)
+                Add(item.Key, item.Value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class from the specified <paramref name="collection"/>
+        /// using the specified <paramref name="comparer"/>.
+        /// </summary>
+        /// <param name="collection">The collection whose elements are added to the <see cref="StringKeyedDictionary{TValue}"/>.</param>
+        /// <param name="comparer">A <see cref="StringSegmentComparer"/> instance to use when comparing keys.
+        /// When <see langword="null"/>, ordinal comparison will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        public StringKeyedDictionary(IEnumerable<KeyValuePair<string, TValue>> collection, StringSegmentComparer comparer = null)
+            : this(comparer)
+        {
+            if (collection == null)
+                Throw.ArgumentNullException(Argument.collection);
+            foreach (KeyValuePair<string, TValue> item in collection)
+                Add(item.Key, item.Value);
         }
 
         #endregion
@@ -1001,7 +1037,8 @@ namespace KGySoft.Collections
             return false;
         }
 
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.TryGetValue(StringSegment,out TValue)"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.TryGetValue(StringSegment,out TValue)" but that kills ReSharper
+        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.TryGetValue(KGySoft.CoreLibraries.StringSegment,`0@)"/>
         public bool TryGetValue(StringSegment key, out TValue value)
         {
             int i = GetItemIndex(key);
@@ -1016,7 +1053,8 @@ namespace KGySoft.Collections
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.TryGetValue(ReadOnlySpan{char},out TValue)"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.TryGetValue(ReadOnlySpan{char},out TValue)" but that kills ReSharper
+        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.TryGetValue(System.ReadOnlySpan{System.Char},`0@)"/>
         public bool TryGetValue(ReadOnlySpan<char> key, out TValue value)
         {
             int i = GetItemIndex(key);
@@ -1040,11 +1078,13 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool ContainsKey(string key) => GetItemIndex(key) >= 0;
 
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(StringSegment)"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.ContainsKey(StringSegment)" but that kills ReSharper
+        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.ContainsKey(KGySoft.CoreLibraries.StringSegment)"/>
         public bool ContainsKey(StringSegment key) => GetItemIndex(key) >= 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(ReadOnlySpan{char})"/>
+        // Bug: could be cref="IStringKeyedDictionary{TValue}.ContainsKey(ReadOnlySpan{char})" but that kills ReSharper
+        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.ContainsKey(System.ReadOnlySpan{System.Char})"/>
         public bool ContainsKey(ReadOnlySpan<char> key) => GetItemIndex(key) >= 0;
 #endif
 
