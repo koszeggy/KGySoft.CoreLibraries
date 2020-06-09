@@ -46,11 +46,9 @@ namespace KGySoft.CoreLibraries
 
             #region Public Methods
 
-            public override bool Equals(StringSegment x, StringSegment y) => x.Equals(y);
-            public override bool Equals(string x, string y) => x == y;
-            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
+            #region String
 
-            public override int GetHashCode(StringSegment obj) => obj.GetHashCode();
+            public override bool Equals(string x, string y) => x == y;
 
             [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
             [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
@@ -61,20 +59,35 @@ namespace KGySoft.CoreLibraries
                 return GetHashCodeOrdinal(obj);
             }
 
-            public override int GetHashCode(ReadOnlySpan<char> obj) => String.GetHashCode(obj);
-
             public override int Compare(string x, string y) => String.CompareOrdinal(x, y);
+
+            #endregion
+
+            #region StringSegment
+
+            public override bool Equals(StringSegment x, StringSegment y) => x.Equals(y);
+            public override int GetHashCode(StringSegment obj) => obj.GetHashCode();
             public override int Compare(StringSegment x, StringSegment y) => x.CompareTo(y);
+
+            #endregion
+
+            #region Span
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
+            public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinal(obj);
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.Ordinal);
+
+#endif
+            #endregion
 
             #endregion
 
             #region Internal Methods
 
+            internal override bool Equals(StringSegment x, string y) => x.Equals(y);
             internal override bool Equals(MutableStringSegment x, string y) => x.Equals(y);
             internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCode();
-
-            internal override bool Equals(StringSegment x, string y) => x.Equals(y);
 
             #endregion
 
@@ -91,12 +104,10 @@ namespace KGySoft.CoreLibraries
             #region Methods
 
             #region Public Methods
-            
-            public override bool Equals(StringSegment x, StringSegment y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
-            public override bool Equals(string x, string y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
 
-            public override int GetHashCode(StringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
+            #region String
+
+            public override bool Equals(string x, string y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
             [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
             [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
@@ -107,11 +118,27 @@ namespace KGySoft.CoreLibraries
                 return GetHashCodeOrdinalIgnoreCase(obj);
             }
 
-            public override int GetHashCode(ReadOnlySpan<char> obj) => String.GetHashCode(obj, StringComparison.OrdinalIgnoreCase);
-
-            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, StringComparison.OrdinalIgnoreCase);
             public override int Compare(string x, string y) => String.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+
+            #endregion
+
+            #region StringSegment
+
+            public override bool Equals(StringSegment x, StringSegment y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
+            public override int GetHashCode(StringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
+            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+
+            #endregion
+
+            #region Span
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
+            public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinalIgnoreCase(obj);
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.CompareTo(y, StringComparison.OrdinalIgnoreCase);
+
+#endif
+            #endregion
 
             #endregion
 
@@ -173,21 +200,27 @@ namespace KGySoft.CoreLibraries
 
             #region Public Methods
 
-            public override bool Equals(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
+            #region String
+
             public override bool Equals(string x, string y) => compareInfo.Compare(x, y, options) == 0;
 
-            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
+            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
+            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
+            public override int GetHashCode(string obj)
             {
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0
-                return knownComparison != null
-                    ? x.Equals(y, knownComparison.Value)
-                    : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
-#else
-                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
-                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
-                return compareInfo.Compare(x, y, options) == 0;
-#endif
+                if (obj == null)
+                    Throw.ArgumentNullException(Argument.obj);
+
+                return compareInfo.GetHashCode(obj, options);
             }
+
+            public override int Compare(string x, string y) => compareInfo.Compare(x, y, options);
+
+            #endregion
+
+            #region StringSegment
+
+            public override bool Equals(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
 
             public override int GetHashCode(StringSegment obj)
             {
@@ -203,23 +236,31 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
-            public override int GetHashCode(string obj)
-            {
-                if (obj == null)
-                    Throw.ArgumentNullException(Argument.obj);
+            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options);
 
-                return compareInfo.GetHashCode(obj, options);
+            #endregion
+
+            #region Span
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+            public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
+            {
+#if NETSTANDARD2_1 || NETCOREAPP3_0
+                return knownComparison != null
+                    ? x.Equals(y, knownComparison.Value)
+                    : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
+#else
+                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
+                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
+                return compareInfo.Compare(x, y, options) == 0;
+#endif
             }
 
             public override int GetHashCode(ReadOnlySpan<char> obj) => compareInfo.GetHashCode(obj, options);
 
-            public override int Compare(StringSegment x, StringSegment y) => StringSegment.Compare(x, y, compareInfo, options);
-            public override int Compare(string x, string y) => compareInfo.Compare(x, y, options);
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
             {
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0
+#if NETSTANDARD2_1 || NETCOREAPP3_0
                 return knownComparison != null
                     ? x.CompareTo(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options);
@@ -230,6 +271,9 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
+#endif
+            #endregion
+
             #endregion
 
             #region Internal Methods
@@ -237,7 +281,7 @@ namespace KGySoft.CoreLibraries
             internal override bool Equals(StringSegment x, string y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             internal override int GetHashCode(MutableStringSegment obj) => Throw.InternalError<int>("Not expected to be called");
             internal override bool Equals(MutableStringSegment x, string y) => Throw.InternalError<bool>("Not expected to be called");
-            
+
             #endregion
 
             #endregion
@@ -245,6 +289,13 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #endregion
+
+        #region Constants
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        private const int lengthThreshold = 32;
+#endif
         #endregion
 
         #region Fields
@@ -295,7 +346,7 @@ namespace KGySoft.CoreLibraries
         #region Static Methods
 
         #region Public Methods
-        
+
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> instance based on the specified <paramref name="comparison"/>.
         /// </summary>
@@ -340,58 +391,87 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s)
         {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            if (s.Length > lengthThreshold)
+                return s.GetHashCode();
+#endif
             var result = 13;
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + s[i];
 
             return result;
-#else
-            return s.GetHashCode();
-#endif
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s, int offset, int length)
         {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            if (length > lengthThreshold)
+                return String.GetHashCode(s.AsSpan(offset, length));
+#endif
             var result = 13;
             for (int i = 0; i < length; i++)
                 result = result * 397 + s[i + offset];
 
             return result;
-#else
-            return String.GetHashCode(s.AsSpan(offset, length));
-#endif
         }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinal(ReadOnlySpan<char> s)
+        {
+            if (s.Length > lengthThreshold)
+                return String.GetHashCode(s);
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + s[i];
+
+            return result;
+        }
+#endif
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s)
         {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            if (s.Length > lengthThreshold)
+                return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
+#endif
+
             var result = 13;
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + Char.ToUpperInvariant(s[i]);
 
             return result;
-#else
-            return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
-#endif
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
         {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            if (length > lengthThreshold)
+                return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
+#endif
             var result = 13;
             for (int i = 0; i < length; i++)
                 result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
 
             return result;
-#else
-            return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
-#endif
         }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static int GetHashCodeOrdinalIgnoreCase(ReadOnlySpan<char> s)
+        {
+            if (s.Length > lengthThreshold)
+                return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
+            var result = 13;
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i]);
+
+            return result;
+        }
+#endif
 
         #endregion
 

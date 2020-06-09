@@ -1371,7 +1371,7 @@ namespace KGySoft.Collections
 
             if (comparer == null)
             {
-                int hashCode = String.GetHashCode(key);
+                int hashCode = StringSegmentComparer.GetHashCodeOrdinal(key);
                 for (int i = buckets[hashCode & mask] - 1; i >= 0; i = entries[i].Next)
                 {
                     if (entries[i].Hash == hashCode && key.Equals(entries[i].Key.AsSpan(), StringComparison.Ordinal))
@@ -1444,7 +1444,7 @@ namespace KGySoft.Collections
                 // searching for an existing key
                 for (int i = bucketRef - 1; i >= 0; i = entries[i].Next)
                 {
-                    if (entries[i].Hash != hashCode || entries[i].Key == key)
+                    if (entries[i].Hash != hashCode || entries[i].Key != key)
                         continue;
 
                     if (throwIfExists)

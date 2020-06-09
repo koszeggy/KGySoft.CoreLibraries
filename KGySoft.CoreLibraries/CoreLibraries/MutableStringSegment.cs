@@ -17,8 +17,6 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -34,65 +32,7 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     internal struct MutableStringSegment : IEquatable<MutableStringSegment>
     {
-        #region StringSegmentIgnoreCaseComparer class
-
-        private sealed class MutableStringSegmentIgnoreCaseComparer : IEqualityComparer<MutableStringSegment>
-        {
-            #region Methods
-
-            public bool Equals(MutableStringSegment x, MutableStringSegment y)
-            {
-                if (x.Length != y.Length)
-                    return false;
-                if (ReferenceEquals(x.str, y.str) && x.offset == y.offset)
-                    return true;
-
-                if (x.str.Length == x.Length && y.str.Length == y.Length)
-                    return String.Equals(x.str, y.str, StringComparison.OrdinalIgnoreCase);
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-                for (int i = 0; i < x.Length; i++)
-                {
-                    if (Char.ToUpperInvariant(x[i]) != Char.ToUpperInvariant(y[i]))
-                        return false;
-                }
-
-                return true;
-#else
-                return x.str.AsSpan(x.offset, x.Length).Equals(y.str.AsSpan(y.offset, y.Length), StringComparison.OrdinalIgnoreCase);
-#endif
-            }
-
-            public int GetHashCode(MutableStringSegment obj)
-            {
-                if (obj.Length == 0)
-                    return 0;
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-                var result = 13;
-                for (int i = 0; i < obj.Length; i++)
-                    result = result * 397 + Char.ToUpperInvariant(obj[i]);
-
-                return result;
-#else
-                return String.GetHashCode(obj.str.AsSpan(obj.offset, obj.Length), StringComparison.OrdinalIgnoreCase);
-#endif
-            }
-
-            #endregion
-        }
-
-        #endregion
-
         #region Fields
-
-        #region Static Fields
-
-        private static MutableStringSegmentIgnoreCaseComparer ignoreCaseComparer;
-
-        #endregion
-
-        #region Instance Fields
 
         #region Internal Fields
 
@@ -110,21 +50,9 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #endregion
-
-        #region Properties and Indexers
-
-        #region Properties
-
-        internal static IEqualityComparer<MutableStringSegment> IgnoreCaseComparer => ignoreCaseComparer ??= new MutableStringSegmentIgnoreCaseComparer();
-
-        #endregion
-
         #region Indexers
 
         internal char this[int index] => str[offset + index];
-
-        #endregion
 
         #endregion
 
@@ -371,30 +299,6 @@ namespace KGySoft.CoreLibraries
                 return true;
 #else
             return str.AsSpan(offset, Length).Equals(other.AsSpan(), StringComparison.OrdinalIgnoreCase);
-#endif
-        }
-
-        internal bool EqualsOrdinalIgnoreCase(MutableStringSegment other)
-        {
-            Debug.Assert(other.str != null);
-            if (Length != other.Length)
-                return false;
-            if (ReferenceEquals(str, other.str) && offset == other.offset)
-                return true;
-
-            if (str.Length == other.Length && other.str.Length == other.Length)
-                return String.Equals(str, other.str, StringComparison.OrdinalIgnoreCase);
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-                for (int i = 0; i < Length; i++)
-                {
-                    if (Char.ToUpperInvariant(this[i]) != Char.ToUpperInvariant(other[i]))
-                        return false;
-                }
-
-                return true;
-#else
-            return str.AsSpan(offset, Length).Equals(other.str.AsSpan(other.offset, other.Length), StringComparison.OrdinalIgnoreCase);
 #endif
         }
 
