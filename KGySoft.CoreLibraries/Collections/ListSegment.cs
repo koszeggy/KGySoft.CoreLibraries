@@ -31,7 +31,7 @@ namespace KGySoft.Collections
     /// Wraps a segment of an <see cref="IList{T}"/> for read-only purposes.
     /// </summary>
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     internal sealed class ListSegment<T> : IList<T>
     {
         #region Fields

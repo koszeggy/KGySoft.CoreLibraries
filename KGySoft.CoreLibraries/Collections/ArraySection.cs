@@ -92,7 +92,6 @@ namespace KGySoft.Collections
             internal ArraySectionDebugView(ArraySection<T> array) => this.array = array;
 
             #endregion
-
         }
 
         #endregion
