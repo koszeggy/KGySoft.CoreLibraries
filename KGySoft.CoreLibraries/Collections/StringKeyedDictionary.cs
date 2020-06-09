@@ -22,11 +22,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Security;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
+using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -42,10 +45,12 @@ namespace KGySoft.Collections
     /// - Special implementation with custom hashing (does not reorganize keys on too many collisions)
     /// - Non-generic IDictionary.Contains and indexer also allows StringSegment
     /// - Value type enumerator, when foreach-ed directly, but reference enumerator when used in LINQ to avoid boxing
-    public sealed class StringKeyedDictionary<TValue> : IStringKeyedDictionary<TValue>, IDictionary
+    [Serializable]
+    public class StringKeyedDictionary<TValue> : IStringKeyedDictionary<TValue>, IDictionary,
 #if !(NET35 || NET40)
-        , IStringKeyedReadOnlyDictionary<TValue>
+        IStringKeyedReadOnlyDictionary<TValue>,
 #endif
+        ISerializable, IDeserializationCallback
     {
         #region Nested Types
         
@@ -653,8 +658,7 @@ namespace KGySoft.Collections
 
         #region Instance Fields
 
-        private readonly StringSegmentComparer comparer;
-
+        private StringSegmentComparer comparer;
         private Entry[] entries;
         private int[] buckets; // 1-based indices for entries. 0 if unused.
         private int mask; // same as bucket.Length - 1 but is cached for better performance
@@ -666,6 +670,7 @@ namespace KGySoft.Collections
         private object syncRoot;
         private KeysCollection keysCollection;
         private ValuesCollection valuesCollection;
+        private SerializationInfo deserializationInfo;
 
         #endregion
 
@@ -676,7 +681,7 @@ namespace KGySoft.Collections
         #region Properties
 
         #region Public Properties
-        
+
         /// <summary>
         /// Gets number of elements currently stored in this <see cref="StringKeyedDictionary{TValue}"/> instance.
         /// </summary>
@@ -850,6 +855,8 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
+        
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class
@@ -919,6 +926,27 @@ namespace KGySoft.Collections
             foreach (KeyValuePair<string, TValue> item in collection)
                 Add(item.Key, item.Value);
         }
+
+        #endregion
+
+        #region Protected Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class from serialized data.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this deserialization.</param>
+        /// <remarks><note type="inherit">If an inherited type serializes data, which may affect the hashes of the keys, then override
+        /// the <see cref="OnDeserialization">OnDeserialization</see> method and use that to restore the data of the derived instance.</note></remarks>
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
+            Justification = "False alarm, serialization constructor has an exact signature.")]
+        protected StringKeyedDictionary(SerializationInfo info, StreamingContext context)
+        {
+            // deferring the actual deserialization until all objects are finalized and hashes do not change anymore
+            deserializationInfo = info;
+        }
+
+        #endregion
 
         #endregion
 
@@ -1153,6 +1181,25 @@ namespace KGySoft.Collections
             value = default;
             return false;
         }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// In a derived class populates a <see cref="SerializationInfo" /> with the additional data of the derived type needed to serialize the target object.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> to populate with data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
+        [SecurityCritical]
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context) { }
+
+        /// <summary>
+        /// In a derived class restores the state the deserialized instance.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        [SecurityCritical]
+        protected virtual void OnDeserialization(SerializationInfo info) { }
 
         #endregion
 
@@ -1538,6 +1585,54 @@ namespace KGySoft.Collections
                     Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
                     return;
             }
+        }
+
+        [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+                Throw.ArgumentNullException(Argument.info);
+
+            info.AddValue(nameof(comparer), comparer);
+            int count = Count;
+            info.AddValue(nameof(Count), count);
+            if (count > 0)
+            {
+                var keysAndValues = new KeyValuePair<string, TValue>[count];
+                ((ICollection<KeyValuePair<string, TValue>>)this).CopyTo(keysAndValues, 0);
+                info.AddValue(nameof(entries), keysAndValues);
+            }
+
+            info.AddValue(nameof(version), version);
+
+            // custom data of a derived class
+            GetObjectData(info, context);
+        }
+
+        [SecuritySafeCritical]
+        void IDeserializationCallback.OnDeserialization(object sender)
+        {
+            SerializationInfo info = deserializationInfo;
+
+            // may occur with remoting, which calls OnDeserialization twice.
+            if (info == null)
+                return;
+
+            comparer = info.GetValueOrDefault<StringSegmentComparer>(nameof(comparer));
+            int count = info.GetInt32(nameof(Count));
+            if (count > 0)
+            {
+                Initialize(count);
+                var keysAndValues = info.GetValueOrDefault<KeyValuePair<string, TValue>[]>(nameof(entries));
+                for (int i = 0; i < count; i++)
+                    Insert(keysAndValues[i].Key, keysAndValues[i].Value, true);
+            }
+
+            version = info.GetInt32(nameof(version));
+            OnDeserialization(info);
+
+            deserializationInfo = null;
         }
 
         #endregion

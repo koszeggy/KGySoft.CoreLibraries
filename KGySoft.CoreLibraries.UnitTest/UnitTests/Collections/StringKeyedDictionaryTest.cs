@@ -17,8 +17,10 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-
+using System.Runtime.Serialization.Formatters.Binary;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 using NUnit.Framework;
@@ -47,7 +49,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             dict.Add("gamma", 3);
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
-            // ... TODO: by others
+            Assert.AreEqual(1, dict["alpha".AsSegment()]);
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(1, dict["alpha".AsSpan()]);
+#endif
 
             // remove and re-add by string
             Assert.IsTrue(dict.Remove("alpha"));
@@ -57,82 +62,75 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             dict.Add("alpha", -1);
             Assert.AreEqual(2, dict.Count);
             Assert.AreEqual(-1, dict["alpha"]);
+            Assert.AreEqual(-1, dict["alpha".AsSegment()]);
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(-1, dict["alpha".AsSpan()]);
+#endif
+
+            // Clear
+            dict.Clear();
+            Assert.AreEqual(0, dict.Count);
+            dict.Add("alpha", 42);
+            Assert.AreEqual(42, dict["alpha"]);
         }
 
-// TODO:
-//        [Test]
-//        public void KeysValuesTest()
-//        {
-//            var cache = new Cache<string, string>(s => s.ToUpperInvariant());
-//            Console.WriteLine(cache["alpha"]);
-//            Console.WriteLine(cache["beta"]);
-//            Console.WriteLine(cache["gamma"]);
-//            Console.WriteLine(cache["delta"]);
-//            Console.WriteLine(cache["epsilon"]);
+        [Test]
+        public void KeysValuesTest()
+        {
+            var dict = new StringKeyedDictionary<int>
+            {
+                { "alpha", 1 },
+                { "beta", 2 },
+                { "gamma", 3 },
+                { "delta", 4 },
+                { "epsilon", 5 }
+            };
 
-//            var keys = cache.Select(c => c.Key);
-//            Assert.IsTrue(keys.SequenceEqual(cache.Keys));
-//            var values = cache.Select(c => c.Value);
-//            Assert.IsTrue(values.SequenceEqual(cache.Values));
+            ICollection<string> keys = dict.Keys;
+            Assert.AreEqual(dict.Count, keys.Count);
+            CollectionAssert.AreEqual(dict.Select(c => c.Key), dict.Keys);
 
-//            Assert.IsTrue(cache.Remove("beta"));
-//            keys = cache.Select(c => c.Key);
-//            Assert.IsTrue(keys.SequenceEqual(cache.Keys));
-//            values = cache.Select(c => c.Value);
-//            Assert.IsTrue(values.SequenceEqual(cache.Values));
-//        }
 
-//        [Test]
-//        public void SerializationTest()
-//        {
-//#if NETCOREAPP2_0 || NETCOREAPP3_0
-//            // .NET Core 2.0/3.0 does not support delegate serialization
-//            var cache = new Cache<string, int>(StringComparer.OrdinalIgnoreCase)
-//            {
-//                EnsureCapacity = true,
-//                Behavior = CacheBehavior.RemoveOldestElement,
-//                DisposeDroppedValues = true
-//            };
-//            cache["One"] = 1;
-//            cache["Two"] = 2;
-//            cache["Three"] = 3;
+            ICollection<int> values = dict.Values;
+            Assert.AreEqual(dict.Count, values.Count);
+            CollectionAssert.AreEqual(dict.Select(c => c.Value), dict.Values);
 
-//            var cacheCopy = cache.DeepClone();
-//            Assert.AreNotSame(cache, cacheCopy);
-//            Assert.AreEqual(cache.Count, cacheCopy.Count);
-//            Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
-//            Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
-//            Assert.AreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues);
-//            Assert.AreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity);
+            Assert.IsTrue(dict.Remove("beta"));
+            Assert.AreEqual(dict.Count, keys.Count);
+            Assert.AreEqual(dict.Count, values.Count);
+        }
 
-//            Assert.IsTrue(cache.SequenceEqual(cacheCopy));
-//            Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
-//            Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
-//#else
-//            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), StringComparer.OrdinalIgnoreCase)
-//            {
-//                EnsureCapacity = true,
-//                Behavior = CacheBehavior.RemoveOldestElement,
-//                DisposeDroppedValues = true
-//            };
-//            Console.WriteLine(cache["alpha"]);
-//            Console.WriteLine(cache["beta"]);
-//            Console.WriteLine(cache["gamma"]);
-//            Assert.IsTrue(cache.Remove("beta"));
+        [TestCase(StringComparison.Ordinal)]
+        [TestCase(StringComparison.OrdinalIgnoreCase)]
+        [TestCase(StringComparison.InvariantCulture)]
+        [TestCase(StringComparison.InvariantCultureIgnoreCase)]
+        [TestCase(StringComparison.CurrentCulture)]
+        [TestCase(StringComparison.CurrentCultureIgnoreCase)]
+        public void SerializationTest(StringComparison comparison)
+        {
+            var dict = new StringKeyedDictionary<int>(StringSegmentComparer.FromComparison(comparison))
+            {
+                { "alpha", 1 },
+                { "beta", 2 },
+                { "gamma", 3 },
+                { "delta", 4 },
+                { "epsilon", 5 }
+            };
 
-//            var cacheCopy = cache.DeepClone();
-//            Assert.AreNotSame(cache, cacheCopy);
-//            Assert.AreEqual(cache.Count, cacheCopy.Count);
-//            Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
-//            Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
-//            Assert.AreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues);
-//            Assert.AreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity);
+            // By BinarySerializationFormatter
+            StringKeyedDictionary<int> clone = dict.DeepClone();
+            Assert.AreNotSame(dict, clone);
+            Assert.AreEqual(dict.Count, clone.Count);
+            CollectionAssert.AreEqual(dict, clone);
 
-//            Assert.IsTrue(cache.SequenceEqual(cacheCopy));
-//            Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
-//            Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
-//#endif
-//        }
+            // By BinaryFormatter
+            var formatter = new BinaryFormatter();
+            using var ms = new MemoryStream();
+            formatter.Serialize(ms, dict);
+            ms.Position = 0;
+            clone = (StringKeyedDictionary<int>)formatter.Deserialize(ms);
+            CollectionAssert.AreEqual(dict, clone);
+        }
 
         #endregion
     }
