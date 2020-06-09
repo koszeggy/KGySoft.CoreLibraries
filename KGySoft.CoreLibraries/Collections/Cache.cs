@@ -1333,7 +1333,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class from the specified <paramref name="dictionary"/> and <paramref name="comparer"/>, with not item loader.
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class from the specified <paramref name="dictionary"/> and <paramref name="comparer"/>, with no item loader.
         /// The <see cref="Capacity"/> will be initialized to the number of elements in <paramref name="dictionary"/>.
         /// </summary>
         /// <param name="dictionary">The dictionary whose elements are added to the <see cref="Cache{TKey,TValue}"/>.</param>
