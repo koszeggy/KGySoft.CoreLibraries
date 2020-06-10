@@ -1158,6 +1158,47 @@ namespace KGySoft.Collections
         }
 #endif
 
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(string)"/>
+        public TValue GetValueOrDefault(string key) => TryGetValue(key, out TValue value) ? value : default;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(string, TActualValue)"/>
+        public TActualValue GetValueOrDefault<TActualValue>(string key, TActualValue defaultValue = default) where TActualValue : TValue
+            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(string, Func{TActualValue})"/>
+        public TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
+            => defaultValueFactory == null
+                ? GetValueOrDefault(key, default(TActualValue))
+                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(StringSegment)"/>
+        public TValue GetValueOrDefault(StringSegment key) => TryGetValue(key, out TValue value) ? value : default;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(StringSegment, TActualValue)"/>
+        public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, TActualValue defaultValue = default) where TActualValue : TValue
+            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(StringSegment, Func{TActualValue})"/>
+        public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
+            => defaultValueFactory == null
+                ? GetValueOrDefault(key, default(TActualValue))
+                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(ReadOnlySpan{char})"/>
+        public TValue GetValueOrDefault(ReadOnlySpan<char> key) => TryGetValue(key, out TValue value) ? value : default;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(ReadOnlySpan{char}, TActualValue)"/>
+        public TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default) where TActualValue : TValue
+            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(ReadOnlySpan{char}, Func{TActualValue})"/>
+        public TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
+            => defaultValueFactory == null
+                ? GetValueOrDefault(key, default(TActualValue))
+                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+#endif
+
         /// <summary>
         /// Determines whether the <see cref="StringKeyedDictionary{TValue}"/> contains a specific key.
         /// </summary>

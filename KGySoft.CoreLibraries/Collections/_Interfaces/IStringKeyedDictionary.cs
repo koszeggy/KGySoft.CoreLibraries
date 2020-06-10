@@ -87,7 +87,7 @@ namespace KGySoft.Collections
 #endif
 
         /// <summary>
-        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
+        /// Tries to get the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
         /// <see langword="true"/>&#160;if the dictionary contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
@@ -100,7 +100,7 @@ namespace KGySoft.Collections
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
-        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
+        /// Tries to get the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
         /// <see langword="true"/>&#160;if the dictionary contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
@@ -110,6 +110,98 @@ namespace KGySoft.Collections
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         bool TryGetValue(ReadOnlySpan<char> key, out TValue value);
+#endif
+
+        /// <summary>
+        /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TValue GetValueOrDefault(string key);
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValue"/> parameter can have a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type
+        /// is not compatible with <typeparamref name="TActualValue"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(string key, TActualValue defaultValue = default) where TActualValue : TValue;
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValueFactory"/> can return an instance of a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
+
+        /// <summary>
+        /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TValue GetValueOrDefault(StringSegment key);
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValue"/> parameter can have a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type
+        /// is not compatible with <typeparamref name="TActualValue"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(StringSegment key, TActualValue defaultValue = default) where TActualValue : TValue;
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValueFactory"/> can return an instance of a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TValue GetValueOrDefault(ReadOnlySpan<char> key);
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValue"/> parameter can have a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type
+        /// is not compatible with <typeparamref name="TActualValue"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue =default) where TActualValue : TValue;
+
+        /// <summary>
+        /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
+        /// The <paramref name="defaultValueFactory"/> can return an instance of a more specific type than <typeparamref name="TValue"/>.
+        /// </summary>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
+        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 #endif
 
         #endregion

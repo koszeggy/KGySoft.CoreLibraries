@@ -96,6 +96,8 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
         public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
             => GetValueOrDefault(dictionary, key, default(TValue));
 
@@ -322,7 +324,7 @@ namespace KGySoft.CoreLibraries
 #endif
 
         /// <summary>
-        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
+        /// Tries to get the typed value from a <see cref="string">string</see>-<see cref="object">object</see>&#160;<paramref name="dictionary"/> for the given key.
         /// <br/>See the <strong>Examples</strong> section for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
@@ -400,7 +402,7 @@ namespace KGySoft.CoreLibraries
 
 #if !(NET35 || NET40)
         /// <summary>
-        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
+        /// Tries to get the typed value from a <see cref="string">string</see>-<see cref="object">object</see>&#160;<paramref name="dictionary"/> for the given key.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
