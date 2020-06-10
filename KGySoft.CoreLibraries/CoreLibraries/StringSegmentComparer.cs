@@ -28,8 +28,11 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents a <see cref="StringSegment"/> comparison operation that uses specific case and culture-based or ordinal comparison rules.
+    /// Represents a string comparison operation that uses specific case and culture-based or ordinal comparison rules
+    /// allowing comparing strings by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
+    /// <br/>See the static properties for more details.
     /// </summary>
+    /// <remarks><note></note></remarks>
     [Serializable]
     public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>,
         IEqualityComparer<string>, IComparer<string>,
@@ -250,6 +253,7 @@ namespace KGySoft.CoreLibraries
                     ? x.Equals(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
 #else
+#error Update Create documentation when this becomes available
                 // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
                 // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
                 return compareInfo.Compare(x, y, options) == 0;
@@ -265,6 +269,7 @@ namespace KGySoft.CoreLibraries
                     ? x.CompareTo(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options);
 #else
+#error Update Create documentation when this becomes available
                 // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
                 // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
                 return compareInfo.Compare(x, y, options);
@@ -310,32 +315,44 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         /// <summary>
-        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal <see cref="StringSegment"/> comparison.
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison.
+        /// <br/>The methods of the returned <seealso cref="StringSegmentComparer"/> instance can be called with <seealso cref="StringSegment"/>
+        /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
         public static StringSegmentComparer Ordinal => ordinalComparer ??= new StringSegmentOrdinalComparer();
 
         /// <summary>
-        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal <see cref="StringSegment"/> comparison.
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison.
+        /// <br/>The methods of the returned <seealso cref="StringSegmentComparer"/> instance can be called with <seealso cref="StringSegment"/>
+        /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
         public static StringSegmentComparer OrdinalIgnoreCase => ordinalIgnoreCaseComparer ??= new StringSegmentOrdinalIgnoreCaseComparer();
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the invariant culture.
+        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer InvariantCulture => invariantComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, false);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive string comparison using the word comparison rules of the invariant culture.
+        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer InvariantCultureIgnoreCase => invariantIgnoreCaseComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, true);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the current culture.
+        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer CurrentCulture => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, false);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs case-insensitive string comparisons using the word comparison rules of the current culture.
+        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer CurrentCultureIgnoreCase => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, true);
 
@@ -375,13 +392,26 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Creates a <see cref="StringSegmentComparer"/> object that compares <see cref="StringSegment"/> instances according to the rules of a specified <paramref name="culture"/>.
+        /// Creates a <see cref="StringSegmentComparer"/> object that compares strings according to the rules of a specified <paramref name="culture"/>.
+        /// <br/>Please note that the returned <seealso cref="StringSegmentComparer"/> may allocate new strings in some cases. See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
         /// <param name="ignoreCase"><see langword="true"/>&#160;to specify that comparison operations be case-insensitive;
         /// <see langword="false"/>&#160;to specify that comparison operations be case-sensitive.</param>
         /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
         /// the <paramref name="culture"/> parameter and the case rule specified by the <paramref name="ignoreCase"/> parameter.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="culture"/> is either the <seealso cref="CultureInfo.InvariantCulture"/> or the <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.</para>
+        /// <para>If <paramref name="culture"/> is any <seealso cref="CultureInfo"/> other than the <seealso cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/>, <seealso cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
+        /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods might allocate a new string. In .NET Core 3.0 and above
+        /// the none of the members with <seealso cref="StringSegment"/> parameters will allocate new strings.
+        /// On the other hand, due to the lack of public <c>CompareInfo.Compare</c> methods with <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameters,
+        /// none of the currently supported targets can avoid allocating strings when using <seealso cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
+        /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods.</para>
+        /// </remarks>
         public static StringSegmentComparer Create(CultureInfo culture, bool ignoreCase) => new StringSegmentCultureAwareComparer(culture, ignoreCase);
 
         #endregion
