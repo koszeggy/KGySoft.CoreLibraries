@@ -309,8 +309,8 @@ namespace KGySoft.CoreLibraries
         public static StringSegment RemoveQuotes(this StringSegment segment)
             => segment.Length < 2
                 ? segment
-                : segment.Length > 1 && (segment[0] == '"' && segment[^1] == '"' || segment[0] == '\'' && segment[^1] == '\'')
-                    ? segment[1..^1]
+                : segment.Length > 1 && (segment[0] == '"' && segment.EndsWith('"') || segment[0] == '\'' && segment.EndsWith('\''))
+                    ? segment.Substring(1, segment.Length - 2)
                     : segment;
 
         #endregion

@@ -49,8 +49,8 @@ namespace KGySoft.CoreLibraries
         public static string RemoveQuotes(this string s)
             => (s?.Length ?? 0) < 2
                 ? s
-                : s.Length > 1 && (s[0] == '"' && s[^1] == '"' || s[0] == '\'' && s[^1] == '\'')
-                    ? s[1..^1]
+                : s.Length > 1 && (s[0] == '"' && s[s.Length - 1] == '"' || s[0] == '\'' && s[s.Length - 1] == '\'')
+                    ? s.Substring(1, s.Length - 2)
                     : s;
 
         /// <summary>
