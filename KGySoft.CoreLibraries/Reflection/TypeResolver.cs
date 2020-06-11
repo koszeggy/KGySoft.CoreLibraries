@@ -672,13 +672,7 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char == '*') // pointer
-                {
-                    modifiers.Add(pointer);
-                    return;
-                }
-
-                if (ctx.Char == '&') // pointer
+                if (ctx.Char == '&') // ByRef type
                 {
                     modifiers.Add(byRef);
                     return;
