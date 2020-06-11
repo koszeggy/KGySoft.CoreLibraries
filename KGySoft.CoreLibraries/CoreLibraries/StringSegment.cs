@@ -336,15 +336,20 @@ namespace KGySoft.CoreLibraries
         public int Offset => offset;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string"/>.
+        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160<see cref="string">string</see>.
         /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
         public bool IsNull => str == null;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance represents an empty segment or was created from a <see langword="null"/>&#160;<see cref="string"/>.
+        /// Gets whether this <see cref="StringSegment"/> instance represents an empty segment or was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
         /// </summary>
         public bool IsNullOrEmpty => length == 0;
+
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance represents a <see langword="null"/>&#160;or empty <see cref="string">string</see>, or contains only whitespace characters.
+        /// </summary>
+        public bool IsNullOrWhiteSpace => length == 0 || TrimStart().length == 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
