@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(StringSegment a, StringSegment b) => !(a == b);
+        public static bool operator !=(StringSegment a, StringSegment b) => !a.Equals(b);
 
         #endregion
 
@@ -200,7 +200,6 @@ namespace KGySoft.CoreLibraries
             // for ordinal String.Compare is faster than Span.[Sequence]Equals
             return String.Compare(str, offset, other.str, other.offset, length, StringComparison.Ordinal) == 0;
 #endif
-
         }
 
         /// <summary>

@@ -32,6 +32,7 @@
   + New Split overloads with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
   + New IndexOf/LastIndexOf/StartsWith/EndsWith overloads with ReadOnlySpan<char> value (.NET Core 3.0/.NET Standard
     2.1 and above)
+  + New Trim/TrimStart/TrimEnd overloads to allow specifying characters to trim
 + StringSegmentExtensions class:
   + New ReadToSeparator overload with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
   + New ToEnum method

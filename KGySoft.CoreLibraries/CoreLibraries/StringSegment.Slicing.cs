@@ -283,7 +283,7 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the start of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimStart()
         {
-            if (str == null)
+            if (length == 0)
                 return this;
             int start = 0;
             while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
@@ -299,7 +299,7 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the end of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimEnd()
         {
-            if (str == null)
+            if (length == 0)
                 return this;
             int end = length - 1;
             while (end >= 0 && Char.IsWhiteSpace(GetCharInternal(end)))
@@ -307,6 +307,146 @@ namespace KGySoft.CoreLibraries
 
             return SubstringInternal(0, end + 1);
         }
+
+        /// <summary>
+        /// Removes all leading and trailing instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(char trimChar) => TrimStart(trimChar).TrimEnd(trimChar);
+
+        /// <summary>
+        /// Removes all leading instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(char trimChar)
+        {
+            if (length == 0)
+                return this;
+            int start = 0;
+            while (start < length && GetCharInternal(start) == trimChar)
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(char trimChar)
+        {
+            if (length == 0)
+                return this;
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end) == trimChar)
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+
+        /// <summary>
+        /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(params char[] trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+
+        /// <summary>
+        /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(params char[] trimChars)
+        {
+            if (length == 0)
+                return this;
+            if ((trimChars?.Length ?? 0) == 0)
+                return TrimStart();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(params char[] trimChars)
+        {
+            if (length == 0)
+                return this;
+            if ((trimChars?.Length ?? 0) == 0)
+                return TrimEnd();
+
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(ReadOnlySpan<char> trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+
+        /// <summary>
+        /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(ReadOnlySpan<char> trimChars)
+        {
+            if (length == 0)
+                return this;
+            if (trimChars.Length == 0)
+                return TrimStart();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(ReadOnlySpan<char> trimChars)
+        {
+            if (length == 0)
+                return this;
+            if (trimChars.Length == 0)
+                return TrimEnd();
+
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+#endif
 
         #endregion
 

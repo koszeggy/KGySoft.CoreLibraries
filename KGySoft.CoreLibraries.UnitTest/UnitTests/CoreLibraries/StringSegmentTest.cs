@@ -404,6 +404,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 #endif
         }
 
+        [TestCase(null, null)]
+        [TestCase("", null)]
+        [TestCase(null, "")]
+        [TestCase("", "")]
+        [TestCase(" x ", null)]
+        [TestCase(" x ", "")]
+        [TestCase(" x ", " ")]
+        [TestCase("abcab", "ab")]
+        public void TrimTest(string s, string trimChars)
+        {
+            char[] chars = trimChars?.ToCharArray();
+            StringSegment segment = s;
+
+            // no reference case
+            if (s == null)
+            {
+                Assert.AreEqual(segment, segment.Trim(chars));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(segment, segment.Trim(chars.AsSpan()));
+#endif
+                return;
+            }
+
+            string expected = s.Trim(chars);
+            Assert.AreEqual(expected, segment.Trim(chars));
+            if (chars?.Length == 1)
+                Assert.AreEqual(expected, segment.Trim(chars[0]));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expected, segment.Trim(chars.AsSpan()));
+#endif
+        }
+
         #endregion
     }
 }
