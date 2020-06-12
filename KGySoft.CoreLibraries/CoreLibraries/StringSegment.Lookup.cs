@@ -770,72 +770,16 @@ namespace KGySoft.CoreLibraries
             return result >= 0 ? result - offset : -1;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfInternal(string s, int startIndex, int count)
         {
             Debug.Assert(!IsNull);
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
+            if (s.Length <= 1)
+                return s.Length == 0 ? startIndex : IndexOfInternal(s[0], startIndex, count);
 
-            int len = s.Length;
-            if (len == 0)
-                return startIndex;
-
-            if (len >= count)
-            {
-                if (len != count)
-                    return -1;
-
-                // possible shortcut if s.Length == count == this.Length
-                if (count == length)
-                {
-                    Debug.Assert(startIndex == 0);
-                    return str.Length == len
-                        ? str == s ? 0 : -1
-                        : Equals(s) ? 0 : -1;
-                }
-            }
-
-            char first = s[0];
-            int start = offset + startIndex;
-            int end;
-
-            // searching for a single char: the simple way
-            if (len == 1)
-            {
-                end = start + count;
-                for (int i = offset + startIndex; i < end; i++)
-                {
-                    if (str[i] == first)
-                        return i - offset;
-                }
-
-                return -1;
-            }
-
-            end = start + count - len + 1;
-            for (int i = offset + startIndex; i < end; i++)
-            {
-                if (str[i] != first)
-                    continue;
-
-                // first char matches: looking for difference in other chars if any
-                for (int j = 1; j < len; j++)
-                {
-                    if (str[i + j] == s[j])
-                        continue;
-
-                    // here we have a difference: continuing with skipping the matched characters
-                    i += j - 1;
-                    goto continueOuter; // yes, a dreadful goto which is actually a continue
-                }
-
-                // Here we have full match. As single char patterns are not handled here we could have
-                // check this into the inner loop to avoid goto but that requires an extra condition.
-                return i - offset;
-
-            continueOuter:;
-            }
-
-            return -1;
+            int result = str.IndexOf(s, offset + startIndex, count, StringComparison.Ordinal);
+            return result >= 0 ? result - offset : -1;
         }
 
         private int IndexOfInternal(StringSegment s, int startIndex, int count)
@@ -844,13 +788,15 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(!s.IsNull);
             Debug.Assert((uint)startIndex <= (uint)length && startIndex + count <= length);
 
-            int len = s.length;
-            if (len == 0)
-                return startIndex;
+            if (s.length <= 1)
+                return s.length == 0 ? startIndex : IndexOfInternal(s.GetCharInternal(0), startIndex, count);
+            if (s.length == s.UnderlyingString.Length)
+                return IndexOfInternal(s.UnderlyingString, startIndex, count);
 
-            if (len >= count)
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            if (s.length >= count)
             {
-                if (len != count)
+                if (s.length != count)
                     return -1;
 
                 // possible shortcut if s.Length == count == this.Length
@@ -863,29 +809,15 @@ namespace KGySoft.CoreLibraries
 
             char first = s.GetCharInternal(0);
             int start = offset + startIndex;
-            int end;
 
-            // searching for a single char: the simple way
-            if (len == 1)
-            {
-                end = start + count;
-                for (int i = offset + startIndex; i < end; i++)
-                {
-                    if (str[i] == first)
-                        return i - offset;
-                }
-
-                return -1;
-            }
-
-            end = start + count - len + 1;
+            int end = start + count - s.length + 1;
             for (int i = offset + startIndex; i < end; i++)
             {
                 if (str[i] != first)
                     continue;
 
                 // first char matches: looking for difference in other chars if any
-                for (int j = 1; j < len; j++)
+                for (int j = 1; j < s.length; j++)
                 {
                     if (str[i + j] == s.GetCharInternal(j))
                         continue;
@@ -903,6 +835,10 @@ namespace KGySoft.CoreLibraries
             }
 
             return -1;
+#else
+            int result = str.AsSpan(offset + startIndex, count).IndexOf(s.AsSpan, StringComparison.Ordinal);
+            return result >= 0 ? result + startIndex : -1;
+#endif
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)

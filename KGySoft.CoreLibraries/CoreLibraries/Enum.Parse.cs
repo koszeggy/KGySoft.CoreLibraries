@@ -55,7 +55,7 @@ namespace KGySoft.CoreLibraries
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
 
-            var s = new MutableStringSegment(value);
+            var s = new StringSegmentInternal(value);
             s.Trim();
             result = default(TEnum);
             if (s.Length == 0)
@@ -75,7 +75,7 @@ namespace KGySoft.CoreLibraries
 
             ulong acc = 0UL;
             StringKeyedDictionary<ulong> dict = ignoreCase ? NameRawValuePairsIgnoreCase : NameRawValuePairs;
-            while (s.TryGetNextSegment(separator, out MutableStringSegment token))
+            while (s.TryGetNextSegment(separator, out StringSegmentInternal token))
             {
                 token.Trim();
                 if (token.Length == 0)
@@ -193,7 +193,7 @@ namespace KGySoft.CoreLibraries
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
 
-            var s = new MutableStringSegment(value.UnderlyingString, value.Offset, value.Length);
+            var s = new StringSegmentInternal(value.UnderlyingString, value.Offset, value.Length);
             s.Trim();
             result = default(TEnum);
             if (s.Length == 0)
@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries
 
             ulong acc = 0UL;
             StringKeyedDictionary<ulong> dict = ignoreCase ? NameRawValuePairsIgnoreCase : NameRawValuePairs;
-            while (s.TryGetNextSegment(separator, out MutableStringSegment token))
+            while (s.TryGetNextSegment(separator, out StringSegmentInternal token))
             {
                 token.Trim();
                 if (token.Length == 0)

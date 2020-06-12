@@ -1293,7 +1293,7 @@ namespace KGySoft.Collections
 
         #region Internal Methods
 
-        internal bool TryGetValue(MutableStringSegment key, out TValue value)
+        internal bool TryGetValue(StringSegmentInternal key, out TValue value)
         {
             int i = GetItemIndex(key);
             if (i >= 0)
@@ -1398,7 +1398,7 @@ namespace KGySoft.Collections
             return -1;
         }
 
-        private int GetItemIndex(MutableStringSegment key)
+        private int GetItemIndex(StringSegmentInternal key)
         {
             Debug.Assert(key.Length != 0);
             if (buckets == null)

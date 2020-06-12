@@ -483,8 +483,6 @@ namespace KGySoft.CoreLibraries
                     i += 1;
                     break;
                 case '-':
-                    if (!allowNegative)
-                        return false;
                     isNegative = true;
                     i += 1;
                     break;
@@ -507,11 +505,23 @@ namespace KGySoft.CoreLibraries
                 i += 1;
             }
 
-            // we check it only here to minimize the performance overhead for valid cases
-            if (value > max && !(isNegative && value == max + 1))
+            if (isNegative)
+            {
+                if (value == 0)
+                    return true;
+
+                // for negative values the MaxValue of the appropriate range is expected (eg 127 for SByte)
+                if (!allowNegative || value > max + 1)
+                    return false;
+
+                result = (ulong)-(long)value;
+                return true;
+            }
+
+            if (value > max)
                 return false;
 
-            result = isNegative ? (ulong)-(long)value : value;
+            result = value;
             return true;
         }
 

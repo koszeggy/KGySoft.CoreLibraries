@@ -111,6 +111,15 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal void Append(StringSegmentInternal s)
+        {
+            Debug.Assert(Length + s.Length <= Capacity, "Not enough capacity");
+            WriteString(pos, s.String, s.Offset, s.Length);
+            pos += s.Length;
+        }
+
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(string s, int startIndex, int count)
         {
             Debug.Assert(Length + count <= Capacity, "Not enough capacity");

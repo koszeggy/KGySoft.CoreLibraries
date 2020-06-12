@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using KGySoft.Collections;
 using NUnit.Framework;
 
@@ -34,6 +35,18 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         private const string testStringLong = "long: 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
         private const int limitCount = 2;
 
+        [Test]
+        public void IndexOfTest()
+        {
+            //const string sep = ": ";
+            //const string sep = "901";
+            const string sep = "abc";
+            new PerformanceTest<int> { Iterations = 10_000_000, Repeat = 3, TestName = $"Sep = '{sep}'"}
+                .AddCase(() => testStringLong.AsSegment().IndexOf(sep))
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
         #endregion
 
         #region Methods
@@ -47,8 +60,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             }
             .AddCase(() => s.Substring(1), "String.Substring")
             .AddCase(() => s.AsSegment().Substring(1), "StringSegment.Substring")
-            .AddCase(() => new MutableStringSegment(s).Substring(1), "MutableStringSegment.Substring")
-            .AddCase(() => new MutableStringSegment(s).Slice(1), "MutableStringSegment.Slice")
+            .AddCase(() => new StringSegmentInternal(s).Substring(1), "StringSegmentInternal.Substring")
+            .AddCase(() => new StringSegmentInternal(s).Slice(1), "StringSegmentInternal.Slice")
             .DoTest()
             .DumpResults(Console.Out);
 
@@ -61,8 +74,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             }
             .AddCase(() => s.Substring(1, 2), "String.Substring")
             .AddCase(() => s.AsSegment().Substring(1, 2), "StringSegment.Substring")
-            .AddCase(() => new MutableStringSegment(s).Substring(1, 2), "MutableStringSegment.Substring")
-            .AddCase(() => new MutableStringSegment(s).Slice(1, 2), "MutableStringSegment.Slice")
+            .AddCase(() => new StringSegmentInternal(s).Substring(1, 2), "StringSegmentInternal.Substring")
+            .AddCase(() => new StringSegmentInternal(s).Slice(1, 2), "StringSegmentInternal.Slice")
             .DoTest()
             .DumpResults(Console.Out);
 
@@ -119,6 +132,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 while (!rest.IsNull)
                     rest.ReadToSeparator(sep);
             }, "StringSegmentExtensions.ReadToSeparator(char)")
+            .AddCase(() => new StringSegmentInternal(s).Split(sep), "StringSegmentInternal.Split(char)")
+            .AddCase(() =>
+            {
+                var rest = new StringSegmentInternal(s);
+                while (rest.TryGetNextSegment(sep, out var _)) { }
+            }, "StringSegmentInternal.TryGetNextSegment(char)")
             .DoTest()
             .DumpResults(Console.Out);
 

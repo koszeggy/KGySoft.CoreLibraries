@@ -17,9 +17,9 @@
 #region Usings
 
 using System;
-using System.Drawing;
-using KGySoft.Diagnostics;
-using KGySoft.Reflection;
+using System.Globalization;
+using System.Linq;
+
 using NUnit.Framework;
 
 #endregion
@@ -86,6 +86,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("-0", DoubleExtensions.NegativeZero);
             Test("true", true);
             Test("0", false);
+            Test("-1", true);
             Test("1980-01-13", new DateTime(1980, 01, 13));
             Test("Black", ConsoleColor.Black);
             Test("1", new IntPtr(1));
@@ -93,6 +94,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // Registered conversions
             Test("1.2.3.4", new Version(1, 2, 3, 4));
             Test("alpha", "alpha".AsSegment());
+        }
+
+        [TestCase("0123456789aAbBcCdDeEfF")]
+        public void ParseHexTest(string s)
+        {
+            byte[] expected = new byte[s.Length / 2];
+            for (int i = 0; i < expected.Length; i++)
+                expected[i] = Byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            CollectionAssert.AreEqual(expected, s.ParseHexBytes());
+        }
+
+        [TestCase(" 0, 1, 23 ,45 ,67 , 89,aA,bB,cC,dD, eE, 0fF ", ",")]
+        public void ParseHexWithSeparatorTest(string s, string separator)
+        {
+            byte[] expected = s.Split(new[] { separator }, StringSplitOptions.None).Select(b => Byte.Parse(b, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray();
+            CollectionAssert.AreEqual(expected, s.ParseHexBytes(separator));
+        }
+
+        [TestCase(" 0, -0, 1, 23 ,45 ,67 , 89, 254 , 100 , 000099 ", ",")]
+        public void ParseDecimalBytesTest(string s, string separator)
+        {
+            byte[] expected = s.Split(new[] { separator }, StringSplitOptions.None).Select(b => Byte.Parse(b, NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
+            CollectionAssert.AreEqual(expected, s.ParseDecimalBytes(separator));
+        }
+
+        [Test]
+        public void IndexOfAnyTest()
+        {
+            const string s = "alpha, beta, gamma";
+            Throws<ArgumentException>(() => s.IndexOfAny("delta", null), "Specified argument contains a null element.");
+            Assert.AreEqual(0, s.IndexOfAny("delta", ""));
+            Assert.AreEqual(-1, s.IndexOfAny("delta", "epsilon"));
+            Assert.AreEqual(13, s.IndexOfAny("delta", "gamma"));
         }
 
         #endregion

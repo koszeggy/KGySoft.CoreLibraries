@@ -34,7 +34,7 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class ByteArrayExtensions
     {
-        #region Extension Methods
+        #region Public Methods
 
         #region Hex
 

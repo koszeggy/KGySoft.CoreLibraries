@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -105,9 +106,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="separator">A separator delimiting the hex values. If <see langword="null"/>, then <paramref name="s"/> is parsed as a continuous hex stream.</param>
         /// <returns>A byte array containing the hex values as bytes.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;and <paramref name="s"/> does not consist of event amount of hex digits.</exception>
-        /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
-        /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
+        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;or empty, and <paramref name="s"/> does not consist of event number of hex digits,
+        /// or parsing failed.</exception>
         public static byte[] ParseHexBytes(this string s, string separator)
         {
             if (s == null)
@@ -116,10 +116,16 @@ namespace KGySoft.CoreLibraries
             if (string.IsNullOrEmpty(separator))
                 return ParseHexBytes(s);
 
-            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
-            byte[] result = new byte[values.Length];
-            for (int i = 0; i < values.Length; i++)
-                result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            List<StringSegmentInternal> values = new StringSegmentInternal(s).Split(separator);
+            int len = values.Count;
+            byte[] result = new byte[len];
+            for (int i = 0; i < len; i++)
+            {
+                StringSegmentInternal segment = values[i];
+                segment.Trim();
+                if (!Parser.TryParseHexByte(segment, out result[i]))
+                    Throw.ArgumentException(Argument.s, Res.StringExtensionsCannotParseAsType(segment.ToString(), Reflector.ByteType));
+            }
 
             return result;
         }
@@ -130,9 +136,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">A string containing continuous hex values without delimiters.</param>
         /// <returns>A byte array containing the hex values as bytes.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="s"/> does not consist of event amount of hex digits.</exception>
-        /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
-        /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
+        /// <exception cref="ArgumentException"><paramref name="s"/> does not consist of event amount of hex digits, or parsing failed.</exception>
         public static byte[] ParseHexBytes(this string s)
         {
             if (s == null)
@@ -141,12 +145,15 @@ namespace KGySoft.CoreLibraries
             if (s.Length == 0)
                 return Reflector.EmptyArray<byte>();
 
-            if (s.Length % 2 != 0)
+            if ((s.Length & 1) != 0)
                 Throw.ArgumentException(Argument.s, Res.StringExtensionsSourceLengthNotEven);
 
             byte[] result = new byte[s.Length >> 1];
-            for (int i = 0; i < (s.Length >> 1); i++)
-                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (!Parser.TryParseHexByte(s, i << 1, out result[i]))
+                    Throw.ArgumentException(Argument.s, Res.StringExtensionsCannotParseAsType(s.Substring(i << 1, 2), Reflector.ByteType));
+            }
 
             return result;
         }
@@ -169,10 +176,18 @@ namespace KGySoft.CoreLibraries
             if (String.IsNullOrEmpty(separator))
                 Throw.ArgumentException(Argument.separator, Res.StringExtensionsSeparatorNullOrEmpty);
 
-            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
-            byte[] result = new byte[values.Length];
-            for (int i = 0; i < values.Length; i++)
-                result[i] = Byte.Parse(values[i].Trim(), CultureInfo.InvariantCulture);
+            List<StringSegmentInternal> values = new StringSegmentInternal(s).Split(separator);
+            int len = values.Count;
+            byte[] result = new byte[len];
+            for (int i = 0; i < len; i++)
+            {
+                StringSegmentInternal segment = values[i];
+                segment.Trim();
+                if (!segment.TryParseIntQuick(false, Byte.MaxValue, out ulong value))
+                    Throw.ArgumentException(Argument.s, Res.StringExtensionsCannotParseAsType(segment.ToString(), Reflector.ByteType));
+                result[i] = (byte)value;
+            }
+
             return result;
         }
 

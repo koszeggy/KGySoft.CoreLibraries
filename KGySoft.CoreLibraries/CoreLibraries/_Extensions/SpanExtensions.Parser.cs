@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: StringExtensions.cs
@@ -221,7 +222,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // allowing also an integer, which will be true for nonzero value
-                    if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
+                    if (s.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
                     {
                         value = (T)(object)(result != 0L);
                         return true;
@@ -331,7 +332,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Single.TryParse(s, floatStyle, culture, out float result))
                     {
-                        if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                        if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = FloatExtensions.NegativeZero;
                         value = (T)(object)result;
                         return true;
@@ -342,7 +343,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Double.TryParse(s, floatStyle, culture, out double result))
                     {
-                        if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                        if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = DoubleExtensions.NegativeZero;
                         value = (T)(object)result;
                         return true;
@@ -415,7 +416,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // allowing also an integer, which will be true for nonzero value
-                if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
+                if (s.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
                 {
                     value = result != 0L;
                     return true;
@@ -565,7 +566,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = FloatExtensions.NegativeZero;
                 value = result;
                 return true;
@@ -579,7 +580,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = DoubleExtensions.NegativeZero;
                 value = result;
                 return true;
@@ -653,3 +654,5 @@ namespace KGySoft.CoreLibraries
         #endregion
     }
 }
+
+#endif

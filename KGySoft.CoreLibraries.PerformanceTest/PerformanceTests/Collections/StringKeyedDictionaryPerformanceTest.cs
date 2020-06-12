@@ -59,7 +59,17 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             StringSegmentComparer ssc = null;
             if (comparison != null)
             {
-                sc = StringComparer.FromComparison(comparison.Value);
+#if NETFRAMEWORK || NETSTANDARD2_0
+                sc = comparison.Value switch
+                {
+                    StringComparison.Ordinal => StringComparer.Ordinal,
+                    StringComparison.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
+                    StringComparison.InvariantCulture => StringComparer.InvariantCulture,
+                    StringComparison.InvariantCultureIgnoreCase => StringComparer.InvariantCultureIgnoreCase,
+                };
+#else
+                sc = StringComparer.FromComparison(comparison.Value); 
+#endif
                 ssc = StringSegmentComparer.FromComparison(comparison.Value);
             }
 
@@ -70,7 +80,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .AddCase(i => dictionary[i.ToString(CultureInfo.InvariantCulture)], "Dictionary read")
                 .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture)], "StringKeyedDictionary read (string)")
                 .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture).AsSegment()], "StringKeyedDictionary read (StringSegment)")
-                .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture).AsSpan()], "StringKeyedDictionary read (ReadOnlySpan<char>)")
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture).AsSpan()], "StringKeyedDictionary read (ReadOnlySpan<char>)") 
+#endif
                 .DoTest()
                 .DumpResults(Console.Out);
 

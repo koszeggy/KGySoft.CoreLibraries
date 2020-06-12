@@ -211,6 +211,49 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
+            internal static bool TryParseHexByte(string s, int pos, out byte value)
+            {
+                Debug.Assert(s.Length > pos + 1);
+                if (TryParseHexDigit(s[pos], out int hi) && TryParseHexDigit(s[pos + 1], out int lo))
+                {
+                    value = (byte)((hi << 4) | lo);
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            internal static bool TryParseHexByte(StringSegmentInternal s, out byte value)
+            {
+                if (s.Length > 0)
+                {
+                    s.TrimStart('0');
+
+                    if (s.Length == 2 && TryParseHexDigit(s[0], out int hi) && TryParseHexDigit(s[1], out int lo))
+                    {
+                        value = (byte)((hi << 4) | lo);
+                        return true;
+                    }
+
+                    if (s.Length == 1 && TryParseHexDigit(s[0], out int result))
+                    {
+                        value = (byte)result;
+                        return true;
+                    }
+
+                    // if now empty it means valid 0
+                    if (s.Length == 0)
+                    {
+                        value = 0;
+                        return true;
+                    }
+                }
+
+                value = default;
+                return false;
+            }
+
             #endregion
 
             #region Private Methods
@@ -225,25 +268,29 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(bool))
                 {
-                    s = s.Trim();
-                    if (String.Equals(s, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
+                    var segment = new StringSegmentInternal(s);
+                    segment.Trim();
+                    if (segment.EqualsOrdinalIgnoreCase(Boolean.FalseString))
                     {
                         value = (T)(object)false;
                         return true;
                     }
 
-                    if (String.Equals(s, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
+                    if (segment.EqualsOrdinalIgnoreCase(Boolean.TrueString))
                     {
                         value = (T)(object)true;
                         return true;
                     }
 
                     // allowing also an integer, which will be true for nonzero value
-                    if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
+                    if (segment.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
                     {
                         value = (T)(object)(result != 0L);
                         return true;
                     }
+
+                    value = default;
+                    return false;
                 }
 
                 if (typeof(T) == typeof(byte))
@@ -392,22 +439,28 @@ namespace KGySoft.CoreLibraries
                 if (typeof(T) == typeof(DateTime))
                 {
                     s = s.TrimEnd();
-                    DateTimeStyles style = s.EndsWith('Z') ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    if (DateTime.TryParse(s, culture, style, out DateTime result))
+                    if (s.Length > 0)
                     {
-                        value = (T)(object)result;
-                        return true;
+                        DateTimeStyles style = s[s.Length - 1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                        if (DateTime.TryParse(s, culture, style, out DateTime result))
+                        {
+                            value = (T)(object)result;
+                            return true;
+                        }
                     }
                 }
 
                 if (typeof(T) == typeof(DateTimeOffset))
                 {
                     s = s.TrimEnd();
-                    DateTimeStyles style = s.EndsWith('Z') ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    if (DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                    if (s.Length > 0)
                     {
-                        value = (T)(object)result;
-                        return true;
+                        DateTimeStyles style = s[s.Length - 1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                        if (DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                        {
+                            value = (T)(object)result;
+                            return true;
+                        }
                     }
                 }
 
@@ -417,21 +470,22 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseBoolean(string s, CultureInfo culture, out object value)
             {
-                s = s.Trim();
-                if (String.Equals(s, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
+                var segment = new StringSegmentInternal(s);
+                segment.Trim();
+                if (segment.EqualsOrdinalIgnoreCase(Boolean.FalseString))
                 {
                     value = false;
                     return true;
                 }
 
-                if (String.Equals(s, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
+                if (segment.EqualsOrdinalIgnoreCase(Boolean.TrueString))
                 {
                     value = true;
                     return true;
                 }
 
                 // allowing also an integer, which will be true for nonzero value
-                if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
+                if (segment.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
                 {
                     value = result != 0L;
                     return true;
@@ -581,7 +635,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = FloatExtensions.NegativeZero;
                 value = result;
                 return true;
@@ -595,7 +649,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = DoubleExtensions.NegativeZero;
                 value = result;
                 return true;
@@ -632,29 +686,61 @@ namespace KGySoft.CoreLibraries
             private static bool TryParseDateTime(string s, CultureInfo culture, out object value)
             {
                 s = s.TrimEnd();
-                DateTimeStyles style = s.EndsWith('Z') ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                if (!DateTime.TryParse(s, culture, style, out DateTime result))
+                if (s.Length > 0)
                 {
-                    value = null;
-                    return false;
+                    DateTimeStyles style = s[s.Length - 1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    if (DateTime.TryParse(s, culture, style, out DateTime result))
+                    {
+                        value = result;
+                        return true;
+                    }
                 }
 
-                value = result;
-                return true;
+                value = null;
+                return false;
             }
 
             private static bool TryParseDateTimeOffset(string s, CultureInfo culture, out object value)
             {
                 s = s.TrimEnd();
-                DateTimeStyles style = s.EndsWith('Z') ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                if (!DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                if (s.Length > 0)
                 {
-                    value = null;
-                    return false;
+                    DateTimeStyles style = s[s.Length - 1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    if (DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                    {
+                        value = result;
+                        return true;
+                    }
                 }
 
-                value = result;
-                return true;
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseHexDigit(char c, out int value)
+            {
+                if (c >= '0' && c <= '9')
+                {
+                    value = c - '0';
+                    return true;
+                }
+
+                const int shiftUpper = 'A' - 10;
+                if (c >= 'A' && c <= 'F')
+                {
+                    value = c - shiftUpper;
+                    return true;
+                }
+
+                const int shiftLower = 'a' - 10;
+                if (c >= 'a' && c <= 'f')
+                {
+                    value = c - shiftLower;
+                    return true;
+                }
+
+                value = default;
+                return false;
             }
 
             #endregion

@@ -118,31 +118,6 @@ namespace KGySoft.CoreLibraries
 
         #region Internal Methods
 
-        internal static bool EqualsOrdinalIgnoreCase(StringSegment a, StringSegment b)
-        {
-            if (ReferenceEquals(a.str, b.str) && a.offset == b.offset)
-                return true;
-            if (a.length != b.length || a.str == null || b.str == null)
-                return false;
-
-            if (a.str.Length == a.length && b.str.Length == b.length)
-                return String.Equals(a.str, b.str, StringComparison.OrdinalIgnoreCase);
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-            for (int i = 0; i < a.length; i++)
-            {
-                if (Char.ToUpperInvariant(a.GetCharInternal(i)) != Char.ToUpperInvariant(b.GetCharInternal(i)))
-                    return false;
-            }
-
-            return true;
-#else
-            // for ordinal ignore case Span.Equals is faster than String.Compare
-            return a.str.AsSpan(a.offset, a.length).Equals(b.str.AsSpan(b.offset, b.length), StringComparison.OrdinalIgnoreCase);
-#endif
-
-        }
-
         internal static int Compare(StringSegment a, StringSegment b, CompareInfo compareInfo, CompareOptions options)
         {
             if (a.str == null || b.str == null)
@@ -172,6 +147,8 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Instance Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Indicates whether the current <see cref="StringSegment"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
@@ -277,6 +254,36 @@ namespace KGySoft.CoreLibraries
                 null => CompareTo(Null),
                 _ => Throw.ArgumentException<int>(Argument.obj, Res.NotAnInstanceOfType(typeof(StringSegment)))
             };
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static bool EqualsOrdinalIgnoreCase(StringSegment a, StringSegment b)
+        {
+            if (ReferenceEquals(a.str, b.str) && a.offset == b.offset)
+                return true;
+            if (a.length != b.length || a.str == null || b.str == null)
+                return false;
+
+            if (a.str.Length == a.length && b.str.Length == b.length)
+                return String.Equals(a.str, b.str, StringComparison.OrdinalIgnoreCase);
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
+            for (int i = 0; i < a.length; i++)
+            {
+                if (Char.ToUpperInvariant(a.GetCharInternal(i)) != Char.ToUpperInvariant(b.GetCharInternal(i)))
+                    return false;
+            }
+
+            return true;
+#else
+            // for ordinal ignore case Span.Equals is faster than String.Compare
+            return a.str.AsSpan(a.offset, a.length).Equals(b.str.AsSpan(b.offset, b.length), StringComparison.OrdinalIgnoreCase);
+#endif
+        }
+
+        #endregion
 
         #endregion
 

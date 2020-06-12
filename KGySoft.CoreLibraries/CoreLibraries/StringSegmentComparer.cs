@@ -89,8 +89,8 @@ namespace KGySoft.CoreLibraries
             #region Internal Methods
 
             internal override bool Equals(StringSegment x, string y) => x.Equals(y);
-            internal override bool Equals(MutableStringSegment x, string y) => x.Equals(y);
-            internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCode();
+            internal override bool Equals(StringSegmentInternal x, string y) => x.Equals(y);
+            internal override int GetHashCode(StringSegmentInternal obj) => obj.GetHashCode();
 
             #endregion
 
@@ -148,8 +148,8 @@ namespace KGySoft.CoreLibraries
             #region Internal Methods
 
             internal override bool Equals(StringSegment x, string y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
-            internal override bool Equals(MutableStringSegment x, string y) => x.EqualsOrdinalIgnoreCase(y);
-            internal override int GetHashCode(MutableStringSegment obj) => obj.GetHashCodeOrdinalIgnoreCase();
+            internal override bool Equals(StringSegmentInternal x, string y) => x.EqualsOrdinalIgnoreCase(y);
+            internal override int GetHashCode(StringSegmentInternal obj) => obj.GetHashCodeOrdinalIgnoreCase();
 
             #endregion
 
@@ -284,8 +284,8 @@ namespace KGySoft.CoreLibraries
             #region Internal Methods
 
             internal override bool Equals(StringSegment x, string y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
-            internal override int GetHashCode(MutableStringSegment obj) => Throw.InternalError<int>("Not expected to be called");
-            internal override bool Equals(MutableStringSegment x, string y) => Throw.InternalError<bool>("Not expected to be called");
+            internal override int GetHashCode(StringSegmentInternal obj) => Throw.InternalError<int>("Not expected to be called");
+            internal override bool Equals(StringSegmentInternal x, string y) => Throw.InternalError<bool>("Not expected to be called");
 
             #endregion
 
@@ -712,11 +712,11 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region MutableStringSegment
+        #region StringSegmentInternal
 
-        internal abstract bool Equals(MutableStringSegment x, string y);
+        internal abstract bool Equals(StringSegmentInternal x, string y);
 
-        internal abstract int GetHashCode(MutableStringSegment obj);
+        internal abstract int GetHashCode(StringSegmentInternal obj);
 
         ///// <summary>
         ///// When overridden in a derived class, compares two <see cref="StringSegment"/> instances and returns an indication of their relative sort order.

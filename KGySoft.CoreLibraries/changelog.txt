@@ -21,6 +21,9 @@
   + New Parse/TryParse overloads with ReadOnlySpan<char> parameters (.NET Core 3.0/.NET Standard 2.1 and above)
   + New IsDefined overload with StringSegment parameter
   + New IsDefined overload with ReadOnlySpan<char> parameter (.NET Core 3.0/.NET Standard 2.1 and above)
+* Files class:
+  + New GetRelativePath overload with a bool isCaseSensitive parameter
+  * Improving GetRelativePath path performance and reducing allocations
 + FloatExtensions class:
   + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 + New SpanExtensions class (.NET Core 3.0/.NET Standard 2.1 and above):
@@ -28,6 +31,7 @@
   + The same Read/ReadToSeparator/ReadLine methods as are in StringSegmentExtensions
   + ToEnum method
   + RemoveQuoes methods
+* StringExtensions class: Improving performance of parser methods, reducing number of allocations.
 + StringSegment struct:
   + New IsNullOrWhiteSpace property
   + New Split overloads with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
