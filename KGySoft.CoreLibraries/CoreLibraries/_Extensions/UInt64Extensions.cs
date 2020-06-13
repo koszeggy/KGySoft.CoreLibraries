@@ -53,13 +53,37 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        internal static int DecimalDigitsCount(this ulong value)
+        {
+            return value >= 10000000000000000000UL ? 20
+                : value >= 1000000000000000000UL ? 19
+                : value >= 100000000000000000UL ? 18
+                : value >= 10000000000000000UL ? 17
+                : value >= 1000000000000000UL ? 16
+                : value >= 100000000000000UL ? 15
+                : value >= 10000000000000UL ? 14
+                : value >= 1000000000000UL ? 13
+                : value >= 100000000000UL ? 12
+                : value >= 10000000000UL ? 11
+                : value >= 1000000000UL ? 10
+                : value >= 100000000UL ? 9
+                : value >= 10000000UL ? 8
+                : value >= 1000000UL ? 7
+                : value >= 100000UL ? 6
+                : value >= 10000UL ? 5
+                : value >= 1000UL ? 4
+                : value >= 100UL ? 3
+                : value >= 10UL ? 2
+                : 1;
+        }
+
         [SecuritySafeCritical]
         internal static unsafe string QuickToString(this ulong value, bool isNegative)
         {
             if (value == 0)
                 return "0";
 
-            char* buf = stackalloc char[20];
+            char* buf = stackalloc char[21];
             int size = 0;
             while (value > 0)
             {

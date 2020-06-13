@@ -17,8 +17,9 @@
 #region Usings
 
 using System;
+using System.Globalization;
 using System.Linq;
-
+using KGySoft.Diagnostics;
 using NUnit.Framework;
 
 #endregion
@@ -46,9 +47,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsTrue(result.Contains(Environment.NewLine));
         }
-
+        
         [Test]
         public void ToHexString()
+        {
+            byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
+            Throws<ArgumentException>(() => bytes.ToHexValuesString("a"));
+
+            Assert.AreEqual(bytes.Select(b => b.ToString("X2", CultureInfo.InvariantCulture)).Join(""), bytes.ToHexValuesString(""));
+            Assert.AreEqual(bytes.Select(b => b.ToString("X2", CultureInfo.InvariantCulture)).Join(", "), bytes.ToHexValuesString(", "));
+        }
+
+        [Test]
+        public void ToHexStringIndented()
         {
             byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
 
@@ -112,22 +123,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             result = bytes.ToHexValuesString(", ", 1, 2, ' ', true);
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsFalse(result.Contains(Environment.NewLine));
-
-            Throws<ArgumentException>(() => bytes.ToHexValuesString("a"));
         }
 
         [Test]
         public void ToDecimalString()
         {
-            byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
+            byte[] bytes = Enumerable.Range(1, 1000).Select(i => (byte)i).ToArray();
 
             Throws<ArgumentNullException>(() => bytes.ToDecimalValuesString(null));
+            Throws<ArgumentException>(() => bytes.ToDecimalValuesString("0"));
+            Assert.AreEqual(bytes.Select(b => b.ToString(CultureInfo.InvariantCulture)).Join(", "), bytes.ToDecimalValuesString());
+        }
 
-            string result = bytes.ToDecimalValuesString();
-            Assert.IsFalse(Char.IsWhiteSpace(result[0]));
-            Assert.IsFalse(result.Contains(Environment.NewLine));
+        [Test]
+        public void ToDecimalStringIndented()
+        {
+            byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
 
-            result = bytes.ToDecimalValuesString(", ", 0, 2, ' ', true);
+            string result = bytes.ToDecimalValuesString(", ", 0, 2, ' ', true);
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsFalse(result.Contains(Environment.NewLine));
 
@@ -163,8 +176,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             result = bytes.ToDecimalValuesString(", ", 1, 2, ' ', true);
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsFalse(result.Contains(Environment.NewLine));
-
-            Throws<ArgumentException>(() => bytes.ToDecimalValuesString("0"));
         }
 
         #endregion

@@ -19,7 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -29,6 +28,7 @@ using System.Runtime.Serialization;
 using System.Security;
 
 using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -806,9 +806,18 @@ namespace KGySoft.Resources
             // string type is explicitly defined
             if (node.TypeName != null)
             {
-                string[] typeParts = node.TypeName.Split(',');
-                string assembly = node.AssemblyAliasValue?.Split(',')[0] ?? (typeParts.Length > 1 ? typeParts[1] : null);
-                if (typeParts[0].Trim() == "System.String" && (assembly == null || assembly.Trim() == "mscorlib"))
+                var nodeTypeName = new StringSegmentInternal(node.TypeName);
+                nodeTypeName.TryGetNextSegment(',', out StringSegmentInternal typeName);
+                typeName.Trim();
+                
+                StringSegmentInternal assembly = default;
+                if (node.AssemblyAliasValue != null)
+                    new StringSegmentInternal(node.AssemblyAliasValue).TryGetNextSegment(',', out assembly);
+                else if (nodeTypeName.Length != 0)
+                    nodeTypeName.TryGetNextSegment(',', out assembly);
+                assembly.Trim();
+
+                if (typeName.Equals(TypeResolver.StringTypeFullName) && (assembly.Length == 0 || AssemblyResolver.IsCoreLibAssemblyName(assembly)))
                     return node.ValueData;
             }
 

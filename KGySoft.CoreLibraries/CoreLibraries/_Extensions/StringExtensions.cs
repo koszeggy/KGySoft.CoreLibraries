@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><paramref name="s"/> repeated <paramref name="count"/> times.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is less than 0.</exception>
-        public static string Repeat(this string s, int count)
+        public static unsafe string Repeat(this string s, int count)
         {
             if (s == null)
                 Throw.ArgumentNullException(Argument.s);
@@ -86,13 +86,15 @@ namespace KGySoft.CoreLibraries
             if (count == 0)
                 return String.Empty;
 
-            StringBuilder result = new StringBuilder(s);
-            for (int i = 0; i < count; i++)
+            string result = new String('\0', count * s.Length);
+            fixed (char* pResult = result)
             {
-                result.Append(s);
+                var sb = new MutableStringBuilder(pResult, result.Length);
+                for (int i = 0; i < count; i++)
+                    sb.Append(s);
             }
 
-            return result.ToString();
+            return result;
         }
 
         #endregion

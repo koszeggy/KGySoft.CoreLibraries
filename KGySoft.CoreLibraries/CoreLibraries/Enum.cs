@@ -853,7 +853,7 @@ namespace KGySoft.CoreLibraries
         private static int GetStringLength(ulong value)
         {
             if (!underlyingInfo.IsSigned)
-                return (int)Math.Log10(value) + 1;
+                return value.DecimalDigitsCount();
             long signed = ToSigned(value);
             int sign;
             if (signed < 0)
@@ -864,7 +864,7 @@ namespace KGySoft.CoreLibraries
             else
                 sign = 0;
 
-            return (int)Math.Log10(signed) + 1 + sign;
+            return ((ulong)signed).DecimalDigitsCount() + sign;
         }
 
         #endregion

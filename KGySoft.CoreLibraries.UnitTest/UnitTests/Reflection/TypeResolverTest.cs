@@ -33,8 +33,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
     [TestFixture]
     public class TypeResolverTest
     {
+        #region Fields
+        
         private static readonly Type[] sourceDumpAndResolveTypesContainingGenericArguments =
-        {
+{
             typeof(List<>).GetGenericArguments()[0], // T of List<>
             typeof(Dictionary<,>).MakeGenericType(typeof(string), typeof(Dictionary<,>).GetGenericArguments()[1]), // Dictionary<string, TValue>
             typeof(Dictionary<,>).MakeGenericType(typeof(Dictionary<,>).GetGenericArguments()[0], typeof(string)), // Dictionary<TKey, string>
@@ -52,6 +54,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             typeof(Array).GetMethod("Resize").GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize<T>
             typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize").GetGenericArguments()[0]), // List<T>
         };
+
+        #endregion
 
         #region Methods
 

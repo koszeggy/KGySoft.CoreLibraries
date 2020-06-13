@@ -37,6 +37,7 @@ using System.Windows.Forms;
 
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
+using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization.Binary;
 
@@ -637,9 +638,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if !NETCOREAPP2_0
                 // legacy formats: KGy version converts these to self formats
-                new System.Resources.ResXFileRef(path, "System.String"),
+                new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName),
                 new System.Resources.ResXDataNode("TestString", "string"),
-                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 
@@ -653,7 +654,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new ResXFileRef(path, typeof(string)),
                 new ResXDataNode("TestString", "string"),
 #if !NETCOREAPP2_0
-                new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+                new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 

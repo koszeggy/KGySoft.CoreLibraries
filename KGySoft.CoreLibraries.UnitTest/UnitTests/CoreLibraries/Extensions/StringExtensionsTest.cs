@@ -119,6 +119,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             CollectionAssert.AreEqual(expected, s.ParseDecimalBytes(separator));
         }
 
+        [TestCase("", 2, "")]
+        [TestCase("alpha", 0, "")]
+        [TestCase("alpha", 1, "alpha")]
+        [TestCase("Alpha", 3, "AlphaAlphaAlpha")]
+        public void RepeatTest(string s, int count, string expected)
+        {
+            Assert.AreEqual(expected, s.Repeat(count));
+        }
+
         [Test]
         public void IndexOfAnyTest()
         {
