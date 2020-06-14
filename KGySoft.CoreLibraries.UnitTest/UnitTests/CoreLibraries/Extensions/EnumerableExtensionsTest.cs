@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using NUnit.Framework;
@@ -113,6 +114,28 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsFalse("alpha".IsNullOrEmpty());
             Assert.IsTrue("alpha".Where(Char.IsDigit).IsNullOrEmpty());
             Assert.IsFalse("alpha".Where(Char.IsLetter).IsNullOrEmpty());
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(",")]
+        [TestCase(", ")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "Intended")]
+        public void JoinTest(string separator)
+        {
+            IEnumerable<string> values = Enumerable.Range(1, 10).Select(i => i.ToString());
+            string expected = String.Join(separator, values.ToArray());
+
+            Assert.AreEqual(expected, values.Join(separator));
+            Assert.AreEqual(expected, values.ToArray().Join(separator));
+            Assert.AreEqual(expected, values.ToList().Join(separator));
+
+            if (separator?.Length == 1)
+            {
+                Assert.AreEqual(expected, values.Join(separator[0]));
+                Assert.AreEqual(expected, values.ToArray().Join(separator[0]));
+                Assert.AreEqual(expected, values.ToList().Join(separator[0]));
+            }
         }
 
         #endregion

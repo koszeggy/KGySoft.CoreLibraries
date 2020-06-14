@@ -24,7 +24,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.Annotations;
@@ -1657,21 +1656,64 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
-        /// <param name="separator">The separator to be used between the members.</param>
+        /// <param name="separator">The separator to be used between the members. If <see langword="null"/>&#160;or empty, then </param>
         /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
-        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static string Join<T>(this IEnumerable<T> source, string separator)
         {
             if (source == null)
                 Throw.ArgumentNullException(Argument.source);
-            if (separator == null)
-                Throw.ArgumentNullException(Argument.separator);
 
+            switch (source)
+            {
+                case string[] strArray:
+                    // fast because uses FastAllocateString inside
+                    return String.Join(separator, strArray);
+                case IList<string> strList:
+                    // we can preallocate result
+                    return FastJoin(strList, separator);
+                default:
+                    // fallback with StringBuilder
 #if NET35
-            return String.Join(separator, source is string[] strArray ? strArray : source.Select(i => i.ToString()).ToArray());
+                    return String.Join(separator, source.Select(i => i.ToString()).ToArray());
 #else
-            return String.Join(separator, source);
+                    return String.Join(separator, source);
 #endif
+            }
+        }
+
+        /// <summary>
+        /// Concatenates the items of the <paramref name="source"/> collection into a new <see cref="string">string</see> instance
+        /// using the specified <paramref name="separator"/> between the items.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
+        /// <param name="separator">The separator to be used between the members.</param>
+        /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
+        public static string Join<T>(this IEnumerable<T> source, char separator)
+        {
+            if (source == null)
+                Throw.ArgumentNullException(Argument.source);
+
+            switch (source)
+            {
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+                case string[] strArray:
+                    // fast because uses FastAllocateString inside
+                    return String.Join(separator, strArray);
+#endif
+                case IList<string> strList:
+                    // we can preallocate result
+                    return FastJoin(strList, separator);
+                default:
+                    // fallback with StringBuilder
+#if NET35
+                    return String.Join(separator.ToString(), source.Select(i => i.ToString()).ToArray());
+#elif NETFRAMEWORK || NETSTANDARD2_0
+                    return String.Join(separator.ToString(), source);
+#else
+                    return String.Join(separator, source);
+#endif
+            }
         }
 
         #endregion
@@ -1863,6 +1905,56 @@ namespace KGySoft.CoreLibraries
             {
                 (enumerator as IDisposable)?.Dispose();
             }
+        }
+
+        private static unsafe string FastJoin(IList<string> values, string separator)
+        {
+            int len = values.Count;
+            if (len == 0)
+                return String.Empty;
+            if (separator == null)
+                separator = String.Empty;
+            int resultLen = (len - 1) * separator.Length;
+            for (int i = 0; i < len; i++)
+                resultLen += values[i]?.Length ?? 0;
+
+            string result = new String('\0', resultLen);
+            fixed (char* pResult = result)
+            {
+                var sb = new MutableStringBuilder(pResult, resultLen);
+                for (int i = 0; i < len; i++)
+                {
+                    if (i != 0)
+                        sb.Append(separator);
+                    sb.Append(values[i]);
+                }
+            }
+
+            return result;
+        }
+
+        private static unsafe string FastJoin(IList<string> values, char separator)
+        {
+            int len = values.Count;
+            if (len == 0)
+                return String.Empty;
+            int resultLen = len - 1;
+            for (int i = 0; i < len; i++)
+                resultLen += values[i]?.Length ?? 0;
+
+            string result = new String('\0', resultLen);
+            fixed (char* pResult = result)
+            {
+                var sb = new MutableStringBuilder(pResult, resultLen);
+                for (int i = 0; i < len; i++)
+                {
+                    if (i != 0)
+                        sb.Append(separator);
+                    sb.Append(values[i]);
+                }
+            }
+
+            return result;
         }
 
         #endregion

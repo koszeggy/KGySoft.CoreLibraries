@@ -14,6 +14,7 @@
 + The ArrayExtensions class has been made public along with some new members:
   + New AsSection methods
   + New AsArray2D/AsArray3D methods
+* ByteArrayExtensions class: Improving performance of To*String methods, reducing number of allocations.
 + DoubleExtensions class:
   + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
 + Enum<TEnum> class:
@@ -21,6 +22,7 @@
   + New Parse/TryParse overloads with ReadOnlySpan<char> parameters (.NET Core 3.0/.NET Standard 2.1 and above)
   + New IsDefined overload with StringSegment parameter
   + New IsDefined overload with ReadOnlySpan<char> parameter (.NET Core 3.0/.NET Standard 2.1 and above)
++ EnumerableExtensions class: New Join overload.
 * Files class:
   + New GetRelativePath overload with a bool isCaseSensitive parameter
   * Improving GetRelativePath path performance and reducing allocations
