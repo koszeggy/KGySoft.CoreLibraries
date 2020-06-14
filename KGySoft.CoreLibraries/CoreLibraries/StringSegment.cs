@@ -336,7 +336,7 @@ namespace KGySoft.CoreLibraries
         public int Offset => offset;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160<see cref="string">string</see>.
+        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
         /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
         public bool IsNull => str == null;

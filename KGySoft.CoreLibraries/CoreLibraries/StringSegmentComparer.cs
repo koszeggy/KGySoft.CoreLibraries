@@ -27,6 +27,10 @@ using System.Runtime.CompilerServices;
 
 namespace KGySoft.CoreLibraries
 {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574, CS1580 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a string comparison operation that uses specific case and culture-based or ordinal comparison rules
     /// allowing comparing strings by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
@@ -214,7 +218,11 @@ namespace KGySoft.CoreLibraries
                 if (obj == null)
                     Throw.ArgumentNullException(Argument.obj);
 
+#if NET35 || NET40 || NET45
+                return stringComparer.GetHashCode(obj);
+#else
                 return compareInfo.GetHashCode(obj, options);
+#endif
             }
 
             public override int Compare(string x, string y) => compareInfo.Compare(x, y, options);
@@ -260,7 +268,14 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
-            public override int GetHashCode(ReadOnlySpan<char> obj) => compareInfo.GetHashCode(obj, options);
+            public override int GetHashCode(ReadOnlySpan<char> obj)
+            {
+#if NETSTANDARD2_1
+                return compareInfo.GetHashCode(obj.ToString(), options);
+#else
+                return compareInfo.GetHashCode(obj, options);
+#endif
+            }
 
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
             {
@@ -316,42 +331,42 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison.
-        /// <br/>The methods of the returned <seealso cref="StringSegmentComparer"/> instance can be called with <seealso cref="StringSegment"/>
+        /// <br/>The methods of the returned <see cref="StringSegmentComparer"/> instance can be called with <see cref="StringSegment"/>
         /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
         public static StringSegmentComparer Ordinal => ordinalComparer ??= new StringSegmentOrdinalComparer();
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison.
-        /// <br/>The methods of the returned <seealso cref="StringSegmentComparer"/> instance can be called with <seealso cref="StringSegment"/>
+        /// <br/>The methods of the returned <see cref="StringSegmentComparer"/> instance can be called with <see cref="StringSegment"/>
         /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
         public static StringSegmentComparer OrdinalIgnoreCase => ordinalIgnoreCaseComparer ??= new StringSegmentOrdinalIgnoreCaseComparer();
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the invariant culture.
-        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
         /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer InvariantCulture => invariantComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, false);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive string comparison using the word comparison rules of the invariant culture.
-        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
         /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer InvariantCultureIgnoreCase => invariantIgnoreCaseComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, true);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the current culture.
-        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
         /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer CurrentCulture => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, false);
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs case-insensitive string comparisons using the word comparison rules of the current culture.
-        /// <br/>Depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
+        /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
         /// none of the members allocate new strings.
         /// </summary>
         public static StringSegmentComparer CurrentCultureIgnoreCase => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, true);
@@ -393,7 +408,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Creates a <see cref="StringSegmentComparer"/> object that compares strings according to the rules of a specified <paramref name="culture"/>.
-        /// <br/>Please note that the returned <seealso cref="StringSegmentComparer"/> may allocate new strings in some cases. See the <strong>Remarks</strong> section for details.
+        /// <br/>Please note that the returned <see cref="StringSegmentComparer"/> may allocate new strings in some cases. See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
         /// <param name="ignoreCase"><see langword="true"/>&#160;to specify that comparison operations be case-insensitive;
@@ -401,15 +416,15 @@ namespace KGySoft.CoreLibraries
         /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
         /// the <paramref name="culture"/> parameter and the case rule specified by the <paramref name="ignoreCase"/> parameter.</returns>
         /// <remarks>
-        /// <para>If <paramref name="culture"/> is either the <seealso cref="CultureInfo.InvariantCulture"/> or the <see cref="CultureInfo.CurrentCulture"/>,
-        /// then depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/> method might allocate a new string. In .NET Core 3.0 and above
-        /// none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.</para>
-        /// <para>If <paramref name="culture"/> is any <seealso cref="CultureInfo"/> other than the <seealso cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
-        /// then depending on the targeted platform, the <seealso cref="GetHashCode(StringSegment)"/>, <seealso cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
+        /// <para>If <paramref name="culture"/> is either the <see cref="CultureInfo.InvariantCulture"/> or the <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> and <see cref="GetHashCode(ReadOnlySpan{char})"/> methods might allocate a new string.
+        /// In .NET Core 3.0 and above none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.</para>
+        /// <para>If <paramref name="culture"/> is any <see cref="CultureInfo"/> other than the <see cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/>, <see cref="GetHashCode(ReadOnlySpan{char})"/>, <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
         /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods might allocate a new string. In .NET Core 3.0 and above
-        /// the none of the members with <seealso cref="StringSegment"/> parameters will allocate new strings.
+        /// the none of the members with <see cref="StringSegment"/> parameters will allocate new strings.
         /// On the other hand, due to the lack of public <c>CompareInfo.Compare</c> methods with <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameters,
-        /// none of the currently supported targets can avoid allocating strings when using <seealso cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
+        /// none of the currently supported targets can avoid allocating strings when using <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
         /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods.</para>
         /// </remarks>
         public static StringSegmentComparer Create(CultureInfo culture, bool ignoreCase) => new StringSegmentCultureAwareComparer(culture, ignoreCase);
@@ -421,7 +436,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
             if (s.Length > lengthThreshold)
                 return s.GetHashCode();
 #endif
@@ -435,7 +450,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s, int offset, int length)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length));
 #endif
@@ -450,8 +465,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(ReadOnlySpan<char> s)
         {
+#if !NETSTANDARD2_1
             if (s.Length > lengthThreshold)
-                return String.GetHashCode(s);
+                return String.GetHashCode(s); 
+#endif
             var result = 13;
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + s[i];
@@ -463,7 +480,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
             if (s.Length > lengthThreshold)
                 return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
 #endif
@@ -478,7 +495,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
 #endif
@@ -493,8 +510,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(ReadOnlySpan<char> s)
         {
+#if !NETSTANDARD2_1
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
+#endif
             var result = 13;
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + Char.ToUpperInvariant(s[i]);

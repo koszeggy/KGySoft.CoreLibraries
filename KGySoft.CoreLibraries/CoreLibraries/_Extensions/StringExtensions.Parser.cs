@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 
@@ -258,6 +259,8 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "Intended, in Release JIT compliler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
             private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
@@ -283,7 +286,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // allowing also an integer, which will be true for nonzero value
-                    if (segment.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
+                    if (segment.TryParseIntQuick(true, Int64.MaxValue, out ulong result))
                     {
                         value = (T)(object)(result != 0L);
                         return true;
@@ -485,7 +488,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // allowing also an integer, which will be true for nonzero value
-                if (segment.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
+                if (segment.TryParseIntQuick(true, Int64.MaxValue, out ulong result))
                 {
                     value = result != 0L;
                     return true;

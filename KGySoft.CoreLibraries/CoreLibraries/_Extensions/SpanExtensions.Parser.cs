@@ -222,7 +222,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // allowing also an integer, which will be true for nonzero value
-                    if (s.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
+                    if (s.TryParseIntQuick(true, Int64.MaxValue, out ulong result))
                     {
                         value = (T)(object)(result != 0L);
                         return true;
@@ -416,7 +416,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // allowing also an integer, which will be true for nonzero value
-                if (s.TryParseIntQuick(true, UInt64.MaxValue, out ulong result))
+                if (s.TryParseIntQuick(true, Int64.MaxValue, out ulong result))
                 {
                     value = result != 0L;
                     return true;

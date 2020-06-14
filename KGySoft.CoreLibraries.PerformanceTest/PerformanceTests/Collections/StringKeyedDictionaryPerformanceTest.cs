@@ -66,6 +66,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                     StringComparison.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
                     StringComparison.InvariantCulture => StringComparer.InvariantCulture,
                     StringComparison.InvariantCultureIgnoreCase => StringComparer.InvariantCultureIgnoreCase,
+                    _ => throw new ArgumentOutOfRangeException(nameof(comparison))
                 };
 #else
                 sc = StringComparer.FromComparison(comparison.Value); 

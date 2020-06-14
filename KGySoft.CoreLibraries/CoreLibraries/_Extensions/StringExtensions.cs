@@ -23,6 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -74,6 +75,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><paramref name="s"/> repeated <paramref name="count"/> times.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is less than 0.</exception>
+        [SecuritySafeCritical]
         public static unsafe string Repeat(this string s, int count)
         {
             if (s == null)

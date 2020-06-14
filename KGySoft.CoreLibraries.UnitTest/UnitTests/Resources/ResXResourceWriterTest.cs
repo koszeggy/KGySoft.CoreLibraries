@@ -16,6 +16,8 @@
 
 #region Usings
 
+using KGySoft.Drawing;
+
 #region Used Namespaces
 
 using System;
@@ -86,22 +88,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
             {
-                List<byte> bytes = value as List<byte>;
-                if (destinationType == typeof(string) && bytes != null)
+                if (destinationType == typeof(string) && value is List<byte> bytes)
                     return bytes.ToArray().ToDecimalValuesString();
 
-                HashSet<byte> hashbytes = value as HashSet<byte>;
-                if (destinationType == typeof(string) && hashbytes != null)
+                if (destinationType == typeof(string) && value is HashSet<byte> hashbytes)
                     return "H" + hashbytes.ToArray().ToDecimalValuesString();
 
-                List<TestEnum> enums = value as List<TestEnum>;
-                if (destinationType == typeof(string) && enums != null)
+                if (destinationType == typeof(string) && value is List<TestEnum> enums)
                     return "E" + enums.Select(e => (byte)e).ToArray().ToDecimalValuesString();
 
-                HashSet<TestEnum> hashenums = value as HashSet<TestEnum>;
-                if (destinationType == typeof(string) && hashenums != null)
+                if (destinationType == typeof(string) && value is HashSet<TestEnum> hashenums)
                     return "X" + hashenums.Select(e => (byte)e).ToArray().ToDecimalValuesString();
-
 
                 return base.ConvertTo(context, culture, value, destinationType);
             }
@@ -189,13 +186,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         private static Bitmap CreateTestTiff()
         {
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            throw new NotImplementedException();
-            //var msTiff = new MemoryStream();
-            //Images.InformationMultiSize.ExtractBitmaps().SaveAsMultipageTiff(msTiff);
-            //msTiff.Position = 0L;
-            //var tiffImage = new Bitmap(msTiff);
-            //return tiffImage;
+            var msTiff = new MemoryStream();
+            Icons.Information.ExtractBitmaps().SaveAsMultipageTiff(msTiff);
+            msTiff.Position = 0L;
+            var tiffImage = new Bitmap(msTiff);
+            return tiffImage;
         } 
 #endif
 
@@ -459,10 +454,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            //CursorHandle cursor = Images.Information.ToCursorHandle();
-
+#if !(NET35 || NETCOREAPP2_0) // .NET35 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>(); 
+#endif
             object[] referenceObjects =
                 {
                     // built-in
@@ -480,13 +474,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     // partly working built-in
 #if !NETCOREAPP2_0
                     Cursors.Arrow, // a default cursor: by string
-                    //new Cursor(cursor), // custom cursor: exception is thrown both for string and byte[] conversion
 
-                    // TODO: re-enable after referencing KGySoft.Drawing from nuget
-                    //Icons.Information, // multi-resolution icon (built-in saves one page only)
-                    //Images.InformationMultiSize, // multi-resolution bitmap-icon (built-in saves one page only)
-                    //CreateTestTiff(), // multipage TIFF (built-in saves first page only)
-                    //CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#if !NET35 // should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+                    Icons.Information, // multi-resolution icon (built-in saves one page only)
+                    Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
+                    CreateTestTiff(), // multipage TIFF (built-in saves first page only)
+                    CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#endif
 #endif
 
                     // pure custom
@@ -497,7 +491,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             SystemSerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
-            //cursor.Dispose();
         }
 
         [Test]
@@ -679,7 +672,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     }
                 };
 
+            // ReSharper disable once ConvertToLocalFunction - it will be a delegate in the end when passed to the methods
+#pragma warning disable IDE0039 // Use local function
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
+#pragma warning restore IDE0039 // Use local function
             ITypeResolutionService typeResolver = new TestTypeResolver();
             SystemSerializeObjects(referenceObjects, typeNameConverter, typeResolver);
             KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);

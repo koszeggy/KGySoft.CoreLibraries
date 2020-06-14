@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -48,6 +49,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
+        [SecuritySafeCritical]
         public static unsafe string ToHexValuesString(this byte[] bytes, string separator = null)
         {
             if (bytes == null)
@@ -140,6 +142,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
+        [SecuritySafeCritical]
         public static unsafe string ToDecimalValuesString(this byte[] bytes, string separator = ", ")
         {
             if (bytes == null)
@@ -514,6 +517,7 @@ namespace KGySoft.CoreLibraries
                 salt = salt.Repeat((int)Math.Ceiling(8d / salt.Length));
         }
 
+        [SecuritySafeCritical]
         private static unsafe string Split(string text, int lineLength, int indentSize, char indentChar, bool indentSingleLine)
         {
             // single line

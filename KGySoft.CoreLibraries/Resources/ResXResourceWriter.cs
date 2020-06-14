@@ -757,8 +757,7 @@ namespace KGySoft.Resources
         /// <param name="value">An object that is the value of the property to add.</param>
         public void AddMetadata(string name, object value)
         {
-            var node = value as ResXDataNode;
-            if (node != null)
+            if (value is ResXDataNode node)
             {
                 if (name != node.Name)
                     node = new ResXDataNode(name, value);

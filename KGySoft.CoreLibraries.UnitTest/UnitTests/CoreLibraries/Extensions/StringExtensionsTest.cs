@@ -19,7 +19,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
-
+using KGySoft.ComponentModel;
 using NUnit.Framework;
 
 #endregion
@@ -92,6 +92,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", new IntPtr(1));
 
             // Registered conversions
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
+            Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));
+            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+#endif
             Test("1.2.3.4", new Version(1, 2, 3, 4));
             Test("alpha", "alpha".AsSegment());
         }

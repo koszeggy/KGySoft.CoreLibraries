@@ -273,10 +273,10 @@ namespace KGySoft.CoreLibraries
             checkedObjects.Add(reference);
             try
             {
-                if (!(reference is string) && reference is IEnumerable)
+                if (!(reference is string) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
-                        ? CheckMembersAndItemsEqual(reference, check, errors, checkedObjects)
-                        : CheckItemsEqual((IEnumerable)reference, (IEnumerable)check, false, errors, checkedObjects);
+                        ? CheckMembersAndItemsEqual(enumerable, check, errors, checkedObjects)
+                        : CheckItemsEqual(enumerable, (IEnumerable)check, false, errors, checkedObjects);
 
                 if (reference is float floatRef && check is float floatCheck)
                     return Check(BitConverter.ToInt32(BitConverter.GetBytes(floatRef), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0), $"Float equality failed: {floatRef.ToRoundtripString()} <-> {floatCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(floatRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(floatCheck).ToHexValuesString()}", errors);

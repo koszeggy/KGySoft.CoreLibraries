@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using KGySoft.CoreLibraries;
 
@@ -25,6 +26,10 @@ using KGySoft.CoreLibraries;
 
 namespace KGySoft.Collections
 {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents an <see cref="IDictionary{TKey,TValue}"/> with <see cref="string">string</see> key
     /// that can be queried also by <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"/>
@@ -45,6 +50,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the value to get or set.</param>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
         /// <exception cref="KeyNotFoundException"><paramref name="key"/> is not found.</exception>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It is actually string")]
         TValue this[StringSegment key] { get; }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)

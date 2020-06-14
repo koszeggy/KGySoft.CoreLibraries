@@ -74,6 +74,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
+            [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "ArraySection is not readonly so it would generate defensive copies")]
             private ArraySection<T> array;
 
             #endregion

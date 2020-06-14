@@ -36,6 +36,10 @@ using KGySoft.Serialization.Binary;
 
 namespace KGySoft.Collections
 {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a string keyed dictionary that can be queried also by <see cref="StringSegment"/>
     /// and <see cref="ReadOnlySpan{T}"/> (in .NET Core 3.0/.NET Standard 2.1 and above) instances.
@@ -869,8 +873,10 @@ namespace KGySoft.Collections
             }
         }
 
+
         // Bug: could be cref="IStringKeyedDictionary{TValue}.this[StringSegment]" but that kills ReSharper
         /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(KGySoft.CoreLibraries.StringSegment)"/>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It is actually string")]
         public TValue this[StringSegment key]
         {
             get

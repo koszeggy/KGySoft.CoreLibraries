@@ -472,6 +472,7 @@ namespace KGySoft.CoreLibraries
         internal static bool TryParseIntQuick(this ReadOnlySpan<char> s, bool allowNegative, ulong max, out ulong result)
         {
             Debug.Assert(s.Length > 0, $"Nonzero length is expected in {nameof(TryParseIntQuick)}");
+            Debug.Assert(!allowNegative || max < UInt64.MaxValue, "If negative values are allowed max should be less than UInt64.MaxValue");
 
             result = 0UL;
             bool isNegative = false;

@@ -23,6 +23,7 @@ using System.IO;
 using System.Reflection;
 #endif
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -156,6 +157,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The relative path of <paramref name="target" /> from <paramref name="baseDirectory" />, or the absolute path of <paramref name="target" /> if there is no relative path between them.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="baseDirectory"/> is <see langword="null"/>.</exception>
         /// <returns>The relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.</returns>
+        [SecuritySafeCritical]
         public static unsafe string GetRelativePath(string target, string baseDirectory, bool isCaseSensitive)
         {
             if (target == null)

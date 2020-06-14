@@ -467,6 +467,11 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
         /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="comparison"/> is <see cref="StringComparison.Ordinal"/>, then no new string allocation occurs on any platforms.</para>
+        /// <para>If <paramref name="comparison"/> is other than <see cref="StringComparison.Ordinal"/>, then depending on the targeted platform a new string allocation may occur.
+        /// The .NET Core 3.0 and newer builds do not allocate a new string with any <paramref name="comparison"/> values.</para>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(ReadOnlySpan<char> value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
@@ -479,8 +484,17 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return IsNull || value.Length > 0 ? -1 : 0;
 
+#if NETSTANDARD2_1
+            int result = comparison == StringComparison.Ordinal
+                ? str.AsSpan(offset + startIndex, count).LastIndexOf(value)
+                : str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
+            return result < 0 ? -1
+                : comparison == StringComparison.Ordinal ? result + startIndex
+                : result - offset;
+#else
             int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
             return result >= 0 ? result + startIndex : -1;
+#endif
         }
 
         /// <summary>

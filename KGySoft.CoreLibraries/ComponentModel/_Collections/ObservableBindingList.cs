@@ -396,7 +396,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
             // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
-            => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
+            => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
 
         #endregion
 

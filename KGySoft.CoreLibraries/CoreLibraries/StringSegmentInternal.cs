@@ -203,6 +203,7 @@ namespace KGySoft.CoreLibraries
         internal bool TryParseIntQuick(bool allowNegative, ulong max, out ulong result)
         {
             Debug.Assert(Length > 0, $"Nonzero length is expected in {nameof(TryParseIntQuick)}");
+            Debug.Assert(!allowNegative || max < UInt64.MaxValue, "If negative values are allowed max should be less than UInt64.MaxValue");
 
             result = 0UL;
             bool isNegative = false;
@@ -241,7 +242,7 @@ namespace KGySoft.CoreLibraries
                 if (value == 0)
                     return true;
 
-                // for negative values the MaxValue of the appropriate range is expected (eg 127 for SByte)
+                // For negative values the MaxValue of the appropriate range is expected (eg 127 for SByte) but actually -128 should be accepted, too
                 if (!allowNegative || value > max + 1)
                     return false;
 
