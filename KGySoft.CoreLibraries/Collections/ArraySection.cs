@@ -41,11 +41,11 @@ namespace KGySoft.Collections
 
     /// <summary>
     /// Represents a one dimensional array or a section of an array.
-    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"/> types but can be used on every platform in the same way
-    /// and it is faster than <see cref="Memory{T}"/> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
+    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way
+    /// and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <typeparam name="T">The type of the element in the collection.</typeparam>
+    /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>The <see cref="ArraySection{T}"/> type is similar to the combination of the <see cref="Memory{T}"/> type and the .NET Core version of the <see cref="ArraySegment{T}"/> type.</para>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
@@ -61,13 +61,42 @@ namespace KGySoft.Collections
     /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
-    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
     public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
     {
+        #region Nested Types
+
+        private struct ArraySectionDebugView // strange error in VS2019: this must be a struct; otherwise, debug values will be completely misinterpreted
+        {
+            #region Fields
+
+            [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "ArraySection is not readonly so it would generate defensive copies")]
+            private ArraySection<T> array;
+
+            #endregion
+
+            #region Properties
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 2D array debug items")]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+            public T[] Items => array.ToArray();
+
+            #endregion
+
+            #region Constructors
+
+            internal ArraySectionDebugView(ArraySection<T> array) => this.array = array;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
@@ -133,13 +162,13 @@ namespace KGySoft.Collections
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/>.
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/>.
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => new Span<T>(array, offset, length);
@@ -255,7 +284,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "False alarm, see AsSpan")]
-        public static implicit operator Span<T>(in ArraySection<T> arraySection) => arraySection.AsSpan;
+        public static implicit operator Span<T>(ArraySection<T> arraySection) => arraySection.AsSpan;
 #endif
 
         /// <summary>
@@ -264,7 +293,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the equality check.</returns>
-        public static bool operator ==(in ArraySection<T> a, in ArraySection<T> b) => a.Equals(b);
+        public static bool operator ==(ArraySection<T> a, ArraySection<T> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified <see cref="ArraySection{T}"/> instances have different values.
@@ -272,7 +301,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(in ArraySection<T> a, in ArraySection<T> b) => !(a == b);
+        public static bool operator !=(ArraySection<T> a, ArraySection<T> b) => !(a == b);
 
         #endregion
 
@@ -338,6 +367,16 @@ namespace KGySoft.Collections
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
             poolArray = false;
 #endif
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>
+        /// using the specified <paramref name="offset"/>.
+        /// </summary>
+        /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
+        /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
+        public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
+        {
         }
 
         #endregion
@@ -414,6 +453,27 @@ namespace KGySoft.Collections
             array.CopyElements(offset, result, 0, length);
             return result;
         }
+
+        /// <summary>
+        /// Gets this <see cref="ArraySection{T}"/> as an <see cref="Array2D{T}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="ArraySection{T}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>An <see cref="Array2D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public Array2D<T> AsArray2D(int height, int width) => new Array2D<T>(this, height, width);
+
+        /// <summary>
+        /// Gets this <see cref="ArraySection{T}"/> as an <see cref="Array3D{T}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="ArraySection{T}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>An <see cref="Array3D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public Array3D<T> AsArray3D(int depth, int height, int width) => new Array3D<T>(this, depth, height, width);
 
         /// <summary>
         /// Gets the reference to the element at the specified <paramref name="index"/>.

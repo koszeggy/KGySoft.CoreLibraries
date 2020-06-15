@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -125,7 +124,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static StringSegment GetNextSegment(ref StringSegment rest, in StringSegment separator)
+        internal static StringSegment GetNextSegment(ref StringSegment rest, StringSegment separator)
         {
             Debug.Assert(!separator.IsNullOrEmpty, "Non-empty separator is expected here");
             if (rest.length == 0)
@@ -232,6 +231,36 @@ namespace KGySoft.CoreLibraries
             return new StringSegment(rest.str, offset, pos);
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static StringSegment GetNextSegment(ref StringSegment rest, ReadOnlySpan<char> separator)
+        {
+            Debug.Assert(!separator.IsEmpty, "Non-empty separator is expected here");
+            if (rest.length == 0)
+            {
+                StringSegment result = rest.IsNull ? default : rest;
+                rest = default;
+                return result;
+            }
+
+            int pos = rest.IndexOfInternal(separator, 0, rest.length);
+
+            // last segment
+            if (pos == -1)
+            {
+                StringSegment result = rest;
+                rest = default;
+                return result;
+            }
+
+            // returning next segment and advance
+            int offset = rest.offset;
+            rest = rest.SubstringInternal(pos + separator.Length);
+            return new StringSegment(rest.str, offset, pos);
+        }
+
+#endif
+
         #endregion
 
         #region Instance Methods
@@ -254,7 +283,7 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the start of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimStart()
         {
-            if (str == null)
+            if (length == 0)
                 return this;
             int start = 0;
             while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
@@ -270,7 +299,7 @@ namespace KGySoft.CoreLibraries
         /// characters are removed from the end of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimEnd()
         {
-            if (str == null)
+            if (length == 0)
                 return this;
             int end = length - 1;
             while (end >= 0 && Char.IsWhiteSpace(GetCharInternal(end)))
@@ -278,6 +307,146 @@ namespace KGySoft.CoreLibraries
 
             return SubstringInternal(0, end + 1);
         }
+
+        /// <summary>
+        /// Removes all leading and trailing instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(char trimChar) => TrimStart(trimChar).TrimEnd(trimChar);
+
+        /// <summary>
+        /// Removes all leading instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(char trimChar)
+        {
+            if (length == 0)
+                return this;
+            int start = 0;
+            while (start < length && GetCharInternal(start) == trimChar)
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing instances of a character from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChar">The character to remove.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all instances
+        /// of the <paramref name="trimChar"/> character are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(char trimChar)
+        {
+            if (length == 0)
+                return this;
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end) == trimChar)
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+
+        /// <summary>
+        /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(params char[] trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+
+        /// <summary>
+        /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(params char[] trimChars)
+        {
+            if (length == 0)
+                return this;
+            if ((trimChars?.Length ?? 0) == 0)
+                return TrimStart();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(params char[] trimChars)
+        {
+            if (length == 0)
+                return this;
+            if ((trimChars?.Length ?? 0) == 0)
+                return TrimEnd();
+
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment Trim(ReadOnlySpan<char> trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+
+        /// <summary>
+        /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimStart(ReadOnlySpan<char> trimChars)
+        {
+            if (length == 0)
+                return this;
+            if (trimChars.Length == 0)
+                return TrimStart();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            return SubstringInternal(start);
+        }
+
+        /// <summary>
+        /// Removes all trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
+        /// </summary>
+        /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
+        /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
+        /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
+        public StringSegment TrimEnd(ReadOnlySpan<char> trimChars)
+        {
+            if (length == 0)
+                return this;
+            if (trimChars.Length == 0)
+                return TrimEnd();
+
+            int end = length - 1;
+            while (end >= 0 && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(0, end + 1);
+        }
+#endif
 
         #endregion
 
@@ -528,7 +697,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(in StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(StringSegment separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator.length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
@@ -576,7 +745,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(in StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(StringSegment separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
@@ -819,6 +988,70 @@ namespace KGySoft.CoreLibraries
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(params string[] separators) => Split(separators, default, false);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, ReadOnlySpan{char})"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that delimits the segments in this <see cref="StringSegment"/>. If empty, then no splitting will occur.</param>
+        /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
+        public IList<StringSegment> Split(ReadOnlySpan<char> separator, int? maxLength = default, bool removeEmptyEntries = false)
+        {
+            if (separator.Length == 1)
+                return Split(separator[0], maxLength, removeEmptyEntries);
+
+            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            if (result != null)
+                return result;
+
+            // empty string separator: returning whole string (compatibility with String.Split)
+            if (separator.IsEmpty)
+                return new[] { this };
+
+            int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
+            result = new List<StringSegment>(Math.Min(limit, 16));
+            StringSegment rest = this;
+            limit -= 1; // so the last segment is not searched if there are too many of them
+
+            while (!rest.IsNull && result.Count < limit)
+            {
+                StringSegment segment = GetNextSegment(ref rest, separator);
+                if (segment.length > 0 || !removeEmptyEntries)
+                    result.Add(segment);
+            }
+
+            if (!rest.IsNull)
+            {
+                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // (this is how String.Split also works)
+                if (removeEmptyEntries && result.Count == limit && rest.length >= separator.Length && rest.StartsWith(separator))
+                    rest = rest.SubstringInternal(separator.Length);
+
+                if (rest.length > 0 || !removeEmptyEntries)
+                    result.Add(rest);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
+        /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, ReadOnlySpan{char})"/> extension method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
+        /// </summary>
+        /// <param name="separator">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that delimits the segments in this <see cref="StringSegment"/>. If empty, then no splitting will occur.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
+        /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
+        /// delimited by <paramref name="separator"/>.</returns>
+        public IList<StringSegment> Split(ReadOnlySpan<char> separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+#endif
 
         #endregion
 

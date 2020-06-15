@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using KGySoft.Collections;
-using KGySoft.CoreLibraries.PerformanceTests.Reflection;
 
 using NUnit.Framework;
 
@@ -37,68 +37,61 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
     [TestFixture]
     public class CachePerformanceTest
     {
-        #region Constants
-
-        private const int capacity = 10000;
-        private const int iterations = 1000000;
-
-        #endregion
-
         #region Fields
 
         private static readonly Func<int, string> loader = i => i.ToString();
+        private static readonly Func<string, int> loaderStr = s => s.Length;
 
         #endregion
 
         #region Methods
 
         [Test]
-        public void CacheOverheadBaselineTest()
+        public void CacheOverheadBaselineIntKeyTest()
         {
-            const int count = 10_000;
+            const int count = 100_000;
             Dictionary<int, string> dictionary = Enumerable.Range(0, count).ToDictionary(i => i, i => i.ToString(CultureInfo.InvariantCulture));
             var cacheRemoveOldest = new Cache<int, string>(dictionary) { Behavior = CacheBehavior.RemoveOldestElement };
             var cacheRemoveLeastRecent = new Cache<int, string>(dictionary);
 
             // Dictionary expected to be the fastest one, Cache with RemoveLeastRecentUsedElement has the most overhead
-            new PerformanceTest { TestName = "Indexer access test", Iterations = 10_000 }
-                .AddCase(() =>
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        string s = dictionary[i];
-                    }
-                }, "Dictionary read")
-                .AddCase(() =>
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        string s = cacheRemoveOldest[i];
-                    }
-                }, "Cache read (RemoveOldestElement)")
-                .AddCase(() =>
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        string s = cacheRemoveLeastRecent[i];
-                    }
-                }, "Cache read (RemoveLeastRecentUsedElement)")
+            new IteratorPerformanceTest<string> { TestName = "Indexer access test", Iterations = count }
+                .AddCase(i => dictionary[i], "Dictionary read")
+                .AddCase(i => cacheRemoveOldest[i], "Cache read (RemoveOldestElement)")
+                .AddCase(i => cacheRemoveLeastRecent[i], "Cache read (RemoveLeastRecentUsedElement)")
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest { TestName = "Populate test", Iterations = 1000 }
-                .AddCase(() =>
-                {
-                    var dict = new Dictionary<int, string>(count);
-                    for (int i = 0; i < count; i++)
-                        dict[i] = i.ToString(CultureInfo.InvariantCulture);
-                }, "Dictionary")
-                .AddCase(() =>
-                {
-                    var dict = new Cache<int, string>(count);
-                    for (int i = 0; i < count; i++)
-                        dict[i] = i.ToString(CultureInfo.InvariantCulture);
-                }, "Cache")
+            var dict = new Dictionary<int, string>(count);
+            var cache = new Cache<int, string>(count);
+            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count }
+                .AddCase(i => dict[i] = i.ToString(CultureInfo.InvariantCulture), "Dictionary")
+                .AddCase(i => cache[i] = i.ToString(CultureInfo.InvariantCulture), "Cache")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void CacheOverheadBaselineStringKeyTest()
+        {
+            const int count = 100_000;
+            Dictionary<string, int> dictionary = Enumerable.Range(0, count).ToDictionary(i => i.ToString(CultureInfo.InvariantCulture));
+            var cacheRemoveOldest = new Cache<string, int>(dictionary) { Behavior = CacheBehavior.RemoveOldestElement };
+            var cacheRemoveLeastRecent = new Cache<string, int>(dictionary);
+
+            // Dictionary expected to be the fastest one, Cache with RemoveLeastRecentUsedElement has the most overhead
+            new IteratorPerformanceTest<int> { TestName = "Indexer access test", Iterations = count }
+                .AddCase(i => dictionary[i.ToString(CultureInfo.InvariantCulture)], "Dictionary read")
+                .AddCase(i => cacheRemoveOldest[i.ToString(CultureInfo.InvariantCulture)], "Cache read (RemoveOldestElement)")
+                .AddCase(i => cacheRemoveLeastRecent[i.ToString(CultureInfo.InvariantCulture)], "Cache read (RemoveLeastRecentUsedElement)")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            var dict = new Dictionary<string, int>(count);
+            var cache = new Cache<string, int>(count);
+            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count }
+                .AddCase(i => dict[i.ToString(CultureInfo.InvariantCulture)] = i, "Dictionary")
+                .AddCase(i => cache[i.ToString(CultureInfo.InvariantCulture)] = i, "Cache")
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -106,6 +99,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void NeverDropElementsTest()
         {
+            const int capacity = 10_000;
+            const int iterations = 1_000_000;
+
             var cacheRemoveOldest = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveOldestElement };
             var cacheRemoveLeastRecent = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
 
@@ -124,11 +120,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         [Test]
         public void DropElementsTest()
         {
+            const int capacity = 10_000;
+            const int iterations = 1_000_000;
+
             var cacheRemoveOldest = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveOldestElement };
             var cacheRemoveLeastRecent = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
             int range = (int)(capacity * 1.5);
 
-            new RandomizedPerformanceTest<string> { Iterations = iterations, TestName = "Using cache with dropping elements" }
+            new RandomizedPerformanceTest<string> { Iterations = iterations, TestName = "Using cache with dropping elements, random access" }
                 .AddCase(rnd => cacheRemoveOldest[rnd.Next(range)], $"{nameof(cacheRemoveOldest.Behavior)} = {cacheRemoveOldest.Behavior}")
                 .AddCase(rnd => cacheRemoveLeastRecent[rnd.Next(range)], $"{nameof(cacheRemoveLeastRecent.Behavior)} = {cacheRemoveLeastRecent.Behavior}")
                 .DoTest()

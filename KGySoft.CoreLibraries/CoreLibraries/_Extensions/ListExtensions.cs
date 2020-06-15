@@ -25,7 +25,7 @@ using KGySoft.Collections;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="IList{T}"/> type.
+    /// Provides extension methods for the <see cref="IList{T}"/> type.
     /// </summary>
     public static class ListExtensions
     {

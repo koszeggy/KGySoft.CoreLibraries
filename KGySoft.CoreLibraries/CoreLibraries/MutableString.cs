@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Security; 
 
@@ -28,6 +29,7 @@ namespace KGySoft.CoreLibraries
     /// Similar to Span{char} but can be used in any platform.
     /// </summary>
     [SecurityCritical]
+    [DebuggerDisplay("{" + nameof(ToStringDebugger) + "()}")]
     internal readonly unsafe struct MutableString
     {
         #region Fields
@@ -72,7 +74,7 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         [SecuritySafeCritical]
-        public override string ToString() => new String(head, 0, Length).Replace('\0', '□');
+        public override string ToString() => new String(head, 0, Length);
 
         #endregion
 
@@ -93,6 +95,12 @@ namespace KGySoft.CoreLibraries
             for (int i = 0; i < Length; i++)
                 head[i] = Char.ToUpperInvariant(head[i]);
         }
+
+        #endregion
+
+        #region PrivateMethods
+
+        private string ToStringDebugger() => ToString().Replace('\0', '□');
 
         #endregion
 

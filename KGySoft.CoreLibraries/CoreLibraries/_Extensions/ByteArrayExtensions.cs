@@ -18,23 +18,25 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+
+using KGySoft.Collections;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Array">byte[]</see> type.
+    /// Provides extension methods for the <see cref="Array">byte[]</see> type.
     /// </summary>
     public static class ByteArrayExtensions
     {
-        #region Extension Methods
+        #region Public Methods
 
         #region Hex
 
@@ -47,23 +49,43 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
-        public static string ToHexValuesString(this byte[] bytes, string separator = null)
+        [SecuritySafeCritical]
+        public static unsafe string ToHexValuesString(this byte[] bytes, string separator = null)
         {
             if (bytes == null)
                 Throw.ArgumentNullException(Argument.bytes);
             bool useSeparator = !String.IsNullOrEmpty(separator);
-            if (useSeparator && separator.Any(c => c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f'))
-                Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidHex);
-
-            StringBuilder result = new StringBuilder(bytes.Length * (2 + (separator ?? String.Empty).Length));
-            for (int i = 0; i < bytes.Length; i++)
+            if (useSeparator)
             {
-                result.Append(bytes[i].ToString("X2", CultureInfo.InvariantCulture));
-                if (useSeparator && i < bytes.Length - 1)
-                    result.Append(separator);
+                // ReSharper disable once ForCanBeConvertedToForeach - it used to be an Any call but has been refactored due to performance
+                for (int i = 0; i < separator.Length; i++)
+                {
+                    char c = separator[i];
+                    if (c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f')
+                        Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidHex);
+                }
             }
 
-            return result.ToString();
+            int bytesLength = bytes.Length;
+            if (bytesLength == 0)
+                return String.Empty;
+
+            int len = (bytesLength << 1) + (useSeparator ? (bytesLength - 1) * separator.Length : 0);
+            string result = new String('\0', len);
+            fixed (char* pResult = result)
+            {
+                var sb = new MutableStringBuilder(pResult, len);
+
+                // ReSharper disable once ForCanBeConvertedToForeach - performance
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    if (useSeparator && sb.Length != 0)
+                        sb.Append(separator);
+                    sb.AppendHex(bytes[i]);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -120,7 +142,8 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
-        public static string ToDecimalValuesString(this byte[] bytes, string separator = ", ")
+        [SecuritySafeCritical]
+        public static unsafe string ToDecimalValuesString(this byte[] bytes, string separator = ", ")
         {
             if (bytes == null)
                 Throw.ArgumentNullException(Argument.bytes);
@@ -130,16 +153,30 @@ namespace KGySoft.CoreLibraries
             if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
                 Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidDec);
 
-            StringBuilder result = new StringBuilder(bytes.Length * (3 + separator.Length));
-            for (int i = 0; i < bytes.Length; i++)
+            var buf = new ArraySection<char>(bytes.Length * (3 + separator.Length), false);
+            try
             {
-                result.Append(bytes[i].ToString(CultureInfo.InvariantCulture));
-                if (i < bytes.Length - 1)
-                    result.Append(separator);
-            }
+                fixed (char* pBuf = buf)
+                {
+                    var result = new MutableStringBuilder(pBuf, buf.Length);
+                    
+                    // ReSharper disable once ForCanBeConvertedToForeach - intended, performance
+                    for (int i = 0; i < bytes.Length; i++)
+                    {
+                        if (result.Length != 0)
+                            result.Append(separator);
+                        result.Append(bytes[i]);
+                    }
 
-            return result.ToString();
+                    return result.ToString();
+                }
+            }
+            finally
+            {
+                buf.Release();
+            }
         }
+
 
         /// <summary>
         /// Converts the byte array to string of decimal values.
@@ -475,53 +512,72 @@ namespace KGySoft.CoreLibraries
                 salt = "ABCDEFGH";
                 return;
             }
+
             if (salt.Length < 8)
-            {
-                salt = salt.Repeat(Convert.ToInt32(Math.Ceiling(8d / salt.Length)));
-            }
+                salt = salt.Repeat((int)Math.Ceiling(8d / salt.Length));
         }
 
-        private static string Split(string text, int lineLength, int indentSize, char indentChar, bool indentSingleLine)
+        [SecuritySafeCritical]
+        private static unsafe string Split(string text, int lineLength, int indentSize, char indentChar, bool indentSingleLine)
         {
+            // single line
             if (lineLength <= 0 || text.Length <= lineLength)
-                return indentSingleLine && indentSize > 0 ? new String(indentChar, indentSize) + text : text;
-
-            string indent = indentSize > 0 ? new String(indentChar, indentSize) : String.Empty;
-            StringBuilder result =
-                new StringBuilder(text.Length + (indentSize + Environment.NewLine.Length) * (text.Length / lineLength + 1));
-            int i;
-            for (i = 0; i < text.Length - lineLength; i += lineLength)
             {
-                result.Append(indent);
-                result.Append(text, i, lineLength);
-                result.AppendLine();
+                if (!indentSingleLine || indentSize <= 0)
+                    return text;
+                return text.PadLeft(text.Length + indentSize, indentChar);
             }
 
-            result.Append(indent);
-            result.Append(text, i, text.Length - i);
-            return result.ToString();
+            int lineCount = (int)Math.Ceiling((double)text.Length / lineLength);
+            int len = text.Length + lineCount * indentSize + (lineCount - 1) * Environment.NewLine.Length;
+            var result = new String('\0', len);
+            fixed (char* pResult = result)
+            {
+                var sb = new MutableStringBuilder(pResult, len);
+
+                int pos;
+                for (pos = 0; pos < text.Length - lineLength; pos += lineLength)
+                {
+                    sb.Append(indentChar, indentSize);
+                    sb.Append(text, pos, lineLength);
+                    sb.AppendLine();
+                }
+
+                sb.Append(indentChar, indentSize);
+                sb.Append(text, pos, text.Length - pos);
+                Debug.Assert(sb.Length == sb.Capacity, "Wrong length initialization");
+            }
+
+            return result;
         }
 
         private static string Wrap(string text, string separator, int lineLength, int indentSize, char indentChar, bool indentSingleLine)
         {
+            // single line
             if (lineLength <= 0 || text.Length <= lineLength)
-                return indentSingleLine && indentSize > 0 ? new String(indentChar, indentSize) + text : text;
+            {
+                if (!indentSingleLine || indentSize <= 0)
+                    return text;
+                return text.PadLeft(text.Length + indentSize, indentChar);
+            }
 
-            string indent = indentSize > 0 ? new String(indentChar, indentSize) : String.Empty;
             if (lineLength < 0)
                 lineLength = 0;
             if (indentSize < 0)
                 indentSize = 0;
 
+            // Not using MutableStringBuilder because the final length can be longer than this if lines cannot be completely filled
             StringBuilder result = new StringBuilder(text.Length + (indentSize + Environment.NewLine.Length) * (text.Length / lineLength + 1));
             int pos;
             int nextSep;
             int currLineLen = 0;
             bool firstLine = true;
-            string fragment;
+
+            string indent = indentSize > 0 ? new String(indentChar, indentSize) : String.Empty;
+            StringSegment fragment;
             for (pos = 0; (nextSep = text.IndexOf(separator, pos, StringComparison.Ordinal)) > 0; pos = nextSep + separator.Length)
             {
-                fragment = text.Substring(pos, nextSep - pos + separator.Length);
+                fragment = new StringSegment(text, pos, nextSep - pos + separator.Length);
 
                 // wrapping is needed
                 if (currLineLen + fragment.Length > lineLength)
@@ -529,8 +585,9 @@ namespace KGySoft.CoreLibraries
                     // the first fragment of the line exceeds the line length: dumping, and then wrapping.
                     if (currLineLen == 0)
                     {
-                        result.Append(indent);
-                        result.AppendLine(fragment);
+                        result.Append(indentChar, indentSize);
+                        result.Append(fragment.UnderlyingString, fragment.Offset, fragment.Length);
+                        result.AppendLine();
                         firstLine = false;
                         continue;
                     }
@@ -544,18 +601,18 @@ namespace KGySoft.CoreLibraries
 
                     result.AppendLine();
                     result.Append(indent);
-                    result.Append(fragment);
+                    result.Append(fragment.UnderlyingString, fragment.Offset, fragment.Length);
                     currLineLen = fragment.Length;
                     continue;
                 }
 
                 // no wrapping is needed
-                result.Append(fragment);
+                result.Append(fragment.UnderlyingString, fragment.Offset, fragment.Length);
                 currLineLen += fragment.Length;
             }
 
             // processing the last fragment
-            fragment = text.Substring(pos);
+            fragment = text.AsSegment(pos);
 
             // wrapping is needed
             if (currLineLen + fragment.Length > lineLength)
@@ -568,7 +625,7 @@ namespace KGySoft.CoreLibraries
                         return indentSingleLine && indentSize > 0 ? indent + text : text;
 
                     result.Append(indent);
-                    result.Append(fragment);
+                    result.Append(fragment.UnderlyingString, fragment.Offset, fragment.Length);
                     return result.ToString();
                 }
 
@@ -584,7 +641,7 @@ namespace KGySoft.CoreLibraries
             if (currLineLen == 0)
                 result.Append(indent);
 
-            result.Append(fragment);
+            result.Append(fragment.UnderlyingString, fragment.Offset, fragment.Length);
             return result.ToString();
         }
 

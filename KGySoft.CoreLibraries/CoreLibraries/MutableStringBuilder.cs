@@ -88,7 +88,7 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         [SecuritySafeCritical]
-        public override string ToString() => str.Substring(0, Length).ToString();
+        public override string ToString() => pos == str.Length ? str.ToString() : str.Substring(0, Length).ToString();
 
         #endregion
 
@@ -103,12 +103,32 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal void Append(char c, int count)
+        {
+            Debug.Assert(Length + count <= Capacity, "Not enough capacity");
+            for (int i = 0; i < count; i++)
+            {
+                str[pos] = c;
+                pos += 1;
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(string s)
         {
             Debug.Assert(Length + s.Length <= Capacity, "Not enough capacity");
             WriteString(pos, s);
             pos += s.Length;
         }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal void Append(StringSegmentInternal s)
+        {
+            Debug.Assert(Length + s.Length <= Capacity, "Not enough capacity");
+            WriteString(pos, s.String, s.Offset, s.Length);
+            pos += s.Length;
+        }
+
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal void Append(string s, int startIndex, int count)
@@ -141,6 +161,19 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(i == pos, "Invalid size");
             pos += size;
         }
+
+        internal void Append(byte value) => Append(value, false, value >= 100 ? 3 : value >= 10 ? 2 : 1);
+
+        internal void AppendHex(byte value)
+        {
+            Debug.Assert(Length + 2 <= Capacity, "Not enough capacity");
+            const string hexDigits = "0123456789ABCDEF";
+
+            Append(hexDigits[(value >> 4)]);
+            Append(hexDigits[(value & 0xF)]);
+        }
+
+        internal void AppendLine() => Append(Environment.NewLine);
 
         internal void Insert(int index, char c)
         {
@@ -181,17 +214,16 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe void WriteString(int index, string s)
         {
-            int len = s.Length;
 #if !(NET35 || NET40 || NET45)
-            if (len > 8)
+            if (s.Length > 8)
             {
                 fixed (char* ptr = s)
-                    Buffer.MemoryCopy(ptr, str.AddressOf(pos), (Capacity - pos) << 1, len << 1);
+                    Buffer.MemoryCopy(ptr, str.AddressOf(pos), (Capacity - pos) << 1, s.Length << 1);
                 return;
             } 
 #endif
 
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < s.Length; i++)
                 str[index + i] = s[i];
         }
 

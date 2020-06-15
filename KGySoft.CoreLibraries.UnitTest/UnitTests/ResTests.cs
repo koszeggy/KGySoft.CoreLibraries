@@ -103,6 +103,8 @@ namespace KGySoft.CoreLibraries.UnitTests
                 for (int i = 0; i < parameters.Length; i++)
                 {
                     var parameter = parameters[i];
+                    if (parameter == null) // span
+                        continue;
                     Assert.IsTrue(value.Contains(parameter.ToString(), StringComparison.Ordinal)
                         || mi.IsGenericMethodDefinition // Xxx<TEnum>(TEnum value) - not value but possible TValue is printed
                         || parameter is float f && value.Contains(f.ToString("P2"), StringComparison.Ordinal) // percentage format of float
@@ -134,7 +136,15 @@ namespace KGySoft.CoreLibraries.UnitTests
                     continue;
                 key = key.Substring(0, key.Length - "Format".Length);
                 if (!obtainedMembers.Contains(key))
+                {
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+                    // skipping known, platform dependent entries that would be "orphans" otherwise - if they are really orphans the error will come on the affected platform
+                    if (key.StartsWith("SpanExtensions", StringComparison.Ordinal))
+                        continue;
+#endif
+
                     uncovered.Add((string)enumerator.Key);
+                }
             }
 
             Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{uncovered.Join(Environment.NewLine)}");

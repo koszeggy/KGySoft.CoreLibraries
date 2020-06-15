@@ -72,7 +72,7 @@ namespace KGySoft.Collections
     /// </remarks>
     /// <div style="display:none"><example/></div>
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
     public sealed class CircularList<T> : ISupportsRangeList<T>, IList
     {

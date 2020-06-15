@@ -893,6 +893,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } },
 
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1158,6 +1160,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 TestEnumByte.One, // non standard assembly
                 new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
                 new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
 
                 typeof(List<int>), // supported generic
@@ -1227,6 +1230,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
                 new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
 
                 typeof(List<int>), // supported generic
                 typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
@@ -1333,6 +1337,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
 
                 // nullable arrays
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
@@ -1445,6 +1451,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
 
                 // nullable arrays
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },

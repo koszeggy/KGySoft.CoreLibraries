@@ -36,11 +36,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Methods
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
         [Test]
         public void ParseData()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             var refReader = new System.Resources.ResXResourceReader(path, new[] { new AssemblyName("System.Drawing"), new AssemblyName("System") });
             refReader.BasePath = Files.GetExecutingPath();
             ResXResourceReader reader = new ResXResourceReader(path);
@@ -63,7 +63,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void TestEnumerators()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             ResXResourceReader reader = new ResXResourceReader(path);
 
             // reading one element, then reset, read first element again
@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void TestDataTypes()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             using var reader = new ResXResourceReader(path
 #if NETCOREAPP2_0
                 , new TestTypeResolver() // for Bitmap, Icon in .NET 2.0
@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
-#if NETCOREAPP2_0
+#if !NETFRAMEWORK
                     if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
                         continue;
 #endif

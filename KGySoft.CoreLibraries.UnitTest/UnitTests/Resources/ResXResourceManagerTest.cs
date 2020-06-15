@@ -27,7 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
@@ -427,6 +427,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Bitmap>(reference);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
+#if NETFRAMEWORK
             // any object embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestObjectEmbedded"); // WinForms type
             check = manager.GetObject("TestObjectEmbedded");
@@ -437,6 +438,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 AssertDeepEquals(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
             }
+#endif
 
             // icon embedded as bytearray.base64 (created by a ctor from stream)
             reference = refManager.GetObject("TestIconEmbedded"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.

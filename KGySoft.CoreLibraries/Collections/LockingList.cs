@@ -72,7 +72,7 @@ namespace KGySoft.Collections
     /// <seealso cref="LockingCollection{T}" />
     /// <seealso cref="LockingDictionary{TKey,TValue}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
     public class LockingList<T> : LockingCollection<T>, IList<T>
     {

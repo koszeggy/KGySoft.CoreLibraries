@@ -25,7 +25,7 @@ using System.Globalization;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="decimal">decimal</see> type.
+    /// Provides extension methods for the <see cref="decimal">decimal</see> type.
     /// </summary>
     public static class DecimalExtensions
     {

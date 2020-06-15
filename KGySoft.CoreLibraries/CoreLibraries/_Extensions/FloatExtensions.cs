@@ -18,17 +18,20 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="float">float</see> type.
+    /// Provides extension methods for the <see cref="float">float</see> type.
     /// </summary>
     public static class FloatExtensions
     {
         #region Constants
+
+        #region Public Constants
 
         /// <summary>
         /// Represents the negative zero value. This value is constant.
@@ -38,9 +41,21 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Private Constants
+
+        private const float defaultTolerance = 1e-6f;
+
+        #endregion
+
+        #endregion
+
         #region Fields
 
-        private static long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
+#if NETFRAMEWORK || NETSTANDARD2_0
+        private static readonly long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
+#else
+        private static readonly int negativeZeroBits = BitConverter.SingleToInt32Bits(NegativeZero);
+#endif
 
         #endregion
 
@@ -64,7 +79,73 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if <paramref name="value"/> represents a negative zero value; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNegativeZero(this float value) => BitConverter.DoubleToInt64Bits(value) == negativeZeroBits;
+        public static bool IsNegativeZero(this float value) =>
+#if NETFRAMEWORK || NETSTANDARD2_0
+            BitConverter.DoubleToInt64Bits(value) == negativeZeroBits;
+#else
+            BitConverter.SingleToInt32Bits(value) == negativeZeroBits;
+#endif
+
+        /// <summary>
+        /// Gets whether the specified <paramref name="value"/> can be considered zero using a specific <paramref name="tolerance"/>.
+        /// </summary>
+        /// <param name="value">The value to be check.</param>
+        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
+        /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
+        /// <returns><see langword="true"/>&#160;if <paramref name="value"/> can be considered zero using the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static bool TolerantIsZero(this float value, float tolerance = defaultTolerance) =>
+#if NETFRAMEWORK || NETSTANDARD2_0
+            Math.Abs(value) <= tolerance;
+#else
+            MathF.Abs(value) <= tolerance;
+#endif
+
+        /// <summary>
+        /// Gets whether two <see cref="float">float</see> values are equal considering the specified <paramref name="tolerance"/>.
+        /// </summary>
+        /// <param name="value">The value to be compared to another one.</param>
+        /// <param name="other">The other value compared to the self <paramref name="value"/>.</param>
+        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but it should be some low positive value to get a reasonable result. This parameter is optional.
+        /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
+        /// <returns><see langword="true"/>, if the values are equal considering the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static bool TolerantEquals(this float value, float other, float tolerance = defaultTolerance)
+            => TolerantIsZero(value - other, tolerance);
+
+        /// <summary>
+        /// Gets the ceiling of the specified <paramref name="value"/> using a specific <paramref name="tolerance"/>.
+        /// That is the closest integral number to <paramref name="value"/> if the difference from that is not larger than <paramref name="tolerance"/>;
+        /// otherwise, the smallest integral value that is greater than <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The value, whose ceiling is abut to be retrieved.</param>
+        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
+        /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
+        /// <returns>The ceiling of the specified <paramref name="value"/> using the specified <paramref name="tolerance"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static float TolerantCeiling(this float value, float tolerance = defaultTolerance) =>
+#if NETFRAMEWORK || NETSTANDARD2_0
+            TolerantIsZero((float)Math.IEEERemainder(value, 1), tolerance) ? (float)Math.Round(value) : (float)Math.Ceiling(value);
+#else
+            TolerantIsZero(MathF.IEEERemainder(value, 1), tolerance) ? MathF.Round(value) : MathF.Ceiling(value);
+#endif
+
+        /// <summary>
+        /// Gets the floor of the specified <paramref name="value"/> using a specific <paramref name="tolerance"/>.
+        /// That is the closest integral number to <paramref name="value"/> if the difference from that is not larger than <paramref name="tolerance"/>;
+        /// otherwise, the largest integral value that is less than <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The value, whose floor is abut to be retrieved.</param>
+        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
+        /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
+        /// <returns>The floor of the specified <paramref name="value"/> using the specified <paramref name="tolerance"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static float TolerantFloor(this float value, float tolerance = defaultTolerance) =>
+#if NETFRAMEWORK || NETSTANDARD2_0
+            TolerantIsZero((float)Math.IEEERemainder(value, 1), tolerance) ? (float)Math.Round(value) : (float)Math.Floor(value);
+#else
+            TolerantIsZero(MathF.IEEERemainder(value, 1), tolerance) ? MathF.Round(value) : MathF.Floor(value);
+#endif
 
         #endregion
     }

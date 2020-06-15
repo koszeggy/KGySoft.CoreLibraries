@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using KGySoft.Collections;
 using NUnit.Framework;
 
 #endregion
@@ -118,6 +119,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf((" " + toSearch).AsSegment(1), 0, s?.Length ?? 0));
+            if (s != null)
+            {
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment()));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf((" " + toSearch).AsSegment(1)));
+            }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+            if (s != null)
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+#endif
             if (s == null)
                 return;
 
@@ -143,8 +157,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch, 0, s.Length));
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSegment(), 0, s.Length));
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf((" " + toSearch).AsSegment(1), 0, s.Length));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment()));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf((" " + toSearch).AsSegment(1)));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+            Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
+#endif
 
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
@@ -164,7 +184,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void StartsWith(bool expectedResult, string s, string value)
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
+            {
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value.AsSpan(), stringComparison));
+#endif
+            }
 
             if (value.Length == 1)
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value[0]));
@@ -179,7 +204,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void EndsWith(bool expectedResult, string s, string value)
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
-                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value, stringComparison));
+            {
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSegment(), stringComparison));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSpan(), stringComparison));
+#endif
+            }
 
             if (value.Length == 1)
                 Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
@@ -221,6 +251,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 segments = s.AsSegment().Split(separator.AsSegment(), removeEmpty);
                 actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                // as span
+                segments = s.AsSegment().Split(separator.AsSpan(), removeEmpty);
+                actual = segments.Join("|");
+                Assert.AreEqual(expected, actual);
+#endif
 
                 // as string array with multiple values
                 strings = s.Split(new[] { separator, null }, removeEmpty ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
@@ -364,6 +401,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(s.Substring(1).Substring(1), s.AsSegment().Substring(1).Substring(1).ToString());
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             Assert.AreEqual(s[1..^1], s.AsSegment()[1..^1]);
+#endif
+        }
+
+        [TestCase(null, null)]
+        [TestCase("", null)]
+        [TestCase(null, "")]
+        [TestCase("", "")]
+        [TestCase(" x ", null)]
+        [TestCase(" x ", "")]
+        [TestCase(" x ", " ")]
+        [TestCase("abcab", "ab")]
+        public void TrimTest(string s, string trimChars)
+        {
+            char[] chars = trimChars?.ToCharArray();
+            StringSegment segment = s;
+
+            // no reference case
+            if (s == null)
+            {
+                Assert.AreEqual(segment, segment.Trim(chars));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+                Assert.AreEqual(segment, segment.Trim(chars.AsSpan()));
+#endif
+                return;
+            }
+
+            string expected = s.Trim(chars);
+            Assert.AreEqual(expected, segment.Trim(chars));
+            if (chars?.Length == 1)
+                Assert.AreEqual(expected, segment.Trim(chars[0]));
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+            Assert.AreEqual(expected, segment.Trim(chars.AsSpan()));
 #endif
         }
 

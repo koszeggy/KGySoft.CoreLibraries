@@ -40,7 +40,7 @@ namespace KGySoft.Collections
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <typeparam name="T">The type of the element in the collection.</typeparam>
+    /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="Array2D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
     /// <para>If the current platform supports it, the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
@@ -120,13 +120,13 @@ namespace KGySoft.Collections
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
-        /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Memory{T}"/>.
+        /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => buffer.AsMemory;
 
         /// <summary>
-        /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Span{T}"/>.
+        /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => buffer.AsSpan;
@@ -230,7 +230,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
                 Justification = "See the Buffer property")]
-        public static implicit operator ArraySection<T>(in Array2D<T> array) => array.buffer;
+        public static implicit operator ArraySection<T>(Array2D<T> array) => array.buffer;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -242,7 +242,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
                 Justification = "False alarm, see AsSpan")]
-        public static implicit operator Span<T>(in Array2D<T> array) => array.AsSpan;
+        public static implicit operator Span<T>(Array2D<T> array) => array.AsSpan;
 #endif
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the equality check.</returns>
-        public static bool operator ==(in Array2D<T> a, in Array2D<T> b) => a.Equals(b);
+        public static bool operator ==(Array2D<T> a, Array2D<T> b) => a.Equals(b);
 
         /// <summary>
         /// Determines whether two specified <see cref="Array2D{T}"/> instances have different values.
@@ -259,7 +259,7 @@ namespace KGySoft.Collections
         /// <param name="a">The left argument of the equality check.</param>
         /// <param name="b">The right argument of the equality check.</param>
         /// <returns>The result of the inequality check.</returns>
-        public static bool operator !=(in Array2D<T> a, in Array2D<T> b) => !(a == b);
+        public static bool operator !=(Array2D<T> a, Array2D<T> b) => !(a == b);
 
         #endregion
 

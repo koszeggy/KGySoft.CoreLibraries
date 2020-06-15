@@ -25,7 +25,7 @@ using System.IO;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Stream"/> type.
+    /// Provides extension methods for the <see cref="Stream"/> type.
     /// </summary>
     public static class StreamExtensions
     {

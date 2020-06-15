@@ -28,7 +28,7 @@ using KGySoft.Annotations;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="WaitHandle"/> type.
+    /// Provides extension methods for the <see cref="WaitHandle"/> type.
     /// </summary>
     /// <remarks>
     /// <note>This class is available only in .NET 4.5 and above.</note>

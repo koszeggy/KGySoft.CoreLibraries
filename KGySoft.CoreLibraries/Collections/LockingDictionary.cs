@@ -81,7 +81,7 @@ namespace KGySoft.Collections
     /// <seealso cref="LockingList{T}" />
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     public class LockingDictionary<TKey, TValue> : LockingCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
     {
         #region Properties and Indexers

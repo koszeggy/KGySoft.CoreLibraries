@@ -16,6 +16,8 @@
 
 #region Usings
 
+using KGySoft.Drawing;
+
 #region Used Namespaces
 
 using System;
@@ -31,12 +33,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
+using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization.Binary;
 
@@ -47,7 +50,7 @@ using NUnit.Framework.Internal;
 
 #region Used Aliases
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
 using SystemResXResourceReader = System.Resources.ResXResourceReader;
 using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 #endif
@@ -85,22 +88,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
             {
-                List<byte> bytes = value as List<byte>;
-                if (destinationType == typeof(string) && bytes != null)
+                if (destinationType == typeof(string) && value is List<byte> bytes)
                     return bytes.ToArray().ToDecimalValuesString();
 
-                HashSet<byte> hashbytes = value as HashSet<byte>;
-                if (destinationType == typeof(string) && hashbytes != null)
+                if (destinationType == typeof(string) && value is HashSet<byte> hashbytes)
                     return "H" + hashbytes.ToArray().ToDecimalValuesString();
 
-                List<TestEnum> enums = value as List<TestEnum>;
-                if (destinationType == typeof(string) && enums != null)
+                if (destinationType == typeof(string) && value is List<TestEnum> enums)
                     return "E" + enums.Select(e => (byte)e).ToArray().ToDecimalValuesString();
 
-                HashSet<TestEnum> hashenums = value as HashSet<TestEnum>;
-                if (destinationType == typeof(string) && hashenums != null)
+                if (destinationType == typeof(string) && value is HashSet<TestEnum> hashenums)
                     return "X" + hashenums.Select(e => (byte)e).ToArray().ToDecimalValuesString();
-
 
                 return base.ConvertTo(context, culture, value, destinationType);
             }
@@ -157,67 +155,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Methods
 
-        #region Static Methods
-
-#if !NETCOREAPP2_0
-        private static Metafile CreateTestMetafile()
-        {
-            Graphics refGraph = Graphics.FromHwnd(IntPtr.Zero);
-            IntPtr hdc = refGraph.GetHdc();
-            Metafile result = new Metafile(hdc, EmfType.EmfOnly, "Test");
-
-            //Draw some silly drawing
-            using (var g = Graphics.FromImage(result))
-            {
-                var r = new Rectangle(0, 0, 100, 100);
-                var reye1 = new Rectangle(20, 20, 20, 30);
-                var reye2 = new Rectangle(60, 20, 20, 30);
-
-                g.FillEllipse(Brushes.Yellow, r);
-                g.FillEllipse(Brushes.White, reye1);
-                g.FillEllipse(Brushes.White, reye2);
-                g.DrawEllipse(Pens.Black, reye1);
-                g.DrawEllipse(Pens.Black, reye2);
-                g.DrawBezier(Pens.Red, new Point(10, 50), new Point(10, 100), new Point(90, 100), new Point(90, 50));
-            }
-
-            refGraph.ReleaseHdc(hdc);
-            refGraph.Dispose();
-            return result;
-        }
-
-        private static Bitmap CreateTestTiff()
-        {
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            throw new NotImplementedException();
-            //var msTiff = new MemoryStream();
-            //Images.InformationMultiSize.ExtractBitmaps().SaveAsMultipageTiff(msTiff);
-            //msTiff.Position = 0L;
-            //var tiffImage = new Bitmap(msTiff);
-            //return tiffImage;
-        } 
-#endif
-
-        #endregion
-
-        #region Instance Methods
-
         #region Public Methods
 
         [Test]
         public void ReadWriteRead()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
             ReadWriteReadResX(path, true, false);
 
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            //path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            //ReadWriteReadResX(path, true, true);
-            //ReadWriteReadResX(path, false, true);
-            //ReadWriteReadResX(path, true, false);
+#if NETFRAMEWORK
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
+            path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            ReadWriteReadResX(path, true, true);
+            ReadWriteReadResX(path, false, true);
+            ReadWriteReadResX(path, true, false);
+#endif
         }
 
         [Test]
@@ -250,7 +204,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new TimeSpan(1, 2, 3, 4, 5),
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
         }
@@ -278,7 +234,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
         }
 
@@ -313,7 +271,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Decimal.MaxValue
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly
         }
 
@@ -366,7 +326,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿',
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
 
             // system serializer fails here
@@ -410,7 +372,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' }),
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
 
             // These strings cannot be (de)serialized with system serializer
@@ -445,7 +409,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     typeof(List<>).GetGenericArguments()[0] // this can be only binary serialized  
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
 
             KGySerializeObjects(referenceObjects); 
             KGySerializeObjects(referenceObjects, false);
@@ -458,10 +424,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            //CursorHandle cursor = Images.Information.ToCursorHandle();
-
+#if !(NET35 || NETCOREAPP2_0) // .NET35 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>(); 
+#endif
             object[] referenceObjects =
                 {
                     // built-in
@@ -476,16 +441,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     CultureInfo.GetCultureInfo("en"),
                     CultureInfo.GetCultureInfo("en-US"),
 
-                    // partly working built-in
-#if !NETCOREAPP2_0
+                // partly working built-in
+#if NETFRAMEWORK
                     Cursors.Arrow, // a default cursor: by string
-                    //new Cursor(cursor), // custom cursor: exception is thrown both for string and byte[] conversion
+#endif
 
-                    // TODO: re-enable after referencing KGySoft.Drawing from nuget
-                    //Icons.Information, // multi-resolution icon (built-in saves one page only)
-                    //Images.InformationMultiSize, // multi-resolution bitmap-icon (built-in saves one page only)
-                    //CreateTestTiff(), // multipage TIFF (built-in saves first page only)
-                    //CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#if !(NET35 || NETCOREAPP2_0) // .NET 3.5 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+                    Icons.Information, // multi-resolution icon (built-in saves one page only)
+                    Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
+#if WINDOWS
+                    CreateTestTiff(), // multipage TIFF (built-in saves first page only)
+                    CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#endif
 #endif
 
                     // pure custom
@@ -493,10 +460,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Encoding.UTF7,
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
-            //cursor.Dispose();
         }
 
         [Test]
@@ -515,7 +483,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Array.CreateInstance(typeof(byte), new int[] { 3, 3 }, new int[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
 #if !NETCOREAPP3_0
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false); 
@@ -538,7 +508,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new string[,] { { "One", "Two" }, { "One", "Two" } }, // multidimensional string array
                 };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
 
@@ -627,7 +599,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
                 // binary wrapper
@@ -635,15 +607,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false),
                 new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false, true),
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
                 // legacy formats: KGy version converts these to self formats
-                new System.Resources.ResXFileRef(path, "System.String"),
+                new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName),
                 new System.Resources.ResXDataNode("TestString", "string"),
-                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 
+#if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
 
@@ -652,8 +626,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 // self formats: supported only by KGySoft
                 new ResXFileRef(path, typeof(string)),
                 new ResXDataNode("TestString", "string"),
-#if !NETCOREAPP2_0
-                new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+#if NETFRAMEWORK
+                new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 
@@ -678,9 +652,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     }
                 };
 
+            // ReSharper disable once ConvertToLocalFunction - it will be a delegate in the end when passed to the methods
+#pragma warning disable IDE0039 // Use local function
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
+#pragma warning restore IDE0039 // Use local function
             ITypeResolutionService typeResolver = new TestTypeResolver();
-            SystemSerializeObjects(referenceObjects, typeNameConverter, typeResolver);
+
+#if NETFRAMEWORK
+            SystemSerializeObjects(referenceObjects);
+#endif
             KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);
             KGySerializeObjects(referenceObjects, false, true, typeNameConverter, typeResolver);
         }
@@ -761,9 +741,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
         }
 
+#if NETFRAMEWORK
         private void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
         {
-#if !NETCOREAPP2_0
             using (new TestExecutionContext.IsolatedContext())
             {
                 Console.WriteLine($"------------------System ResXResourceWriter (Items Count: {referenceObjects.Length})--------------------");
@@ -771,7 +751,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     StringBuilder sb = new StringBuilder();
                     using (SystemResXResourceWriter writer =
-#if NET35 || NETCOREAPP3_0
+#if NET35
                         new SystemResXResourceWriter(new StringWriter(sb))
 
 #else
@@ -804,8 +784,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Console.WriteLine($"System serialization failed: {e}");
                 }
             }  
-#endif
         }
+#endif
 
         private void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
         {
@@ -832,7 +812,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             if (compatibilityMode)
             {
                 deserializedObjects.Clear();
@@ -859,8 +839,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             } 
 #endif
         }
-
-        #endregion
 
         #endregion
 

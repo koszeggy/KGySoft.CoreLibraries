@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -223,10 +222,20 @@ namespace KGySoft.Reflection
 
         #region Constants
 
+        #region Internal Constants
+
+        internal const string StringTypeFullName = "System.String";
+
+        #endregion
+
+        #region Private Constants
+
         private const int pointer = -1;
         private const int byRef = -2;
 
         private const TypeNameKind removeAssemblyVersions = (TypeNameKind)(-1);
+
+        #endregion
 
         #endregion
 
@@ -673,13 +682,7 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char == '*') // pointer
-                {
-                    modifiers.Add(pointer);
-                    return;
-                }
-
-                if (ctx.Char == '&') // pointer
+                if (ctx.Char == '&') // ByRef type
                 {
                     modifiers.Add(byRef);
                     return;

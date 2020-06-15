@@ -65,7 +65,7 @@ namespace KGySoft.Reflection
 
         private static readonly string[] coreLibNames =
         {
-            CoreLibrariesAssembly.FullName.Split(',')[0].ToLowerInvariant(), // could be by GetName but that requires FileIOPermission
+            CoreLibrariesAssembly.FullName.Split(new[] { ',' }, 2)[0], // could be by GetName but that requires FileIOPermission
 #if !NETFRAMEWORK
             mscorlibName
 #endif
@@ -166,10 +166,23 @@ namespace KGySoft.Reflection
                 || publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
         }
 
-        internal static bool IsCoreLibAssemblyName(string assemblyName)
+        internal static bool IsCoreLibAssemblyName(string assemblyName) => IsCoreLibAssemblyName(new StringSegmentInternal(assemblyName));
+
+        internal static bool IsCoreLibAssemblyName(StringSegmentInternal assemblyName)
         {
-            string name = assemblyName.Split(new[] { ',' }, 2)[0].ToLowerInvariant();
-            return name.In(coreLibNames);
+            if (!assemblyName.TryGetNextSegment(',', out StringSegmentInternal name))
+                return false;
+
+            // ReSharper disable once LoopCanBeConvertedToQuery - performance, allocation
+            // ReSharper disable once ForCanBeConvertedToForeach - performance, allocation
+            for (var i = 0; i < coreLibNames.Length; i++)
+            {
+                string libName = coreLibNames[i];
+                if (name.EqualsOrdinalIgnoreCase(libName))
+                    return true;
+            }
+
+            return false;
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Same signature for every target platform.")]

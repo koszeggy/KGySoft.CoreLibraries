@@ -17,11 +17,13 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 #if NETFRAMEWORK
 using System.Reflection;
 #endif
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -150,10 +152,13 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="target">The target file or directory name. Can be either an absolute path or a relative one to current directory.</param>
         /// <param name="baseDirectory">The base directory to which the relative <paramref name="target" /> path should be determined.</param>
+        /// <param name="isCaseSensitive"><see langword="true"/>&#160;to perform a case-sensitive comparison;
+        /// <see langword="false"/>&#160;to perform a case-insensitive comparison.</param>
         /// <returns>The relative path of <paramref name="target" /> from <paramref name="baseDirectory" />, or the absolute path of <paramref name="target" /> if there is no relative path between them.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="baseDirectory"/> is <see langword="null"/>.</exception>
         /// <returns>The relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.</returns>
-        public static string GetRelativePath(string target, string baseDirectory)
+        [SecuritySafeCritical]
+        public static unsafe string GetRelativePath(string target, string baseDirectory, bool isCaseSensitive)
         {
             if (target == null)
                 Throw.ArgumentNullException(Argument.target);
@@ -167,40 +172,83 @@ namespace KGySoft.CoreLibraries
             target = Path.GetFullPath(target);
             baseDirectory = Path.GetFullPath(baseDirectory);
 
-            string[] basePathParts = baseDirectory.Trim(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);
-            string[] targetPathParts = target.Trim(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);
+            var srcDir = new StringSegmentInternal(baseDirectory);
+            srcDir.TrimEnd(Path.DirectorySeparatorChar);
+            List<StringSegmentInternal> basePathParts = srcDir.Split(Path.DirectorySeparatorChar);
+
+            var dstDir = new StringSegmentInternal(target);
+            dstDir.TrimEnd(Path.DirectorySeparatorChar);
+            List<StringSegmentInternal> targetPathParts = dstDir.Split(Path.DirectorySeparatorChar);
 
             int commonPathDepth = 0;
-            for (int i = 0; i < Math.Min(basePathParts.Length, targetPathParts.Length); i++)
+            int len = Math.Min(basePathParts.Count, targetPathParts.Count);
+            if (isCaseSensitive)
             {
-                if (!basePathParts[i].Equals(targetPathParts[i], StringComparison.OrdinalIgnoreCase))
-                    break;
-                commonPathDepth += 1;
+                for (int i = 0; i < len; i++)
+                {
+                    if (!basePathParts[i].Equals(targetPathParts[i]))
+                        break;
+                    commonPathDepth += 1;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    if (!basePathParts[i].EqualsOrdinalIgnoreCase(targetPathParts[i]))
+                        break;
+                    commonPathDepth += 1;
+                }
             }
 
             // no common parts
             if (commonPathDepth == 0)
                 return target;
 
-            StringBuilder result = new StringBuilder();
-            for (int i = commonPathDepth; i < basePathParts.Length; i++)
+            int baseOnlyCount = basePathParts.Count - commonPathDepth;
+            int targetPathCount = targetPathParts.Count;
+            len = baseOnlyCount > 0 ? baseOnlyCount * 2 + (baseOnlyCount - 1) : 0; // .. and path separators
+            for (int i = commonPathDepth; i < targetPathCount; i++)
             {
-                if (i > commonPathDepth)
-                    result.Append(Path.DirectorySeparatorChar);
-                result.Append("..");
+                if (len > 0)
+                    len += 1;
+                len += targetPathParts[i].Length;
+            }
+
+            string result = new String('\0', len);
+            fixed (char* pResult = result)
+            {
+                var sb = new MutableStringBuilder(pResult, len);
+                for (int i = 0; i < baseOnlyCount; i++)
+                {
+                    if (i > 0)
+                        sb.Append(Path.DirectorySeparatorChar);
+                    sb.Append("..");
+                }
+
+                for (int i = commonPathDepth; i < targetPathCount; i++)
+                {
+                    if (sb.Length > 0)
+                        sb.Append(Path.DirectorySeparatorChar);
+                    sb.Append(targetPathParts[i]);
+                }
             }
 
             if (result.Length == 0)
-                result.Append(".");
-
-            for (int i = commonPathDepth; i < targetPathParts.Length; i++)
-            {
-                result.Append(Path.DirectorySeparatorChar);
-                result.Append(targetPathParts[i]);
-            }
-
-            return result.ToString();
+                return ".";
+            return result;
         }
+
+        /// <summary>
+        /// Gets the relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.
+        /// This overload performs a case insensitive comparison.
+        /// </summary>
+        /// <param name="target">The target file or directory name. Can be either an absolute path or a relative one to current directory.</param>
+        /// <param name="baseDirectory">The base directory to which the relative <paramref name="target" /> path should be determined.</param>
+        /// <returns>The relative path of <paramref name="target" /> from <paramref name="baseDirectory" />, or the absolute path of <paramref name="target" /> if there is no relative path between them.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="baseDirectory"/> is <see langword="null"/>.</exception>
+        /// <returns>The relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.</returns>
+        public static string GetRelativePath(string target, string baseDirectory) => GetRelativePath(target, baseDirectory, false);
 
         /// <summary>
         /// Returns whether a wildcarded pattern matches a file name.

@@ -36,7 +36,7 @@ using KGySoft.Security.Cryptography;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Random"/> type.
+    /// Provides extension methods for the <see cref="Random"/> type.
     /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <example>

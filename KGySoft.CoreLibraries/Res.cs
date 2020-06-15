@@ -156,7 +156,7 @@ namespace KGySoft
         /// <summary>The array section has no elements.</summary>
         internal static string ArraySectionEmpty => Get("ArraySection_Empty");
 
-        /// <summary>The array section has insufficient capacity.</summary>
+        /// <summary>The specified buffer has insufficient capacity.</summary>
         internal static string ArraySectionInsufficientCapacity => Get("ArraySection_InsufficientCapacity");
 
         #endregion
@@ -921,6 +921,15 @@ namespace KGySoft
         /// <summary>Array of pointer type '{0}' is not supported.</summary>
         internal static string SerializationPointerArrayTypeNotSupported(Type type) => Get("Serialization_PointerArrayTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
+        #endregion
+
+        #region SpanExtensions
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+
+        /// <summary>The specified span '{0}' cannot be parsed as type {1}.</summary>
+        internal static string SpanExtensionsCannotParseAsType(ReadOnlySpan<char> s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s.ToString(), type);
+
+#endif
         #endregion
 
         #region StringExtensions

@@ -21,8 +21,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices; 
-using System.Security; 
+using System.Runtime.CompilerServices;
+using System.Security;
+
+using KGySoft.Collections;
 
 #endregion
 
@@ -36,12 +38,12 @@ namespace KGySoft.CoreLibraries
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
-    public static class Enum<TEnum> where TEnum : struct, Enum
+    public static partial class Enum<TEnum> where TEnum : struct, Enum
     {
         #region Fields
 
-        // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
-        private static readonly bool isFlags = (typeof(TEnum)).IsFlagsEnum();
+        // ReSharper disable StaticMemberInGenericType - all fields in this class depend on TEnum
+        private static readonly bool isFlags = typeof(TEnum).IsFlagsEnum();
 
         // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
         // but that is alright. Once a field is set no more locks will be requested for it again.
@@ -55,10 +57,10 @@ namespace KGySoft.CoreLibraries
         private static TEnum[] values;
         private static string[] names;
         private static Dictionary<TEnum, string> valueNamePairs;
-        private static Dictionary<string, TEnum> nameValuePairs;
+        private static StringKeyedDictionary<TEnum> nameValuePairs;
         private static (ulong[] RawValues, string[] Names) rawValueNamePairs;
-        private static Dictionary<MutableStringSegment, ulong> nameRawValuePairs;
-        private static Dictionary<MutableStringSegment, ulong> nameRawValuePairsIgnoreCase;
+        private static StringKeyedDictionary<ulong> nameRawValuePairs;
+        private static StringKeyedDictionary<ulong> nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
         // ReSharper restore StaticMemberInGenericType
 
@@ -69,9 +71,9 @@ namespace KGySoft.CoreLibraries
         private static string[] Names => names ?? InitNames();
         private static TEnum[] Values => values ?? InitValues();
         private static Dictionary<TEnum, string> ValueNamePairs => valueNamePairs ?? InitValueNamePairs();
-        private static Dictionary<string, TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
-        private static Dictionary<MutableStringSegment, ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
-        private static Dictionary<MutableStringSegment, ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
+        private static StringKeyedDictionary<TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
+        private static StringKeyedDictionary<ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
+        private static StringKeyedDictionary<ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
 
         private static string Zero =>
             rawValueNamePairs.RawValues.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
@@ -164,6 +166,28 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.value);
             return NameValuePairs.ContainsKey(value);
         }
+
+        /// <summary>
+        /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
+        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
+        public static bool IsDefined(StringSegment value)
+        {
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.ContainsKey(value);
+        }
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        /// <summary>
+        /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
+        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
+        public static bool IsDefined(ReadOnlySpan<char> value) => NameValuePairs.ContainsKey(value);
+#endif
 
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
@@ -362,146 +386,6 @@ namespace KGySoft.CoreLibraries
         public static TEnum GetFlagsMask() => converter.ToEnum(FlagsMask);
 
         /// <summary>
-        /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used.</param>
-        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/>&#160;if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
-        public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
-        {
-            if (value == null)
-                Throw.ArgumentNullException(Argument.value);
-
-            // simple name match test
-            if (NameValuePairs.TryGetValue(value, out result))
-                return true;
-
-            var s = new MutableStringSegment(value);
-            s.Trim();
-            result = default(TEnum);
-            if (s.Length == 0)
-                return false;
-
-            // simple numeric value
-            char c = s[0];
-            if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
-            {
-                result = converter.ToEnum(numericValue);
-                return true;
-            }
-
-            // rest: flags enum or ignored case
-            if (String.IsNullOrEmpty(separator))
-                separator = EnumExtensions.DefaultParseSeparator;
-
-            ulong acc = 0UL;
-            while (s.TryGetNextSegment(separator, out MutableStringSegment token))
-            {
-                token.Trim();
-                if (token.Length == 0)
-                    return false;
-
-                // literal token found in dictionary
-                if (NameRawValuePairs.TryGetValue(token, out ulong tokens))
-                {
-                    acc |= tokens;
-                    continue;
-                }
-
-                // checking for case-insensitive match
-                if (ignoreCase && NameRawValuePairsIgnoreCase.TryGetValue(token, out tokens))
-                {
-                    acc |= tokens;
-                    continue;
-                }
-
-                // checking if is numeric token
-                c = token[0];
-                if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
-                {
-                    acc |= numericValue;
-                    continue;
-                }
-
-                // none of above
-                return false;
-            }
-
-            result = converter.ToEnum(acc);
-            return true;
-        }
-
-        /// <summary>
-        /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/>&#160;if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
-        public static bool TryParse(string value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
-
-        /// <summary>
-        /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used.</param>
-        /// <param name="result"><see langword="null"/>&#160;if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">If <paramref name="value"/> is not a simple field or numeric value</exception>
-        public static bool TryParse(string value, string separator, out TEnum result) => TryParse(value, separator, false, out result);
-
-        /// <summary>
-        /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="result"><see langword="null"/>&#160;if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
-        public static bool TryParse(string value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
-
-        /// <summary>
-        /// Converts the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values specified the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used. This parameter is optional.
-        /// <br/>Default value: <c>,</c></param>
-        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
-        public static TEnum Parse(string value, string separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
-        {
-            if (!TryParse(value, separator, ignoreCase, out TEnum result))
-                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value, typeof(TEnum)));
-            return result;
-        }
-
-        /// <summary>
-        /// Converts the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// </summary>
-        /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
-        public static TEnum Parse(string value, bool ignoreCase)
-        {
-            if (!TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out TEnum result))
-                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value, typeof(TEnum)));
-            return result;
-        }
-
-        /// <summary>
         /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
@@ -521,7 +405,7 @@ namespace KGySoft.CoreLibraries
             // returning as flags
             if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
                 return FormatCompoundFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
-            
+
             // defined value exists
             if (ValueNamePairs.TryGetValue(value, out string name))
                 return name;
@@ -540,7 +424,7 @@ namespace KGySoft.CoreLibraries
             // returning as flags
             if (isFlags)
                 return FormatCompoundFlags(value, EnumExtensions.DefaultFormatSeparator, false);
-            
+
             // defined value exists
             if (ValueNamePairs.TryGetValue(value, out string name))
                 return name;
@@ -662,17 +546,17 @@ namespace KGySoft.CoreLibraries
                 return values = (TEnum[])Enum.GetValues(typeof(TEnum));
         }
 
-        private static Dictionary<string, TEnum> InitNameValuePairs()
+        private static StringKeyedDictionary<TEnum> InitNameValuePairs()
         {
             lock (syncRoot)
             {
-                Dictionary<string, TEnum> result = nameValuePairs;
+                StringKeyedDictionary<TEnum> result = nameValuePairs;
 
                 // lost race
                 if (result != null)
                     return result;
 
-                result = new Dictionary<string, TEnum>(Names.Length);
+                result = new StringKeyedDictionary<TEnum>(Names.Length);
                 for (int i = 0; i < Values.Length; i++)
                     result.Add(names[i], values[i]);
                 return nameValuePairs = result;
@@ -701,37 +585,37 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static Dictionary<MutableStringSegment, ulong> InitNameRawValuePairs()
+        private static StringKeyedDictionary<ulong> InitNameRawValuePairs()
         {
             lock (syncRoot)
             {
-                Dictionary<MutableStringSegment, ulong> result = nameRawValuePairs;
+                StringKeyedDictionary<ulong> result = nameRawValuePairs;
 
                 // lost race
                 if (result != null)
                     return result;
 
-                result = new Dictionary<MutableStringSegment, ulong>(Names.Length);
+                result = new StringKeyedDictionary<ulong>(Names.Length);
                 for (int i = 0; i < Values.Length; i++)
-                    result.Add(new MutableStringSegment(names[i]), converter.ToUInt64(values[i]));
+                    result.Add(names[i], converter.ToUInt64(values[i]));
 
                 return nameRawValuePairs = result;
             }
         }
 
-        private static Dictionary<MutableStringSegment, ulong> InitNameRawValuePairsIgnoreCase()
+        private static StringKeyedDictionary<ulong> InitNameRawValuePairsIgnoreCase()
         {
             lock (syncRoot)
             {
-                Dictionary<MutableStringSegment, ulong> result = nameRawValuePairsIgnoreCase;
+                StringKeyedDictionary<ulong> result = nameRawValuePairsIgnoreCase;
 
                 // lost race
                 if (result != null)
                     return result;
 
-                result = new Dictionary<MutableStringSegment, ulong>(Names.Length, MutableStringSegment.IgnoreCaseComparer);
-                Dictionary<MutableStringSegment, ulong> refDict = NameRawValuePairs;
-                foreach (KeyValuePair<MutableStringSegment, ulong> pair in refDict)
+                result = new StringKeyedDictionary<ulong>(Names.Length, StringSegmentComparer.OrdinalIgnoreCase);
+                StringKeyedDictionary<ulong> refDict = NameRawValuePairs;
+                foreach (KeyValuePair<string, ulong> pair in refDict)
                     result[pair.Key] = pair.Value;
 
                 return nameRawValuePairsIgnoreCase = result;
@@ -968,7 +852,7 @@ namespace KGySoft.CoreLibraries
         private static int GetStringLength(ulong value)
         {
             if (!underlyingInfo.IsSigned)
-                return (int)Math.Log10(value) + 1;
+                return value.DecimalDigitsCount();
             long signed = ToSigned(value);
             int sign;
             if (signed < 0)
@@ -979,7 +863,7 @@ namespace KGySoft.CoreLibraries
             else
                 sign = 0;
 
-            return (int)Math.Log10(signed) + 1 + sign;
+            return ((ulong)signed).DecimalDigitsCount() + sign;
         }
 
         #endregion

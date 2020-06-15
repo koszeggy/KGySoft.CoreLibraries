@@ -35,7 +35,7 @@ namespace KGySoft.CoreLibraries
 #endif
 
     /// <summary>
-    /// Represents a segment of a <see cref="string"/>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
+    /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.
     /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
@@ -232,7 +232,7 @@ namespace KGySoft.CoreLibraries
 
             #region Constructors
 
-            internal Enumerator(in StringSegment segment)
+            internal Enumerator(StringSegment segment)
             {
                 this.segment = segment;
                 index = 0;
@@ -336,15 +336,20 @@ namespace KGySoft.CoreLibraries
         public int Offset => offset;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string"/>.
+        /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
         /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
         public bool IsNull => str == null;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance represents an empty segment or was created from a <see langword="null"/>&#160;<see cref="string"/>.
+        /// Gets whether this <see cref="StringSegment"/> instance represents an empty segment or was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
         /// </summary>
         public bool IsNullOrEmpty => length == 0;
+
+        /// <summary>
+        /// Gets whether this <see cref="StringSegment"/> instance represents a <see langword="null"/>&#160;or empty <see cref="string">string</see>, or contains only whitespace characters.
+        /// </summary>
+        public bool IsNullOrWhiteSpace => length == 0 || TrimStart().length == 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -436,7 +441,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="string">string</see> instance that represents the specified <see cref="StringSegment"/>.
         /// </returns>
-        public static explicit operator string(in StringSegment stringSegment) => stringSegment.ToString();
+        public static explicit operator string(StringSegment stringSegment) => stringSegment.ToString();
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -448,7 +453,7 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "False alarm, see AsSpan")]
-        public static implicit operator ReadOnlySpan<char>(in StringSegment stringSegment) => stringSegment.AsSpan;
+        public static implicit operator ReadOnlySpan<char>(StringSegment stringSegment) => stringSegment.AsSpan;
 #endif
 
         #endregion
@@ -485,23 +490,14 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int GetHashCode()
         {
             if (str == null)
                 return 0;
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            // This does not use a randomized hash but at least this way we don't allocate a new string
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + GetCharInternal(i);
-
-            return result;
-#else
-            return String.GetHashCode(AsSpan);
-#endif
-
-
+            return length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinal(str)
+                : StringSegmentComparer.GetHashCodeOrdinal(str, offset, length);
         }
 
         /// <summary>
@@ -572,16 +568,9 @@ namespace KGySoft.CoreLibraries
         {
             if (str == null)
                 return 0;
-
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + Char.ToUpperInvariant(GetCharInternal(i));
-
-            return result;
-#else
-            return String.GetHashCode(AsSpan, StringComparison.OrdinalIgnoreCase);
-#endif
+            return length == str.Length
+                ? StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str)
+                : StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(str, offset, length);
         }
 
         #endregion

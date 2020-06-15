@@ -45,10 +45,10 @@ namespace KGySoft
         [ContractAnnotation("=> halt")]internal static T ArgumentNullException<T>(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
         [ContractAnnotation("=> halt")]internal static void ArgumentNullException(Argument arg, string message) => throw CreateArgumentNullException(arg, message);
 
-        internal static void ThrowIfNullIsInvalid<T>(object value)
+        internal static void ThrowIfNullIsInvalid<T>(object value, Argument? arg = null)
         {
             if (value == null && default(T) != null)
-                Throw.ArgumentNullException(Argument.value);
+                Throw.ArgumentNullException(arg ?? Argument.value);
         }
 
         [ContractAnnotation("=> halt")]internal static void ArgumentException(string message, Exception inner = null) => throw CreateArgumentException(null, message, inner);

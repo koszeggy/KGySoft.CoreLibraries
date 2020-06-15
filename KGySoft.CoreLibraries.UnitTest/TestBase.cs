@@ -25,7 +25,9 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel.Design;
+#if NETFRAMEWORK
+using System.ComponentModel.Design; 
+#endif
 using System.Drawing;
 using System.Drawing.Imaging; 
 using System.IO;
@@ -37,10 +39,11 @@ using System.Security.Permissions;
 using System.Security.Policy; 
 #endif
 using System.Text;
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
+using KGySoft.Drawing;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization.Binary;
@@ -52,7 +55,7 @@ using NUnit.Framework;
 #region Used Aliases
 
 using Assert = NUnit.Framework.Assert;
-#if NETFRAMEWORK || NETCOREAPP3_0
+#if NETFRAMEWORK
 using SystemDataNode = System.Resources.ResXDataNode;
 using SystemFileRef = System.Resources.ResXFileRef; 
 #endif
@@ -227,6 +230,50 @@ namespace KGySoft.CoreLibraries
         } 
 #endif
 
+#if !NETCOREAPP2_0 && WINDOWS
+        protected static Metafile CreateTestMetafile()
+        {
+            Graphics refGraph = Graphics.FromHwnd(IntPtr.Zero);
+            IntPtr hdc = refGraph.GetHdc();
+            Metafile result = new Metafile(hdc, EmfType.EmfOnly, "Test");
+
+            //Draw some silly drawing
+            using (var g = Graphics.FromImage(result))
+            {
+                var r = new Rectangle(0, 0, 100, 100);
+                var reye1 = new Rectangle(20, 20, 20, 30);
+                var reye2 = new Rectangle(60, 20, 20, 30);
+
+                g.FillEllipse(Brushes.Yellow, r);
+                g.FillEllipse(Brushes.White, reye1);
+                g.FillEllipse(Brushes.White, reye2);
+                g.DrawEllipse(Pens.Black, reye1);
+                g.DrawEllipse(Pens.Black, reye2);
+                g.DrawBezier(Pens.Red, new Point(10, 50), new Point(10, 100), new Point(90, 100), new Point(90, 50));
+            }
+
+            refGraph.ReleaseHdc(hdc);
+            refGraph.Dispose();
+            return result;
+        }
+
+        protected static Bitmap CreateTestTiff()
+        {
+            var msTiff = new MemoryStream();
+            Icons.Information.ExtractBitmaps().SaveAsMultipageTiff(msTiff);
+            msTiff.Position = 0L;
+            var tiffImage = new Bitmap(msTiff);
+            return tiffImage;
+        } 
+#endif
+
+        protected static string Combine(string p1, string p2, string p3) =>
+#if NET35
+            Path.Combine(p1, Path.Combine(p2, p3));
+#else
+            Path.Combine(p1, p2, p3);
+#endif
+
         #endregion
 
         #region Private Methods
@@ -252,7 +299,7 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(ResXDataNode))
                     return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
@@ -273,10 +320,10 @@ namespace KGySoft.CoreLibraries
             checkedObjects.Add(reference);
             try
             {
-                if (!(reference is string) && reference is IEnumerable)
+                if (!(reference is string) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
-                        ? CheckMembersAndItemsEqual(reference, check, errors, checkedObjects)
-                        : CheckItemsEqual((IEnumerable)reference, (IEnumerable)check, false, errors, checkedObjects);
+                        ? CheckMembersAndItemsEqual(enumerable, check, errors, checkedObjects)
+                        : CheckItemsEqual(enumerable, (IEnumerable)check, false, errors, checkedObjects);
 
                 if (reference is float floatRef && check is float floatCheck)
                     return Check(BitConverter.ToInt32(BitConverter.GetBytes(floatRef), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0), $"Float equality failed: {floatRef.ToRoundtripString()} <-> {floatCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(floatRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(floatCheck).ToHexValuesString()}", errors);
@@ -315,13 +362,12 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
 
-                // TODO: reference KGySoft.Drawing from nuget
                 if (typeRef == typeof(Metafile))
-                    return true; //return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
+                    return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
                 if (typeRef == typeof(Icon))
-                    return true; //return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
+                    return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
                 if (typeRef == typeof(ImageListStreamer))
                 {
                     var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };

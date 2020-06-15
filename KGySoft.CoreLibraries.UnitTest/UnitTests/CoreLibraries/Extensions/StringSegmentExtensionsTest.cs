@@ -222,6 +222,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
         }
 
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+        [Test]
+        public void ReadToSeparatorSpanTest()
+        {
+            StringSegment ss = null;
+            Assert.AreEqual(StringSegment.Null, ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.AreEqual(StringSegment.Null, ss.ReadToSeparator(" ".AsSpan()));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = StringSegment.Empty;
+            Assert.AreEqual(StringSegment.Empty, ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = " ".AsSegment();
+            Assert.AreEqual(" ", ss.ReadToSeparator(ReadOnlySpan<char>.Empty));
+            Assert.IsTrue(ss.IsNull);
+
+            ss = "alpha, beta gamma  delta ";
+            ReadOnlySpan<char> sep = ", ";
+            Assert.AreEqual("alpha", ss.ReadToSeparator(sep));
+            Assert.AreEqual("beta gamma  delta ", ss.ReadToSeparator(sep));
+            Assert.IsTrue(ss.IsNull);
+        } 
+#endif
+
         [Test]
         public void ReadLineTest()
         {
@@ -255,6 +280,32 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual("23", ss);
             Assert.AreEqual("23", ss.Read(10));
             Assert.IsTrue(ss.IsNull);
+        }
+
+        [TestCase(null, null)]
+        [TestCase("", "")]
+        [TestCase("a", "a")]
+        [TestCase("alpha", "alpha")]
+        [TestCase("\"", "\"")]
+        [TestCase("'", "'")]
+        [TestCase("'\"", "'\"")]
+        [TestCase("\"\"", "")]
+        [TestCase("''", "")]
+        [TestCase("'a'", "a")]
+        [TestCase("\"a\"", "a")]
+        public void RemoveQuotesTest(string s, string expectedResult)
+        {
+            Assert.AreEqual(expectedResult.AsSegment(), s.AsSegment().RemoveQuotes());
+        }
+
+        [TestCaseGeneric(null, null, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("x", null, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("Black", ConsoleColor.Black, TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric("-1", (ConsoleColor)(-1), TypeArguments = new[] { typeof(ConsoleColor) })]
+        public void ToEnumTest<TEnum>(string s, TEnum? expectedResult)
+            where TEnum : struct, Enum
+        {
+            Assert.AreEqual(s.AsSegment().ToEnum<TEnum>(), expectedResult);
         }
 
         #endregion

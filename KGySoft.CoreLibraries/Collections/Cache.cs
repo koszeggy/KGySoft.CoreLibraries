@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
@@ -237,7 +238,7 @@ namespace KGySoft.Collections
     /// <seealso cref="CacheBehavior"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
     public class Cache<TKey, TValue> : IDictionary<TKey, TValue>, ICache, ISerializable, IDeserializationCallback
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
@@ -262,8 +263,7 @@ namespace KGySoft.Collections
             private readonly int version;
             private readonly bool isGeneric;
 
-            private int position;
-            private int currentIndex;
+            private int index;
 
             [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
@@ -284,7 +284,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     if (isGeneric)
                         return current;
@@ -296,7 +296,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return new DictionaryEntry(current.Key, current.Value);
                 }
@@ -306,7 +306,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Key;
                 }
@@ -316,7 +316,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (position == -1 || position == cache.Count)
+                    if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Value;
                 }
@@ -333,8 +333,7 @@ namespace KGySoft.Collections
                 this.cache = cache;
                 version = cache.version;
                 this.isGeneric = isGeneric;
-                position = -1;
-                currentIndex = -1;
+                index = -1;
             }
 
             #endregion
@@ -350,24 +349,22 @@ namespace KGySoft.Collections
                 if (version != cache.version)
                     Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
-                if (position < cache.Count)
-                    position += 1;
-
-                if (position == cache.Count)
+                if (index == -1)
+                    index = cache.first;
+                else if (index == cache.usedCount)
                     return false;
-
-                if (position == 0)
-                {
-                    Debug.Assert(cache.first >= 0);
-                    currentIndex = cache.first;
-                }
                 else
+                    index = cache.items[index].NextInOrder;
+
+                if (index == -1)
                 {
-                    Debug.Assert(cache.items[currentIndex].NextInOrder >= 0, "Next element not found");
-                    currentIndex = cache.items[currentIndex].NextInOrder;
+                    index = cache.usedCount;
+                    current = default;
+                    return false;
                 }
 
-                current = new KeyValuePair<TKey, TValue>(cache.items[currentIndex].Key, cache.items[currentIndex].Value);
+                ref CacheItem item = ref cache.items[index];
+                current = new KeyValuePair<TKey, TValue>(item.Key, item.Value);
                 return true;
             }
 
@@ -375,8 +372,7 @@ namespace KGySoft.Collections
             {
                 if (version != cache.version)
                     Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
-                position = -1;
-                currentIndex = -1;
+                index = -1;
                 current = default;
             }
 
@@ -431,7 +427,7 @@ namespace KGySoft.Collections
         #region KeysCollection class
 
         [DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
-        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}")]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}")]
         [Serializable]
         private sealed class KeysCollection : ICollection<TKey>, ICollection
         {
@@ -574,7 +570,7 @@ namespace KGySoft.Collections
         #region ValuesCollection class
 
         [DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
-        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ")}")]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
         [Serializable]
         private sealed class ValuesCollection : ICollection<TValue>, ICollection
         {
@@ -805,24 +801,20 @@ namespace KGySoft.Collections
 
             internal TKey Key;
             internal TValue Value;
-
-            /// <summary>
-            /// Hash code (31 bits used), -1 if empty
-            /// </summary>
             internal int Hash;
 
             /// <summary>
-            /// Index of a chained item in the current bucket or -1 if last
+            /// Zero-based index of a chained item in the current bucket or -1 if last
             /// </summary>
             internal int NextInBucket;
 
             /// <summary>
-            /// Index of next item in the evaluation order or -1 if last
+            /// Zero-based index of next item in the evaluation order or -1 if last
             /// </summary>
             internal int NextInOrder;
 
             /// <summary>
-            /// Index of previous item in the evaluation order or -1 if first
+            /// Zero-based index of previous item in the evaluation order or -1 if first
             /// </summary>
             internal int PrevInOrder;
 
@@ -838,6 +830,7 @@ namespace KGySoft.Collections
         #region Constants
 
         private const int defaultCapacity = 128;
+        private const int minBucketSize = 4;
 
         #endregion
 
@@ -865,6 +858,10 @@ namespace KGySoft.Collections
 
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
+#if NETFRAMEWORK || NETSTANDARD2_0
+        private static readonly bool isKeyManaged = !typeKey.IsUnmanaged(); 
+        private static readonly bool isValueManaged = !typeValue.IsUnmanaged(); 
+#endif
 
         #endregion
 
@@ -876,12 +873,12 @@ namespace KGySoft.Collections
         private SerializationInfo deserializationInfo;
 
         private int capacity;
-        private bool ensureCapacity;
         private CacheBehavior behavior = CacheBehavior.RemoveLeastRecentUsedElement;
         private bool disposeDroppedValues;
 
         private CacheItem[] items;
-        private int[] buckets;
+        private int[] buckets; // 1-based indices for items. 0 means unused bucket.
+        private int mask; // same as bucket.Length - 1 but is cached for better performance
         private int usedCount; // used elements in items including deleted ones
         private int deletedCount;
         private int deletedItemsBucket = -1; // First deleted entry among used elements. -1 if there are no deleted elements.
@@ -898,6 +895,7 @@ namespace KGySoft.Collections
         private object syncRootForThreadSafeAccessor;
         private KeysCollection keysCollection;
         private ValuesCollection valuesCollection;
+        private bool ensureCapacity;
 
         #endregion
 
@@ -1335,7 +1333,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class from the specified <paramref name="dictionary"/> and <paramref name="comparer"/>, with not item loader.
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class from the specified <paramref name="dictionary"/> and <paramref name="comparer"/>, with no item loader.
         /// The <see cref="Capacity"/> will be initialized to the number of elements in <paramref name="dictionary"/>.
         /// </summary>
         /// <param name="dictionary">The dictionary whose elements are added to the <see cref="Cache{TKey,TValue}"/>.</param>
@@ -1404,6 +1402,24 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
             return key is TKey;
         }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static bool IsKeyManaged() =>
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+            // not "caching" the result of this call because that would make the JIT-ed code slower
+            RuntimeHelpers.IsReferenceOrContainsReferences<TKey>();
+#else
+            isKeyManaged;
+#endif
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static bool IsValueManaged() =>
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+            // not "caching" the result of this call because that would make the JIT-ed code slower
+            RuntimeHelpers.IsReferenceOrContainsReferences<TValue>();
+#else
+            isValueManaged;
+#endif
 
         #endregion
 
@@ -1722,10 +1738,9 @@ namespace KGySoft.Collections
 
         private void Initialize(int suggestedCapacity)
         {
-            int bucketSize = PrimeHelper.GetPrime(suggestedCapacity);
+            int bucketSize = Math.Max(minBucketSize, suggestedCapacity).GetNextPowerOfTwo();
             buckets = new int[bucketSize];
-            for (int i = 0; i < buckets.Length; i++)
-                buckets[i] = -1;
+            mask = bucketSize - 1;
 
             // items.Length <= bucketSize!
             items = new CacheItem[capacity < bucketSize ? capacity : bucketSize];
@@ -1744,6 +1759,8 @@ namespace KGySoft.Collections
             Resize(capacity);
         }
 
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private int GetItemIndex(TKey key)
         {
             if (key == null)
@@ -1752,8 +1769,8 @@ namespace KGySoft.Collections
             if (buckets == null)
                 return -1;
 
-            int hashCode = comparer.GetHashCode(key) & 0x7FFFFFFF;
-            for (int i = buckets[hashCode % buckets.Length]; i >= 0; i = items[i].NextInBucket)
+            int hashCode = comparer.GetHashCode(key);
+            for (int i = buckets[hashCode & mask] - 1; i >= 0; i = items[i].NextInBucket)
             {
                 if (items[i].Hash == hashCode && comparer.Equals(items[i].Key, key))
                     return i;
@@ -1790,19 +1807,20 @@ namespace KGySoft.Collections
             if (buckets == null)
                 return false;
 
-            int hashCode = comparer.GetHashCode(key) & 0x7FFFFFFF;
-            int bucket = hashCode % buckets.Length;
+            int hashCode = comparer.GetHashCode(key);
+            int bucket = hashCode & mask;
             int prevInBucket = -1;
-            for (int i = buckets[bucket]; i >= 0; prevInBucket = i, i = items[i].NextInBucket)
+            for (int i = buckets[bucket] - 1; i >= 0; prevInBucket = i, i = items[i].NextInBucket)
             {
                 if (items[i].Hash != hashCode || !comparer.Equals(items[i].Key, key))
                     continue;
+
                 if (checkValue && !ComparerHelper<TValue>.EqualityComparer.Equals(items[i].Value, value))
                     return false;
 
                 // removing entry from the original bucket
                 if (prevInBucket < 0)
-                    buckets[bucket] = items[i].NextInBucket;
+                    buckets[bucket] = items[i].NextInBucket + 1;
                 else
                     items[prevInBucket].NextInBucket = items[i].NextInBucket;
 
@@ -1824,9 +1842,10 @@ namespace KGySoft.Collections
                     items[items[i].NextInOrder].PrevInOrder = items[i].PrevInOrder;
 
                 // cleanup
-                items[i].Hash = -1;
-                items[i].Key = default;
-                items[i].Value = default;
+                if (IsKeyManaged())
+                    items[i].Key = default;
+                if (IsValueManaged())
+                    items[i].Value = default;
                 items[i].NextInOrder = -1;
                 items[i].PrevInOrder = -1;
 
@@ -1846,7 +1865,7 @@ namespace KGySoft.Collections
             Debug.Assert(first != -1, "first is -1 in DropFirst");
             if (disposeDroppedValues && items[first].Value is IDisposable disposable)
                 disposable.Dispose();
-            Remove(items[first].Key);
+            InternalRemove(items[first].Key, default, false);
         }
 
         private void DropItems(int amount)
@@ -1864,12 +1883,11 @@ namespace KGySoft.Collections
             if (buckets == null)
                 Initialize(ensureCapacity ? capacity : 1);
 
-            // Ignoring MSB so we can use -1 to sign unused entries
-            int hashCode = comparer.GetHashCode(key) & 0x7FFFFFFF;
-            int targetBucket = hashCode % buckets.Length;
+            int hashCode = comparer.GetHashCode(key);
+            ref int bucketRef = ref buckets[hashCode & mask];
 
             // searching for an existing key
-            for (int i = buckets[targetBucket]; i >= 0; i = items[i].NextInBucket)
+            for (int i = bucketRef - 1; i >= 0; i = items[i].NextInBucket)
             {
                 if (items[i].Hash != hashCode || !comparer.Equals(items[i].Key, key))
                     continue;
@@ -1907,20 +1925,21 @@ namespace KGySoft.Collections
                     int oldSize = items.Length;
                     int newSize = capacity >> 1 > oldSize ? oldSize << 1 : capacity;
                     Resize(newSize);
-                    targetBucket = hashCode % buckets.Length;
+                    bucketRef = ref buckets[hashCode & mask];
                 }
 
                 index = usedCount;
                 usedCount += 1;
             }
 
-            items[index].Hash = hashCode;
-            items[index].NextInBucket = buckets[targetBucket];
-            items[index].Key = key;
-            items[index].Value = value;
-            items[index].PrevInOrder = last;
-            items[index].NextInOrder = -1;
-            buckets[targetBucket] = index;
+            ref CacheItem itemRef = ref items[index];
+            itemRef.Hash = hashCode;
+            itemRef.NextInBucket = bucketRef - 1; // Next is zero-based
+            itemRef.Key = key;
+            itemRef.Value = value;
+            itemRef.PrevInOrder = last;
+            itemRef.NextInOrder = -1;
+            bucketRef = index + 1; // bucket indices are 1-based
             if (first == -1)
                 first = index;
             if (last != -1)
@@ -1933,10 +1952,9 @@ namespace KGySoft.Collections
 
         private void Resize(int suggestedSize)
         {
-            int newBucketSize = PrimeHelper.GetPrime(suggestedSize);
+            int newBucketSize = suggestedSize.GetNextPowerOfTwo();
             var newBuckets = new int[newBucketSize];
-            for (int i = 0; i < newBuckets.Length; i++)
-                newBuckets[i] = -1;
+            mask = newBucketSize - 1;
 
             var newItems = new CacheItem[capacity < newBucketSize ? capacity : newBucketSize];
 
@@ -1964,12 +1982,9 @@ namespace KGySoft.Collections
             // re-applying buckets for the new size
             for (int i = 0; i < usedCount; i++)
             {
-                if (newItems[i].Hash < 0)
-                    continue;
-
-                int bucket = newItems[i].Hash % newBucketSize;
-                newItems[i].NextInBucket = newBuckets[bucket];
-                newBuckets[bucket] = i;
+                int bucket = newItems[i].Hash & mask;
+                newItems[i].NextInBucket = newBuckets[bucket] - 1;
+                newBuckets[bucket] = i + 1;
             }
 
             buckets = newBuckets;

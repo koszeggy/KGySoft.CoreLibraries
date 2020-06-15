@@ -6,6 +6,65 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.3.0:
+~~~~~~~~~
+
++ KGySoft.CoreLibraries namespace:
+==================================
++ The ArrayExtensions class has been made public along with some new members:
+  + New AsSection methods
+  + New AsArray2D/AsArray3D methods
+* ByteArrayExtensions class: Improving performance of To*String methods, reducing number of allocations.
++ DoubleExtensions class:
+  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
++ Enum<TEnum> class:
+  + New Parse/TryParse overloads with StringSegment parameters
+  + New Parse/TryParse overloads with ReadOnlySpan<char> parameters (.NET Core 3.0/.NET Standard 2.1 and above)
+  + New IsDefined overload with StringSegment parameter
+  + New IsDefined overload with ReadOnlySpan<char> parameter (.NET Core 3.0/.NET Standard 2.1 and above)
++ EnumerableExtensions class: New Join overload.
+* Files class:
+  + New GetRelativePath overload with a bool isCaseSensitive parameter
+  * Improving GetRelativePath path performance and reducing allocations
++ FloatExtensions class:
+  + New TolerantIsZero/TolerantEquals/TolerantCeiling/TolerantFloor methods
++ New SpanExtensions class (.NET Core 3.0/.NET Standard 2.1 and above):
+  + The same Parse/TryParse methods as are in StringExtensions
+  + The same Read/ReadToSeparator/ReadLine methods as are in StringSegmentExtensions
+  + ToEnum method
+  + RemoveQuoes methods
+* StringExtensions class: Improving performance of parser methods, reducing number of allocations.
++ StringSegment struct:
+  + New IsNullOrWhiteSpace property
+  + New Split overloads with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
+  + New IndexOf/LastIndexOf/StartsWith/EndsWith overloads with ReadOnlySpan<char> value (.NET Core 3.0/.NET Standard
+    2.1 and above)
+  + New Trim/TrimStart/TrimEnd overloads to allow specifying characters to trim
++ StringSegmentComparer class:
+  + Implements also IComparer<string> and IEqualityComparer<string>
+  + Now supports comparison between string and ReadOnlySpan<char> instances as well so it can be used in a
+    StringKeyedCollection<TValue> instance as a comparer to lookup entries by string, StringSegment or
+    ReadOnlySpan<char> (.NET Core 3.0/.NET Standard 2.1 and above) instances without allocating new strings.
++ StringSegmentExtensions class:
+  + New ReadToSeparator overload with ReadOnlySpan<char> separator (.NET Core 3.0/.NET Standard 2.1 and above)
+  + New ToEnum method
+  + New RemoveQuoes method
+
+* KGySoft.Collections namespace:
+================================
+* ArraySection struct:
+  - Fixing strange debugger display issue for VS2019
+  + New constructor overload
+  + New AsArray2D/AsArray3D methods
+* Cache<TKey, TValue> class:
+  * Improving general performance (using a different hashing)
++ New IStringKeyedDictionary<TValue> interface
++ New IStringKeyedReadOnlyDictionary<TValue> interface (.NET 4.5 and above)
++ New StringKeyedDictionary<TValue> class, which allows lookup operations also by StringSegment and
+  ReadOnlySpan<char> (.NET Core 3.0/.NET Standard 2.1 and above)
+
+
+~~~~~~~~~
 * v5.2.0:
 ~~~~~~~~~
 
