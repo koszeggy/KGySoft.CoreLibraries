@@ -97,7 +97,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void FromNodeInfo()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             var rs = new ResXResourceSet(path, null) { SafeMode = true };
             var node = (ResXDataNode)rs.GetObject("string");
 

@@ -81,7 +81,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetObject()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // string
@@ -130,7 +130,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetStringSafe()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null) { SafeMode = true };
             object o;
 
@@ -165,7 +165,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void CleanupAndRegenerate()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // in safe mode, raw value is expected
@@ -195,7 +195,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SetRemoveObject()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // replace
@@ -233,7 +233,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SetAlias()
         {
             const string aliasName = "custom alias";
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             var rs = new ResXResourceSet(path, null);
 
             rs.SetObject("enum", TestEnum.X);
@@ -385,7 +385,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void CloneValuesTest()
         {
             string key = "TestBinFile";
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path);
             Assert.IsFalse(rs.CloneValues);
             Assert.IsTrue(rs.AutoFreeXmlData);

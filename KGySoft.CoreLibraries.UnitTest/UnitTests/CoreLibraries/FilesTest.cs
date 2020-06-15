@@ -29,12 +29,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
     {
         #region Methods
 
+#if WINDOWS
         [TestCase(@"C:\DIR1", @"D:\DIR1", @"C:\DIR1")]
         [TestCase(@"C:\DIR1", @"C:\DIR1", @".")]
         [TestCase(@"C:\DIR1", @"C:\DIR2", @"..\DIR1")]
-        [TestCase(@"DIR1", @"DIR1", @".")]
         [TestCase(@"C:\", @"C:\DIR1\SUBDIR1", @"..\..")]
         [TestCase(@"C:\DIR1\SUBDIR1", @"C:\", @"DIR1\SUBDIR1")]
+#endif
+        [TestCase(@"DIR1", @"DIR1", @".")]
         [TestCase(@"DIR1", @"DIR2", @"..\DIR1")]
         [TestCase(@"DIR1\SUBDIR1", @"DIR2", @"..\DIR1\SUBDIR1")]
         [TestCase(@"DIR1", @"DIR2\SUBDIR2", @"..\..\DIR1")]

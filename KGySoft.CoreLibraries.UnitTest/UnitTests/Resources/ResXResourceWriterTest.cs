@@ -160,17 +160,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void ReadWriteRead()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
             ReadWriteReadResX(path, true, false);
 
-            // TODO: re-enable after referencing KGySoft.Drawing from nuget
-            //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            //path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            //ReadWriteReadResX(path, true, true);
-            //ReadWriteReadResX(path, false, true);
-            //ReadWriteReadResX(path, true, false);
+#if WINDOWS
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
+            path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            ReadWriteReadResX(path, true, true);
+            ReadWriteReadResX(path, false, true);
+            ReadWriteReadResX(path, true, false);
+#endif
         }
 
         [Test]
@@ -596,7 +597,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
                 // binary wrapper
