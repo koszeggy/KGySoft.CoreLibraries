@@ -66,6 +66,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the value to get or set.</param>
         /// <exception cref="KeyNotFoundException"><paramref name="key"/> is not found.</exception>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Can be treated as string")]
         TValue this[ReadOnlySpan<char> key] { get; }
 #endif
 

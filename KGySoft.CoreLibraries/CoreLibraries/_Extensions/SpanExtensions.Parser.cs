@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 
@@ -198,6 +199,8 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "Intended, in Release JIT compliler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
             private static bool TryParseKnownValueType<T>(ReadOnlySpan<char> s, CultureInfo culture, out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");

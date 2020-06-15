@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetObject()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            var path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // string
@@ -129,13 +129,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetStringSafe()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            var path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null) { SafeMode = true };
-            object o;
 
             // when getting an object, result is always a ResXDataNode regardless of the object is a string
-            Assert.IsInstanceOf<ResXDataNode>(o = rs.GetObject("TestString"));
-            Assert.IsInstanceOf<ResXDataNode>(o = rs.GetObject("TestBytes"));
+            Assert.IsInstanceOf<ResXDataNode>(rs.GetObject("TestString"));
+            Assert.IsInstanceOf<ResXDataNode>(rs.GetObject("TestBytes"));
 
             // for a string, the string value is returned
             Assert.AreEqual("String invariant ResX", rs.GetString("TestString"));
@@ -150,8 +149,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsTrue(rs.GetString("TestTextFile").StartsWith("TestTextFile.txt;System.String, mscorlib", StringComparison.Ordinal));
 
             rs.SafeMode = false;
-            o = rs.GetString("TestTextFile");
-            o = rs.GetObject("TestBinFile");
+            Assert.IsNotNull(rs.GetString("TestTextFile"));
+            Assert.IsNotNull(rs.GetObject("TestBinFile"));
             rs.SafeMode = true;
 
             // ...unless the string value is already obtained and cached
@@ -164,7 +163,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void CleanupAndRegenerate()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // in safe mode, raw value is expected
@@ -194,7 +193,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SetRemoveObject()
         {
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            var path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
 
             // replace
@@ -232,7 +231,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SetAlias()
         {
             const string aliasName = "custom alias";
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
+            var path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             var rs = new ResXResourceSet(path, null);
 
             rs.SetObject("enum", TestEnum.X);
@@ -384,7 +383,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void CloneValuesTest()
         {
             string key = "TestBinFile";
-            var path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            var path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             var rs = new ResXResourceSet(path);
             Assert.IsFalse(rs.CloneValues);
             Assert.IsTrue(rs.AutoFreeXmlData);

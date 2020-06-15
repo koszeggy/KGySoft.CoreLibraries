@@ -891,6 +891,7 @@ namespace KGySoft.Collections
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         // Bug: could be cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]" but that kills ReSharper
         /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(System.ReadOnlySpan{System.Char})"/>
+        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Can be treated as string")]
         public TValue this[ReadOnlySpan<char> key]
         {
             get

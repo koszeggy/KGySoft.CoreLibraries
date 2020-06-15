@@ -267,6 +267,13 @@ namespace KGySoft.CoreLibraries
         } 
 #endif
 
+        protected static string Combine(string p1, string p2, string p3) =>
+#if NET35
+            Path.Combine(p1, Path.Combine(p2, p3));
+#else
+            Path.Combine(p1, p2, p3);
+#endif
+
         #endregion
 
         #region Private Methods

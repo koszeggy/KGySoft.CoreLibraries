@@ -160,14 +160,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void ReadWriteRead()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
             ReadWriteReadResX(path, true, false);
 
 #if NETFRAMEWORK
             typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
+            path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
             ReadWriteReadResX(path, true, false);
@@ -441,12 +441,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     CultureInfo.GetCultureInfo("en"),
                     CultureInfo.GetCultureInfo("en-US"),
 
-                    // partly working built-in
+                // partly working built-in
 #if NETFRAMEWORK
                     Cursors.Arrow, // a default cursor: by string
 #endif
 
-#if !NET35 // should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+#if !(NET35 || NETCOREAPP2_0) // .NET 3.5 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
                     Icons.Information, // multi-resolution icon (built-in saves one page only)
                     Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
 #if WINDOWS
@@ -599,7 +599,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
+            string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
                 // binary wrapper

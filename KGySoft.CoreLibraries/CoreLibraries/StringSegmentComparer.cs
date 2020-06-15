@@ -175,7 +175,7 @@ namespace KGySoft.CoreLibraries
             private readonly StringComparer stringComparer;
 #endif
 #if NETSTANDARD2_1 || NETCOREAPP3_0
-            private StringComparison? knownComparison;
+            private readonly StringComparison? knownComparison;
 #endif
 
             #endregion
@@ -313,7 +313,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constants
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
         private const int lengthThreshold = 32;
 #endif
         #endregion
