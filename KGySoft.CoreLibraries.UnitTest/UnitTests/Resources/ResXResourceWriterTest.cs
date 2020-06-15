@@ -449,8 +449,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if !NET35 // should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
                     Icons.Information, // multi-resolution icon (built-in saves one page only)
                     Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
+#if WINDOWS
                     CreateTestTiff(), // multipage TIFF (built-in saves first page only)
                     CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#endif
 #endif
 
                     // pure custom

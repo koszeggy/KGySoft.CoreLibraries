@@ -230,7 +230,7 @@ namespace KGySoft.CoreLibraries
         } 
 #endif
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 && WINDOWS
         protected static Metafile CreateTestMetafile()
         {
             Graphics refGraph = Graphics.FromHwnd(IntPtr.Zero);
