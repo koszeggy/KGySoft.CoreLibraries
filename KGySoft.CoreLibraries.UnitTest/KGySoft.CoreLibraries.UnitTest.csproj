@@ -1,19 +1,27 @@
 ﻿<!--Microsoft.NET.Sdk.WindowsDesktop is required for non-string resources.
     It raises NETSDK1105 warning for non netcoreapp3.0 targets but there is no way using conditions here (and NETSDK1105 cannot be suppressed) -->
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<!-- <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop"> -->
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
-    <UseWindowsForms>true</UseWindowsForms>
+
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
+
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWindows)'=='true'">
+    <DefineConstants>WINDOWS</DefineConstants>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <!-- Common NuGet references -->
@@ -38,6 +46,10 @@
     <PackageReference Include="System.Text.Encoding.CodePages">
       <Version>4.5.1</Version>
     </PackageReference>
+    
+    <!--Required for non-string resources-->
+    <PackageReference Include="System.Resources.Extensions" Version="4.7.0" />
+
   </ItemGroup>
 
   <!-- Project references -->

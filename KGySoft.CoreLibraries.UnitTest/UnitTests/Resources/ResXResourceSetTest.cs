@@ -25,7 +25,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-#if !NETCOREAPP2_0
+#if WINDOWS && !NETCOREAPP2_0
 using System.Windows.Forms; 
 #endif
 
@@ -103,8 +103,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Point>(rs.GetObject("TestPoint"));
 
 #if !NETCOREAPP2_0
+#if WINDOWS
             // mime, deserialized by BinaryFormatter
             Assert.IsInstanceOf<ImageListStreamer>(rs.GetObject("TestObjectEmbedded"));
+#endif
 
             // mime, converted from byte array by type converter
             Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImageEmbedded"));

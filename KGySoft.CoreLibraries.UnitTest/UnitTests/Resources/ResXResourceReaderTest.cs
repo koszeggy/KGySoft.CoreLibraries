@@ -36,7 +36,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Methods
 
-#if !NETCOREAPP2_0
+#if WINDOWS && !NETCOREAPP2_0
         [Test]
         public void ParseData()
         {
