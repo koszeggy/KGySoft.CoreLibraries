@@ -25,7 +25,9 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.ComponentModel.Design;
+#if NETFRAMEWORK
+using System.ComponentModel.Design; 
+#endif
 using System.Drawing;
 using System.Drawing.Imaging; 
 using System.IO;
@@ -37,7 +39,7 @@ using System.Security.Permissions;
 using System.Security.Policy; 
 #endif
 using System.Text;
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
@@ -53,7 +55,7 @@ using NUnit.Framework;
 #region Used Aliases
 
 using Assert = NUnit.Framework.Assert;
-#if WINDOWS && (NETFRAMEWORK || NETCOREAPP3_0)
+#if NETFRAMEWORK
 using SystemDataNode = System.Resources.ResXDataNode;
 using SystemFileRef = System.Resources.ResXFileRef; 
 #endif
@@ -290,7 +292,7 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(ResXDataNode))
                     return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
 
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
@@ -358,7 +360,7 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(Icon))
                     return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
 
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
                 if (typeRef == typeof(ImageListStreamer))
                 {
                     var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };

@@ -36,11 +36,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Methods
 
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
         [Test]
         public void ParseData()
         {
-            string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
+            string path = Path.Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             var refReader = new System.Resources.ResXResourceReader(path, new[] { new AssemblyName("System.Drawing"), new AssemblyName("System") });
             refReader.BasePath = Files.GetExecutingPath();
             ResXResourceReader reader = new ResXResourceReader(path);
@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
-#if NETCOREAPP2_0 || !WINDOWS
+#if !NETFRAMEWORK
                     if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
                         continue;
 #endif

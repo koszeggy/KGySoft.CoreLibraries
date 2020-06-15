@@ -20,12 +20,11 @@ using System;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Drawing;
-using System.Drawing.Text;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
@@ -102,12 +101,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // no mime, parsed from string by type converter
             Assert.IsInstanceOf<Point>(rs.GetObject("TestPoint"));
 
-#if !NETCOREAPP2_0
-#if WINDOWS
+#if NETFRAMEWORK
             // mime, deserialized by BinaryFormatter
             Assert.IsInstanceOf<ImageListStreamer>(rs.GetObject("TestObjectEmbedded"));
 #endif
 
+#if !NETCOREAPP2_0
             // mime, converted from byte array by type converter
             Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImageEmbedded"));
 #endif

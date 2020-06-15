@@ -27,7 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
-#if WINDOWS && !NETCOREAPP2_0
+#if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
 
@@ -60,7 +60,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Public Methods
 
-#if WINDOWS
         [Test]
         public void GetString()
         {
@@ -105,41 +104,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.SafeMode = true;
             Assert.AreEqual(manager.GetObject(resName, inv).ToString(), manager.GetString(resName, inv));
         }
-#else
-       [Test]
-        public void GetString()
-        {
-            var manager = new ResXResourceManager("TestResourceResX", enUS);
-            var resName = "TestString";
-            string valueInv = manager.GetString(resName, inv);
-            Assert.IsNotNull(valueInv);
-
-            // if assembly has en-US invariant culture, then requiring en-US should return the invariant resource
-            Assert.AreEqual(valueInv, manager.GetString(resName, enUS));
-
-            // but en is different from invariant
-            Assert.AreNotEqual(valueInv, manager.GetString(resName, en));
-
-            manager = new ResXResourceManager("TestResourceResX", GetType().Assembly); // this assembly has no invariant resources language set
-            valueInv = manager.GetString(resName, inv);
-            Assert.IsNotNull(valueInv);
-
-            // if assembly has no specified invariant culture, then requiring en-US should return the en-US resource, which is different from invariant
-            Assert.AreNotEqual(valueInv, manager.GetString(resName, enUS));
-
-            // and from en as well
-            Assert.AreNotEqual(valueInv, manager.GetString(resName, en));
-
-            // Non string throws an exception if not is in safe mode
-            resName = "TestImage";
-            Assert.IsFalse(manager.SafeMode);
-            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
-
-            // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
-            manager.SafeMode = true;
-            Assert.AreEqual(manager.GetObject(resName, inv).ToString(), manager.GetString(resName, inv));
-        }
-#endif
 
         [Test]
         public void GetMetaString()
@@ -463,7 +427,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Bitmap>(reference);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
-#if WINDOWS
+#if NETFRAMEWORK
             // any object embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestObjectEmbedded"); // WinForms type
             check = manager.GetObject("TestObjectEmbedded");
