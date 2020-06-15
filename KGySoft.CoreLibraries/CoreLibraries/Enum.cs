@@ -172,7 +172,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool IsDefined(StringSegment value)
         {
             if (value.IsNull)
@@ -184,9 +184,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
-        /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
+        /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool IsDefined(ReadOnlySpan<char> value) => NameValuePairs.ContainsKey(value);
 #endif
 

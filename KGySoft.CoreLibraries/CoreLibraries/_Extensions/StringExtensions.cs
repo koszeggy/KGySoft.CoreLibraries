@@ -227,8 +227,8 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>An object of <typeparamref name="T"/>, which is the result of the parsing.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.</para>
         /// <para>Natively parsed types:
         /// <list type="bullet">
         /// <item><description><see cref="System.Enum"/> based types</description></item>

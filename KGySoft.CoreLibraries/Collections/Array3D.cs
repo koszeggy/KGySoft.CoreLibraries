@@ -40,7 +40,7 @@ namespace KGySoft.Collections
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <typeparam name="T">The type of the element in the collection.</typeparam>
+    /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="Array3D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
     /// <para>If the current platform supports it, the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
@@ -126,13 +126,13 @@ namespace KGySoft.Collections
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
-        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Memory{T}"/>.
+        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => buffer.AsMemory;
 
         /// <summary>
-        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Span{T}"/>.
+        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => buffer.AsSpan;

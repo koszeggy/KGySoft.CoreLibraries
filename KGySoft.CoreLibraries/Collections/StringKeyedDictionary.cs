@@ -50,7 +50,7 @@ namespace KGySoft.Collections
     /// <para>Being as a regular <see cref="IDictionary{TKey,TValue}"/> implementation with <see cref="string">string</see> key,
     /// the <see cref="StringKeyedDictionary{TValue}"/> class can be populated by keys and values as any regular dictionary.
     /// However, as it implements also the <see cref="IStringKeyedDictionary{TValue}"/> interface, it allows accessing its values
-    /// by using <seealso cref="StringSegment"/> (supported on every platform) and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
+    /// by using <see cref="StringSegment"/> (supported on every platform) and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// (in .NET Core 3.0/.NET Standard 2.1 and above) instances.</para>
     /// <para>The <see cref="StringKeyedDictionary{TValue}"/> class uses a custom hashing, which usually makes it faster
     /// than a regular <see cref="Dictionary{TKey,TValue}"/> with <see cref="string">string</see> key.
@@ -58,20 +58,21 @@ namespace KGySoft.Collections
     /// does not use randomized hashing for keys no longer than 32 characters. Therefore, it is not recommended to expose it to a public
     /// service, which may affect the keys to be stored. But since <see cref="StringKeyedDictionary{TValue}"/> is not thread-safe, it is not
     /// recommended to use it in such a service anyway.</note></para>
-    /// <para>Depending on the context, the <seealso cref="StringKeyedDictionary{TValue}"/> can return either a value type or reference type enumerator.
-    /// When used in a C# <see langword="foreach"/>&#160;statement directly, the public <seealso cref="Enumerator"/> type is used, which is a value type
+    /// <para>Depending on the context, the <see cref="StringKeyedDictionary{TValue}"/> can return either a value type or reference type enumerator.
+    /// When used in a C# <see langword="foreach"/>&#160;statement directly, the public <see cref="Enumerator"/> type is used, which is a value type
     /// (this behavior is similar to the regular <see cref="Dictionary{TKey,TValue}"/> class). But when the enumerator is obtained via the <see cref="IEnumerable{T}"/> interface
     /// (occurs when using LINQ or extension methods), then the <see cref="StringKeyedDictionary{TValue}"/> returns a reference type to avoid boxing and to provide a better performance.</para>
-    /// <para>To use custom string comparison you can pass a <seealso cref="StringSegmentComparer"/> instance to the constructors. It allows string comparisons
-    /// by <see cref="string">string</see>, <seealso cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
-    /// By default, the <seealso cref="StringKeyedDictionary{TValue}"/> uses case-sensitive ordinal comparison.
+    /// <para>To use custom string comparison you can pass a <see cref="StringSegmentComparer"/> instance to the constructors. It allows string comparisons
+    /// by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
+    /// By default, the <see cref="StringKeyedDictionary{TValue}"/> uses case-sensitive ordinal comparison.
     /// <note>Please note that when using a non-ordinal comparison, then depending on the targeted platform there might occur new string allocations when using
-    /// query members with <seealso cref="StringSegment"/> or <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values.
-    /// See the properties and the <see cref="StringSegmentComparer.Create"/> method of the <seealso cref="StringSegmentComparer"/> class for more details.</note></para>
+    /// query members with <see cref="StringSegment"/> or <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values.
+    /// See the properties and the <see cref="StringSegmentComparer.Create"/> method of the <see cref="StringSegmentComparer"/> class for more details.</note></para>
     /// </remarks>
     /// <threadsafety instance="false"/>
     /// <seealso cref="IStringKeyedDictionary{TValue}"/>
     /// <seealso cref="IStringKeyedReadOnlyDictionary{TValue}"/>
+    /// <seealso cref="StringSegment"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(StringKeyedDictionary<>.StringKeyedDictionaryDebugView))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]

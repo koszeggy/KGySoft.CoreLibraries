@@ -270,8 +270,8 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><typeparamref name="TTarget"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
@@ -381,7 +381,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An object of <paramref name="targetType"/>, which is the result of the conversion.</returns>
         /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <paramref name="targetType"/>.</exception>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
@@ -404,7 +404,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -429,7 +429,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -443,7 +443,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -458,7 +458,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>

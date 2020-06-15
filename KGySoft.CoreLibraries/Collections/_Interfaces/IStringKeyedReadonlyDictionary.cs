@@ -188,6 +188,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         TValue GetValueOrDefault(ReadOnlySpan<char> key);
 
         /// <summary>
@@ -200,6 +201,7 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default) where TActualValue : TValue;
 
         /// <summary>
@@ -211,6 +213,7 @@ namespace KGySoft.Collections
         /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
+        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 #endif
 

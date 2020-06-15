@@ -53,6 +53,7 @@ namespace KGySoft.CoreLibraries
         /// Gets an <see cref="ArraySection{T}"/> instance, which represents a section of the specified <paramref name="array"/>.
         /// No heap allocation occurs when using this method.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The array to create the <see cref="ArraySection{T}"/> from.</param>
         /// <param name="offset">The zero-based offset that points to the first element of the returned section.</param>
         /// <param name="length">The desired length of the returned section.</param>
@@ -63,6 +64,7 @@ namespace KGySoft.CoreLibraries
         /// Gets an <see cref="ArraySection{T}"/> instance, which represents a section of the specified <paramref name="array"/>.
         /// No heap allocation occurs when using this method.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The array to create the <see cref="ArraySection{T}"/> from.</param>
         /// <param name="offset">The zero-based offset that points to the first element of the returned section.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance, which represents a section of the specified <paramref name="array"/>.</returns>
@@ -72,6 +74,7 @@ namespace KGySoft.CoreLibraries
         /// Gets the specified <paramref name="array"/> as an <see cref="ArraySection{T}"/> instance.
         /// No heap allocation occurs when using this method.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The array to create the <see cref="ArraySection{T}"/> from.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance for the specified <paramref name="array"/>.</returns>
         public static ArraySection<T> AsSection<T>(this T[] array) => array == null ? ArraySection<T>.Null : new ArraySection<T>(array);
@@ -81,6 +84,7 @@ namespace KGySoft.CoreLibraries
         /// The array must have enough capacity for the specified <paramref name="height"/> and <paramref name="width"/>.
         /// No heap allocation occurs when using this method.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The desired underlying buffer for the <see cref="Array2D{T}"/> instance to be created.
         /// It must have sufficient capacity for the specified dimensions.</param>
         /// <param name="height">The height of the array to be returned.</param>
@@ -93,6 +97,7 @@ namespace KGySoft.CoreLibraries
         /// The array must have enough capacity for the specified <paramref name="depth"/>, <paramref name="height"/> and <paramref name="width"/>.
         /// No heap allocation occurs when using this method.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The desired underlying buffer for the <see cref="Array3D{T}"/> instance to be created.
         /// It must have sufficient capacity for the specified dimensions.</param>
         /// <param name="depth">The depth of the array to be returned.</param>

@@ -94,7 +94,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="other">The other value compared to the self <paramref name="value"/>.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but it should be some low positive value to get a reasonable result. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
-        /// <returns></returns>
+        /// <returns><see langword="true"/>, if the values are equal considering the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static bool TolerantEquals(this double value, double other, double tolerance = defaultTolerance)
             => TolerantIsZero(value - other, tolerance);
@@ -107,7 +107,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value, whose ceiling is abut to be retrieved.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
-        /// <returns><paramref name="value"/>, if the difference between <paramref name="value"/>  </returns>
+        /// <returns>The ceiling of the specified <paramref name="value"/> using the specified <paramref name="tolerance"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static double TolerantCeiling(this double value, double tolerance = defaultTolerance)
             => TolerantIsZero(Math.IEEERemainder(value, 1), tolerance) ? Math.Round(value) : Math.Ceiling(value);
@@ -115,12 +115,12 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the floor of the specified <paramref name="value"/> using a specific <paramref name="tolerance"/>.
         /// That is the closest integral number to <paramref name="value"/> if the difference from that is not larger than <paramref name="tolerance"/>;
-        /// otherwise, the smallest integral value that is less than <paramref name="value"/>.
+        /// otherwise, the largest integral value that is less than <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value, whose floor is abut to be retrieved.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
-        /// <returns></returns>
+        /// <returns>The floor of the specified <paramref name="value"/> using the specified <paramref name="tolerance"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static double TolerantFloor(this double value, double tolerance = defaultTolerance)
             => TolerantIsZero(Math.IEEERemainder(value, 1), tolerance) ? Math.Round(value) : Math.Floor(value);

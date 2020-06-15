@@ -47,10 +47,10 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter after the next whitespace character and returns
         /// the consumed part without the whitespace. If the first character of <paramref name="rest"/> was a whitespace
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
         /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by whitespace characters,
         /// or the complete original value of <paramref name="rest"/> if it contained no more whitespace characters.</returns>
         public static ReadOnlySpan<char> ReadToWhiteSpace(ref this ReadOnlySpan<char> rest)
@@ -91,10 +91,10 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> character and returns
         /// the consumed part without the <paramref name="separator"/>. If the first character of <paramref name="rest"/> was a <paramref name="separator"/>
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
         /// <param name="separator">The separator character to search in the specified span.</param>
         /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
         /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
@@ -128,10 +128,10 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> and returns
         /// the consumed part without the <paramref name="separator"/>. If <paramref name="rest"/> started with <paramref name="separator"/>
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
         /// <param name="separator">The separator to search in the specified span.</param>
         /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by the specified <paramref name="separator"/>,
         /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
@@ -172,10 +172,10 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter after the next separator and returns
         /// the consumed part without the separator. If <paramref name="rest"/> started with one of the <paramref name="separators"/>
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
         /// <param name="separators">The separators to search in the specified span.</param>
         /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by any of the specified <paramref name="separators"/>,
         /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
@@ -221,11 +221,11 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter after the current line and returns
         /// the consumed part without the newline character(s). If <paramref name="rest"/> started with a new line
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
-        /// <returns>A <see cref="StringSegment"/> that contains the first line of the original value of the <paramref name="rest"/> parameter,
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
+        /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first line of the original value of the <paramref name="rest"/> parameter,
         /// or the complete original value of <paramref name="rest"/> if it contained no more lines.</returns>
         public static ReadOnlySpan<char> ReadLine(ref this ReadOnlySpan<char> rest)
         {
@@ -259,12 +259,12 @@ namespace KGySoft.CoreLibraries
         /// Advances the specified <paramref name="rest"/> parameter consuming up to <paramref name="maxLength"/> characters and returns
         /// the consumed part. If <paramref name="rest"/> started with a new line
         /// before the call, then an empty span is returned. If the whole <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> has been processed,
-        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"/> after returning.
+        /// then <paramref name="rest"/> will be <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> after returning.
         /// </summary>
         /// <param name="rest">Represents the rest of the string to process. When this method returns, the value of this
-        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"/> if the whole span has been processed.</param>
+        /// parameter will be the remaining unprocessed part, or <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see> if the whole span has been processed.</param>
         /// <param name="maxLength">The maximum number of characters to read.</param>
-        /// <returns>A <see cref="StringSegment"/> that contains the first line of the original value of the <paramref name="rest"/> parameter,
+        /// <returns>A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> that contains the first line of the original value of the <paramref name="rest"/> parameter,
         /// or the complete original value of <paramref name="rest"/> if it contained no more than <paramref name="maxLength"/> characters.</returns>
         public static ReadOnlySpan<char> Read(ref this ReadOnlySpan<char> rest, int maxLength)
         {
@@ -376,9 +376,9 @@ namespace KGySoft.CoreLibraries
         /// </list>
         /// <note>Apart from <see cref="Enum"/> and <see cref="Type"/> types, no string allocation occurs when parsing any of the types above.</note>
         /// </para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.
         /// If a registered conversion can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.
         /// If a type converter can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
         /// </remarks>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>

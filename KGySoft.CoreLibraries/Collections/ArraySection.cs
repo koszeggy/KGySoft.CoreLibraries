@@ -41,11 +41,11 @@ namespace KGySoft.Collections
 
     /// <summary>
     /// Represents a one dimensional array or a section of an array.
-    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"/> types but can be used on every platform in the same way
-    /// and it is faster than <see cref="Memory{T}"/> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
+    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way
+    /// and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <typeparam name="T">The type of the element in the collection.</typeparam>
+    /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>The <see cref="ArraySection{T}"/> type is similar to the combination of the <see cref="Memory{T}"/> type and the .NET Core version of the <see cref="ArraySegment{T}"/> type.</para>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
@@ -162,13 +162,13 @@ namespace KGySoft.Collections
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/>.
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/>.
+        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => new Span<T>(array, offset, length);
@@ -375,7 +375,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
-        public ArraySection(T[] array, int offset) : this(array, offset, array?.Length ?? 0 - offset)
+        public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
         {
         }
 

@@ -226,7 +226,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is 0.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(ReadOnlySpan<char> value) => IsNull ? -1 : IndexOfInternal(value, 0, length);
 
@@ -240,7 +240,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(ReadOnlySpan<char> value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
@@ -269,7 +269,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is <paramref name="startIndex"/>.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is <paramref name="startIndex"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(ReadOnlySpan<char> value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => IndexOf(value, startIndex, length - startIndex, comparison);
@@ -281,7 +281,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to seek.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is 0.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is 0.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(ReadOnlySpan<char> value, StringComparison comparison)
             => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
@@ -466,7 +466,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         /// <remarks>
         /// <para>If <paramref name="comparison"/> is <see cref="StringComparison.Ordinal"/>, then no new string allocation occurs on any platforms.</para>
         /// <para>If <paramref name="comparison"/> is other than <see cref="StringComparison.Ordinal"/>, then depending on the targeted platform a new string allocation may occur.
@@ -506,7 +506,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is the smaller of <paramref name="startIndex"/> and the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(ReadOnlySpan<char> value, int startIndex, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, startIndex, length - startIndex, comparison);
@@ -519,7 +519,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
         /// <returns>The zero-based index position of <paramref name="value"/> if that <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> is found, or -1 if it is not.
-        /// If value is <see cref="ReadOnlySpan{T}.Empty"/>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
+        /// If value is <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see>, the return value is the last index position of this <see cref="StringSegment"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
             => LastIndexOf(value, 0, length, comparison);
