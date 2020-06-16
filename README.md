@@ -205,6 +205,10 @@ var threadSafeCache = personCache.GetThreadSafeAccessor(protectItemLoader: false
 person = threadSafeCache[id];
 ```
 
+- #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
+
+Acts as a regular `IDictionary<string, TValue` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm) or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm) and `ReadOnlySpan<char>` instances.
+
 - #### [`CircularList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_CircularList_1.htm):
 
 Fully compatible with `List<T>` but maintains a dynamic start/end position of the stored elements internally, which makes it very fast when elements are added/removed at the first position. It has also optimized range operations and can return both value type and reference type enumerators depending on the used context.
