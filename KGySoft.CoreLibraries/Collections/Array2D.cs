@@ -287,6 +287,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="Array2D{T}"/> struct from an existing <see cref="ArraySection{T}"/>
         /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="buffer">The desired underlying buffer for the <see cref="Array2D{T}"/> instance to be created.
         /// It must have sufficient capacity for the specified dimensions. Even if <paramref name="buffer"/> owns an array rented from

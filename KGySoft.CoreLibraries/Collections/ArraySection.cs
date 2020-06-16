@@ -340,6 +340,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>.
+        /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         public ArraySection(T[] array) : this(array, 0, array?.Length ?? 0)
@@ -349,6 +350,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>
         /// using the specified <paramref name="offset"/> and <paramref name="length"/>.
+        /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
@@ -372,6 +374,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <paramref name="array"/>
         /// using the specified <paramref name="offset"/>.
+        /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
