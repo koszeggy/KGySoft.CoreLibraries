@@ -69,6 +69,56 @@ See the [change log](https://github.com/koszeggy/KGySoft.CoreLibraries/blob/mast
 
 ### Useful Extensions:
 
+- #### Span-like types for all platforms:
+
+In .NET, depending on the targeted platform you can create a `ReadOnlySpan<char>`/`ReadOnlyMemory<char>` from a string or a `Span<T>`/`Memory<T>` from an array. In KGy SOFT Core Libraries you can use the [`StringSegment`][StringSegment] and [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm) in a very similar manner. They are not just available also for older platforms, starting with .NET Framework 3.5 but provide additional features as well.
+
+```cs
+// For strings you can use the AsSegment extensions in a similar way to AsSpan/AsMemory:
+StringSegment segment = "This is a string".AsSegment(10); // Contains "string" without allocating a new string.
+```
+
+[`StringSegment`][StringSegment] can be cast to `ReadOnlySpan<char>` (if available on current platform) but it has also some additional features such as [splitting](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_StringSegment_Split.htm). And the [`StringSegmentExtensions`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentExtensions.htm) class have several reader methods, which work on [`StringSegment`][StringSegment] type just like the `StreamReader` on strings:
+
+[StringSegment]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm
+
+```cs
+// Splitting a string into segments without allocating new strings:
+IList<StringSegment> segments = someDelimitedString.AsSegment().Split('|');
+
+// Or, you can use the reader methods so you don't need to allocate even the list:
+// Please note that though StringSegment is immutable, it is passed to the ReadToSeparator extension method
+// as a ref parameter so it can "consume" the segment as if it was mutable.
+StringSegment rest = someDelimitedString; // note that implicit cast works, too
+while (!rest.IsNull)
+    DoSomenthingWithSegment(rest.ReadToSeparator('|'));
+```
+
+> _Tip:_ Try also [online](https://dotnetfiddle.net/Byk0YM).
+
+[`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array3D_1.htm) types work similarly but for arrays. They are not just faster than `Memory<T>` (whose `Span` property has some extra cost) but offer some additional features as well:
+
+```cs
+// So far similar to AsSpan or AsMemory extensions:
+ArraySection<byte> section = myByteArray.AsSection(25, 100); // 100 bytes starting at index 25
+
+// But if you wish you can treat it as a 10x10 two-dimensional array:
+Array2D<byte> as2d = section.AsArray2D(10, 10);
+
+// 2D indexing works the same way as for a real multidimensional array. But this is actually faster:
+byte element = as2d[2, 3];
+
+// Slicing works the same way as for ArraySection/Spans:
+Array2D<byte> someRows = as2d[1..^1]; // same as as2d.Slice(1, as2d.Height - 2)
+
+// Or you can get a simple row:
+ArraySection<byte> singleRow = as2d[0];
+```
+
+Please note that none of the lines in the example above allocate anything on the heap.
+
+> _Tip:_ [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array3D_1.htm) types have constructors where you can specify an arbitrary capacity. If the targeted platform supports it, then these use array pooling, which can be much faster than allocating new arrays. Do not forget to release the created instances that were created by the allocator constructors.
+
 - #### [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) extension methods:
 
 > _Tip:_ Try also [online](https://dotnetfiddle.net/GKSif4).
@@ -208,7 +258,7 @@ person = threadSafeCache[id];
 
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 
-Acts as a regular `IDictionary<string, TValue` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm) or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm) and `ReadOnlySpan<char>` instances.
+Acts as a regular `IDictionary<string, TValue` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`][StringSegment] or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`][StringSegment] and `ReadOnlySpan<char>` instances.
 
 - #### [`CircularList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_CircularList_1.htm):
 
