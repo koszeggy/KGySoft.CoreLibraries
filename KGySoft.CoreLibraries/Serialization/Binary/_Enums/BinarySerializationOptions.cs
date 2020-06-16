@@ -107,7 +107,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// <para>This option makes possible to deserialize an object, which has been changed since last serialization.
-        /// When this options is enabled, names of the base classes, and fields that have been serialized but have been since then
+        /// When this option is enabled, names of the base classes, and fields that have been serialized but have been since then
         /// removed, will be ignored.
         /// <note type="caution">When this flag is enabled, an erroneous deserialization may silently succeed. When a field has
         /// been renamed or relocated into another base class,  use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead.</note></para>

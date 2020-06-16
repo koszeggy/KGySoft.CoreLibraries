@@ -30,7 +30,7 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// A class, which can generate an <see cref="EnumComparer{TEnum}"/> implementations.
+    /// A class, which can generate <see cref="EnumComparer{TEnum}"/> implementations.
     /// <br/>This class is a replacement of the old RecompILer logic and can be used also for .NET Core/Standard platforms.
     /// </summary>
     internal static class EnumComparerBuilder

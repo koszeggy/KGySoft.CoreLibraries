@@ -31,11 +31,13 @@ using KGySoft.Collections;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Generic helper class for the <see cref="Enum"/> class.
-    /// Provides high performance solutions for already existing functionality in the <see cref="Enum"/> class along with
-    /// some additional features.
+    /// Generic helper class for the <see cref="Enum"/> class. Provides high performance solutions
+    /// for already existing functionality in the <see cref="Enum"/> class along with some additional features.
     /// </summary>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
+    /// <remarks>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/xNTnLE" target="_blank">online</a>.</note>
+    /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
     public static partial class Enum<TEnum> where TEnum : struct, Enum
@@ -53,7 +55,7 @@ namespace KGySoft.CoreLibraries
         private static readonly EnumComparer<TEnum> converter = EnumComparer<TEnum>.Comparer; // The comparer contains also some internal converter methods.
         private static readonly EnumUnderlyingInfo underlyingInfo = EnumUnderlyingInfo.GetUnderlyingInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 
-        // These members van vary per TEnum and are initialized only on demand
+        // These members can vary per TEnum and are initialized only on demand
         private static TEnum[] values;
         private static string[] names;
         private static Dictionary<TEnum, string> valueNamePairs;
