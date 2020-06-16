@@ -22,6 +22,7 @@ Multiple versions of .NET Framework, .NET Core and .NET Standard are supported.
 5. [Examples](#examples)
    - [Extensions Methods](#useful-extensions)
    - [Collections](#high-performance-collections)
+   - [Fast enum handling](#fast-enum-handling)
    - [Reflection](#alternative-reflection-api)
    - [Binary Serialization](#binary-serialization)
    - [XML Serialization](#xml-serialization)
@@ -237,6 +238,16 @@ Console.WriteLine(clist.SkipWhile(i => i < 0).Count());
 Combines the features of `IBindingList` implementations (such as `BindingList<T>`) and `INotifyCollectionChanged` implementations (such as `ObservableCollection<T>`). It makes it an ideal collection type in many cases (such as in a technology-agnostic View-Model layer) because it can used in practically any UI environments. By default it is initialized by a [`SortableBindingList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SortableBindingList_1.htm) but can wrap any `IList<T>` implementation.
 
 > _Tip:_ See more collections in the [`KGySoft.Collections`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections.htm), [`KGySoft.Collections.ObjectModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections_ObjectModel.htm) and [`KGySoft.ComponentModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespaces.
+
+### Fast Enum Handling
+
+In .NET Framework some enum operations used to be legendarily slow. Back then I created the static [`Enum<TEnum>`][enum] and [`EnumComparer<TEnum>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_EnumComparer_1.htm) classes, which provid must faster operations on enum types than `System.Enum`. Since then, the performance has been radically improved, especially in .NET Core, so the difference became much narrower, though it [still exists](https://dotnetfiddle.net/xNTnLE).
+
+So today the main benefit of using the [`Enum<TEnum>`][enum] class is its extra features and maybe the support of `ReadOnlySpan<char>` type, which is still missing at `System.Enum`. And of course, if you target older frameworks, which can't use `ReadOnlySpan<char>`, you can still use the member overloads that accept [`StringSegment`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm) parameters.
+
+> _Tip:_ See the performance comparison in .NET Core and try it [online](https://dotnetfiddle.net/xNTnLE).
+
+[enum]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_Enum_1.htm
 
 ### Alternative Reflection API
 
