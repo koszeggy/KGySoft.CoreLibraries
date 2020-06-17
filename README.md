@@ -71,7 +71,7 @@ See the [change log](https://github.com/koszeggy/KGySoft.CoreLibraries/blob/mast
 
 - #### Span-like types for all platforms:
 
-In .NET, depending on the targeted platform you can create a `ReadOnlySpan<char>`/`ReadOnlyMemory<char>` from a string or a `Span<T>`/`Memory<T>` from an array. In KGy SOFT Core Libraries you can use the [`StringSegment`][StringSegment] and [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm) in a very similar manner. They are not just available also for older platforms, starting with .NET Framework 3.5 but provide additional features as well.
+In .NET, depending on the targeted platform you can create a `ReadOnlySpan<char>`/`ReadOnlyMemory<char>` from a string or a `Span<T>`/`Memory<T>` from an array. In KGy SOFT Core Libraries you can use the [`StringSegment`][StringSegment] and [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm) in a very similar manner. They are not just available also for older platforms (starting with .NET Framework 3.5) but provide additional features as well.
 
 ```cs
 // For strings you can use the AsSegment extensions in a similar way to AsSpan/AsMemory:
