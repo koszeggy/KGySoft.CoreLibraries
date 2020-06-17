@@ -565,7 +565,7 @@ public class MyModel : ValidatingObjectBase
     }
 }
 ```
-_Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try business objects in action
+> _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try business objects in action
 
 ### Command Binding
 
@@ -784,7 +784,7 @@ public class MyView : ViewBase<MyViewModel>
     }
 }
 ```
-_Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try command bindings in action
+> _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try command bindings in action
 
 [ICommand]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommand.htm
 [ICommandBinding]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommandBinding.htm
