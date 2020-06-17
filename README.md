@@ -565,6 +565,7 @@ public class MyModel : ValidatingObjectBase
     }
 }
 ```
+_Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try business objects in action
 
 ### Command Binding
 
@@ -783,6 +784,7 @@ public class MyView : ViewBase<MyViewModel>
     }
 }
 ```
+_Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try command bindings in action
 
 [ICommand]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommand.htm
 [ICommandBinding]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommandBinding.htm
@@ -850,7 +852,7 @@ The result of the `DoTest` method can be processed either manually or can be dum
 
 ```
 ==[System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results]================================================
-Iterations: 1 000 000
+Iterations: 1,000,000
 Warming up: Yes
 Test cases: 2
 Repeats: 2
@@ -858,14 +860,14 @@ Calling GC.Collect: Yes
 Forced CPU Affinity: 2
 Cases are sorted by time (quickest first)
 --------------------------------------------------
-1. Enum<TEnum>.ToString: average time: 26,60 ms
-  #1          29,40 ms   <---- Worst
-  #2          23,80 ms   <---- Best
-  Worst-Best difference: 5,60 ms (23,55%)
-2. Enum.ToString: average time: 460,78 ms (+434,18 ms / 1 732,36%)
-  #1         456,18 ms   <---- Best
-  #2         465,37 ms   <---- Worst
-  Worst-Best difference: 9,19 ms (2,01%)
+1. Enum<TEnum>.ToString: average time: 26.60 ms
+  #1          29.40 ms   <---- Worst
+  #2          23.80 ms   <---- Best
+  Worst-Best difference: 5.60 ms (23.55%)
+2. Enum.ToString: average time: 460.78 ms (+434.18 ms / 1,732.36%)
+  #1         456.18 ms   <---- Best
+  #2         465.37 ms   <---- Worst
+  Worst-Best difference: 9.19 ms (2.01%)
 ```
 
 If you need to use parameterized tests you can simply derive the `PerformanceTestBase<TDelegate, TResult>` class. Override the `OnBeforeCase` method to reset the parameter for each test cases. For example, this is how you can use a prepared `Random` instance in a performance test:
