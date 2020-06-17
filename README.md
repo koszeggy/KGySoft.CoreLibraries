@@ -321,7 +321,7 @@ There are four public classes derived from [`MemberAccessor`](https://docs.kgyso
 
 - #### [`Reflector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_Reflector.htm) class - the convenient way:
 
-If convenience is priority, then the [`Reflector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_Reflector.htm) class offers every functionality you need to use for reflection. While the accessors above can to be obtained by a `MemberInfo` instance, the `Reflector` can be used even by name. The following example demonstrates this for methods:
+If convenience is priority, then the [`Reflector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_Reflector.htm) class offers every functionality you need to use for reflection. While the accessors above can be obtained by a `MemberInfo` instance, the `Reflector` can be used even by name. The following example demonstrates this for methods:
 
 ```cs
 // Any method by MethodInfo:
