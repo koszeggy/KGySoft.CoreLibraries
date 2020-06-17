@@ -78,7 +78,7 @@ In .NET, depending on the targeted platform you can create a `ReadOnlySpan<char>
 StringSegment segment = "This is a string".AsSegment(10); // Contains "string" without allocating a new string.
 ```
 
-[`StringSegment`][StringSegment] can be cast to `ReadOnlySpan<char>` (if available on current platform) but it has also some additional features such as [splitting](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_StringSegment_Split.htm). And the [`StringSegmentExtensions`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentExtensions.htm) class have several reader methods, which work on [`StringSegment`][StringSegment] type just like the `StreamReader` on strings:
+[`StringSegment`][StringSegment] can be cast to `ReadOnlySpan<char>` (if available on current platform) but it has also some additional features such as [splitting](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_StringSegment_Split.htm). And the [`StringSegmentExtensions`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentExtensions.htm) class have several reader methods, which work on [`StringSegment`][StringSegment] type just like the `StringReader` on strings:
 
 [StringSegment]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegment.htm
 
