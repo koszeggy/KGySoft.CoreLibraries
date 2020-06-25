@@ -214,7 +214,7 @@ rnd.NextEnum<ConsoleColor>();
 // and NextByte, NextSByte, NextInt16, NextDecimal, etc.
 
 // NextObject: for practically anything. See also GenerateObjectSettings.
-rnd.NextObject<Person>().Dump(); // custom type
+rnd.NextObject<Person>(); // custom type
 rnd.NextObject<(int, string)>(); // tuple
 rnd.NextObject<IConvertible>(); // interface implementation
 rnd.NextObject<MarshalByRefObject>(); // abstract type implementation
