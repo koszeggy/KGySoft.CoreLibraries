@@ -430,15 +430,21 @@ namespace KGySoft.Reflection
 
         private static FieldAccessor GetField(Type type, Type fieldType, string fieldNamePattern)
         {
+            // Fields are meant to be used for non-visible members either by type or name pattern (or both)
             FieldAccessor GetFieldAccessor((Type DeclaringType, Type FieldType, string FieldNamePattern) key)
             {
-                // Fields are meant to be used for non-visible members either by type or name pattern (or both)
-                var fields = key.DeclaringType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                FieldInfo field =
-                    fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
-                    ?? fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
-                        && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
-                return field == null ? null : FieldAccessor.GetAccessor(field);
+                for (Type t = key.DeclaringType; t != typeof(object); t = t.BaseType)
+                {
+                    FieldInfo[] fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    FieldInfo field = fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
+                        ?? fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
+                            && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
+
+                    if (field != null)
+                        return FieldAccessor.GetAccessor(field);
+                }
+
+                return null;
             }
 
             if (fields == null)
