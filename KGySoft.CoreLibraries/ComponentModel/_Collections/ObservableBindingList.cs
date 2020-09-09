@@ -64,7 +64,7 @@ namespace KGySoft.ComponentModel
     /// <item>In <see cref="ObservableBindingList{T}"/> the <see cref="OnCollectionChanged">OnCollectionChanged</see> method simply raises the <see cref="CollectionChanged"/> event without calling <see cref="BlockReentrancy">BlockReentrancy</see>,
     /// which is rather called explicitly whenever it is needed.</item>
     /// <item>In <see cref="ObservableBindingList{T}"/> the <see cref="Collection{T}.Add">Add</see>, <see cref="Collection{T}.Insert">Insert</see>, <see cref="Collection{T}.Remove">Remove</see>, <see cref="Collection{T}.RemoveAt">RemoveAt</see>,
-    /// <see cref="Collection{T}.Clear">Clear</see> and <see cref="Move">Move</see> methods, and the setter if the <see cref="Collection{T}.Items">Items</see> property can throw a <see cref="NotSupportedException"/> if the wrapped collection is read-only.</item>
+    /// <see cref="Collection{T}.Clear">Clear</see> and <see cref="Move">Move</see> methods, and the setter of the <see cref="Collection{T}.Items">Items</see> property can throw a <see cref="NotSupportedException"/> if the wrapped collection is read-only.</item>
     /// </list>
     /// </para>
     /// <para><strong>Differences</strong> to the <see cref="BindingList{T}"/> class:

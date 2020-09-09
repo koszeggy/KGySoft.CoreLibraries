@@ -40,7 +40,7 @@ namespace KGySoft.ComponentModel
         public object OldValue { get; }
 
         /// <summary>
-        /// Gets the property value after the change or <see cref="ObservableObjectBase.MissingProperty"/> the property has been just been reset and no value is stored for it.
+        /// Gets the property value after the change or <see cref="ObservableObjectBase.MissingProperty"/> if the property has just been reset and there is no stored value for it.
         /// </summary>
         public object NewValue { get; }
 
