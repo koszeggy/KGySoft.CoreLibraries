@@ -11,6 +11,9 @@
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+
+    <!-- NUnit does not run .NET 3.5 tests on the correct runtime so the tests for .NET 3.5 can be executed as a console app -->
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
