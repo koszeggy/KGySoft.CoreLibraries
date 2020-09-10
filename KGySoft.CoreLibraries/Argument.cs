@@ -63,6 +63,7 @@ namespace KGySoft
         elementType,
         eventName,
         expression,
+        factory,
         field,
         fieldName,
         fileName,

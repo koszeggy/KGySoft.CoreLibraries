@@ -6,13 +6,20 @@
 ===============================================================================
 
 ~~~~~~~~~
-- v5.3.1:
+! v5.4.0:
 ~~~~~~~~~
+
+! KGySoft.CoreLibraries namespace:
+==================================
+! ThreadSafeRandom class:
+  ! Implementing IDisposable. Instances created by the non-default constructor should be disposed to prevent leaks.
+  * Improving performance, especially for the static Instance property
+  + New constructor that accepts a factory delegate to provide a thread-safe wrapper for any Random implementation.
 
 - KGySoft.Resources namespace:
 ==============================
 - ResXFileRef class: The inner converter does not dispose the memory stream after creating the object from stream,
-  which solves some rare issues (eg. creating a Bitmap from multi-resolution icon)
+  which solves some rare issues with resources that need to keep the initializer stream to be kept alive.
 
 
 ~~~~~~~~~
