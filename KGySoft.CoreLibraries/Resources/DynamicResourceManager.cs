@@ -1168,9 +1168,9 @@ namespace KGySoft.Resources
         #region Protected Methods
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
+        /// Releases the resources used by this <see cref="DynamicResourceManager"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to explicit disposing; otherwise, <see langword="false"/>.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)

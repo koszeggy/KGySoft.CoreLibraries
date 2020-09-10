@@ -130,49 +130,49 @@ namespace KGySoft.ComponentModel
         INotifyCollectionChanged, INotifyPropertyChanged,
         IBindingList, ICancelAddNew, IRaiseItemChangedEvents
     {
-        #region SimpleMonitor class
+#region SimpleMonitor class
 
         [Serializable]
         private class SimpleMonitor : IDisposable
         {
-            #region Fields
+#region Fields
 
             private int busyCount;
 
-            #endregion
+#endregion
 
-            #region Properties
+#region Properties
 
             public bool Busy => busyCount > 0;
 
-            #endregion
+#endregion
 
-            #region Methods
+#region Methods
 
             public void Enter() => ++busyCount;
             public void Dispose() => --busyCount;
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #region Constants
+#region Constants
 
         private const string indexerName = "Item[]";
 
-        #endregion
+#endregion
 
-        #region Fields
+#region Fields
 
-        #region Static Fields
+#region Static Fields
 
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
 
-        #endregion
+#endregion
 
-        #region Instance Fields
+#region Instance Fields
 
         private readonly SimpleMonitor monitor = new SimpleMonitor();
 
@@ -193,11 +193,11 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private ListChangedEventHandler listChangedHandler;
         [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Events
+#region Events
 
         /// <summary>
         /// Occurs when the list or an item in the list changes.
@@ -241,11 +241,11 @@ namespace KGySoft.ComponentModel
             remove => propertyChangedHandler -= value;
         }
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
-        #region Public Properties
+#region Public Properties
 
         /// <summary>
         /// Gets or sets whether <see cref="ListChanged"/> and <see cref="CollectionChanged"/> events are invoked with
@@ -387,9 +387,9 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        #endregion
+#endregion
 
-        #region Protected Properties
+#region Protected Properties
 
         /// <summary>
         /// Gets the property descriptors of <typeparamref name="T"/>.
@@ -398,18 +398,18 @@ namespace KGySoft.ComponentModel
             // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
             => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
 
-        #endregion
+#endregion
 
-        #region Private Properties
+#region Private Properties
 
         private bool IsBindingList => Items is IBindingList;
         private IBindingList AsBindingList => Items as IBindingList;
         private bool HookItemsPropertyChanged => !IsBindingList && canRaiseItemChange;
         private bool IsDualNotifyCollectionType => IsBindingList && Items is INotifyCollectionChanged;
 
-        #endregion
+#endregion
 
-        #region Explicitly Implemented Interface Properties
+#region Explicitly Implemented Interface Properties
 
         bool IRaiseItemChangedEvents.RaisesItemChangedEvents => RaiseItemChangedEvents;
         bool IBindingList.SupportsChangeNotification => true;
@@ -419,11 +419,11 @@ namespace KGySoft.ComponentModel
         PropertyDescriptor IBindingList.SortProperty => AsBindingList?.SortProperty;
         ListSortDirection IBindingList.SortDirection => AsBindingList?.SortDirection ?? default;
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with a <see cref="SortableBindingList{T}"/> internally.
@@ -448,11 +448,11 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public ObservableBindingList(IList<T> list) : base(list) => Initialize();
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
-        #region Public Methods
+#region Public Methods
 
         /// <summary>
         /// Releases the list and removes both incoming and outgoing subscriptions.
@@ -597,14 +597,14 @@ namespace KGySoft.ComponentModel
             FireItemChanged(position, this[position], null);
         }
 
-        #endregion
+#endregion
 
-        #region Protected Methods
+#region Protected Methods
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
+        /// Releases the resources used by this <see cref="ObservableBindingList{T}"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing || disposed)
@@ -870,9 +870,9 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
 
         private void Initialize()
         {
@@ -1020,7 +1020,7 @@ namespace KGySoft.ComponentModel
             Justification = "False alarm, the new analyzer includes the complexity of local methods. And moving them outside this method would be a bad idea.")]
         private void ProcessCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
-            #region Local Methods
+#region Local Methods
 
             void HookNewItems(IList newItems)
             {
@@ -1046,7 +1046,7 @@ namespace KGySoft.ComponentModel
                 }
             }
 
-            #endregion
+#endregion
 
             using (BlockReentrancy())
             {
@@ -1138,9 +1138,9 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        #endregion
+#endregion
 
-        #region Event handlers
+#region Event handlers
 
         private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
@@ -1205,9 +1205,9 @@ namespace KGySoft.ComponentModel
             FireItemChanged(pos, item, pd);
         }
 
-        #endregion
+#endregion
 
-        #region Explicitly Implemented Interface Methods
+#region Explicitly Implemented Interface Methods
 
         void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).ApplySort(property, direction);
         int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? Throw.NotSupportedException<int>();
@@ -1216,9 +1216,9 @@ namespace KGySoft.ComponentModel
         void IBindingList.RemoveSort() => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).RemoveSort();
         object IBindingList.AddNew() => AddNew();
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }
 #endif

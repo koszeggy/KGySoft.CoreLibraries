@@ -203,9 +203,9 @@ namespace KGySoft.Security.Cryptography
         }
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
+        /// Releases the resources used by this <see cref="SecureRandom"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
 #if !NET35

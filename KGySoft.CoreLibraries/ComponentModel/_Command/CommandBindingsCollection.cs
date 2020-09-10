@@ -551,7 +551,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Releases every binding in this <see cref="CommandBindingsCollection"/>.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method was invoked by explicit disposing, <see langword="false"/>&#160;if finalizing the object.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to explicit disposing, <see langword="false"/>&#160;if finalizing the object.</param>
         protected virtual void Dispose(bool disposing) => ClearItems();
 
         #endregion
