@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v5.3.1:
+~~~~~~~~~
+
+- KGySoft.Resources namespace:
+==============================
+- ResXFileRef class: The inner converter does not dispose the memory stream after creating the object from stream,
+  which solves some rare issues (eg. creating a Bitmap from multi-resolution icon)
+
+
+~~~~~~~~~
 * v5.3.0:
 ~~~~~~~~~
 
