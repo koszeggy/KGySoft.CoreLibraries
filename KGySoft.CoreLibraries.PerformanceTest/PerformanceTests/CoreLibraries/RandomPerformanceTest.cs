@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using KGySoft.Security.Cryptography;
 #if !NET35
 using System.Threading.Tasks;
 #endif
@@ -33,6 +34,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         #region Methods
 
         [Test]
+        public void FastRandomTest()
+        {
+            throw new NotImplementedException();
+            // TODO: Next overloads, NextDouble, NextBytes
+        }
+
+        [Test]
         public void ThreadSafeRandomTest()
         {
             const int iterations = 1_000_000;
@@ -40,11 +48,24 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             using var trnd = new ThreadSafeRandom();
             using var trndSeed = new ThreadSafeRandom(0);
             using var trndStatic = ThreadSafeRandom.Instance;
+            using var trndWrappedFast = new ThreadSafeRandom(() => new FastRandom());
+            using var trndWrappedSecure = new ThreadSafeRandom(() => new SecureRandom());
+            using var trndWrappedThreadSafe = new ThreadSafeRandom(() => new ThreadSafeRandom());
+            using var trndWrappedRandom = new ThreadSafeRandom(() => new Random());
+            var fast = new FastRandom(0);
+            using var secure = new SecureRandom();
+
             new PerformanceTest<int> { TestName = "Non-parallel", Iterations = iterations }
                 .AddCase(() => rnd.Next(), "Random")
                 .AddCase(() => trnd.Next(), "ThreadSafeRandom()")
                 .AddCase(() => trndSeed.Next(), "ThreadSafeRandom(0)")
                 .AddCase(() => trndStatic.Next(), "ThreadSafeRandom.Instance")
+                .AddCase(() => trndWrappedRandom.Next(), "ThreadSafeRandom(Random)")
+                .AddCase(() => trndWrappedFast.Next(), "ThreadSafeRandom(FastRandom)")
+                .AddCase(() => trndWrappedSecure.Next(), "ThreadSafeRandom(SecureRandom)")
+                .AddCase(() => trndWrappedThreadSafe.Next(), "ThreadSafeRandom(ThreadSafeRandom)")
+                .AddCase(() => fast.Next(), "FastRandom")
+                .AddCase(() => secure.Next(), "SecureRandom")
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -53,6 +74,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 .AddCase(() => Parallel.For(0, iterations, i => trnd.Next()), "ThreadSafeRandom()")
                 .AddCase(() => Parallel.For(0, iterations, i => trndSeed.Next()), "ThreadSafeRandom(0)")
                 .AddCase(() => Parallel.For(0, iterations, i => trndStatic.Next()), "ThreadSafeRandom.Instance")
+                .AddCase(() => Parallel.For(0, iterations, i => trndWrappedRandom.Next()), "ThreadSafeRandom(Random)")
+                .AddCase(() => Parallel.For(0, iterations, i => trndWrappedFast.Next()), "ThreadSafeRandom(FastRandom)")
+                .AddCase(() => Parallel.For(0, iterations, i => trndWrappedSecure.Next()), "ThreadSafeRandom(SecureRandom)")
+                .AddCase(() => Parallel.For(0, iterations, i => trndWrappedThreadSafe.Next()), "ThreadSafeRandom(ThreadSafeRandom)")
                 .DoTest()
                 .DumpResults(Console.Out);
 #endif

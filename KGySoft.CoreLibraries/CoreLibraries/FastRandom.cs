@@ -203,27 +203,30 @@ namespace KGySoft.CoreLibraries
 
         private ulong SampleUInt64()
         {
-            // this is the compacted version of the XorShift+ algorithm from here: https://en.wikipedia.org/wiki/Xorshift#xorshift+
-            state.A ^= state.A << 23;
-            ulong t = state.A ^ state.B ^ (state.A >> 17) ^ (state.B >> 26);
-            state.A = state.B;
+            // this is the C# version of the XorShift+ algorithm from here: https://en.wikipedia.org/wiki/Xorshift#xorshift+
+            ulong t = state.A;
+            ulong s = state.B;
+            t ^= t << 23;
+            t ^= t >> 17;
+            t ^= s ^ (s >> 26);
+            state.A = s;
             state.B = t;
-            return t + state.A;
+            return t + s;
         }
 
         private double SampleDouble() => (uint)SampleUInt64() * normalizationFactor;
 
         [SecurityCritical]
-        private unsafe void FillBytes(byte* pBuf, int bufferLength)
+        private unsafe void FillBytes(byte* pBuf, int bufLen)
         {
             // filling up the buffer with 64-bit chunks as long as possible
-            int len = bufferLength >> 3;
+            int len = bufLen >> 3;
             ulong* pQWord = (ulong*)pBuf;
             for (int i = 0; i < len; i++)
                 pQWord[i] = SampleUInt64();
 
             byte* pByte = (byte*)(pQWord + len);
-            len = bufferLength & 7;
+            len = bufLen & 7;
             if (len == 0)
                 return;
 

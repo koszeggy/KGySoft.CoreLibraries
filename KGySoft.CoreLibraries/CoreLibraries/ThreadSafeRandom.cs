@@ -40,13 +40,13 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            [ThreadStatic] private static Random threadInstance;
+            [ThreadStatic] private static FastRandom threadInstance;
 
             #endregion
 
             #region Properties
 
-            private static Random ThreadInstance => threadInstance ??= new Random();
+            private static FastRandom ThreadInstance => threadInstance ??= new FastRandom();
 
             #endregion
 
@@ -62,11 +62,11 @@ namespace KGySoft.CoreLibraries
 
             #region Public Methods
 
+            public override int Next() => ThreadInstance.Next();
             public override int Next(int maxValue) => ThreadInstance.Next(maxValue);
             public override int Next(int minValue, int maxValue) => ThreadInstance.Next(minValue, maxValue);
-            public override int Next() => ThreadInstance.Next();
-            public override void NextBytes(byte[] buffer) => ThreadInstance.NextBytes(buffer);
             public override double NextDouble() => ThreadInstance.NextDouble();
+            public override void NextBytes(byte[] buffer) => ThreadInstance.NextBytes(buffer);
 
 #if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
             /// <summary>
@@ -114,7 +114,7 @@ namespace KGySoft.CoreLibraries
             {
                 threadInstance = new ThreadLocal<Random>(() =>
                 {
-                    var result = new Random(seed);
+                    var result = new FastRandom(seed);
                     Interlocked.Increment(ref seed);
                     return result;
                 });
@@ -132,11 +132,11 @@ namespace KGySoft.CoreLibraries
 
             #region Public Methods
 
+            public override int Next() => threadInstance.Value.Next();
             public override int Next(int maxValue) => threadInstance.Value.Next(maxValue);
             public override int Next(int minValue, int maxValue) => threadInstance.Value.Next(minValue, maxValue);
-            public override int Next() => threadInstance.Value.Next();
-            public override void NextBytes(byte[] buffer) => threadInstance.Value.NextBytes(buffer);
             public override double NextDouble() => threadInstance.Value.NextDouble();
+            public override void NextBytes(byte[] buffer) => threadInstance.Value.NextBytes(buffer);
 
 #if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
             /// <summary>
@@ -204,6 +204,7 @@ namespace KGySoft.CoreLibraries
         /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class, using a time-dependent seed value.
         /// It is practically the same as using the <see cref="Instance"/> property.
         /// </summary>
+        [Obsolete("Use directly the static Instance property.")]
         public ThreadSafeRandom() => provider = Instance;
 
         /// <summary>
@@ -233,9 +234,10 @@ namespace KGySoft.CoreLibraries
 
         #region Private Constructors
 
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "It's to distinct from the default constructor")]
         private ThreadSafeRandom(bool _)
         {
-            // a dummy constructor for ThreadSafeRandomTimeBased to avoid the Obsolete warning
+            // a dummy constructor for ThreadSafeRandomDefault to avoid recursion and the obsolete warning
         }
 
         #endregion
