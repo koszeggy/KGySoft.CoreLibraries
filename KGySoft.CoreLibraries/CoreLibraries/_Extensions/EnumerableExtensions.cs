@@ -1722,23 +1722,23 @@ namespace KGySoft.CoreLibraries
         #region Random
 
         /// <summary>
-        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="FastRandom"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="seed">The seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
-            => Shuffle(source, new Random(seed));
+            => Shuffle(source, new FastRandom(seed));
 
         /// <summary>
-        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a new <see cref="Random"/> instance.
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a new <see cref="FastRandom"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
-            => Shuffle(source, new Random());
+            => Shuffle(source, new FastRandom());
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a specified <see cref="Random"/> instance.
@@ -1759,7 +1759,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets a random element from the enumerable <paramref name="source"/> using a new <see cref="Random"/> instance.
+        /// Gets a random element from the enumerable <paramref name="source"/> using a new <see cref="FastRandom"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
@@ -1768,7 +1768,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
         public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
-            => GetRandomElement(source, new Random(), defaultIfEmpty);
+            => GetRandomElement(source, new FastRandom(), defaultIfEmpty);
 
         /// <summary>
         /// Gets a random element from the enumerable <paramref name="source"/> using a specified <see cref="Random"/> instance.

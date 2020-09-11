@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private Random random;
+        private FastRandom random;
 
         #endregion
 
@@ -54,7 +54,7 @@ namespace KGySoft.CoreLibraries
 
         protected override void OnInitialize()
         {
-            random = new Random(Seed);
+            random = new FastRandom(Seed);
 #if DEBUG
             Assert.Inconclusive("Run the performance test in Release Build");
 #endif
@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
             PerformanceTest.CheckTestingFramework();
         }
 
-        protected override void OnBeforeCase() => random = new Random(Seed);
+        protected override void OnBeforeCase() => random = new FastRandom(Seed);
 
         #endregion
     }
@@ -71,7 +71,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private Random random;
+        private FastRandom random;
 
         #endregion
 
@@ -93,7 +93,7 @@ namespace KGySoft.CoreLibraries
 
         protected override void OnInitialize()
         {
-            random = new Random(Seed);
+            random = new FastRandom(Seed);
 #if DEBUG
             Assert.Inconclusive("Run the performance test in Release Build");
 #endif
@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries
             PerformanceTest.CheckTestingFramework();
         }
 
-        protected override void OnBeforeCase() => random = new Random(Seed);
+        protected override void OnBeforeCase() => random = new FastRandom(Seed);
 
         #endregion
     }
