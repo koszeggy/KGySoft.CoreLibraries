@@ -11,10 +11,14 @@
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
++ New FastRandom class
 ! ThreadSafeRandom class:
+  ! Sequences of a given seed are not the same as in the previous versions
   ! Implementing IDisposable. Instances created by the non-default constructor should be disposed to prevent leaks.
   * Improving performance, especially for the static Instance property
   + New constructor that accepts a factory delegate to provide a thread-safe wrapper for any Random implementation.
+* SafeRandom class:
+  * Improving performance
 
 - KGySoft.Resources namespace:
 ==============================
