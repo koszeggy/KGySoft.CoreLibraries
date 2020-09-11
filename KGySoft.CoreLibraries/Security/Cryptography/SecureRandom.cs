@@ -43,6 +43,12 @@ namespace KGySoft.Security.Cryptography
     /// <seealso cref="Random" />
     public class SecureRandom : Random, IDisposable
     {
+        #region Constants
+
+        private const double normalizationFactor = 1d / (UInt32.MaxValue + 1d);
+
+        #endregion
+
         #region Fields
 
         private readonly RandomNumberGenerator provider;
@@ -81,6 +87,7 @@ namespace KGySoft.Security.Cryptography
         /// <param name="buffer">An array of bytes to contain random numbers.</param>
         public override void NextBytes(byte[] buffer)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm: it CAN be null
             if (buffer == null)
                 Throw.ArgumentNullException(Argument.buffer);
             provider.GetBytes(buffer);
@@ -103,7 +110,7 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-        public override double NextDouble() => Sample();
+        public override double NextDouble() => SampleDouble();
 
         /// <summary>
         /// Returns a non-negative random integer.
@@ -129,7 +136,12 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.
         /// </returns>
-        public override int Next(int maxValue) => Next(0, maxValue);
+        public override int Next(int maxValue)
+        {
+            if (maxValue < 0)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            return (int)(SampleDouble() * maxValue);
+        }
 
         /// <summary>
         /// Returns a random integer that is within a specified range.
@@ -141,22 +153,14 @@ namespace KGySoft.Security.Cryptography
         /// </returns>
         public override int Next(int minValue, int maxValue)
         {
-            if (minValue > maxValue)
+            if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
-            if (minValue == maxValue)
-                return minValue;
-
             uint range = (uint)(maxValue - minValue);
-            uint limit = UInt32.MaxValue - (UInt32.MaxValue % range);
-            uint sample;
-            do
-            {
-                sample = SampleUInt32();
-            }
-            while (sample > limit);
 
-            return (int)((sample % range) + (uint)minValue);
+            if (range <= Int32.MaxValue)
+                return (int)(SampleDouble() * range) + minValue;
+            return (int)((long)(SampleDouble() * range) + minValue);
         }
 
         /// <summary>
@@ -178,29 +182,7 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-        [SecuritySafeCritical]
-        protected override unsafe double Sample()
-        {
-            // ReSharper disable once JoinDeclarationAndInitializer - due to #if
-            ulong sample;
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            Span<byte> bytes = stackalloc byte[8];
-            provider.GetBytes(bytes);
-#if NETSTANDARD2_1
-            sample = MemoryMarshal.Read<ulong>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            sample = Unsafe.As<byte, ulong>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            byte[] bytes = new byte[8];
-            provider.GetBytes(bytes);
-            fixed (byte* p = bytes)
-                sample = *(ulong*)p;
-#endif
-            // mantissa of the double type is at the last 53 bits
-            return sample / (double)(1UL << 53);
-        }
+        protected override double Sample() => SampleDouble();
 
         /// <summary>
         /// Releases the resources used by this <see cref="SecureRandom"/> instance.
@@ -221,21 +203,13 @@ namespace KGySoft.Security.Cryptography
         [SecuritySafeCritical]
         private unsafe uint SampleUInt32()
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            Span<byte> bytes = stackalloc byte[4];
-            provider.GetBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<uint>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, uint>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             byte[] bytes = new byte[4];
             provider.GetBytes(bytes);
             fixed (byte* p = bytes)
                 return *(uint*)p;
-#endif
         }
+
+        private double SampleDouble() => SampleUInt32() * normalizationFactor;
 
         #endregion
 
