@@ -26,7 +26,8 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Represents a thread-safe pseudo-random number generator.
-    /// Provides also a shared instance accessible via the static <see cref="Instance"/> property.
+    /// You can use the static <see cref="O:KGySoft.CoreLibraries.ThreadSafeRandom.Create">Create</see> methods to create a customized instance,
+    /// or just use the static <see cref="Instance"/> property for a fast shared instance.
     /// </summary>
     /// <seealso cref="Random" />
     public class ThreadSafeRandom : Random, IDisposable
@@ -97,20 +98,20 @@ namespace KGySoft.CoreLibraries
 
         #region ThreadSafeRandomWrapper class
 
-        private sealed class ThreadSafeRandomWrapper : Random, IDisposable
+        private sealed class ThreadSafeRandomWrapper : ThreadSafeRandom
         {
             #region Fields
 
             private readonly ThreadLocal<Random> threadInstance;
             private readonly bool trackValues;
 
-            private bool disposed;
+            private volatile bool disposed;
 
             #endregion
 
             #region Constructors
 
-            internal ThreadSafeRandomWrapper(int seed)
+            internal ThreadSafeRandomWrapper(int seed) : base(false)
             {
                 threadInstance = new ThreadLocal<Random>(() =>
                 {
@@ -120,10 +121,10 @@ namespace KGySoft.CoreLibraries
                 });
             }
 
-            internal ThreadSafeRandomWrapper(Func<Random> factory)
+            internal ThreadSafeRandomWrapper(Func<Random> factory) : base(false)
             {
-                threadInstance = new ThreadLocal<Random>(factory, true);
                 trackValues = true;
+                threadInstance = new ThreadLocal<Random>(factory, trackValues);
             }
 
             #endregion
@@ -146,21 +147,22 @@ namespace KGySoft.CoreLibraries
             public override void NextBytes(Span<byte> buffer) => threadInstance.Value.NextBytes(buffer);
 #endif
 
-            public void Dispose()
+            #endregion
+
+            #region Protected Methods
+
+            protected override double Sample() => threadInstance.Value.NextDouble();
+
+            protected override void Dispose(bool disposing)
             {
                 if (disposed)
                     return;
                 if (trackValues)
                     threadInstance.Values.ForEach(rnd => (rnd as IDisposable)?.Dispose());
                 threadInstance.Dispose();
+                base.Dispose(disposing);
                 disposed = true;
             }
-
-            #endregion
-
-            #region Protected Methods
-
-            protected override double Sample() => threadInstance.Value.NextDouble();
 
             #endregion
 
@@ -181,7 +183,7 @@ namespace KGySoft.CoreLibraries
 
         #region Instance Fields
 
-        private readonly Random provider;
+        private readonly ThreadSafeRandom provider;
 
         #endregion
 
@@ -190,7 +192,7 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         /// <summary>
-        /// Gets a thread-safe <see cref="Random"/> instance initialized by a time-dependent default seed value.
+        /// Gets a thread-safe <see cref="Random"/> instance initialized by a random seed value for each thread independently.
         /// </summary>
         public static ThreadSafeRandom Instance => staticInstance ??= new ThreadSafeRandomDefault();
 
@@ -201,34 +203,18 @@ namespace KGySoft.CoreLibraries
         #region Public Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class, using a time-dependent seed value.
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class, using a random seed value.
         /// It is practically the same as using the <see cref="Instance"/> property.
         /// </summary>
-        [Obsolete("Use directly the static Instance property.")]
+        [Obsolete("This member is maintained for compatibility reasons. Use directly the static Instance property for a slightly better performance.")]
         public ThreadSafeRandom() => provider = Instance;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
-        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// It is practically the same as using the <see cref="Create(int)"/> method.
         /// </summary>
-        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence. If a negative number is specified, the absolute value of the number is used.</param>
-        /// <remarks>
-        /// <para>Make sure the created instance is disposed if it is not used anymore.</para>
-        /// <note>Please note that two generated sequence can be different even with the same starting <paramref name="seed"/> if the created instance is accessed from different threads.</note>
-        /// </remarks>
-        public ThreadSafeRandom(int seed) => provider = new ThreadSafeRandomWrapper(seed);
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="factory"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
-        /// </summary>
-        /// <param name="factory">A delegate that will be invoked once in each thread the created instance is used.</param>
-        /// <remarks>
-        /// <para>Make sure the created instance is disposed if it is not used anymore even if the created instances are not disposable.</para>
-        /// <para>Disposing the created instance disposes also the <see cref="Random"/> instances created by the <paramref name="factory"/> if the created <see cref="Random"/> instances are disposable.</para>
-        /// <note>If <paramref name="factory"/> creates a pseudo random number generator, then in order not to produce the same sequence from the different threads make sure the <paramref name="factory"/> method creates instances with different seeds.</note>
-        /// </remarks>
-        public ThreadSafeRandom(Func<Random> factory) => provider = new ThreadSafeRandomWrapper(factory ?? Throw.ArgumentNullException<Func<Random>>(Argument.factory));
+        [Obsolete("This member is maintained for compatibility reasons. Use the static Create method for a slightly better performance.")]
+        public ThreadSafeRandom(int seed) => provider = Create(seed);
 
         #endregion
 
@@ -237,7 +223,7 @@ namespace KGySoft.CoreLibraries
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "It's to distinct from the default constructor")]
         private ThreadSafeRandom(bool _)
         {
-            // a dummy constructor for ThreadSafeRandomDefault to avoid recursion and the obsolete warning
+            // a dummy constructor for derived types to avoid the obsolete warning and provider initialization
         }
 
         #endregion
@@ -245,6 +231,36 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Methods
+
+        #region Static Methods
+
+        /// <summary>
+        /// Creates a <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="seed"/> value.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <remarks>
+        /// <para>Make sure the created instance is disposed if it is not used anymore.</para>
+        /// <note>Please note that two generated sequence can be different even with the same starting <paramref name="seed"/> if the created instance is accessed from different threads.</note>
+        /// </remarks>
+        public static ThreadSafeRandom Create(int seed) => new ThreadSafeRandomWrapper(seed);
+
+        /// <summary>
+        /// Creates a <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="factory"/> in each thread the result is accessed from.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="factory">A delegate that will be invoked once in each thread the created instance is used from.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// <para>Make sure the created instance is disposed if it is not used anymore even if the created instances are not disposable.</para>
+        /// <para>Disposing the created instance disposes also the <see cref="Random"/> instances created by the <paramref name="factory"/> if the created <see cref="Random"/> instances are disposable.</para>
+        /// <note>If <paramref name="factory"/> creates a pseudo random number generator, then in order not to produce the same sequence from the different threads make sure the <paramref name="factory"/> method creates instances with different seeds.</note>
+        /// </remarks>
+        public static ThreadSafeRandom Create(Func<Random> factory) => new ThreadSafeRandomWrapper(factory ?? Throw.ArgumentNullException<Func<Random>>(Argument.factory));
+
+        #endregion
+
+        #region Instance Methods
 
         #region Public Methods
 
@@ -327,6 +343,8 @@ namespace KGySoft.CoreLibraries
             if (disposing)
                 (provider as IDisposable)?.Dispose();
         }
+
+        #endregion
 
         #endregion
 

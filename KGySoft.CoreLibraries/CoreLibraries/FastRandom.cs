@@ -21,6 +21,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 
+using KGySoft.Security.Cryptography;
+
 #endregion
 
 namespace KGySoft.CoreLibraries
@@ -29,6 +31,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Represents a pseudo random number generator, which is functionally compatible
     /// with the <see cref="Random"/> class but is significantly faster than that.
+    /// For cryptographically secure random numbers use the <see cref="SecureRandom"/> class instead.
     /// </summary>
     public class FastRandom : Random
     {
@@ -71,7 +74,8 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public unsafe FastRandom()
         {
-            // A new Guid is ideal as a random seed as it is a real random value and has the same size
+            // A new Guid is ideal as a random seed as it is a real random value (though with a few fixed bits)
+            // and has the same size as our state
             Guid seed = Guid.NewGuid();
             state = *(UInt128*)&seed;
         }
@@ -104,7 +108,7 @@ namespace KGySoft.CoreLibraries
             int result;
             do
             {
-                // actually we could use a SampleUInt32() method, which generates a 64-bit sample for every second time
+                // we could use a SampleUInt32() method, which generates a 64-bit sample for every second time
                 // but actually that is slower on 64-bit builds both in .NET Framework and .NET Core.
                 result = (int)SampleUInt64() & Int32.MaxValue;
             } while (result == Int32.MaxValue);
@@ -185,6 +189,50 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
+        /// <summary>
+        /// Returns a random <see cref="int"/> value.
+        /// </summary>
+        /// <returns>A 32-bit signed integer that is greater than or equal to <see cref="Int32.MinValue">Int32.MinValue</see> and less or equal to <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
+        /// <remarks>
+        /// <para>Similarly to the <see cref="Next()">Next</see> method this one returns an <see cref="int"/> value; however, the result can be negative and
+        /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</para>
+        /// <para>The <see cref="RandomExtensions.NextInt32(Random)">RandomExtensions.NextInt32(Random)</see> extension method has the same functionality
+        /// but it is faster to call this one directly.</para>
+        /// </remarks>
+        public int NextInt32() => (int)SampleUInt64();
+
+        /// <summary>
+        /// Returns a random <see cref="uint"/> value.
+        /// </summary>
+        /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
+        /// <remarks>
+        /// <para>The <see cref="RandomExtensions.NextUInt32(Random)">RandomExtensions.NextUInt32(Random)</see> extension method has the same functionality
+        /// but it is faster to call this one directly.</para>
+        /// </remarks>
+        [CLSCompliant(false)]
+        public uint NextUInt32() => (uint)SampleUInt64();
+
+        /// <summary>
+        /// Returns a random <see cref="long"/> value.
+        /// </summary>
+        /// <returns>A 64-bit signed integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
+        /// <remarks>
+        /// <para>The <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method has the same functionality
+        /// but it is faster to call this one directly.</para>
+        /// </remarks>
+        public long NextInt64() => (long)SampleUInt64();
+
+        /// <summary>
+        /// Returns a random <see cref="ulong"/> value.
+        /// </summary>
+        /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
+        /// <remarks>
+        /// <para>The <see cref="RandomExtensions.NextUInt64(Random)">RandomExtensions.NextUInt64(Random)</see> extension method has the same functionality
+        /// but it is faster to call this one directly.</para>
+        /// </remarks>
+        [CLSCompliant(false)]
+        public ulong NextUInt64() => SampleUInt64();
+
         #endregion
 
         #region Protected Methods
@@ -201,6 +249,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private ulong SampleUInt64()
         {
             // this is the C# version of the XorShift+ algorithm from here: https://en.wikipedia.org/wiki/Xorshift#xorshift+
@@ -230,8 +279,22 @@ namespace KGySoft.CoreLibraries
             if (len == 0)
                 return;
 
-            // filling up the rest of the bytes one by one (up to 7 bytes)
+            // filling up the rest of the bytes (up to 7 bytes)
             ulong finalSample = SampleUInt64();
+
+            // 32 bit at once if possible
+            if ((len & 4) != 0)
+            {
+                ((uint*)pByte)[0] = (uint)finalSample;
+                if (len == 4)
+                    return;
+
+                finalSample >>= 32;
+                pByte += 4;
+                len &= ~4;
+            }
+
+            // last bytes (up to 3)
             for (int i = 0; i < len; i++, finalSample >>= 8)
                 pByte[i] = (byte)finalSample;
         }

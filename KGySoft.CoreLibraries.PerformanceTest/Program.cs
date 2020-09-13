@@ -52,9 +52,6 @@ namespace KGySoft.CoreLibraries
 
         internal static void Main()
         {
-            new RandomPerformanceTest().ThreadSafeRandomTest();
-            return;
-
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
             // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
             // or just calling the method to debug directly

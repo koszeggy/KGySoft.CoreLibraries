@@ -27,6 +27,8 @@ using System.Runtime.InteropServices;
 using System.Security; 
 using System.Security.Cryptography;
 
+using KGySoft.CoreLibraries;
+
 #endregion
 
 namespace KGySoft.Security.Cryptography
@@ -34,13 +36,13 @@ namespace KGySoft.Security.Cryptography
     /// <summary>
     /// Represents a secure random number generator, which uses a <see cref="RandomNumberGenerator"/> instance to produce
     /// cryptographically secure random numbers.
-    /// This class is functionally compatible with the <see cref="Random"/> class.
+    /// This class is functionally compatible with the <see cref="Random"/> and <see cref="FastRandom"/> classes.
     /// </summary>
     /// <remarks>
     /// <note>Please note that <see cref="SecureRandom"/> class implements the <see cref="IDisposable"/> interface
     /// so make sure you dispose it (or use it in a <see langword="using"/>&#160;block) if not used in a static context.</note>
     /// </remarks>
-    /// <seealso cref="Random" />
+    /// <seealso cref="FastRandom"/>
     public class SecureRandom : Random, IDisposable
     {
         #region Constants

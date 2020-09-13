@@ -23,7 +23,7 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// This class is based on the .NET Framework ThreadLocal type. This custom version is used even in .NET 4.0 because
-    /// the Framework version supports the <see cref="Values"/> property only from .NET 3.5
+    /// the Framework version supports the <see cref="Values"/> property only from .NET 4.5
     /// Original source: https://source.dot.net/#System.Private.CoreLib/ThreadLocal.cs
     /// </summary>
     internal class ThreadLocal<T> : IDisposable
