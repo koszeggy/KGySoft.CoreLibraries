@@ -18,6 +18,9 @@
     disposed to prevent leaks.
   * Improving performance, especially for the static Instance property (it doesn't use locking anymore)
   + New Create method that accepts a delegate to provide a thread-safe wrapper for any Random implementation.
+* RandomExtensions class:
+  - NextInt64/NetxUInt64 methods: For wide ranges it was possible to return the maxValue
+  * NextByte/NextSByte/Next[U]Int* methods: improving performance in several cases
 * SafeRandom class:
   * Improving performance
 

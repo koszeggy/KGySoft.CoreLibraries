@@ -94,7 +94,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextInt32Test()
         {
-            var rnd = new Random();
+            var rnd = new FastRandom();
 
             // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextInt32(1, 0));
@@ -121,6 +121,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // shift, largest possible range
             result = rnd.NextInt32(Int32.MinValue + 1, Int32.MaxValue, true);
             Assert.IsTrue(result > Int32.MinValue);
+
+            // no range
+            result = rnd.NextInt32(1, 1);
+            Assert.AreEqual(1, result);
         }
 
         [Test]
@@ -131,6 +135,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt32(1, 0));
 
+            // small range
             var result = rnd.NextUInt32(1, 2);
             Assert.AreEqual(1, result);
             result = rnd.NextUInt32(UInt32.MaxValue - 1, UInt32.MaxValue);
@@ -139,18 +144,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // big range
             result = rnd.NextUInt32(10, (uint)Int32.MaxValue + 100);
             Assert.IsTrue(result >= 10 && result < (uint)Int32.MaxValue + 100);
-        }
 
-        [Test]
-        public void NextUInt64Test()
-        {
-            var rnd = new Random();
-
-            // min-max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
-
-            var result = rnd.NextUInt64(0, 10);
-            Assert.IsTrue(result >= 0 && result < 10);
+            // no range
+            result = rnd.NextUInt32(1, 1);
+            Assert.AreEqual(1U, result);
         }
 
         [Test]
@@ -159,11 +156,41 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // full range
             var rnd = new Random();
 
-            // min-max
+            // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextInt64(1, 0));
 
+            // small range
             var result = rnd.NextInt64(-5, 5);
             Assert.IsTrue(result >= -5 && result < 5);
+
+            // no range
+            result = rnd.NextInt64(1, 1);
+            Assert.AreEqual(1L, result);
+
+            // big range, worst possible generating limit
+            result = rnd.NextInt64(-1, Int64.MaxValue, true);
+            Assert.IsTrue(result >= -1L);
+        }
+
+        [Test]
+        public void NextUInt64Test()
+        {
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
+
+            // small range
+            var result = rnd.NextUInt64(0, 10);
+            Assert.IsTrue(result >= 0 && result < 10);
+
+            // no range
+            result = rnd.NextUInt64(1, 1);
+            Assert.AreEqual(1L, result);
+
+            // big range, worst possible generating limit
+            result = rnd.NextUInt64(0UL, (UInt64.MaxValue >> 1) + 1, true);
+            Assert.IsTrue(result < (UInt64.MaxValue >> 1) + 1);
         }
 
         [Test]
