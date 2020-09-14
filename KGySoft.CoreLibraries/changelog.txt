@@ -14,6 +14,7 @@
 + New FastRandom class
 ! ThreadSafeRandom class:
   ! Sequences of a given seed are not the same as in the previous versions
+  ! The public constructors have been made obsolete. Use the static members instead.
   ! Implementing IDisposable. Instances created by the non-default constructor and the Create method should be
     disposed to prevent leaks.
   * Improving performance, especially for the static Instance property (it doesn't use locking anymore)

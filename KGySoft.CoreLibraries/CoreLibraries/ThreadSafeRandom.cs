@@ -19,15 +19,17 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using KGySoft.Security.Cryptography;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents a thread-safe pseudo-random number generator.
-    /// You can use the static <see cref="O:KGySoft.CoreLibraries.ThreadSafeRandom.Create">Create</see> methods to create a customized instance,
-    /// or just use the static <see cref="Instance"/> property for a fast shared instance.
+    /// Represents a thread-safe wrapper for random number generators.
+    /// You can use the static <see cref="O:KGySoft.CoreLibraries.ThreadSafeRandom.Create">Create</see> methods to create a customized instance
+    /// (eg. you can wrap a <see cref="SecureRandom"/> instance to create cryptographically safe random number in a thread-safe way),
+    /// or just use the static <see cref="Instance"/> property for a fast shared instance (which uses <see cref="FastRandom"/> internally).
     /// </summary>
     /// <seealso cref="Random" />
     public class ThreadSafeRandom : Random, IDisposable
@@ -192,8 +194,13 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         /// <summary>
-        /// Gets a thread-safe <see cref="Random"/> instance initialized by a random seed value for each thread independently.
+        /// Gets a <see cref="ThreadSafeRandom"/> instance that can be used from any threads concurrently.
         /// </summary>
+        /// <remarks>
+        /// <note>This property returns a <see cref="ThreadSafeRandom"/> instance, which generates pseudo random numbers using <see cref="FastRandom"/> internally.
+        /// To produce cryptographically secure random numbers use the <see cref="Create(Func{Random})"/> method instead, and initialize it by a delegate,
+        /// which returns <see cref="SecureRandom"/> instances.</note>
+        /// </remarks>
         public static ThreadSafeRandom Instance => staticInstance ??= new ThreadSafeRandomDefault();
 
         #endregion
