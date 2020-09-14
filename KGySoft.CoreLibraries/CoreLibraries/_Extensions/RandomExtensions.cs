@@ -54,6 +54,7 @@ namespace KGySoft.CoreLibraries
     /// {
     ///     public static void Main()
     ///     {
+    ///         // Or FastRandom for the fastest results, or SecureRandom for cryptographically safe results.
     ///         var rnd = new Random();
     /// 
     ///         // Next... for all simple types:
@@ -346,23 +347,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe int NextInt32(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[4];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<int>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, int>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[4];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(int*)p;
-#endif
         }
 
         /// <summary>
@@ -438,23 +426,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe uint NextUInt32(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[4];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<uint>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, uint>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[4];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(uint*)p;
-#endif
         }
 
         /// <summary>
@@ -514,23 +489,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe long NextInt64(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[8];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<long>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, long>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[8];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(long*)p;
-#endif
         }
 
         /// <summary>
@@ -598,23 +560,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe ulong NextUInt64(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[8];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<ulong>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, ulong>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[8];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(ulong*)p;
-#endif
         }
 
         /// <summary>
