@@ -25,6 +25,11 @@
 * SafeRandom class:
   * Improving performance
 
++ KGySoft.ComponentModel namespace:
+===================================
++ Command class: New CreateSynchronizedPropertyBinding methods
++ CommandBindingsCollection: New CreateSynchronizedPropertyBinding methods
+
 - KGySoft.Resources namespace:
 ==============================
 - ResXFileRef class: The inner converter does not dispose the memory stream after creating the object from stream,
