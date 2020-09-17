@@ -228,7 +228,7 @@ namespace KGySoft.CoreLibraries
             /// Must be a separate instance because dynamic method references will never freed.
             /// Other problem if the original Random is a disposable secure random: invoking the delegate would throw an exception.
             /// </summary>
-            private static readonly Random randomForDelegates = new Random();
+            private static readonly Random randomForDelegates = new FastRandom();
 
             private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates); 
             private static readonly MethodInfo nextObjectGenMethod = (typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));

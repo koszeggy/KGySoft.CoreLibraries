@@ -346,7 +346,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             new SerializationEventsClass { Name = "Parent" }.AddChild("Child").Parent,
 
             // ISerializable class
-            new DataTable("tableName", "tableNamespace"),
+            new Exception("message"),
 
             // IBinarySerializable
             new BinarySerializable { IntProp = 42 },

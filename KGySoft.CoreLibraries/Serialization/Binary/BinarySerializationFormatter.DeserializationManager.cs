@@ -506,7 +506,12 @@ namespace KGySoft.Serialization.Binary
             private static StringBuilder ReadStringBuilder(BinaryReader br)
             {
                 int capacity = Read7BitInt(br);
-                return new StringBuilder(br.ReadString(), capacity);
+                int maxCapacity = Read7BitInt(br);
+                if (maxCapacity == Int32.MaxValue)
+                    return new StringBuilder(br.ReadString(), capacity);
+                var result = new StringBuilder(capacity, maxCapacity);
+                result.Append(br.ReadString());
+                return result;
             }
 
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object finalObject)
@@ -933,8 +938,20 @@ namespace KGySoft.Serialization.Binary
 
                         if (collection is IList list)
                         {
-                            AddListElement(list, element);
+#if NET35
+                            if (element != null || !descriptor.IsGenericCollection)
+#endif
+                            {
+                                AddListElement(list, element);
+                                continue;
+                            }
+
+#if NET35
+                            // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
+                            addMethod = serInfo.GetAddMethod(descriptor);
+                            AddCollectionElement(collection, addMethod, null);
                             continue;
+#endif
                         }
 
                         Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");

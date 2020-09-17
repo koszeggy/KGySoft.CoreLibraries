@@ -122,7 +122,7 @@ namespace KGySoft.Resources
                 return result;
             }
 
-            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "MemoryStream must not be disposed if returned.")]
+            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "MemoryStream must not be disposed even if passsed to constructor.")]
             internal static object ConvertFrom(string stringValue, Type objectType, string basePath)
             {
                 if (stringValue == null)
@@ -155,20 +155,15 @@ namespace KGySoft.Resources
                 if (!File.Exists(fileName))
                     Throw.FileNotFoundException(Res.ResourcesFileRefFileNotFound(fileName), fileName);
                 using (FileStream s = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    buffer = new byte[s.Length];
-                    s.Read(buffer, 0, (int)s.Length);
-                }
+                    buffer = s.ToArray();
 
                 if (toCreate == Reflector.ByteArrayType)
                     return buffer;
 
                 var memStream = new MemoryStream(buffer);
-                if (toCreate == typeof(MemoryStream))
-                    return memStream;
-
-                using (memStream)
-                    return Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
+                return toCreate == typeof(MemoryStream)
+                    ? memStream
+                    : Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
             }
 
             #endregion

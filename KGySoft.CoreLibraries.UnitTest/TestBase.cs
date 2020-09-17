@@ -338,7 +338,10 @@ namespace KGySoft.CoreLibraries
                 {
                     StringBuilder sbRef = (StringBuilder)reference;
                     StringBuilder sbCheck = (StringBuilder)check;
-                    bool result = Check(sbRef.Capacity == sbCheck.Capacity, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Capacity)} {sbRef.Capacity} <-> {sbCheck.Capacity}", errors);
+                    bool result = Check(sbRef.MaxCapacity == sbCheck.MaxCapacity, $"{nameof(StringBuilder)}.{nameof(StringBuilder.MaxCapacity)} {sbRef.MaxCapacity} <-> {sbCheck.MaxCapacity}", errors);
+#if !NET35 // when deserializing by fields, Capacity is lost in .NET 3.5 and will be the same as value length
+                    result &= Check(sbRef.Capacity == sbCheck.Capacity, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Capacity)} {sbRef.Capacity} <-> {sbCheck.Capacity}", errors); 
+#endif
                     result &= Check(sbRef.Length == sbCheck.Length, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Length)} {sbRef.Length} <-> {sbCheck.Length}", errors);
                     result &= Check(sbRef.ToString() == sbCheck.ToString(), $"{nameof(StringBuilder)}: {sbRef} <-> {sbCheck}", errors);
                     return result;

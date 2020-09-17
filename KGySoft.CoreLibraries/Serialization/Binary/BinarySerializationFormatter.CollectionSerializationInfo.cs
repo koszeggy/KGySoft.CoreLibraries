@@ -80,6 +80,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal string SpecificAddMethod { get; set; }
 
+            internal bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;
             internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
             internal bool IsNonGenericCollection => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
             internal bool IsNonGenericDictionary => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
@@ -92,7 +93,6 @@ namespace KGySoft.Serialization.Binary
 
             #region Private Properties
 
-            private bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;
             private bool HasCapacity => (Info & CollectionInfo.HasCapacity) == CollectionInfo.HasCapacity;
             private bool HasEqualityComparer => (Info & CollectionInfo.HasEqualityComparer) == CollectionInfo.HasEqualityComparer;
             private bool HasAnyComparer => HasEqualityComparer || (Info & CollectionInfo.HasComparer) == CollectionInfo.HasComparer;
@@ -225,7 +225,7 @@ namespace KGySoft.Serialization.Binary
             {
                 MethodAccessor GetAddMethodAccessor(Type type)
                 {
-                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary values.
+                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary/collection values.
 
                     MethodInfo method = IsGeneric
                         ? type.GetMethod(methodName, type.GetGenericArguments()) // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)

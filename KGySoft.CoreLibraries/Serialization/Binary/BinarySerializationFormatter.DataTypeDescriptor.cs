@@ -23,10 +23,8 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Runtime.Serialization;
 using System.Text;
 
 using KGySoft.Collections;
@@ -50,6 +48,7 @@ namespace KGySoft.Serialization.Binary
             private bool? isDictionary;
 #if NET35
             private bool? isGenericDictionary;
+            private bool? isGenericCollection;
 #endif
             private bool? isSingleElement;
 
@@ -65,12 +64,13 @@ namespace KGySoft.Serialization.Binary
             internal DataTypes CollectionDataType => GetCollectionDataType(dataType);
             internal bool IsCollection => IsCollectionType(dataType);
             internal bool IsArray => CollectionDataType == DataTypes.Array;
-            internal bool IsDictionary => isDictionary ?? (isDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary).Value;
+            internal bool IsDictionary => isDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary;
 #if NET35
-            internal bool IsGenericDictionary => isGenericDictionary ?? (isGenericDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary).Value;
+            internal bool IsGenericDictionary => isGenericDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
+            internal bool IsGenericCollection => isGenericCollection ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGeneric;
 #endif
             internal bool IsReadOnly { get; set; }
-            internal bool IsSingleElement => isSingleElement ?? (isSingleElement = serializationInfo[CollectionDataType].IsSingleElement).Value;
+            internal bool IsSingleElement => isSingleElement ??= serializationInfo[CollectionDataType].IsSingleElement;
             internal bool IsNullable { get; private set; }
 
             /// <summary>

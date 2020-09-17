@@ -54,6 +54,7 @@ namespace KGySoft.CoreLibraries
     /// {
     ///     public static void Main()
     ///     {
+    ///         // Or FastRandom for the fastest results, or SecureRandom for cryptographically safe results.
     ///         var rnd = new Random();
     /// 
     ///         // Next... for all simple types:
@@ -200,7 +201,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random, sbyte maxValue, bool inclusiveUpperBound = false)
-            => (sbyte)random.NextInt32(0, maxValue, inclusiveUpperBound);
+            => (sbyte)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="sbyte"/> value that is within a specified range.
@@ -238,7 +239,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static byte NextByte(this Random random, byte maxValue, bool inclusiveUpperBound = false)
-            => (byte)random.NextUInt32(0U, maxValue, inclusiveUpperBound);
+            => (byte)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="byte"/> value that is within a specified range.
@@ -253,7 +254,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static byte NextByte(this Random random, byte minValue, byte maxValue, bool inclusiveUpperBound = false)
-            => (byte)random.NextUInt32(minValue, maxValue, inclusiveUpperBound);
+            => (byte)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="short"/> value.
@@ -278,7 +279,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static short NextInt16(this Random random, short maxValue, bool inclusiveUpperBound = false)
-            => (short)random.NextInt32(0, maxValue, inclusiveUpperBound);
+            => (short)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="short"/> value that is within a specified range.
@@ -317,7 +318,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort maxValue, bool inclusiveUpperBound = false)
-            => (ushort)random.NextUInt32(0U, maxValue, inclusiveUpperBound);
+            => (ushort)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="ushort"/> value that is within a specified range.
@@ -333,7 +334,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort minValue, ushort maxValue, bool inclusiveUpperBound = false)
-            => (ushort)random.NextUInt32(minValue, maxValue, inclusiveUpperBound);
+            => (ushort)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
         /// Returns a random <see cref="int"/> value.
@@ -346,23 +347,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe int NextInt32(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[4];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<int>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, int>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[4];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(int*)p;
-#endif
         }
 
         /// <summary>
@@ -377,7 +365,19 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static int NextInt32(this Random random, int maxValue, bool inclusiveUpperBound = false)
-            => random.NextInt32(0, maxValue, inclusiveUpperBound);
+        {
+            if (random == null)
+                Throw.ArgumentNullException(Argument.random);
+            
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == Int32.MaxValue)
+                    return random.Next(-1, maxValue) + 1;
+                maxValue += 1;
+            }
+
+            return random.Next(maxValue);
+        }
 
         /// <summary>
         /// Returns a random <see cref="int"/> value that is within a specified range.
@@ -395,8 +395,6 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
-            if (minValue == maxValue)
-                return minValue;
 
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
@@ -428,23 +426,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe uint NextUInt32(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[4];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<uint>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, uint>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[4];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(uint*)p;
-#endif
         }
 
         /// <summary>
@@ -478,9 +463,6 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
-            if (minValue == maxValue)
-                return minValue;
-
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
@@ -502,28 +484,15 @@ namespace KGySoft.CoreLibraries
         /// Returns a random <see cref="long"/> value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
-        /// <returns>A 64-bit unsigned integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
+        /// <returns>A 64-bit signed integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [SecuritySafeCritical]
         public static unsafe long NextInt64(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[8];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<long>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, long>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[8];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(long*)p;
-#endif
         }
 
         /// <summary>
@@ -556,19 +525,20 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
-            if (minValue == maxValue)
-                return minValue;
-
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = (ulong)(maxValue - minValue);
+            if (range <= UInt32.MaxValue)
+                return random.NextUInt32(0U, (uint)range, inclusiveUpperBound) + minValue;
+
             if (inclusiveUpperBound)
             {
                 if (range == UInt64.MaxValue)
                     return random.NextInt64();
-                range += 1;
             }
+            else
+                range -= 1;
 
             ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);
             ulong sample;
@@ -590,23 +560,10 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe ulong NextUInt64(this Random random)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-            // In practice, in .NET Core 3.0 this is still slower than the fallback version but
-            // we hope the best for the future and at least we spare some heap allocation
-            Span<byte> bytes = stackalloc byte[8];
-            random.NextBytes(bytes);
-#if NETSTANDARD2_1
-            return MemoryMarshal.Read<ulong>(bytes); // Unsafe.As would be much faster but that is not available in Standard
-#else
-            return Unsafe.As<byte, ulong>(ref bytes[0]);
-#endif // NETSTANDARD2_1
-
-#else // !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
             var bytes = new byte[8];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
                 return *(ulong*)p;
-#endif
         }
 
         /// <summary>
@@ -640,19 +597,20 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null)
                 Throw.ArgumentNullException(Argument.random);
-            if (minValue == maxValue)
-                return minValue;
-
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = maxValue - minValue;
+            if (range <= UInt32.MaxValue)
+                return random.NextUInt32(0U, (uint)range, inclusiveUpperBound) + minValue;
+
             if (inclusiveUpperBound)
             {
                 if (range == UInt64.MaxValue)
                     return random.NextUInt64();
-                range += 1;
             }
+            else
+                range -= 1;
 
             ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);
             ulong sample;
@@ -661,7 +619,6 @@ namespace KGySoft.CoreLibraries
                 sample = random.NextUInt64();
             }
             while (sample > limit);
-
             return (sample % range) + minValue;
         }
 

@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: RandomizedPerformanceTest.cs
+//  File: ParameterizedPerformanceTest.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -18,23 +18,24 @@
 
 using System;
 using KGySoft.Diagnostics;
+using KGySoft.Reflection;
 using NUnit.Framework;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
-    internal class RandomizedPerformanceTest : PerformanceTestBase<Action<Random>, object>
+    internal class ParameterizedPerformanceTest<TParam> : PerformanceTestBase<Action<TParam>, object>
     {
         #region Fields
 
-        private FastRandom random;
+        private TParam parameter;
 
         #endregion
 
         #region Properties
 
-        public int Seed { get; set; }
+        public Func<TParam> ParamFactory { get; set; }
 
         public new string TestName
         {
@@ -46,38 +47,38 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        protected override object Invoke(Action<Random> del)
+        protected override object Invoke(Action<TParam> del)
         {
-            del.Invoke(random);
+            del.Invoke(parameter);
             return null;
         }
 
         protected override void OnInitialize()
         {
-            random = new FastRandom(Seed);
 #if DEBUG
             Assert.Inconclusive("Run the performance test in Release Build");
 #endif
             base.OnInitialize();
             PerformanceTest.CheckTestingFramework();
+            OnBeforeCase();
         }
 
-        protected override void OnBeforeCase() => random = new FastRandom(Seed);
+        protected override void OnBeforeCase() => parameter = ParamFactory == null ? Activator.CreateInstance<TParam>() : ParamFactory.Invoke();
 
         #endregion
     }
 
-    internal class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>
+    internal class ParameterizedPerformanceTest<TParam, TResult> : PerformanceTestBase<Func<TParam, TResult>, TResult>
     {
         #region Fields
 
-        private FastRandom random;
+        private TParam parameter;
 
         #endregion
 
         #region Properties
 
-        public int Seed { get; set; }
+        public Func<TParam> ParamFactory { get; set; }
 
         public new string TestName
         {
@@ -89,19 +90,19 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        protected override T Invoke(Func<Random, T> del) => del.Invoke(random);
+        protected override TResult Invoke(Func<TParam, TResult> del) => del.Invoke(parameter);
 
         protected override void OnInitialize()
         {
-            random = new FastRandom(Seed);
 #if DEBUG
             Assert.Inconclusive("Run the performance test in Release Build");
 #endif
             base.OnInitialize();
             PerformanceTest.CheckTestingFramework();
+            OnBeforeCase();
         }
 
-        protected override void OnBeforeCase() => random = new FastRandom(Seed);
+        protected override void OnBeforeCase() => parameter = ParamFactory == null ? Activator.CreateInstance<TParam>() : ParamFactory.Invoke();
 
         #endregion
     }
