@@ -203,6 +203,7 @@ if (stringValue.In("something", "something else", "maybe some other value", "or.
 > _Tip:_ Try also [online](https://dotnetfiddle.net/EPHRIx).
 
 ```cs
+// Or FastRandom for the fastest results, or SecureRandom for cryptographically safe results.
 var rnd = new Random();
 
 // Next... for all simple types:
