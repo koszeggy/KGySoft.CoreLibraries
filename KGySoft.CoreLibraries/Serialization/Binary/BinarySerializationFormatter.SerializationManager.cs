@@ -242,6 +242,7 @@ namespace KGySoft.Serialization.Binary
             private static void WriteStringBuilder(BinaryWriter bw, StringBuilder sb)
             {
                 Write7BitInt(bw, sb.Capacity);
+                Write7BitInt(bw, sb.MaxCapacity);
                 bw.Write(sb.ToString());
             }
 

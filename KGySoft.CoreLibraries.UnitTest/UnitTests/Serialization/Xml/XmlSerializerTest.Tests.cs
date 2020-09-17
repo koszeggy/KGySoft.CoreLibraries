@@ -326,7 +326,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeByTypeConverter()
         {
 #if !NETCOREAPP3_0
-            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 
@@ -562,7 +562,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeSimpleArrays()
         {
 #if !NETCOREAPP3_0
-            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             IList[] referenceObjects =
                 {
@@ -1025,16 +1025,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             object[] referenceObjects =
                 {
-                    new StrongBox<int>(13)
+                    (13, "alpha")
                 };
 
-            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.Runtime.CompilerServices.StrongBox`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
+#if !(NET35 || NET40 || NET45) // InvalidOperationException: System.ValueTuple`2 is inaccessible due to its protection level. Only public types can be processed.  
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.ValueTuple`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
             SystemSerializeObjects(referenceObjects);
+#endif
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type Int32: 13 <-> 0");
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type ValueTuple`2[Int32,String]: (13, alpha) <-> (0, )");
         }
 
         /// <summary>
@@ -1097,7 +1099,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeComplexGenericCollections()
         {
 #if !NETCOREAPP3_0
-            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             ICollection[] referenceObjects =
                 {

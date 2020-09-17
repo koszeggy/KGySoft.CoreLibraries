@@ -11,16 +11,18 @@
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
-+ New FastRandom class
 ! ThreadSafeRandom class:
   ! Sequences of a given seed are not the same as in the previous versions
   ! The public constructors have been made obsolete. Use the static members instead.
-  ! Implementing IDisposable. Instances created by the non-default constructor and the Create method should be
-    disposed to prevent leaks.
-  * Improving performance, especially for the static Instance property (it doesn't use locking anymore)
+  ! Implementing IDisposable. Instances created by the non-default constructor and the Create methods should be
+    disposed to prevent memory leaks.
+  * Improving performance, especially for the static Instance property (it doesn't use locks anymore)
   + New Create method that accepts a delegate to provide a thread-safe wrapper for any Random implementation.
+  + New Create method that replaces the seed-specifying constructor
++ New FastRandom class
 * RandomExtensions class:
-  - NextInt64/NetxUInt64 methods: For wide ranges it was possible to return the maxValue
+  - NextInt64/NetxUInt64 methods: For wide ranges it was possible to return the maxValue even if upper bound was
+    not inclusive
   * NextByte/NextSByte/Next[U]Int* methods: improving performance in several cases
 * SafeRandom class:
   * Improving performance
@@ -34,6 +36,14 @@
 ==============================
 - ResXFileRef class: The inner converter does not dispose the memory stream after creating the object from stream,
   which solves some rare issues with resources that need to keep the initializer stream to be kept alive.
+
+! KGySoft.Serialization.Binary namespace:
+=========================================
+! BinarySerializationFormatter class:
+  ! Natively supported serialization of StringBuilder have been changed (produced stream is not compatible with
+    previous versions)
+  - Natively supported serialization of StringBuilder preserves MaxCapacity
+  - In .NET 3.5 fixing a deserialization issue affecting some generic collections with nullable element type.
 
 
 ~~~~~~~~~
