@@ -202,7 +202,7 @@ namespace KGySoft.ComponentModel
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, null);
 
         /// <summary>
-        /// Creates a synchronized binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/>, which allows to update the
+        /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/>, which allows to update the
         /// specified <paramref name="targetPropertyName"/> in the <paramref name="targets"/>, when the property of <paramref name="sourcePropertyName"/> changes in the <paramref name="source"/>.
         /// The target properties will be set using the <see cref="SynchronizationContext"/> of the thread on which this method was called.
         /// </summary>

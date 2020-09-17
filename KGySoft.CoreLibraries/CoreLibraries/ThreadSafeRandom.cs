@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Represents a thread-safe wrapper for random number generators.
     /// You can use the static <see cref="O:KGySoft.CoreLibraries.ThreadSafeRandom.Create">Create</see> methods to create a customized instance
-    /// (eg. you can wrap a <see cref="SecureRandom"/> instance to create cryptographically safe random number in a thread-safe way),
+    /// (eg. you can wrap a <see cref="SecureRandom"/> instance to generate cryptographically safe random numbers in a thread-safe way),
     /// or just use the static <see cref="Instance"/> property for a fast shared instance (which uses <see cref="FastRandom"/> internally).
     /// </summary>
     /// <seealso cref="Random" />
@@ -220,6 +220,7 @@ namespace KGySoft.CoreLibraries
         /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
         /// It is practically the same as using the <see cref="Create(int)"/> method.
         /// </summary>
+        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
         [Obsolete("This member is maintained for compatibility reasons. Use the static Create method for a slightly better performance.")]
         public ThreadSafeRandom(int seed) => provider = Create(seed);
 
@@ -246,9 +247,10 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <returns>A <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="seed"/> value.</returns>
         /// <remarks>
         /// <para>Make sure the created instance is disposed if it is not used anymore.</para>
-        /// <note>Please note that two generated sequence can be different even with the same starting <paramref name="seed"/> if the created instance is accessed from different threads.</note>
+        /// <note>Please note that two generated sequences can be different even with the same starting <paramref name="seed"/> if the created instance is accessed from different threads.</note>
         /// </remarks>
         public static ThreadSafeRandom Create(int seed) => new ThreadSafeRandomWrapper(seed);
 
@@ -257,7 +259,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="factory">A delegate that will be invoked once in each thread the created instance is used from.</param>
-        /// <returns></returns>
+        /// <returns>A <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="factory"/> in each thread the result is accessed from.</returns>
         /// <remarks>
         /// <para>Make sure the created instance is disposed if it is not used anymore even if the created instances are not disposable.</para>
         /// <para>Disposing the created instance disposes also the <see cref="Random"/> instances created by the <paramref name="factory"/> if the created <see cref="Random"/> instances are disposable.</para>
