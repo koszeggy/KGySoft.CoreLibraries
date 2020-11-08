@@ -34,6 +34,7 @@ using NUnit.Framework.Internal;
 #endregion
 
 #pragma warning disable 162 // Unreachable code may occur depending on values of constant fields
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - IFormatter instances are not necessarily BinaryFormatters
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {

@@ -16,6 +16,8 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Collections;
 #if !NET35
@@ -35,6 +37,14 @@ using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
+
+#endregion
+
+#region Used Aliases
+
+using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
+
+#endregion
 
 #endregion
 

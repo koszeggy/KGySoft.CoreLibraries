@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries
                     // ReSharper disable once PossibleNullReferenceException
                     if (type.IsEnum)
                     {
-#if NETSTANDARD2_1 || NETCOREAPP3_0
+#if NETSTANDARD2_1 || NETCOREAPP3_0 || NET5_0
                         return Enum.TryParse(type, s.ToString(), out value);
 #else
                         // as of 06/2020 there is no such overload yet but we hope it for the future...

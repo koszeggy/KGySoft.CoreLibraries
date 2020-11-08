@@ -420,11 +420,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeByTypeConverter()
         {
-#if !NETCOREAPP3_0
+#if NETFRAMEWORK || NETCOREAPP2_0
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
-#if !(NET35 || NETCOREAPP2_0) // .NET35 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+#if !NETCOREAPP2_0
             typeof(Image).RegisterTypeConverter<AdvancedImageConverter>(); 
 #endif
             object[] referenceObjects =
@@ -446,7 +446,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Cursors.Arrow, // a default cursor: by string
 #endif
 
-#if !(NET35 || NETCOREAPP2_0) // .NET 3.5 should work too, but NUnit cannot run on .NET 2.0 so the KGySoft.CoreLibraries referenced by Drawing cannot be loaded
+#if !NETCOREAPP2_0
                     Icons.Information, // multi-resolution icon (built-in saves one page only)
                     Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
 #if WINDOWS
@@ -457,7 +457,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                     // pure custom
                     new Version(1, 2, 3, 4),
-                    Encoding.UTF7,
+#if !NET
+                    Encoding.UTF7,  
+#endif
                 };
 
 #if NETFRAMEWORK

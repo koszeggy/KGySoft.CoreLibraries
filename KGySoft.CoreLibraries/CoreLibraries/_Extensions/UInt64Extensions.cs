@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-#if NETCOREAPP3_0
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0)
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;

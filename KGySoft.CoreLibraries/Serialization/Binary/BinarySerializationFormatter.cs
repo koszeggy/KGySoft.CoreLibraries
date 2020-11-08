@@ -670,12 +670,10 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.HashSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-#if NET472 || NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1
-                        CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
-#elif NET35 || NET40 || NET45 || NETSTANDARD2_0
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
 #else
-#error Select ctor arguments for the newly added .NET version.
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
 #endif
                     SpecificAddMethod = nameof(HashSet<_>.Add) // because faster than via ICollection<T>.Add
                 }

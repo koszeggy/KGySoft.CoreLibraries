@@ -446,7 +446,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
-#if !NETCOREAPP3_0 // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
+#if !(NETCOREAPP3_0 || NET) // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");
             check = manager.GetObject("TestSoundEmbedded");
@@ -662,7 +662,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Clean(manager, enGB);
         }
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
         [Test]
         public void SerializationTest()
         {

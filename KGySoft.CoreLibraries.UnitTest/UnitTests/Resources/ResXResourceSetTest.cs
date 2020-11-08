@@ -219,7 +219,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // save and reload
             StringBuilder sb = new StringBuilder();
-#if NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NETFRAMEWORK
             RemoveUnsupportedItems(rs);
 #endif
             rs.Save(new StringWriter(sb));
@@ -399,13 +399,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             key = "TestString";
             Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
             Assert.AreSame(rs.GetString(key), rs.GetString(key));
-        } 
+        }
 
         #endregion
 
         #region Private Methods
 
-#if NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NETFRAMEWORK
         private void RemoveUnsupportedItems(ResXResourceSet rs)
         {
             string[] unsupported =

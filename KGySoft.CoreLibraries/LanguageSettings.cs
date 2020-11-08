@@ -268,7 +268,7 @@ namespace KGySoft
             }
         }
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
+#if NETFRAMEWORK
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
@@ -280,7 +280,7 @@ namespace KGySoft
         /// <see langword="true"/>&#160;if system regional settings should be captured; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>This property is not available in the .NET Core and .NET Standard packages.
+        /// <note>This property is available only for the .NET Framework packages.
         /// However, if you use .NET Core 2.1 or newer you can reference the <c>Microsoft.Win32.SystemEvents</c> package
         /// to use <see cref="SystemEvents.UserPreferenceChanged"/> event.</note>
         /// </remarks>
@@ -441,7 +441,7 @@ namespace KGySoft
 
         #region Event handlers
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
+#if NETFRAMEWORK
         [SecuritySafeCritical]
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {

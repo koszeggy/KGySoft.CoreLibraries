@@ -692,7 +692,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
                 Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
                 // DomainUnload, individual
                 Cleanup();
                 manager.ReleaseAllResources();
@@ -756,7 +756,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
         }
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
         [Test]
         public void SerializationTest()
         {

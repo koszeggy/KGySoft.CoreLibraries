@@ -446,7 +446,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<ArraySegment<int>>(); // array ctor
             Test<Cache<int, int>>(); // populate
             Test<Queue>(); // ICollection ctor
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
             Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object  
 #endif
 

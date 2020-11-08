@@ -16,11 +16,12 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -33,6 +34,14 @@ using System.Text;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
+
+#region Used Aliases
+
+using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
+
+#endregion
 
 #endregion
 
@@ -1466,15 +1475,16 @@ namespace KGySoft.Serialization.Binary
             private string GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
                 => IgnoreTypeForwardedFromAttribute ? null : AssemblyResolver.GetForwardedAssemblyName(type, omitIfCoreLibrary);
 
-            private int GetAssemblyIndex(Type type, string boundAsmName)
+            private int GetAssemblyIndex(Type type, ref string boundAsmName)
             {
                 if (OmitAssemblyQualifiedNames)
                     return OmitAssemblyIndex;
                 if (boundAsmName == null && !IgnoreTypeForwardedFromAttribute)
                 {
-                    boundAsmName = GetForwardedAssemblyName(type, false);
-                    if (boundAsmName != null && AssemblyResolver.IsCoreLibAssemblyName(boundAsmName))
+                    string forwardedAsmName = GetForwardedAssemblyName(type, false);
+                    if (forwardedAsmName != null && AssemblyResolver.IsCoreLibAssemblyName(forwardedAsmName))
                         return 0;
+                    boundAsmName = forwardedAsmName;
                 }
 
                 return boundAsmName == null
@@ -1653,7 +1663,7 @@ namespace KGySoft.Serialization.Binary
                 // 2.) New type: Assembly index (and name for new ones)
                 if (isNewType)
                 {
-                    index = GetAssemblyIndex(rootType, boundAsmName);
+                    index = GetAssemblyIndex(rootType, ref boundAsmName);
 
                     // known assembly
                     if (index != -1)
@@ -1718,7 +1728,7 @@ namespace KGySoft.Serialization.Binary
                 Write7BitInt(bw, NewTypeIndex);
 
                 // 2.) Assembly index
-                index = GetAssemblyIndex(origType, explicitAsmName);
+                index = GetAssemblyIndex(origType, ref explicitAsmName);
 
                 // known assembly
                 if (index != -1)
