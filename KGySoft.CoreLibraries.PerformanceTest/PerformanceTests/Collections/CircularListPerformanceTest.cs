@@ -158,7 +158,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             List<int> list = new List<int>(clist);
             LinkedList<int> llist = new LinkedList<int>(clist);
 
-            new PerformanceTest { TestName = "Enumerating Lists Test", Iterations = 100_000, Repeat = 5 }
+            new PerformanceTest { TestName = "Enumerating Lists Test", Iterations = 100_000 }
                 .AddCase(() =>
                 {
                     foreach (int i in list) { }

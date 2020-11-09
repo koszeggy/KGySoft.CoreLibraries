@@ -374,6 +374,7 @@ namespace KGySoft.Collections
             /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             public bool MoveNext()
             {
                 if (version != list.version)

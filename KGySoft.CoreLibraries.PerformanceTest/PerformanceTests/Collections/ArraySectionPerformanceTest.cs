@@ -85,33 +85,33 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         }
 
         [Test]
-        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "Intended, we need two different array instances")]
         public void EnumerationTest()
         {
             const int size = 1 << 8;
             IEnumerable<int> range = Enumerable.Range(0, size);
             int[] array = range.ToArray();
-            ArraySection<int> arraySection = new ArraySection<int>(range.ToArray());
+            ArraySection<int> arraySection = new ArraySection<int>(array);
 
             new PerformanceTest<int>
                 {
                     TestName = nameof(EnumerationTest),
-                    Iterations = 100_000
+                    Iterations = 100_000,
+                    Repeat = 5
                 }
-                .AddCase(() =>
-                {
-                    int sum = 0;
-                    foreach (int i in array)
-                        sum += i;
-                    return sum;
-                }, "foreach on int[]")
-                .AddCase(() =>
-                {
-                    int sum = 0;
-                    foreach (int i in arraySection)
-                        sum += i;
-                    return sum;
-                }, "foreach on ArraySection<int>")
+                //.AddCase(() =>
+                //{
+                //    int sum = 0;
+                //    foreach (int i in array)
+                //        sum += i;
+                //    return sum;
+                //}, "foreach on int[]")
+                //.AddCase(() =>
+                //{
+                //    int sum = 0;
+                //    foreach (int i in arraySection)
+                //        sum += i;
+                //    return sum;
+                //}, "foreach on ArraySection<int>")
                 .AddCase(() => array.Sum(), "LINQ on int[]")
                 .AddCase(() => arraySection.Sum(), "LINQ on ArraySection<int>")
                 .DoTest()

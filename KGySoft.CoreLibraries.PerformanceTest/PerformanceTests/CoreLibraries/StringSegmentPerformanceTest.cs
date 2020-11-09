@@ -35,18 +35,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         private const string testStringLong = "long: 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
         private const int limitCount = 2;
 
-        [Test]
-        public void IndexOfTest()
-        {
-            //const string sep = ": ";
-            //const string sep = "901";
-            const string sep = "abc";
-            new PerformanceTest<int> { Iterations = 10_000_000, Repeat = 3, TestName = $"Sep = '{sep}'"}
-                .AddCase(() => testStringLong.AsSegment().IndexOf(sep))
-                .DoTest()
-                .DumpResults(Console.Out);
-        }
-
         #endregion
 
         #region Methods

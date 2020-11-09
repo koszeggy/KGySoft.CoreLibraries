@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> is <see langword="null"/>.</exception>
         /// <returns><see langword="true"/>, if <paramref name="fileName"/> can be created; otherwise, <see langword="false"/>.</returns>
-        [Obsolete("This method is obsolete. Use " + nameof(TryCreateWithPath) + "method instead")]
+        [Obsolete("This method is obsolete. Use " + nameof(TryCreateWithPath) + " method instead")]
         public static bool CanCreate(string fileName, bool canOverwrite = true)
         {
             bool result;

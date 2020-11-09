@@ -79,7 +79,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
             {
                 using (var ms = new MemoryStream())
                 {
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: formatter is not necessarily a BinaryFormatter
                     formatter.Serialize(ms, o);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     return ms.ToArray();
                 }
             }
@@ -87,7 +89,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
             object Deserialize(IFormatter formatter, byte[] data)
             {
                 using (var ms = new MemoryStream(data))
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: formatter is not necessarily a BinaryFormatter
                     return formatter.Deserialize(ms);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
             }
 
             var bf = new BinaryFormatter();
