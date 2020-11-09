@@ -790,7 +790,9 @@ namespace KGySoft.Resources
                 if (formatter != null)
                 {
                     using (var ms = new MemoryStream(serializedData))
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, this is not a BinaryFormatter but a SoapFormatter instance
                         result = formatter.Deserialize(ms);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                     return true;
@@ -1193,7 +1195,9 @@ namespace KGySoft.Resources
                 {
                     // ReSharper disable once PossibleNullReferenceException - type is array
                     bool wrap = !type.IsSerializable || type.IsArray && type.GetArrayRank() == 1 && !type.GetElementType().IsPrimitive && !type.GetInterfaces().Any(i => i.IsGenericType);
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: only when forcing compatibility
                     binaryFormatter.Serialize(ms, wrap ? new AnyObjectSerializerWrapper(cachedValue, true) : cachedValue);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
                 }
 
@@ -1360,7 +1364,9 @@ namespace KGySoft.Resources
                 if (serializedData != null && serializedData.Length > 0)
                 {
                     using (var ms = new MemoryStream(serializedData))
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: for compatibility reasons
                         result = binaryFormatter.Deserialize(ms);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                 }

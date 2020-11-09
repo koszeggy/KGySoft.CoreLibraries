@@ -16,10 +16,12 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Collections;
 #if !NET35
-using System.Collections.Concurrent; 
+using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -36,6 +38,14 @@ using System.Text;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
+
+#region Used Aliases
+
+using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
+
+#endregion
 
 #endregion
 

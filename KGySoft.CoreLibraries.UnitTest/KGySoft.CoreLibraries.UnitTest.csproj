@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
-    <!--<TargetFrameworks>netcoreapp3.0</TargetFrameworks>-->
+    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;net5.0</TargetFrameworks>
+    <!--<TargetFrameworks>net5.0</TargetFrameworks>-->
     <!--For UnitTesting the .NET Standard versions-->
-    <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>netcoreapp3.0</TargetFrameworks>-->
 
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
 
@@ -38,8 +38,8 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
-  <!-- .NET Core only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0'">
+  <!-- .NET/Core only references -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0'">
     <PackageReference Include="System.Drawing.Common">
       <Version>4.7.0</Version>
     </PackageReference>

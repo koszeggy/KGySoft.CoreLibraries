@@ -243,17 +243,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void SerializationTest()
         {
-#if NETCOREAPP2_0 || NETCOREAPP3_0
-            // .NET Core 2.0/3.0 does not support delegate serialization
-            var cache = new Cache<string, int>(StringComparer.OrdinalIgnoreCase)
+#if NETFRAMEWORK
+            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), StringComparer.OrdinalIgnoreCase)
             {
                 EnsureCapacity = true,
                 Behavior = CacheBehavior.RemoveOldestElement,
                 DisposeDroppedValues = true
             };
-            cache["One"] = 1;
-            cache["Two"] = 2;
-            cache["Three"] = 3;
+            Console.WriteLine(cache["alpha"]);
+            Console.WriteLine(cache["beta"]);
+            Console.WriteLine(cache["gamma"]);
+            Assert.IsTrue(cache.Remove("beta"));
 
             var cacheCopy = cache.DeepClone();
             Assert.AreNotSame(cache, cacheCopy);
@@ -267,16 +267,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
             Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
 #else
-            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), StringComparer.OrdinalIgnoreCase)
+            // .NET Core 2.0/3.0 does not support delegate serialization
+            var cache = new Cache<string, int>(StringComparer.OrdinalIgnoreCase)
             {
                 EnsureCapacity = true,
                 Behavior = CacheBehavior.RemoveOldestElement,
                 DisposeDroppedValues = true
             };
-            Console.WriteLine(cache["alpha"]);
-            Console.WriteLine(cache["beta"]);
-            Console.WriteLine(cache["gamma"]);
-            Assert.IsTrue(cache.Remove("beta"));
+            cache["One"] = 1;
+            cache["Two"] = 2;
+            cache["Three"] = 3;
 
             var cacheCopy = cache.DeepClone();
             Assert.AreNotSame(cache, cacheCopy);

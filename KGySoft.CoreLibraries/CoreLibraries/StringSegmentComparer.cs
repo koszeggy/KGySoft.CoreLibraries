@@ -261,9 +261,6 @@ namespace KGySoft.CoreLibraries
                     ? x.Equals(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
 #else
-#error Update Create documentation when this becomes available
-                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
-                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
                 return compareInfo.Compare(x, y, options) == 0;
 #endif
             }
@@ -284,9 +281,6 @@ namespace KGySoft.CoreLibraries
                     ? x.CompareTo(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options);
 #else
-#error Update Create documentation when this becomes available
-                // For future versions (as of 06/2020 this is not available in any released versions yet but the master already contains it as a public method):
-                // https://github.com/dotnet/runtime/blob/d0889f1159b6ea044b5e491921b7a37a688ce465/src/libraries/System.Private.CoreLib/src/System/Globalization/CompareInfo.cs#L435
                 return compareInfo.Compare(x, y, options);
 #endif
             }
@@ -409,7 +403,8 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Creates a <see cref="StringSegmentComparer"/> object that compares strings according to the rules of a specified <paramref name="culture"/>.
-        /// <br/>Please note that the returned <see cref="StringSegmentComparer"/> may allocate new strings in some cases. See the <strong>Remarks</strong> section for details.
+        /// <br/>Please note that the returned <see cref="StringSegmentComparer"/> may allocate new strings in some cases when targeting older frameworks.
+        /// See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
         /// <param name="ignoreCase"><see langword="true"/>&#160;to specify that comparison operations be case-insensitive;
@@ -423,10 +418,8 @@ namespace KGySoft.CoreLibraries
         /// <para>If <paramref name="culture"/> is any <see cref="CultureInfo"/> other than the <see cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
         /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/>, <see cref="GetHashCode(ReadOnlySpan{char})"/>, <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
         /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods might allocate a new string. In .NET Core 3.0 and above
-        /// none of the members with <see cref="StringSegment"/> parameters will allocate new strings.
-        /// On the other hand, due to the lack of public <c>CompareInfo.Compare</c> methods with <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameters,
-        /// none of the currently supported targets can avoid allocating strings when using <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
-        /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods.</para>
+        /// none of the members with <see cref="StringSegment"/> parameters will allocate new strings. And methods with <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameters
+        /// (<see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/> and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/>) can avoid allocating strings when targeting .NET 5.0 or higher.</para>
         /// </remarks>
         public static StringSegmentComparer Create(CultureInfo culture, bool ignoreCase) => new StringSegmentCultureAwareComparer(culture, ignoreCase);
 

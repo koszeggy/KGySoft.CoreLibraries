@@ -44,7 +44,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
             new RandomizedPerformanceTest
                 {
                     TestTime = 200,
-                    Repeat = 5,
+                    //Repeat = 5,
                 }
                 .AddCase(rnd => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")
                 .AddCase(rnd => collTest.IndexOf(rnd.Next(collTest.Count)), "FastLookupCollection.IndexOf, Consistency check ON")

@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
             new PerformanceTest
                 {
                     Iterations = 100,
-                    Repeat = 5,
+                    //Repeat = 5,
                 }
                 .AddCase(() =>
                 {
@@ -90,7 +90,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
             new RandomizedPerformanceTest
                 {
                     Iterations = 1000,
-                    Repeat = 5
+                    //Repeat = 5
                 }
                 .AddCase(rnd => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
                 .AddCase(rnd => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")

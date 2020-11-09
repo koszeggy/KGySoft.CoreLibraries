@@ -380,6 +380,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             try
             {
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, formatter is not necessarily a BinaryFormatter
                 using (var ms = new MemoryStream())
                 {
                     try
@@ -414,6 +415,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                             throw;
                     }
                 }
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
             }
             finally
             {

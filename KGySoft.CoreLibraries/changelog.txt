@@ -6,6 +6,22 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.5.0:
+~~~~~~~~~
+
++ Assembly changes:
+===================
++ Targeting also .NET 5.0.
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* StringSegmentComparer class:
+  * When targeting .NET 5.0 or later, then Equals(ReadOnlySpan<char>, ReadOnlySpan<char>) and
+    Compare(ReadOnlySpan<char>, ReadOnlySpan<char>) overloads can avoid allocating new strings even for
+    cultures other than InvariantCulture and CurrentCulture.
+
+
+~~~~~~~~~
 ! v5.4.0:
 ~~~~~~~~~
 

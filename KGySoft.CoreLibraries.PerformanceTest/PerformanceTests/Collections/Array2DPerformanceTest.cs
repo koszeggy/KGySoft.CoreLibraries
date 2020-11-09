@@ -74,7 +74,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             new PerformanceTest
                 {
                     TestName = nameof(AccessTest),
-                    Iterations = 10_000
+                    Iterations = 10_000,
+                    Repeat = 5
                 }
                 .AddCase(() =>
                 {

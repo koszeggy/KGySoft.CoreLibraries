@@ -293,7 +293,7 @@ namespace KGySoft.Resources
             resxResourceSet = resx;
             compiledResourceSet = compiled;
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
+#if NETFRAMEWORK
             // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
             Table = null;
 #endif

@@ -682,7 +682,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Clean(manager, enGB);
         }
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
         [Test]
         public void SerializationTest()
         {

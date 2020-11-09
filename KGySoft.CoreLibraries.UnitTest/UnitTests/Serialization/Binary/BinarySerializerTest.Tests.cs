@@ -1090,7 +1090,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Cache<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
                 new Cache<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
                 new Cache<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // SerializationException : Serializing delegates is not supported on this platform.
+#if NETFRAMEWORK // SerializationException : Serializing delegates is not supported on this platform.
                 new Cache<string, string>(s => s.ToUpper()) { { "alpha", "ALPHA" } },
 #endif
             };
@@ -1102,7 +1102,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
         [Test]
         public void SerializeRemoteObjects()
         {
@@ -1435,7 +1435,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
-#if !NETCOREAPP3_0 // works but Equals fails on the clone
+#if !(NETCOREAPP3_0 || NET) // works but Equals fails on the clone
                 typeof(int),
 #endif
 
@@ -1593,7 +1593,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SelfReferencerDirect("Direct"),
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = true }, // circular reference deserialized by IObjectReference default object graph
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = true }, // circular reference deserialized by IObjectReference custom object graph
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // PlatformNotSupportedException : Operation is not supported on this platform.
+#if NETFRAMEWORK // PlatformNotSupportedException : Operation is not supported on this platform.
                 Encoding.GetEncoding("shift_jis"), // circular reference deserialized by IObjectReference custom object graph
 #endif
             };

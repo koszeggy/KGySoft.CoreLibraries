@@ -254,7 +254,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             public object[] Array3 { get; } = new object[3];
 
             public Cache<int, string> Cache { get; } =
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
                 new Cache<int, string>(i => i.ToString()); 
 #else
                 new Cache<int, string>(); // .NET Core does not support delegate serialization
@@ -272,7 +272,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             {
                 CopyContent(XmlSerializable, xmlSerializableClass);
                 CopyContent(Array3, array);
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
                 toCache?.ForEach(i => { var dummy = Cache[i]; });
 #else
                 toCache?.ForEach(i => Cache[i] = i.ToString());

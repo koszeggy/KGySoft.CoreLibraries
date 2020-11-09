@@ -124,12 +124,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             CollectionAssert.AreEqual(dict, clone);
 
             // By BinaryFormatter
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: this is a test
             var formatter = new BinaryFormatter();
             using var ms = new MemoryStream();
             formatter.Serialize(ms, dict);
             ms.Position = 0;
             clone = (StringKeyedDictionary<int>)formatter.Deserialize(ms);
             CollectionAssert.AreEqual(dict, clone);
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
         }
 
         #endregion

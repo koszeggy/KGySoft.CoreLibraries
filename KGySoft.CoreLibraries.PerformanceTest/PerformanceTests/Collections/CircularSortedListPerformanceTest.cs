@@ -141,7 +141,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             SortedList<int, string> slist = new SortedList<int, string>(cslist);
             SortedDictionary<int, string> sdict = new SortedDictionary<int, string>(cslist);
 
-            new PerformanceTest { TestName = "Enumeration Test", Iterations = 10000 }
+            new PerformanceTest { TestName = "Enumeration Test", Iterations = 10_000 }
                 .AddCase(() =>
                 {
                     foreach (var item in slist) { }

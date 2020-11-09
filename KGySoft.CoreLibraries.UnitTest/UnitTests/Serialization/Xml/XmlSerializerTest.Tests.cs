@@ -348,7 +348,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Uri(@"x:\teszt"),
                 new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
                 new Version(1, 2, 3, 4),
-                Encoding.UTF7,
+#if !NET
+		        Encoding.UTF7,  
+#endif
                 Color.Blue
             };
 
