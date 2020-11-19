@@ -12,6 +12,7 @@
 + Assembly changes:
 ===================
 + Targeting also .NET 5.0.
+  KNOWN .NET 5.0 PERFORMANCE REGRESSION: https://github.com/dotnet/runtime/issues/44457
 
 * KGySoft.CoreLibraries namespace:
 ==================================
