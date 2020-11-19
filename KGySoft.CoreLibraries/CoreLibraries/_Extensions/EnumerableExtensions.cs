@@ -1755,7 +1755,7 @@ namespace KGySoft.CoreLibraries
             if (source == null)
                 Throw.ArgumentNullException(Argument.source);
 
-            return source.Select(item => new { Order = random.Next(), Value = item }).OrderBy(i => i.Order).Select(i => i.Value);
+            return source.OrderBy(_ => random.Next());
         }
 
         /// <summary>

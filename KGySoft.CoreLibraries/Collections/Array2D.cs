@@ -79,7 +79,6 @@ namespace KGySoft.Collections
             internal Array2DDebugView(Array2D<T> array) => this.array = array;
 
             #endregion
-
         }
 
         #endregion
