@@ -186,8 +186,8 @@ namespace KGySoft.Collections
         bool ICollection<T>.IsReadOnly => true;
         int ICollection<T>.Count => length;
 
-        // It actually should use a private field but as we never lock on this we will never cause a deadlock with this.
-        object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull); // would be better to allocate a new field for this but 
+        // It actually should use a private field but as we never lock on this we could never cause a deadlock even if someone uses it.
+        object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull);
         bool ICollection.IsSynchronized => false;
 
         int ICollection.Count => length;
