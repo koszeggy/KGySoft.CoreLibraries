@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
 using System.Runtime.Serialization;
@@ -41,17 +42,17 @@ namespace KGySoft
 
         #region Internal Methods
 
-        [ContractAnnotation("=> halt")]internal static void ArgumentNullException(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
         [ContractAnnotation("=> halt")]internal static T ArgumentNullException<T>(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
         [ContractAnnotation("=> halt")]internal static void ArgumentNullException(Argument arg, string message) => throw CreateArgumentNullException(arg, message);
 
-        internal static void ThrowIfNullIsInvalid<T>(object value, Argument? arg = null)
+        internal static void ThrowIfNullIsInvalid<T>(object? value, Argument? arg = null)
         {
             if (value == null && default(T) != null)
                 Throw.ArgumentNullException(arg ?? Argument.value);
         }
 
-        [ContractAnnotation("=> halt")]internal static void ArgumentException(string message, Exception inner = null) => throw CreateArgumentException(null, message, inner);
+        [ContractAnnotation("=> halt")]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException(null, message, inner);
         [ContractAnnotation("=> halt")]internal static void ArgumentException(Argument arg, string message) => throw CreateArgumentException(arg, message);
         [ContractAnnotation("=> halt")]internal static void ArgumentException(Argument arg, string message, Exception inner) => throw CreateArgumentException(arg, message, inner);
         [ContractAnnotation("=> halt")]internal static T ArgumentException<T>(Argument arg, string message) => throw CreateArgumentException(arg, message);
