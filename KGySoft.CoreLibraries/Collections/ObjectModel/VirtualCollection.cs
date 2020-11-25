@@ -24,7 +24,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -49,7 +48,7 @@ namespace KGySoft.Collections.ObjectModel
         #region Fields
 
         private readonly IList<T> items;
-        [NonSerialized] private object syncRoot;
+        [NonSerialized] private object? syncRoot;
 
         #endregion
 
@@ -152,7 +151,7 @@ namespace KGySoft.Collections.ObjectModel
 
         #region Explicitly Implemented Interface Indexers
 
-        object IList.this[int index]
+        object? IList.this[int index]
         {
             get => this[index];
             set
@@ -160,7 +159,7 @@ namespace KGySoft.Collections.ObjectModel
                 Throw.ThrowIfNullIsInvalid<T>(value);
                 try
                 {
-                    this[index] = (T)value;
+                    this[index] = (T)value!;
                 }
                 catch (InvalidCastException)
                 {
@@ -189,7 +188,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
         public VirtualCollection(IList<T> list)
         {
-            if (list == null)
+            if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
             items = list;
         }
@@ -318,12 +317,10 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
         /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         public void CopyTo(T[] array, int arrayIndex)
         {
             int length = Count;
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
@@ -399,11 +396,9 @@ namespace KGySoft.Collections.ObjectModel
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             if (array is T[] typedArray)
@@ -420,7 +415,7 @@ namespace KGySoft.Collections.ObjectModel
             if (array.Rank != 1)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
-            if (array is object[] objectArray)
+            if (array is object?[] objectArray)
             {
                 for (int i = 0; i < length; i++)
                 {
@@ -434,18 +429,18 @@ namespace KGySoft.Collections.ObjectModel
             Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
         }
 
-        bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
+        bool IList.Contains(object? value) => typeof(T).CanAcceptValue(value) && Contains((T)value!);
 
-        int IList.IndexOf(object value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : -1;
+        int IList.IndexOf(object? value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value!) : -1;
 
-        int IList.Add(object value)
+        int IList.Add(object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
 
             T item;
             try
             {
-                item = (T)value;
+                item = (T)value!;
                 Add(item);
             }
             catch (InvalidCastException)
@@ -454,15 +449,15 @@ namespace KGySoft.Collections.ObjectModel
                 item = default;
             }
 
-            return GetItemIndex(item);
+            return GetItemIndex(item!);
         }
 
-        void IList.Insert(int index, object value)
+        void IList.Insert(int index, object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
             try
             {
-                Insert(index, (T)value);
+                Insert(index, (T)value!);
             }
             catch (InvalidCastException)
             {
@@ -470,12 +465,12 @@ namespace KGySoft.Collections.ObjectModel
             }
         }
 
-        void IList.Remove(object value)
+        void IList.Remove(object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
             try
             {
-                Remove((T)value);
+                Remove((T)value!);
             }
             catch (InvalidCastException)
             {

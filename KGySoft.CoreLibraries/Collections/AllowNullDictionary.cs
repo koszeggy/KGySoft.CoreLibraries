@@ -27,6 +27,17 @@ using KGySoft.Diagnostics;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+#else
+#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
+#endif
+
+#endregion
+
+
 namespace KGySoft.Collections
 {
     /// <summary>
@@ -37,7 +48,7 @@ namespace KGySoft.Collections
     /// <seealso cref="IDictionary{TKey, TValue}" />
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    internal class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    internal class AllowNullDictionary<[CanBeNull]TKey, TValue> : IDictionary<TKey, TValue>
     {
         #region Constants
 
@@ -47,11 +58,10 @@ namespace KGySoft.Collections
 
         #region Fields
 
-        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, Dictionary<TKey, TValue> is serializable")]
         private readonly Dictionary<TKey, TValue> dict;
 
         private bool hasNullKey;
-        private TValue nullValue;
+        [AllowNull]private TValue nullValue = default!;
 
         #endregion
 
@@ -67,7 +77,7 @@ namespace KGySoft.Collections
                     return dict.Keys;
 
                 var keys = new TKey[Count];
-                keys[0] = default(TKey);
+                keys[0] = default(TKey)!;
                 dict.Keys.CopyTo(keys, 1);
                 return keys;
             }
@@ -132,7 +142,7 @@ namespace KGySoft.Collections
 
         public AllowNullDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this(((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count).GetValueOrDefault(defaultCapacity))
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             foreach (KeyValuePair<TKey, TValue> item in collection)
                 this[item.Key] = item.Value;
@@ -169,12 +179,12 @@ namespace KGySoft.Collections
             return oldHasNull;
         }
 
-        public bool TryGetValue([CanBeNull]TKey key, out TValue value)
+        public bool TryGetValue([CanBeNull]TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key != null)
                 return dict.TryGetValue(key, out value);
 
-            value = hasNullKey ? nullValue : default(TValue);
+            value = hasNullKey ? nullValue : default(TValue)!;
             return hasNullKey;
         }
 
@@ -185,9 +195,9 @@ namespace KGySoft.Collections
             dict.Clear();
         }
 
-        public void CopyTo([CanBeNull]KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
@@ -196,7 +206,7 @@ namespace KGySoft.Collections
 
             ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex);
             if (hasNullKey)
-                array[arrayIndex + dict.Count] = new KeyValuePair<TKey, TValue>(default(TKey), nullValue);
+                array[arrayIndex + dict.Count] = new KeyValuePair<TKey, TValue>(default(TKey)!, nullValue);
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
@@ -208,7 +218,7 @@ namespace KGySoft.Collections
 
         private IEnumerator<KeyValuePair<TKey, TValue>> GetEnumeratorWithNull()
         {
-            yield return new KeyValuePair<TKey, TValue>(default(TKey), nullValue);
+            yield return new KeyValuePair<TKey, TValue>(default(TKey)!, nullValue);
             foreach (var item in dict)
                 yield return item;
         }
@@ -220,9 +230,13 @@ namespace KGySoft.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
             => Add(item.Key, item.Value);
 
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? result'")]
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
             => TryGetValue(item.Key, out TValue value) && EqualityComparer<TValue>.Default.Equals(value, item.Value);
 
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? result'")]
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
             => TryGetValue(item.Key, out TValue value) && EqualityComparer<TValue>.Default.Equals(value, item.Value) && Remove(item.Key);
 

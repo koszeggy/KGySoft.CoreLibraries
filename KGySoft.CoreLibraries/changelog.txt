@@ -6,6 +6,23 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.5.1:
+~~~~~~~~~
+
+* Assembly changes:
+===================
+* Members are annotated for using C# 8.0 nullable references
+
+- KGySoft.Collections namespace:
+================================
+- ArraySection<T> struct: AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
+
+- KGySoft.Collections.ObjectModel namespace:
+============================================
+- FastLookupCollection<T> class: Fixing binary deserialization
+
+
+~~~~~~~~~
 * v5.5.0:
 ~~~~~~~~~
 

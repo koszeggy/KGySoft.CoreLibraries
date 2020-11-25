@@ -89,7 +89,7 @@ namespace KGySoft.CoreLibraries
         /// <para>If <paramref name="type"/> is passed by reference, then the element type is checked.</para>
         /// <para>If either <paramref name="type"/> or <paramref name="value"/> is <see langword="enum"/>, then its underlying type is also accepted because both can be unboxed from an <see cref="object"/> without casting errors.</para>
         /// </remarks>
-        public static bool CanAcceptValue(this Type type, object value)
+        public static bool CanAcceptValue(this Type type, object? value)
         {
             if (type == null)
                 Throw.ArgumentNullException(Argument.type);

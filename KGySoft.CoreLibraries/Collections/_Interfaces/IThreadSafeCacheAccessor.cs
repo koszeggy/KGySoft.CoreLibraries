@@ -23,6 +23,7 @@ namespace KGySoft.Collections
     /// <typeparam name="TKey">The type of the key in the cache.</typeparam>
     /// <typeparam name="TValue">The type of the value in the cache.</typeparam>
     public interface IThreadSafeCacheAccessor<in TKey, out TValue>
+        where TKey : notnull
     {
         #region Indexers
 

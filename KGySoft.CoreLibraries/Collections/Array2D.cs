@@ -28,12 +28,16 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
-namespace KGySoft.Collections
-{
+#region Suppressions
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.Collections
+{
     /// <summary>
     /// Represents a rectangular array, whose indexer access is faster than a regular 2D array.
     /// It supports accessing its rows or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
@@ -69,8 +73,9 @@ namespace KGySoft.Collections
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
             [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 2D array debug items")]
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
             [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
-            public T[,] Items => array.To2DArray();
+            public T[,]? Items => array.To2DArray();
 
             #endregion
 
@@ -154,7 +159,6 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The element at the specified indices.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1023:Indexers should not be multidimensional", Justification = "The type represents a multidimensional array")]
         public T this[int y, int x]
         {
             // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
@@ -332,7 +336,6 @@ namespace KGySoft.Collections
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <param name="rowCount">The desired number of rows of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.</returns>
-        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
         public Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
         /// <summary>
@@ -387,7 +390,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is Array2D<T> other && Equals(other);
+        public override bool Equals(object? obj) => obj is Array2D<T> other && Equals(other);
 
         /// <summary>
         /// Returns a hash code for this <see cref="Array2D{T}"/> instance.
@@ -395,6 +398,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode",
             Justification = "Field 'buffer' is practically read-only but it is not marked as so to prevent creating defensive copies")]
         public override int GetHashCode()
@@ -409,7 +413,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[] ToArray() => buffer.ToArray();
+        public T[]? ToArray() => buffer.ToArray();
 
         /// <summary>
         /// Copies the elements of this <see cref="Array2D{T}"/> to a new two dimensional array.
@@ -417,7 +421,7 @@ namespace KGySoft.Collections
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "See ToJaggedArray")]
-        public T[,] To2DArray()
+        public T[,]? To2DArray()
         {
             if (buffer.IsNull)
                 return null;
@@ -440,7 +444,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[][] ToJaggedArray()
+        public T[][]? ToJaggedArray()
         {
             if (buffer.IsNull)
                 return null;

@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -33,7 +34,7 @@ namespace KGySoft.Collections
     {
         #region Fields
 
-        private readonly T[] array;
+        private readonly T[]? array;
         private readonly int start;
         private readonly int end;
 
@@ -48,17 +49,20 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the element at the current position of the enumerator.
         /// </summary>
+        [MaybeNull]
         public T Current
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => index >= start && index < end ? array[index] : default;
+#pragma warning disable CS8766 // Nullability of reference types in return type doesn't match implicitly implemented member (possibly because of nullability attributes). - actually it should be MaybeNull also on IEnumerator<T>
+            get => index >= start && index < end ? array![index] : default!;
+#pragma warning restore CS8766
         }
 
         #endregion
 
         #region Explicitly Implemented Interface Properties
 
-        object IEnumerator.Current
+        object? IEnumerator.Current
         {
             get
             {
@@ -74,7 +78,7 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        internal ArraySectionEnumerator(T[] array, int offset, int length)
+        internal ArraySectionEnumerator(T[]? array, int offset, int length)
         {
             this.array = array;
             start = offset;

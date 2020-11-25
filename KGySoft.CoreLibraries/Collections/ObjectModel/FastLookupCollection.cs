@@ -20,14 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
-#region NET35 || NET40 || NET45 || NETSTANDARD2_0
-using KGySoft.Reflection; 
-#endregion
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
+using KGySoft.Reflection;
+#endif
 
 #endregion
 
@@ -51,7 +51,17 @@ namespace KGySoft.Collections.ObjectModel
     {
         #region Fields
 
-        [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+        #region Static Fields
+
+        private protected static readonly IEqualityComparer<T> Comparer = ComparerHelper<T>.EqualityComparer;
+
+        #endregion
+
+        #region Instance Fields
+
+        [NonSerialized]private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+
+        #endregion
 
         #endregion
 
@@ -87,7 +97,6 @@ namespace KGySoft.Collections.ObjectModel
         /// <see langword="false"/>&#160;to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/>&#160;if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
-        [SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors", Justification = "False alarm, OnMapRebuilt is not called when the constructor calls BuildIndexMap")]
         public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list)
         {
             BuildIndexMap(false);
@@ -116,11 +125,8 @@ namespace KGySoft.Collections.ObjectModel
             return result;
         }
 
-        private protected static bool AreEqual(T x, T y)
-            => EqualityComparer<T>.Default.Equals(x, y);
-
         private protected static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item)
-            => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
+            => map.TryGetValue(item, out CircularList<int>? indices) ? indices[0] : -1;
 
         private protected static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
             => map.TryGetValue(item, out var indices) && indices.Contains(index);
@@ -128,7 +134,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
         private protected static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
-            if (!map.TryGetValue(item, out CircularList<int> indices))
+            if (!map.TryGetValue(item, out CircularList<int>? indices))
             {
                 indices = new CircularList<int>(1);
                 map[item] = indices;
@@ -150,7 +156,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
         private protected static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
-            if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
+            if (!map.TryGetValue(item, out CircularList<int>? indices) || !RemoveIndex(indices, index))
                 return false;
             if (indices.Count == 0)
                 map.Remove(item);
@@ -235,7 +241,7 @@ namespace KGySoft.Collections.ObjectModel
             if (!CheckConsistency)
                 return result;
 
-            if (result < 0 || result < Count && AreEqual(item, base.GetItem(result)))
+            if (result < 0 || result < Count && Comparer.Equals(item, base.GetItem(result)))
                 return result;
 
             // the underlying collection is inconsistent
@@ -298,7 +304,6 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
         /// <param name="item">The object to insert.</param>
-        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
         protected override void InsertItem(int index, T item)
         {
             base.InsertItem(index, item);
@@ -374,7 +379,11 @@ namespace KGySoft.Collections.ObjectModel
         #region Private Methods
 
         [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap(false);
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+            BuildIndexMap(false);
+        }
 
         private void BuildIndexMap(bool rebuild = true)
         {

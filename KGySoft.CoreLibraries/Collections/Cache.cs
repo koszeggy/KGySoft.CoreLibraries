@@ -32,6 +32,15 @@ using KGySoft.Diagnostics;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     /// <summary>
@@ -243,6 +252,7 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
 #endif
+        where TKey : notnull
     {
         #region Nested Types
 
@@ -265,7 +275,6 @@ namespace KGySoft.Collections
 
             private int index;
 
-            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -308,7 +317,7 @@ namespace KGySoft.Collections
                 {
                     if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current.Key!;
+                    return current.Key;
                 }
             }
 
@@ -478,16 +487,14 @@ namespace KGySoft.Collections
 
             public bool Contains(TKey item)
             {
-                if (item == null)
+                if (item == null!)
                     Throw.ArgumentNullException(Argument.item);
                 return owner.ContainsKey(item);
             }
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
             public void CopyTo(TKey[] array, int arrayIndex)
             {
-                if (array == null)
+                if (array == null!)
                     Throw.ArgumentNullException(Argument.array);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
@@ -528,11 +535,9 @@ namespace KGySoft.Collections
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
             void ICollection.CopyTo(Array array, int index)
             {
-                if (array == null)
+                if (array == null!)
                     Throw.ArgumentNullException(Argument.array);
 
                 if (array is TKey[] keys)
@@ -552,7 +557,7 @@ namespace KGySoft.Collections
                 {
                     for (int current = owner.first; current != -1; current = owner.items[current].NextInOrder)
                     {
-                        objectArray[index] = owner.items![current].Key!;
+                        objectArray[index] = owner.items![current].Key;
                         index += 1;
                     }
                 }
@@ -621,11 +626,9 @@ namespace KGySoft.Collections
 
             public bool Contains(TValue item) => owner.ContainsValue(item);
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
             public void CopyTo(TValue[] array, int arrayIndex)
             {
-                if (array == null)
+                if (array == null!)
                     Throw.ArgumentNullException(Argument.array);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
@@ -666,11 +669,9 @@ namespace KGySoft.Collections
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
             void ICollection.CopyTo(Array array, int index)
             {
-                if (array == null)
+                if (array == null!)
                     Throw.ArgumentNullException(Argument.array);
 
                 if (array is TValue[] values)
@@ -749,6 +750,8 @@ namespace KGySoft.Collections
 
             #region Indexers
 
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+            [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? result'")]
             public TValue this[TKey key]
             {
                 get
@@ -770,7 +773,7 @@ namespace KGySoft.Collections
                             return result;
                         }
 
-                        cache.Insert(key!, newItem, false);
+                        cache.Insert(key, newItem, false);
                     }
 
                     return newItem;
@@ -859,8 +862,10 @@ namespace KGySoft.Collections
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
 #if NETFRAMEWORK || NETSTANDARD2_0
+        // ReSharper disable StaticMemberInGenericType - they depend on type arguments
         private static readonly bool isKeyManaged = !typeKey.IsUnmanaged(); 
         private static readonly bool isValueManaged = !typeValue.IsUnmanaged(); 
+        // ReSharper restore StaticMemberInGenericType
 #endif
 
         #endregion
@@ -1125,9 +1130,6 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})"/>
         /// <seealso cref="Behavior"/>
         /// <seealso cref="GetThreadSafeAccessor"/>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
-        [AllowNull]
         public TValue this[TKey key]
         {
             [CollectionAccess(CollectionAccessType.UpdatedContent)]
@@ -1149,7 +1151,7 @@ namespace KGySoft.Collections
             }
             set
             {
-                if (key == null)
+                if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Insert(key, value, false);
             }
@@ -1159,8 +1161,8 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         object? IDictionary.this[object key]
         {
             get
@@ -1173,7 +1175,7 @@ namespace KGySoft.Collections
             }
             set
             {
-                if (key == null)
+                if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Throw.ThrowIfNullIsInvalid<TValue>(value);
 
@@ -1182,7 +1184,7 @@ namespace KGySoft.Collections
                     TKey typedKey = (TKey)key;
                     try
                     {
-                        this[typedKey!] = (TValue)value;
+                        this[typedKey] = (TValue)value!;
                     }
                     catch (InvalidCastException)
                     {
@@ -1246,7 +1248,7 @@ namespace KGySoft.Collections
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="Behavior"/>
-        public Cache(int capacity, IEqualityComparer<TKey> comparer = null) : this(null, capacity, comparer)
+        public Cache(int capacity, IEqualityComparer<TKey>? comparer = null) : this(null, capacity, comparer)
         {
         }
 
@@ -1354,7 +1356,7 @@ namespace KGySoft.Collections
         /// <seealso cref="Behavior"/>
         public Cache(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null)
         {
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
             itemLoader = nullLoader;
             this.comparer = comparer ?? ComparerHelper<TKey>.EqualityComparer;
@@ -1378,8 +1380,6 @@ namespace KGySoft.Collections
         /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this deserialization.</param>
         /// <remarks><note type="inherit">If an inherited type serializes data, which may affect the hashes of the keys, then override
         /// the <see cref="OnDeserialization">OnDeserialization</see> method and use that to restore the data of the derived instance.</note></remarks>
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
-            Justification = "False alarm, serialization constructor has an exact signature.")]
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable. - the fields will be initialized in IDeserializationCallback.OnDeserialization
         protected Cache(SerializationInfo info, StreamingContext context)
 #pragma warning restore CS8618
@@ -1401,7 +1401,7 @@ namespace KGySoft.Collections
 
         private static bool CanAcceptKey(object key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return key is TKey;
         }
@@ -1486,10 +1486,9 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Uncached")]
         public TValue GetValueUncached(TKey key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             TValue result = itemLoader.Invoke(key);
@@ -1581,11 +1580,9 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
-        public void Add(TKey key, [AllowNull]TValue value)
+        public void Add(TKey key, TValue value)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             Insert(key, value, true);
@@ -1600,11 +1597,9 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
         public bool Remove(TKey key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             return InternalRemove(key, default, false);
@@ -1726,6 +1721,8 @@ namespace KGySoft.Collections
         /// <param name="info">The <see cref="SerializationInfo" /> to populate with data.</param>
         /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
         [SecurityCritical]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void GetObjectData(SerializationInfo info, StreamingContext context) { }
 
         /// <summary>
@@ -1733,6 +1730,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
         [SecurityCritical]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void OnDeserialization(SerializationInfo info) { }
 
         #endregion
@@ -1766,7 +1765,7 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private int GetItemIndex(TKey key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             if (buckets == null)
@@ -1805,7 +1804,7 @@ namespace KGySoft.Collections
             last = index;
         }
 
-        private bool InternalRemove([DisallowNull]TKey key, [AllowNull]TValue value, bool checkValue)
+        private bool InternalRemove(TKey key, [AllowNull]TValue value, bool checkValue)
         {
             if (buckets == null)
                 return false;
@@ -1881,7 +1880,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Inserting a new element into the cache
         /// </summary>
-        private void Insert([DisallowNull]TKey key, [AllowNull]TValue value, bool throwIfExists)
+        private void Insert(TKey key, TValue value, bool throwIfExists)
         {
             if (buckets == null)
                 Initialize(ensureCapacity ? capacity : 1);
@@ -2000,7 +1999,7 @@ namespace KGySoft.Collections
 
         void ICache.Touch(object key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             try
@@ -2015,7 +2014,7 @@ namespace KGySoft.Collections
 
         void ICache.RefreshValue(object key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             try
@@ -2045,11 +2044,9 @@ namespace KGySoft.Collections
             return i >= 0 && ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, items![i].Value);
         }
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
@@ -2065,18 +2062,16 @@ namespace KGySoft.Collections
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
         {
-            if (item.Key == null)
+            if (item.Key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return InternalRemove(item.Key, item.Value, true);
         }
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, true);
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
         void IDictionary.Add(object key, object? value)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             Throw.ThrowIfNullIsInvalid<TValue>(value);
 
@@ -2085,7 +2080,7 @@ namespace KGySoft.Collections
                 TKey typedKey = (TKey)key;
                 try
                 {
-                    Add(typedKey, (TValue)value);
+                    Add(typedKey, (TValue)value!);
                 }
                 catch (InvalidCastException)
                 {
@@ -2100,7 +2095,6 @@ namespace KGySoft.Collections
 
         bool IDictionary.Contains(object key) => CanAcceptKey(key) && ContainsKey((TKey)key);
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new Enumerator(this, false);
 
         void IDictionary.Remove(object key)
@@ -2109,11 +2103,9 @@ namespace KGySoft.Collections
                 Remove((TKey)key);
         }
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (index < 0 || index > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
@@ -2153,10 +2145,9 @@ namespace KGySoft.Collections
         }
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             info.AddValue(nameof(capacity), capacity);

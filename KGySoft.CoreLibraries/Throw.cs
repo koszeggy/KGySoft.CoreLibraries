@@ -60,7 +60,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
         [ContractAnnotation("=> halt")]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
 
-        [ContractAnnotation("=> halt")] internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
 
         [ContractAnnotation("=> halt")]
         internal static void EnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum 

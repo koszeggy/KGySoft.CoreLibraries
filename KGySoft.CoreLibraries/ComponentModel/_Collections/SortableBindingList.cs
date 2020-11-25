@@ -665,7 +665,7 @@ namespace KGySoft.ComponentModel
                 return result;
 
             int count = Count;
-            if (count == sortedToBaseIndex.Count && (result < 0 || result < count && AreEqual(item, GetItemBySortedIndex(result))))
+            if (count == sortedToBaseIndex.Count && (result < 0 || result < count && Comparer.Equals(item, GetItemBySortedIndex(result))))
                 return result;
 
             BuildSortedIndexMap();

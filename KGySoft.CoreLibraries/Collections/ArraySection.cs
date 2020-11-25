@@ -28,7 +28,6 @@ using System.Buffers;
 #endif
 
 using KGySoft.CoreLibraries;
-using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 
 #endregion
@@ -82,9 +81,9 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 2D array debug items")]
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
             [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
-            public T[] Items => array.ToArray();
+            public T[]? Items => array.ToArray();
 
             #endregion
 
@@ -127,7 +126,7 @@ namespace KGySoft.Collections
 
         #region Instance Fields
 
-        private readonly T[] array;
+        private readonly T[]? array;
         private readonly int offset;
         private readonly int length;
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
@@ -177,7 +176,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as an <see cref="ArraySegment{T}"/>.
         /// </summary>
-        public ArraySegment<T> AsArraySegment => new ArraySegment<T>(array, offset, length);
+        public ArraySegment<T> AsArraySegment => array == null ? default : new ArraySegment<T>(array, offset, length);
 
         #endregion
 
@@ -238,7 +237,7 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        object IList.this[int index]
+        object? IList.this[int index]
         {
             get => this[index];
             set
@@ -246,7 +245,7 @@ namespace KGySoft.Collections
                 Throw.ThrowIfNullIsInvalid<T>(value);
                 try
                 {
-                    this[index] = (T)value;
+                    this[index] = (T)value!;
                 }
                 catch (InvalidCastException)
                 {
@@ -272,7 +271,7 @@ namespace KGySoft.Collections
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "The alternative exists as a constructor")]
-        public static implicit operator ArraySection<T>(T[] array) => array == null ? Null : new ArraySection<T>(array);
+        public static implicit operator ArraySection<T>(T[]? array) => array == null ? Null : new ArraySection<T>(array);
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -316,7 +315,9 @@ namespace KGySoft.Collections
         /// <param name="assureClean"><see langword="true"/>&#160;to make sure the allocated array is zero-initialized;
         /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        [SuppressMessage("Microsoft.Usage", "CA1801:Review unused parameters", Justification = "Used in .NET Core 3.0/Standard 2.1")]
+#if NETFRAMEWORK || NETSTANDARD2_0
+        [SuppressMessage("Microsoft.Usage", "CA1801:Review unused parameters", Justification = "Used in .NET Core 3.0/Standard 2.1 and above")] 
+#endif
         public ArraySection(int length, bool assureClean = true)
         {
             if (length < 0)
@@ -343,6 +344,8 @@ namespace KGySoft.Collections
         /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array) : this(array, 0, array?.Length ?? 0)
         {
         }
@@ -357,7 +360,7 @@ namespace KGySoft.Collections
         /// <param name="length">The number of items to include in the new <see cref="ArraySection{T}"/>.</param>
         public ArraySection(T[] array, int offset, int length)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if ((uint)offset > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
@@ -378,6 +381,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
         {
         }
@@ -388,7 +393,7 @@ namespace KGySoft.Collections
 
         #region Static Methods
 
-        private static bool CanAccept(object value) => value is T || value == null && default(T) == null;
+        private static bool CanAccept(object? value) => value is T || value == null && default(T) == null;
 
         #endregion
 
@@ -403,7 +408,7 @@ namespace KGySoft.Collections
         {
             if (length == 0)
                 return;
-            Array.Clear(array, offset, length);
+            Array.Clear(array!, offset, length);
         }
 
         /// <summary>
@@ -411,7 +416,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/>.</returns>
-        public ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array, offset + startIndex, length - startIndex);
+        public ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array!, offset + startIndex, length - startIndex);
 
         /// <summary>
         /// Gets a new <see cref="ArraySection{T}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
@@ -419,9 +424,9 @@ namespace KGySoft.Collections
         /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
         /// <param name="length">The desired length of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
-        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
-        public ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array, offset + startIndex, length);
+        public ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array!, offset + startIndex, length);
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="ArraySection{T}"/>.
@@ -448,12 +453,12 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="ArraySection{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[] ToArray()
+        public T[]? ToArray()
         {
             if (length == 0)
                 return array; // it can be even null
             T[] result = new T[length];
-            array.CopyElements(offset, result, 0, length);
+            array!.CopyElements(offset, result, 0, length);
             return result;
         }
 
@@ -504,7 +509,7 @@ namespace KGySoft.Collections
         {
             if (length == 0)
                 return -1;
-            int result = Array.IndexOf(array, item, offset, length);
+            int result = Array.IndexOf(array!, item, offset, length);
             return result < 0 ? result : result - offset;
         }
 
@@ -523,11 +528,9 @@ namespace KGySoft.Collections
         /// <param name="target">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="ArraySection{T}"/>.</param>
         /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
         /// <br/>Default value: 0.</param>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         public void CopyTo(T[] target, int targetIndex = 0)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
             if (targetIndex < 0 || targetIndex > target.Length)
                 Throw.ArgumentOutOfRangeException(Argument.targetIndex);
@@ -549,7 +552,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.targetIndex);
             if (target.length - targetIndex < length)
                 Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
-            array?.CopyElements(offset, target.array, target.offset + targetIndex, length);
+            array?.CopyElements(offset, target.array!, target.offset + targetIndex, length);
         }
 
         /// <summary>
@@ -589,7 +592,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj == null ? IsNull
                 : obj is ArraySection<T> other ? Equals(other)
                 : obj is T[] arr && Equals(new ArraySection<T>(arr)); // must check array because == operator supports it as well
@@ -607,13 +610,13 @@ namespace KGySoft.Collections
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal T GetItemInternal(int index) => array[offset + index];
+        internal T GetItemInternal(int index) => array![offset + index];
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal void SetItemInternal(int index, T value) => array[offset + index] = value;
+        internal void SetItemInternal(int index, T value) => array![offset + index] = value;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal ref T GetElementReferenceInternal(int index) => ref array[offset + index];
+        internal ref T GetElementReferenceInternal(int index) => ref array![offset + index];
 
         #endregion
 
@@ -628,14 +631,12 @@ namespace KGySoft.Collections
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        int IList.IndexOf(object value) => CanAccept(value) ? IndexOf((T)value) : -1;
-        bool IList.Contains(object value) => CanAccept(value) && Contains((T)value);
+        int IList.IndexOf(object? value) => CanAccept(value) ? IndexOf((T)value!) : -1;
+        bool IList.Contains(object? value) => CanAccept(value) && Contains((T)value!);
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection.CopyTo(Array targetArray, int index)
         {
-            if (targetArray == null)
+            if (targetArray == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             if (targetArray is T[] typedArray)
@@ -651,7 +652,7 @@ namespace KGySoft.Collections
             if (targetArray.Rank != 1)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
-            if (targetArray is object[] objectArray)
+            if (targetArray is object?[] objectArray)
             {
                 for (int i = 0; i < length; i++)
                 {
@@ -663,9 +664,9 @@ namespace KGySoft.Collections
             Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
         }
 
-        int IList.Add(object item) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.Insert(int index, object item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.Remove(object item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        int IList.Add(object? item) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
         #endregion

@@ -511,7 +511,7 @@ namespace KGySoft
 
         // ReSharper disable InconsistentNaming
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string ICollectionNonGenericValueTypeInvalid(object value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
+        internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type);

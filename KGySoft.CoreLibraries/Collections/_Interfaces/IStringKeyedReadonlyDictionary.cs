@@ -106,7 +106,7 @@ namespace KGySoft.Collections
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
-        bool TryGetValue(StringSegment key, out TValue value);
+        bool TryGetValue(StringSegment key, [MaybeNullWhen(false)]out TValue value);
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -119,7 +119,7 @@ namespace KGySoft.Collections
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        bool TryGetValue(ReadOnlySpan<char> key, out TValue value);
+        bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)]out TValue value);
 #endif
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        TValue GetValueOrDefault(string key);
+        [return:MaybeNull]TValue GetValueOrDefault(string key);
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -139,7 +139,7 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
-        TActualValue GetValueOrDefault<TActualValue>(string key, TActualValue defaultValue = default) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(string key, [AllowNull]TActualValue defaultValue = default) where TActualValue : TValue;
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -150,14 +150,14 @@ namespace KGySoft.Collections
         /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 
         /// <summary>
         /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
         /// </summary>
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        TValue GetValueOrDefault(StringSegment key);
+        [return:MaybeNull]TValue GetValueOrDefault(StringSegment key);
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -169,7 +169,7 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
-        TActualValue GetValueOrDefault<TActualValue>(StringSegment key, TActualValue defaultValue = default) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(StringSegment key, [AllowNull]TActualValue defaultValue = default) where TActualValue : TValue;
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -180,7 +180,7 @@ namespace KGySoft.Collections
         /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -189,7 +189,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        TValue GetValueOrDefault(ReadOnlySpan<char> key);
+        [return:MaybeNull]TValue GetValueOrDefault(ReadOnlySpan<char> key);
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -202,7 +202,7 @@ namespace KGySoft.Collections
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, [AllowNull]TActualValue defaultValue = default) where TActualValue : TValue;
 
         /// <summary>
         /// Tries to get the typed value from the dictionary for the given <paramref name="key"/>.
@@ -214,7 +214,7 @@ namespace KGySoft.Collections
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
         /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
+        [return:MaybeNull]TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 #endif
 
         #endregion
