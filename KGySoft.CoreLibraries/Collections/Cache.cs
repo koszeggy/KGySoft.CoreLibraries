@@ -400,20 +400,16 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            readonly Cache<TKey, TValue> owner;
+            private readonly Cache<TKey, TValue> owner;
 
             #endregion
 
             #region Properties
 
             public int Reads => owner.cacheReads;
-
             public int Writes => owner.cacheWrites;
-
             public int Deletes => owner.cacheDeletes;
-
             public int Hits => owner.cacheHit;
-
             public float HitRate => Reads == 0 ? 0 : (float)Hits / Reads;
 
             #endregion
@@ -528,11 +524,8 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Methods
 
             void ICollection<TKey>.Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             void ICollection<TKey>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             bool ICollection<TKey>.Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
-
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
@@ -591,7 +584,6 @@ namespace KGySoft.Collections
             #region Public Properties
 
             public int Count => owner.Count;
-
             public bool IsReadOnly => true;
 
             #endregion
@@ -662,11 +654,8 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Methods
 
             void ICollection<TValue>.Add(TValue item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             void ICollection<TValue>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             bool ICollection<TValue>.Remove(TValue item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
-
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
@@ -1090,7 +1079,6 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
 
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
-
         IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
 #endif
 

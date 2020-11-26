@@ -20,9 +20,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Diagnostics;
+
+#endregion
+
+#region Suppressions
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+#endif
 
 #endregion
 
@@ -83,6 +92,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     public class LockingDictionary<TKey, TValue> : LockingCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
+        where TKey : notnull
     {
         #region Properties and Indexers
 
@@ -265,7 +275,7 @@ namespace KGySoft.Collections
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter.
         /// This parameter is passed uninitialized.</param>
         /// <returns><see langword="true" />&#160;if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             Lock();
             try

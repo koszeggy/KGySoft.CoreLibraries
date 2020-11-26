@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -94,7 +95,7 @@ namespace KGySoft.ComponentModel
 
             [SecurityCritical] public object GetRealObject(StreamingContext context) => Value;
             public override string ToString() => Res.ComponentModelMissingPropertyReference;
-            public override bool Equals(object obj) => obj is MissingPropertyReference;
+            public override bool Equals(object? obj) => obj is MissingPropertyReference;
             public override int GetHashCode() => 0;
 
             #endregion
@@ -115,14 +116,14 @@ namespace KGySoft.ComponentModel
 
         // This dictionary is never expanded though existing values may be overwritten. New properties are
         // added to lockingStorage, and a merged dictionary is assigned to the lock free instance from time to time
-        private volatile Dictionary<string, object> lockFreeStorage = new Dictionary<string, object>();
+        private volatile Dictionary<string, object?>? lockFreeStorage = new Dictionary<string, object?>();
 
-        [NonSerialized] private Dictionary<string, Type> reflectedProperties;
-        [NonSerialized] private Dictionary<string, object> lockingStorage;
-        [NonSerialized] private DateTime nextMerge;
-        [NonSerialized] private object syncRoot;
-        [NonSerialized] private int suspendCounter;
-        [NonSerialized] private PropertyChangedEventHandler propertyChanged;
+        [NonSerialized]private Dictionary<string, Type>? reflectedProperties;
+        [NonSerialized]private Dictionary<string, object?>? lockingStorage;
+        [NonSerialized]private DateTime nextMerge;
+        [NonSerialized]private object? syncRoot;
+        [NonSerialized]private int suspendCounter;
+        [NonSerialized]private PropertyChangedEventHandler? propertyChanged;
 
         private volatile bool isModified;
         private volatile bool isDisposed;
@@ -141,7 +142,7 @@ namespace KGySoft.ComponentModel
         /// changed notifications can use it in a compatible way. To get the old and new values in an event handler you can cast the argument to <see cref="PropertyChangedExtendedEventArgs"/>
         /// or call the <see cref="PropertyChangedEventArgsExtensions.TryGetOldPropertyValue">TryGetOldPropertyValue</see> and <see cref="PropertyChangedEventArgsExtensions.TryGetNewPropertyValue">TryGetNewPropertyValue</see> extension methods on it.</note>
         /// </remarks>
-        public event PropertyChangedEventHandler PropertyChanged
+        public event PropertyChangedEventHandler? PropertyChanged
         {
             add => propertyChanged += value;
             remove => propertyChanged -= value;
@@ -198,7 +199,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the properties for internal usage. Do not use for adding new values!
         /// </summary>
-        private protected Dictionary<string, object> PropertiesInternal
+        private protected Dictionary<string, object?> PropertiesInternal
         {
             get
             {
@@ -221,11 +222,11 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private Dictionary<string, object> LockFreeStorage
+        private Dictionary<string, object?> LockFreeStorage
         {
             get
             {
-                Dictionary<string, object> result = lockFreeStorage;
+                Dictionary<string, object?>? result = lockFreeStorage;
                 if (result == null || isDisposed)
                     Throw.ObjectDisposedException();
                 return result;
@@ -259,27 +260,27 @@ namespace KGySoft.ComponentModel
             PopulateProperties(result, type.GetProperties(BindingFlags.Instance | BindingFlags.Public));
 
             // non-public properties by type (because private properties cannot be obtained for all levels in one step)
-            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType!)
                 PopulateProperties(result, t.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
             return result;
         }
 
-        private static Dictionary<string, object> MergeProperties(Dictionary<string, object> lockFreeProps, Dictionary<string, object> lockingProps)
+        private static Dictionary<string, object?> MergeProperties(Dictionary<string, object?> lockFreeProps, Dictionary<string, object?>? lockingProps)
         {
             // ToArray is needed to use CopyTo instead of Enumerator on the original dictionary because the
             // enumerator can throw an exception if a value is overwritten in the meantime
 #if NETFRAMEWORK || NETSTANDARD2_0
-            KeyValuePair<string, object>[] props = lockFreeProps.ToArray();
-            var newStorage = new Dictionary<string, object>();
-            foreach (KeyValuePair<string, object> prop in props)
+            KeyValuePair<string, object?>[] props = lockFreeProps.ToArray();
+            var newStorage = new Dictionary<string, object?>();
+            foreach (KeyValuePair<string, object?> prop in props)
                 newStorage[prop.Key] = prop.Value;
 #else
-            var newStorage = new Dictionary<string, object>(lockFreeProps.ToArray());
+            var newStorage = new Dictionary<string, object?>(lockFreeProps.ToArray());
 #endif
             if (lockingProps != null)
             {
-                foreach (KeyValuePair<string, object> item in lockingProps)
+                foreach (KeyValuePair<string, object?> item in lockingProps)
                     newStorage[item.Key] = item.Value;
             }
 
@@ -340,7 +341,7 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
-        internal void ReplaceProperties(IDictionary<string, object> newProperties, bool invokeChangedEvent)
+        internal void ReplaceProperties(IDictionary<string, object?> newProperties, bool invokeChangedEvent)
         {
             // If a new key is added after this step we simply don't care
             EnsureMerged();
@@ -355,16 +356,16 @@ namespace KGySoft.ComponentModel
                 Set(property.Value, invokeChangedEvent, property.Key);
         }
 
-        internal bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangedEvent)
+        internal bool TryReplaceProperty(string propertyName, object? originalValue, object? newValue, bool invokeChangedEvent)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
 
             if (MissingProperty.Equals(newValue))
                 return ResetProperty(propertyName, invokeChangedEvent);
 
             bool tryAddNew = MissingProperty.Equals(originalValue);
-            bool exists = TryGetPropertyValue(propertyName, true, out object currentValue);
+            bool exists = TryGetPropertyValue(propertyName, true, out object? currentValue);
             if (!(exists ^ tryAddNew) || exists && !Equals(originalValue, currentValue))
                 return false;
 
@@ -376,17 +377,17 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
-        internal Dictionary<string, object> CloneProperties()
+        internal Dictionary<string, object?> CloneProperties()
         {
             EnsureMerged();
 
-            var result = new Dictionary<string, object>();
+            var result = new Dictionary<string, object?>();
 
             // ToArray ensures that CopyTo is used instead of the enumerator, which does not tolerate value replacements
-            foreach (KeyValuePair<string, object> property in LockFreeStorage.ToArray())
+            foreach (KeyValuePair<string, object?> property in LockFreeStorage.ToArray())
             {
                 // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use cache now
-                object clonedValue;
+                object? clonedValue;
                 if (property.Value == null)
                     clonedValue = null;
                 else if (property.Value is ICloneable cloneable)
@@ -428,16 +429,16 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(Func<T> createInitialValue, [CallerMemberName] string propertyName = null)
+        protected T Get<T>(Func<T> createInitialValue, [CallerMemberName]string propertyName = null!)
         {
-            if (TryGetPropertyValue(propertyName, true, out object value))
+            if (TryGetPropertyValue(propertyName, true, out object? value))
             {
                 if (!typeof(T).CanAcceptValue(value))
                     Throw.InvalidOperationException(Res.ComponentModelReturnedTypeInvalid(typeof(T)));
-                return (T)value;
+                return (T)value!;
             }
 
-            if (createInitialValue == null)
+            if (createInitialValue == null!)
                 Throw.InvalidOperationException(Res.ComponentModelPropertyValueNotExist(propertyName));
             T result = createInitialValue.Invoke();
             Set(result, false, propertyName);
@@ -461,8 +462,8 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(T defaultValue = default, [CallerMemberName] string propertyName = null)
-            => TryGetPropertyValue(propertyName, true, out object value) && typeof(T).CanAcceptValue(value) ? (T)value : defaultValue;
+        protected T Get<T>(T defaultValue = default, [CallerMemberName]string propertyName = null!)
+            => TryGetPropertyValue(propertyName, true, out object? value) && typeof(T).CanAcceptValue(value) ? (T)value! : defaultValue!;
 
         /// <summary>
         /// Sets the value of a property.
@@ -483,9 +484,9 @@ namespace KGySoft.ComponentModel
         /// the this method may throw an <see cref="InvalidOperationException"/>. Overriding the <see cref="CanSetProperty">CanSetProperty</see> method can solve this issue
         /// but it may lead to further errors if multiple properties use the same key in the inner storage.</para>
         /// </remarks>
-        protected bool Set(object value, bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null)
+        protected bool Set(object? value, bool invokeChangedEvent = true, [CallerMemberName]string propertyName = null!)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
             if (MissingProperty.Equals(value))
                 return ResetProperty(propertyName, invokeChangedEvent);
@@ -493,8 +494,8 @@ namespace KGySoft.ComponentModel
             if (!CanSetProperty(propertyName, value))
                 Throw.InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
 
-            Dictionary<string, object> lockFreeProps = LockFreeStorage;
-            bool exists = lockFreeProps.TryGetValue(propertyName, out object oldValue);
+            Dictionary<string, object?> lockFreeProps = LockFreeStorage;
+            bool exists = lockFreeProps.TryGetValue(propertyName, out object? oldValue);
             if (exists)
             {
                 if (Equals(value, oldValue))
@@ -508,7 +509,7 @@ namespace KGySoft.ComponentModel
             {
                 lock (SyncRoot)
                 {
-                    Dictionary<string, object> lockingProps = GetCreateLockingStorage();
+                    Dictionary<string, object?> lockingProps = GetCreateLockingStorage();
                     exists = lockingProps.TryGetValue(propertyName, out oldValue);
                     if (exists)
                     {
@@ -536,11 +537,11 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true"/>&#160;if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
         protected bool ResetProperty(string propertyName, bool invokeChangedEvent = true)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
 
-            Dictionary<string, object> lockFreeProps = LockFreeStorage;
-            bool exists = lockFreeProps.TryGetValue(propertyName, out object oldValue);
+            Dictionary<string, object?> lockFreeProps = LockFreeStorage;
+            bool exists = lockFreeProps.TryGetValue(propertyName, out object? oldValue);
 
             if (exists)
             {
@@ -548,7 +549,7 @@ namespace KGySoft.ComponentModel
                 lock (SyncRoot)
                 {
                     // even if lockingStorage is null, we need a new copy to reassign lock free storage
-                    Dictionary<string, object> newProperties = MergeProperties(lockFreeProps, lockingStorage);
+                    Dictionary<string, object?> newProperties = MergeProperties(lockFreeProps, lockingStorage);
                     newProperties.Remove(propertyName);
                     lockFreeStorage = newProperties;
                     lockingStorage = null;
@@ -562,7 +563,7 @@ namespace KGySoft.ComponentModel
                 // property does not exist in lock free dictionary: just removing from locking one if exists there
                 lock (SyncRoot)
                 {
-                    Dictionary<string, object> lockingProps = lockingStorage;
+                    Dictionary<string, object?> lockingProps = lockingStorage;
 
                     // lost race
                     if (lockingProps == null)
@@ -602,10 +603,10 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
         /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
-        protected virtual bool CanSetProperty(string propertyName, object value)
+        protected virtual bool CanSetProperty(string propertyName, object? value)
         {
             Dictionary<string, Type> props = reflectedProperties ??= reflectedPropertiesCache[GetType()];
-            return props.TryGetValue(propertyName, out Type type) && type.CanAcceptValue(value);
+            return props.TryGetValue(propertyName, out Type? type) && type.CanAcceptValue(value);
         }
 
         /// <summary>
@@ -634,6 +635,8 @@ namespace KGySoft.ComponentModel
         /// then check the <see cref="IsDisposed"/> property first and call the base method as the last step to prevent <see cref="ObjectDisposedException"/>.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void Dispose(bool disposing)
         {
             if (isDisposed)
@@ -654,9 +657,9 @@ namespace KGySoft.ComponentModel
         /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
         protected internal virtual void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
-            if (e == null)
+            if (e == null!)
                 Throw.ArgumentNullException(Argument.e);
-            if (!isModified && AffectsModifiedState(e.PropertyName))
+            if (!isModified && AffectsModifiedState(e.PropertyName!))
                 SetModified(true);
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, e);
@@ -666,9 +669,9 @@ namespace KGySoft.ComponentModel
 
         #region Private Protected Methods
 
-        private protected bool TryGetPropertyValue(string propertyName, bool errorIfCannotGetProperty, out object value)
+        private protected bool TryGetPropertyValue(string propertyName, bool errorIfCannotGetProperty, out object? value)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
             if (!CanGetProperty(propertyName))
             {
@@ -678,14 +681,14 @@ namespace KGySoft.ComponentModel
                 return false;
             }
 
-            Dictionary<string, object> lockFreeProps = LockFreeStorage;
+            Dictionary<string, object?> lockFreeProps = LockFreeStorage;
             if (lockFreeProps.TryGetValue(propertyName, out value))
                 return true;
             if (lockingStorage == null)
                 return false;
             lock (SyncRoot)
             {
-                Dictionary<string, object> lockingProps = lockingStorage;
+                Dictionary<string, object?> lockingProps = lockingStorage;
 
                 // lost race
                 if (lockingProps == null)
@@ -701,7 +704,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Methods
 
-        private void MergeIfExpired(Dictionary<string, object> lockFreeProps, Dictionary<string, object> lockingProps)
+        private void MergeIfExpired(Dictionary<string, object?> lockFreeProps, Dictionary<string, object?> lockingProps)
         {
             if (DateTime.UtcNow < nextMerge)
                 return;
@@ -709,12 +712,12 @@ namespace KGySoft.ComponentModel
             lockingStorage = null;
         }
 
-        private Dictionary<string, object> GetCreateLockingStorage()
+        private Dictionary<string, object?> GetCreateLockingStorage()
         {
-            Dictionary<string, object> result = lockingStorage;
+            Dictionary<string, object?>? result = lockingStorage;
             if (result != null)
                 return result;
-            result = lockingStorage = new Dictionary<string, object>();
+            result = lockingStorage = new Dictionary<string, object?>();
             nextMerge = DateTime.UtcNow + mergeTimeout;
             return result;
         }
@@ -726,7 +729,7 @@ namespace KGySoft.ComponentModel
 
             lock (SyncRoot)
             {
-                Dictionary<string, object> lockingProps = lockingStorage;
+                Dictionary<string, object?>? lockingProps = lockingStorage;
 
                 // lost race
                 if (lockingProps == null)

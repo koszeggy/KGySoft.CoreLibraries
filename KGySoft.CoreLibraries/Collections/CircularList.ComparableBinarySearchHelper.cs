@@ -48,15 +48,15 @@ namespace KGySoft.Collections
                 TComparable item = list.ElementAt(i);
 
                 int order;
-                if (item == null)
+                if (item == null!)
                 {
-                    if (value == null)
+                    if (value == null!)
                         order = 0;
                     else
                         order = -1;
                 }
                 else
-                    order = item.CompareTo(value);
+                    order = item.CompareTo(value!);
 
                 if (order == 0)
                     return i;

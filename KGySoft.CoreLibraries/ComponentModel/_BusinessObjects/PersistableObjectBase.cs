@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 #endregion
@@ -50,39 +51,38 @@ namespace KGySoft.ComponentModel
     {
         #region Methods
 
-        bool IPersistableObject.TryGetPropertyValue(string propertyName, out object value)
+        bool IPersistableObject.TryGetPropertyValue(string propertyName, out object? value)
             => TryGetPropertyValue(propertyName, false, out value);
 
         bool IPersistableObject.CanGetProperty(string propertyName) => CanGetProperty(propertyName);
-        bool IPersistableObject.CanSetProperty(string propertyName, object value) => CanSetProperty(propertyName, value);
+        bool IPersistableObject.CanSetProperty(string propertyName, object? value) => CanSetProperty(propertyName, value);
 
         T IPersistableObject.GetPropertyOrDefault<T>(string propertyName, T defaultValue)
             => Get(defaultValue, propertyName);
 
-        bool IPersistableObject.SetProperty(string propertyName, object value, bool invokeChangedEvent)
+        bool IPersistableObject.SetProperty(string propertyName, object? value, bool invokeChangedEvent)
             => Set(value, invokeChangedEvent, propertyName);
 
         bool IPersistableObject.ResetProperty(string propertyName, bool invokeChangedEvent)
             => ResetProperty(propertyName, invokeChangedEvent);
 
-        bool IPersistableObject.TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangedEvent)
+        bool IPersistableObject.TryReplaceProperty(string propertyName, object? originalValue, object? newValue, bool invokeChangedEvent)
             => TryReplaceProperty(propertyName, originalValue, newValue, invokeChangedEvent);
 
-        IDictionary<string, object> IPersistableObject.GetProperties()
-        {
-            // no need to Lock-Unlock because the underlying dictionary is changed by set or assignment only
-            return PropertiesInternal.ToDictionary(p => p.Key,
+        [SuppressMessage("CodeQuality", "IDE0004:Type cast is redundant", Justification = "Needed to avoid CS8619")]
+        IDictionary<string, object?> IPersistableObject.GetProperties()
+            => PropertiesInternal.ToDictionary(p => p.Key,
                 p =>
                 {
                     if (!CanGetProperty(p.Key))
-                        Throw.InvalidOperationException<object>(Res.ComponentModelCannotGetProperty(p.Key));
-                    return p.Value;
+                        Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(p.Key));
+                    // ReSharper disable once RedundantCast
+                    return (object?)p.Value;
                 });
-        }
 
-        void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool triggerChangedEvent)
+        void IPersistableObject.SetProperties(IDictionary<string, object?> newProperties, bool triggerChangedEvent)
         {
-            if (newProperties == null)
+            if (newProperties == null!)
                 Throw.ArgumentNullException(Argument.newProperties);
 
             // Not locking properties can change even during the set.
@@ -92,7 +92,7 @@ namespace KGySoft.ComponentModel
                 Set(property.Value, triggerChangedEvent, property.Key);
         }
 
-        void IPersistableObject.ReplaceProperties(IDictionary<string, object> properties, bool triggerChangedEvent)
+        void IPersistableObject.ReplaceProperties(IDictionary<string, object?> properties, bool triggerChangedEvent)
             => ReplaceProperties(properties, triggerChangedEvent);
 
         #endregion

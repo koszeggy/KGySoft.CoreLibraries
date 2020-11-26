@@ -563,7 +563,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="x">A <see cref="string">string</see> to compare to <paramref name="y"/>.</param>
         /// <param name="y">A <see cref="string">string</see> to compare to <paramref name="x"/>.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
-        public abstract bool Equals(string x, string y);
+        public abstract bool Equals(string? x, string? y);
 
         /// <summary>
         /// When overridden in a derived class, gets the hash code for the specified <see cref="string">string</see>.
@@ -721,7 +721,7 @@ namespace KGySoft.CoreLibraries
 
         #region StringSegment
 
-        internal abstract bool Equals(StringSegment x, string y);
+        internal abstract bool Equals(StringSegment x, string? y);
 
         #endregion
 

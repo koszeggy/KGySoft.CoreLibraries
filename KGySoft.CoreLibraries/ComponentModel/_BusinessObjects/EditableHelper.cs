@@ -32,7 +32,7 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly ObservableObjectBase owner;
-        private readonly LockingList<IDictionary<string, object>> snapshots = new List<IDictionary<string, object>>().AsThreadSafe();
+        private readonly LockingList<IDictionary<string, object?>> snapshots = new List<IDictionary<string, object?>>().AsThreadSafe();
 
         #endregion
 

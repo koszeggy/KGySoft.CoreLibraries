@@ -35,7 +35,7 @@ namespace KGySoft.ComponentModel
         /// <param name="args">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
         /// <param name="oldValue">If the specified event <paramref name="args"/> is a <see cref="PropertyChangedExtendedEventArgs"/> instance, then the property value before the change; otherwise, <see langword="null"/>.</param>
         /// <returns><see langword="true"/>&#160;if the specified event <paramref name="args"/> is a <see cref="PropertyChangedExtendedEventArgs"/> instance; otherwise, <see langword="null"/>.</returns>
-        public static bool TryGetOldPropertyValue(this PropertyChangedEventArgs args, out object oldValue)
+        public static bool TryGetOldPropertyValue(this PropertyChangedEventArgs args, out object? oldValue)
         {
             if (args is PropertyChangedExtendedEventArgs ext)
             {
@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
         /// <param name="args">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
         /// <param name="newValue">If the specified event <paramref name="args"/> is a <see cref="PropertyChangedExtendedEventArgs"/> instance, then the property value after the change; otherwise, <see langword="null"/>.</param>
         /// <returns><see langword="true"/>&#160;if the specified event <paramref name="args"/> is a <see cref="PropertyChangedExtendedEventArgs"/> instance; otherwise, <see langword="null"/>.</returns>
-        public static bool TryGetNewPropertyValue(this PropertyChangedEventArgs args, out object newValue)
+        public static bool TryGetNewPropertyValue(this PropertyChangedEventArgs args, out object? newValue)
         {
             if (args is PropertyChangedExtendedEventArgs ext)
             {

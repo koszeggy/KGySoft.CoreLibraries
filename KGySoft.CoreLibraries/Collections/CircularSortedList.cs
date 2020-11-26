@@ -23,9 +23,16 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
+
+#endregion
+
+#region Suppressions
+
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+#endif
 
 #endregion
 
@@ -111,7 +118,7 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>, IReadOnlyList<KeyValuePair<TKey, TValue>>
 #endif
-
+        where TKey : notnull
     {
         #region Nested types
 
@@ -129,7 +136,7 @@ namespace KGySoft.Collections
             private readonly CircularSortedList<TKey, TValue> list;
 
             [NonSerialized]
-            private object syncRoot;
+            private object? syncRoot;
 
             #endregion
 
@@ -167,6 +174,7 @@ namespace KGySoft.Collections
 
             #region Public Indexers
 
+            // ReSharper disable once ValueParameterNotUsed - false alarm: throw
             public TKey this[int index]
             {
                 get => list.keys[index];
@@ -177,7 +185,8 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Indexers
 
-            object IList.this[int index]
+            // ReSharper disable once ValueParameterNotUsed - false alarm: throw
+            object? IList.this[int index]
             {
                 get => list.keys[index];
                 set => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
@@ -220,11 +229,11 @@ namespace KGySoft.Collections
                 // casting to get a reference enumerator
                 => ((IList<TKey>)list.keys).GetEnumerator();
 
-            bool IList.Contains(object value) => CanAcceptKey(value) && Contains((TKey)value);
-            int IList.Add(object value) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
-            int IList.IndexOf(object value) => CanAcceptKey(value) ? IndexOf((TKey)value) : -1;
-            void IList.Insert(int index, object value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            void IList.Remove(object value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool IList.Contains(object? value) => CanAcceptKey(value) && Contains((TKey)value!);
+            int IList.Add(object? value) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
+            int IList.IndexOf(object? value) => CanAcceptKey(value) ? IndexOf((TKey)value!) : -1;
+            void IList.Insert(int index, object? value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void IList.Remove(object? value) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             void ICollection.CopyTo(Array array, int index) => ((ICollection)list.keys).CopyTo(array, index);
 
             #endregion
@@ -259,7 +268,6 @@ namespace KGySoft.Collections
             private int index;
             private int steps;
 
-            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -307,7 +315,7 @@ namespace KGySoft.Collections
                 }
             }
 
-            object IDictionaryEnumerator.Value
+            object? IDictionaryEnumerator.Value
             {
                 get
                 {
@@ -412,7 +420,6 @@ namespace KGySoft.Collections
 
             private int index;
 
-            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -515,7 +522,6 @@ namespace KGySoft.Collections
             private int index;
             private int steps;
 
-            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -638,12 +644,9 @@ namespace KGySoft.Collections
         private readonly CircularList<TValue> values;
         private readonly IComparer<TKey> comparer;
 
-        [NonSerialized]
-        private IList<TKey> keysList;
-        [NonSerialized]
-        private IList<TValue> valuesList;
-        [NonSerialized]
-        private object syncRoot;
+        [NonSerialized]private IList<TKey>? keysList;
+        [NonSerialized]private IList<TValue>? valuesList;
+        [NonSerialized]private object? syncRoot;
 
         #endregion
 
@@ -809,8 +812,6 @@ namespace KGySoft.Collections
         /// is at the first or last position. Otherwise, setting this property is an O(log n) operation, if the <paramref name="key"/> already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// If the <paramref name="key"/> is not in the list, and the new element is not at the first or last position, setting the property is an O(n) operation. If insertion causes a resize, the operation is O(n).</para>
         /// </remarks>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
         public TValue this[TKey key]
         {
             [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, KeyNotFoundException is expected")]
@@ -824,7 +825,7 @@ namespace KGySoft.Collections
             }
             set
             {
-                if (key == null)
+                if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
 
                 int index = SearchKeyOptimizedLastOrFirst(key);
@@ -839,15 +840,14 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
+        // ReSharper disable once ValueParameterNotUsed - false alarm: throw
         KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
         {
             get => ElementAt(index);
             set => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
-        object IDictionary.this[object key]
+        object? IDictionary.this[object key]
         {
             get
             {
@@ -863,7 +863,7 @@ namespace KGySoft.Collections
             }
             set
             {
-                if (key == null)
+                if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Throw.ThrowIfNullIsInvalid<TValue>(value);
 
@@ -872,7 +872,7 @@ namespace KGySoft.Collections
                     TKey typedKey = (TKey)key;
                     try
                     {
-                        this[typedKey] = (TValue)value;
+                        this[typedKey] = (TValue)value!;
                     }
                     catch (InvalidCastException)
                     {
@@ -886,7 +886,8 @@ namespace KGySoft.Collections
             }
         }
 
-        object IList.this[int index]
+        // ReSharper disable once ValueParameterNotUsed - false alarm: throw
+        object? IList.this[int index]
         {
             get => ElementAt(index);
             set => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
@@ -938,7 +939,7 @@ namespace KGySoft.Collections
         /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
-        public CircularSortedList(int capacity, IComparer<TKey> comparer = null)
+        public CircularSortedList(int capacity, IComparer<TKey>? comparer = null)
         {
             keys = new CircularList<TKey>(capacity);
             values = new CircularList<TValue>(capacity);
@@ -976,7 +977,9 @@ namespace KGySoft.Collections
         /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
         /// Otherwise it is an O(n*n) operation.</para>
         /// </remarks>
-        public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer = null)
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
+        public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey>? comparer = null)
             : this(dictionary?.Count ?? 0, comparer)
         {
             if (dictionary == null)
@@ -993,7 +996,7 @@ namespace KGySoft.Collections
 
         #region Static Methods
 
-        private static bool CanAcceptKey(object key)
+        private static bool CanAcceptKey(object? key)
         {
             if (key == null)
                 Throw.ArgumentNullException(Argument.key);
@@ -1028,7 +1031,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public int Add(TKey key, TValue value)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             int pos = SearchKeyOptimizedLastOrFirst(key);
@@ -1049,7 +1052,7 @@ namespace KGySoft.Collections
         /// <remarks>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
         public int IndexOfKey(TKey key)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
             int index = keys.InternalBinarySearch(0, keys.Count, key, comparer);
@@ -1185,7 +1188,7 @@ namespace KGySoft.Collections
         /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
         /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             int index = IndexOfKey(key);
             if (index >= 0)
@@ -1333,11 +1336,9 @@ namespace KGySoft.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => IndexOf(item) >= 0;
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             if (arrayIndex < 0 || arrayIndex > array.Length)
@@ -1367,11 +1368,9 @@ namespace KGySoft.Collections
         /// <filterpriority>2</filterpriority>
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, key CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key CAN be null so the Throw is reachable")]
-        void IDictionary.Add(object key, object value)
+        void IDictionary.Add(object key, object? value)
         {
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             Throw.ThrowIfNullIsInvalid<TValue>(value);
 
@@ -1380,7 +1379,7 @@ namespace KGySoft.Collections
                 TKey typedKey = (TKey)key;
                 try
                 {
-                    Add(typedKey, (TValue)value);
+                    Add(typedKey, (TValue)value!);
                 }
                 catch (InvalidCastException)
                 {
@@ -1395,7 +1394,6 @@ namespace KGySoft.Collections
 
         bool IDictionary.Contains(object key) => CanAcceptKey(key) && ContainsKey((TKey)key);
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new EnumeratorAsReference(this, false);
 
         void IDictionary.Remove(object key)
@@ -1404,11 +1402,9 @@ namespace KGySoft.Collections
                 Remove((TKey)key);
         }
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (index < 0 || index > array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
@@ -1451,7 +1447,7 @@ namespace KGySoft.Collections
             }
         }
 
-        int IList.Add(object value)
+        int IList.Add(object? value)
         {
             if (value == null)
                 Throw.ArgumentNullException(Argument.value);
@@ -1461,7 +1457,7 @@ namespace KGySoft.Collections
 
             if (value is DictionaryEntry entry)
             {
-                if (entry.Key == null)
+                if (entry.Key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
 
@@ -1470,7 +1466,7 @@ namespace KGySoft.Collections
                     TKey typedKey = (TKey)entry.Key;
                     try
                     {
-                        return Add(typedKey, (TValue)entry.Value);
+                        return Add(typedKey, (TValue)entry.Value!);
                     }
                     catch (InvalidCastException)
                     {
@@ -1486,16 +1482,16 @@ namespace KGySoft.Collections
             return Throw.ArgumentException<int>(Argument.value, Res.CircularSortedListInvalidKeyValueType(typeof(KeyValuePair<TKey, TValue>)));
         }
 
-        bool IList.Contains(object value) => ((IList)this).IndexOf(value) >= 0;
+        bool IList.Contains(object? value) => ((IList)this).IndexOf(value) >= 0;
 
-        int IList.IndexOf(object value)
+        int IList.IndexOf(object? value)
         {
             if (value is KeyValuePair<TKey, TValue> keyValuePair)
                 return IndexOf(keyValuePair);
 
             if (value is DictionaryEntry entry)
             {
-                if (entry.Key == null)
+                if (entry.Key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
 
@@ -1504,7 +1500,7 @@ namespace KGySoft.Collections
                     TKey typedKey = (TKey)entry.Key;
                     try
                     {
-                        return IndexOf(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value));
+                        return IndexOf(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value!));
                     }
                     catch (InvalidCastException)
                     {
@@ -1520,9 +1516,9 @@ namespace KGySoft.Collections
             return -1;
         }
 
-        void IList.Insert(int index, object value) => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+        void IList.Insert(int index, object? value) => Throw.NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
 
-        void IList.Remove(object value)
+        void IList.Remove(object? value)
         {
             if (value is KeyValuePair<TKey, TValue> keyValuePair)
             {
@@ -1532,7 +1528,7 @@ namespace KGySoft.Collections
 
             if (value is DictionaryEntry entry)
             {
-                if (entry.Key == null)
+                if (entry.Key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 Throw.ThrowIfNullIsInvalid<TValue>(entry.Value);
 
@@ -1541,7 +1537,7 @@ namespace KGySoft.Collections
                     TKey typedKey = (TKey)entry.Key;
                     try
                     {
-                        Remove(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value));
+                        Remove(new KeyValuePair<TKey, TValue>(typedKey, (TValue)entry.Value!));
                     }
                     catch (InvalidCastException)
                     {

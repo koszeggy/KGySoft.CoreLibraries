@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -38,7 +39,7 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="value">Returns the value of the property if it could be found in the inner storage. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>&#160;if the property exists in the inner storage; otherwise, <see langword="false"/>.</returns>
-        bool TryGetPropertyValue(string propertyName, out object value);
+        bool TryGetPropertyValue(string propertyName, out object? value);
 
         /// <summary>
         /// Gets whether the specified property can be retrieved.
@@ -57,7 +58,7 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">Name of the property.</param>
         /// <param name="value">The property value to set.</param>
         /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
-        bool CanSetProperty(string propertyName, object value);
+        bool CanSetProperty(string propertyName, object? value);
 
         /// <summary>
         /// Gets the specified property if it exists in the inner storage and has a compatibly type with <typeparamref name="T"/>; otherwise, returns <paramref name="defaultValue"/>.
@@ -79,7 +80,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>&#160;if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot set the property.</exception>
-        bool SetProperty(string propertyName, object value, bool triggerChangedEvent = true);
+        bool SetProperty(string propertyName, object? value, bool triggerChangedEvent = true);
 
         /// <summary>
         /// Resets the property of the specified <paramref name="propertyName"/>, meaning, it will be removed from the underlying storage so the property getters will return the default value again and <see cref="TryGetPropertyValue">TryGetPropertyValue</see> will return <see langword="false"/>.
@@ -95,7 +96,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <returns>A copy of the stored properties.</returns>
         /// <exception cref="InvalidOperationException">A property cannot be retrieved.</exception>
-        IDictionary<string, object> GetProperties();
+        IDictionary<string, object?> GetProperties();
 
         /// <summary>
         /// Sets the provided <paramref name="properties"/> in the <see cref="IPersistableObject"/>. The new set of properties will be merged with the existing ones.
@@ -104,7 +105,7 @@ namespace KGySoft.ComponentModel
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
-        void SetProperties(IDictionary<string, object> properties, bool triggerChangedEvent = true);
+        void SetProperties(IDictionary<string, object?> properties, bool triggerChangedEvent = true);
 
         /// <summary>
         /// Replaces the properties of the <see cref="IPersistableObject"/> with the provided new <paramref name="properties"/>. If contains less entries than the actually stored entries, then the difference will be removed from the <see cref="IPersistableObject"/>.
@@ -113,7 +114,7 @@ namespace KGySoft.ComponentModel
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
-        void ReplaceProperties(IDictionary<string, object> properties, bool triggerChangedEvent = true);
+        void ReplaceProperties(IDictionary<string, object?> properties, bool triggerChangedEvent = true);
 
         /// <summary>
         /// Tries to the replace a property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.
@@ -125,7 +126,7 @@ namespace KGySoft.ComponentModel
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
         /// <returns><see langword="true"/>&#160;if the originally stored value equals <paramref name="originalValue"/> and the replacement was successful; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot get or set the property.</exception>
-        bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool triggerChangedEvent = true);
+        bool TryReplaceProperty(string propertyName, object? originalValue, object? newValue, bool triggerChangedEvent = true);
 
         #endregion
     }

@@ -73,8 +73,7 @@ namespace KGySoft.Collections
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
             [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 3D array debug items")]
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
+            // ReSharper disable once UnusedMember.Local
             public T[,,]? Items => array.To3DArray();
 
             #endregion

@@ -61,7 +61,7 @@ namespace KGySoft.Collections
         private readonly Dictionary<TKey, TValue> dict;
 
         private bool hasNullKey;
-        [AllowNull]private TValue nullValue = default!;
+        [AllowNull]private TValue nullValue = default!; // TODO: TValue? when ReSharper allows it
 
         #endregion
 

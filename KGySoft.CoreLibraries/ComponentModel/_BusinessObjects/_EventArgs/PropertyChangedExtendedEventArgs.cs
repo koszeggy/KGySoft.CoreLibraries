@@ -37,12 +37,12 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the property value before the change or <see cref="ObservableObjectBase.MissingProperty"/> if no previous value was stored for the property before the change.
         /// </summary>
-        public object OldValue { get; }
+        public object? OldValue { get; }
 
         /// <summary>
         /// Gets the property value after the change or <see cref="ObservableObjectBase.MissingProperty"/> if the property has just been reset and there is no stored value for it.
         /// </summary>
-        public object NewValue { get; }
+        public object? NewValue { get; }
 
         #endregion
 
@@ -54,7 +54,7 @@ namespace KGySoft.ComponentModel
         /// <param name="oldValue">The property value before the change.</param>
         /// <param name="newValue">The property value after the change.</param>
         /// <param name="propertyName">Name of the property.</param>
-        public PropertyChangedExtendedEventArgs(object oldValue, object newValue, string propertyName) : base(propertyName)
+        public PropertyChangedExtendedEventArgs(object? oldValue, object? newValue, string propertyName) : base(propertyName)
         {
             OldValue = oldValue;
             NewValue = newValue;

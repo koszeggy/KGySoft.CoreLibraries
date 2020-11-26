@@ -184,7 +184,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="other">A <see cref="StringSegment"/> instance to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(string other)
+        public bool Equals(string? other)
         {
             if (ReferenceEquals(str, other) && offset == 0)
                 return true;

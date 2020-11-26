@@ -16,11 +16,10 @@
 
 #region Usings
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+
 using KGySoft.Diagnostics;
 
 #endregion
@@ -53,6 +52,7 @@ namespace KGySoft.Collections
 
         #region Indexers
 
+        // ReSharper disable once ValueParameterNotUsed - false alarm: throw
         public T this[int index]
         {
             get => list[index + offset];
