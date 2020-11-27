@@ -1363,7 +1363,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The source to check.</param>
         /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
         {
             if (source == null)
                 return true;

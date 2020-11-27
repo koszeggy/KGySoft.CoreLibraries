@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices; 
 
 #endregion
@@ -33,14 +32,12 @@ namespace KGySoft.ComponentModel
     /// <typeparam name="TParam">The type of the command parameter.</typeparam>
     /// <seealso cref="ICommand" />
     /// <seealso cref="SourceAwareTargetedCommand{TEventArgs,TTarget}"/>
-    [SuppressMessage("Microsoft.Design", "CA1005:AvoidExcessiveParametersOnGenericTypes",
-        Justification = "It actually still simplifies ICommand.Execute and there are the even simpler predefined commands")]
     public sealed class SourceAwareTargetedCommand<TEventArgs, TTarget, TParam> : ICommand<TEventArgs>, IDisposable
         where TEventArgs : EventArgs
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> callback;
+        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? callback;
 
         #endregion
 
@@ -53,7 +50,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
         }
@@ -65,7 +62,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, TTarget, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = (src, _, t, pars) => callback.Invoke(src, t, pars);
         }
@@ -86,21 +83,21 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object parameter)
+        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object? target, object? parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source, state, (TTarget)target, (TParam)parameter);
+            copy.Invoke(source, state, (TTarget)target!, (TParam)parameter!);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object? target, object? parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target, (TParam)parameter);
+            copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target!, (TParam)parameter!);
         }
 
         #endregion

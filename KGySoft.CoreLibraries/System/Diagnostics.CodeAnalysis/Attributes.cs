@@ -6,6 +6,14 @@ namespace System.Diagnostics.CodeAnalysis
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property, Inherited = false)]
     internal sealed class AllowNullAttribute : Attribute { }
 
+    /// <summary>Specifies that null is disallowed as an input even if the corresponding type allows it.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property, Inherited = false)]
+    internal sealed class DisallowNullAttribute : Attribute { }
+
+    /// <summary>Specifies that an output will not be null even if the corresponding type allows it. Specifies that an input argument was not null when the call returns.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
+    internal sealed class NotNullAttribute : Attribute { }
+
     /// <summary>Specifies that an output may be null even if the corresponding type disallows it.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
     internal sealed class MaybeNullAttribute : Attribute { }

@@ -48,7 +48,7 @@ namespace KGySoft.ComponentModel
         DynamicObject,
         ITypedList, // so a binding will not treat the type as a list of Key and Value properties (because the CommandState implements IDictionary<string, object>)
 #if !NET40
-        IReadOnlyDictionary<string, object>,
+        IReadOnlyDictionary<string, object?>,
 #endif
 #endif
         ICommandState,
@@ -97,7 +97,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Occurs when a state entry value changes.
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         #endregion
 
@@ -189,7 +189,7 @@ namespace KGySoft.ComponentModel
         /// <param name="initialConfiguration">The initial configuration to use for initializing this <see cref="CommandState"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="ArgumentException"><paramref name="initialConfiguration"/> contains a non-<see cref="bool">bool</see>&#160;<c>Enabled</c> entry.</exception>
-        public CommandState(IDictionary<string, object> initialConfiguration = null)
+        public CommandState(IDictionary<string, object?>? initialConfiguration = null)
         {
             if (initialConfiguration == null)
                 return;
@@ -230,7 +230,7 @@ namespace KGySoft.ComponentModel
         /// <param name="key">The object to use as the key of the element to add.</param>
         /// <param name="value">The object to use as the value of the element to add.</param>
         /// <exception cref="ArgumentException">An item with the same key has already been added</exception>
-        public void Add(string key, object value)
+        public void Add(string key, object? value)
         {
             stateProperties.Lock();
             try
@@ -255,7 +255,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>&#160;if the <see cref="CommandState"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false" />.
         /// </returns>
-        public bool TryGetValue(string key, out object value) => stateProperties.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out object? value) => stateProperties.TryGetValue(key, out value);
 
 #if !NET35
 

@@ -43,7 +43,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType)
             => destinationType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
         /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
             => sourceType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (!destinationType.In(Reflector.StringType, Reflector.ByteArrayType))
                 return base.ConvertTo(context, culture, value, destinationType);
@@ -81,15 +81,15 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="object"/> to convert.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
-            byte[] bytes = null;
+            byte[]? bytes = null;
             if (value is string s)
                 bytes = Convert.FromBase64String(s);
             else if (value?.GetType() == Reflector.ByteArrayType) // cast is dangerous: works also from sbyte[] so type check must be performed
                 bytes = (byte[])value;
 
-            return bytes != null ? BinarySerializer.Deserialize(bytes) : base.ConvertFrom(context, culture, value);
+            return bytes != null ? BinarySerializer.Deserialize(bytes) : base.ConvertFrom(context!, culture!, value);
         }
 
         #endregion

@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -260,7 +259,7 @@ namespace KGySoft.ComponentModel
             PopulateProperties(result, type.GetProperties(BindingFlags.Instance | BindingFlags.Public));
 
             // non-public properties by type (because private properties cannot be obtained for all levels in one step)
-            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType!)
+            for (Type? t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
                 PopulateProperties(result, t.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
             return result;
@@ -635,8 +634,6 @@ namespace KGySoft.ComponentModel
         /// then check the <see cref="IsDisposed"/> property first and call the base method as the last step to prevent <see cref="ObjectDisposedException"/>.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void Dispose(bool disposing)
         {
             if (isDisposed)

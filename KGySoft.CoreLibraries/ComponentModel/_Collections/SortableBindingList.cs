@@ -19,7 +19,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+#if !NET35
+using System.Collections.ObjectModel; 
+#endif
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -31,15 +33,19 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
     #region Usings
 
-    using SortIndex = KeyValuePair<int, object>;
+    using SortIndex = KeyValuePair<int, object?>;
 
     #endregion
 
@@ -62,19 +68,18 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        [NonSerialized] private bool isChangingOrRaisingChanged;
-        [NonSerialized] private bool sortPending; // indicates that the list is sorted but contains unsorted elements due to insertion
-        [NonSerialized] private PropertyDescriptor sortProperty;
-        private string sortPropertyName; // for serialization
+        [NonSerialized]private bool isChangingOrRaisingChanged;
+        [NonSerialized]private bool sortPending; // indicates that the list is sorted but contains unsorted elements due to insertion
+        [NonSerialized]private PropertyDescriptor? sortProperty;
+        private string? sortPropertyName; // for serialization
 
-        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, nullable enums are serializable")]
         private ListSortDirection? sortDirection;
-        [NonSerialized] private CircularList<SortIndex> sortedToBaseIndex; // int is not enough, because contains the evaluated property value can be used for comparison when an item is inserted/changed
-        [NonSerialized] private IComparer<SortIndex> itemComparer;
-        [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToSortedIndex;
+        [NonSerialized]private CircularList<SortIndex>? sortedToBaseIndex; // int is not enough, because contains the evaluated property value can be used for comparison when an item is inserted/changed
+        [NonSerialized]private IComparer<SortIndex>? itemComparer;
+        [NonSerialized]private AllowNullDictionary<T, CircularList<int>>? itemToSortedIndex;
         private bool sortOnChange;
         private int addNewPos = -1;
-        [NonSerialized] private bool isCancelingNew;
+        [NonSerialized]private bool isCancelingNew;
 
         #endregion
 
@@ -119,7 +124,7 @@ namespace KGySoft.ComponentModel
         /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/>&#160;if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
         /// </summary>
-        protected override PropertyDescriptor SortPropertyCore => sortProperty;
+        protected override PropertyDescriptor? SortPropertyCore => sortProperty;
 
         /// <summary>
         /// Gets the direction of the sort.
@@ -182,7 +187,7 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc/>
         public override void CancelNew(int itemIndex)
         {
-            if (sortDirection != null && sortedToBaseIndex.Count != Count)
+            if (sortDirection != null && sortedToBaseIndex!.Count != Count)
             {
                 // if there is inconsistency there will be an EndNew instead of cancel because we cannot be sure what to remove
                 BuildSortedIndexMap();
@@ -207,7 +212,7 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc/>
         public override void EndNew(int itemIndex)
         {
-            if (sortDirection != null && sortedToBaseIndex.Count != Count)
+            if (sortDirection != null && sortedToBaseIndex!.Count != Count)
             {
                 BuildSortedIndexMap();
                 return;
@@ -253,7 +258,7 @@ namespace KGySoft.ComponentModel
         /// <para>If <paramref name="property"/> is not <see langword="null"/>, then finding an item by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.Find">Find</see> overloads on the same property
         /// will be also faster.</para>
         /// </remarks>
-        protected override void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
+        protected override void ApplySortCore(PropertyDescriptor? property, ListSortDirection direction)
         {
             if (!Enum<ListSortDirection>.IsDefined(direction))
                 Throw.EnumArgumentOutOfRangeWithValues(Argument.direction, direction);
@@ -273,6 +278,7 @@ namespace KGySoft.ComponentModel
 
             EndNew();
             sortedToBaseIndex = null;
+            itemComparer = null;
             itemToSortedIndex = null;
             sortProperty = null;
             sortDirection = null;
@@ -305,7 +311,7 @@ namespace KGySoft.ComponentModel
             while (lo <= hi)
             {
                 int i = lo + ((hi - lo) >> 1);
-                int order = itemComparer.Compare(sortedToBaseIndex[i], value);
+                int order = itemComparer!.Compare(sortedToBaseIndex![i], value);
 
                 if (order == 0)
                     return i;
@@ -352,14 +358,14 @@ namespace KGySoft.ComponentModel
             T original = GetItemBySortedIndex(index);
 
             // here we can't ignore inconsistency because we need to update the maintained indices
-            if (!RemoveIndex(itemToSortedIndex, original, index) || !AddIndex(itemToSortedIndex, item, index))
+            if (!RemoveIndex(itemToSortedIndex!, original, index) || !AddIndex(itemToSortedIndex!, item, index))
             {
                 BuildSortedIndexMap();
-                RemoveIndex(itemToSortedIndex, original, index);
-                AddIndex(itemToSortedIndex, item, index);
+                RemoveIndex(itemToSortedIndex!, original, index);
+                AddIndex(itemToSortedIndex!, item, index);
             }
             else
-                sortedToBaseIndex[index] = new SortIndex(sortedToBaseIndex[index].Key, sortProperty == null ? item : sortProperty.GetValue(item));
+                sortedToBaseIndex![index] = new SortIndex(sortedToBaseIndex[index].Key, sortProperty == null || item == null ? item : sortProperty.GetValue(item));
 
             int baseIndex = GetBaseIndex(index);
             isChangingOrRaisingChanged = true;
@@ -391,7 +397,6 @@ namespace KGySoft.ComponentModel
         /// </list>
         /// </para>
         /// </remarks>
-        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
         protected override void InsertItem(int index, T item)
         {
             if (sortDirection == null)
@@ -416,18 +421,18 @@ namespace KGySoft.ComponentModel
             if (IsAddingNew)
                 addNewPos = index;
             int newLength = Count;
-            if (newLength != sortedToBaseIndex.Count + 1)
+            if (newLength != sortedToBaseIndex!.Count + 1)
                 BuildSortedIndexMap();
             else
             {
                 // no need to adjust indices in sortedToBaseIndex because we added the item to the last position in underlying list
-                sortedToBaseIndex.Insert(index, new SortIndex(newLength - 1, sortProperty == null ? item : sortProperty.GetValue(item)));
+                sortedToBaseIndex.Insert(index, new SortIndex(newLength - 1, sortProperty == null || item == null ? item : sortProperty.GetValue(item)));
                 if (index + 1 < newLength)
                 {
                     HashSet<T> adjustedValues = CreateAdjustSet(newLength);
                     for (int i = index + 1; i < newLength; i++)
                     {
-                        if (!AdjustIndex(itemToSortedIndex, GetItemBySortedIndexUnchecked(i), index, 1, adjustedValues))
+                        if (!AdjustIndex(itemToSortedIndex!, GetItemBySortedIndexUnchecked(i), index, 1, adjustedValues))
                         {
                             BuildSortedIndexMap();
                             return;
@@ -435,7 +440,7 @@ namespace KGySoft.ComponentModel
                     }
                 }
 
-                if (!AddIndex(itemToSortedIndex, item, index))
+                if (!AddIndex(itemToSortedIndex!, item, index))
                     BuildSortedIndexMap();
             }
 
@@ -465,10 +470,10 @@ namespace KGySoft.ComponentModel
                 index = addNewPos;
             }
 
-            if (Count != sortedToBaseIndex.Count)
+            if (Count != sortedToBaseIndex!.Count)
             {
                 // Possible issue here: in case of inconsistency after the resort the removed element is actually random
-                // But if canceling a new element we addNewPos is reset do we must return here.
+                // But if canceling a new element we reset addNewPos so we must return here.
                 BuildSortedIndexMap();
                 if (isCancelingNew)
                     return;
@@ -489,7 +494,7 @@ namespace KGySoft.ComponentModel
             }
 
             // here we can't ignore inconsistency because we need to update the maintained indices
-            if (!RemoveIndex(itemToSortedIndex, original, index))
+            if (!RemoveIndex(itemToSortedIndex!, original, index))
             {
                 BuildSortedIndexMap();
                 return;
@@ -515,7 +520,7 @@ namespace KGySoft.ComponentModel
                 for (int i = index; i < length; i++)
                 {
                     // Getting as unchecked to avoid possible double rebuild. Count difference were already checked above anyway.
-                    if (!AdjustIndex(itemToSortedIndex, GetItemBySortedIndexUnchecked(i), index, -1, adjustedValues))
+                    if (!AdjustIndex(itemToSortedIndex!, GetItemBySortedIndexUnchecked(i), index, -1, adjustedValues))
                     {
                         BuildSortedIndexMap();
                         return;
@@ -536,8 +541,8 @@ namespace KGySoft.ComponentModel
         {
             if (sortDirection != null)
             {
-                sortedToBaseIndex.Reset();
-                itemToSortedIndex.Clear();
+                sortedToBaseIndex!.Reset();
+                itemToSortedIndex!.Clear();
                 sortPending = false;
             }
 
@@ -547,7 +552,7 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc/>
         protected override void OnListChanged(ListChangedEventArgs e)
         {
-            if (e == null)
+            if (e == null!)
                 Throw.ArgumentNullException(Argument.e);
 
             if (isChangingOrRaisingChanged)
@@ -582,14 +587,14 @@ namespace KGySoft.ComponentModel
 
         #region Private Protected Methods
 
-        private protected override void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
+        private protected override void ItemPropertyChanged([NotNull]T item, int itemIndex, PropertyDescriptor? property)
         {
             base.ItemPropertyChanged(item, itemIndex, property);
             if (sortDirection == null)
                 return;
 
             if (property != null && property.Name == sortProperty?.Name)
-                sortedToBaseIndex[itemIndex] = new SortIndex(GetBaseIndex(itemIndex), sortProperty == null ? item : sortProperty.GetValue(item));
+                sortedToBaseIndex![itemIndex] = new SortIndex(GetBaseIndex(itemIndex), sortProperty == null ? item : sortProperty.GetValue(item));
         }
 
         #endregion
@@ -632,10 +637,10 @@ namespace KGySoft.ComponentModel
             for (var i = 0; i < count; i++)
             {
                 T item = base.GetItem(i);
-                sortedToBaseIndex.AddLast(new SortIndex(i, sortProperty == null ? item : sortProperty.GetValue(item)));
+                sortedToBaseIndex.AddLast(new SortIndex(i, sortProperty == null || item == null ? item : sortProperty.GetValue(item)));
             }
 
-            sortedToBaseIndex.Sort(itemComparer);
+            sortedToBaseIndex.Sort(itemComparer!);
 
             // T -> sortedIndex
             if (itemToSortedIndex == null || itemToSortedIndex.Count > 0)
@@ -654,13 +659,13 @@ namespace KGySoft.ComponentModel
 
         private int GetSortedItemIndex(T item)
         {
-            if (sortedToBaseIndex.Count != Count)
+            if (sortedToBaseIndex!.Count != Count)
             {
                 BuildSortedIndexMap();
-                return GetFirstIndex(itemToSortedIndex, item);
+                return GetFirstIndex(itemToSortedIndex!, item);
             }
 
-            int result = GetFirstIndex(itemToSortedIndex, item);
+            int result = GetFirstIndex(itemToSortedIndex!, item);
             if (!CheckConsistency)
                 return result;
 
@@ -669,23 +674,23 @@ namespace KGySoft.ComponentModel
                 return result;
 
             BuildSortedIndexMap();
-            return GetFirstIndex(itemToSortedIndex, item);
+            return GetFirstIndex(itemToSortedIndex!, item);
         }
 
-        private int GetBaseIndex(int sortedIndex) => sortedToBaseIndex[sortedIndex].Key;
+        private int GetBaseIndex(int sortedIndex) => sortedToBaseIndex![sortedIndex].Key;
 
         private T GetItemBySortedIndexUnchecked(int index) => base.GetItem(GetBaseIndex(index));
 
         private T GetItemBySortedIndex(int index)
         {
-            if (sortedToBaseIndex.Count != Count)
+            if (sortedToBaseIndex!.Count != Count)
             {
                 BuildSortedIndexMap();
                 return GetItemBySortedIndexUnchecked(index);
             }
 
             T result = GetItemBySortedIndexUnchecked(index);
-            if (CheckConsistency && !ContainsIndex(itemToSortedIndex, result, index))
+            if (CheckConsistency && !ContainsIndex(itemToSortedIndex!, result, index))
                 BuildSortedIndexMap();
 
             return result;
@@ -693,7 +698,7 @@ namespace KGySoft.ComponentModel
 
         private void CheckNewItemSorted(int index)
         {
-            if (index >= sortedToBaseIndex.Count)
+            if (index >= sortedToBaseIndex!.Count)
             {
                 BuildSortedIndexMap();
                 return;
@@ -706,7 +711,7 @@ namespace KGySoft.ComponentModel
             int compareResult;
             if (index > 0)
             {
-                compareResult = itemComparer.Compare(sortedToBaseIndex[index], sortedToBaseIndex[index - 1]);
+                compareResult = itemComparer!.Compare(sortedToBaseIndex[index], sortedToBaseIndex[index - 1]);
                 if (compareResult != 0)
                 {
                     sortPending = sortDirection == ListSortDirection.Ascending && compareResult < 0 || sortDirection == ListSortDirection.Descending && compareResult > 0;
@@ -719,7 +724,7 @@ namespace KGySoft.ComponentModel
                 return;
 
             // check with next
-            compareResult = itemComparer.Compare(sortedToBaseIndex[index + 1], sortedToBaseIndex[index]);
+            compareResult = itemComparer!.Compare(sortedToBaseIndex[index + 1], sortedToBaseIndex[index]);
             if (compareResult != 0)
                 sortPending = sortDirection == ListSortDirection.Ascending && compareResult < 0 || sortDirection == ListSortDirection.Descending && compareResult > 0;
         }

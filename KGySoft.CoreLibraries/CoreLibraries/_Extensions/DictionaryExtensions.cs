@@ -18,7 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Diagnostics.CodeAnalysis;
+using KGySoft.Annotations;
 using KGySoft.Collections;
 
 #endregion
@@ -397,8 +398,14 @@ namespace KGySoft.CoreLibraries
         ///     }
         /// }]]></code>
         /// </example>
-        public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
-            => dictionary.GetActualValueOrDefault(key, defaultValue);
+        public static TActualValue GetValueOrDefault<TActualValue>(
+#nullable disable // workaround for accepting both IDictionary<string, object?> and IDictionary<string, object>
+            [DisallowNull]this IDictionary<string, object> dictionary,
+#nullable restore
+            string key, TActualValue defaultValue = default)
+        {
+            return dictionary.GetActualValueOrDefault(key, defaultValue);
+        }
 
 #if !(NET35 || NET40)
         /// <summary>

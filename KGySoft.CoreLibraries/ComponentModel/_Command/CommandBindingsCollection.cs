@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 
@@ -57,7 +57,7 @@ namespace KGySoft.ComponentModel
         /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        public virtual ICommandBinding Add(ICommand command, IDictionary<string, object> initialState = null, bool disposeCommand = false)
+        public virtual ICommandBinding Add(ICommand command, IDictionary<string, object?>? initialState = null, bool disposeCommand = false)
         {
             ICommandBinding result = command.CreateBinding(initialState, disposeCommand);
             Add(result);
@@ -75,12 +75,12 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        public ICommandBinding Add(ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
+        public ICommandBinding Add(ICommand command, object source, string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
         {
             ICommandBinding result = Add(command, initialState).AddSource(source, eventName);
             if (!targets.IsNullOrEmpty())
             {
-                foreach (object target in targets)
+                foreach (object target in targets!)
                     result.AddTarget(target);
             }
 
@@ -96,7 +96,7 @@ namespace KGySoft.ComponentModel
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        public ICommandBinding Add(ICommand command, object source, string eventName, params object[] targets)
+        public ICommandBinding Add(ICommand command, object source, string eventName, params object[]? targets)
             => Add(command, source, eventName, null, targets);
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
-        public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[] targets)
+        public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, null);
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
-        public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, params object[] targets)
+        public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[] targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, null);
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
-        public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[] targets)
+        public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, awaitCompletion);
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
-        public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, bool awaitCompletion, params object[] targets)
+        public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, awaitCompletion);
 
         /// <summary>
@@ -212,8 +212,7 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add(Action<ICommandState> callback, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add(Action<ICommandState> callback, IDictionary<string, object?>? initialState = null)
             => Add(new SimpleCommand(callback), initialState, true);
 
         /// <summary>
@@ -227,8 +226,7 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add(Action callback, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add(Action callback, IDictionary<string, object?>? initialState = null)
             => Add(new SimpleCommand(callback), initialState, true);
 
         /// <summary>
@@ -244,10 +242,9 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TParam>(Action<ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TParam>(Action<ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null)
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SimpleCommand<TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -265,10 +262,9 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TParam>(Action<TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TParam>(Action<TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null)
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SimpleCommand<TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -285,8 +281,7 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>, ICommandState> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>, ICommandState> callback, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareCommand<TEventArgs>(callback), initialState, true);
 
         /// <summary>
@@ -301,8 +296,7 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>> callback, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareCommand<TEventArgs>(callback), initialState, true);
 
         /// <summary>
@@ -319,10 +313,9 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SourceAwareCommand<TEventArgs, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -341,10 +334,9 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TParam>(Action<ICommandSource<TEventArgs>, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SourceAwareCommand<TEventArgs, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -363,8 +355,7 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TTarget>(Action<ICommandState, TTarget> callback, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TTarget>(Action<ICommandState, TTarget> callback, IDictionary<string, object?>? initialState = null)
             => Add(new TargetedCommand<TTarget>(callback), initialState, true);
 
         /// <summary>
@@ -381,8 +372,7 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TTarget>(Action<TTarget> callback, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TTarget>(Action<TTarget> callback, IDictionary<string, object?>? initialState = null)
             => Add(new TargetedCommand<TTarget>(callback), initialState, true);
 
         /// <summary>
@@ -401,10 +391,9 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TTarget, TParam>(Action<ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TTarget, TParam>(Action<ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null)
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new TargetedCommand<TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -425,10 +414,9 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TTarget, TParam>(Action<TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null)
+        public ICommandBinding Add<TTarget, TParam>(Action<TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null)
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new TargetedCommand<TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -448,8 +436,7 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareTargetedCommand<TEventArgs, TTarget>(callback), initialState, true);
 
         /// <summary>
@@ -467,8 +454,7 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, TTarget> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, TTarget> callback, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareTargetedCommand<TEventArgs, TTarget>(callback), initialState, true);
 
         /// <summary>
@@ -488,10 +474,9 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -513,10 +498,9 @@ namespace KGySoft.ComponentModel
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Added by disposedCommand = true")]
-        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
+        public ICommandBinding Add<TEventArgs, TTarget, TParam>(Action<ICommandSource<TEventArgs>, TTarget, TParam> callback, Func<TParam> getParam, IDictionary<string, object?>? initialState = null) where TEventArgs : EventArgs
         {
-            if (getParam == null)
+            if (getParam == null!)
                 Throw.ArgumentNullException(Argument.getParam);
             return Add(new SourceAwareTargetedCommand<TEventArgs, TTarget, TParam>(callback), initialState, true).WithParameter(() => getParam.Invoke());
         }
@@ -542,7 +526,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="item"/> is <see langword="null"/>.</exception>
         protected override void InsertItem(int index, ICommandBinding item)
         {
-            if (item == null)
+            if (item == null!)
                 Throw.ArgumentNullException(Argument.item);
             if (item.IsDisposed)
                 Throw.ArgumentException(Argument.item, Res.ComponentModelCannotAddDisposedBinding);
@@ -557,7 +541,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException">item</exception>
         protected override void SetItem(int index, ICommandBinding item)
         {
-            if (item == null)
+            if (item == null!)
                 Throw.ArgumentNullException(Argument.item);
             if (item.IsDisposed)
                 Throw.ArgumentException(Argument.item, Res.ComponentModelCannotAddDisposedBinding);
@@ -599,7 +583,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Methods
 
-        private ICommandBinding DoAddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, object[] targets, bool? awaitCompletion)
+        private ICommandBinding DoAddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, object[]? targets, bool? awaitCompletion)
         {
             ICommandBinding result = Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, false, awaitCompletion);
             Add(result);

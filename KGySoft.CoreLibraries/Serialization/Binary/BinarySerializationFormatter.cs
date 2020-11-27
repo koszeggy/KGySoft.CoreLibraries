@@ -1178,7 +1178,7 @@ namespace KGySoft.Serialization.Binary
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryReader constructor will not leave the stream open.")]
-        public object Deserialize(byte[] rawData, int offset = 0)
+        public object? Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
                 return DeserializeByReader(br);

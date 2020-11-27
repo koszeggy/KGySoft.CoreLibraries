@@ -18,7 +18,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -46,7 +45,7 @@ namespace KGySoft.ComponentModel
             private readonly ulong flagValue;
             private readonly ulong defaultValue;
             private readonly FieldInfo valueField;
-            private readonly ITypeDescriptorContext context;
+            private readonly ITypeDescriptorContext? context;
             private readonly Attribute[] attributes;
 
             #endregion
@@ -72,7 +71,7 @@ namespace KGySoft.ComponentModel
             /// <param name="defaultValue">The default value of the <see langword="enum"/>&#160;instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
             /// <param name="valueField">The underlying value field of the <see langword="enum"/>&#160;type.</param>
             /// <param name="attributes">Custom attributes of the <see langword="enum"/>&#160;flag field.</param>
-            internal EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
+            internal EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext? context)
                 : base(componentType, name, Reflector.BoolType)
             {
                 this.flagValue = flagValue;
@@ -124,9 +123,7 @@ namespace KGySoft.ComponentModel
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance with the property that is to be examined for persistence.</param>
             /// <returns><see langword="true"/>&#160;if the value of the property can persist; otherwise, <see langword="false" />.</returns>
-            public override bool ShouldSerializeValue(object component) =>
-                // ReSharper disable once AssignNullToNotNullAttribute
-                !Equals(GetValue(component), GetDefaultValue());
+            public override bool ShouldSerializeValue(object component) => !Equals(GetValue(component), GetDefaultValue());
 
             /// <summary>
             /// Resets the value for this property of the component.
@@ -179,11 +176,9 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, value CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, value CAN be null so the Throw is reachable")]
-        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
+        public override PropertyDescriptorCollection? GetProperties(ITypeDescriptorContext? context, object value, Attribute[] attributes)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
             Type enumType = value.GetType();
             if (!enumType.IsEnum)
@@ -196,12 +191,12 @@ namespace KGySoft.ComponentModel
 
             // this is how value field is obtained in Type.GetEnumUnderlyingType
             FieldInfo valueField = enumType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)[0];
-            DefaultValueAttribute defaultAttr = context?.PropertyDescriptor?.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
+            DefaultValueAttribute? defaultAttr = context?.PropertyDescriptor?.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
             ulong defaultValue = defaultAttr?.Value?.GetType() == enumType ? ((Enum)defaultAttr.Value).ToUInt64() : 0UL;
             PropertyDescriptorCollection enumFields = new PropertyDescriptorCollection(null);
             foreach (FieldInfo field in fields)
             {
-                Enum enumValue = (Enum)Reflector.GetField(null, field);
+                Enum enumValue = (Enum)Reflector.GetField(null, field)!;
                 if (enumValue.IsSingleFlag())
                     enumFields.Add(new EnumFlagDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Attribute.GetCustomAttributes(field, false), context));
             }
@@ -214,14 +209,14 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this method this parameter is ignored.</param>
         /// <returns>This method always returns <see langword="true" />.</returns>
-        public override bool GetPropertiesSupported(ITypeDescriptorContext context) => true;
+        public override bool GetPropertiesSupported(ITypeDescriptorContext? context) => true;
 
         /// <summary>
         /// Gets whether this object supports a standard set of values that can be picked from a list using the specified context.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this method this parameter is ignored.</param>
         /// <returns>This method always returns <see langword="false" />.</returns>
-        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => false;
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => false;
 
         #endregion
     }

@@ -160,7 +160,7 @@ namespace KGySoft.ComponentModel
         /// <param name="parameter">The parameter of the command. Can be <see langword="null"/>&#160;if the binding has no parameter.
         /// Evaluated once per triggering the command. Even if the binding has multiple targets the <see cref="Execute">Execute</see> method
         /// is invoked with the same <paramref name="parameter"/> value for each target.</param>
-        void Execute(ICommandSource source, ICommandState state, object target, object parameter);
+        void Execute(ICommandSource source, ICommandState state, object? target, object? parameter);
 
         #endregion
     }

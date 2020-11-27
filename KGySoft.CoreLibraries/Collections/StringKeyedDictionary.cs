@@ -742,6 +742,7 @@ namespace KGySoft.Collections
 
         private static readonly Type typeValue = typeof(TValue);
 #if (NETFRAMEWORK || NETSTANDARD2_0)
+        // ReSharper disable once StaticMemberInGenericType - depends on TValue
         private static readonly bool isValueManaged = !typeValue.IsUnmanaged();
 #endif
 
@@ -1339,8 +1340,6 @@ namespace KGySoft.Collections
         /// <param name="info">The <see cref="SerializationInfo" /> to populate with data.</param>
         /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
         [SecurityCritical]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void GetObjectData(SerializationInfo info, StreamingContext context) { }
 
         /// <summary>
@@ -1348,8 +1347,6 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
         [SecurityCritical]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Virtual method")]
         protected virtual void OnDeserialization(SerializationInfo info) { }
 
         #endregion

@@ -647,7 +647,7 @@ namespace KGySoft
         /// <summary>There is no event '{0}' in type '{1}'.</summary>
         internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
 
-        /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>
+        /// <summary>Event '{0}' does not have regular event handler delegate type or accessors.</summary>
         internal static string ComponentModelInvalidEvent(string eventName) => Get("ComponentModel_InvalidEventFormat", eventName);
 
         /// <summary>Cannot get property '{0}'.</summary>

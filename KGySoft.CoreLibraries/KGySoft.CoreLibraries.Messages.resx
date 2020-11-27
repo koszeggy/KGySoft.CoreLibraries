@@ -941,7 +941,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>There is no event '{0}' in component '{1}'.</value>
   </data>
   <data name="ComponentModel_InvalidEventFormat" xml:space="preserve">
-    <value>Event '{0}' does not have regular event handler delegate type.</value>
+    <value>Event '{0}' does not have regular event handler delegate type or accessors.</value>
   </data>
   <data name="ComponentModel_InvalidCommandSource" xml:space="preserve">
     <value>Source must be an object instance for instance events and a Type for static events.</value>

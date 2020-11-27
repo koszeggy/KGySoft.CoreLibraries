@@ -41,7 +41,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType)
             => destinationType == Reflector.StringType || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (destinationType == Reflector.StringType && value is StringSegment stringSegment)
                 return stringSegment.ToString();
@@ -67,7 +67,7 @@ namespace KGySoft.ComponentModel
         /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
             => sourceType == Reflector.StringType || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
@@ -78,14 +78,14 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="object" /> to convert.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns>A <see cref="StringSegment" /> instance that represents the converted value.</returns>
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             if (value == null)
                 return null;
 
             if (value is string str)
                 return str.AsSegment();
-            return base.ConvertFrom(context, culture, value);
+            return base.ConvertFrom(context!, culture!, value);
         }
 
         #endregion

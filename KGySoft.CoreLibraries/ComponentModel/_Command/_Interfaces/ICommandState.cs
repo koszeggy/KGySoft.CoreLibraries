@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ICommand" />
     /// <seealso cref="ICommandStateUpdater" />
     /// <seealso cref="ICommandBinding" />
-    public interface ICommandState : IDictionary<string, object>, INotifyPropertyChanged
+    public interface ICommandState : IDictionary<string, object?>, INotifyPropertyChanged
     {
         #region Properties
 

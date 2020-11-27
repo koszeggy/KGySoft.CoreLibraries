@@ -57,7 +57,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
         /// <returns>Serialized raw data of the object</returns>
-        public static byte[] Serialize(object data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).Serialize(data);
+        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).Serialize(data);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an object.
@@ -68,7 +68,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized object.</returns>
-        public static object Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
+        public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.

@@ -41,10 +41,11 @@ namespace KGySoft.ComponentModel
         {
             #region Fields
 
-            internal CommandBinding Binding;
-            internal string EventName;
-            internal object Source;
-            internal Delegate Delegate;
+            // these fields are initialized after creating a concrete instance by reflection so they are not marked as nullable
+            internal CommandBinding Binding = null!;
+            internal string EventName = null!;
+            internal object Source = null!;
+            internal Delegate Delegate = null!;
 
             #endregion
         }
@@ -61,7 +62,8 @@ namespace KGySoft.ComponentModel
         {
             #region Methods
 
-            [SuppressMessage("VS", "IDE0060:Remove unused parameter", Justification = "Event handler")]
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "They are necessary")]
+            [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Event handler")]
             [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Event handler")]
             internal void Execute(object sender, TEventArgs e)
                 => Binding.InvokeCommand(new CommandSource<TEventArgs>
@@ -97,9 +99,9 @@ namespace KGySoft.ComponentModel
         private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
 
         private bool disposed;
-        private Func<object> getParameterCallback;
-        private EventHandler<ExecuteCommandEventArgs> executing;
-        private EventHandler<ExecuteCommandEventArgs> executed;
+        private Func<object?>? getParameterCallback;
+        private EventHandler<ExecuteCommandEventArgs>? executing;
+        private EventHandler<ExecuteCommandEventArgs>? executed;
 
         #endregion
 
@@ -107,13 +109,13 @@ namespace KGySoft.ComponentModel
 
         #region Events
 
-        public event EventHandler<ExecuteCommandEventArgs> Executing
+        public event EventHandler<ExecuteCommandEventArgs>? Executing
         {
             add => executing += value;
             remove => executing -= value;
         }
 
-        public event EventHandler<ExecuteCommandEventArgs> Executed
+        public event EventHandler<ExecuteCommandEventArgs>? Executed
         {
             add => executed += value;
             remove => executed -= value;
@@ -125,17 +127,17 @@ namespace KGySoft.ComponentModel
 
         public bool IsDisposed => disposed;
         public ICommandState State => state;
-        public IDictionary<object, string[]> Sources => sources?.ToDictionary(i => i.Key, i => i.Value.Values.Select(si => si.EventName).ToArray());
-        public IList<object> Targets => targets?.ToArray();
+        public IDictionary<object, string[]> Sources => sources.ToDictionary(i => i.Key, i => i.Value.Values.Select(si => si.EventName).ToArray());
+        public IList<object> Targets => targets.ToArray();
         public IList<ICommandStateUpdater> StateUpdaters => stateUpdaters.ToArray();
 
         #endregion
 
         #region Constructors
 
-        internal CommandBinding(ICommand command, IDictionary<string, object> initialState, bool disposeCommand)
+        internal CommandBinding(ICommand command, IDictionary<string, object?>? initialState, bool disposeCommand)
         {
-            if (command == null)
+            if (command == null!)
                 Throw.ArgumentNullException(Argument.command);
 
             this.command = command;
@@ -167,7 +169,7 @@ namespace KGySoft.ComponentModel
             PopulateEvents(result, type.GetEvents());
 
             // non-public events by type (because private events cannot be obtained for all levels in one step)
-            for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+            for (Type? t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
                 PopulateEvents(result, t.GetEvents(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
             return result;
@@ -206,28 +208,28 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
-            if (eventName == null)
+            if (eventName == null!)
                 Throw.ArgumentNullException(Argument.eventName);
 
             Type sourceType = source as Type ?? source.GetType();
             bool isStatic = ReferenceEquals(source, sourceType);
-            if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
+            if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo? eventInfo))
                 Throw.ArgumentException(Argument.eventName, Res.ComponentModelMissingEvent(eventName, sourceType));
-            MethodInfo addMethod = eventInfo.GetAddMethod(true);
+            MethodInfo? addMethod = eventInfo.GetAddMethod(true);
+            MethodInfo? invokeMethod = eventInfo.EventHandlerType?.GetMethod(nameof(Action.Invoke));
+            ParameterInfo[]? invokerParameters = invokeMethod?.GetParameters();
+
+            if (addMethod == null || invokeMethod?.ReturnType != Reflector.VoidType || invokerParameters?.Length != 2
+                || invokerParameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(invokerParameters[1].ParameterType))
+                Throw.ArgumentException(Argument.eventName, Res.ComponentModelInvalidEvent(eventName));
+
             if (addMethod.IsStatic ^ isStatic)
                 Throw.ArgumentException(Argument.commandSource, Res.ComponentModelInvalidCommandSource);
 
-            MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
-            ParameterInfo[] invokerParameters = invokeMethod?.GetParameters();
-
-            // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
-            if (invokeMethod?.ReturnType != Reflector.VoidType || invokerParameters.Length != 2 || invokerParameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(invokerParameters[1].ParameterType))
-                Throw.ArgumentException(Argument.eventName, Res.ComponentModelInvalidEvent(eventName));
-
             // already added
-            if (sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions) && subscriptions.ContainsKey(eventInfo))
+            if (sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo>? subscriptions) && subscriptions.ContainsKey(eventInfo))
                 return this;
 
             // creating generic info by reflection because the signature must match and EventArgs can vary
@@ -237,7 +239,7 @@ namespace KGySoft.ComponentModel
             info.Binding = this;
 
             // subscribing the event by info.Execute
-            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
+            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType!, info, nameof(SubscriptionInfo<EventArgs>.Execute));
             Reflector.InvokeMethod(isStatic ? null : source, addMethod, info.Delegate);
 
             if (subscriptions == null)
@@ -253,6 +255,8 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
             return DoRemoveSource(source);
         }
 
@@ -260,6 +264,8 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
+            if (updater == null!)
+                Throw.ArgumentNullException(Argument.updater);
             stateUpdaters.Add(updater);
             if (updateSources && sources.Count > 0)
                 GetInstanceSources().ForEach(UpdateSource);
@@ -270,6 +276,8 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
+            if (updater == null!)
+                Throw.ArgumentNullException(Argument.updater);
             return stateUpdaters.Remove(updater);
         }
 
@@ -277,7 +285,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
 
             targets.Add(target);
@@ -295,28 +303,32 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
+            if (target == null!)
+                Throw.ArgumentNullException(Argument.target);
             return targets.Remove(target);
         }
 
-        public ICommandBinding WithParameter(Func<object> callback)
+        public ICommandBinding WithParameter(Func<object?>? callback)
         {
             getParameterCallback = callback;
             return this;
         }
 
-        public void InvokeCommand(object source, string eventName, EventArgs eventArgs, object parameter)
+        public void InvokeCommand(object source, string eventName, EventArgs eventArgs, object? parameter)
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
-            if (eventName == null)
+            if (eventName == null!)
                 Throw.ArgumentNullException(Argument.eventName);
+            if (eventArgs == null!)
+                Throw.ArgumentNullException(Argument.eventArgs);
             InvokeCommand(new CommandSource<EventArgs>
             {
                 Source = source,
                 TriggeringEvent = eventName,
-                EventArgs = eventArgs ?? EventArgs.Empty,
+                EventArgs = eventArgs,
             }, parameter);
         }
 
@@ -328,13 +340,13 @@ namespace KGySoft.ComponentModel
         {
             if (stateUpdaters.Count == 0)
                 return;
-            foreach (string propertyName in ((IDictionary<string, object>)state).Keys)
+            foreach (string propertyName in ((IDictionary<string, object?>)state).Keys)
                 UpdateSource(source, propertyName);
         }
 
         private void UpdateSource(object source, string propertyName)
         {
-            if (!state.TryGetValue(propertyName, out object stateValue))
+            if (!state.TryGetValue(propertyName, out object? stateValue))
                 return;
 
             foreach (ICommandStateUpdater updater in stateUpdaters)
@@ -344,14 +356,14 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source, object parameter)
+        private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source, object? parameter)
             where TEventArgs : EventArgs
         {
             if (disposed)
                 return;
 
-            ICommand<TEventArgs> cmdTypedArgs = command as ICommand<TEventArgs>;
-            ExecuteCommandEventArgs e = null;
+            ICommand<TEventArgs>? cmdTypedArgs = command as ICommand<TEventArgs>;
+            ExecuteCommandEventArgs? e = null;
             executing?.Invoke(this, e = new ExecuteCommandEventArgs(source, state));
             if (disposed || !state.Enabled)
                 return;
@@ -391,11 +403,11 @@ namespace KGySoft.ComponentModel
 
         private bool DoRemoveSource(object source)
         {
-            if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions))
+            if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo>? subscriptions))
                 return false;
 
             foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
-                Reflector.InvokeMethod(source is Type ? null : source, subscriptionInfo.Key.GetRemoveMethod(true), subscriptionInfo.Value.Delegate);
+                Reflector.InvokeMethod(source is Type ? null : source, subscriptionInfo.Key.GetRemoveMethod(true)!, subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
         }
@@ -406,12 +418,12 @@ namespace KGySoft.ComponentModel
 
         #region Event handlers
 
-        private void State_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        private void State_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (stateUpdaters.Count == 0)
                 return;
             foreach (object source in GetInstanceSources())
-                UpdateSource(source, e.PropertyName);
+                UpdateSource(source, e.PropertyName!);
         }
 
         #endregion

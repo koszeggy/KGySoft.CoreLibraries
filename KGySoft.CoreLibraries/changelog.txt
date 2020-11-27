@@ -21,6 +21,15 @@
 ============================================
 - FastLookupCollection<T> class: Fixing binary deserialization
 
+- KGySoft.ComponentModel namespace:
+===================================
+- FastBindingList<T>:
+  - FindCore method: The default implementation could throw an ArgumentNullException if the binding list contained
+    a null element.
+- SortableBindingList<T>:
+  - SetItem/InsertItem methods: Not throwing an ArgumentNullException if the list is sorted by a property and a null
+    item is set or inserted
+
 
 ~~~~~~~~~
 * v5.5.0:

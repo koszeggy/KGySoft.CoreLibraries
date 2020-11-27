@@ -55,7 +55,7 @@ namespace KGySoft.ComponentModel
         {
         }
 
-        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value) => true;
+        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object? value) => true;
 
         #endregion
     }

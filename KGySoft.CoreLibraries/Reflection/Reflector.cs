@@ -269,7 +269,7 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+        public static void SetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => SetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -352,7 +352,7 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+        public static bool TrySetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => TrySetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -1199,7 +1199,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, MethodInfo method, params object[] parameters)
+        public static object InvokeMethod(object? instance, MethodInfo method, params object[] parameters)
             => InvokeMethod(instance, method, null, ReflectionWays.Auto, parameters);
 
         #endregion
@@ -2242,7 +2242,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static void SetField(object instance, FieldInfo field, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static void SetField(object? instance, FieldInfo field, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (field == null)
                 Throw.ArgumentNullException(Argument.field);
@@ -2442,7 +2442,7 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note>To get the property explicitly by dynamically created delegates use the <see cref="FieldAccessor"/> class.</note>
         /// </remarks>
-        public static object GetField(object instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
+        public static object? GetField(object? instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
         {
             if (field == null)
                 Throw.ArgumentNullException(Argument.field);

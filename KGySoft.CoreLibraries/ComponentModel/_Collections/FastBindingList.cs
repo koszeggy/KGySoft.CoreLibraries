@@ -31,9 +31,13 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -100,7 +104,7 @@ namespace KGySoft.ComponentModel
         #region Instance Fields
 
         // For tracking actually subscribed elements. Not an issue that is not serialized because the clone's inner list is not accessible from outside.
-        [NonSerialized] private readonly HashSet<T> trackedSubscriptions;
+        [NonSerialized]private readonly HashSet<T>? trackedSubscriptions;
 
         private bool disposed;
         private bool allowNew;
@@ -108,10 +112,10 @@ namespace KGySoft.ComponentModel
         private bool allowRemove;
         private int addNewPos = -1;
         private bool raiseListChangedEvents;
-        [NonSerialized] private bool isAddingNew;
-        [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
-        [NonSerialized] private EventHandler<AddingNewEventArgs<T>> addingNewHandler;
-        [NonSerialized] private ListChangedEventHandler listChangedHandler;
+        [NonSerialized]private bool isAddingNew;
+        [NonSerialized]private PropertyDescriptorCollection? propertyDescriptors;
+        [NonSerialized]private EventHandler<AddingNewEventArgs<T>>? addingNewHandler;
+        [NonSerialized]private ListChangedEventHandler? listChangedHandler;
 
         #endregion
 
@@ -125,7 +129,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// By handling this event a custom item creation of <typeparamref name="T"/> can be provided.
         /// </remarks>
-        public event EventHandler<AddingNewEventArgs<T>> AddingNew
+        public event EventHandler<AddingNewEventArgs<T>>? AddingNew
         {
             add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AllowNew
             remove => addingNewHandler -= value;
@@ -134,7 +138,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Occurs when the list or an item in the list changes.
         /// </summary>
-        public event ListChangedEventHandler ListChanged
+        public event ListChangedEventHandler? ListChanged
         {
             add => listChangedHandler += value;
             remove => listChangedHandler -= value;
@@ -217,7 +221,7 @@ namespace KGySoft.ComponentModel
         /// <para>This property returns the value of the overridable <see cref="SortPropertyCore"/> property.</para>
         /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
-        public PropertyDescriptor SortProperty => SortPropertyCore;
+        public PropertyDescriptor? SortProperty => SortPropertyCore;
 
         /// <summary>
         /// Gets or sets whether adding or removing items within the list raises <see cref="ListChanged"/> events.
@@ -238,7 +242,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
             // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
-            => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
+            => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
 
         /// <summary>
         /// Gets whether <see cref="ListChanged"/> events are enabled.
@@ -275,7 +279,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
-        protected virtual PropertyDescriptor SortPropertyCore => null;
+        protected virtual PropertyDescriptor? SortPropertyCore => null;
 
         /// <summary>
         /// Gets the direction of the sort.
@@ -343,7 +347,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <para>To customize the behavior either subscribe the <see cref="AddingNew"/> event or override the <see cref="AddNewCore">AddNewCore</see> method in a derived class.</para>
         /// </remarks>
-        [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Same as BindingList<T>.AddNew")]
+        [return:NotNull]
         public T AddNew()
         {
             if (disposed)
@@ -394,7 +398,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             if (!PropertyDescriptors.Contains(property))
                 Throw.ArgumentException(Argument.property, Res.ComponentModelInvalidProperty(property, typeof(T)));
@@ -418,7 +422,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
             PropertyDescriptor property = PropertyDescriptors[propertyName];
             if (property == null)
@@ -454,7 +458,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             if (!PropertyDescriptors.Contains(property))
                 Throw.ArgumentException(Argument.property, Res.ComponentModelInvalidProperty(property, typeof(T)));
@@ -478,7 +482,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 Throw.ObjectDisposedException();
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
             var property = PropertyDescriptors[propertyName];
             if (property == null)
@@ -565,6 +569,7 @@ namespace KGySoft.ComponentModel
         /// <para>This is the overridable implementation of the <see cref="AddNew">AddNew</see> method. The base implementation raises the <see cref="AddingNew"/> event. If it is not
         /// handled or returns <see langword="null"/>, then tries to create a new instance of <typeparamref name="T"/> and adds it to the end of the list.</para>
         /// </remarks>
+        [return:NotNull]
         protected virtual T AddNewCore()
         {
             var e = new AddingNewEventArgs<T>();
@@ -575,7 +580,7 @@ namespace KGySoft.ComponentModel
             Add(newItem);
 
             // Return new item to caller
-            return newItem;
+            return newItem!;
         }
 
         /// <summary>
@@ -589,7 +594,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
-        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction) => Throw.NotSupportedException(Res.NotSupported);
+        protected virtual void ApplySortCore(PropertyDescriptor? property, ListSortDirection direction) => Throw.NotSupportedException(Res.NotSupported);
 
         /// <summary>
         /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads.
@@ -614,14 +619,18 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         protected virtual int FindCore(PropertyDescriptor property, object key)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
 
             int length = Count;
             for (int i = 0; i < length; i++)
             {
                 // virtual GetItem call is intended here
-                if (Equals(property.GetValue(GetItem(i)), key))
+                T item = GetItem(i);
+                if (item == null)
+                    continue;
+
+                if (Equals(property.GetValue(item), key))
                     return i;
             }
 
@@ -670,7 +679,6 @@ namespace KGySoft.ComponentModel
 
             if (canRaiseItemChange || CheckConsistency)
             {
-                // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
                 T originalItem = base.GetItem(index);
                 if (canRaiseItemChange)
                     UnhookPropertyChanged(originalItem);
@@ -735,7 +743,6 @@ namespace KGySoft.ComponentModel
 
             EndNew();
             if (canRaiseItemChange)
-                // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
                 UnhookPropertyChanged(base.GetItem(index));
 
             base.RemoveItem(index);
@@ -826,7 +833,7 @@ namespace KGySoft.ComponentModel
         /// <param name="item">The changed item.</param>
         /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
         /// <param name="property">The descriptor of the changed property.</param>
-        private protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property) { }
+        private protected virtual void ItemPropertyChanged([NotNull]T item, int itemIndex, PropertyDescriptor? property) { }
 
         #endregion
 
@@ -844,6 +851,8 @@ namespace KGySoft.ComponentModel
             HookPropertyChangedAll();
         }
 
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void HookPropertyChanged(T item)
         {
             if (!(item is INotifyPropertyChanged notifyPropertyChanged))
@@ -854,6 +863,8 @@ namespace KGySoft.ComponentModel
                 trackedSubscriptions?.Add(item);
         }
 
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void UnhookPropertyChanged(T item)
         {
             if (!(item is INotifyPropertyChanged notifyPropertyChanged))
@@ -891,10 +902,12 @@ namespace KGySoft.ComponentModel
 
         #region Event handlers
 
-        private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
+        private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             // Invalid sender or property name: simply resetting
-            if (!(sender is T item) || string.IsNullOrEmpty(e?.PropertyName))
+            if (e == null! || !(sender is T item) || String.IsNullOrEmpty(e.PropertyName))
             {
                 ResetBindings();
                 return;
@@ -910,7 +923,7 @@ namespace KGySoft.ComponentModel
                 ResetBindings();
             }
 
-            PropertyDescriptor pd = e.PropertyName == null ? null : PropertyDescriptors.Find(e.PropertyName, true);
+            PropertyDescriptor? pd = e.PropertyName == null ? null : PropertyDescriptors.Find(e.PropertyName, true);
             ItemPropertyChanged(item, pos, pd);
             OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, pos, pd));
         }

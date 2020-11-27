@@ -25,7 +25,7 @@ namespace KGySoft.ComponentModel
 {
     #region Usings
 
-    using SortIndex = KeyValuePair<int, object>;
+    using SortIndex = KeyValuePair<int, object?>;
 
     #endregion
 
@@ -55,6 +55,8 @@ namespace KGySoft.ComponentModel
 
             if (x.Value == null)
                 return y.Value == null ? 0 : -sign;
+            if (y.Value == null)
+                return sign;
             return sign * ((IComparable<TElement>)x.Value).CompareTo((TElement)y.Value);
         }
 

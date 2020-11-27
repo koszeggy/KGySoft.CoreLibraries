@@ -36,7 +36,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback;
+        private Action<ICommandSource<TEventArgs>, ICommandState, TParam>? callback;
 
         #endregion
 
@@ -49,7 +49,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
         }
@@ -61,7 +61,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SourceAwareCommand(Action<ICommandSource<TEventArgs>, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = (src, _, param) => callback.Invoke(src, param);
         }
@@ -82,21 +82,21 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object parameter)
+        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object? target, object? parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TParam> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TParam>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source, state, (TParam)parameter);
+            copy.Invoke(source, state, (TParam)parameter!);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object? target, object? parameter)
         {
-            Action<ICommandSource<TEventArgs>, ICommandState, TParam> copy = callback;
+            Action<ICommandSource<TEventArgs>, ICommandState, TParam>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(source.Cast<TEventArgs>(), state, (TParam)parameter);
+            copy.Invoke(source.Cast<TEventArgs>(), state, (TParam)parameter!);
         }
 
         #endregion

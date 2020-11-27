@@ -28,9 +28,9 @@ namespace KGySoft.ComponentModel
 
         #region Public Properties
 
-        public object Source { get; internal set; }
-        public string TriggeringEvent { get; internal set; }
-        public TEventArgs EventArgs { get; internal set; }
+        public object Source { get; internal set; } = default!;
+        public string TriggeringEvent { get; internal set; } = default!;
+        public TEventArgs EventArgs { get; internal set; } = default!;
 
         #endregion
 

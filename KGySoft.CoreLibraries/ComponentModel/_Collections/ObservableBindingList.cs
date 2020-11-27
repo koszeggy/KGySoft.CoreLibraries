@@ -130,49 +130,49 @@ namespace KGySoft.ComponentModel
         INotifyCollectionChanged, INotifyPropertyChanged,
         IBindingList, ICancelAddNew, IRaiseItemChangedEvents
     {
-#region SimpleMonitor class
+        #region SimpleMonitor class
 
         [Serializable]
         private class SimpleMonitor : IDisposable
         {
-#region Fields
+            #region Fields
 
             private int busyCount;
 
-#endregion
+            #endregion
 
-#region Properties
+            #region Properties
 
             public bool Busy => busyCount > 0;
 
-#endregion
+            #endregion
 
-#region Methods
+            #region Methods
 
             public void Enter() => ++busyCount;
             public void Dispose() => --busyCount;
 
-#endregion
+            #endregion
         }
 
-#endregion
+        #endregion
 
-#region Constants
+        #region Constants
 
         private const string indexerName = "Item[]";
 
-#endregion
+        #endregion
 
-#region Fields
+        #region Fields
 
-#region Static Fields
+        #region Static Fields
 
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
 
-#endregion
+        #endregion
 
-#region Instance Fields
+        #region Instance Fields
 
         private readonly SimpleMonitor monitor = new SimpleMonitor();
 
@@ -185,19 +185,19 @@ namespace KGySoft.ComponentModel
         private bool allowRemove;
         private int addNewPos = -1;
 
-        [NonSerialized] private bool isAddingNew;
-        [NonSerialized] private bool isExplicitChanging; // TODO: nullable enum instead of bool so if on insert/replace/change there comes a sort (reset/move) it can be allowed
-        [NonSerialized] private int lastChangeIndex = -1;
-        [NonSerialized] private PropertyChangedEventHandler propertyChangedHandler;
-        [NonSerialized] private NotifyCollectionChangedEventHandler collectionChangedHandler;
-        [NonSerialized] private ListChangedEventHandler listChangedHandler;
-        [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
+        [NonSerialized]private bool isAddingNew;
+        [NonSerialized]private bool isExplicitChanging; // TODO: nullable enum instead of bool so if on insert/replace/change there comes a sort (reset/move) it can be allowed
+        [NonSerialized]private int lastChangeIndex = -1;
+        [NonSerialized]private PropertyChangedEventHandler? propertyChangedHandler;
+        [NonSerialized]private NotifyCollectionChangedEventHandler? collectionChangedHandler;
+        [NonSerialized]private ListChangedEventHandler? listChangedHandler;
+        [NonSerialized]private PropertyDescriptorCollection? propertyDescriptors;
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Events
+        #region Events
 
         /// <summary>
         /// Occurs when the list or an item in the list changes.
@@ -208,7 +208,7 @@ namespace KGySoft.ComponentModel
         /// <para>Raising this event can be disabled and enabled by the <see cref="RaiseListChangedEvents"/> property.</para>
         /// <para>Raising this event for item property changes can be disabled and enabled by the <see cref="RaiseItemChangedEvents"/> property.</para>
         /// </remarks>
-        public event ListChangedEventHandler ListChanged
+        public event ListChangedEventHandler? ListChanged
         {
             add => listChangedHandler += value;
             remove => listChangedHandler -= value;
@@ -226,7 +226,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Raising this event for item property changes can be disabled and enabled by the <see cref="RaiseItemChangedEvents"/> property.
         /// </note>
         /// </remarks>
-        public event NotifyCollectionChangedEventHandler CollectionChanged
+        public event NotifyCollectionChangedEventHandler? CollectionChanged
         {
             add => collectionChangedHandler += value;
             remove => collectionChangedHandler -= value;
@@ -235,17 +235,17 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Occurs when a property value changes. Occurs also when the elements in the list changes, in which case the value of the <see cref="PropertyChangedEventArgs.PropertyName"/> will be <c>Item[]</c>.
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged
+        public event PropertyChangedEventHandler? PropertyChanged
         {
             add => propertyChangedHandler += value;
             remove => propertyChangedHandler -= value;
         }
 
-#endregion
+        #endregion
 
-#region Properties
+        #region Properties
 
-#region Public Properties
+        #region Public Properties
 
         /// <summary>
         /// Gets or sets whether <see cref="ListChanged"/> and <see cref="CollectionChanged"/> events are invoked with
@@ -387,43 +387,43 @@ namespace KGySoft.ComponentModel
             }
         }
 
-#endregion
+        #endregion
 
-#region Protected Properties
+        #region Protected Properties
 
         /// <summary>
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
-            // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
+            // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor is implemented so
             => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
 
-#endregion
+        #endregion
 
-#region Private Properties
+        #region Private Properties
 
         private bool IsBindingList => Items is IBindingList;
-        private IBindingList AsBindingList => Items as IBindingList;
+        private IBindingList? AsBindingList => Items as IBindingList;
         private bool HookItemsPropertyChanged => !IsBindingList && canRaiseItemChange;
         private bool IsDualNotifyCollectionType => IsBindingList && Items is INotifyCollectionChanged;
 
-#endregion
+        #endregion
 
-#region Explicitly Implemented Interface Properties
+        #region Explicitly Implemented Interface Properties
 
         bool IRaiseItemChangedEvents.RaisesItemChangedEvents => RaiseItemChangedEvents;
         bool IBindingList.SupportsChangeNotification => true;
         bool IBindingList.SupportsSearching => AsBindingList?.SupportsSearching ?? false;
         bool IBindingList.SupportsSorting => AsBindingList?.SupportsSorting ?? false;
         bool IBindingList.IsSorted => AsBindingList?.IsSorted ?? false;
-        PropertyDescriptor IBindingList.SortProperty => AsBindingList?.SortProperty;
+        PropertyDescriptor? IBindingList.SortProperty => AsBindingList?.SortProperty;
         ListSortDirection IBindingList.SortDirection => AsBindingList?.SortDirection ?? default;
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Constructors
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with a <see cref="SortableBindingList{T}"/> internally.
@@ -448,11 +448,11 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public ObservableBindingList(IList<T> list) : base(list) => Initialize();
 
-#endregion
+        #endregion
 
-#region Methods
+        #region Methods
 
-#region Public Methods
+        #region Public Methods
 
         /// <summary>
         /// Releases the list and removes both incoming and outgoing subscriptions.
@@ -476,7 +476,6 @@ namespace KGySoft.ComponentModel
         /// <para>Otherwise, if <typeparamref name="T"/> is a value type or has a parameterless constructor, then a new item of <typeparamref name="T"/> is created and added to the list.</para>
         /// <para>Otherwise, an <see cref="InvalidOperationException"/> will be thrown.</para>
         /// </remarks>
-        [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Same as BindingList<T>.AddNew")]
         public T AddNew()
         {
             if (disposed)
@@ -490,12 +489,14 @@ namespace KGySoft.ComponentModel
                 isAddingNew = true;
                 try
                 {
-                    result = (T)bindingList.AddNew();
+                    // if AddNew returns an invalid type we let the invalid cast exception come
+                    result = (T)bindingList.AddNew()!;
                 }
                 finally
                 {
                     isAddingNew = false;
                 }
+
                 return result;
             }
 
@@ -597,9 +598,9 @@ namespace KGySoft.ComponentModel
             FireItemChanged(position, this[position], null);
         }
 
-#endregion
+        #endregion
 
-#region Protected Methods
+        #region Protected Methods
 
         /// <summary>
         /// Releases the resources used by this <see cref="ObservableBindingList{T}"/> instance.
@@ -870,9 +871,9 @@ namespace KGySoft.ComponentModel
             }
         }
 
-#endregion
+        #endregion
 
-#region Private Methods
+        #region Private Methods
 
         private void Initialize()
         {
@@ -898,6 +899,8 @@ namespace KGySoft.ComponentModel
                 HookPropertyChanged(item);
         }
 
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void HookPropertyChanged(T item)
         {
             if (!(item is INotifyPropertyChanged notifyPropertyChanged))
@@ -906,6 +909,8 @@ namespace KGySoft.ComponentModel
             notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
         }
 
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void UnhookPropertyChanged(T item)
         {
             if (!(item is INotifyPropertyChanged notifyPropertyChanged))
@@ -918,8 +923,8 @@ namespace KGySoft.ComponentModel
 
         private void FireItemReplace(int index, T oldItem, T newItem)
         {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -931,12 +936,12 @@ namespace KGySoft.ComponentModel
             FirePropertyChanged(indexerName);
         }
 
-        private void FireItemChanged(int index, T item, PropertyDescriptor pd)
+        private void FireItemChanged(int index, T item, PropertyDescriptor? pd)
         {
             if (!RaiseItemChangedEvents)
                 return;
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -950,8 +955,8 @@ namespace KGySoft.ComponentModel
 
         private void FireItemAdded(int index, T item)
         {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -966,8 +971,8 @@ namespace KGySoft.ComponentModel
 
         private void FireItemRemoved(int index, T item)
         {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -982,8 +987,8 @@ namespace KGySoft.ComponentModel
 
         private void FireItemMoved(T item, int newIndex, int oldIndex)
         {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -997,8 +1002,8 @@ namespace KGySoft.ComponentModel
 
         private void FireCollectionReset(bool countChanged, bool listChangeOnly)
         {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            NotifyCollectionChangedEventHandler? handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler? handlerListChanged = listChangedHandler;
             if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
                 return;
             using (BlockReentrancy())
@@ -1014,39 +1019,39 @@ namespace KGySoft.ComponentModel
         }
 
         [NotifyPropertyChangedInvocator]
-        private void FirePropertyChanged([CallerMemberName] string propertyName = null) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+        private void FirePropertyChanged([CallerMemberName] string propertyName = null!) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods. And moving them outside this method would be a bad idea.")]
         private void ProcessCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
-#region Local Methods
+            #region Local Methods
 
-            void HookNewItems(IList newItems)
+            void HookNewItems(IList? newItems)
             {
                 if (newItems == null || !HookItemsPropertyChanged)
                     return;
 
-                foreach (object newItem in newItems)
+                foreach (object? newItem in newItems)
                 {
                     if (newItem is T t)
                         HookPropertyChanged(t);
                 }
             }
 
-            void UnhookOldItems(IList oldItems)
+            void UnhookOldItems(IList? oldItems)
             {
                 if (oldItems == null || !HookItemsPropertyChanged)
                     return;
 
-                foreach (object oldItem in oldItems)
+                foreach (object? oldItem in oldItems)
                 {
                     if (oldItem is T t)
                         UnhookPropertyChanged(t);
                 }
             }
 
-#endregion
+            #endregion
 
             using (BlockReentrancy())
             {
@@ -1138,11 +1143,11 @@ namespace KGySoft.ComponentModel
             }
         }
 
-#endregion
+        #endregion
 
-#region Event handlers
+        #region Event handlers
 
-        private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void NotifyCollectionChanged_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (isExplicitChanging)
                 return;
@@ -1174,13 +1179,15 @@ namespace KGySoft.ComponentModel
             ProcessListChanged(e);
         }
 
-        private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
+        private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (!RaiseItemChangedEvents || (!RaiseListChangedEvents && !RaiseCollectionChangedEvents))
                 return;
 
             // Invalid sender or property name: simply resetting
-            if (!(sender is T item) || string.IsNullOrEmpty(e?.PropertyName))
+            if (e == null! || !(sender is T item) || string.IsNullOrEmpty(e.PropertyName))
             {
                 ResetBindings();
                 return;
@@ -1188,7 +1195,7 @@ namespace KGySoft.ComponentModel
 
             // in case of a slow IndexOf implementation caching last changed index
             int pos = lastChangeIndex;
-            if (pos < 0 || pos >= Count || !this[pos].Equals(item))
+            if (pos < 0 || pos >= Count || !Equals(this[pos], item))
             {
                 pos = IndexOf(item);
                 lastChangeIndex = pos;
@@ -1201,24 +1208,24 @@ namespace KGySoft.ComponentModel
                 ResetBindings();
             }
 
-            PropertyDescriptor pd = e.PropertyName == null ? null : PropertyDescriptors.Find(e.PropertyName, true);
+            PropertyDescriptor? pd = e.PropertyName == null ? null : PropertyDescriptors.Find(e.PropertyName, true);
             FireItemChanged(pos, item, pd);
         }
 
-#endregion
+        #endregion
 
-#region Explicitly Implemented Interface Methods
+        #region Explicitly Implemented Interface Methods
 
         void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).ApplySort(property, direction);
         int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? Throw.NotSupportedException<int>();
         void IBindingList.AddIndex(PropertyDescriptor property) => AsBindingList?.AddIndex(property);
         void IBindingList.RemoveIndex(PropertyDescriptor property) => AsBindingList?.RemoveIndex(property);
         void IBindingList.RemoveSort() => (AsBindingList ?? Throw.NotSupportedException<IBindingList>()).RemoveSort();
-        object IBindingList.AddNew() => AddNew();
+        object? IBindingList.AddNew() => AddNew();
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }
 #endif
