@@ -29,7 +29,7 @@ namespace KGySoft.CoreLibraries
     /// Represents a range with lower and upper bounds.
     /// </summary>
     /// <typeparam name="T">The type of the range.</typeparam>
-    public struct Range<T> : IEquatable<Range<T>>
+    public readonly struct Range<T> : IEquatable<Range<T>>
         where T : IComparable<T>
     {
         #region Fields
@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the lower bound of the range.
         /// </summary>
-        public T LowerBound { get; }
+        [AllowNull][MaybeNull]public T LowerBound { get; }
 
         /// <summary>
         /// Gets the upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context the <see cref="Range{T}"/> is used in.
@@ -71,7 +71,6 @@ namespace KGySoft.CoreLibraries
         public static bool operator !=(Range<T> left, Range<T> right) => !left.Equals(right);
 
 #if !(NET35 || NET40 || NET45)
-
         /// <summary>
         /// Performs an implicit conversion from <typeparamref name="T"/> to <see cref="Range{T}"/> using the provided value as upper bound.
         /// </summary>
@@ -93,7 +92,6 @@ namespace KGySoft.CoreLibraries
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
             Justification = "False alarm, (T, T).ToRange would mean an extension method for any ValueTuple<T, T>, which is not acceptable.")]
         public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
-
 #endif
 
         #endregion
@@ -115,9 +113,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="lowerBound">The lower bound.</param>
         /// <param name="upperBound">The upper bound. Whether this is an exclusive or inclusive bound, it depends on the context it is used in.</param>
-        public Range(T lowerBound, T upperBound)
+        public Range([AllowNull]T lowerBound, T upperBound)
         {
-            if (lowerBound.CompareTo(upperBound) > 0)
+            if (lowerBound?.CompareTo(upperBound) > 0)
                 Throw.ArgumentOutOfRangeException(Argument.upperBound, Res.MaxValueLessThanMinValue);
             LowerBound = lowerBound;
             UpperBound = upperBound;
@@ -133,7 +131,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="lowerBound">Returns the lower bound of the range.</param>
         /// <param name="upperBound">Returns the upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context the <see cref="Range{T}"/> is used in.</param>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Deconstruct(out T lowerBound, out T upperBound)
+        public void Deconstruct([MaybeNull]out T lowerBound, out T upperBound)
         {
             lowerBound = LowerBound;
             upperBound = UpperBound;
@@ -151,7 +149,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is Range<T> range && Equals(range);
+        public override bool Equals(object? obj) => obj is Range<T> range && Equals(range);
 
         /// <summary>
         /// Returns a hash code for this instance.
@@ -167,8 +165,6 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="string" /> that represents this <see cref="Range{T}"/> instance.
         /// </returns>
-        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object)",
-            Justification = "Possible usage of current culture is preferred here.")]
         public override string ToString() => $"[{LowerBound}..{UpperBound}]";
 
         #endregion

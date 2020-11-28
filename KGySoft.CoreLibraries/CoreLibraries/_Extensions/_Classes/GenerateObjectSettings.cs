@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets or sets the strategy for initializing a random generated object.
-        /// <br/>Default value: <see cref="CoreLibraries.ObjectInitialization.PublicFieldsAndPropeties"/>.
+        /// <br/>Default value: <see cref="CoreLibraries.ObjectInitialization.PublicFieldsAndProperties"/>.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a valid value of <see cref="CoreLibraries.ObjectInitialization"/>.</exception>
         public ObjectInitialization ObjectInitialization
@@ -224,7 +224,7 @@ namespace KGySoft.CoreLibraries
         /// <para>If the value of this property is a non-sealed class and <see cref="AllowDerivedTypesForNonSealedClasses"/> property is <see langword="true"/>,
         /// then a random derived type can be used for every generated instance.</para>
         /// </remarks>
-        public Type SubstitutionForObjectType { get; set; }
+        public Type? SubstitutionForObjectType { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum level of allowed recursion when generating objects, which contain members or elements of assignable types from their container types.

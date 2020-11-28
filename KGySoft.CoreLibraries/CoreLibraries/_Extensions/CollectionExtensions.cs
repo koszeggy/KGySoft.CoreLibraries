@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using KGySoft.Collections;
 
 #endregion
@@ -54,20 +55,20 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> collection)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             switch (target)
             {
-                case ISupportsRangeCollection<T> supportsRangeColletion:
-                    supportsRangeColletion.AddRange(collection);
+                case ISupportsRangeCollection<T> supportsRangeCollection:
+                    supportsRangeCollection.AddRange(collection);
                     return;
                 case List<T> list:
                     list.AddRange(collection);
                     return;
-                // TODO: Relflector.TryRunMethod(AddRange) first
+                // TODO: Reflector.TryRunMethod(AddRange) first
                 default:
                     collection.ForEach(target.Add);
                     return;

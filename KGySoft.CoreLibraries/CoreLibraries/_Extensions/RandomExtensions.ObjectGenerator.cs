@@ -1011,7 +1011,7 @@ namespace KGySoft.CoreLibraries
                 Type type = obj.GetType();
                 switch (context.Settings.ObjectInitialization)
                 {
-                    case ObjectInitialization.PublicFieldsAndPropeties:
+                    case ObjectInitialization.PublicFieldsAndProperties:
                         fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
                         goto case ObjectInitialization.PublicProperties;
                     case ObjectInitialization.PublicProperties:

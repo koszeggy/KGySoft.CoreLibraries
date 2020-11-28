@@ -1201,7 +1201,7 @@ namespace KGySoft.Collections
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
-            => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing nullable return value
+            => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing MaybeNull return value
                 ? GetValueOrDefault(key, default(TActualValue)!)
                 : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 
@@ -1220,7 +1220,7 @@ namespace KGySoft.Collections
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
-            => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing nullable return value
+            => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing MaybeNull return value
                 ? GetValueOrDefault(key, default(TActualValue)!)
                 : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 

@@ -134,10 +134,18 @@ namespace KGySoft.CoreLibraries
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            if (value >= 1m && powerOf10.TryGetValue(value, out int resultLog10))
-                return resultLog10 / log10E;
-            if (value < 1m && 1m / value is decimal reciprocal && reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out resultLog10))
-                return -resultLog10 / log10E;
+            int resultLog10;
+            if (value >= 1m)
+            {
+                if (powerOf10.TryGetValue(value, out resultLog10))
+                    return resultLog10 / log10E;
+            }
+            else
+            {
+                decimal reciprocal = 1m / value;
+                if (reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out resultLog10))
+                    return -resultLog10 / log10E;
+            }
 
             return RoundInternal(LogE(value));
         }
@@ -156,10 +164,18 @@ namespace KGySoft.CoreLibraries
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            if (value >= 1m && powerOf10.TryGetValue(value, out int result))
-                return result;
-            if (value < 1m && 1m / value is decimal reciprocal && reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out result))
-                return -result;
+            int result;
+            if (value >= 1m)
+            {
+                if (powerOf10.TryGetValue(value, out result))
+                    return result;
+            }
+            else
+            {
+                decimal reciprocal = 1m / value;
+                if (reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out result))
+                    return -result;
+            }
 
             return LogE(value) * log10E;
         }

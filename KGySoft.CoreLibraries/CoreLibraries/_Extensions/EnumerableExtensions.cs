@@ -22,6 +22,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Security;
@@ -33,9 +34,13 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
 #if NET35 || NET40
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
@@ -46,7 +51,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static IThreadSafeCacheAccessor<Type, Type> genericEnumerableCache;
+        private static IThreadSafeCacheAccessor<Type, Type>? genericEnumerableCache;
 
         #endregion
 
@@ -65,9 +70,9 @@ namespace KGySoft.CoreLibraries
         /// <returns>Returns the original list making possible to link it into a LINQ chain.</returns>
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
-            if (action == null)
+            if (action == null!)
                 Throw.ArgumentNullException(Argument.action);
 
             // ReSharper disable PossibleMultipleEnumeration
@@ -95,7 +100,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryAdd<T>([NoEnumeration]this IEnumerable<T> collection, T item, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -145,18 +150,20 @@ namespace KGySoft.CoreLibraries
         /// <see cref="ICollection{T}"/> or <see cref="IProducerConsumerCollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic interfaces, then for better performance use the generic <see cref="TryAdd{T}"><![CDATA[TryAdd<T>]]></see> overload if possible.</note>
         /// </remarks>
-        public static bool TryAdd([NoEnumeration]this IEnumerable collection, object item, bool checkReadOnly = true, bool throwError = true)
+        public static bool TryAdd([NoEnumeration]this IEnumerable collection, object? item, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
             {
                 // 1.) IList
-#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
-                IList list = collection as IList;
-#pragma warning restore IDE0019 // Use pattern matching
+#if NET35
+                IList? list = collection as IList;
                 if (list != null)
+#else
+                if (collection is IList list)
+#endif
                 {
                     if (checkReadOnly && (list.IsReadOnly || list.IsFixedSize))
                         return false;
@@ -193,7 +200,7 @@ namespace KGySoft.CoreLibraries
 
                 // 5.) ICollection<T>
                 Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
+                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
                 {
                     if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
@@ -247,9 +254,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryAddRange<T>([NoEnumeration]this IEnumerable<T> target, IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -290,9 +297,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryAddRange([NoEnumeration]this IEnumerable target, IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -306,7 +313,7 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // ICollection<T>: CollectionExtensions.AddRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
                         {
                             Type t = genericCollectionInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -345,7 +352,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryClear<T>([NoEnumeration]this IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -393,7 +400,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryClear([NoEnumeration]this IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -416,7 +423,7 @@ namespace KGySoft.CoreLibraries
                         genericCollection.Clear();
                         return true;
                     default:
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
                         {
                             if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                                 return false;
@@ -451,7 +458,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryInsert<T>([NoEnumeration]this IEnumerable<T> collection, int index, T item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -496,17 +503,19 @@ namespace KGySoft.CoreLibraries
         /// <para>The <paramref name="item"/> can be inserted into the <paramref name="collection"/> if that is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TryInsert{T}"><![CDATA[TryInsert<T>]]></see> overload if possible.</note>
         /// </remarks>
-        public static bool TryInsert([NoEnumeration]this IEnumerable collection, int index, object item, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        public static bool TryInsert([NoEnumeration]this IEnumerable collection, int index, object? item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
             {
-#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
-                IList list = collection as IList;
-#pragma warning restore IDE0019 // Use pattern matching
+#if NET35
+                IList? list = collection as IList;
                 if (list != null)
+#else
+                if (collection is IList list)
+#endif
                 {
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || list.IsFixedSize || index < 0 || index > list.Count))
                         return false;
@@ -520,7 +529,7 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
-                if (collection is IList<object> genericList)
+                if (collection is IList<object?> genericList)
                 {
                     if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
                         return false;
@@ -528,7 +537,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                 {
                     var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -538,7 +547,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index > count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
@@ -586,9 +595,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryInsertRange<T>([NoEnumeration]this IEnumerable<T> target, int index, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -630,25 +639,25 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryInsertRange([NoEnumeration]this IEnumerable target, int index, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
             {
                 switch (target)
                 {
-                    case IList<object> genericList:
+                    case IList<object?> genericList:
                         {
                             if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
                                 return false;
-                            genericList.InsertRange(index, collection.Cast<object>());
+                            genericList.InsertRange(index, collection.Cast<object?>());
                             return true;
                         }
                     default:
                         // IList<T>: ListExtensions.InsertRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                         {
                             Type t = genericListInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -658,7 +667,7 @@ namespace KGySoft.CoreLibraries
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                                 int count = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
                                 if (index > count || target.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -696,7 +705,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryRemove<T>([NoEnumeration]this IEnumerable<T> collection, T item, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -742,17 +751,19 @@ namespace KGySoft.CoreLibraries
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList"/> or <see cref="ICollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="ICollection{T}"/> interface, then for better performance use the generic <see cref="TryRemove{T}"><![CDATA[TryRemove<T>]]></see> overload if possible.</note>
         /// </remarks>
-        public static bool TryRemove([NoEnumeration]this IEnumerable collection, object item, bool checkReadOnly = true, bool throwError = true)
+        public static bool TryRemove([NoEnumeration]this IEnumerable collection, object? item, bool checkReadOnly = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
             {
-#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
-                IList list = collection as IList;
-#pragma warning restore IDE0019 // Use pattern matching
+#if NET35
+                IList? list = collection as IList;
                 if (list != null)
+#else
+                if (collection is IList list)
+#endif
                 {
                     if (checkReadOnly && (list.IsReadOnly || list.IsFixedSize))
                         return false;
@@ -770,14 +781,14 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
-                if (collection is ICollection<object> genericCollection)
+                if (collection is ICollection<object?> genericCollection)
                 {
                     if (checkReadOnly && genericCollection.IsReadOnly)
                         return false;
                     return genericCollection.Remove(item);
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
                 {
                     if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
@@ -826,7 +837,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryRemoveAt<T>([NoEnumeration]this IEnumerable<T> collection, int index, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -872,7 +883,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryRemoveAt([NoEnumeration]this IEnumerable collection, int index, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -884,20 +895,20 @@ namespace KGySoft.CoreLibraries
                             return false;
                         list.RemoveAt(index);
                         return true;
-                    case IList<object> genericList:
+                    case IList<object?> genericList:
                         if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index >= genericList.Count))
                             return false;
                         genericList.RemoveAt(index);
                         return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                 {
                     if (checkReadOnlyAndBounds)
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
@@ -934,7 +945,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryRemoveRange<T>([NoEnumeration]this IEnumerable<T> collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -982,7 +993,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -998,13 +1009,13 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // IList<T>: ListExtensions.RemoveRange<T>
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                         {
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                                 int collCount = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                                 if ((uint)index >= (uint)collCount || index + count > collCount || collection.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -1049,7 +1060,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TrySetElementAt<T>([NoEnumeration]this IEnumerable<T> collection, int index, T item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
@@ -1095,17 +1106,19 @@ namespace KGySoft.CoreLibraries
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TrySetElementAt{T}"><![CDATA[TrySetElementAt<T>]]></see> overload if possible.</note>
         /// <note>This method returns <see langword="false"/>&#160;also for multidimensional arrays.</note>
         /// </remarks>
-        public static bool TrySetElementAt([NoEnumeration]this IEnumerable collection, int index, object item, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        public static bool TrySetElementAt([NoEnumeration]this IEnumerable collection, int index, object? item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             try
             {
-#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
-                IList list = collection as IList;
-#pragma warning restore IDE0019 // Use pattern matching
+#if NET35
+                IList? list = collection as IList;
                 if (list != null)
+#else
+                if (collection is IList list)
+#endif
                 {
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || index < 0 || index >= list.Count || list is Array array && array.Rank != 1))
                         return false;
@@ -1119,11 +1132,11 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
-                if (collection is IList<object> genericList)
+                if (collection is IList<object?> genericList)
                 {
                     if (checkReadOnlyAndBounds && ((
 #if NET35
-                        !(collection is object[]) && // as we skip null above we can reach this point with an array in .NET 3.5, which is ReadOnly as IList<T>
+                        !(collection is object?[]) && // as we skip null above we can reach this point with an array in .NET 3.5, which is ReadOnly as IList<T>
 #endif
                         genericList.IsReadOnly) || index < 0 || index >= genericList.Count))
                     {
@@ -1134,7 +1147,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                 {
                     var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -1144,7 +1157,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || (
 #if NET35
@@ -1203,9 +1216,9 @@ namespace KGySoft.CoreLibraries
             if (count == 0)
                 return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
 
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -1276,9 +1289,9 @@ namespace KGySoft.CoreLibraries
             if (count == 0)
                 return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
 
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -1287,14 +1300,14 @@ namespace KGySoft.CoreLibraries
             {
                 switch (target)
                 {
-                    case IList<object> genericList:
+                    case IList<object?> genericList:
                         if (checkReadOnlyAndBounds && (genericList.IsReadOnly || (uint)index >= (uint)genericList.Count || index + count > genericList.Count))
                             return false;
-                        genericList.ReplaceRange(index, count, collection.Cast<object>());
+                        genericList.ReplaceRange(index, count, collection.Cast<object?>());
                         return true;
                     default:
                         // IList<T>: ListExtensions.ReplaceRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
                         {
                             Type t = genericListInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -1303,7 +1316,7 @@ namespace KGySoft.CoreLibraries
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
                                 int targetCount = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
                                 if ((uint)index >= (uint)targetCount || index + count > targetCount || target.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -1334,7 +1347,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="source">The source to check.</param>
         /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNullOrEmpty(this IEnumerable source)
+        public static bool IsNullOrEmpty(this IEnumerable? source)
         {
             if (source == null)
                 return true;
@@ -1389,9 +1402,9 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="predicate"/> is <see langword="null"/>.</exception>
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
-            if (predicate == null)
+            if (predicate == null!)
                 Throw.ArgumentNullException(Argument.predicate);
 
             if (source is IList<T> list)
@@ -1425,17 +1438,17 @@ namespace KGySoft.CoreLibraries
         /// <param name="predicate">The predicate to use for the search.</param>
         /// <returns>The index of the found element, or -1 if there was no match.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="predicate"/> is <see langword="null"/>.</exception>
-        public static int IndexOf(this IEnumerable source, Func<object, bool> predicate)
+        public static int IndexOf(this IEnumerable source, Func<object?, bool> predicate)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
             
             switch (source)
             {
-                case IEnumerable<object> enumerableGeneric:
+                case IEnumerable<object?> enumerableGeneric:
                     return enumerableGeneric.IndexOf(predicate);
                 default:
-                    return source.Cast<object>().IndexOf(predicate);
+                    return source.Cast<object?>().IndexOf(predicate);
             }
         }
 
@@ -1449,7 +1462,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
         public static int IndexOf<T>(this IEnumerable<T> source, T element)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             switch (source)
@@ -1480,19 +1493,19 @@ namespace KGySoft.CoreLibraries
         /// <param name="element">The element to search.</param>
         /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
-        public static int IndexOf(this IEnumerable source, object element)
+        public static int IndexOf(this IEnumerable source, object? element)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             switch (source)
             {
-                case IList<object> genericList:
+                case IList<object?> genericList:
                     return genericList.IndexOf(element);
                 case IList list:
                     return list.IndexOf(element);
                 default:
-                    return source.Cast<object>().IndexOf(element);
+                    return source.Cast<object?>().IndexOf(element);
             }
         }
 
@@ -1514,9 +1527,9 @@ namespace KGySoft.CoreLibraries
         /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see> method. The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of <typeparamref name="T"/>, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
         /// </remarks>
-        public static bool TryGetElementAt<T>(this IEnumerable<T> collection, int index, out T item, bool checkBounds = true, bool throwError = true)
+        public static bool TryGetElementAt<T>(this IEnumerable<T> collection, int index, [MaybeNullWhen(false)]out T item, bool checkBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             item = default;
 
@@ -1541,14 +1554,16 @@ namespace KGySoft.CoreLibraries
                     case IList list:
                         if (checkBounds && (index < 0 || index > list.Count))
                             return false;
-                        object result = list[index];
+                        object? result = list[index];
                         if (result is T t)
                         {
                             item = t;
                             return true;
                         }
 
-                        return false;
+#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition. - false alarm, the result can be true if a null item is found
+                        return result == null && default(T) == null;
+#pragma warning restore CS8762
 
                     default:
                         if (index < 0)
@@ -1591,9 +1606,9 @@ namespace KGySoft.CoreLibraries
         /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see> method. The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of the element type, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
         /// </remarks>
-        public static bool TryGetElementAt(this IEnumerable collection, int index, out object item, bool checkBounds = true, bool throwError = true)
+        public static bool TryGetElementAt(this IEnumerable collection, int index, out object? item, bool checkBounds = true, bool throwError = true)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
             item = default;
 
@@ -1601,14 +1616,14 @@ namespace KGySoft.CoreLibraries
             {
                 switch (collection)
                 {
-                    case IList<object> genericList:
+                    case IList<object?> genericList:
                         if (checkBounds && (index < 0 || index >= genericList.Count))
                             return false;
                         item = genericList[index];
                         return true;
 
 #if !(NET35 || NET40)
-                    case IReadOnlyList<object> readOnlyList:
+                    case IReadOnlyList<object?> readOnlyList:
                         if (checkBounds && (index < 0 || index >= readOnlyList.Count))
                             return false;
                         item = readOnlyList[index];
@@ -1646,7 +1661,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static CircularList<T> ToCircularList<T>(this IEnumerable<T> source)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
             return new CircularList<T>(source);
         }
@@ -1657,25 +1672,25 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
-        /// <param name="separator">The separator to be used between the members. If <see langword="null"/>&#160;or empty, then </param>
+        /// <param name="separator">The separator to be used between the items. If <see langword="null"/>&#160;or empty, then the result will be concatenated without using separators.</param>
         /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
-        public static string Join<T>(this IEnumerable<T> source, string separator)
+        public static string Join<T>(this IEnumerable<T> source, string? separator)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             switch (source)
             {
-                case string[] strArray:
+                case string?[] strArray:
                     // fast because uses FastAllocateString inside
                     return String.Join(separator, strArray);
-                case IList<string> strList:
+                case IList<string?> strList:
                     // we can preallocate result
                     return FastJoin(strList, separator);
                 default:
                     // fallback with StringBuilder
 #if NET35
-                    return String.Join(separator, source.Select(i => i.ToString()).ToArray());
+                    return String.Join(separator, source.Select(i => i?.ToString()).ToArray());
 #else
                     return String.Join(separator, source);
 #endif
@@ -1688,27 +1703,27 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
-        /// <param name="separator">The separator to be used between the members.</param>
+        /// <param name="separator">The separator to be used between the items.</param>
         /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
         public static string Join<T>(this IEnumerable<T> source, char separator)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             switch (source)
             {
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
-                case string[] strArray:
+                case string?[] strArray:
                     // fast because uses FastAllocateString inside
                     return String.Join(separator, strArray);
 #endif
-                case IList<string> strList:
+                case IList<string?> strList:
                     // we can preallocate result
                     return FastJoin(strList, separator);
                 default:
                     // fallback with StringBuilder
 #if NET35
-                    return String.Join(separator.ToString(), source.Select(i => i.ToString()).ToArray());
+                    return String.Join(separator.ToString(), source.Select(i => i?.ToString()).ToArray());
 #elif NETFRAMEWORK || NETSTANDARD2_0
                     return String.Join(separator.ToString(), source);
 #else
@@ -1750,9 +1765,9 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
         {
-            if (random == null)
+            if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             return source.OrderBy(_ => random.Next());
@@ -1767,7 +1782,7 @@ namespace KGySoft.CoreLibraries
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
-        public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
+        [return:MaybeNull]public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
             => GetRandomElement(source, new FastRandom(), defaultIfEmpty);
 
         /// <summary>
@@ -1782,11 +1797,11 @@ namespace KGySoft.CoreLibraries
         /// <returns>A random element from the <paramref name="source"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="source"/> contains no elements and <paramref name="defaultIfEmpty"/> is <see langword="false"/>.</exception>
-        public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
+        [return:MaybeNull]public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
         {
-            if (random == null)
+            if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
             if (source is IList<T> list)
@@ -1827,7 +1842,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         internal static IEnumerable AdjustInitializerCollection([NoEnumeration]this IEnumerable initializerCollection, ConstructorInfo collectionCtor)
         {
-            Type collectionType = collectionCtor.DeclaringType;
+            Type collectionType = collectionCtor.DeclaringType!;
 
             // Reverse for Stack
             if (typeof(Stack).IsAssignableFrom(collectionType) || collectionType.IsImplementationOfGenericType(typeof(Stack<>))
@@ -1841,7 +1856,7 @@ namespace KGySoft.CoreLibraries
                 int to = length / 2;
                 for (int i = 0; i < to; i++)
                 {
-                    object temp = list[i];
+                    object? temp = list[i];
                     list[i] = list[length - i - 1];
                     list[length - i - 1] = temp;
                 }
@@ -1853,9 +1868,7 @@ namespace KGySoft.CoreLibraries
                 return initializerCollection;
 
             ICollection coll = (ICollection)initializerCollection;
-
-            // ReSharper disable once AssignNullToNotNullAttribute - parameter is an array so will be never null
-            Array initializerArray = Array.CreateInstance(parameterType.GetElementType(), coll.Count);
+            Array initializerArray = Array.CreateInstance(parameterType.GetElementType()!, coll.Count);
             coll.CopyTo(initializerArray, 0);
             return initializerArray;
         }
@@ -1895,7 +1908,7 @@ namespace KGySoft.CoreLibraries
                     return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
 
                 // all removed (overwritten), inserting the rest
-                IList<object> rest = collection is IList<object> list ? new ListSegment<object>(list, elementsCopied) : enumerator.RestToList();
+                IList<object?> rest = collection is IList<object?> list ? new ListSegment<object?>(list, elementsCopied) : enumerator.RestToList();
                 if (rest.Count > 0)
                     return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
 
@@ -1909,13 +1922,12 @@ namespace KGySoft.CoreLibraries
         }
 
         [SecuritySafeCritical]
-        private static unsafe string FastJoin(IList<string> values, string separator)
+        private static unsafe string FastJoin(IList<string?> values, string? separator)
         {
             int len = values.Count;
             if (len == 0)
                 return String.Empty;
-            if (separator == null)
-                separator = String.Empty;
+            separator ??= String.Empty;
             int resultLen = (len - 1) * separator.Length;
             for (int i = 0; i < len; i++)
                 resultLen += values[i]?.Length ?? 0;
@@ -1928,7 +1940,8 @@ namespace KGySoft.CoreLibraries
                 {
                     if (i != 0)
                         sb.Append(separator);
-                    sb.Append(values[i]);
+                    if (values[i] != null)
+                        sb.Append(values[i]!);
                 }
             }
 
@@ -1936,7 +1949,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [SecuritySafeCritical]
-        private static unsafe string FastJoin(IList<string> values, char separator)
+        private static unsafe string FastJoin(IList<string?> values, char separator)
         {
             int len = values.Count;
             if (len == 0)
@@ -1953,7 +1966,8 @@ namespace KGySoft.CoreLibraries
                 {
                     if (i != 0)
                         sb.Append(separator);
-                    sb.Append(values[i]);
+                    if (values[i] != null)
+                        sb.Append(values[i]!);
                 }
             }
 

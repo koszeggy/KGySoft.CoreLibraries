@@ -30,5 +30,5 @@ namespace KGySoft.CoreLibraries
     /// <param name="targetType">The desired type of the result.</param>
     /// <param name="culture">The used culture for the conversion. If <see langword="null"/>, then the conversion must use culture invariant conversion.</param>
     /// <returns>The result instance of the conversion.</returns>
-    public delegate object Conversion(object obj, Type targetType, CultureInfo culture);
+    public delegate object? Conversion(object obj, Type targetType, CultureInfo? culture);
 }

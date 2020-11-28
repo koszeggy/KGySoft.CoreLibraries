@@ -51,7 +51,7 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
-        private static long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
+        private static readonly long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
 
         #endregion
 

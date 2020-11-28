@@ -19,8 +19,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using KGySoft.Annotations;
+
 using KGySoft.Collections;
+
+#endregion
+
+#region Suppressions
+
+#if NETCOREAPP3_0 // Only in .NET Core 3 the IDictionary<TKey, TValue> has the TKey : notnull constraint. In .NET 5 this has already been removed
+#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
+#endif
 
 #endregion
 
@@ -43,8 +51,8 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
-        public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default(TValue));
+        [return:MaybeNull]public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
+            => GetValueOrDefault(dictionary, key, default(TValue)!);
 
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
@@ -58,7 +66,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
         {
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
@@ -70,17 +78,17 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
-        /// If <see langword="null"/>, then the default value of the <typeparamref name="TValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found..</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TValue> defaultValueFactory)
         {
-            if (defaultValueFactory == null)
-                return dictionary.GetValueOrDefault(key, default(TValue));
+            // null is actually tolerated but defaultValueFactory is not marked as nullable to avoid the confusing MaybeNull return value
+            if (defaultValueFactory == null!)
+                return dictionary.GetValueOrDefault(key, default(TValue)!);
 
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValueFactory.Invoke();
@@ -99,8 +107,8 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
-        public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default(TValue));
+        [return:MaybeNull]public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
+            => GetValueOrDefault(dictionary, key, default(TValue)!);
 
         /// <summary>
         /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
@@ -114,9 +122,11 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, TValue defaultValue)
         {
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             switch (dictionary)
@@ -145,19 +155,21 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
-        /// If <see langword="null"/>, then the default value of the <typeparamref name="TValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, Func<TValue> defaultValueFactory)
         {
-            if (defaultValueFactory == null)
-                return dictionary.GetValueOrDefault(key, default(TValue));
+            // null is actually tolerated but defaultValueFactory is not marked as nullable to avoid the confusing MaybeNull return value
+            if (defaultValueFactory == null!)
+                return dictionary.GetValueOrDefault(key, default(TValue)!);
 
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             switch (dictionary)
@@ -193,10 +205,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue)
             where TActualValue : TValue
         {
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
@@ -209,19 +223,21 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
-        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TActualValue> defaultValueFactory)
             where TActualValue : TValue
         {
-            if (defaultValueFactory == null)
-                return dictionary.GetActualValueOrDefault(key, default(TActualValue));
+            // null is actually tolerated but defaultValueFactory is not marked as nullable to avoid the confusing MaybeNull return value
+            if (defaultValueFactory == null!)
+                return dictionary.GetActualValueOrDefault(key, default(TActualValue)!);
 
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
@@ -242,10 +258,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, TActualValue defaultValue)
             where TActualValue : TValue
         {
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             switch (dictionary)
@@ -280,21 +298,23 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.
-        /// If <see langword="null"/>, then the default value of the <typeparamref name="TActualValue"/> type will be returned for a non-existing <paramref name="key"/>.</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, Func<TActualValue> defaultValueFactory)
             where TActualValue : TValue
         {
-            if (defaultValueFactory == null)
-                return dictionary.GetActualValueOrDefault(key, default(TActualValue));
+            // null is actually tolerated but defaultValueFactory is not marked as nullable to avoid the confusing MaybeNull return value
+            if (defaultValueFactory == null!)
+                return dictionary.GetActualValueOrDefault(key, default(TActualValue)!);
 
-            if (dictionary == null)
+            if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
             switch (dictionary)
@@ -404,7 +424,9 @@ namespace KGySoft.CoreLibraries
 #nullable restore
             string key, TActualValue defaultValue = default)
         {
-            return dictionary.GetActualValueOrDefault(key, defaultValue);
+#nullable disable // just for ReSharper to suppress "Nullability of type argument 'TActualValue' must match constraint type 'object'" - TODO: delete when possible
+            return dictionary.GetActualValueOrDefault(key, defaultValue!);
+#nullable restore
         }
 
 #if !(NET35 || NET40)
@@ -420,8 +442,16 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
-        public static TActualValue GetValueOrDefault<TActualValue>(this IEnumerable<KeyValuePair<string, object>> dictionary, string key, TActualValue defaultValue = default)
-            => dictionary.GetActualValueOrDefault(key, defaultValue);
+        public static TActualValue GetValueOrDefault<TActualValue>(
+#nullable disable // workaround for accepting both IEnumerable<KeyValuePair<string, object?>> and IEnumerable<KeyValuePair<string, object>>
+            [DisallowNull]this IEnumerable<KeyValuePair<string, object>> dictionary,
+#nullable restore
+            string key, TActualValue defaultValue = default)
+        {
+#nullable disable // just for ReSharper to suppress "Nullability of type argument 'TActualValue' must match constraint type 'object'" - TODO: delete when possible
+            return dictionary.GetActualValueOrDefault(key, defaultValue!);
+#nullable restore
+        }
 #endif
 
         /// <summary>
