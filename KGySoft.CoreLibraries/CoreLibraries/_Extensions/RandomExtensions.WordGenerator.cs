@@ -17,9 +17,17 @@
 #region Usings
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Security;
+
+#endregion
+
+#region Suppressions
+
+// ReSharper disable PatternAlwaysMatches - ReSharper does not tolerate switch range operators
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0)
+#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(char) method in some targeted platforms  
+#endif
 
 #endregion
 
@@ -57,9 +65,7 @@ namespace KGySoft.CoreLibraries
                 #region Properties
 
                 internal int CurrentWordStartPosition { get; private set; }
-
                 internal int RemainingWordLength { get; private set; }
-
                 internal int RemainingSentenceLength { get; private set; }
 
                 internal char CurrentWordFirstLetter

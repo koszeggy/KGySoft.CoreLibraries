@@ -34,5 +34,5 @@ namespace KGySoft.CoreLibraries
     /// <returns><see langword="true"/>&#160;if the conversion was successful; otherwise, <see langword="false"/>.</returns>
     [SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", Justification = "Try... pattern")]
     [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Impossible, not called from generic context and all conversions are stored together.")]
-    public delegate bool ConversionAttempt(object obj, Type targetType, CultureInfo? culture, out object? result);
+    public delegate bool ConversionAttempt(object obj, Type targetType, CultureInfo? culture, [MaybeNullWhen(false)]out object result);
 }

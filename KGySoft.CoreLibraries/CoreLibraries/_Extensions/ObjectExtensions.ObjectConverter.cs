@@ -42,9 +42,9 @@ namespace KGySoft.CoreLibraries
                 #region Fields
 
                 internal readonly CultureInfo Culture;
-                internal Exception Error;
-                internal HashSet<(object Instance, Type SourceType, Type TargetType)> FailedAttempts;
-                internal Dictionary<(Type SourceType, Type TargetType), Delegate> LastUsedConversion;
+                internal Exception? Error;
+                internal HashSet<(object Instance, Type SourceType, Type TargetType)>? FailedAttempts;
+                internal Dictionary<(Type SourceType, Type TargetType), Delegate>? LastUsedConversion;
 
                 #endregion
 
@@ -52,7 +52,7 @@ namespace KGySoft.CoreLibraries
 
                 [SuppressMessage("Globalization", "CA1304:Specify CultureInfo",
                     Justification = "False alarm, culture is set after calling this()")]
-                public ConversionContext(CultureInfo culture) : this() => Culture = culture; 
+                internal ConversionContext(CultureInfo culture) : this() => Culture = culture; 
                 
                 #endregion
             }
@@ -80,14 +80,12 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
+            internal static bool TryConvert(object? obj, Type targetType, CultureInfo? culture, out object? value, out Exception? error)
             {
-                if (targetType == null)
+                if (targetType == null!)
                     Throw.ArgumentNullException(Argument.targetType);
 
-                if (culture == null)
-                    culture = CultureInfo.InvariantCulture;
-
+                culture ??= CultureInfo.InvariantCulture;
                 var context = new ConversionContext(culture);
                 bool result = DoConvert(ref context, obj, targetType, out value);
                 error = context.Error;
@@ -100,7 +98,7 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
-            private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)
+            private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo? culture, [MaybeNullWhen(false)]out object result)
             {
                 if (obj.GetType() == targetType)
                 {
@@ -109,37 +107,37 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type[] types = targetType.GetGenericArguments();
-                if (!Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object key)
-                    || !Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object value))
+                if (!Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object? key)
+                    || !Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object? value))
                 {
                     result = null;
                     return false;
                 }
 
-                result = Activator.CreateInstance(targetType);
+                result = Activator.CreateInstance(targetType)!;
                 Accessors.SetKeyValue(result, key, value);
                 return true;
             }
 
-            private static bool TryConvertDictionaryEntryToKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)
+            private static bool TryConvertDictionaryEntryToKeyValuePair(object obj, Type targetType, CultureInfo? culture, [MaybeNullWhen(false)]out object result)
             {
                 var source = (DictionaryEntry)obj;
                 Type[] types = targetType.GetGenericArguments();
-                if (!source.Key.TryConvert(types[0], culture, out object key) || !source.Value.TryConvert(types[1], culture, out object value))
+                if (!source.Key.TryConvert(types[0], culture, out object? key) || !source.Value.TryConvert(types[1], culture, out object? value))
                 {
                     result = null;
                     return false;
                 }
 
-                result = Activator.CreateInstance(targetType);
+                result = Activator.CreateInstance(targetType)!;
                 Accessors.SetKeyValue(result, key, value);
                 return true;
             }
 
-            private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo culture)
+            private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo? culture)
                 => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)), Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)));
 
-            private static bool DoConvert(ref ConversionContext context, object obj, Type targetType, out object value)
+            private static bool DoConvert(ref ConversionContext context, object? obj, Type targetType, out object? value)
             {
                 if (targetType.IsInstanceOfType(obj))
                 {
@@ -154,7 +152,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 if (targetType.IsNullable())
-                    targetType = Nullable.GetUnderlyingType(targetType);
+                    targetType = Nullable.GetUnderlyingType(targetType)!;
 
                 Type sourceType = obj.GetType();
                 if (context.FailedAttempts?.Contains((obj, sourceType, targetType)) == true)
@@ -190,17 +188,15 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (context.FailedAttempts == null)
-                    context.FailedAttempts = new HashSet<(object, Type, Type)>();
+                context.FailedAttempts ??= new HashSet<(object, Type, Type)>();
                 context.FailedAttempts.Add((obj, sourceType, targetType));
-
                 return TryConvertByIntermediateTypes(ref context, obj, targetType, out value);
             }
 
-            private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj, Type targetType, out object value, bool exactTypeMatch)
+            private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj, Type targetType, out object? value, bool exactTypeMatch)
             {
                 Type sourceType = obj.GetType();
-                if (context.LastUsedConversion != null && context.LastUsedConversion.TryGetValue((sourceType, targetType), out Delegate conversion) && TryUseConversion(ref context, obj, targetType, conversion, out value))
+                if (context.LastUsedConversion != null && context.LastUsedConversion.TryGetValue((sourceType, targetType), out Delegate? conversion) && TryUseConversion(ref context, obj, targetType, conversion, out value))
                     return true;
 
                 IList<Delegate> conversions = sourceType.GetConversions(targetType, exactTypeMatch);
@@ -213,10 +209,9 @@ namespace KGySoft.CoreLibraries
                     if (!TryUseConversion(ref context, obj, targetType, conversionDelegate, out value))
                         continue;
 
-                    if (context.LastUsedConversion == null)
-                        context.LastUsedConversion = new Dictionary<(Type, Type), Delegate>();
+                    context.LastUsedConversion ??= new Dictionary<(Type, Type), Delegate>();
                     (Type, Type) key = (sourceType, targetType);
-                    if (!context.LastUsedConversion.TryGetValue(key, out Delegate storedConversion) || storedConversion != conversionDelegate)
+                    if (!context.LastUsedConversion.TryGetValue(key, out Delegate? storedConversion) || storedConversion != conversionDelegate)
                         context.LastUsedConversion[key] = conversionDelegate;
 
                     return true;
@@ -225,7 +220,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryUseConversion(ref ConversionContext context, object obj, Type targetType, Delegate conversionDelegate, out object value)
+            private static bool TryUseConversion(ref ConversionContext context, object obj, Type targetType, Delegate conversionDelegate, out object? value)
             {
                 try
                 {
@@ -249,7 +244,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static bool TryConvertConvertible(ref ConversionContext context, IConvertible convertible, Type targetType, out object value)
+            private static bool TryConvertConvertible(ref ConversionContext context, IConvertible convertible, Type targetType, out object? value)
             {
                 try
                 {
@@ -271,7 +266,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static bool TryConvertByTypeConverter(ref ConversionContext context, object source, Type targetType, out object value)
+            private static bool TryConvertByTypeConverter(ref ConversionContext context, object source, Type targetType, out object? value)
             {
                 value = null;
                 Type sourceType = source.GetType();
@@ -311,19 +306,19 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryConvertCollection(ref ConversionContext context, IEnumerable collection, Type targetType, out object value)
+            private static bool TryConvertCollection(ref ConversionContext context, IEnumerable collection, Type targetType, out object? value)
             {
                 if (targetType.IsArray)
                     return TryConvertToArray(ref context, collection, targetType, out value);
 
                 value = null;
-                if (!targetType.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out Type targetElementType, out bool isDictionary))
+                if (!targetType.IsSupportedCollectionForReflection(out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, out Type? targetElementType, out bool isDictionary))
                     return false;
 
                 if (defaultCtor == null && !targetType.IsValueType)
-                    return TryPopulateByInitializerCollection(ref context, collection, collectionCtor, targetElementType, isDictionary, out value);
+                    return TryPopulateByInitializerCollection(ref context, collection, collectionCtor!, targetElementType, isDictionary, out value);
 
-                var targetCollection = (IEnumerable)(targetType.IsValueType ? Activator.CreateInstance(targetType) : CreateInstanceAccessor.GetAccessor(targetType).CreateInstance());
+                var targetCollection = (IEnumerable)(targetType.IsValueType ? Activator.CreateInstance(targetType)! : CreateInstanceAccessor.GetAccessor(targetType).CreateInstance());
                 if (!targetType.IsPopulatableCollection(targetCollection))
                 {
                     // read-only collection: trying again by initializer collection
@@ -338,11 +333,13 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryConvertToArray(ref ConversionContext context, IEnumerable sourceCollection, Type targetType, out object value)
+            [SuppressMessage("Style", "IDE0083:Use pattern matching",
+                Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
+            private static bool TryConvertToArray(ref ConversionContext context, IEnumerable sourceCollection, Type targetType, out object? value)
             {
                 value = null;
                 int rank = targetType.GetArrayRank();
-                Type targetElementType = targetType.GetElementType();
+                Type targetElementType = targetType.GetElementType()!;
                 Array targetArray;
 
                 // multi dimension target array is supported only if the source is also an array and has the same dimension
@@ -360,12 +357,12 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // ReSharper disable once AssignNullToNotNullAttribute - sourceType is an array here
-                    targetArray = Array.CreateInstance(targetType.GetElementType(), lengths, lowerBounds);
+                    targetArray = Array.CreateInstance(targetType.GetElementType()!, lengths, lowerBounds);
                     var indexer = new ArrayIndexer(lengths, lowerBounds);
-                    foreach (object sourceItem in sourceArray)
+                    foreach (object? sourceItem in sourceArray)
                     {
                         indexer.MoveNext();
-                        if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))
+                        if (!DoConvert(ref context, sourceItem, targetElementType, out object? targetItem))
                             return false;
                         targetArray.SetValue(targetItem, indexer.Current);
                     }
@@ -380,9 +377,9 @@ namespace KGySoft.CoreLibraries
                     // ReSharper disable once AssignNullToNotNullAttribute - target is array in this method
                     targetArray = Array.CreateInstance(targetElementType, collection.Count);
                     int i = 0;
-                    foreach (object sourceItem in collection)
+                    foreach (object? sourceItem in collection)
                     {
-                        if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))
+                        if (!DoConvert(ref context, sourceItem, targetElementType, out object? targetItem))
                             return false;
                         targetArray.SetValue(targetItem, i++);
                     }
@@ -393,9 +390,9 @@ namespace KGySoft.CoreLibraries
 
                 // case 2: source size is not known: using a List
                 IList resultList = (IList)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.GetGenericType(targetElementType)).CreateInstance();
-                foreach (object sourceItem in sourceCollection)
+                foreach (object? sourceItem in sourceCollection)
                 {
-                    if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))
+                    if (!DoConvert(ref context, sourceItem, targetElementType, out object? targetItem))
                         return false;
                     resultList.Add(targetItem);
                 }
@@ -407,7 +404,7 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryPopulateByInitializerCollection(ref ConversionContext context, IEnumerable sourceCollection, ConstructorInfo collectionCtor, Type targetElementType, bool isDictionary, out object value)
+            private static bool TryPopulateByInitializerCollection(ref ConversionContext context, IEnumerable sourceCollection, ConstructorInfo collectionCtor, Type targetElementType, bool isDictionary, out object? value)
             {
                 IEnumerable initializerCollection = targetElementType.CreateInitializerCollection(isDictionary);
                 if (!TryPopulateCollection(ref context, sourceCollection, initializerCollection, targetElementType))
@@ -425,9 +422,9 @@ namespace KGySoft.CoreLibraries
             {
                 try
                 {
-                    foreach (object sourceItem in sourceCollection)
+                    foreach (object? sourceItem in sourceCollection)
                     {
-                        if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem) || !targetCollection.TryAdd(targetItem, false))
+                        if (!DoConvert(ref context, sourceItem, targetElementType, out object? targetItem) || !targetCollection.TryAdd(targetItem, false))
                             return false;
                     }
 
@@ -440,7 +437,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static bool TryConvertByIntermediateTypes(ref ConversionContext context, object obj, Type targetType, out object value)
+            private static bool TryConvertByIntermediateTypes(ref ConversionContext context, object obj, Type targetType, out object? value)
             {
                 value = null;
 
@@ -453,7 +450,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (intermediateType.IsAbstract || intermediateType.IsInterface || intermediateType.IsAssignableFrom(targetType))
                         continue;
-                    if (DoConvert(ref context, obj, intermediateType, out object intermediateResult) && DoConvert(ref context, intermediateResult, targetType, out value))
+                    if (DoConvert(ref context, obj, intermediateType, out object? intermediateResult) && DoConvert(ref context, intermediateResult, targetType, out value))
                         return true;
                 }
 

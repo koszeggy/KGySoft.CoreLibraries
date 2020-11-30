@@ -902,7 +902,7 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
-        private int IndexOfAnyInternal(string[] separators, int startIndex, int count, out int separatorIndex)
+        private int IndexOfAnyInternal(string?[] separators, int startIndex, int count, out int separatorIndex)
         {
             Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
 

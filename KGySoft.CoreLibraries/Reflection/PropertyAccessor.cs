@@ -256,7 +256,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
         /// </remarks>
-        public abstract object Get(object instance, params object[] indexerParameters);
+        public abstract object? Get(object? instance, params object?[]? indexerParameters);
 
         #endregion
 

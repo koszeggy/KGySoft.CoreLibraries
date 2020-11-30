@@ -1969,7 +1969,7 @@ namespace KGySoft.Reflection
         }
 
         [SecurityCritical]
-        internal static bool TryCreateUninitializedObject(Type type, out object result)
+        internal static bool TryCreateUninitializedObject(Type type, [MaybeNullWhen(false)]out object result)
         {
             result = null;
             if (canCreateUninitializedObject == false)
@@ -2798,7 +2798,7 @@ namespace KGySoft.Reflection
         /// </example>
         /// <seealso cref="ResolveTypeOptions"/>
         /// <seealso cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</seealso>
-        public static Type ResolveType(string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+        public static Type? ResolveType(string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, null, options);
 
         /// <summary>

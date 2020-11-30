@@ -21,6 +21,13 @@
 ============================================
 - FastLookupCollection<T> class: Fixing binary deserialization
 
+- KGySoft.CoreLibraries namespace:
+==================================
+- RandomExtensions class:
+  - NextObject methods: Fixing the interpretation of GenerateObjectSettings.ChanceOfNull property for all cases.
+- TypeExtensions class:
+  - IsImplementationOfGenericType method: fixing possible infinite loop
+
 - KGySoft.ComponentModel namespace:
 ===================================
 - FastBindingList<T>:

@@ -396,7 +396,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString(TEnum value, EnumFormattingOptions format, string separator = EnumExtensions.DefaultFormatSeparator)
+        public static string ToString(TEnum value, EnumFormattingOptions format, string? separator = EnumExtensions.DefaultFormatSeparator)
         {
             if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
                 Throw.EnumArgumentOutOfRange(Argument.format, value);
@@ -651,7 +651,7 @@ namespace KGySoft.CoreLibraries
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (converter.ToUInt64(value) & flags) == flags;
 
         [SecuritySafeCritical]
-        private static unsafe string FormatDistinctFlags(TEnum e, string separator)
+        private static unsafe string FormatDistinctFlags(TEnum e, string? separator)
         {
             EnsureRawValueNamePairs();
             ulong origRawValue = converter.ToUInt64(e);
@@ -737,7 +737,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [SecuritySafeCritical]
-        private static unsafe string FormatCompoundFlags(TEnum e, string separator, bool allowNumberWithNames)
+        private static unsafe string FormatCompoundFlags(TEnum e, string? separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();
             ulong origRawValue = converter.ToUInt64(e);

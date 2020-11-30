@@ -167,7 +167,7 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public void AddType(Type type, params AssemblyName[] assemblyIdentities)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             string fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType

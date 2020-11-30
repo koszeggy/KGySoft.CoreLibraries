@@ -178,7 +178,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static StringSegment GetNextSegment(ref StringSegment rest, string[] separators)
+        internal static StringSegment GetNextSegment(ref StringSegment rest, string?[] separators)
         {
             Debug.Assert(!separators.IsNullOrEmpty(), "Non-empty separators are expected here");
             if (rest.length == 0)

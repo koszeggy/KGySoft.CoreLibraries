@@ -19,6 +19,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 #endregion
@@ -181,7 +182,7 @@ namespace KGySoft.CoreLibraries
         /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         public static ReadOnlySpan<char> ReadToSeparator(ref this ReadOnlySpan<char> rest, params char[] separators)
         {
-            if (separators == null)
+            if (separators == null!)
                 Throw.ArgumentNullException(Argument.separators);
             if (separators.Length <= 1)
             {
@@ -344,10 +345,10 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the return value.</typeparam>
-        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then returns <see langword="null"/>.</param>
+        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>An object of <typeparamref name="T"/>, which is the result of the parsing.</returns>
+        /// <returns>An instance of <typeparamref name="T"/>, which is the result of the parsing. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> represents <see langword="null"/>, and <typeparamref name="T"/> is a reference or nullable type.</returns>
         /// <remarks>
         /// <para>The following types are parsed natively:
         /// <list type="bullet">
@@ -381,10 +382,13 @@ namespace KGySoft.CoreLibraries
         /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.
         /// If a type converter can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        public static T Parse<T>(this ReadOnlySpan<char> s, CultureInfo culture = null)
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? value'")]
+        [return:MaybeNull]public static T Parse<T>(this ReadOnlySpan<char> s, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, culture, out T value, out Exception error))
+            if (!Parser.TryParse(s, culture, out T value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, typeof(T)), error);
             return value;
         }
@@ -396,16 +400,16 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> overload for details.
         /// </summary>
         /// <returns>An object of <paramref name="type"/>, which is the result of the parsing.</returns>
-        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then returns <see langword="null"/>.</param>
+        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If represents <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
         /// <param name="type">The desired type of the return value.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>The parsed value.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
+        /// <returns>The parsed value. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> represents <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
-        public static object Parse(this ReadOnlySpan<char> s, Type type, CultureInfo culture = null)
+        public static object? Parse(this ReadOnlySpan<char> s, Type type, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, type, culture, true, out object value, out Exception error) || !type.CanAcceptValue(value))
+            if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, type), error);
             return value;
         }
@@ -417,11 +421,13 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
-        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
+        /// It will be <see langword="null"/>&#160;if <paramref name="s"/> represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo culture, out T value)
+        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, [MaybeNull]out T value)
             => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
@@ -431,10 +437,12 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
-        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
+        /// It will be <see langword="null"/>&#160;if <paramref name="s"/> represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse<T>(this ReadOnlySpan<char> s, out T value) => TryParse(s, null, out value);
+        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        public static bool TryParse<T>(this ReadOnlySpan<char> s, [MaybeNull]out T value) => TryParse(s, null, out value);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value.
@@ -445,9 +453,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
+        /// It will be <see langword="null"/>, if <paramref name="s"/> represents <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse(this ReadOnlySpan<char> s, Type type, CultureInfo culture, out object value)
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        public static bool TryParse(this ReadOnlySpan<char> s, Type type, CultureInfo culture, out object? value)
             => Parser.TryParse(s, type, culture, true, out value, out var _);
 
         /// <summary>
@@ -458,9 +468,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
+        /// It will be <see langword="null"/>, if <paramref name="s"/> represents <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse(this ReadOnlySpan<char> s, Type type, out object value)
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        public static bool TryParse(this ReadOnlySpan<char> s, Type type, out object? value)
             => Parser.TryParse(s, type, null, true, out value, out var _);
 
         #endregion

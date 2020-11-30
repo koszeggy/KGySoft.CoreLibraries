@@ -441,9 +441,9 @@ namespace KGySoft.Reflection
             return result;
         }
 
-        internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
+        internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName>? assemblyNameResolver, Func<Type, string>? typeNameResolver)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             if (!Enum<TypeNameKind>.IsDefined(kind))
                 Throw.EnumArgumentOutOfRange(Argument.kind, kind);

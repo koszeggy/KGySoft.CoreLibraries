@@ -701,7 +701,7 @@ namespace KGySoft.Reflection
 
         #region DictionaryEntry/KeyValuePair
 
-        internal static void SetKeyValue(object instance, object key, object value)
+        internal static void SetKeyValue(object instance, object? key, object? value)
         {
             // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of the boxed struct
             if (instance is DictionaryEntry)
@@ -800,7 +800,7 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this FieldInfo field, object instance, object value)
+        internal static unsafe void Set(this FieldInfo field, object instance, object? value)
         {
             Debug.Assert(!field.IsLiteral);
 
@@ -823,12 +823,12 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe object Get(this PropertyInfo property, object instance)
+        internal static unsafe object? Get(this PropertyInfo property, object? instance)
         {
             Debug.Assert(property.CanRead);
 
             if (property.PropertyType.IsPointer)
-                return new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)));
+                return new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)!));
 
 #if NETSTANDARD2_0
             if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
@@ -839,7 +839,7 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this PropertyInfo property, object instance, object value, params object[] indexerParams)
+        internal static unsafe void Set(this PropertyInfo property, object? instance, object? value, params object?[]? indexerParams)
         {
             Debug.Assert(property.CanWrite);
 

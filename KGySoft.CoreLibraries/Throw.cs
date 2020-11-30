@@ -54,7 +54,7 @@ namespace KGySoft
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException(null, message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message) => throw CreateArgumentException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message, Exception inner) => throw CreateArgumentException(arg, message, inner);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message, Exception? inner) => throw CreateArgumentException(arg, message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(Argument arg, string message) => throw CreateArgumentException(arg, message);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);

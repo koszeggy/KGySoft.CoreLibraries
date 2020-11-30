@@ -988,7 +988,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Gets or sets an <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization.
         /// </summary>
-        public ISurrogateSelector SurrogateSelector { get; set; }
+        public ISurrogateSelector? SurrogateSelector { get; set; }
 
         #endregion
 
@@ -1192,7 +1192,7 @@ namespace KGySoft.Serialization.Binary
         [SecuritySafeCritical]
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
             Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
-        public void SerializeToStream(Stream stream, object data) => SerializeByWriter(new BinaryWriter(stream), data);
+        public void SerializeToStream(Stream stream, object? data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
