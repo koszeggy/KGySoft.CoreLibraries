@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -93,7 +94,7 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets or sets the name of the test.
         /// </summary>
-        public string TestName { get; set; }
+        public string? TestName { get; set; }
 
         /// <summary>
         /// Gets or sets number of iterations of test cases. If greater than zero, then <see cref="TestTime"/> is ignored.

@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+
 using KGySoft.Security.Cryptography;
 
 #endregion
@@ -43,7 +44,7 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            [ThreadStatic] private static FastRandom threadInstance;
+            [ThreadStatic]private static FastRandom? threadInstance;
 
             #endregion
 
@@ -135,25 +136,37 @@ namespace KGySoft.CoreLibraries
 
             #region Public Methods
 
-            public override int Next() => threadInstance.Value.Next();
-            public override int Next(int maxValue) => threadInstance.Value.Next(maxValue);
-            public override int Next(int minValue, int maxValue) => threadInstance.Value.Next(minValue, maxValue);
-            public override double NextDouble() => threadInstance.Value.NextDouble();
-            public override void NextBytes(byte[] buffer) => threadInstance.Value.NextBytes(buffer);
+            public override int Next() => threadInstance.Value?.Next() ?? Throw.ObjectDisposedException<int>();
+            public override int Next(int maxValue) => threadInstance.Value?.Next(maxValue) ?? Throw.ObjectDisposedException<int>();
+            public override int Next(int minValue, int maxValue) => threadInstance.Value?.Next(minValue, maxValue) ?? Throw.ObjectDisposedException<int>();
+            public override double NextDouble() => threadInstance.Value?.NextDouble() ?? Throw.ObjectDisposedException<int>();
+            public override void NextBytes(byte[] buffer)
+            {
+                Random? random = threadInstance.Value;
+                if (random == null)
+                    Throw.ObjectDisposedException();
+                random.NextBytes(buffer);
+            }
 
 #if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
             /// <summary>
             /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
             /// </summary>
             /// <param name="buffer">A <see cref="Span{T}"/> of bytes to contain random numbers.</param>
-            public override void NextBytes(Span<byte> buffer) => threadInstance.Value.NextBytes(buffer);
+            public override void NextBytes(Span<byte> buffer)
+            {
+                Random? random = threadInstance.Value;
+                if (random == null)
+                    Throw.ObjectDisposedException();
+                random.NextBytes(buffer);
+            }
 #endif
 
             #endregion
 
             #region Protected Methods
 
-            protected override double Sample() => threadInstance.Value.NextDouble();
+            protected override double Sample() => threadInstance.Value?.NextDouble() ?? Throw.ObjectDisposedException<double>();
 
             protected override void Dispose(bool disposing)
             {
@@ -179,13 +192,13 @@ namespace KGySoft.CoreLibraries
 
         #region Static Fields
 
-        private static ThreadSafeRandom staticInstance;
+        private static ThreadSafeRandom? staticInstance;
 
         #endregion
 
         #region Instance Fields
 
-        private readonly ThreadSafeRandom provider;
+        private readonly ThreadSafeRandom? provider;
 
         #endregion
 
@@ -228,6 +241,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Constructors
 
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "It's to distinct from the default constructor")]
         private ThreadSafeRandom(bool _)
         {
@@ -265,7 +279,7 @@ namespace KGySoft.CoreLibraries
         /// <para>Disposing the created instance disposes also the <see cref="Random"/> instances created by the <paramref name="factory"/> if the created <see cref="Random"/> instances are disposable.</para>
         /// <note>If <paramref name="factory"/> creates a pseudo random number generator, then in order not to produce the same sequence from the different threads make sure the <paramref name="factory"/> method creates instances with different seeds.</note>
         /// </remarks>
-        public static ThreadSafeRandom Create(Func<Random> factory) => new ThreadSafeRandomWrapper(factory ?? Throw.ArgumentNullException<Func<Random>>(Argument.factory));
+        public static ThreadSafeRandom Create(Func<Random>? factory) => new ThreadSafeRandomWrapper(factory ?? Throw.ArgumentNullException<Func<Random>>(Argument.factory));
 
         #endregion
 
@@ -279,7 +293,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
         /// </returns>
-        public override int Next() => provider.Next();
+        public override int Next() => provider!.Next();
 
         /// <summary>
         /// Returns a non-negative random integer that is less than the specified maximum.
@@ -288,7 +302,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.
         /// </returns>
-        public override int Next(int maxValue) => provider.Next(maxValue);
+        public override int Next(int maxValue) => provider!.Next(maxValue);
 
         /// <summary>
         /// Returns a random integer that is within a specified range.
@@ -298,7 +312,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A 32-bit signed integer greater than or equal to <paramref name="minValue" /> and less than <paramref name="maxValue" />; that is, the range of return values includes <paramref name="minValue" /> but not <paramref name="maxValue" />. If <paramref name="minValue" /> equals <paramref name="maxValue" />, <paramref name="minValue" /> is returned.
         /// </returns>
-        public override int Next(int minValue, int maxValue) => provider.Next(minValue, maxValue);
+        public override int Next(int minValue, int maxValue) => provider!.Next(minValue, maxValue);
 
         /// <summary>
         /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
@@ -306,20 +320,20 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-        public override double NextDouble() => provider.NextDouble();
+        public override double NextDouble() => provider!.NextDouble();
 
         /// <summary>
         /// Fills the elements of a specified array of bytes with random numbers.
         /// </summary>
         /// <param name="buffer">An array of bytes to contain random numbers.</param>
-        public override void NextBytes(byte[] buffer) => provider.NextBytes(buffer);
+        public override void NextBytes(byte[] buffer) => provider!.NextBytes(buffer);
 
 #if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>
         /// <param name="buffer">A <see cref="Span{T}"/> of bytes to contain random numbers.</param>
-        public override void NextBytes(Span<byte> buffer) => provider.NextBytes(buffer);
+        public override void NextBytes(Span<byte> buffer) => provider!.NextBytes(buffer);
 #endif
 
         /// <summary>
@@ -341,7 +355,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
-        protected override double Sample() => provider.NextDouble();
+        protected override double Sample() => provider!.NextDouble();
 
         /// <summary>
         /// Releases the resources used by this <see cref="ThreadSafeRandom"/> instance.

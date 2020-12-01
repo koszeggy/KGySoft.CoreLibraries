@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(string value)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
             return IsNull ? -1 : IndexOfInternal(value, 0, length);
         }
@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(string value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
             if (comparison == StringComparison.Ordinal)
                 return IndexOfInternal(value, startIndex, count);
 
-            int result = str.IndexOf(value, offset + startIndex, count, comparison);
+            int result = str!.IndexOf(value, offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -148,7 +148,7 @@ namespace KGySoft.CoreLibraries
                 return IndexOfInternal(value, startIndex, count);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-            int result = str.IndexOf(value.ToString(), offset + startIndex, count, comparison);
+            int result = str!.IndexOf(value.ToString()!, offset + startIndex, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
             int result = str.AsSpan(offset + startIndex, count).IndexOf(value, comparison);
@@ -305,7 +305,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOf(string value, int startIndex, int count, StringComparison comparison = StringComparison.Ordinal)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
@@ -316,7 +316,7 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return IsNull || value.Length > 0 ? -1 : 0;
 
-            int result = str.LastIndexOf(value, offset + startIndex + count - 1, count, comparison);
+            int result = str!.LastIndexOf(value, offset + startIndex + count - 1, count, comparison);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -373,7 +373,7 @@ namespace KGySoft.CoreLibraries
                 return IsNull || value.length > 0 ? -1 : 0;
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            int result = str.LastIndexOf(value.ToString(), offset + startIndex + count - 1, count, comparison);
+            int result = str!.LastIndexOf(value.ToString()!, offset + startIndex + count - 1, count, comparison);
             return result >= 0 ? result - offset : -1;
 #else
             int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
@@ -426,7 +426,7 @@ namespace KGySoft.CoreLibraries
 
             if (length == 0)
                 return -1;
-            int result = str.LastIndexOf(value, offset + startIndex, count);
+            int result = str!.LastIndexOf(value, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -451,7 +451,7 @@ namespace KGySoft.CoreLibraries
         {
             if (length == 0)
                 return -1;
-            int result = str.LastIndexOf(value, offset, length);
+            int result = str!.LastIndexOf(value, offset, length);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -487,7 +487,7 @@ namespace KGySoft.CoreLibraries
 #if NETSTANDARD2_1
             int result = comparison == StringComparison.Ordinal
                 ? str.AsSpan(offset + startIndex, count).LastIndexOf(value)
-                : str.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
+                : str!.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result < 0 ? -1
                 : comparison == StringComparison.Ordinal ? result + startIndex
                 : result - offset;
@@ -540,7 +540,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOfAny(char[] values, int startIndex, int count)
         {
-            if (values == null)
+            if (values == null!)
                 Throw.ArgumentNullException(Argument.values);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
@@ -585,7 +585,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int LastIndexOfAny(char[] values, int startIndex, int count)
         {
-            if (values == null)
+            if (values == null!)
                 Throw.ArgumentNullException(Argument.values);
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
@@ -594,7 +594,7 @@ namespace KGySoft.CoreLibraries
 
             if (length == 0)
                 return -1;
-            int result = str.LastIndexOfAny(values, offset + startIndex, count);
+            int result = str!.LastIndexOfAny(values, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -633,7 +633,7 @@ namespace KGySoft.CoreLibraries
             if (comparison != StringComparison.Ordinal)
                 return StartsWith(new StringSegment(value), comparison);
 
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
 
             if (IsNull)
@@ -780,7 +780,7 @@ namespace KGySoft.CoreLibraries
         {
             if (length == 0)
                 return -1;
-            int result = str.IndexOf(c, offset + startIndex, count);
+            int result = str!.IndexOf(c, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -792,7 +792,7 @@ namespace KGySoft.CoreLibraries
             if (s.Length <= 1)
                 return s.Length == 0 ? startIndex : IndexOfInternal(s[0], startIndex, count);
 
-            int result = str.IndexOf(s, offset + startIndex, count, StringComparison.Ordinal);
+            int result = str!.IndexOf(s, offset + startIndex, count, StringComparison.Ordinal);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -804,7 +804,7 @@ namespace KGySoft.CoreLibraries
 
             if (s.length <= 1)
                 return s.length == 0 ? startIndex : IndexOfInternal(s.GetCharInternal(0), startIndex, count);
-            if (s.length == s.UnderlyingString.Length)
+            if (s.length == s.UnderlyingString!.Length)
                 return IndexOfInternal(s.UnderlyingString, startIndex, count);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
@@ -827,7 +827,7 @@ namespace KGySoft.CoreLibraries
             int end = start + count - s.length + 1;
             for (int i = offset + startIndex; i < end; i++)
             {
-                if (str[i] != first)
+                if (str![i] != first)
                     continue;
 
                 // first char matches: looking for difference in other chars if any
@@ -871,7 +871,7 @@ namespace KGySoft.CoreLibraries
         private int IndexOfAnyInternal(char[] values, int startIndex, int count)
         {
             Debug.Assert(length != 0);
-            int result = str.IndexOfAny(values, offset + startIndex, count);
+            int result = str!.IndexOfAny(values, offset + startIndex, count);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -910,11 +910,11 @@ namespace KGySoft.CoreLibraries
             {
                 for (int j = 0; j < separators.Length; j++)
                 {
-                    string separator = separators[j];
+                    string? separator = separators[j];
                     if (String.IsNullOrEmpty(separator))
                         continue;
 
-                    int sepLength = separator.Length;
+                    int sepLength = separator!.Length;
                     if (GetCharInternal(i) != separator[0] || sepLength > count - i)
                         continue;
                     if (sepLength == 1 || SubstringInternal(i, sepLength).Equals(separator))
@@ -944,7 +944,7 @@ namespace KGySoft.CoreLibraries
 
             return true;
 #else
-            // for ordinal String.Compare is faster than Span.[Sequence]Equals
+            // for ordinal comparison String.Compare is faster than Span.[Sequence]Equals
             return String.Compare(str, offset, value, 0, value.Length, StringComparison.Ordinal) == 0;
 #endif
         }

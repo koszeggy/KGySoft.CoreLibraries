@@ -95,13 +95,8 @@ namespace KGySoft.CoreLibraries
 
                 error = null;
                 value = null;
-                if (s == null)
-                {
-                    if (type.CanAcceptValue(null))
-                        return true;
-
-                    Throw.ArgumentNullException(Argument.s);
-                }
+                if (s == null && type.CanAcceptValue(null))
+                    return true;
 
                 type = Nullable.GetUnderlyingType(type) ?? type;
                 if (type.IsByRef)

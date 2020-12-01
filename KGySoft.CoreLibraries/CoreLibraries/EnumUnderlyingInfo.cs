@@ -24,13 +24,13 @@ using System.Threading;
 
 namespace KGySoft.CoreLibraries
 {
-    internal struct EnumUnderlyingInfo
+    internal readonly struct EnumUnderlyingInfo
     {
         #region Fields
 
         #region Static Fields
 
-        private static IDictionary<Type, EnumUnderlyingInfo> cache;
+        private static IDictionary<Type, EnumUnderlyingInfo>? cache;
 
         #endregion
 
@@ -56,6 +56,12 @@ namespace KGySoft.CoreLibraries
 
             switch (TypeCode)
             {
+                case TypeCode.Boolean:
+                    MinValue = 0L;
+                    MaxValue = 1L;
+                    SizeMask = 1L;
+                    BitSize = 1;
+                    break;
                 case TypeCode.Byte:
                     MinValue = 0L;
                     MaxValue = Byte.MaxValue;
@@ -75,6 +81,7 @@ namespace KGySoft.CoreLibraries
                     BitSize = 16;
                     break;
                 case TypeCode.UInt16:
+                case TypeCode.Char:
                     MinValue = 0L;
                     MaxValue = UInt16.MaxValue;
                     SizeMask = UInt16.MaxValue;

@@ -18,7 +18,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Security; 
 
 #endregion
@@ -35,7 +34,6 @@ namespace KGySoft.CoreLibraries
         #region Fields
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2151:Fields with critical types should be security critical", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         private readonly char* head;
 
         internal readonly int Length;

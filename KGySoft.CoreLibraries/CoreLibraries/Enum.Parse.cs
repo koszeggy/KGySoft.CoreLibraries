@@ -17,12 +17,6 @@
 #region Usings
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security;
 
 using KGySoft.Collections;
 
@@ -46,9 +40,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
         /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
-        public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
+        public static bool TryParse(string value, string? separator, bool ignoreCase, out TEnum result)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
 
             // simple name match test (always case-sensitive)
@@ -75,7 +69,7 @@ namespace KGySoft.CoreLibraries
 
             ulong acc = 0UL;
             StringKeyedDictionary<ulong> dict = ignoreCase ? NameRawValuePairsIgnoreCase : NameRawValuePairs;
-            while (s.TryGetNextSegment(separator, out StringSegmentInternal token))
+            while (s.TryGetNextSegment(separator!, out StringSegmentInternal token))
             {
                 token.Trim();
                 if (token.Length == 0)
@@ -124,7 +118,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
         /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
-        public static bool TryParse(string value, string separator, out TEnum result) => TryParse(value, separator, false, out result);
+        public static bool TryParse(string value, string? separator, out TEnum result) => TryParse(value, separator, false, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
@@ -147,7 +141,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
-        public static TEnum Parse(string value, string separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
+        public static TEnum Parse(string value, string? separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
         {
             if (!TryParse(value, separator, ignoreCase, out TEnum result))
                 Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value, typeof(TEnum)));
@@ -192,7 +186,7 @@ namespace KGySoft.CoreLibraries
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
 
-            var s = new StringSegmentInternal(value.UnderlyingString, value.Offset, value.Length);
+            var s = new StringSegmentInternal(value.UnderlyingString!, value.Offset, value.Length);
             s.Trim();
             result = default(TEnum);
             if (s.Length == 0)
@@ -287,7 +281,7 @@ namespace KGySoft.CoreLibraries
         public static TEnum Parse(StringSegment value, StringSegment separator = default, bool ignoreCase = false)
         {
             if (!TryParse(value, separator, ignoreCase, out TEnum result))
-                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value.ToString(), typeof(TEnum)));
+                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value.ToString()!, typeof(TEnum)));
             return result;
         }
 
@@ -302,7 +296,7 @@ namespace KGySoft.CoreLibraries
         public static TEnum Parse(StringSegment value, bool ignoreCase)
         {
             if (!TryParse(value, default, ignoreCase, out TEnum result))
-                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value.ToString(), typeof(TEnum)));
+                Throw.ArgumentException(Argument.value, Res.EnumValueCannotBeParsedAsEnum(value.ToString()!, typeof(TEnum)));
             return result;
         }
 

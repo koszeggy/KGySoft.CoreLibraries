@@ -25,6 +25,9 @@
 ==================================
 - RandomExtensions class:
   - NextObject methods: Fixing the interpretation of GenerateObjectSettings.ChanceOfNull property for all cases.
+- ThreadSafeRandom class:
+  - If an instance was created by the factory constructor, then after disposing the Next... members could throw
+    a NullReferenceException. Now a disposed instance will throw an ObjectDisposedException instead.
 - TypeExtensions class:
   - IsImplementationOfGenericType method: fixing possible infinite loop
 

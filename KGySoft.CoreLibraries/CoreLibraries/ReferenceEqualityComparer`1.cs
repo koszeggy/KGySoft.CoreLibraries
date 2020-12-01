@@ -17,6 +17,7 @@
 #region Usings
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -30,7 +31,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static ReferenceEqualityComparer<T> comparer;
+        private static ReferenceEqualityComparer<T>? comparer;
 
         #endregion
 
@@ -42,7 +43,7 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        bool IEqualityComparer<T>.Equals(T x, T y) => ReferenceEquals(x, y);
+        bool IEqualityComparer<T>.Equals([AllowNull]T x, [AllowNull]T y) => ReferenceEquals(x, y);
 
         int IEqualityComparer<T>.GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
 

@@ -15,9 +15,13 @@
 
 #endregion
 
+#region Usings
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
@@ -42,28 +46,28 @@ namespace KGySoft.CoreLibraries
             /// <summary>
             /// The next LinkedSlot for this ThreadLocal instance
             /// </summary>
-            internal volatile LinkedSlot Next;
+            internal volatile LinkedSlot? Next;
 
             /// <summary>
             /// The previous LinkedSlot for this ThreadLocal instance
             /// </summary>
-            internal volatile LinkedSlot Previous;
+            internal volatile LinkedSlot? Previous;
 
             /// <summary>
             /// The SlotArray that stores this LinkedSlot
             /// </summary>
-            internal volatile LinkedSlotVolatile[] SlotArray;
+            internal volatile LinkedSlotVolatile[]? SlotArray;
 
             /// <summary>
             /// The value for this slot.
             /// </summary>
-            internal T Value;
+            [AllowNull]internal T Value = default!;
 
             #endregion
 
             #region Constructors
 
-            internal LinkedSlot(LinkedSlotVolatile[] slotArray)
+            internal LinkedSlot(LinkedSlotVolatile[]? slotArray)
             {
                 SlotArray = slotArray;
             }
@@ -171,7 +175,7 @@ namespace KGySoft.CoreLibraries
                 LinkedSlotVolatile[] slotArray = SlotArray;
                 for (int i = 0; i < slotArray.Length; i++)
                 {
-                    LinkedSlot linkedSlot = slotArray[i].Value;
+                    LinkedSlot? linkedSlot = slotArray[i].Value;
 
                     // This slot in the table is empty
                     if (linkedSlot == null)
@@ -192,7 +196,7 @@ namespace KGySoft.CoreLibraries
                             linkedSlot.Next.Previous = linkedSlot.Previous;
 
                         // Since the list uses a dummy head node, the Previous reference should never be null.
-                        linkedSlot.Previous.Next = linkedSlot.Next;
+                        linkedSlot.Previous!.Next = linkedSlot.Next;
                     }
                 }
             }
@@ -214,7 +218,7 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            internal volatile LinkedSlot Value;
+            internal volatile LinkedSlot? Value;
 
             #endregion
         }
@@ -239,9 +243,9 @@ namespace KGySoft.CoreLibraries
         /// The slot relevant to this particular ThreadLocal instance is determined by the idComplement instance field stored in
         /// the ThreadLocal instance.
         /// </summary>
-        [ThreadStatic]private static LinkedSlotVolatile[] slotArray;
+        [ThreadStatic]private static LinkedSlotVolatile[]? slotArray;
 
-        [ThreadStatic]private static FinalizationHelper finalizationHelper;
+        [ThreadStatic]private static FinalizationHelper? finalizationHelper;
 
         #endregion
 
@@ -255,7 +259,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// A delegate that returns the created value, if null the created value will be default(T)
         /// </summary>
-        private Func<T> valueFactory;
+        private Func<T>? valueFactory;
 
         /// <summary>
         /// Slot ID of this ThreadLocal instance. We store a bitwise complement of the ID (that is ~ID), which allows us to distinguish
@@ -275,7 +279,7 @@ namespace KGySoft.CoreLibraries
         /// A linked list of all values associated with this ThreadLocal instance.
         /// We create a dummy head node. That allows us to remove any (non-dummy)  node without having to locate the linkedSlot field.
         /// </summary>
-        private LinkedSlot linkedSlot = new LinkedSlot(null);
+        private LinkedSlot? linkedSlot = new LinkedSlot(null);
 
         #endregion
 
@@ -283,12 +287,13 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
+        [AllowNull, MaybeNull]
         internal T Value
         {
             get
             {
-                LinkedSlotVolatile[] slots = slotArray;
-                LinkedSlot slot;
+                LinkedSlotVolatile[]? slots = slotArray;
+                LinkedSlot? slot;
                 int id = ~idComplement;
 
                 // Attempt to get the value using the fast path
@@ -307,12 +312,12 @@ namespace KGySoft.CoreLibraries
                     return slot.Value;
                 }
 
-                return GetValueSlow();
+                return GetValueSlow()!;
             }
             private set
             {
-                LinkedSlotVolatile[] slots = slotArray;
-                LinkedSlot slot;
+                LinkedSlotVolatile[]? slots = slotArray;
+                LinkedSlot? slot;
                 int id = ~idComplement;
 
                 // Attempt to set the value using the fast path
@@ -346,7 +351,7 @@ namespace KGySoft.CoreLibraries
             {
                 if (!trackAllValues)
                     Throw.InvalidOperationException(Res.InternalError("Values should not be accesses when initialized without tracking values"));
-                LinkedSlot slot = linkedSlot;
+                LinkedSlot? slot = linkedSlot;
                 int id = ~idComplement;
                 if (id == -1 || slot == null)
                     throw new ObjectDisposedException(Res.ObjectDisposed);
@@ -411,7 +416,7 @@ namespace KGySoft.CoreLibraries
             {
                 for (int i = 0; i < table.Length; i++)
                 {
-                    LinkedSlot linkedSlot = table[i].Value;
+                    LinkedSlot? linkedSlot = table[i].Value;
                     if (linkedSlot?.SlotArray != null)
                     {
                         linkedSlot.SlotArray = newTable;
@@ -443,9 +448,10 @@ namespace KGySoft.CoreLibraries
 
                 initialized = false;
 
-                for (LinkedSlot slot = linkedSlot.Next; slot != null; slot = slot.Next)
+                Debug.Assert(linkedSlot != null, "Should be non-null if not yet disposed");
+                for (LinkedSlot? slot = linkedSlot!.Next; slot != null; slot = slot.Next)
                 {
-                    LinkedSlotVolatile[] slots = slot.SlotArray;
+                    LinkedSlotVolatile[]? slots = slot.SlotArray;
 
                     // The thread that owns this slot has already finished.
                     if (slots == null)
@@ -456,7 +462,7 @@ namespace KGySoft.CoreLibraries
 
                     // And clear the references from the slot table to the linked slot and the value so that
                     // both can get garbage collected.
-                    slots[id].Value.Value = default;
+                    slots[id].Value!.Value = default;
                     slots[id].Value = null;
                 }
             }
@@ -466,13 +472,13 @@ namespace KGySoft.CoreLibraries
             valueFactory = null;
         }
 
-        public override string ToString() => Value.ToString();
+        public override string? ToString() => Value?.ToString();
 
         #endregion
 
         #region Private Methods
 
-        private T GetValueSlow()
+        [return:MaybeNull]private T GetValueSlow()
         {
             // If the object has been disposed, the id will be -1.
             int id = ~idComplement;
@@ -487,7 +493,7 @@ namespace KGySoft.CoreLibraries
             return value;
         }
 
-        private void SetValueSlow(T value, LinkedSlotVolatile[] slots)
+        private void SetValueSlow([AllowNull]T value, LinkedSlotVolatile[]? slots)
         {
             int id = ~idComplement;
 
@@ -507,7 +513,8 @@ namespace KGySoft.CoreLibraries
             if (id >= slots.Length)
             {
                 GrowTable(ref slots, id + 1);
-                finalizationHelper.SlotArray = slots;
+                Debug.Assert(finalizationHelper != null, "Should have been initialized when this thread's slot array was created.");
+                finalizationHelper!.SlotArray = slots;
                 slotArray = slots;
             }
 
@@ -521,7 +528,7 @@ namespace KGySoft.CoreLibraries
             {
                 // Volatile read of the LinkedSlotVolatile.Value property ensures that the m_initialized read
                 // that follows will not be reordered before the read of slotArray[id].
-                LinkedSlot slot = slots[id].Value;
+                LinkedSlot? slot = slots[id].Value;
 
                 // It is important to verify that the ThreadLocal instance has not been disposed. The check must come
                 // after capturing slotArray[id], but before assigning the value into the slot. This ensures that
@@ -530,14 +537,14 @@ namespace KGySoft.CoreLibraries
                 if (!initialized)
                     throw new ObjectDisposedException(Res.ObjectDisposed);
 
-                slot.Value = value;
+                slot!.Value = value;
             }
         }
 
         /// <summary>
         /// Creates a LinkedSlot and inserts it into the linked list for this ThreadLocal instance.
         /// </summary>
-        private void CreateLinkedSlot(LinkedSlotVolatile[] slots, int id, T value)
+        private void CreateLinkedSlot(LinkedSlotVolatile[] slots, int id, [AllowNull]T value)
         {
             var slot = new LinkedSlot(slots);
 
@@ -549,7 +556,7 @@ namespace KGySoft.CoreLibraries
                 if (!initialized)
                     throw new ObjectDisposedException(Res.ObjectDisposed);
 
-                LinkedSlot firstRealNode = slot.Next;
+                LinkedSlot? firstRealNode = slot.Next;
 
                 // Insert linkedSlot between nodes m_linkedSlot and firstRealNode.
                 // (_linkedSlot is the dummy head node that should always be in the front.)

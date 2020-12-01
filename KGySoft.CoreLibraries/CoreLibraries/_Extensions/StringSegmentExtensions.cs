@@ -170,7 +170,7 @@ namespace KGySoft.CoreLibraries
                 {
                     string? separator = separators[0];
                     if (!String.IsNullOrEmpty(separator))
-                        return StringSegment.GetNextSegment(ref rest, separator);
+                        return StringSegment.GetNextSegment(ref rest, separator!);
                 }
 
                 StringSegment result = rest;
@@ -261,7 +261,7 @@ namespace KGySoft.CoreLibraries
             StringSegment result = StringSegment.GetNextSegment(ref rest, newLineSeparators);
 
             // if we found a '\r' we check whether it is followed by a '\n'
-            if (rest.Length == 0 || rest.UnderlyingString[rest.Offset - 1] != '\r' || rest.GetCharInternal(0) != '\n')
+            if (rest.Length == 0 || rest.UnderlyingString![rest.Offset - 1] != '\r' || rest.GetCharInternal(0) != '\n')
                 return result;
             rest = rest.SubstringInternal(1);
             return result;

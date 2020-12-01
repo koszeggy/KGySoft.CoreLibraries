@@ -80,8 +80,8 @@ namespace KGySoft.Diagnostics
         {
             #region Fields
 
-            internal TDelegate Case;
-            internal string Name;
+            internal TDelegate Case = default!;
+            internal string Name = default!;
 
             #endregion
         }
@@ -96,11 +96,11 @@ namespace KGySoft.Diagnostics
 
             internal readonly List<Repetition> Repetitions = new List<Repetition>();
 
-            internal TestCase Case;
-            internal TResult Result;
+            internal TestCase Case = default!;
+            [AllowNull]internal TResult Result = default!;
             internal int IndexBest;
             internal int IndexWorst;
-            internal Exception Error;
+            internal Exception? Error;
 
             #endregion
 
@@ -117,8 +117,8 @@ namespace KGySoft.Diagnostics
             #region Explicitly Implemented Interface Properties
 
             string ITestCaseResult.Name => Case.Name;
-            object ITestCaseResult.Result => Result;
-            Exception ITestCaseResult.Error => Error;
+            object? ITestCaseResult.Result => Result;
+            Exception? ITestCaseResult.Error => Error;
 #if NET35 || NET40
             IList<ITestCaseRepetition> ITestCaseResult.Repetitions => Repetitions.Cast<ITestCaseRepetition>().ToArray();
 #else
@@ -144,7 +144,7 @@ namespace KGySoft.Diagnostics
 
             #region Constructors
 
-            public PerformanceTestResultCollection(PerformanceTestBase<TDelegate, TResult> test, List<TestResult> testResults)
+            internal PerformanceTestResultCollection(PerformanceTestBase<TDelegate, TResult> test, List<TestResult> testResults)
             {
                 this.test = test;
 #if NET35
@@ -164,7 +164,7 @@ namespace KGySoft.Diagnostics
             {
                 #region Local Methods
 
-                static string DumpDiff(double currentValue, double baseValue, string unit = null)
+                static string DumpDiff(double currentValue, double baseValue, string? unit = null)
                 {
                     double diff = currentValue - baseValue;
                     if (diff.Equals(0d))
@@ -193,7 +193,7 @@ namespace KGySoft.Diagnostics
 
                 #endregion
 
-                if (writer == null)
+                if (writer == null!)
                     Throw.ArgumentNullException(Argument.writer);
 
                 writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
@@ -264,7 +264,7 @@ namespace KGySoft.Diagnostics
 
                     // Result
                     // ReSharper disable once PossibleNullReferenceException - never null, ensured by static ctor
-                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke)).ReturnType != Reflector.VoidType
+                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke))!.ReturnType != Reflector.VoidType
                         && (forceShowSize || dumpReturnValue || test.SortBySize))
                     {
                         int caseLength = test.GetLength(result.Result);
@@ -308,8 +308,6 @@ namespace KGySoft.Diagnostics
 
         #region Static Methods
 
-        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect",
-            Justification = "Belongs to the performance test initialization and can be turned off. Important for getting reliable performance test results.")]
         private static void DoCollect()
         {
             GC.Collect();
@@ -330,9 +328,9 @@ namespace KGySoft.Diagnostics
         /// <param name="testCase">The test case.</param>
         /// <param name="name">The name of the test. If not specified, a default name will be added.</param>
         /// <returns>The self <see cref="PerformanceTestBase{TDelegate,TResult}"/> instance to provide fluent initialization syntax.</returns>
-        public PerformanceTestBase<TDelegate, TResult> AddCase(TDelegate testCase, string name = null)
+        public PerformanceTestBase<TDelegate, TResult> AddCase(TDelegate testCase, string? name = null)
         {
-            if (testCase == null)
+            if (testCase == null!)
                 Throw.ArgumentNullException(Argument.testCase);
             cases.Add(new TestCase { Case = testCase, Name = name ?? Res.PerformanceTestCaseDefaultName(cases.Count + 1) });
             return this;
@@ -344,7 +342,7 @@ namespace KGySoft.Diagnostics
         /// <returns>An <see cref="IPerformanceTestResultCollection"/> instance containing the test results.</returns>
         public override IPerformanceTestResultCollection DoTest()
         {
-            if (cases == null)
+            if (cases.Count == 0)
                 Throw.InvalidOperationException(Res.PerformanceTestNoTestCases);
 
             Initialize();
@@ -393,7 +391,7 @@ namespace KGySoft.Diagnostics
         /// <returns>The unit name of <typeparamref name="TResult"/>.</returns>
         protected virtual string GetUnit()
         {
-            if (typeof(TResult).IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type genericType))
+            if (typeof(TResult).IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type? genericType))
             {
                 Type genericParam = genericType.GetGenericArguments()[0];
                 return KnownTypes.GetValueOrDefault(genericParam) ?? genericParam.Name;

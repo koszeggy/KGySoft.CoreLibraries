@@ -27,17 +27,17 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         internal static IEqualityComparer<T> EqualityComparer { get; } =
-#if !NETSTANDARD2_0
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
-#else
+#if NETSTANDARD2_0
             EqualityComparer<T>.Default;
+#else
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
 #endif
 
         internal static IComparer<T> Comparer { get; } =
-#if !NETSTANDARD2_0
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
-#else
+#if NETSTANDARD2_0
             Comparer<T>.Default;
+#else
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
 #endif
 
         #endregion
