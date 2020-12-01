@@ -90,7 +90,7 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate invoker;
+        private Delegate? invoker;
 
         #endregion
 
@@ -114,6 +114,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor is to be created.</param>
         protected MethodAccessor(MethodBase method) :
+            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
             base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -179,7 +180,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
         /// and to preserve changes the of the mutated value type instances.</note>
         /// </remarks>
-        public abstract object Invoke(object instance, params object[] parameters);
+        public abstract object? Invoke(object? instance, params object?[]? parameters);
 
         #endregion
 

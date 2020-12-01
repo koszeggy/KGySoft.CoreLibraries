@@ -107,8 +107,8 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate getter;
-        private Delegate setter;
+        private Delegate? getter;
+        private Delegate? setter;
 
         #endregion
 
@@ -138,10 +138,11 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (CanRead)
-                    return getter ??= CreateGetter();
-                Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return default;
+                if (getter != null)
+                    return getter;
+                if (!CanRead)
+                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return getter = CreateGetter();
             }
         }
 
@@ -153,10 +154,11 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (CanWrite)
-                    return setter ??= CreateSetter();
-                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return default;
+                if (setter != null)
+                    return setter;
+                if (!CanWrite)
+                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return setter = CreateSetter();
             }
         }
 
@@ -171,6 +173,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor is to be created.</param>
         private protected PropertyAccessor(PropertyInfo property) :
+            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
             base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -191,7 +194,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static PropertyAccessor GetAccessor(PropertyInfo property)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             return (PropertyAccessor)GetCreateAccessor(property);
         }
@@ -236,7 +239,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
-        public abstract void Set(object instance, object value, params object[] indexerParameters);
+        public abstract void Set(object? instance, object? value, params object?[]? indexerParameters);
 
         /// <summary>
         /// Gets the value of the property.

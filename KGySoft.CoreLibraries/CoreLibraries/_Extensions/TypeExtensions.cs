@@ -348,7 +348,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The name of the <paramref name="type"/> by the specified <paramref name="kind"/> using the specified custom callbacks.</returns>
         /// <seealso cref="TypeNameKind"/>
         /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>
-        public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
+        public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
             => TypeResolver.GetName(type, kind, assemblyNameResolver, typeNameResolver);
 
         #endregion

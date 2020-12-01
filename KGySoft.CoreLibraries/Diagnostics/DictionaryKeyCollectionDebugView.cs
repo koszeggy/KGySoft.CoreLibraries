@@ -55,7 +55,12 @@ namespace KGySoft.Diagnostics
         ///<summary>
         /// Creates a new instance of CollectionDebugView
         ///</summary>
-        public DictionaryKeyCollectionDebugView(ICollection<TKey> collection) => this.collection = collection;
+        public DictionaryKeyCollectionDebugView(ICollection<TKey> collection)
+        {
+            if (collection == null!)
+                Throw.ArgumentNullException(Argument.collection);
+            this.collection = collection;
+        }
 
         #endregion
     }

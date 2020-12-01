@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -53,7 +54,7 @@ namespace KGySoft.CoreLibraries
         internal StringSegmentInternal(string s, int offset, int length)
         {
             String = s;
-            this.Offset = offset;
+            Offset = offset;
             Length = length;
         }
 
@@ -87,12 +88,15 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
-        public override bool Equals(object obj) => obj is StringSegmentInternal other && Equals(other);
+        public override bool Equals(object? obj) => obj is StringSegmentInternal other && Equals(other);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode", Justification = "These are not expected to be changed in a hashed collection")]
         public override int GetHashCode()
         {
-            if (String == null)
+            // just for a default instance
+            if (String == null!)
                 return 0;
             return Length == String.Length
                 ? StringSegmentComparer.GetHashCodeOrdinal(String)
@@ -333,8 +337,8 @@ namespace KGySoft.CoreLibraries
 
         internal bool Equals(string other)
         {
-            Debug.Assert(other != null);
-            if (Length != other.Length)
+            Debug.Assert(other != null!);
+            if (Length != other!.Length)
                 return false;
             if (ReferenceEquals(String, other) && Offset == 0)
                 return true;
@@ -354,8 +358,8 @@ namespace KGySoft.CoreLibraries
 
         internal bool EqualsOrdinalIgnoreCase(string other)
         {
-            Debug.Assert(other != null);
-            if (Length != other.Length)
+            Debug.Assert(other != null!);
+            if (Length != other!.Length)
                 return false;
             if (ReferenceEquals(String, other) && Offset == 0)
                 return true;
@@ -378,13 +382,13 @@ namespace KGySoft.CoreLibraries
 
         internal bool EqualsOrdinalIgnoreCase(StringSegmentInternal other)
         {
-            Debug.Assert(other.String != null);
+            Debug.Assert(other.String != null!);
             if (Length != other.Length)
                 return false;
             if (ReferenceEquals(String, other.String) && Offset == 0)
                 return true;
 
-            if (String.Length == Length && other.String.Length == other.Length)
+            if (String.Length == Length && other.String!.Length == other.Length)
                 return String.Equals(String, other.String, StringComparison.OrdinalIgnoreCase);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
@@ -403,7 +407,8 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal int GetHashCodeOrdinalIgnoreCase()
         {
-            if (String == null)
+            // just for default instance
+            if (String == null!)
                 return 0;
             return Length == String.Length
                 ? StringSegmentComparer.GetHashCodeOrdinalIgnoreCase(String)
@@ -429,7 +434,6 @@ namespace KGySoft.CoreLibraries
             if (s.Length == 1)
                 return IndexOf(s[0]);
 
-            // This would be the native version, which is much slower even in .NET Core:
             int result = String.IndexOf(s, Offset, Length, StringComparison.Ordinal);
             return result >= 0 ? result - Offset : -1;
         }
@@ -440,7 +444,7 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(s.Length > 0);
             if (s.Length == 1)
                 return IndexOf(s.GetCharInternal(0));
-            if (s.Length == s.UnderlyingString.Length)
+            if (s.Length == s.UnderlyingString!.Length)
                 return IndexOf(s.UnderlyingString);
 
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0

@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private static readonly IDictionary<Type, Type> comparers = new LockingDictionary<Type, Type>();
 
-        private static ModuleBuilder moduleBuilder;
+        private static ModuleBuilder? moduleBuilder;
 
         #endregion
 
@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
                     AssemblyBuilder asm = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Run);
 #endif
 
-                    moduleBuilder = asm.DefineDynamicModule(asmName.Name);
+                    moduleBuilder = asm.DefineDynamicModule(asmName.Name!);
                 }
 
                 return moduleBuilder;
@@ -83,14 +83,14 @@ namespace KGySoft.CoreLibraries
             if (!typeof(TEnum).IsEnum)
                 Throw.InvalidOperationException(Res.EnumTypeParameterInvalid);
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
-            if (!comparers.TryGetValue(underlyingType, out Type comparerDefinition))
+            if (!comparers.TryGetValue(underlyingType, out Type? comparerDefinition))
             {
                 comparerDefinition = BuildGenericComparer(underlyingType);
                 comparers[underlyingType] = comparerDefinition;
             }
 
             Type type = comparerDefinition.GetGenericType(typeof(TEnum));
-            return (EnumComparer<TEnum>)Activator.CreateInstance(type);
+            return (EnumComparer<TEnum>)Activator.CreateInstance(type)!;
         }
 
         #endregion
@@ -105,7 +105,7 @@ namespace KGySoft.CoreLibraries
             TypeBuilder builder = ModuleBuilder.DefineType($"DynamicEnumComparer{underlyingType.Name}`1",
                 TypeAttributes.Public | TypeAttributes.Sealed,
                 typeof(EnumComparer<>));
-            builder.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetDefaultConstructor(), Reflector.EmptyObjects));
+            builder.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetDefaultConstructor()!, Reflector.EmptyObjects));
             GenericTypeParameterBuilder tEnum = builder.DefineGenericParameters("TEnum")[0];
             tEnum.SetGenericParameterAttributes(GenericParameterAttributes.NotNullableValueTypeConstraint);
             tEnum.SetBaseTypeConstraint(Reflector.EnumType);
@@ -118,7 +118,7 @@ namespace KGySoft.CoreLibraries
             GenerateToUInt64(builder, underlyingType, tEnum);
             GenerateToInt64(builder, underlyingType, tEnum);
 
-            return builder.CreateType();
+            return builder.CreateType()!;
         }
 
         /// <summary><![CDATA[
@@ -127,7 +127,7 @@ namespace KGySoft.CoreLibraries
         private static void GenerateDynamicEnumComparerCtor(TypeBuilder type)
         {
             MethodBuilder ctor = type.DefineMethod(".ctor", MethodAttributes.Public | MethodAttributes.HideBySig);
-            ConstructorInfo baseCtor = typeof(EnumComparer<>).GetDefaultConstructor();
+            ConstructorInfo baseCtor = typeof(EnumComparer<>).GetDefaultConstructor()!;
             ctor.SetReturnType(Reflector.VoidType);
             ILGenerator il = ctor.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary><![CDATA[
-        /// public override bool Equals(TEnum x, TEnum y) => (x == y);
+        /// public override bool Equals(TEnum x, TEnum y) => x == y;
         /// ]]></summary>
         private static void GenerateEquals(TypeBuilder type, Type tEnum)
         {
@@ -153,7 +153,12 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary><![CDATA[
-        /// public override int GetHashCode(TEnum obj);
+        /// public override int GetHashCode(TEnum obj) =>
+        /// #if sizeof(TEnum) == 64
+        ///     (int)((long)obj ^ ((long)obj >> 32));
+        /// #else
+        ///     (int)obj;
+        /// #endif
         /// ]]></summary>
         private static void GenerateGetHashCode(TypeBuilder type, Type underlyingType, Type tEnum)
         {
@@ -201,7 +206,7 @@ namespace KGySoft.CoreLibraries
         private static void GenerateCompare(TypeBuilder type, Type underlyingType, Type tEnum)
         {
             MethodBuilder methodCompare = type.DefineMethod(nameof(EnumComparer<_>.Compare), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
-            MethodInfo underlyingCompareTo = underlyingType.GetMethod(nameof(IComparable<_>.CompareTo), new[] { underlyingType });
+            MethodInfo underlyingCompareTo = underlyingType.GetMethod(nameof(IComparable<_>.CompareTo), new[] { underlyingType })!;
             methodCompare.SetReturnType(Reflector.IntType);
             methodCompare.SetParameters(tEnum, tEnum);
             methodCompare.DefineParameter(1, ParameterAttributes.None, "x");
@@ -281,12 +286,14 @@ namespace KGySoft.CoreLibraries
             switch (Type.GetTypeCode(underlyingType))
             {
                 case TypeCode.Byte:
+                case TypeCode.Boolean:
                     return OpCodes.Conv_U1;
                 case TypeCode.SByte:
                     return OpCodes.Conv_I1;
                 case TypeCode.Int16:
                     return OpCodes.Conv_I2;
                 case TypeCode.UInt16:
+                case TypeCode.Char:
                     return OpCodes.Conv_U2;
                 case TypeCode.Int32:
                     return OpCodes.Conv_I4;

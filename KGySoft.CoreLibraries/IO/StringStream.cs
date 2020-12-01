@@ -17,9 +17,8 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using KGySoft.Annotations;
+
 #if NET35
 using KGySoft.CoreLibraries;
 #endif
@@ -101,7 +100,7 @@ namespace KGySoft.IO
 
         public StringStream(string s) : base(Reflector.EmptyArray<byte>(), false)
         {
-            if (s == null)
+            if (s == null!)
                 Throw.ArgumentNullException(Argument.s);
             str = s;
         }
@@ -132,13 +131,11 @@ namespace KGySoft.IO
             return position;
         }
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, buffer CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, key buffer be null so the Throw is reachable")]
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (position < 0)
                 Throw.ObjectDisposedException();
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
             if (offset < 0)
                 Throw.ArgumentOutOfRangeException(Argument.offset, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
@@ -176,7 +173,7 @@ namespace KGySoft.IO
         {
             if (position < 0)
                 Throw.ObjectDisposedException();
-            if (stream == null)
+            if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
             using (var ss = new StringStream(str))
                 ss.CopyTo(stream);
@@ -192,8 +189,6 @@ namespace KGySoft.IO
 
         #region Protected Methods
 
-        [SuppressMessage("Microsoft.Usage", "CA2215:Dispose methods should call base class dispose",
-            Justification = "Just avoiding calling Dispose on a disposed object")]
         protected override void Dispose(bool disposing)
         {
             if (position < 0)

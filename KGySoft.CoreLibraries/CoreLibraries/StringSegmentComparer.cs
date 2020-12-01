@@ -19,7 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -55,18 +54,16 @@ namespace KGySoft.CoreLibraries
 
             #region String
 
-            public override bool Equals(string x, string y) => x == y;
+            public override bool Equals(string? x, string? y) => x == y;
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
             public override int GetHashCode(string obj)
             {
-                if (obj == null)
+                if (obj == null!)
                     Throw.ArgumentNullException(Argument.obj);
                 return GetHashCodeOrdinal(obj);
             }
 
-            public override int Compare(string x, string y) => String.CompareOrdinal(x, y);
+            public override int Compare(string? x, string? y) => String.CompareOrdinal(x, y);
 
             #endregion
 
@@ -92,7 +89,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal override bool Equals(StringSegment x, string y) => x.Equals(y);
+            internal override bool Equals(StringSegment x, string? y) => x.Equals(y);
             internal override bool Equals(StringSegmentInternal x, string y) => x.Equals(y);
             internal override int GetHashCode(StringSegmentInternal obj) => obj.GetHashCode();
 
@@ -114,18 +111,16 @@ namespace KGySoft.CoreLibraries
 
             #region String
 
-            public override bool Equals(string x, string y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+            public override bool Equals(string? x, string? y) => String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
             public override int GetHashCode(string obj)
             {
-                if (obj == null)
+                if (obj == null!)
                     Throw.ArgumentNullException(Argument.obj);
                 return GetHashCodeOrdinalIgnoreCase(obj);
             }
 
-            public override int Compare(string x, string y) => String.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            public override int Compare(string? x, string? y) => String.Compare(x, y, StringComparison.OrdinalIgnoreCase);
 
             #endregion
 
@@ -151,7 +146,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal override bool Equals(StringSegment x, string y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
+            internal override bool Equals(StringSegment x, string? y) => StringSegment.EqualsOrdinalIgnoreCase(x, y);
             internal override bool Equals(StringSegmentInternal x, string y) => x.EqualsOrdinalIgnoreCase(y);
             internal override int GetHashCode(StringSegmentInternal obj) => obj.GetHashCodeOrdinalIgnoreCase();
 
@@ -184,7 +179,7 @@ namespace KGySoft.CoreLibraries
 
             internal StringSegmentCultureAwareComparer(CultureInfo culture, bool ignoreCase)
             {
-                if (culture == null)
+                if (culture == null!)
                     Throw.ArgumentNullException(Argument.culture);
                 compareInfo = culture.CompareInfo;
                 options = ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None;
@@ -209,13 +204,11 @@ namespace KGySoft.CoreLibraries
 
             #region String
 
-            public override bool Equals(string x, string y) => compareInfo.Compare(x, y, options) == 0;
+            public override bool Equals(string? x, string? y) => compareInfo.Compare(x, y, options) == 0;
 
-            [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, obj CAN be null")]
-            [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, obj CAN be null")]
             public override int GetHashCode(string obj)
             {
-                if (obj == null)
+                if (obj == null!)
                     Throw.ArgumentNullException(Argument.obj);
 
 #if NET35 || NET40 || NET45
@@ -225,7 +218,7 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
-            public override int Compare(string x, string y) => compareInfo.Compare(x, y, options);
+            public override int Compare(string? x, string? y) => compareInfo.Compare(x, y, options);
 
             #endregion
 
@@ -292,7 +285,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal override bool Equals(StringSegment x, string y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
+            internal override bool Equals(StringSegment x, string? y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             internal override int GetHashCode(StringSegmentInternal obj) => Throw.InternalError<int>("Not expected to be called");
             internal override bool Equals(StringSegmentInternal x, string y) => Throw.InternalError<bool>("Not expected to be called");
 
@@ -314,10 +307,10 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
-        private static StringSegmentComparer ordinalComparer;
-        private static StringSegmentComparer ordinalIgnoreCaseComparer;
-        private static StringSegmentComparer invariantComparer;
-        private static StringSegmentComparer invariantIgnoreCaseComparer;
+        private static StringSegmentComparer? ordinalComparer;
+        private static StringSegmentComparer? ordinalIgnoreCaseComparer;
+        private static StringSegmentComparer? invariantComparer;
+        private static StringSegmentComparer? invariantIgnoreCaseComparer;
 
         #endregion
 
@@ -435,6 +428,8 @@ namespace KGySoft.CoreLibraries
                 return s.GetHashCode();
 #endif
             var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + s[i];
 
@@ -464,6 +459,8 @@ namespace KGySoft.CoreLibraries
                 return String.GetHashCode(s); 
 #endif
             var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + s[i];
 
@@ -480,6 +477,8 @@ namespace KGySoft.CoreLibraries
 #endif
 
             var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + Char.ToUpperInvariant(s[i]);
 
@@ -509,6 +508,8 @@ namespace KGySoft.CoreLibraries
                 return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
 #endif
             var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (int i = 0; i < s.Length; i++)
                 result = result * 397 + Char.ToUpperInvariant(s[i]);
 
@@ -582,7 +583,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
         /// </returns>
-        public abstract int Compare(string x, string y);
+        public abstract int Compare(string? x, string? y);
 
         #endregion
 
@@ -595,7 +596,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="y">An object to compare to <paramref name="x"/>.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> refer to the same object, or <paramref name="x"/> and <paramref name="y"/> are both
         /// the same type of object and those objects are equal, or both <paramref name="x"/> and <paramref name="y"/> are <see langword="null"/>; otherwise, <see langword="false"/>.</returns>
-        public new bool Equals(object x, object y)
+        public new bool Equals(object? x, object? y)
         {
             if (x == y)
                 return true;
@@ -633,7 +634,7 @@ namespace KGySoft.CoreLibraries
         public int GetHashCode(object obj)
         {
             // Unlike in Equals, null is not accepted here. StringSegment.Null will still work.
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
 
             return obj switch
@@ -652,7 +653,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
         /// </returns>
-        public int Compare(object x, object y)
+        public int Compare(object? x, object? y)
         {
             if (x == y)
                 return 0;
@@ -728,18 +729,7 @@ namespace KGySoft.CoreLibraries
         #region StringSegmentInternal
 
         internal abstract bool Equals(StringSegmentInternal x, string y);
-
         internal abstract int GetHashCode(StringSegmentInternal obj);
-
-        ///// <summary>
-        ///// When overridden in a derived class, compares two <see cref="StringSegment"/> instances and returns an indication of their relative sort order.
-        ///// </summary>
-        ///// <param name="x">A <see cref="StringSegment"/> to compare to <paramref name="y"/>.</param>
-        ///// <param name="y">A <see cref="StringSegment"/> to compare to <paramref name="x"/>.</param>
-        ///// <returns>
-        ///// A signed integer that indicates the relative order of <paramref name="x" /> and <paramref name="y" />.
-        ///// </returns>
-        //public abstract int Compare(StringSegment x, StringSegment y);
 
         #endregion
 

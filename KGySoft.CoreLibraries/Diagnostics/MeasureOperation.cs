@@ -32,7 +32,7 @@ namespace KGySoft.Diagnostics
 
         private readonly Stopwatch stopwatch = new Stopwatch();
 
-        private MeasureItem item;
+        private MeasureItem? item;
 
         #endregion
 

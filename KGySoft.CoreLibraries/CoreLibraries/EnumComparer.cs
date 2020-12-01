@@ -19,13 +19,27 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
+#if (NETFRAMEWORK && !NET35) || NETSTANDARD2_0
+using System.Linq.Expressions; 
+#endif
 using System.Runtime.Serialization;
 using System.Security;
-using System.Threading;
+#if (NETFRAMEWORK && !NET35) || NETSTANDARD2_0
+using System.Threading; 
+#endif
 
 using KGySoft.Collections;
+#if (NETFRAMEWORK && !NET35) || NETSTANDARD2_0
 using KGySoft.Reflection;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes). - Equals/Compare parameters are never null in this class but the constraint is checked in ctor  
+#endif
 
 #endregion
 
@@ -89,6 +103,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region FallbackEnumComparer
+#if (NETFRAMEWORK && !NET35) || NETSTANDARD2_0
 
         /// <summary>
         /// A fallback comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/>
@@ -100,38 +115,9 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            private Func<ulong, TEnum> toEnum;
-            private Func<TEnum, ulong> toUInt64;
-            private Func<TEnum, long> toInt64;
-
-            #endregion
-
-            #region Constructors
-
-#if !NETFRAMEWORK || NET35
-            internal
-#endif
-            protected FallbackEnumComparer()
-            {
-                ParameterExpression valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
-                toEnum = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression).Compile();
-
-                valueParamExpression = Expression.Parameter(typeof(TEnum), "value");
-
-                // ToUInt64 for unsigned types
-                if (!typeof(TEnum).IsSignedIntegerType())
-                {
-                    toUInt64 = Expression.Lambda<Func<TEnum, ulong>>(Expression.Convert(valueParamExpression, Reflector.ULongType), valueParamExpression).Compile();
-                    return;
-                }
-
-                toInt64 = Expression.Lambda<Func<TEnum, long>>(Expression.Convert(valueParamExpression, Reflector.LongType), valueParamExpression).Compile();
-
-                // ToUInt64 for signed types
-                var asULong = Expression.Convert(valueParamExpression, Reflector.ULongType);
-                var applyMask = Expression.And(asULong, Expression.Constant(typeof(TEnum).GetSizeMask()));
-                toUInt64 = Expression.Lambda<Func<TEnum, ulong>>(applyMask, valueParamExpression).Compile();
-            }
+            private Func<ulong, TEnum>? toEnum;
+            private Func<TEnum, ulong>? toUInt64;
+            private Func<TEnum, long>? toInt64;
 
             #endregion
 
@@ -215,6 +201,7 @@ namespace KGySoft.CoreLibraries
             #endregion
         }
 
+#endif
         #endregion
 
         #region PartiallyTrustedEnumComparer class
@@ -230,9 +217,9 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
-            private static Func<TEnum, TEnum, bool> equals;
-            private static Func<TEnum, int> getHashCode;
-            private static Func<TEnum, TEnum, int> compare;
+            private static Func<TEnum, TEnum, bool>? equals;
+            private static Func<TEnum, int>? getHashCode;
+            private static Func<TEnum, TEnum, int>? compare;
 
             #endregion
 
@@ -319,7 +306,7 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
-        private static EnumComparer<TEnum> comparer;
+        private static EnumComparer<TEnum>? comparer;
 
         #endregion
 
@@ -364,7 +351,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is EnumComparer<TEnum>;
+        public override bool Equals(object? obj) => obj is EnumComparer<TEnum>;
 
         /// <summary>
         /// Returns a hash code for this instance.
@@ -439,8 +426,6 @@ namespace KGySoft.CoreLibraries
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        [SuppressMessage("Microsoft.Usage", "CA2240:ImplementISerializableCorrectly", Justification = "It MUST NOT be overridable. Every derived type must return the Comparer singleton instance.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
 
         #endregion

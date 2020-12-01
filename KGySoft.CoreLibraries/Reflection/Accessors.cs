@@ -22,7 +22,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -57,45 +56,45 @@ namespace KGySoft.Reflection
 
         #region CollectionExtensions
 
-        private static MethodInfo addRangeExtensionMethod;
-        private static IDictionary<Type, ActionMethodAccessor> methodsCollectionExtensions_AddRange;
+        private static MethodInfo? addRangeExtensionMethod;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsCollectionExtensions_AddRange;
 
         #endregion
 
         #region ListExtensions
 
-        private static MethodInfo insertRangeExtensionMethod;
-        private static MethodInfo removeRangeExtensionMethod;
-        private static MethodInfo replaceRangeExtensionMethod;
-        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_InsertRange;
-        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_RemoveRange;
-        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_ReplaceRange;
+        private static MethodInfo? insertRangeExtensionMethod;
+        private static MethodInfo? removeRangeExtensionMethod;
+        private static MethodInfo? replaceRangeExtensionMethod;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_InsertRange;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_RemoveRange;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_ReplaceRange;
 
         #endregion
 
         #region ICollection<T>
 
-        private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_IsReadOnly;
-        private static IDictionary<Type, ActionMethodAccessor> methodsICollection_Add;
-        private static IDictionary<Type, ActionMethodAccessor> methodsICollection_Clear;
-        private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_Count;
-        private static IDictionary<Type, FunctionMethodAccessor> methodsICollection_Remove;
+        private static IDictionary<Type, SimplePropertyAccessor>? propertiesICollection_IsReadOnly;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsICollection_Add;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsICollection_Clear;
+        private static IDictionary<Type, SimplePropertyAccessor>? propertiesICollection_Count;
+        private static IDictionary<Type, FunctionMethodAccessor>? methodsICollection_Remove;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static IDictionary<Type, FunctionMethodAccessor> methodsIProducerConsumerCollection_TryAdd;
+        private static IDictionary<Type, FunctionMethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        private static IDictionary<Type, ActionMethodAccessor> methodsIList_Insert;
-        private static IDictionary<Type, ActionMethodAccessor> methodsIList_RemoveAt;
-        private static IDictionary<Type, IndexerAccessor> propertiesIList_Item;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsIList_Insert;
+        private static IDictionary<Type, ActionMethodAccessor>? methodsIList_RemoveAt;
+        private static IDictionary<Type, IndexerAccessor>? propertiesIList_Item;
 
         #endregion
 
@@ -108,9 +107,9 @@ namespace KGySoft.Reflection
         #region Exception
 
 #if NET35 || NET40
-        private static FieldAccessor fieldException_source;
-        private static FieldAccessor fieldException_remoteStackTraceString;
-        private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
+        private static FieldAccessor? fieldException_source;
+        private static FieldAccessor? fieldException_remoteStackTraceString;
+        private static ActionMethodAccessor? methodException_InternalPreserveStackTrace;
 #endif
 
         #endregion
@@ -118,14 +117,14 @@ namespace KGySoft.Reflection
         #region HashSet<T>
 
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0 // from .NET 4.72 capacity ctor is available
-        private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
+        private static IDictionary<Type, ActionMethodAccessor?>? methodsHashSet_Initialize;
 #endif
 
         #endregion
 
         #region MemoryStream
 
-        private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
+        private static FunctionMethodAccessor? methodMemoryStream_InternalGetBuffer;
 
 #if !NETFRAMEWORK
         private static bool? hasMemoryStream_InternalGetBuffer;
@@ -137,9 +136,9 @@ namespace KGySoft.Reflection
 
         #region Any Member
 
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor> properties;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type FieldType, string FieldNamePattern), FieldAccessor> fields;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type P1, Type P2), ActionMethodAccessor> ctorMethods;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor?>? properties;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? P1, Type? P2), ActionMethodAccessor?>? ctorMethods;
 
         #endregion
 
@@ -155,10 +154,9 @@ namespace KGySoft.Reflection
         {
             if (methodsCollectionExtensions_AddRange == null)
                 Interlocked.CompareExchange(ref methodsCollectionExtensions_AddRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsCollectionExtensions_AddRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            if (!methodsCollectionExtensions_AddRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor((addRangeExtensionMethod ??= typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))).GetGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor((addRangeExtensionMethod ??= typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))!).GetGenericMethod(genericArgument));
                 methodsCollectionExtensions_AddRange[genericArgument] = accessor;
             }
 
@@ -174,10 +172,9 @@ namespace KGySoft.Reflection
             // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_InsertRange == null)
                 Interlocked.CompareExchange(ref methodsListExtensions_InsertRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_InsertRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            if (!methodsListExtensions_InsertRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor((insertRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))).GetGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor((insertRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))!).GetGenericMethod(genericArgument));
                 methodsListExtensions_InsertRange[genericArgument] = accessor;
             }
 
@@ -189,10 +186,9 @@ namespace KGySoft.Reflection
             // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_RemoveRange == null)
                 Interlocked.CompareExchange(ref methodsListExtensions_RemoveRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_RemoveRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            if (!methodsListExtensions_RemoveRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor((removeRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))).GetGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor((removeRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))!).GetGenericMethod(genericArgument));
                 methodsListExtensions_RemoveRange[genericArgument] = accessor;
             }
 
@@ -204,10 +200,9 @@ namespace KGySoft.Reflection
             // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_ReplaceRange == null)
                 Interlocked.CompareExchange(ref methodsListExtensions_ReplaceRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_ReplaceRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            if (!methodsListExtensions_ReplaceRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                accessor = new ActionMethodAccessor((replaceRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))).GetGenericMethod(genericArgument));
+                accessor = new ActionMethodAccessor((replaceRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))!).GetGenericMethod(genericArgument));
                 methodsListExtensions_ReplaceRange[genericArgument] = accessor;
             }
 
@@ -223,9 +218,9 @@ namespace KGySoft.Reflection
         {
             if (propertiesICollection_IsReadOnly == null)
                 Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
-            if (!propertiesICollection_IsReadOnly.TryGetValue(collectionInterface, out SimplePropertyAccessor accessor))
+            if (!propertiesICollection_IsReadOnly.TryGetValue(collectionInterface, out SimplePropertyAccessor? accessor))
             {
-                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly)));
+                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))!);
                 propertiesICollection_IsReadOnly[collectionInterface] = accessor;
             }
 
@@ -236,9 +231,9 @@ namespace KGySoft.Reflection
         {
             if (methodsICollection_Add == null)
                 Interlocked.CompareExchange(ref methodsICollection_Add, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsICollection_Add.TryGetValue(collectionInterface, out ActionMethodAccessor accessor))
+            if (!methodsICollection_Add.TryGetValue(collectionInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Add)));
+                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Add))!);
                 methodsICollection_Add[collectionInterface] = accessor;
             }
 
@@ -249,9 +244,9 @@ namespace KGySoft.Reflection
         {
             if (methodsICollection_Clear == null)
                 Interlocked.CompareExchange(ref methodsICollection_Clear, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsICollection_Clear.TryGetValue(collectionInterface, out ActionMethodAccessor accessor))
+            if (!methodsICollection_Clear.TryGetValue(collectionInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Clear)));
+                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Clear))!);
                 methodsICollection_Clear[collectionInterface] = accessor;
             }
 
@@ -262,9 +257,9 @@ namespace KGySoft.Reflection
         {
             if (propertiesICollection_Count == null)
                 Interlocked.CompareExchange(ref propertiesICollection_Count, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
-            if (!propertiesICollection_Count.TryGetValue(collectionInterface, out SimplePropertyAccessor accessor))
+            if (!propertiesICollection_Count.TryGetValue(collectionInterface, out SimplePropertyAccessor? accessor))
             {
-                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.Count)));
+                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.Count))!);
                 propertiesICollection_Count[collectionInterface] = accessor;
             }
 
@@ -275,9 +270,9 @@ namespace KGySoft.Reflection
         {
             if (methodsICollection_Remove == null)
                 Interlocked.CompareExchange(ref methodsICollection_Remove, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
-            if (!methodsICollection_Remove.TryGetValue(collectionInterface, out FunctionMethodAccessor accessor))
+            if (!methodsICollection_Remove.TryGetValue(collectionInterface, out FunctionMethodAccessor? accessor))
             {
-                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Remove)));
+                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Remove))!);
                 methodsICollection_Remove[collectionInterface] = accessor;
             }
 
@@ -293,9 +288,9 @@ namespace KGySoft.Reflection
         {
             if (methodsIProducerConsumerCollection_TryAdd == null)
                 Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
-            if (!methodsIProducerConsumerCollection_TryAdd.TryGetValue(collectionInterface, out FunctionMethodAccessor accessor))
+            if (!methodsIProducerConsumerCollection_TryAdd.TryGetValue(collectionInterface, out FunctionMethodAccessor? accessor))
             {
-                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd)));
+                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!);
                 methodsIProducerConsumerCollection_TryAdd[collectionInterface] = accessor;
             }
 
@@ -311,9 +306,9 @@ namespace KGySoft.Reflection
         {
             if (methodsIList_Insert == null)
                 Interlocked.CompareExchange(ref methodsIList_Insert, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsIList_Insert.TryGetValue(listInterface, out ActionMethodAccessor accessor))
+            if (!methodsIList_Insert.TryGetValue(listInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.Insert)));
+                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.Insert))!);
                 methodsIList_Insert[listInterface] = accessor;
             }
 
@@ -324,9 +319,9 @@ namespace KGySoft.Reflection
         {
             if (methodsIList_RemoveAt == null)
                 Interlocked.CompareExchange(ref methodsIList_RemoveAt, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsIList_RemoveAt.TryGetValue(listInterface, out ActionMethodAccessor accessor))
+            if (!methodsIList_RemoveAt.TryGetValue(listInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.RemoveAt)));
+                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.RemoveAt))!);
                 methodsIList_RemoveAt[listInterface] = accessor;
             }
 
@@ -337,9 +332,9 @@ namespace KGySoft.Reflection
         {
             if (propertiesIList_Item == null)
                 Interlocked.CompareExchange(ref propertiesIList_Item, new LockingDictionary<Type, IndexerAccessor>(), null);
-            if (!propertiesIList_Item.TryGetValue(listInterface, out IndexerAccessor accessor))
+            if (!propertiesIList_Item.TryGetValue(listInterface, out IndexerAccessor? accessor))
             {
-                accessor = new IndexerAccessor(listInterface.GetProperty("Item"));
+                accessor = new IndexerAccessor(listInterface.GetProperty("Item")!);
                 propertiesIList_Item[listInterface] = accessor;
             }
 
@@ -359,9 +354,9 @@ namespace KGySoft.Reflection
         #region Exception
 
 #if NET35 || NET40
-        private static FieldAccessor Exception_source => fieldException_source ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic));
-        private static FieldAccessor Exception_remoteStackTraceString => fieldException_remoteStackTraceString ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic));
-        private static MethodAccessor Exception_InternalPreserveStackTrace => methodException_InternalPreserveStackTrace ??= new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic));
+        private static FieldAccessor Exception_source => fieldException_source ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)!);
+        private static FieldAccessor Exception_remoteStackTraceString => fieldException_remoteStackTraceString ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic)!);
+        private static MethodAccessor Exception_InternalPreserveStackTrace => methodException_InternalPreserveStackTrace ??= new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic)!);
 #endif
 
         #endregion
@@ -369,13 +364,13 @@ namespace KGySoft.Reflection
         #region HashSet<T>
 
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0 // for other frameworks we expect that ctor with capacity is available. If not, the usages will provide the compile error
-        private static MethodAccessor HashSet_Initialize<T>()
+        private static MethodAccessor? HashSet_Initialize<T>()
         {
             if (methodsHashSet_Initialize == null)
-                Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe(), null);
-            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor accessor))
+                Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor?>().AsThreadSafe(), null);
+            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor? accessor))
             {
-                MethodInfo mi = typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo? mi = typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic);
                 accessor = mi == null ? null : new ActionMethodAccessor(mi);
                 methodsHashSet_Initialize[typeof(T)] = accessor;
             }
@@ -389,18 +384,18 @@ namespace KGySoft.Reflection
         #region MemoryStream
 
 #if NETFRAMEWORK
-        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ??= new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic));
+        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ??= new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)!);
 #else
-        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
+        private static FunctionMethodAccessor? MemoryStream_InternalGetBuffer
         {
             get
             {
                 if (hasMemoryStream_InternalGetBuffer == null)
                 {
-                    MethodInfo mi = typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic);
+                    MethodInfo? mi = typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic);
                     hasMemoryStream_InternalGetBuffer = mi != null;
                     if (hasMemoryStream_InternalGetBuffer == true)
-                        methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(mi);
+                        methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(mi!);
                 }
 
                 return hasMemoryStream_InternalGetBuffer == true ? methodMemoryStream_InternalGetBuffer : null;
@@ -414,30 +409,30 @@ namespace KGySoft.Reflection
 
         #region Any Member
 
-        private static PropertyAccessor GetProperty(Type type, string propertyName)
+        private static PropertyAccessor? GetProperty(Type type, string propertyName)
         {
-            static PropertyAccessor GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
+            static PropertyAccessor? GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
             {
                 // Properties are meant to be used for visible members so always exact names are searched
-                PropertyInfo property = key.DeclaringType.GetProperty(key.PropertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                PropertyInfo? property = key.DeclaringType.GetProperty(key.PropertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
                 return property == null ? null : PropertyAccessor.GetAccessor(property);
             }
 
             if (properties == null)
-                Interlocked.CompareExchange(ref properties, new Cache<(Type, string), PropertyAccessor>(GetPropertyAccessor).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref properties, new Cache<(Type, string), PropertyAccessor?>(GetPropertyAccessor).GetThreadSafeAccessor(), null);
             return properties[(type, propertyName)];
         }
 
-        private static FieldAccessor GetField(Type type, Type fieldType, string fieldNamePattern)
+        private static FieldAccessor? GetField(Type type, Type? fieldType, string? fieldNamePattern)
         {
             // Fields are meant to be used for non-visible members either by type or name pattern (or both)
-            FieldAccessor GetFieldAccessor((Type DeclaringType, Type FieldType, string FieldNamePattern) key)
+            FieldAccessor? GetFieldAccessor((Type DeclaringType, Type? FieldType, string? FieldNamePattern) key)
             {
-                for (Type t = key.DeclaringType; t != typeof(object); t = t.BaseType)
+                for (Type? t = key.DeclaringType; t != Reflector.ObjectType; t = t.BaseType)
                 {
-                    FieldInfo[] fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                    FieldInfo field = fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
-                        ?? fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
+                    FieldInfo[] fieldArray = t!.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    FieldInfo? field = fieldArray.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
+                        ?? fieldArray.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
                             && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
 
                     if (field != null)
@@ -448,26 +443,26 @@ namespace KGySoft.Reflection
             }
 
             if (fields == null)
-                Interlocked.CompareExchange(ref fields, new Cache<(Type, Type, string), FieldAccessor>(GetFieldAccessor).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref fields, new Cache<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor).GetThreadSafeAccessor(), null);
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
-        private static T GetFieldValueOrDefault<T>(object obj, T defaultValue = default, string fieldNamePattern = null)
+        private static T GetFieldValueOrDefault<T>(object obj, T defaultValue = default, string? fieldNamePattern = null)
         {
-            var field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
-            return field == null ? defaultValue : (T)field.Get(obj);
+            FieldAccessor? field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
+            return field == null ? defaultValue! : (T)field.Get(obj)!;
         }
 
         private static T GetFieldValueOrDefault<T>(object obj, Func<T> defaultValueFactory)
         {
-            var field = GetField(obj.GetType(), typeof(T), null);
-            return field == null ? defaultValueFactory.Invoke() : (T)field.Get(obj);
+            FieldAccessor? field = GetField(obj.GetType(), typeof(T), null);
+            return field == null ? defaultValueFactory.Invoke() : (T)field.Get(obj)!;
         }
 
-        private static void SetFieldValue(object obj, string fieldNamePattern, object value, bool throwIfMissing = true)
+        private static void SetFieldValue(object obj, string fieldNamePattern, object? value, bool throwIfMissing = true)
         {
             Type type = obj.GetType();
-            FieldAccessor field = GetField(type, null, fieldNamePattern);
+            FieldAccessor? field = GetField(type, null, fieldNamePattern);
             if (field == null)
             {
                 if (throwIfMissing)
@@ -485,19 +480,19 @@ namespace KGySoft.Reflection
             field.Set(obj, value);
         }
 
-        private static ActionMethodAccessor GetCtorMethod(Type type, object[] ctorArgs)
+        private static ActionMethodAccessor? GetCtorMethod(Type type, object?[] ctorArgs)
         {
-            static ActionMethodAccessor GetCtorMethodAccessor((Type Type, Type P1, Type P2) key)
+            static ActionMethodAccessor? GetCtorMethodAccessor((Type Type, Type? P1, Type? P2) key)
             {
-                ConstructorInfo ci = key.P1 == null 
+                ConstructorInfo? ci = key.P1 == null 
                     ? key.Type.GetDefaultConstructor()
                     : key.Type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, key.P2 == null ? new[] { key.P1 } : new[] { key.P1, key.P2 }, null);
                 return ci == null ? null : new ActionMethodAccessor(ci);
             }
 
             if (ctorMethods == null)
-                Interlocked.CompareExchange(ref ctorMethods, new Cache<(Type, Type, Type), ActionMethodAccessor>(GetCtorMethodAccessor).GetThreadSafeAccessor(), null);
-            return ctorMethods[(type, ctorArgs?.ElementAtOrDefault(0)?.GetType(), ctorArgs?.ElementAtOrDefault(1)?.GetType())];
+                Interlocked.CompareExchange(ref ctorMethods, new Cache<(Type, Type?, Type?), ActionMethodAccessor?>(GetCtorMethodAccessor).GetThreadSafeAccessor(), null);
+            return ctorMethods[(type, ctorArgs.ElementAtOrDefault(0)?.GetType(), ctorArgs.ElementAtOrDefault(1)?.GetType())];
         }
 
         #endregion
@@ -524,27 +519,27 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        internal static bool IsReadOnly([NoEnumeration] this IEnumerable collection, Type collectionInterface) => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection);
-        internal static void Add([NoEnumeration] this IEnumerable collection, Type collectionInterface, object? item) => ICollection_Add(collectionInterface).Invoke(collection, item);
-        internal static void Clear([NoEnumeration] this IEnumerable collection, Type collectionInterface) => ICollection_Clear(collectionInterface).Invoke(collection);
-        internal static int Count([NoEnumeration] this IEnumerable collection, Type collectionInterface) => (int)ICollection_Count(collectionInterface).Get(collection);
-        internal static bool Remove([NoEnumeration] this IEnumerable collection, Type collectionInterface, object? item) => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item);
+        internal static bool IsReadOnly([NoEnumeration]this IEnumerable collection, Type collectionInterface) => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection)!;
+        internal static void Add([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => ICollection_Add(collectionInterface).Invoke(collection, item);
+        internal static void Clear([NoEnumeration]this IEnumerable collection, Type collectionInterface) => ICollection_Clear(collectionInterface).Invoke(collection);
+        internal static int Count([NoEnumeration]this IEnumerable collection, Type collectionInterface) => (int)ICollection_Count(collectionInterface).Get(collection)!;
+        internal static bool Remove([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item)!;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        internal static bool TryAddToProducerConsumerCollection([NoEnumeration] this IEnumerable collection, Type collectionInterface, object? item) => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item);
+        internal static bool TryAddToProducerConsumerCollection([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item)!;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        internal static void Insert([NoEnumeration] this IEnumerable list, Type listInterface, int index, object? item) => IList_Insert(listInterface).Invoke(list, index, item);
-        internal static void RemoveAt([NoEnumeration] this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
-        internal static void SetElementAt([NoEnumeration] this IEnumerable list, Type listInterface, int index, object? item) => IList_Item(listInterface).Set(list, item, index);
+        internal static void Insert([NoEnumeration]this IEnumerable list, Type listInterface, int index, object? item) => IList_Insert(listInterface).Invoke(list, index, item);
+        internal static void RemoveAt([NoEnumeration]this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
+        internal static void SetElementAt([NoEnumeration]this IEnumerable list, Type listInterface, int index, object? item) => IList_Item(listInterface).Set(list, item, index);
 
         #endregion
 
@@ -576,15 +571,16 @@ namespace KGySoft.Reflection
         #region Point
 
 #if !NETCOREAPP2_0
-        internal static int Point_GetX(object point) => point == null ? 0 : (int)GetPropertyValue(point, "X");
-        internal static int Point_GetY(object point) => point == null ? 0 : (int)GetPropertyValue(point, "Y");
+        internal static int Point_GetX(object? point) => point == null ? 0 : (int)GetPropertyValue(point, "X")!;
+        internal static int Point_GetY(object? point) => point == null ? 0 : (int)GetPropertyValue(point, "Y")!;
 #endif
 
         #endregion
 
         #region MemoryStream
 
-        internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer?.Invoke(ms);
+        // ReSharper disable once ConstantConditionalAccessQualifier - there are some targets where it can be null
+        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => (byte[]?)MemoryStream_InternalGetBuffer?.Invoke(ms);
 
         #endregion
 
@@ -601,9 +597,9 @@ namespace KGySoft.Reflection
         #region ResXFileRef
 
 #if !NETCOREAPP2_0
-        internal static string ResXFileRef_GetFileName(object fileRef) => (string)GetPropertyValue(fileRef, "FileName");
-        internal static string ResXFileRef_GetTypeName(object fileRef) => (string)GetPropertyValue(fileRef, "TypeName");
-        internal static Encoding ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding)GetPropertyValue(fileRef, "TextFileEncoding");
+        internal static string? ResXFileRef_GetFileName(object fileRef) => (string?)GetPropertyValue(fileRef, "FileName");
+        internal static string? ResXFileRef_GetTypeName(object fileRef) => (string?)GetPropertyValue(fileRef, "TypeName");
+        internal static Encoding? ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding?)GetPropertyValue(fileRef, "TextFileEncoding");
 #endif
 
         #endregion
@@ -611,10 +607,10 @@ namespace KGySoft.Reflection
         #region ResXDataNode
 
 #if !NETCOREAPP2_0
-        internal static object ResXDataNode_GetValue(object node) => GetFieldValueOrDefault<object>(node, null, "value");
-        internal static string ResXDataNode_GetComment(object node) => GetFieldValueOrDefault<string>(node, null, "comment");
-        internal static object ResXDataNode_GetFileRef(object node) => GetField(node.GetType(), null, "fileRef")?.Get(node);
-        internal static object ResXDataNode_GetNodeInfo(object node) => GetField(node.GetType(), null, "nodeInfo")?.Get(node);
+        internal static object? ResXDataNode_GetValue(object node) => GetFieldValueOrDefault<object?>(node, null, "value");
+        internal static string? ResXDataNode_GetComment(object node) => GetFieldValueOrDefault<string?>(node, null, "comment");
+        internal static object? ResXDataNode_GetFileRef(object node) => GetField(node.GetType(), null, "fileRef")?.Get(node);
+        internal static object? ResXDataNode_GetNodeInfo(object node) => GetField(node.GetType(), null, "nodeInfo")?.Get(node);
 #endif
 
         #endregion
@@ -622,44 +618,44 @@ namespace KGySoft.Reflection
         #region DataNodeInfo
 
 #if !NETCOREAPP2_0
-        internal static string DataNodeInfo_GetName(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "Name");
-        internal static string DataNodeInfo_GetComment(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "Comment");
-        internal static string DataNodeInfo_GetTypeName(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "TypeName");
-        internal static string DataNodeInfo_GetMimeType(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "MimeType");
-        internal static string DataNodeInfo_GetValueData(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "ValueData");
-        internal static object DataNodeInfo_GetReaderPosition(object nodeInfo) => GetField(nodeInfo.GetType(), null, "ReaderPosition")?.Get(nodeInfo);
+        internal static string? DataNodeInfo_GetName(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "Name");
+        internal static string? DataNodeInfo_GetComment(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "Comment");
+        internal static string? DataNodeInfo_GetTypeName(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "TypeName");
+        internal static string? DataNodeInfo_GetMimeType(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "MimeType");
+        internal static string? DataNodeInfo_GetValueData(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "ValueData");
+        internal static object? DataNodeInfo_GetReaderPosition(object nodeInfo) => GetField(nodeInfo.GetType(), null, "ReaderPosition")?.Get(nodeInfo);
 #endif
 
         #endregion
 
         #region IEnumerables
 
-        internal static int Count([NoEnumeration] this IEnumerable collection)
+        internal static int Count([NoEnumeration]this IEnumerable collection)
         {
             if (collection is ICollection c)
                 return c.Count;
-            PropertyAccessor property = GetProperty(collection.GetType(), "Count"); // StringDictionary
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Count"); // StringDictionary
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
-            return (int)property.Get(collection);
+            return (int)property.Get(collection)!;
         }
 
-        internal static int Capacity([NoEnumeration] this IEnumerable collection)
+        internal static int Capacity([NoEnumeration]this IEnumerable collection)
         {
-            PropertyAccessor property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
-            return (int)property.Get(collection);
+            return (int)property.Get(collection)!;
         }
 
-        internal static bool IsCaseInsensitive([NoEnumeration] this IEnumerable collection)
+        internal static bool IsCaseInsensitive([NoEnumeration]this IEnumerable collection)
             => GetFieldValueOrDefault(collection, false, "caseInsensitive"); // HybridDictionary
 
-        internal static object GetComparer([NoEnumeration] this IEnumerable collection)
+        internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {
             // 1.) By Comparer/EqualityComparer property
             Type type = collection.GetType();
-            PropertyAccessor property = GetProperty(type, "Comparer") // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
+            PropertyAccessor? property = GetProperty(type, "Comparer") // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
                 ?? GetProperty(type, "EqualityComparer"); // Hashtable
             if (property != null)
                 return property.Get(collection);
@@ -672,8 +668,8 @@ namespace KGySoft.Reflection
 
         #region Comparer
 
-        internal static CompareInfo CompareInfo(this Comparer comparer)
-            => GetFieldValueOrDefault<CompareInfo>(comparer);
+        internal static CompareInfo? CompareInfo(this Comparer comparer)
+            => GetFieldValueOrDefault<CompareInfo?>(comparer);
 
         #endregion
 
@@ -681,7 +677,7 @@ namespace KGySoft.Reflection
 
         internal static int[] GetUnderlyingArray(this BitArray bitArray)
         {
-            var result = GetFieldValueOrDefault<int[]>(bitArray);
+            int[]? result = GetFieldValueOrDefault<int[]?>(bitArray);
             if (result != null)
                 return result;
 
@@ -708,11 +704,11 @@ namespace KGySoft.Reflection
             {
                 Type type = instance.GetType();
 #if NETSTANDARD2_0
-                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Key)).MemberInfo).SetValue(instance, key);
-                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Value)).MemberInfo).SetValue(instance, value);
+                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Key))!.MemberInfo).SetValue(instance, key);
+                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Value))!.MemberInfo).SetValue(instance, value);
 #else
-                GetProperty(type, nameof(DictionaryEntry.Key)).Set(instance, key);
-                GetProperty(type, nameof(DictionaryEntry.Value)).Set(instance, value);
+                GetProperty(type, nameof(DictionaryEntry.Key))!.Set(instance, key);
+                GetProperty(type, nameof(DictionaryEntry.Value))!.Set(instance, value);
 #endif
                 return;
             }
@@ -727,7 +723,7 @@ namespace KGySoft.Reflection
         #region Type
 #if NETFRAMEWORK
 
-        internal static bool IsSzArray(this Type type) => (bool)GetPropertyValue(type, nameof(IsSzArray));
+        internal static bool IsSzArray(this Type type) => (bool)GetPropertyValue(type, nameof(IsSzArray))!;
 
 #endif
         #endregion
@@ -746,24 +742,24 @@ namespace KGySoft.Reflection
 
         internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern)
         {
-            var field = (FieldInfo)GetField(type, null, fieldNamePattern).MemberInfo;
+            FieldInfo? field = (FieldInfo?)GetField(type, null, fieldNamePattern)?.MemberInfo;
             if (field == null)
                 Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
             return field;
         }
 
-        internal static object GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
+        internal static object? GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
         {
             Type type = genTypeDef.GetGenericType(t);
-            PropertyAccessor property = GetProperty(type, propertyName);
+            PropertyAccessor? property = GetProperty(type, propertyName);
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, genTypeDef));
             return property.Get(null);
         }
 
-        internal static object GetPropertyValue(object instance, string propertyName)
+        internal static object? GetPropertyValue(object instance, string propertyName)
         {
-            PropertyAccessor property = GetProperty(instance.GetType(), propertyName);
+            PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
             return property.Get(instance);
@@ -772,10 +768,10 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a constructor on an already created instance.
         /// </summary>
-        internal static bool TryInvokeCtor(object instance, params object[] ctorArgs)
+        internal static bool TryInvokeCtor(object instance, params object?[] ctorArgs)
         {
-            Debug.Assert(ctorArgs == null || ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
-            ActionMethodAccessor accessor = GetCtorMethod(instance.GetType(), ctorArgs);
+            Debug.Assert(ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
+            ActionMethodAccessor? accessor = GetCtorMethod(instance.GetType(), ctorArgs);
             if (accessor == null)
                 return false;
 
@@ -790,23 +786,23 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe object Get(this FieldInfo field, object instance)
+        internal static unsafe object? Get(this FieldInfo field, object? instance)
         {
             if (field.FieldType.IsPointer)
-                return new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)));
+                return new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
 
             return FieldAccessor.GetAccessor(field).Get(instance);
         }
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this FieldInfo field, object instance, object? value)
+        internal static unsafe void Set(this FieldInfo field, object? instance, object? value)
         {
             Debug.Assert(!field.IsLiteral);
 
             if (field.FieldType.IsPointer)
             {
-                field.SetValue(instance, Pointer.Box(((IntPtr)value).ToPointer(), field.FieldType));
+                field.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), field.FieldType));
                 return;
             }
 
@@ -839,13 +835,13 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this PropertyInfo property, object? instance, object? value, params object?[]? indexerParams)
+        internal static unsafe void Set(this PropertyInfo property, object? instance, object? value, params object?[] indexerParams)
         {
             Debug.Assert(property.CanWrite);
 
             if (property.PropertyType.IsPointer)
             {
-                property.SetValue(instance, Pointer.Box(((IntPtr)value).ToPointer(), property.PropertyType), null);
+                property.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), property.PropertyType), null);
                 return;
             }
 
@@ -861,7 +857,7 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object Invoke(this MethodInfo method, object instance, params object[] parameters)
+        internal static object? Invoke(this MethodInfo method, object? instance, params object?[] parameters)
         {
 #if NETSTANDARD2_0
             if (!method.IsStatic && method.DeclaringType?.IsValueType == true)

@@ -63,7 +63,12 @@ namespace KGySoft.Diagnostics
         /// Creates a new instance of <see cref="DictionaryDebugView{TKey,TValue}"/> class.
         ///</summary>
         /// <param name="dictionary">The dictionary to provide the view for.</param>
-        public DictionaryDebugView(IDictionary<TKey, TValue> dictionary) => dict = dictionary;
+        public DictionaryDebugView(IDictionary<TKey, TValue> dictionary)
+        {
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            dict = dictionary;
+        }
 
         #endregion
     }

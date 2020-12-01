@@ -101,7 +101,7 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate initializer;
+        private Delegate? initializer;
 
         #endregion
 
@@ -146,7 +146,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static CreateInstanceAccessor GetAccessor(Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             return (CreateInstanceAccessor)GetCreateAccessor(type);
         }
@@ -159,7 +159,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static CreateInstanceAccessor GetAccessor(ConstructorInfo ctor)
         {
-            if (ctor == null)
+            if (ctor == null!)
                 Throw.ArgumentNullException(Argument.ctor);
             return (CreateInstanceAccessor)GetCreateAccessor(ctor);
         }
@@ -207,7 +207,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">Reflector.CreateInstance</see> methods to invoke constructors with ref/out parameters without losing the returned parameter values.</note>
         /// </remarks>
-        public abstract object CreateInstance(params object[] parameters);
+        public abstract object CreateInstance(params object?[]? parameters);
 
         #endregion
 

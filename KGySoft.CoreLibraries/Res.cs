@@ -764,16 +764,16 @@ namespace KGySoft
         #region Reflection
 
         /// <summary>The constant field cannot be set: {0}.{1}</summary>
-        internal static string ReflectionCannotSetConstantField(Type type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
+        internal static string ReflectionCannotSetConstantField(Type? type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
 
         /// <summary>Member type {0} is not supported.</summary>
         internal static string ReflectionNotSupportedMemberType(MemberTypes memberType) => Get("Reflection_NotSupportedMemberTypeFormat", memberType);
 
         /// <summary>Property has no getter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoGetter(Type type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoGetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
 
         /// <summary>Property has no setter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoSetter(Type type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoSetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
 
         /// <summary>Value "{0}" cannot be resolved as a System.Type.</summary>
         internal static string ReflectionNotAType(string value) => Get("Reflection_NotATypeFormat", value);

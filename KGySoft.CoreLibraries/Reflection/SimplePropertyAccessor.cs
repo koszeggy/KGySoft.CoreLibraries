@@ -19,7 +19,9 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
+#if !NETSTANDARD2_0
+using System.Reflection.Emit; 
+#endif
 using System.Runtime.CompilerServices; 
 
 #endregion
@@ -33,12 +35,12 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Represents a non-generic setter that can be used for any simple properties.
         /// </summary>
-        private delegate void PropertySetter(object instance, object value);
+        private delegate void PropertySetter(object? instance, object? value);
 
         /// <summary>
         /// Represents a non-generic getter that can be used for any simple properties.
         /// </summary>
-        private delegate object PropertyGetter(object instance);
+        private delegate object? PropertyGetter(object? instance);
 
         #endregion
 
@@ -56,11 +58,11 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override void Set(object instance, object value, params object[] indexerParameters)
+        public override void Set(object? instance, object? value, params object?[]? indexerParameters)
             => ((PropertySetter)Setter)(instance, value);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object Get(object instance, params object[] indexerParameters)
+        public override object? Get(object? instance, params object?[]? indexerParameters)
             => ((PropertyGetter)Getter)(instance);
 
         #endregion
@@ -70,8 +72,8 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateGetter()
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
-            MethodInfo getterMethod = property.GetGetMethod(true);
-            Type declaringType = getterMethod.DeclaringType;
+            MethodInfo getterMethod = property.GetGetMethod(true)!;
+            Type? declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)
@@ -115,8 +117,8 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateSetter()
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
-            MethodInfo setterMethod = property.GetSetMethod(true);
-            Type declaringType = setterMethod.DeclaringType;
+            MethodInfo setterMethod = property.GetSetMethod(true)!;
+            Type? declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)

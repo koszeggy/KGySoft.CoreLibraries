@@ -21,6 +21,14 @@ using System.Runtime.InteropServices;
 
 #endregion
 
+#region Suppressions
+
+#pragma warning disable 649 // Field is never assigned - Windows API structure
+// ReSharper disable InconsistentNaming
+// ReSharper disable NotAccessedField.Global
+
+#endregion
+
 namespace KGySoft.Reflection.WinApi
 {
     /// <summary>

@@ -17,10 +17,14 @@
 #region Usings
 
 using System;
+#if !NETSTANDARD2_0
 using System.Linq;
+#endif
 using System.Linq.Expressions;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 using System.Security;
 
@@ -38,7 +42,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Represents a non-generic function that can be used for any function methods.
         /// </summary>
-        private delegate object AnyFunction(object target, object[] arguments);
+        private delegate object? AnyFunction(object? target, object?[]? arguments);
 
         #endregion
 
@@ -56,7 +60,7 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object Invoke(object instance, params object[] parameters)
+        public override object? Invoke(object? instance, params object?[]? parameters)
         {
             try
             {
@@ -76,7 +80,7 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateInvoker()
         {
             MethodInfo method = (MethodInfo)MemberInfo;
-            Type declaringType = method.DeclaringType;
+            Type? declaringType = method.DeclaringType;
             if (!method.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (method.ReturnType.IsPointer)
@@ -86,7 +90,7 @@ namespace KGySoft.Reflection
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (hasRefParameters || (!method.IsStatic && declaringType.IsValueType))
+            if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType))
             {
                 // for struct instance methods or methods with ref/out parameters: Dynamic method
                 DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
@@ -104,7 +108,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
-                    parameterType = parameterType.GetElementType();
+                    parameterType = parameterType.GetElementType()!;
 
                 // ReSharper disable once AssignNullToNotNullAttribute
 #endif
@@ -113,7 +117,7 @@ namespace KGySoft.Reflection
 
             // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
             MethodCallExpression methodToCall = Expression.Call(
-                method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 method, // method info
                 methodParameters); // arguments cast to target types
 

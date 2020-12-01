@@ -19,7 +19,9 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
+#if !NETSTANDARD2_0
+using System.Reflection.Emit; 
+#endif
 using System.Runtime.CompilerServices;
 using System.Security;
 
@@ -111,12 +113,12 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Represents a non-generic setter that can be used for any fields.
         /// </summary>
-        private delegate void FieldSetter(object instance, object value);
+        private delegate void FieldSetter(object? instance, object? value);
 
         /// <summary>
         /// Represents a non-generic getter that can be used for any fields.
         /// </summary>
-        private delegate object FieldGetter(object instance);
+        private delegate object? FieldGetter(object? instance);
 
         #endregion
 
@@ -128,8 +130,8 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        private FieldGetter getter;
-        private FieldSetter setter;
+        private FieldGetter? getter;
+        private FieldSetter? setter;
 
         #endregion
 
@@ -173,9 +175,11 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
+                if (setter != null)
+                    return setter;
                 if (IsConstant)
                     Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
-                return setter ??= CreateSetter();
+                return setter = CreateSetter();
             }
         }
 
@@ -209,7 +213,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static FieldAccessor GetAccessor(FieldInfo field)
         {
-            if (field == null)
+            if (field == null!)
                 Throw.ArgumentNullException(Argument.field);
             return (FieldAccessor)GetCreateAccessor(field);
         }
@@ -250,7 +254,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public void Set(object instance, object value)
+        public void Set(object? instance, object? value)
         {
             try
             {
@@ -275,7 +279,7 @@ namespace KGySoft.Reflection
         /// </note>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public object Get(object instance) => Getter.Invoke(instance);
+        public object? Get(object? instance) => Getter.Invoke(instance);
 
         #endregion
 
@@ -286,14 +290,14 @@ namespace KGySoft.Reflection
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
 
             FieldInfo field = (FieldInfo)MemberInfo;
-            Type declaringType = field.DeclaringType;
+            Type? declaringType = field.DeclaringType;
             if (!field.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (field.FieldType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
             MemberExpression member = Expression.Field(
                     // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
-                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                     field);
 
             LambdaExpression lambda = Expression.Lambda<FieldGetter>(
@@ -305,7 +309,7 @@ namespace KGySoft.Reflection
         private FieldSetter CreateSetter()
         {
             FieldInfo field = (FieldInfo)MemberInfo;
-            Type declaringType = field.DeclaringType;
+            Type? declaringType = field.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (field.FieldType.IsPointer)

@@ -382,7 +382,6 @@ namespace KGySoft.CoreLibraries
         /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.
         /// If a type converter can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
         /// </remarks>
-        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? value'")]
@@ -405,7 +404,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The parsed value. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> represents <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object? Parse(this ReadOnlySpan<char> s, Type type, CultureInfo? culture = null)
         {
@@ -426,7 +425,6 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/>&#160;if <paramref name="s"/> represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
         public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, [MaybeNull]out T value)
             => Parser.TryParse(s, culture, out value, out var _);
 
@@ -441,7 +439,6 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/>&#160;if <paramref name="s"/> represents <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
         public static bool TryParse<T>(this ReadOnlySpan<char> s, [MaybeNull]out T value) => TryParse(s, null, out value);
 
         /// <summary>
@@ -456,7 +453,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/>, if <paramref name="s"/> represents <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, CultureInfo culture, out object? value)
             => Parser.TryParse(s, type, culture, true, out value, out var _);
 
@@ -471,7 +468,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/>, if <paramref name="s"/> represents <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> represents <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, out object? value)
             => Parser.TryParse(s, type, null, true, out value, out var _);
 

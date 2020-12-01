@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Occurs when the <see cref="Interval"/> elapses.
         /// </summary>
-        public event EventHandler<HiResTimerElapsedEventArgs> Elapsed;
+        public event EventHandler<HiResTimerElapsedEventArgs>? Elapsed;
 
         #endregion
 

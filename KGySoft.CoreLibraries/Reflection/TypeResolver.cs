@@ -133,7 +133,6 @@ namespace KGySoft.Reflection
             #region Properties
 
             internal bool Success => reader.Peek() == -1 && stack.Count == 0;
-
             internal char Char { get; private set; }
 
             internal State State
@@ -147,9 +146,7 @@ namespace KGySoft.Reflection
             }
 
             internal int Rank { get; set; }
-
             internal bool IsBufEmpty => buf.Length == 0;
-
             internal bool IsWhiteSpace => Char.IsWhiteSpace(Char);
 
             #endregion
@@ -170,7 +167,6 @@ namespace KGySoft.Reflection
             #region Public Methods
             
             public void Dispose() => reader.Dispose();
-
             public override string ToString() => Enum<State>.ToString(State);
 
             #endregion
@@ -243,9 +239,9 @@ namespace KGySoft.Reflection
 
         #region Static Fields
 
-        private static LockingDictionary<string, Type> typeCacheByString;
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
-        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> typeNameCache;
+        private static LockingDictionary<string, Type?>? typeCacheByString;
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>>? typeCacheByAssembly;
+        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>>? typeNameCache;
 
         #endregion
 
@@ -255,13 +251,13 @@ namespace KGySoft.Reflection
         private readonly CircularList<int> modifiers = new CircularList<int>();
         private readonly List<TypeResolver> genericArgs = new List<TypeResolver>();
 
-        private string rootName;
-        private string assemblyName;
-        private TypeResolver declaringType;
-        private string declaringMethod;
+        private string? rootName;
+        private string? assemblyName;
+        private TypeResolver? declaringType;
+        private string? declaringMethod;
 
-        private Type type;
-        private Assembly assembly;
+        private Type? type;
+        private Assembly? assembly;
 
         #endregion
 
@@ -269,8 +265,8 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        private static LockingDictionary<string, Type> TypeCacheByString
-            => typeCacheByString ??= new Cache<string, Type>(256).AsThreadSafe();
+        private static LockingDictionary<string, Type?> TypeCacheByString
+            => typeCacheByString ??= new Cache<string, Type?>(256).AsThreadSafe();
 
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
             => typeCacheByAssembly ??= new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>().AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
@@ -286,7 +282,7 @@ namespace KGySoft.Reflection
 
         private TypeResolver(string typeName, ResolveTypeOptions options) : this(options)
         {
-            if (typeName == null)
+            if (typeName == null!)
                 Throw.ArgumentNullException(Argument.typeName);
 
             Initialize(typeName);
@@ -294,7 +290,7 @@ namespace KGySoft.Reflection
 
         private TypeResolver(Assembly assembly, string typeName, ResolveTypeOptions options) : this(options)
         {
-            if (typeName == null)
+            if (typeName == null!)
                 Throw.ArgumentNullException(Argument.typeName);
 
             this.assembly = assembly;
@@ -302,14 +298,13 @@ namespace KGySoft.Reflection
             Initialize(typeName);
         }
 
-        private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
+        private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
             if (type == null)
                 Throw.ArgumentNullException(Argument.type);
             this.type = type;
 
             // modifiers
-            // ReSharper disable once PossibleNullReferenceException
             while (type.HasElementType)
             {
                 if (type.IsArray)
@@ -318,7 +313,7 @@ namespace KGySoft.Reflection
                     modifiers.AddFirst(byRef);
                 else if (type.IsPointer)
                     modifiers.AddFirst(pointer);
-                type = type.GetElementType();
+                type = type.GetElementType()!;
             }
 
             // generic arguments
@@ -345,7 +340,7 @@ namespace KGySoft.Reflection
             }
 
             // generic parameter
-            declaringType = new TypeResolver(type.DeclaringType, kind, assemblyNameResolver, typeNameResolver);
+            declaringType = new TypeResolver(type.DeclaringType!, kind, assemblyNameResolver, typeNameResolver);
             declaringMethod = type.DeclaringMethod?.ToString();
         }
 
@@ -357,15 +352,15 @@ namespace KGySoft.Reflection
 
         #region Internal Methods
 
-        internal static Type ResolveType(string typeName, Func<AssemblyName, string, Type> typeResolver, ResolveTypeOptions options)
+        internal static Type? ResolveType(string typeName, Func<AssemblyName?, string, Type?>? typeResolver, ResolveTypeOptions options)
         {
-            if (typeName == null)
+            if (typeName == null!)
                 Throw.ArgumentNullException(Argument.typeName);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            string key = null;
-            Type result;
+            string? key = null;
+            Type? result;
 
             // Trying to use the cache but only if no resolver is specified
             if (typeResolver == null)
@@ -393,16 +388,16 @@ namespace KGySoft.Reflection
                 Throw.ReflectionException(Res.ReflectionNotAType(typeName));
 
             if (key != null && result != null)
-                typeCacheByString[key] = result;
+                TypeCacheByString[key] = result;
 
             return result;
         }
 
-        internal static Type ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options)
+        internal static Type? ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options)
         {
-            if (assembly == null)
+            if (assembly == null!)
                 Throw.ArgumentNullException(Argument.assembly);
-            if (typeName == null)
+            if (typeName == null!)
                 Throw.ArgumentNullException(Argument.typeName);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
@@ -412,7 +407,7 @@ namespace KGySoft.Reflection
                 prefix &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
             string key = ((int)prefix).ToString(CultureInfo.InvariantCulture) + typeName;
             LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
-            if (cache.TryGetValue(key, out Type result))
+            if (cache.TryGetValue(key, out Type? result))
                 return result;
 
             if (GetAssemblyNamePos(typeName) >= 0)
@@ -441,7 +436,7 @@ namespace KGySoft.Reflection
             return result;
         }
 
-        internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName>? assemblyNameResolver, Func<Type, string>? typeNameResolver)
+        internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -450,16 +445,16 @@ namespace KGySoft.Reflection
 
             // not caching if the result can be provided by delegates
             if (assemblyNameResolver != null || typeNameResolver != null)
-                return new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver).GetName(kind);
+                return new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver).GetName(kind)!;
 
             LockingDictionary<TypeNameKind, string> cache = TypeNameCache[type];
-            if (cache.TryGetValue(kind, out string result))
+            if (cache.TryGetValue(kind, out string? result))
                 return result;
 
             result = new TypeResolver(type, kind, null, null).GetName(kind);
 
-            cache[kind] = result;
-            return result;
+            cache[kind] = result!;
+            return result!;
         }
 
         internal static string StripName(string typeName, bool stripVersionOnly)
@@ -483,7 +478,7 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
-        public override string ToString() => GetName(TypeNameKind.ForcedAssemblyQualifiedName) ?? base.ToString();
+        public override string ToString() => GetName(TypeNameKind.ForcedAssemblyQualifiedName) ?? base.ToString()!;
 
         #endregion
 
@@ -820,8 +815,7 @@ namespace KGySoft.Reflection
 
                 if (ctx.Char == ':') // generic parameter declaring type
                 {
-                    if (rootName == null)
-                        rootName = ctx.GetBuf();
+                    rootName ??= ctx.GetBuf();
                     ParseDeclaringType(ref ctx);
                     return;
                 }
@@ -840,8 +834,7 @@ namespace KGySoft.Reflection
 
                 if (ctx.Char == ':') // generic method signature
                 {
-                    if (rootName == null)
-                        rootName = ctx.GetBuf();
+                    rootName ??= ctx.GetBuf();
                     ctx.State = State.MethodSignature;
                     return;
                 }
@@ -988,7 +981,7 @@ namespace KGySoft.Reflection
             }
         }
 
-        private string GetName(TypeNameKind kind)
+        private string? GetName(TypeNameKind kind)
         {
             if (rootName == null)
                 return null;
@@ -1014,7 +1007,7 @@ namespace KGySoft.Reflection
             }
 
             void DumpRootName(StringBuilder sb, TypeNameKind kind)
-                => sb.Append(kind == TypeNameKind.ShortName ? rootName.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
+                => sb.Append(kind == TypeNameKind.ShortName ? rootName!.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
             {
@@ -1029,7 +1022,7 @@ namespace KGySoft.Reflection
                     TypeResolver arg = genericArgs[i];
                     bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
-                            && !AssemblyResolver.IsCoreLibAssemblyName(arg.assemblyName ?? arg.declaringType?.assemblyName);
+                            && !AssemblyResolver.IsCoreLibAssemblyName(arg.assemblyName ?? arg.declaringType?.assemblyName!);
                     if (aqn)
                         sb.Append('[');
                     arg.DumpName(sb, kind);
@@ -1128,7 +1121,7 @@ namespace KGySoft.Reflection
             DumpAssemblyName(result, typeNameKind);
         }
 
-        private Type Resolve(Func<AssemblyName, string, Type> typeResolver)
+        private Type? Resolve(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             if (type != null)
                 return type;
@@ -1138,7 +1131,7 @@ namespace KGySoft.Reflection
                 return null;
 
             // 1. Resolving root type
-            Type result = ResolveRootType(typeResolver);
+            Type? result = ResolveRootType(typeResolver);
             if (result == null)
                 return null;
 
@@ -1146,7 +1139,7 @@ namespace KGySoft.Reflection
             if (genericArgs.Count > 0)
             {
                 Debug.Assert(result.IsGenericTypeDefinition, "Root type is expected to be a generic type definition");
-                Type[] args = new Type[genericArgs.Count];
+                Type?[] args = new Type[genericArgs.Count];
                 for (int i = 0; i < args.Length; i++)
                 {
                     args[i] = genericArgs[i].Resolve(typeResolver);
@@ -1154,7 +1147,7 @@ namespace KGySoft.Reflection
                         return null;
                 }
 
-                result = result.GetGenericType(args);
+                result = result.GetGenericType(args!);
             }
 
             // 3. Applying modifiers
@@ -1180,7 +1173,7 @@ namespace KGySoft.Reflection
             return type = result;
         }
 
-        private Type ResolveRootType(Func<AssemblyName, string, Type> typeResolver)
+        private Type? ResolveRootType(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             if (declaringType != null)
                 return ResolveGenericParameter(typeResolver);
@@ -1188,12 +1181,12 @@ namespace KGySoft.Reflection
             bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
             bool allowIgnoreAssembly = (options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None;
             bool ignoreCase = (options & ResolveTypeOptions.IgnoreCase) != ResolveTypeOptions.None;
-            Type result;
+            Type? result;
 
             // 1.) By resolver
             if (typeResolver != null)
             {
-                AssemblyName asmName = null;
+                AssemblyName? asmName = null;
                 try
                 {
                     if (assemblyName != null)
@@ -1205,13 +1198,13 @@ namespace KGySoft.Reflection
                     // This is OK, we don't want to support wrong names, which could break parsing.
                     // And this is the symmetric logic with GetName's assemblyNameResolver.
                     if (throwError)
-                        Throw.ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName), e);
+                        Throw.ArgumentException(Res.ReflectionInvalidAssemblyName(assemblyName!), e);
 
                     // In this case we don't use fallback logic because we couldn't call the delegate.
                     return null;
                 }
 
-                result = typeResolver.Invoke(asmName, rootName);
+                result = typeResolver.Invoke(asmName, rootName!);
                 if (result != null)
                     return result;
             }
@@ -1230,7 +1223,7 @@ namespace KGySoft.Reflection
             // 3/a. Resolving the type from a specific assembly
             if (assembly != null)
             {
-                result = assembly.GetType(rootName, throwError && !allowIgnoreAssembly, ignoreCase);
+                result = assembly.GetType(rootName!, throwError && !allowIgnoreAssembly, ignoreCase);
                 if (result != null || !allowIgnoreAssembly)
                     return result;
             }
@@ -1238,7 +1231,7 @@ namespace KGySoft.Reflection
             else if (assemblyName == null)
             {
                 // We are not throwing an exception from here because on failure we try all assemblies
-                result = typeResolver?.Invoke(null, rootName) ?? AssemblyResolver.MscorlibAssembly?.GetType(rootName, false, ignoreCase);
+                result = typeResolver?.Invoke(null, rootName!) ?? AssemblyResolver.MscorlibAssembly.GetType(rootName!, false, ignoreCase);
                 if (result != null)
                     return result;
             }
@@ -1246,27 +1239,27 @@ namespace KGySoft.Reflection
 
             // 3/c. Resolving the type from any assembly
             // Type.GetType is not redundant even if we tried mscorlib.dll above because it still can load core library types.
-            result = Type.GetType(rootName, false, ignoreCase);
+            result = Type.GetType(rootName!, false, ignoreCase);
             if (result != null)
                 return result;
 
             // Looking for the type in the loaded assemblies
             foreach (Assembly asm in Reflector.GetLoadedAssemblies())
             {
-                result = asm.GetType(rootName, false, ignoreCase);
+                result = asm.GetType(rootName!, false, ignoreCase);
                 if (result != null)
                     return result;
             }
 
             if (throwError)
-                Throw.ReflectionException(Res.ReflectionNotAType(rootName));
+                Throw.ReflectionException(Res.ReflectionNotAType(rootName!));
             return null;
         }
 
-        private Type ResolveGenericParameter(Func<AssemblyName, string, Type> typeResolver)
+        private Type? ResolveGenericParameter(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             // Declaring Type
-            Type t = declaringType.Resolve(typeResolver);
+            Type? t = declaringType!.Resolve(typeResolver);
             if (t == null)
                 return null;
 

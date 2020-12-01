@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">An object that supplies culture-specific comparison information.
         /// if <see langword="null"/>, then <see cref="CultureInfo.CurrentCulture">CultureInfo.CurrentCulture</see> will be used.</param>
         /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
-        public static int Compare(StringSegment a, StringSegment b, bool ignoreCase, CultureInfo culture)
+        public static int Compare(StringSegment a, StringSegment b, bool ignoreCase, CultureInfo? culture)
             => Compare(a, b, (culture ?? CultureInfo.CurrentCulture).CompareInfo, ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None);
 
         #endregion
@@ -212,7 +212,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj == null ? IsNull
             : obj is StringSegment other ? Equals(other)
             : obj is string s && Equals(s);
@@ -246,7 +246,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 32-bit signed integer that indicates whether this instance precedes, follows, or appears in the same position in the sort order as the <paramref name="obj"/> parameter.</returns>
         /// <remarks><note>Unlike the <see cref="String.CompareTo(object)">String.CompareTo</see> method, this one performs an ordinal comparison.
         /// Use the <see cref="O:KGySoft.CoreLibraries.StringSegment.Compare">Compare</see> methods to perform a custom comparison.</note></remarks>
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
             => obj switch
             {
                 StringSegment ss => CompareTo(ss),

@@ -61,7 +61,12 @@ namespace KGySoft.Diagnostics
         /// Creates a new instance of CollectionDebugView
         ///</summary>
         /// <param name="collection">The collection to provide the view for.</param>
-        public CollectionDebugView(ICollection<T> collection) => this.collection = collection;
+        public CollectionDebugView(ICollection<T> collection)
+        {
+            if (collection == null!)
+                Throw.ArgumentNullException(Argument.collection);
+            this.collection = collection;
+        }
 
         #endregion
     }

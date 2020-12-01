@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -185,7 +184,7 @@ namespace KGySoft.Diagnostics
     /// <note type="tip">See also the <strong>Examples</strong> section of the <see cref="PerformanceTestBase{TDelegate,TResult}"/> class to see how to create a custom type for parameterized performance tests.</note>
     /// </example>
     /// <seealso cref="PerformanceTest{TResult}" />
-    public class PerformanceTest : PerformanceTestBase<Action, object>
+    public class PerformanceTest : PerformanceTestBase<Action, object?>
     {
         #region Methods
 
@@ -194,7 +193,7 @@ namespace KGySoft.Diagnostics
         /// </summary>
         /// <param name="del">The delegate to invoke.</param>
         /// <returns>In <see cref="PerformanceTest"/> class this method returns always <see langword="null"/>.</returns>
-        protected override object Invoke(Action del)
+        protected override object? Invoke(Action del)
         {
             del.Invoke();
             return null;

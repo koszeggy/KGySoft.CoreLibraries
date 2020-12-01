@@ -49,7 +49,7 @@ namespace KGySoft.CoreLibraries
             int end = rest.offset + rest.length;
             for (int i = rest.offset; i < end; i++)
             {
-                if (Char.IsWhiteSpace(rest.str[i]))
+                if (Char.IsWhiteSpace(rest.str![i]))
                 {
                     pos = i - rest.offset;
                     break;
@@ -67,7 +67,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + 1);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -93,7 +93,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + 1);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -120,7 +120,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + 1);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -147,7 +147,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + separator.length);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -174,7 +174,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + separator.Length);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -200,8 +200,8 @@ namespace KGySoft.CoreLibraries
 
             // returning next segment and advance
             int offset = rest.offset;
-            rest = rest.SubstringInternal(pos + separators[separatorIndex].Length);
-            return new StringSegment(rest.str, offset, pos);
+            rest = rest.SubstringInternal(pos + separators[separatorIndex]!.Length);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -228,7 +228,7 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + separators[separatorIndex].length);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -256,9 +256,8 @@ namespace KGySoft.CoreLibraries
             // returning next segment and advance
             int offset = rest.offset;
             rest = rest.SubstringInternal(pos + separator.Length);
-            return new StringSegment(rest.str, offset, pos);
+            return new StringSegment(rest.str!, offset, pos);
         }
-
 #endif
 
         #endregion
@@ -356,7 +355,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment Trim(params char[] trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+        public StringSegment Trim(params char[]? trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
 
         /// <summary>
         /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
@@ -364,7 +363,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment TrimStart(params char[] trimChars)
+        public StringSegment TrimStart(params char[]? trimChars)
         {
             if (length == 0)
                 return this;
@@ -384,7 +383,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment TrimEnd(params char[] trimChars)
+        public StringSegment TrimEnd(params char[]? trimChars)
         {
             if (length == 0)
                 return this;
@@ -459,8 +458,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="length">The desired length of the returned segment.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because of compatibility with string and because it will be the new length of the returned instance")]
-        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
         public StringSegment Substring(int startIndex, int length)
         {
             if (IsNull)
@@ -470,7 +469,7 @@ namespace KGySoft.CoreLibraries
             if ((uint)length > (uint)this.length - startIndex)
                 Throw.ArgumentOutOfRangeException(Argument.length);
 
-            return new StringSegment(str, offset + startIndex, length);
+            return new StringSegment(str!, offset + startIndex, length);
         }
 
         /// <summary>
@@ -486,7 +485,7 @@ namespace KGySoft.CoreLibraries
             if ((uint)startIndex > (uint)length)
                 Throw.ArgumentOutOfRangeException(Argument.startIndex);
             int start = offset + startIndex;
-            return new StringSegment(str, start, length - startIndex);
+            return new StringSegment(str!, start, length - startIndex);
         }
 
         #endregion
@@ -506,7 +505,7 @@ namespace KGySoft.CoreLibraries
         /// delimited by whitespace characters.</returns>
         public IList<StringSegment> Split(int? maxLength = default, bool removeEmptyEntries = false)
         {
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -561,7 +560,7 @@ namespace KGySoft.CoreLibraries
         /// delimited by <paramref name="separator"/>.</returns>
         public IList<StringSegment> Split(char separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -615,7 +614,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(char[] separators, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(char[]? separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
             if (separators == null || separators.Length == 0)
@@ -623,7 +622,7 @@ namespace KGySoft.CoreLibraries
             if (separators.Length == 1)
                 return Split(separators[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -702,7 +701,7 @@ namespace KGySoft.CoreLibraries
             if (separator.length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -760,7 +759,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(StringSegment[] separators, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(StringSegment[]? separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
             if (separators == null || separators.Length == 0)
@@ -768,7 +767,7 @@ namespace KGySoft.CoreLibraries
             if (separators.Length == 1)
                 return Split(separators[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -819,7 +818,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(StringSegment[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
+        public IList<StringSegment> Split(StringSegment[]? separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
@@ -830,7 +829,7 @@ namespace KGySoft.CoreLibraries
         /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(params StringSegment[] separators) => Split(separators, default, false);
+        public IList<StringSegment> Split(params StringSegment[]? separators) => Split(separators, default, false);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
@@ -844,12 +843,12 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(string separator, int? maxLength = default, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(string? separator, int? maxLength = default, bool removeEmptyEntries = false)
         {
             if (separator?.Length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -864,7 +863,7 @@ namespace KGySoft.CoreLibraries
 
             while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment segment = GetNextSegment(ref rest, separator);
+                StringSegment segment = GetNextSegment(ref rest, separator!);
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
             }
@@ -873,7 +872,7 @@ namespace KGySoft.CoreLibraries
             {
                 // if we reached limit but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
-                if (removeEmptyEntries && result.Count == limit && rest.length >= separator.Length && rest.StartsWithInternal(separator))
+                if (removeEmptyEntries && result.Count == limit && rest.length >= separator!.Length && rest.StartsWithInternal(separator))
                     rest = rest.SubstringInternal(separator.Length);
 
                 if (rest.length > 0 || !removeEmptyEntries)
@@ -892,7 +891,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
-        public IList<StringSegment> Split(string separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
+        public IList<StringSegment> Split(string? separator, bool removeEmptyEntries) => Split(separator, default, removeEmptyEntries);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
@@ -907,7 +906,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(string[] separators, int? maxLength, bool removeEmptyEntries = false)
+        public IList<StringSegment> Split(string?[]? separators, int? maxLength, bool removeEmptyEntries = false)
         {
             // No separator: splitting by white spaces (compatibility with String.Split)
             if (separators == null || separators.Length == 0)
@@ -947,9 +946,9 @@ namespace KGySoft.CoreLibraries
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
-                    foreach (string sep in separators)
+                    foreach (string? sep in separators)
                     {
-                        if (String.IsNullOrEmpty(sep) || sep.Length > rest.length)
+                        if (String.IsNullOrEmpty(sep) || sep!.Length > rest.length)
                             continue;
                         if (rest.StartsWithInternal(sep))
                         {
@@ -976,7 +975,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to disallow returning empty segments in the result; <see langword="false"/>&#160;to allow returning empty segments.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(string[] separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
+        public IList<StringSegment> Split(string?[]? separators, bool removeEmptyEntries) => Split(separators, default, removeEmptyEntries);
 
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances without allocating new strings.
@@ -987,7 +986,7 @@ namespace KGySoft.CoreLibraries
         /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
-        public IList<StringSegment> Split(params string[] separators) => Split(separators, default, false);
+        public IList<StringSegment> Split(params string?[]? separators) => Split(separators, default, false);
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -1007,7 +1006,7 @@ namespace KGySoft.CoreLibraries
             if (separator.Length == 1)
                 return Split(separator[0], maxLength, removeEmptyEntries);
 
-            IList<StringSegment> result = SplitCommon(maxLength, removeEmptyEntries);
+            IList<StringSegment>? result = SplitCommon(maxLength, removeEmptyEntries);
             if (result != null)
                 return result;
 
@@ -1060,21 +1059,21 @@ namespace KGySoft.CoreLibraries
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
-        [SuppressMessage("Microsoft.Maintainability", "CA1500:Variable names should not match field names", Justification = "Intended because it will be the new length of the returned instance")]
         internal StringSegment SubstringInternal(int start, int length) =>
-            new StringSegment(str, offset + start, length);
+            new StringSegment(str!, offset + start, length);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal StringSegment SubstringInternal(int start) =>
-            new StringSegment(str, offset + start, length - start);
+            new StringSegment(str!, offset + start, length - start);
 
         #endregion
 
         #region Private Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private StringSegment[] SplitCommon(int? maxLength, bool removeEmptyEntries)
+        private StringSegment[]? SplitCommon(int? maxLength, bool removeEmptyEntries)
         {
             if (IsNull)
                 Throw.InvalidOperationException(Res.StringSegmentNull);

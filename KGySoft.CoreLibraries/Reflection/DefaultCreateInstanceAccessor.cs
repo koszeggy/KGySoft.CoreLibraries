@@ -53,7 +53,7 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object CreateInstance(params object[] parameters) => ((DefaultCtor)Initializer)();
+        public override object CreateInstance(params object?[]? parameters) => ((DefaultCtor)Initializer)();
 
         #endregion
 

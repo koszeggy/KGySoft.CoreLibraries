@@ -22,9 +22,7 @@ using System.IO;
 #if NETFRAMEWORK
 using System.Reflection;
 #endif
-using System.Runtime.CompilerServices;
 using System.Security;
-using System.Text;
 using System.Text.RegularExpressions;
 
 #endregion
@@ -45,14 +43,14 @@ namespace KGySoft.CoreLibraries
         /// <returns>The created <see cref="FileStream"/>.</returns>
         public static FileStream CreateWithPath(string path)
         {
-            if (path == null)
+            if (path == null!)
                 Throw.ArgumentNullException(Argument.path);
             if (path.Length == 0)
                 Throw.ArgumentException(Argument.path, Res.ArgumentEmpty);
 
-            var dir = Path.GetDirectoryName(path);
+            string? dir = Path.GetDirectoryName(path);
             if (!String.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(dir!);
             return File.Create(path);
         }
 
@@ -62,9 +60,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="path">The name of the file to be created with path.</param>
         /// <param name="overwriteIfExists"><see langword="true"/>&#160;to allow an already existing file to be overwritten; otherwise, <see langword="false"/>.</param>
         /// <returns>A <see cref="FileStream"/> instance if the file could be created or overwritten; otherwise, <see langword="null"/>.</returns>
-        public static FileStream TryCreateWithPath(string path, bool overwriteIfExists = true)
+        public static FileStream? TryCreateWithPath(string path, bool overwriteIfExists = true)
         {
-            if (path == null)
+            if (path == null!)
                 Throw.ArgumentNullException(Argument.path);
             try
             {
@@ -91,7 +89,7 @@ namespace KGySoft.CoreLibraries
         public static bool CanCreate(string fileName, bool canOverwrite = true)
         {
             bool result;
-            using (FileStream fs = TryCreateWithPath(fileName, canOverwrite))
+            using (FileStream? fs = TryCreateWithPath(fileName, canOverwrite))
                 result = fs != null;
 
             if (result)
@@ -119,9 +117,9 @@ namespace KGySoft.CoreLibraries
         /// <returns>Returns <paramref name="path"/>, if that is a non-existing file name. Returns <see langword="null"/>, if <paramref name="path"/> denotes a root directory.
         /// Otherwise, returns a non-existing file name with a number postfix in the file name part (the extension will not be changed).</returns>
         /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
-        public static string GetNextFileName(string path, string postfixSeparator = null)
+        public static string? GetNextFileName(string path, string? postfixSeparator = null)
         {
-            if (path == null)
+            if (path == null!)
                 Throw.ArgumentNullException(Argument.path);
 
             postfixSeparator ??= String.Empty;
@@ -129,7 +127,7 @@ namespace KGySoft.CoreLibraries
             if (!File.Exists(path))
                 return path;
 
-            string dirName = Path.GetDirectoryName(path);
+            string? dirName = Path.GetDirectoryName(path);
             if (dirName == null)
                 return null;
 
@@ -160,11 +158,11 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe string GetRelativePath(string target, string baseDirectory, bool isCaseSensitive)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
             if (target.Length == 0)
                 Throw.ArgumentException(Argument.target, Res.ArgumentEmpty);
-            if (baseDirectory == null)
+            if (baseDirectory == null!)
                 Throw.ArgumentNullException(Argument.baseDirectory);
             if (baseDirectory.Length == 0)
                 Throw.ArgumentException(Argument.baseDirectory, Res.ArgumentEmpty);
@@ -259,9 +257,9 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="pattern"/> or <paramref name="fileName"/> is <see langword="null"/>.</exception>
         public static bool IsWildcardMatch(string pattern, string fileName)
         {
-            if (pattern == null)
+            if (pattern == null!)
                 Throw.ArgumentNullException(Argument.pattern);
-            if (fileName == null)
+            if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
 
             return new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase).IsMatch(fileName);
@@ -273,9 +271,11 @@ namespace KGySoft.CoreLibraries
         /// <returns>The full path of the directory where the executing application resides.</returns>
         public static string GetExecutingPath() =>
 #if NETFRAMEWORK
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
 #else
-            Path.GetDirectoryName(AppContext.BaseDirectory);
+            // Using always GetDirectoryName because BaseDirectory is always postfixed by directory separator.
+            // If base directory is a root path, then GetDirectoryName returns null
+            Path.GetDirectoryName(AppContext.BaseDirectory) ?? AppContext.BaseDirectory;
 #endif
 
         #endregion

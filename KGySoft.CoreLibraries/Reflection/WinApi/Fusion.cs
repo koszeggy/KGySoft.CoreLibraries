@@ -18,7 +18,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -46,7 +45,6 @@ namespace KGySoft.Reflection.WinApi
             /// <param name="dwReserved">Reserved for future extensibility. dwReserved must be 0 (zero).</param>
             /// <returns>HRESULT</returns>
             [DllImport("fusion.dll")]
-            [SuppressMessage("Microsoft.Security", "CA5122:PInvokesShouldNotBeSafeCriticalFxCopRule", Justification = "False alarm, SecurityCriticalAttribute is applied to container class")]
             internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
 
             #endregion
@@ -59,7 +57,7 @@ namespace KGySoft.Reflection.WinApi
         /// <summary>
         /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
         /// </summary>
-        internal static string GetGacPath(string name)
+        internal static string? GetGacPath(string name)
         {
             const int bufSize = 1024;
 
@@ -71,8 +69,8 @@ namespace KGySoft.Reflection.WinApi
                     currentAssemblyPath = new String('\0', bufSize)
                 };
 
-                int hresult = assemblyCache.QueryAssemblyInfo(0, name, ref aInfo);
-                if (hresult >= 0)
+                int hResult = assemblyCache.QueryAssemblyInfo(0, name, ref aInfo);
+                if (hResult >= 0)
                     return aInfo.currentAssemblyPath;
             }
 
