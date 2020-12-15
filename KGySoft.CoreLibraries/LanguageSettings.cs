@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Resources;
 #if NETFRAMEWORK
@@ -151,7 +152,7 @@ namespace KGySoft
         /// <seealso cref="FormattingLanguage"/>
         /// <seealso cref="FormattingLanguageChangedGlobal"/>
         [field: ThreadStatic]
-        public static event EventHandler FormattingLanguageChanged;
+        public static event EventHandler? FormattingLanguageChanged;
 
         /// <summary>
         /// Occurs when the formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed in any <see cref="Thread"/>
@@ -166,7 +167,7 @@ namespace KGySoft
         /// </remarks>
         /// <seealso cref="FormattingLanguage"/>
         /// <seealso cref="FormattingLanguageChanged"/>
-        public static event EventHandler FormattingLanguageChangedGlobal;
+        public static event EventHandler? FormattingLanguageChangedGlobal;
 
         /// <summary>
         /// Occurs when the display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed by setting the
@@ -179,7 +180,7 @@ namespace KGySoft
         /// <seealso cref="DisplayLanguage"/>
         /// <seealso cref="DisplayLanguageChangedGlobal"/>
         [field: ThreadStatic]
-        public static event EventHandler DisplayLanguageChanged;
+        public static event EventHandler? DisplayLanguageChanged;
 
         /// <summary>
         /// Occurs when the display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed in any <see cref="Thread"/>
@@ -194,15 +195,15 @@ namespace KGySoft
         /// </remarks>
         /// <seealso cref="DisplayLanguage"/>
         /// <seealso cref="DisplayLanguageChanged"/>
-        public static event EventHandler DisplayLanguageChangedGlobal;
+        public static event EventHandler? DisplayLanguageChangedGlobal;
 
         #endregion
 
         #region Internal Events
 
-        internal static event EventHandler DynamicResourceManagersSourceChanged;
+        internal static event EventHandler? DynamicResourceManagersSourceChanged;
 
-        internal static event EventHandler DynamicResourceManagersAutoSaveChanged;
+        internal static event EventHandler? DynamicResourceManagersAutoSaveChanged;
 
         #endregion
 
@@ -392,6 +393,8 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
         /// <br/>Default value: <c>[T]</c>
         /// </summary>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UntranslatedResourcePrefix
         {
             get => untranslatedResourcePrefix;
@@ -404,6 +407,8 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to add non existing resources to the invariant resource set.
         /// <br/>Default value: <c>[U]</c>
         /// </summary>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UnknownResourcePrefix
         {
             get => unknownResourcePrefix;

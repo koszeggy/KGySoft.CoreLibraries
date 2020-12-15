@@ -49,7 +49,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
         /// <param name="inner">The inner exception.</param>
-        public ReflectionException(string message, Exception inner) : base(message, inner) { }
+        public ReflectionException(string message, Exception? inner) : base(message, inner) { }
 
         #endregion
 

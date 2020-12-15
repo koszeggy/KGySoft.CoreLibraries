@@ -40,6 +40,13 @@
   - SetItem/InsertItem methods: Not throwing an ArgumentNullException if the list is sorted by a property and a null
     item is set or inserted
 
+* KGySoft.Resources namespace:
+==============================
+* ResXResourceWriter class:
+  * AddResource(string, byte[]) method: allowing null array to be conform with the nullability of the
+    IResourceWriter interface.
+  * AddMetadata(string, byte[]) method: allowing null array to be conform with AddResource(string, byte[]).
+
 
 ~~~~~~~~~
 * v5.5.0:

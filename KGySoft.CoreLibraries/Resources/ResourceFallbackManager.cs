@@ -37,7 +37,7 @@ namespace KGySoft.Resources
 
         #region Constructors
 
-        internal ResourceFallbackManager(CultureInfo startingCulture, CultureInfo neutralResourcesCulture, bool useParents)
+        internal ResourceFallbackManager(CultureInfo? startingCulture, CultureInfo neutralResourcesCulture, bool useParents)
         {
             this.startingCulture = startingCulture ?? Thread.CurrentThread.CurrentUICulture;
             this.neutralResourcesCulture = neutralResourcesCulture;

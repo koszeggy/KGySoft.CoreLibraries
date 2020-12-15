@@ -139,6 +139,7 @@ namespace KGySoft
         targetPropertyName,
         targetType,
         testCase,
+        textWriter,
         type,
         typeName,
         types,

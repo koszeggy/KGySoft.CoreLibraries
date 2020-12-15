@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -28,12 +29,12 @@ namespace KGySoft.Resources
         #region Fields
 
         internal bool CompatibleFormat;
-        internal string Name;
-        internal string Comment;
-        internal string TypeName;
-        internal string AssemblyAliasValue;
-        internal string MimeType;
-        internal string ValueData;
+        internal string Name = default!;
+        internal string? Comment;
+        internal string? TypeName;
+        internal string? AssemblyAliasValue;
+        internal string? MimeType;
+        internal string? ValueData;
         internal int Line; //only used to track position in the reader
         internal int Column; //only used to track position in the reader
 
@@ -46,11 +47,11 @@ namespace KGySoft.Resources
 #if !NETCOREAPP2_0
         internal static DataNodeInfo InitFromWinForms(object nodeInfoWinForms)
         {
-            object pos = Accessors.DataNodeInfo_GetReaderPosition(nodeInfoWinForms);
+            object pos = Accessors.DataNodeInfo_GetReaderPosition(nodeInfoWinForms)!;
             return new DataNodeInfo
             {
                 CompatibleFormat = true,
-                Name = Accessors.DataNodeInfo_GetName(nodeInfoWinForms),
+                Name = Accessors.DataNodeInfo_GetName(nodeInfoWinForms)!,
                 Comment = Accessors.DataNodeInfo_GetComment(nodeInfoWinForms),
                 TypeName = Accessors.DataNodeInfo_GetTypeName(nodeInfoWinForms),
                 MimeType = Accessors.DataNodeInfo_GetMimeType(nodeInfoWinForms),

@@ -19,11 +19,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
-
-using KGySoft.Reflection;
 
 #endregion
 
@@ -36,8 +33,6 @@ namespace KGySoft.Resources
     internal sealed class HybridResourceSet : ResourceSet, IExpandoResourceSet, IExpandoResourceSetInternal, IEnumerable
     {
         #region Nested classes
-
-        #region Enumerator class
 
         /// <summary>
         /// An enumerator for a HybridResourceSet. If both .resx and compiled resources contain the same key, returns only the value from the .resx.
@@ -66,8 +61,8 @@ namespace KGySoft.Resources
             private readonly IDictionaryEnumerator compiledEnumerator;
 
             private State state;
-            private HashSet<string> resxKeys;
-            private HashSet<string> compiledKeys;
+            private HashSet<string>? resxKeys;
+            private HashSet<string>? compiledKeys;
 
             #endregion
 
@@ -99,7 +94,7 @@ namespace KGySoft.Resources
                         case State.EnumeratingResX:
                             return resxEnumerator.Key;
                         case State.EnumeratingCompiled:
-                            return compiledEnumerator.Key;
+                            return compiledEnumerator.Key!;
                         default:
                             Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                             return default;
@@ -107,7 +102,7 @@ namespace KGySoft.Resources
                 }
             }
 
-            public object Value
+            public object? Value
             {
                 get
                 {
@@ -156,7 +151,7 @@ namespace KGySoft.Resources
                         // version is checked internally here
                         if (resxEnumerator.MoveNext())
                         {
-                            resxKeys.Add(resxEnumerator.Key.ToString());
+                            resxKeys!.Add(resxEnumerator.Key.ToString()!);
                             return true;
                         }
 
@@ -170,8 +165,9 @@ namespace KGySoft.Resources
 
                         while (compiledEnumerator.MoveNext())
                         {
-                            compiledKeys.Add(compiledEnumerator.Key.ToString());
-                            if (resxKeys.Contains(compiledEnumerator.Key.ToString()))
+                            string key = compiledEnumerator.Key!.ToString()!;
+                            compiledKeys!.Add(key);
+                            if (resxKeys!.Contains(key))
                                 continue;
 
                             return true;
@@ -179,8 +175,7 @@ namespace KGySoft.Resources
 
                         resxKeys = null;
                         state = State.Finished;
-                        if (owner.compiledKeys == null)
-                            owner.compiledKeys = compiledKeys;
+                        owner.compiledKeys ??= compiledKeys;
                         return false;
 
                     case State.Finished:
@@ -204,18 +199,12 @@ namespace KGySoft.Resources
 
         #endregion
 
-        #endregion
-
         #region Fields
 
-        private ResXResourceSet resxResourceSet;
-
-        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
-            Justification = "In .NET Core 2.0 ResourceSet is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
-        private ResourceSet compiledResourceSet;
-
-        [NonSerialized] private HashSet<string> compiledKeys;
-        [NonSerialized] private HashSet<string> compiledKeysCaseInsensitive;
+        private ResXResourceSet? resxResourceSet;
+        private ResourceSet? compiledResourceSet;
+        [NonSerialized]private HashSet<string>? compiledKeys;
+        [NonSerialized]private HashSet<string>? compiledKeysCaseInsensitive;
 
         #endregion
 
@@ -227,7 +216,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                ResXResourceSet resx = resxResourceSet;
+                ResXResourceSet? resx = resxResourceSet;
                 if (resx == null)
                     Throw.ObjectDisposedException();
                 return resx.IsModified;
@@ -238,7 +227,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                ResXResourceSet resx = resxResourceSet;
+                ResXResourceSet? resx = resxResourceSet;
                 if (resx == null)
                     Throw.ObjectDisposedException();
 
@@ -246,7 +235,7 @@ namespace KGySoft.Resources
             }
             set
             {
-                ResXResourceSet resx = resxResourceSet;
+                ResXResourceSet? resx = resxResourceSet;
                 if (resx == null)
                     Throw.ObjectDisposedException();
 
@@ -262,7 +251,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                ResXResourceSet resx = resxResourceSet;
+                ResXResourceSet? resx = resxResourceSet;
                 if (resx == null)
                     Throw.ObjectDisposedException();
 
@@ -270,7 +259,7 @@ namespace KGySoft.Resources
             }
             set
             {
-                ResXResourceSet resx = resxResourceSet;
+                ResXResourceSet? resx = resxResourceSet;
                 if (resx == null)
                     Throw.ObjectDisposedException();
 
@@ -286,9 +275,9 @@ namespace KGySoft.Resources
 
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
-            if (resx == null)
+            if (resx == null!)
                 Throw.ArgumentNullException(Argument.resx);
-            if (compiled == null)
+            if (compiled == null!)
                 Throw.ArgumentNullException(Argument.compiled);
             resxResourceSet = resx;
             compiledResourceSet = compiled;
@@ -319,8 +308,8 @@ namespace KGySoft.Resources
 
         public override IDictionaryEnumerator GetEnumerator()
         {
-            ResXResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
+            ResourceSet? compiled = compiledResourceSet;
             if (resx == null || compiled == null)
                 Throw.ObjectDisposedException();
 
@@ -328,50 +317,50 @@ namespace KGySoft.Resources
             return new Enumerator(this, (ResXResourceEnumerator)resx.GetEnumerator(), compiled.GetEnumerator(), ((IResXResourceContainer)resx).Version);
         }
 
-        public override object GetObject(string name)
+        public override object? GetObject(string name)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             return GetResource(name, false, false, resx.SafeMode, resx.CloneValues);
         }
 
-        public override object GetObject(string name, bool ignoreCase)
+        public override object? GetObject(string name, bool ignoreCase)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             return GetResource(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
-        public override string GetString(string name)
+        public override string? GetString(string name)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
-            return (string)GetResource(name, false, true, resx.SafeMode, resx.CloneValues);
+            return (string?)GetResource(name, false, true, resx.SafeMode, resx.CloneValues);
         }
 
-        public override string GetString(string name, bool ignoreCase)
+        public override string? GetString(string name, bool ignoreCase)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
-            return (string)GetResource(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
+            return (string?)GetResource(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
         }
 
-        public object GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+        public object? GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
-            ResXResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
+            ResourceSet? compiled = compiledResourceSet;
             if (resx == null || compiled == null)
                 Throw.ObjectDisposedException();
 
-            object result = resx.GetResourceInternal(name, ignoreCase, isString, asSafe, cloneValue);
+            object? result = resx.GetResourceInternal(name, ignoreCase, isString, asSafe, cloneValue);
 
             if (result != null)
                 return result;
@@ -383,9 +372,9 @@ namespace KGySoft.Resources
             return isString ? compiled.GetString(name, ignoreCase) : compiled.GetObject(name, ignoreCase);
         }
 
-        public object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+        public object? GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -394,7 +383,7 @@ namespace KGySoft.Resources
 
         public IDictionaryEnumerator GetMetadataEnumerator()
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -403,7 +392,7 @@ namespace KGySoft.Resources
 
         public IDictionaryEnumerator GetAliasEnumerator()
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -412,24 +401,22 @@ namespace KGySoft.Resources
 
         public bool ContainsResource(string name, bool ignoreCase)
         {
-            ResXResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
+            ResourceSet? compiled = compiledResourceSet;
             if (resx == null || compiled == null)
                 Throw.ObjectDisposedException();
 
             if (resx.ContainsResource(name, ignoreCase))
                 return true;
 
-            HashSet<string> binKeys = compiledKeys;
+            HashSet<string>? binKeys = compiledKeys;
             if (binKeys == null)
             {
                 // no foreach because that would evaluate (deserialize) the values, too
                 binKeys = new HashSet<string>();
                 IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
                 while (compiledEnumerator.MoveNext())
-                {
-                    binKeys.Add(compiledEnumerator.Key.ToString());
-                }
+                    binKeys.Add(compiledEnumerator.Key!.ToString()!);
 
                 compiledKeys = binKeys;
             }
@@ -440,63 +427,61 @@ namespace KGySoft.Resources
             if (!ignoreCase)
                 return false;
 
-            HashSet<string> binKeysIgnoreCase = compiledKeysCaseInsensitive;
+            HashSet<string>? binKeysIgnoreCase = compiledKeysCaseInsensitive;
             if (binKeysIgnoreCase == null)
-            {
                 compiledKeysCaseInsensitive = binKeysIgnoreCase = new HashSet<string>(binKeys, StringComparer.OrdinalIgnoreCase);
-            }
 
             return binKeysIgnoreCase.Contains(name);
         }
 
         public bool ContainsMeta(string name, bool ignoreCase)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             return resx.ContainsMeta(name, ignoreCase);
         }
 
-        public object GetMetaObject(string name, bool ignoreCase = false)
+        public object? GetMetaObject(string name, bool ignoreCase = false)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             return resx.GetMetaInternal(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
-        public string GetMetaString(string name, bool ignoreCase = false)
+        public string? GetMetaString(string name, bool ignoreCase = false)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
-            return (string)resx.GetMetaInternal(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
+            return (string?)resx.GetMetaInternal(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
         }
 
-        public string GetAliasValue(string alias)
+        public string? GetAliasValue(string alias)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             return resx.GetAliasValue(alias);
         }
 
-        public void SetObject(string name, object value)
+        public void SetObject(string name, object? value)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             resx.SetObject(name, value);
         }
 
-        public void SetMetaObject(string name, object value)
+        public void SetMetaObject(string name, object? value)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -505,7 +490,7 @@ namespace KGySoft.Resources
 
         public void SetAliasValue(string alias, string assemblyName)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -514,7 +499,7 @@ namespace KGySoft.Resources
 
         public void RemoveObject(string name)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -523,7 +508,7 @@ namespace KGySoft.Resources
 
         public void RemoveMetaObject(string name)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -532,34 +517,34 @@ namespace KGySoft.Resources
 
         public void RemoveAliasValue(string alias)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             resx.RemoveAliasValue(alias);
         }
 
-        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
+        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             resx.Save(fileName, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
-        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
+        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
             resx.Save(stream, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
-        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
+        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResXResourceSet? resx = resxResourceSet;
             if (resx == null)
                 Throw.ObjectDisposedException();
 
@@ -570,11 +555,10 @@ namespace KGySoft.Resources
 
         #region Protected Methods
 
-        [SuppressMessage("Microsoft.Usage", "CA2215:Dispose methods should call base class dispose", Justification = "False alarm, it is called but only once.")]
         protected override void Dispose(bool disposing)
         {
-            ResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
+            ResourceSet? resx = resxResourceSet;
+            ResourceSet? compiled = compiledResourceSet;
             if (resx == null || compiled == null)
                 return;
 

@@ -125,12 +125,12 @@ namespace KGySoft
         private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => new ArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);
         private static Exception CreateKeyNotFoundException(string message) => new KeyNotFoundException(message);
-        private static Exception CreateInvalidOperationException(string message, Exception inner = null) => new InvalidOperationException(message, inner);
-        private static Exception CreateNotSupportedException(string message, Exception inner = null) => new NotSupportedException(message, inner);
-        private static Exception CreateObjectDisposedException(string message, string name = null) => new ObjectDisposedException(name, message);
-        private static Exception CreateReflectionException(string message, Exception inner = null) => new ReflectionException(message, inner);
-        private static Exception CreateTypeLoadException(string message, Exception inner = null) => new TypeLoadException(message, inner);
-        private static Exception CreateSerializationException(string message, Exception inner = null) => new SerializationException(message, inner);
+        private static Exception CreateInvalidOperationException(string message, Exception? inner = null) => new InvalidOperationException(message, inner);
+        private static Exception CreateNotSupportedException(string message, Exception? inner = null) => new NotSupportedException(message, inner);
+        private static Exception CreateObjectDisposedException(string message, string? name = null) => new ObjectDisposedException(name, message);
+        private static Exception CreateReflectionException(string message, Exception? inner = null) => new ReflectionException(message, inner);
+        private static Exception CreateTypeLoadException(string message, Exception? inner = null) => new TypeLoadException(message, inner);
+        private static Exception CreateSerializationException(string message, Exception? inner = null) => new SerializationException(message, inner);
         private static Exception CreatePlatformNotSupportedException(string message) => new PlatformNotSupportedException(message);
 
         #endregion

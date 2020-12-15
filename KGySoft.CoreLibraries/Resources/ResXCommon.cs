@@ -22,6 +22,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
+
 using KGySoft.CoreLibraries;
 using KGySoft.IO;
 using KGySoft.Reflection;
@@ -103,7 +104,7 @@ namespace KGySoft.Resources
 
         #region Private Fields
 
-        private static IFormatter soapFormatter;
+        private static IFormatter? soapFormatter;
 
         #endregion
 
@@ -116,22 +117,23 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets assembly info for the corresponding type. If the delegate is provided it is used to get this information.
         /// </summary>
-        internal static string GetAssemblyQualifiedName(Type type, Func<Type, string> typeNameConverter, bool compatibleFormat)
+        [return:NotNullIfNotNull("type")]
+        internal static string GetAssemblyQualifiedName(Type? type, Func<Type, string?>? typeNameConverter, bool compatibleFormat)
         {
             #region Local Methods
 
             static AssemblyName GetAssemblyName(Type t)
             {
-                string legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
+                string? legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
                 return legacyName != null ? new AssemblyName(legacyName) : t.Assembly.GetName();
             }
 
             #endregion
 
             if (type == null)
-                return null;
+                return null!;
 
-            string result = null;
+            string? result = null;
 
             if (typeNameConverter != null)
                 result = typeNameConverter.Invoke(type);
@@ -152,8 +154,7 @@ namespace KGySoft.Resources
                         result = ResXResourceWriterNameWinForms + WinFormsPostfix;
                 }
 
-                if (result == null)
-                    result = type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
+                result ??= type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
             }
 
             return result;
@@ -168,20 +169,20 @@ namespace KGySoft.Resources
             return valueData;
         }
 
-        internal static XmlException CreateXmlException(string message, int line, int pos, Exception innerException = null)
+        internal static XmlException CreateXmlException(string message, int line, int pos, Exception? innerException = null)
             => new XmlException(message, innerException, line, pos);
 
-        internal static IFormatter GetSoapFormatter()
+        internal static IFormatter? GetSoapFormatter()
         {
             if (soapFormatter == null)
             {
                 try
                 {
-                    Type type = Reflector.ResolveType(soapFormatterTypeName);
+                    Type? type = Reflector.ResolveType(soapFormatterTypeName);
 
                     // no Reflector or Accessor is needed because this is a static instance so will be invoked once. In this case Reflector would be slower for that single run.
                     if (type != null)
-                        soapFormatter = (IFormatter)Activator.CreateInstance(type);
+                        soapFormatter = (IFormatter)Activator.CreateInstance(type)!;
                 }
                 catch (ReflectionException)
                 {
@@ -193,7 +194,7 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")]
-        internal static MemoryStream ToMemoryStream(string name, object value, bool safeMode)
+        internal static MemoryStream? ToMemoryStream(string name, object? value, bool safeMode)
         {
             if (value == null)
                 return null;
@@ -201,7 +202,7 @@ namespace KGySoft.Resources
             if (value is ResXDataNode node)
                 return ToStreamSafe(node);
 
-            if (CanGetAsMemoryStream(value, safeMode, out MemoryStream result))
+            if (CanGetAsMemoryStream(value, safeMode, out MemoryStream? result))
                 return result;
 
             Throw.InvalidOperationException(Res.ResourcesNonStreamResourceWithType(name, value.GetType()));
@@ -212,7 +213,7 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        private static bool CanGetAsMemoryStream(object value, bool safeMode, out MemoryStream result)
+        private static bool CanGetAsMemoryStream(object value, bool safeMode, [MaybeNullWhen(false)]out MemoryStream result)
         {
             // .NET issue: is operator would capture sbyte[], too (https://stackoverflow.com/q/33896316/5114784)
             if (value.GetType() == Reflector.ByteArrayType)
@@ -242,19 +243,21 @@ namespace KGySoft.Resources
                 return true;
             }
 
-            result = new StringStream(value.ToString());
+            result = new StringStream(value.ToString() ?? String.Empty);
             return true;
         }
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")]
-        private static MemoryStream ToStreamSafe(ResXDataNode node)
+#if NETFRAMEWORK
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")] 
+#endif
+        private static MemoryStream? ToStreamSafe(ResXDataNode node)
         {
-            object value = node.ValueInternal;
+            object? value = node.ValueInternal;
 
             // not deserialized yet
             if (value == null)
             {
-                string typeName = node.FileRef?.TypeName ?? node.AssemblyQualifiedName;
+                string? typeName = node.FileRef?.TypeName ?? node.AssemblyQualifiedName;
                 if (typeName != null && Reflector.ResolveType(typeName) is Type type && type.In(Reflector.ByteArrayType, Reflector.StringType, typeof(MemoryStream)))
                     value = node.GetValue();
             }
@@ -262,11 +265,11 @@ namespace KGySoft.Resources
             if (value is ResXNullRef)
                 return null;
 
-            if (value != null && CanGetAsMemoryStream(value, false, out MemoryStream result))
+            if (value != null && CanGetAsMemoryStream(value, false, out MemoryStream? result))
                 return result;
 
             // not a supported type or type cannot be determined: by raw value
-            return new StringStream(node.ValueData ?? node.GetDataNodeInfo(null, null).ValueData);
+            return new StringStream(node.ValueData ?? node.GetDataNodeInfo(null, null).ValueData!);
         }
 
         #endregion

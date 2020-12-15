@@ -81,7 +81,7 @@ namespace KGySoft.Resources
 
             #region Static Methods
 
-            internal static string[] ParseResXFileRefString(string stringValue)
+            internal static string[]? ParseResXFileRefString(string? stringValue)
             {
                 if (stringValue == null)
                     return null;
@@ -122,19 +122,18 @@ namespace KGySoft.Resources
                 return result;
             }
 
-            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "MemoryStream must not be disposed even if passsed to constructor.")]
-            internal static object ConvertFrom(string stringValue, Type objectType, string basePath)
+            internal static object ConvertFrom(string stringValue, Type? objectType, string? basePath)
             {
-                if (stringValue == null)
+                if (stringValue == null!)
                     Throw.ArgumentNullException(Argument.stringValue);
-                string[] parts = ParseResXFileRefString(stringValue);
+                string[]? parts = ParseResXFileRefString(stringValue);
                 if (parts == null)
                     Throw.ArgumentException(Argument.stringValue, Res.ArgumentInvalidString);
                 string fileName = parts[0];
                 if (!String.IsNullOrEmpty(basePath) && !Path.IsPathRooted(fileName))
-                    fileName = Path.Combine(basePath, fileName);
+                    fileName = Path.Combine(basePath!, fileName);
 
-                Type toCreate = objectType ?? TypeResolver.ResolveType(parts[1], null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
+                Type? toCreate = objectType ?? TypeResolver.ResolveType(parts[1], null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
 
                 // string: consider encoding
                 if (toCreate == Reflector.StringType)
@@ -163,20 +162,20 @@ namespace KGySoft.Resources
                 var memStream = new MemoryStream(buffer);
                 return toCreate == typeof(MemoryStream)
                     ? memStream
-                    : Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
+                    : Reflector.CreateInstance(toCreate!, ReflectionWays.Auto, memStream);
             }
 
             #endregion
 
             #region Instance Methods
 
-            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == Reflector.StringType;
+            public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) => sourceType == Reflector.StringType;
 
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == Reflector.StringType;
+            public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType) => destinationType == Reflector.StringType;
 
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
+            public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
 
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
+            public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
 
             #endregion
 
@@ -191,10 +190,10 @@ namespace KGySoft.Resources
 
         private readonly string fileName;
         private readonly string typeName;
-        private readonly string encoding;
+        private readonly string? encoding;
 
         [NonSerialized]
-        private Encoding textFileEncoding;
+        private Encoding? textFileEncoding;
 
         #endregion
 
@@ -224,7 +223,7 @@ namespace KGySoft.Resources
         /// <returns>
         /// The encoding used in the referenced file.
         /// </returns>
-        public Encoding TextFileEncoding
+        public Encoding? TextFileEncoding
         {
             get
             {
@@ -242,7 +241,7 @@ namespace KGySoft.Resources
 
         #region Internal Properties
 
-        internal string EncodingName => encoding;
+        internal string? EncodingName => encoding;
 
         #endregion
 
@@ -259,11 +258,11 @@ namespace KGySoft.Resources
         /// <param name="type">The type of the resource that is referenced. Should be either <see cref="string"/>, array of <see cref="byte"/>, <see cref="MemoryStream"/> or a type, which has a constructor with one <see cref="Stream"/> parameter.</param>
         /// <param name="textFileEncoding">The encoding used in the referenced file. Used if <paramref name="type"/> is <see cref="string"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
+        public ResXFileRef(string fileName, Type type, Encoding? textFileEncoding = null)
         {
-            if (fileName == null)
+            if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             this.fileName = fileName;
@@ -279,7 +278,7 @@ namespace KGySoft.Resources
 
         #region Internal Constructors
 
-        internal ResXFileRef(string fileName, string typeName, string encoding)
+        internal ResXFileRef(string fileName, string typeName, string? encoding)
         {
             this.fileName = fileName;
             this.typeName = typeName;
@@ -305,10 +304,10 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentException"><paramref name="s"/> is contains invalid value.</exception>
         public static ResXFileRef Parse(string s)
         {
-            if (s == null)
+            if (s == null!)
                 Throw.ArgumentNullException(Argument.s);
 
-            if (TryParse(s, out ResXFileRef result))
+            if (TryParse(s, out ResXFileRef? result))
                 return result;
 
             Throw.ArgumentException(Argument.s, Res.ArgumentInvalidString);
@@ -322,9 +321,9 @@ namespace KGySoft.Resources
         /// <param name="result">When this method returns, contains a <see cref="ResXFileRef"/> instance that represents the file reference specified in <paramref name="s"/>,
         /// if the conversion succeeded, or <see langword="null"/>&#160;if the conversion failed.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="s"/> was converted successfully; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse(string s, out ResXFileRef result)
+        public static bool TryParse(string? s, [MaybeNullWhen(false)]out ResXFileRef result)
         {
-            string[] fileRefDetails = Converter.ParseResXFileRefString(s);
+            string[]? fileRefDetails = Converter.ParseResXFileRefString(s);
             if (fileRefDetails == null || fileRefDetails.Length < 2 || fileRefDetails.Length > 3)
             {
                 result = null;
@@ -339,9 +338,9 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
-        internal static string ToString(string fileName, string typeName, string encoding)
+        internal static string ToString(string fileName, string typeName, string? encoding)
         {
-            string result = "";
+            string result = String.Empty;
 
             if (fileName.IndexOf(';') != -1 || fileName.IndexOf('"') != -1)
                 result += "\"" + fileName + "\";";
@@ -357,8 +356,8 @@ namespace KGySoft.Resources
 
 #if !NETCOREAPP2_0
         internal static ResXFileRef InitFromWinForms(object other) => new ResXFileRef(
-            Accessors.ResXFileRef_GetFileName(other),
-            Accessors.ResXFileRef_GetTypeName(other),
+            Accessors.ResXFileRef_GetFileName(other)!,
+            Accessors.ResXFileRef_GetTypeName(other)!,
             Accessors.ResXFileRef_GetTextFileEncoding(other)?.WebName);
 #endif
 
@@ -382,7 +381,7 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
-        internal object GetValue(Type objectType, string basePath) => Converter.ConvertFrom(ToString(), objectType, basePath);
+        internal object GetValue(Type objectType, string? basePath) => Converter.ConvertFrom(ToString(), objectType, basePath);
 
         #endregion
 

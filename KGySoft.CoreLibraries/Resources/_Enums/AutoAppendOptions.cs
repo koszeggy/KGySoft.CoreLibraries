@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Resources;
 
@@ -33,8 +32,6 @@ namespace KGySoft.Resources
     /// <seealso cref="DynamicResourceManager.AutoAppend"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>
     [Flags]
-    [SuppressMessage("Microsoft.Usage", "CA2217:DoNotMarkEnumsWithFlags",
-        Justification = "AppendNeutralCultures/AppendSpecificCultures must include flags of all neutral/specific culture options and also must have their own unique flag, which must not be set alone. This is asserted also by DynamicResourceManger")]
     public enum AutoAppendOptions
     {
         /// <summary>

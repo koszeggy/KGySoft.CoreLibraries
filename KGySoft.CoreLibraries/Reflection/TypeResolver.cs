@@ -300,7 +300,7 @@ namespace KGySoft.Reflection
 
         private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             this.type = type;
 

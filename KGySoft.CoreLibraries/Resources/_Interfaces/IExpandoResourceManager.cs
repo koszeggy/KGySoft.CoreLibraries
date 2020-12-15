@@ -101,7 +101,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <see langword="true"/>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
-        IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false);
+        IExpandoResourceSet? GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false);
 
         /// <summary>
         /// Tells the resource manager to call the <see cref="ResourceSet.Close">Close</see> method on all <see cref="ResourceSet" /> objects and release all resources.
@@ -136,7 +136,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        string GetString(string name, CultureInfo culture = null);
+        string? GetString(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/> and <paramref name="culture"/>.
@@ -164,7 +164,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        MemoryStream GetStream(string name, CultureInfo culture = null);
+        MemoryStream? GetStream(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
@@ -189,7 +189,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        object GetObject(string name, CultureInfo culture = null);
+        object? GetObject(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Adds or replaces a resource object in the current <see cref="IExpandoResourceManager"/> with the specified
@@ -214,7 +214,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        void SetObject(string name, object value, CultureInfo culture = null);
+        void SetObject(string name, object? value, CultureInfo? culture = null);
 
         /// <summary>
         /// Removes a resource object from the current <see cref="IExpandoResourceManager"/> with the specified
@@ -236,7 +236,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        void RemoveObject(string name, CultureInfo culture = null);
+        void RemoveObject(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Returns the value of the string metadata for the specified <paramref name="culture"/>.
@@ -260,7 +260,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        string GetMetaString(string name, CultureInfo culture = null);
+        string? GetMetaString(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the metadata of the specified <paramref name="name"/> and <paramref name="culture"/>.
@@ -289,7 +289,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        MemoryStream GetMetaStream(string name, CultureInfo culture = null);
+        MemoryStream? GetMetaStream(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.
@@ -315,7 +315,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        object GetMetaObject(string name, CultureInfo culture = null);
+        object? GetMetaObject(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Adds or replaces a metadata object in the current <see cref="IExpandoResourceManager"/> with the specified
@@ -337,7 +337,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        void SetMetaObject(string name, object value, CultureInfo culture = null);
+        void SetMetaObject(string name, object? value, CultureInfo? culture = null);
 
         /// <summary>
         /// Removes a metadata object from the current <see cref="IExpandoResourceManager"/> with the specified
@@ -355,7 +355,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        void RemoveMetaObject(string name, CultureInfo culture = null);
+        void RemoveMetaObject(string name, CultureInfo? culture = null);
 
         /// <summary>
         /// Saves the resource set of a particular <paramref name="culture"/> if it has been already loaded.

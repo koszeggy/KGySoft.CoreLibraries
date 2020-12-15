@@ -147,7 +147,7 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
-        object GetObject(string name, bool ignoreCase = false);
+        object? GetObject(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Searches for a <see cref="string" /> resource with the specified <paramref name="name"/>.
@@ -163,7 +163,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
-        string GetString(string name, bool ignoreCase = false);
+        string? GetString(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Searches for a metadata object with the specified <paramref name="name"/>.
@@ -177,7 +177,7 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
-        object GetMetaObject(string name, bool ignoreCase = false);
+        object? GetMetaObject(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Searches for a <see cref="string" /> metadata with the specified <paramref name="name"/>.
@@ -193,7 +193,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
-        string GetMetaString(string name, bool ignoreCase = false);
+        string? GetMetaString(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Gets the assembly name for the specified <paramref name="alias"/>.
@@ -203,7 +203,7 @@ namespace KGySoft.Resources
         /// <remarks>If an alias is redefined in the .resx file, then this method returns the last occurrence of the alias value.</remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="alias"/> is <see langword="null"/>.</exception>
-        string GetAliasValue(string alias);
+        string? GetAliasValue(string alias);
 
         /// <summary>
         /// Gets whether the current <see cref="IExpandoResourceSet"/> contains a resource with the given <paramref name="name"/>.
@@ -244,7 +244,7 @@ namespace KGySoft.Resources
         /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
-        void SetObject(string name, object value);
+        void SetObject(string name, object? value);
 
         /// <summary>
         /// Adds or replaces a metadata object in the current <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.
@@ -263,7 +263,7 @@ namespace KGySoft.Resources
         /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
-        void SetMetaObject(string name, object value);
+        void SetMetaObject(string name, object? value);
 
         /// <summary>
         /// Adds or replaces an assembly alias value in the current <see cref="IExpandoResourceSet"/>.
@@ -326,7 +326,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
+        void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         /// <summary>
         /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="stream"/>. If the current <see cref="IExpandoResourceSet"/> instance
@@ -345,7 +345,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
+        void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         /// <summary>
         /// Saves the <see cref="IExpandoResourceSet"/> by the specified <paramref name="textWriter"/>. If the current <see cref="IExpandoResourceSet"/> instance
@@ -364,7 +364,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
+        void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         #endregion
     }

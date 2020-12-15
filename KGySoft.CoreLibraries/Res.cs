@@ -861,10 +861,10 @@ namespace KGySoft
         internal static string ResourcesNeutralResourceFileNotFoundResX(string fileName) => Get("Resources_NeutralResourceFileNotFoundResXFormat", fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</summary>
-        internal static string ResourcesNeutralResourceNotFoundCompiled(string baseNameField, string fileName) => Get("Resources_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
+        internal static string ResourcesNeutralResourceNotFoundCompiled(string baseNameField, string? fileName) => Get("Resources_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</summary>
-        internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
+        internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string? assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
 
         /// <summary>Cannot find a name for the resource at line {0}, position {1}.</summary>
         internal static string ResourcesNoResXName(int line, int pos) => Get("Resources_NoResXNameFormat", line, pos);
@@ -1045,7 +1045,7 @@ namespace KGySoft
 
         private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(CultureInfo.InvariantCulture, unavailableResource, id);
 
-        private static string Get([NotNull]string id, params object[] args)
+        private static string Get([NotNull]string id, params object?[]? args)
         {
             string format = Get(id);
             return args == null ? format : SafeFormat(format, args);
@@ -1059,7 +1059,7 @@ namespace KGySoft
 
         private static string FormatBool(bool value) => value ? Yes : No;
 
-        private static string SafeFormat(string format, object[] args)
+        private static string SafeFormat(string format, object?[] args)
         {
             try
             {

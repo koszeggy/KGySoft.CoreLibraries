@@ -19,14 +19,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+#if !NET35
 using System.Runtime.CompilerServices;
+#endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
@@ -311,7 +312,7 @@ namespace KGySoft.Resources
             /// <summary>
             /// Gets the wrapped resource set. This is always a parent of <see cref="WrappedCulture"/>.
             /// </summary>
-            internal ResXResourceSet ResXResourceSet { get; private set; }
+            internal ResXResourceSet? ResXResourceSet { get; private set; }
 
             /// <summary>
             /// Gets the culture of the wrapped resource set
@@ -390,11 +391,11 @@ namespace KGySoft.Resources
 #else
             internal Dictionary<string, ResourceSet> ResourceSets;
 #endif
-            internal ResourceSet Result;
-            internal ProxyResourceSet Proxy;
-            internal CultureInfo FoundCultureToAdd;
-            internal CultureInfo FoundProxyCulture;
-            internal ResourceFallbackManager FallbackManager;
+            internal ResourceSet? Result;
+            internal ProxyResourceSet? Proxy;
+            internal CultureInfo? FoundCultureToAdd;
+            internal CultureInfo? FoundProxyCulture;
+            internal ResourceFallbackManager? FallbackManager;
 
             #endregion
         }
@@ -411,33 +412,24 @@ namespace KGySoft.Resources
 
         #region Fields
 
-        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
-            Justification = "In .NET Core 2.0 CultureInfo is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
         private readonly CultureInfo neutralResourcesCulture;
 
         private string resxResourcesDir = "Resources";
-
-        [NonSerialized]
-        private string resxDirFullPath;
-
-        [NonSerialized]
-        private object syncRoot;
+        [NonSerialized]private string? resxDirFullPath;
+        [NonSerialized]private object? syncRoot;
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
         /// has been found but the resource set was requested last time. In cases it means difference this way performs usually better (no unneeded traversal again and again).
         /// </summary>
-        [NonSerialized]
-        private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
+        [NonSerialized]private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
 #if !NET35
         /// <summary>
         /// Local cache of the resource sets.
         /// Before serializing we remove proxies and unmodified sets.
         /// </summary>
-        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
-            Justification = "In .NET Core 2.0 ResourceSet is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
-        private Dictionary<string, ResourceSet> resourceSets;
+        private Dictionary<string, ResourceSet>? resourceSets;
 #endif
 
         #endregion
@@ -450,7 +442,7 @@ namespace KGySoft.Resources
         /// Gets or sets the relative path to .resx resource files.
         /// <br/>Default value: <c>Resources</c>
         /// </summary>
-        public string ResXResourcesDir
+        [AllowNull]public string ResXResourcesDir
         {
             get => resxResourcesDir;
             set
@@ -459,7 +451,7 @@ namespace KGySoft.Resources
                     return;
 
                 resxDirFullPath = null;
-                if (value == null)
+                if (value == null!)
                 {
                     resxResourcesDir = String.Empty;
                     return;
@@ -555,13 +547,13 @@ namespace KGySoft.Resources
 
 
 #if NET35
-        private Hashtable InternalResourceSets => base.ResourceSets;
+        private Hashtable? InternalResourceSets => base.ResourceSets;
 
-        private new Hashtable ResourceSets
+        [AllowNull]private new Hashtable ResourceSets
         {
             get
             {
-                Hashtable result = base.ResourceSets;
+                Hashtable? result = base.ResourceSets;
                 if (result == null)
                     Throw.ObjectDisposedException();
                 return result;
@@ -569,8 +561,9 @@ namespace KGySoft.Resources
             set => base.ResourceSets = value;
         }
 #else
-        private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
+        private Dictionary<string, ResourceSet>? InternalResourceSets => resourceSets;
 
+        [AllowNull]
 #if NETFRAMEWORK
         new
 #endif
@@ -578,7 +571,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                Dictionary<string, ResourceSet> result = resourceSets;
+                Dictionary<string, ResourceSet>? result = resourceSets;
                 if (result == null)
                     Throw.ObjectDisposedException();
                 return result;
@@ -645,7 +638,7 @@ namespace KGySoft.Resources
         /// <para>If <paramref name="neutralResourcesLanguage"/> is <see langword="null"/>, then the default culture is auto detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
         /// If it is not defined, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as default culture.</para>
         /// </remarks>
-        public ResXResourceManager(string baseName, CultureInfo neutralResourcesLanguage = null)
+        public ResXResourceManager(string baseName, CultureInfo? neutralResourcesLanguage = null)
             : this(baseName, Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly())
         {
             if (neutralResourcesLanguage != null)
@@ -664,7 +657,8 @@ namespace KGySoft.Resources
         /// of the fallback culture. If the <see cref="Assembly"/> of <paramref name="resourceSource"/> does not define this attribute, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as the default culture.</para>
         /// </remarks>
         public ResXResourceManager(Type resourceSource)
-            : this(resourceSource?.Name, resourceSource?.Assembly)
+            // ReSharper disable once ConstantConditionalAccessQualifier - it CAN be null even if it is not allowed. Exception is thrown from the base via the overloaded ctor.
+            : this(resourceSource?.Name!, resourceSource?.Assembly!)
         {
         }
 
@@ -692,9 +686,9 @@ namespace KGySoft.Resources
         #region Private Methods
 
 #if NET35
-        private static bool TryGetResource(Hashtable localResourceSets, string cultureName, out ResourceSet rs)
+        private static bool TryGetResource(Hashtable localResourceSets, string cultureName, [MaybeNullWhen(false)]out ResourceSet rs)
         {
-            rs = (ResourceSet)localResourceSets[cultureName];
+            rs = (ResourceSet?)localResourceSets[cultureName];
             return rs != null;
         }
 
@@ -706,7 +700,7 @@ namespace KGySoft.Resources
             lock (localResourceSets)
             {
                 // If another thread added this culture, return that.
-                ResourceSet lostRace = (ResourceSet)localResourceSets[cultureName];
+                ResourceSet? lostRace = (ResourceSet?)localResourceSets[cultureName];
                 if (lostRace != null)
                 {
                     if (!ReferenceEquals(lostRace, rs))
@@ -734,10 +728,8 @@ namespace KGySoft.Resources
         }
 #else
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool TryGetResource(Dictionary<string, ResourceSet> localResourceSets, string cultureName, out ResourceSet rs)
-        {
-            return localResourceSets.TryGetValue(cultureName, out rs);
-        }
+        private static bool TryGetResource(Dictionary<string, ResourceSet> localResourceSets, string cultureName, [MaybeNullWhen(false)]out ResourceSet rs)
+            => localResourceSets.TryGetValue(cultureName, out rs);
 
         private static void AddResourceSet(Dictionary<string, ResourceSet> localResourceSets, string cultureName, ref ResourceSet rs)
         {
@@ -747,7 +739,7 @@ namespace KGySoft.Resources
             lock (localResourceSets)
             {
                 // If another thread added this culture, return that.
-                if (TryGetResource(localResourceSets, cultureName, out ResourceSet lostRace))
+                if (TryGetResource(localResourceSets, cultureName, out ResourceSet? lostRace))
                 {
                     if (!ReferenceEquals(lostRace, rs))
                     {
@@ -774,16 +766,11 @@ namespace KGySoft.Resources
         }
 #endif
 
-        private static ResXResourceSet GetResXResourceSet(ResourceSet rs)
-        {
-            if (rs == null)
-                return null;
-
-            if (rs is ResXResourceSet resx)
-                return resx;
-
-            return ((ProxyResourceSet)rs).ResXResourceSet;
-        }
+        [return:NotNullIfNotNull("rs")]
+        private static ResXResourceSet? Unwrap(ResourceSet? rs)
+            => rs == null ? null
+                : rs is ResXResourceSet resx ? resx
+                : ((ProxyResourceSet)rs).ResXResourceSet;
 
         private static string GetExecutingPath()
         {
@@ -796,11 +783,11 @@ namespace KGySoft.Resources
             }
             catch (SecurityException)
             {
-                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
+                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory!;
             }
             catch (UnauthorizedAccessException)
             {
-                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
+                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory!;
             }
 #endif
         }
@@ -811,7 +798,7 @@ namespace KGySoft.Resources
             // The non-generic enumerator is not a problem, values must be cast anyway.
             IDictionaryEnumerator enumerator = resourceSets.GetEnumerator();
             while (enumerator.MoveNext())
-                ((ResourceSet)enumerator.Value).Dispose();
+                ((ResourceSet)enumerator.Value!).Dispose();
         }
 
         #endregion
@@ -840,7 +827,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string GetString(string name) => (string)GetObjectInternal(name, null, true, CloneValues);
+        public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified <paramref name="culture"/>.
@@ -863,7 +850,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true, CloneValues);
+        public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/>.
@@ -888,7 +875,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public new virtual MemoryStream GetStream(string name) => GetStream(name, null);
+        public new virtual MemoryStream? GetStream(string name) => GetStream(name, null);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/> and <paramref name="culture"/>.
@@ -916,9 +903,9 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public new virtual MemoryStream GetStream(string name, CultureInfo culture)
+        public new virtual MemoryStream? GetStream(string name, CultureInfo? culture)
         {
-            object value = GetObjectInternal(name, culture, false, false);
+            object? value = GetObjectInternal(name, culture, false, false);
             return ResXCommon.ToMemoryStream(name, value, SafeMode);
         }
 
@@ -942,7 +929,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
+        public override object? GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
 
         /// <summary>
         /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
@@ -967,7 +954,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false, CloneValues);
+        public override object? GetObject(string name, CultureInfo? culture) => GetObjectInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Returns the value of the string metadata for the specified <paramref name="culture"/>.
@@ -990,7 +977,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true, CloneValues);
+        public string? GetMetaString(string name, CultureInfo? culture = null) => (string?)GetMetaInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the metadata of the specified <paramref name="name"/> and <paramref name="culture"/>.
@@ -1019,9 +1006,9 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public MemoryStream GetMetaStream(string name, CultureInfo culture = null)
+        public MemoryStream? GetMetaStream(string name, CultureInfo? culture = null)
         {
-            object value = GetMetaInternal(name, culture, false, false);
+            object? value = GetMetaInternal(name, culture, false, false);
             return ResXCommon.ToMemoryStream(name, value, SafeMode);
         }
 
@@ -1042,7 +1029,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false, CloneValues);
+        public object? GetMetaObject(string name, CultureInfo? culture = null) => GetMetaInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Adds or replaces a resource object in the current <see cref="ResXResourceManager" /> with the specified
@@ -1064,9 +1051,9 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
-        public void SetObject(string name, object value, CultureInfo culture = null)
+        public void SetObject(string name, object? value, CultureInfo? culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false)!;
             rs.SetObject(name, value);
         }
 
@@ -1084,9 +1071,9 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
-        public void RemoveObject(string name, CultureInfo culture = null)
+        public void RemoveObject(string name, CultureInfo? culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false);
+            ResXResourceSet? rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveObject(name);
         }
 
@@ -1108,9 +1095,9 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
-        public void SetMetaObject(string name, object value, CultureInfo culture = null)
+        public void SetMetaObject(string name, object? value, CultureInfo? culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false)!;
             rs.SetMetaObject(name, value);
         }
 
@@ -1128,9 +1115,9 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
-        public void RemoveMetaObject(string name, CultureInfo culture = null)
+        public void RemoveMetaObject(string name, CultureInfo? culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
+            ResXResourceSet? rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveMetaObject(name);
         }
 
@@ -1151,12 +1138,14 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
-            if (culture == null)
+            if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
-            ResourceSet rs;
+            ResourceSet? rs;
             lock (SyncRoot)
             {
                 if (!TryGetResource(localResourceSets, culture.Name, out rs))
@@ -1184,6 +1173,8 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
@@ -1191,7 +1182,7 @@ namespace KGySoft.Resources
             lock (SyncRoot)
             {
                 // this enumerates both Hashtable and Dictionary the same way.
-                // The nongeneric enumerator is not a problem, values must be cast anyway.
+                // The non-generic enumerator is not a problem, values must be cast anyway.
                 IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
                 bool first = true;
                 while (enumerator.MoveNext())
@@ -1207,7 +1198,7 @@ namespace KGySoft.Resources
                         first = false;
                     }
 
-                    rs.Save(GetResourceFileName((string)enumerator.Key), compatibleFormat);
+                    rs.Save(GetResourceFileName((string)enumerator.Key!), compatibleFormat);
                     result = true;
                 }
             }
@@ -1243,9 +1234,11 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="ThrowException"/> are <see langword="true"/>&#160;and the .resx file of the neutral culture was not found.</exception>
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
-        public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
-            => (ResourceSet)GetExpandoResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
+#endif
+        public override ResourceSet? GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+            => (ResourceSet?)GetExpandoResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture, which can be dynamically modified.
@@ -1260,12 +1253,12 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <see langword="true"/>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
-        public IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
+        public IExpandoResourceSet? GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
                 Throw.EnumArgumentOutOfRange(Argument.behavior, behavior);
 
-            ResXResourceSet result = GetResXResourceSet(culture, behavior, tryParents);
+            ResXResourceSet? result = GetResXResourceSet(culture, behavior, tryParents);
 
             // These properties are never taken from the stored sets so setting them only when the user obtains a ResXResourceSet instance.
             // It does not matter if they are changed by the user.
@@ -1293,7 +1286,7 @@ namespace KGySoft.Resources
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
+        internal ResXResourceSet? GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
             #region Local Methods to reduce complexity
 
@@ -1305,12 +1298,10 @@ namespace KGySoft.Resources
                         return false;
                 }
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm, returned by the out parameter above and can have a derived type
                 // returning whether the cached resource is not a proxy or if the proxy does not have to be (possibly) replaced
                 return ctx.Result is ResXResourceSet // result is not a proxy but an actual resource
                     || ctx.Behavior == ResourceSetRetrieval.GetIfAlreadyLoaded // nothing new should be loaded
                     || (ctx.Behavior == ResourceSetRetrieval.LoadIfExists
-                        // ReSharper disable once PossibleInvalidCastException - if not ResXResourceSet, then proxy
                         && ((ctx.Proxy = (ProxyResourceSet)ctx.Result).HierarchyLoaded // nothing new can be loaded in the hierarchy
                             || !ctx.TryParents && !ctx.Proxy.FileExists));
             }
@@ -1321,10 +1312,8 @@ namespace KGySoft.Resources
                 foreach (CultureInfo currentCultureInfo in ctx.FallbackManager)
                 {
                     bool resourceFound;
-                    lock (syncRoot)
-                    {
+                    lock (syncRoot!)
                         resourceFound = TryGetResource(ctx.ResourceSets, currentCultureInfo.Name, out ctx.Result);
-                    }
 
                     if (resourceFound)
                     {
@@ -1346,14 +1335,11 @@ namespace KGySoft.Resources
                         }
 
                         // proxy is found
-                        ctx.Proxy = (ProxyResourceSet)ctx.Result;
+                        ctx.Proxy = (ProxyResourceSet)ctx.Result!;
 
                         // ReSharper disable once PossibleNullReferenceException - if not ResXResourceSet, then proxy
                         Debug.Assert(ctx.FoundProxyCulture == null || Equals(ctx.FoundProxyCulture, ctx.Proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
-
-                        // ReSharper disable once PossibleNullReferenceException - if not ResXResourceSet, then proxy
-                        if (ctx.FoundProxyCulture == null)
-                            ctx.FoundProxyCulture = ctx.Proxy.WrappedCulture;
+                        ctx.FoundProxyCulture ??= ctx.Proxy.WrappedCulture;
 
                         // if we traversing here because last time the proxy has been loaded by
                         // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we clear the
@@ -1393,19 +1379,19 @@ namespace KGySoft.Resources
 
             #endregion
 
-            if (culture == null)
+            if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
             var context = new GetResXResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ResourceSets = ResourceSets };
             if (TryGetCachedResourceSet(ref context))
-                return GetResXResourceSet(context.Result);
+                return Unwrap(context.Result);
 
             if (TryGetResourceWhileTraverse(ref context))
-                return GetResXResourceSet(context.Result);
+                return Unwrap(context.Result);
 
             // there is a culture to be added to the cache
             if (context.FoundCultureToAdd != null)
             {
-                lock (syncRoot)
+                lock (syncRoot!)
                 {
                     // we replace a proxy: we must delete proxies, which are children of the found resource.
                     if (context.FoundProxyCulture != null)
@@ -1425,16 +1411,16 @@ namespace KGySoft.Resources
                     // context.FoundCultureToAdd now refers to the culture that had resources.
                     // Update cultures starting from requested culture up to the culture
                     // that had resources, but in place of non-found resources we will place a proxy.
-                    foreach (CultureInfo updateCultureInfo in context.FallbackManager)
+                    foreach (CultureInfo updateCultureInfo in context.FallbackManager!)
                     {
                         // stop when we've added current or reached invariant (top of chain)
                         if (ReferenceEquals(updateCultureInfo, context.FoundCultureToAdd))
                         {
-                            AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref context.Result);
+                            AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref context.Result!);
                             break;
                         }
 
-                        ResourceSet newProxy = new ProxyResourceSet(GetResXResourceSet(context.Result), context.FoundCultureToAdd,
+                        ResourceSet newProxy = new ProxyResourceSet(Unwrap(context.Result)!, context.FoundCultureToAdd,
                             GetExistingResourceFileName(updateCultureInfo) != null, behavior == ResourceSetRetrieval.GetIfAlreadyLoaded);
                         AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref newProxy);
                     }
@@ -1443,15 +1429,16 @@ namespace KGySoft.Resources
                 }
             }
 
-            return GetResXResourceSet(context.Result);
+            return Unwrap(context.Result);
         }
 
         /// <summary>
         /// Creates an empty resource set for the given culture so it can be expanded.
         /// Does not make the resource set dirty until it is actually edited.
         /// </summary>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
-        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm due to Debug.Assert")]
+#if NET35
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")] 
+#endif
         internal ResXResourceSet CreateResourceSet(CultureInfo culture)
         {
             ResourceSet result = new ResXResourceSet(basePath: GetResourceDirName());
@@ -1478,7 +1465,7 @@ namespace KGySoft.Resources
         /// </returns>
         protected override string GetResourceFileName(CultureInfo culture)
         {
-            if (culture == null)
+            if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
             return GetResourceFileName(culture.Name);
         }
@@ -1489,16 +1476,16 @@ namespace KGySoft.Resources
         /// <param name="culture">The culture object to look for.</param>
         /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
         /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
-        /// <returns>
-        /// The specified resource set.
-        /// </returns>
+        /// <returns>The specified resource set.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
-        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
+#endif
+        protected override ResourceSet? InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // Internally just call the internal GetResXResourceSet instead. Via public methods GetExpandoResourceSet is called, which adjusts safe mode of the result accordingly to this instance.
-            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from CoreLibraries assembly.");
+            Debug.Assert(!ReferenceEquals(Assembly.GetCallingAssembly(), Assembly.GetExecutingAssembly()), "InternalGetResourceSet is called from CoreLibraries assembly.");
 
             // the base tries to parse the stream as binary. It would be better if GrovelForResourceSet
             // would be protected in base, so it would be enough to override only that one (at least in .NET 4 and above).
@@ -1535,16 +1522,14 @@ namespace KGySoft.Resources
         private void ResetResourceSets() => resourceSets = new Dictionary<string, ResourceSet>();
 #endif
 
-        private object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
+        private object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
         {
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
-            if (culture == null)
-                culture = CultureInfo.CurrentUICulture;
-
-            ResXResourceSet first = GetFirstResourceSet(culture);
-            object value;
+            culture ??= CultureInfo.CurrentUICulture;
+            ResXResourceSet? first = GetFirstResourceSet(culture);
+            object? value;
             if (first != null)
             {
                 value = first.GetResourceInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
@@ -1556,23 +1541,21 @@ namespace KGySoft.Resources
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, neutralResourcesCulture, true);
-            ResXResourceSet toCache = null;
+            ResXResourceSet? toCache = null;
             foreach (CultureInfo currentCultureInfo in mgr)
             {
-                ResXResourceSet rs = GetResXResourceSet(currentCultureInfo, ResourceSetRetrieval.LoadIfExists, true);
+                ResXResourceSet? rs = GetResXResourceSet(currentCultureInfo, ResourceSetRetrieval.LoadIfExists, true);
                 if (rs == null)
                     return null;
 
                 if (rs == first)
                     continue;
 
-                if (toCache == null)
-                    toCache = rs;
-
+                toCache ??= rs;
                 value = rs.GetResourceInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
                 if (value != null)
                 {
-                    lock (syncRoot)
+                    lock (syncRoot!)
                         lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, toCache);
 
                     return value;
@@ -1584,13 +1567,13 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
+        private object? GetMetaInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
         {
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
             // in case of metadata there is no hierarchy traversal so if there is no result trying to provoke the missing manifest exception
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
+            ResXResourceSet? rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
             if (rs == null && ThrowException)
                 GetResXResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, true);
             return rs?.GetMetaInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
@@ -1599,7 +1582,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Tries to get the first resource set in the traversal path from the caches.
         /// </summary>
-        private ResXResourceSet GetFirstResourceSet(CultureInfo culture)
+        private ResXResourceSet? GetFirstResourceSet(CultureInfo culture)
         {
             // Logic from ResourceFallbackManager.GetEnumerator()
             if (!ReferenceEquals(culture, CultureInfo.InvariantCulture) && culture.Name == neutralResourcesCulture.Name)
@@ -1612,11 +1595,11 @@ namespace KGySoft.Resources
 
                 // Look in the ResourceSet table
                 var localResourceSets = ResourceSets; // this is Hashtable in .NET 3.5, Dictionary above
-                if (!TryGetResource(localResourceSets, culture.Name, out ResourceSet rs))
+                if (!TryGetResource(localResourceSets, culture.Name, out ResourceSet? rs))
                     return null;
 
                 // update the cache with the most recent ResourceSet
-                ResXResourceSet result = GetResXResourceSet(rs);
+                ResXResourceSet result = Unwrap(rs)!;
                 lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, result);
                 return result;
             }
@@ -1635,15 +1618,14 @@ namespace KGySoft.Resources
             return Path.Combine(GetResourceDirName(), result.ToString());
         }
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, created resource set is returned.")]
-        private ResXResourceSet GrovelForResourceSet(CultureInfo culture, bool loadIfExists, out bool exists)
+        private ResXResourceSet? GrovelForResourceSet(CultureInfo culture, bool loadIfExists, out bool exists)
         {
-            string fileName = GetExistingResourceFileName(culture);
+            string? fileName = GetExistingResourceFileName(culture);
             exists = fileName != null;
             return exists && loadIfExists ? new ResXResourceSet(fileName, GetResourceDirName()) : null;
         }
 
-        private string GetExistingResourceFileName(CultureInfo culture)
+        private string? GetExistingResourceFileName(CultureInfo culture)
         {
             string fileName = GetResourceFileName(culture);
             bool exists = File.Exists(fileName);
@@ -1681,6 +1663,8 @@ namespace KGySoft.Resources
             return resxDirFullPath;
         }
 
+        [SuppressMessage("Style", "IDE0083:Use pattern matching",
+            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         [OnSerializing]
         private void OnSerializing(StreamingContext ctx)
         {
@@ -1696,8 +1680,8 @@ namespace KGySoft.Resources
                     .Cast<DictionaryEntry>()
 #endif
 
-                           where !(res.Value is ResXResourceSet) || !((ResXResourceSet)res.Value).IsModified
-                           select res.Key;
+                    where !(res.Value is ResXResourceSet resx) || !resx.IsModified
+                    select res.Key;
 
                 foreach (var key in keys.ToList()) // key is object in .NET 3.5, and is string above
                     resources.Remove(key);
