@@ -22,6 +22,14 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#pragma warning disable CS8769 // Nullability of reference types in type of parameter doesn't match implemented member (possibly because of nullability attributes).
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
@@ -45,7 +53,7 @@ namespace KGySoft.CoreLibraries
 
         bool IEqualityComparer<T>.Equals([AllowNull]T x, [AllowNull]T y) => ReferenceEquals(x, y);
 
-        int IEqualityComparer<T>.GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
+        int IEqualityComparer<T>.GetHashCode([DisallowNull]T obj) => RuntimeHelpers.GetHashCode(obj);
 
         #endregion
     }

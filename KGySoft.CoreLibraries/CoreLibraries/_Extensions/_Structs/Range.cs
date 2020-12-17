@@ -23,6 +23,14 @@ using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     /// <summary>

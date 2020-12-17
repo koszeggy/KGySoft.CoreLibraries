@@ -774,13 +774,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string testRes = manager.GetString(resName);
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
-#if NET35
-            // TODO .NET 3.5: get/set pointer fields by FieldAccessor
-            Assert.Inconclusive("Serializing pointers is not supported");
-#endif
+#if !NET35 // After deserializing a standard ResourceManager on runtime 2.0 an ObjectDisposedException occurs for GetString
             refManager = refManager.DeepClone();
+            Assert.AreEqual(testResRef, refManager.GetString(resName)); 
+#endif
             manager = manager.DeepClone();
-            Assert.AreEqual(testResRef, refManager.GetString(resName));
             Assert.AreEqual(testRes, manager.GetString(resName));
 
             // introducing a change: serialization preserves the change

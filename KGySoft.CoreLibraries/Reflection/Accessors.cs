@@ -552,8 +552,8 @@ namespace KGySoft.Reflection
         #region Exception
 
 #if NET35 || NET40
-        internal static string GetSource(this Exception exception) => (string)Exception_source.Get(exception);
-        internal static void SetSource(this Exception exception, string value) => Exception_source.Set(exception, value);
+        internal static string? GetSource(this Exception exception) => (string?)Exception_source.Get(exception);
+        internal static void SetSource(this Exception exception, string? value) => Exception_source.Set(exception, value);
         internal static void SetRemoteStackTraceString(this Exception exception, string value) => Exception_remoteStackTraceString.Set(exception, value);
         internal static void InternalPreserveStackTrace(this Exception exception) => Exception_InternalPreserveStackTrace.Invoke(exception);
 #endif

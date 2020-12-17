@@ -243,7 +243,7 @@ namespace KGySoft.Diagnostics
             string key = category + ":" + operation;
             lock (items)
             {
-                if (items.TryGetValue(key, out MeasureItem item))
+                if (items.TryGetValue(key, out MeasureItem? item))
                     return item;
             }
 
@@ -273,7 +273,7 @@ namespace KGySoft.Diagnostics
                 category = Res.ProfilerUncategorized;
 
             string key = category + ":" + operation;
-            MeasureItem item;
+            MeasureItem? item;
             lock (items)
             {
                 if (!items.TryGetValue(key, out item))

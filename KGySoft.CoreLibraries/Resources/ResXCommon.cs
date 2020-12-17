@@ -157,7 +157,7 @@ namespace KGySoft.Resources
                 result ??= type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
             }
 
-            return result;
+            return result!;
         }
 
         internal static string ToBase64(byte[] value)

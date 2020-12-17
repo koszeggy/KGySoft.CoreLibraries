@@ -587,7 +587,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Protected Methods
 
-        private protected override void ItemPropertyChanged([NotNull]T item, int itemIndex, PropertyDescriptor? property)
+        private protected override void ItemPropertyChanged([DisallowNull]T item, int itemIndex, PropertyDescriptor? property)
         {
             base.ItemPropertyChanged(item, itemIndex, property);
             if (sortDirection == null)

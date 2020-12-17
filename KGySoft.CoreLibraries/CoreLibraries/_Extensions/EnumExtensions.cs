@@ -85,7 +85,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The enum value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
-        public static string GetName<TEnum>(this TEnum value)
+        public static string? GetName<TEnum>(this TEnum value)
             where TEnum : struct, Enum
         {
             return Enum<TEnum>.GetName(value);

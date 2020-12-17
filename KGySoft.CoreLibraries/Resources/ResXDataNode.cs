@@ -329,9 +329,7 @@ namespace KGySoft.Resources
 #if !NET35
             override
 #endif
-#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member. - false alarm, out parameters CAN be null
             public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
-#pragma warning restore CS8767
             {
                 // Actually the same as in the WinForms implementation but fixed for generics.
                 assemblyName = null;
@@ -356,9 +354,7 @@ namespace KGySoft.Resources
                 }
             }
 
-#pragma warning disable CS8766 // Nullability of reference types in return type doesn't match implicitly implemented member. - false alarm, return value CAN be null
             public override Type? BindToType(string assemblyName, string typeName)
-#pragma warning restore CS8766
             {
                 if (typeResolver == null)
                     return null;

@@ -8,7 +8,7 @@ namespace System.Runtime.ExceptionServices
     {
         private readonly Exception exception;
         private readonly string stackTrace;
-        private readonly string source;
+        private readonly string? source;
 
         private ExceptionDispatchInfo(Exception source)
         {

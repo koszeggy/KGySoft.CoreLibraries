@@ -51,10 +51,10 @@ namespace KGySoft.Serialization.Xml
         {
             #region Fields
 
-            internal Type Type;
+            internal Type? Type;
             internal XElement Element;
-            internal object ExistingInstance;
-            internal object Result;
+            internal object? ExistingInstance;
+            internal object? Result;
 
             #endregion
         }
@@ -68,9 +68,9 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes an XML content to an object.
         /// </summary>
-        public static object Deserialize(XElement content)
+        public static object? Deserialize(XElement content)
         {
-            if (content == null)
+            if (content == null!)
                 Throw.ArgumentNullException(Argument.content);
 
             if (content.Name.LocalName != XmlSerializer.ElementObject)
@@ -79,9 +79,8 @@ namespace KGySoft.Serialization.Xml
             if (content.IsEmpty)
                 return null;
 
-            XAttribute attrType = content.Attribute(XmlSerializer.AttributeType);
-
-            Type objType = null;
+            XAttribute? attrType = content.Attribute(XmlSerializer.AttributeType!);
+            Type? objType = null;
             if (attrType != null)
             {
                 objType = Reflector.ResolveType(attrType.Value);
@@ -94,22 +93,23 @@ namespace KGySoft.Serialization.Xml
 
             if (attrType == null)
                 Throw.ArgumentException(Argument.content, Res.XmlSerializationRootTypeMissing);
-            return Throw.NotSupportedException<object>(Res.XmlSerializationDeserializingTypeNotSupported(objType));
+            return Throw.NotSupportedException<object>(Res.XmlSerializationDeserializingTypeNotSupported(objType!));
         }
 
         /// <summary>
         /// Deserializes inner content of an object or collection.
         /// </summary>
+        [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public static void DeserializeContent(XElement parent, object obj)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (parent == null)
+            if (parent == null!)
                 Throw.ArgumentNullException(Argument.parent);
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
-            XAttribute attrFormat = parent.Attribute(XmlSerializer.AttributeFormat);
+            XAttribute? attrFormat = parent.Attribute(XmlSerializer.AttributeFormat!);
             if (attrFormat != null && attrFormat.Value == XmlSerializer.AttributeValueCustom)
             {
                 if (!(obj is IXmlSerializable xmlSerializable))
@@ -131,7 +131,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // Populatable collection: clearing it before restoring (root-level DeserializeContent, collection of read-only properties)
-            Type collectionElementType = null;
+            Type? collectionElementType = null;
             if (objType.IsCollection())
             {
                 if (!objType.IsReadWriteCollection(obj))
@@ -155,8 +155,8 @@ namespace KGySoft.Serialization.Xml
         private static object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
         {
             IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
-            var members = new Dictionary<MemberInfo, object>();
-            DeserializeMembersAndElements(parent, initializerCollection, collectionCtor.DeclaringType, collectionElementType, members);
+            var members = new Dictionary<MemberInfo, object?>();
+            DeserializeMembersAndElements(parent, initializerCollection, collectionCtor.DeclaringType!, collectionElementType, members);
             return CreateCollectionByInitializerCollection(collectionCtor, initializerCollection, members);
         }
 
@@ -166,22 +166,23 @@ namespace KGySoft.Serialization.Xml
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/>&#160;only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private static void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type collectionElementType, Dictionary<MemberInfo, object> members)
+        private static void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {
             foreach (XElement memberOrItem in parent.Elements())
             {
                 string name = memberOrItem.Name.LocalName;
-                ResolveMember(objRealType, name, memberOrItem.Attribute(XmlSerializer.AttributeDeclaringType)?.Value, memberOrItem.Attribute(XmlSerializer.AttributeType)?.Value, out PropertyInfo property, out FieldInfo field, out Type itemType);
-                MemberInfo member = (MemberInfo)property ?? field;
+                ResolveMember(objRealType, name, memberOrItem.Attribute(XmlSerializer.AttributeDeclaringType!)?.Value, memberOrItem.Attribute(XmlSerializer.AttributeType!)?.Value,
+                    out PropertyInfo? property, out FieldInfo? field, out Type? itemType);
+                MemberInfo? member = (MemberInfo?)property ?? field;
 
                 // 1.) real member
                 if (member != null)
                 {
-                    object existingValue = members != null ? null : property != null
-                        ? property.Get(obj)
-                        : field.Get(obj);
-                    if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(memberOrItem), out var result) && !TryDeserializeObject(itemType, memberOrItem, existingValue, out result))
-                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
+                    object? existingValue = members != null ? null
+                        : property != null ? property.Get(obj)
+                        : field!.Get(obj);
+                    if (!TryDeserializeByConverter(member, itemType!, () => ReadStringValue(memberOrItem), out var result) && !TryDeserializeObject(itemType, memberOrItem, existingValue, out result))
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType!));
 
                     HandleDeserializedMember(obj, member, result, existingValue, members);
                     continue;
@@ -215,41 +216,42 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private static bool TryDeserializeObject(Type type, XElement element, object existingInstance, out object result)
+        [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
+        private static bool TryDeserializeObject(Type? type, XElement element, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
 
-            bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
+            static bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
                 {
                     // key
-                    XElement xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Key));
+                    XElement? xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Key)!);
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingKey);
-                    XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
-                    Type keyType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
-                    if (!TryDeserializeObject(keyType, xItem, null, out object key))
+                    XAttribute? xType = xItem.Attribute(XmlSerializer.AttributeType!);
+                    Type? keyType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
+                    if (!TryDeserializeObject(keyType, xItem, null, out object? key))
                     {
                         if (xType != null && keyType == null)
                             Throw.ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType!));
                     }
 
                     // value
-                    xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Value));
+                    xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Value)!);
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingValue);
-                    xType = xItem.Attribute(XmlSerializer.AttributeType);
-                    Type valueType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
-                    if (!TryDeserializeObject(valueType, xItem, null, out object value))
+                    xType = xItem.Attribute(XmlSerializer.AttributeType!);
+                    Type? valueType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
+                    if (!TryDeserializeObject(valueType, xItem, null, out object? value))
                     {
                         if (xType != null && valueType == null)
                             Throw.ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType!));
                     }
 
-                    ctx.Result = Activator.CreateInstance(ctx.Type);
+                    ctx.Result = Activator.CreateInstance(ctx.Type)!;
                     Accessors.SetKeyValue(ctx.Result, key, value);
                     return true;
                 }
@@ -257,12 +259,12 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
-            void DeserializeBinary(ref TryDeserializeObjectContext ctx)
+            static void DeserializeBinary(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Element.IsEmpty)
                     return;
                 byte[] data = Convert.FromBase64String(ctx.Element.Value);
-                XAttribute attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
+                XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
                 if (attrCrc != null)
                 {
                     if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
@@ -272,56 +274,54 @@ namespace KGySoft.Serialization.Xml
                 ctx.Result = BinarySerializer.Deserialize(data);
             }
 
-            bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
+            static bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
             {
-                if (ctx.Type != null && !ctx.Element.IsEmpty)
+                if (ctx.Type == null || ctx.Element.IsEmpty)
+                    return false;
+
+                // 1.) array (both existing and new)
+                if (ctx.Type.IsArray)
                 {
-                    // 1.) array (both existing and new)
-                    if (ctx.Type.IsArray)
-                    {
-                        ctx.Result = DeserializeArray(ctx.ExistingInstance as Array, ctx.Type.GetElementType(), ctx.Element, true);
-                        return true;
-                    }
-
-                    // 2.) existing read-write collection
-                    if (ctx.Type.IsReadWriteCollection(ctx.ExistingInstance))
-                    {
-                        DeserializeContent(ctx.Element, ctx.ExistingInstance);
-                        ctx.Result = ctx.ExistingInstance;
-                        return true;
-                    }
-
-                    bool isCollection = ctx.Type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
-
-                    // 3.) New collection by collectionCtor (only if there is no defaultCtor)
-                    if (isCollection && defaultCtor == null && !ctx.Type.IsValueType)
-                    {
-                        ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor, elementType, isDictionary);
-                        return true;
-                    }
-
-                    ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
-                            ? ctx.Type.IsValueType ? Activator.CreateInstance(ctx.Type) : CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
-                            : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
-
-                    // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
-                    if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
-                    {
-                        if (collectionCtor != null)
-                        {
-                            ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor, elementType, isDictionary);
-                            return true;
-                        }
-
-                        Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
-                    }
-
-                    // 5.) Newly created collection or any other object (both existing and new)
-                    DeserializeContent(ctx.Element, ctx.Result);
+                    ctx.Result = DeserializeArray((Array)ctx.ExistingInstance!, ctx.Type.GetElementType(), ctx.Element, true);
                     return true;
                 }
 
-                return false;
+                // 2.) existing read-write collection
+                if (ctx.Type.IsReadWriteCollection(ctx.ExistingInstance))
+                {
+                    DeserializeContent(ctx.Element, ctx.ExistingInstance!);
+                    ctx.Result = ctx.ExistingInstance;
+                    return true;
+                }
+
+                bool isCollection = ctx.Type.IsSupportedCollectionForReflection(out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, out Type? elementType, out bool isDictionary);
+
+                // 3.) New collection by collectionCtor (only if there is no defaultCtor)
+                if (isCollection && defaultCtor == null && !ctx.Type.IsValueType)
+                {
+                    ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor!, elementType!, isDictionary);
+                    return true;
+                }
+
+                ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
+                    ? ctx.Type.IsValueType ? Activator.CreateInstance(ctx.Type) : CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
+                    : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+
+                // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
+                if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
+                {
+                    if (collectionCtor != null)
+                    {
+                        ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor, elementType!, isDictionary);
+                        return true;
+                    }
+
+                    Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
+                }
+
+                // 5.) Newly created collection or any other object (both existing and new)
+                DeserializeContent(ctx.Element, ctx.Result!);
+                return true;
             }
 
             #endregion
@@ -339,17 +339,17 @@ namespace KGySoft.Serialization.Xml
             // a.) If type can be natively parsed, parsing from string
             if (type != null && type.CanBeParsedNatively())
             {
-                string value = ReadStringValue(element);
+                string? value = ReadStringValue(element);
                 result = value.Parse(type);
                 return true;
             }
 
             // b.) Deserialize IXmlSerializable
-            string format = element.Attribute(XmlSerializer.AttributeFormat)?.Value;
+            string? format = element.Attribute(XmlSerializer.AttributeFormat!)?.Value;
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                    ? type.IsValueType ? Activator.CreateInstance(type) : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
+                    ? type.IsValueType ? Activator.CreateInstance(type)! : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
                     : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                 {
@@ -414,39 +414,38 @@ namespace KGySoft.Serialization.Xml
         private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
             byte[] data = Convert.FromBase64String(ctx.Element.Value);
-            XAttribute attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
+            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
             if (attrCrc != null)
             {
                 if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
                     Throw.ArgumentException(Res.XmlSerializationCrcError);
             }
 
-            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type, data);
+            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
         }
 
         /// <summary>
         /// Array deserialization, XElement version
         /// </summary>
-        private static Array DeserializeArray(Array array, Type elementType, XElement element, bool canRecreateArray)
+        private static Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
             if (array == null && elementType == null)
                 Throw.ArgumentNullException(Argument.elementType);
 
-            ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength)?.Value, element.Attribute(XmlSerializer.AttributeDim)?.Value, out int[] lengths, out int[] lowerBounds);
+            ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength!)?.Value, element.Attribute(XmlSerializer.AttributeDim!)?.Value, out int[] lengths, out int[] lowerBounds);
 
             // checking existing array or creating a new array
             if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
-                array = Array.CreateInstance(elementType, lengths, lowerBounds);
-            if (elementType == null)
-                elementType = array.GetType().GetElementType();
+                array = Array.CreateInstance(elementType!, lengths, lowerBounds);
+            elementType ??= array.GetType().GetElementType()!;
 
             // has no elements: primitive array (can be restored by BlockCopy)
             if (elementType.IsPrimitive && !element.HasElements)
             {
                 string value = element.Value;
                 byte[] data = Convert.FromBase64String(value);
-                XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
-                string crc = attrCrc?.Value;
+                XAttribute? attrCrc = element.Attribute(XmlSerializer.AttributeCrc!);
+                string? crc = attrCrc?.Value;
 
                 if (crc != null)
                 {
@@ -466,13 +465,13 @@ namespace KGySoft.Serialization.Xml
             if (items.Count != array.Length)
                 Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, items.Count));
 
-            ArrayIndexer arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
+            ArrayIndexer? arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
             int deserializedItemsCount = 0;
             while (items.Count > 0)
             {
                 XElement item = items.Dequeue();
-                Type itemType = null;
-                XAttribute attrType = item.Attribute(XmlSerializer.AttributeType);
+                Type? itemType = null;
+                XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType!);
                 if (attrType != null)
                     itemType = Reflector.ResolveType(attrType.Value);
                 if (itemType == null)
@@ -498,10 +497,9 @@ namespace KGySoft.Serialization.Xml
             return array;
         }
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "XmlReader will close StringReader because created by CloseInput = true.")]
         private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XContainer parent)
         {
-            XElement content = parent.Elements().FirstOrDefault();
+            XElement? content = parent.Elements().FirstOrDefault();
             if (content == null)
                 Throw.ArgumentException(Res.XmlSerializationNoContent(xmlSerializable.GetType()));
             using (XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
@@ -518,16 +516,15 @@ namespace KGySoft.Serialization.Xml
             }
         }
 
-        private static string ReadStringValue(XElement element)
+        private static string? ReadStringValue(XElement element)
         {
             if (element.IsEmpty)
                 return null;
 
-            XAttribute attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped);
-            if (attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue)
-                return element.Value;
-
-            return Unescape(element.Value);
+            XAttribute? attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped!);
+            return attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue
+                ? element.Value
+                : Unescape(element.Value);
         }
 
         #endregion

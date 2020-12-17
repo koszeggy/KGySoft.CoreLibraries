@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries
             }
 
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo? culture)
-                => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)), Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)));
+                => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key))!, Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)));
 
             private static bool DoConvert(ref ConversionContext context, object? obj, Type targetType, out object? value)
             {

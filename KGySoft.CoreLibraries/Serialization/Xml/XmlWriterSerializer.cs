@@ -34,12 +34,16 @@ using KGySoft.Serialization.Binary;
 
 #endregion
 
+#region Suppressions
+
+#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw but FxCop ignores both [ContractAnnotation] and [DoesNotReturn] attributes
+
+#endregion
+
 namespace KGySoft.Serialization.Xml
 {
     internal class XmlWriterSerializer : XmlSerializerBase
     {
-#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
         #region SerializeObjectContext Struct
 
         private struct SerializeObjectContext
@@ -77,7 +81,7 @@ namespace KGySoft.Serialization.Xml
             writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueCustom);
 
             Type objType = obj.GetType();
-            string contentName = null;
+            string? contentName = null;
             object[] attrs = objType.GetCustomAttributes(typeof(XmlRootAttribute), true);
             if (attrs.Length > 0)
                 contentName = ((XmlRootAttribute)attrs[0]).ElementName;
@@ -96,9 +100,9 @@ namespace KGySoft.Serialization.Xml
 
         #region Public Methods
 
-        public void Serialize(XmlWriter writer, object obj)
+        public void Serialize(XmlWriter writer, object? obj)
         {
-            if (writer == null)
+            if (writer == null!)
                 Throw.ArgumentNullException(Argument.writer);
 
             writer.WriteStartElement(XmlSerializer.ElementObject);
@@ -130,9 +134,9 @@ namespace KGySoft.Serialization.Xml
         /// </remarks>
         public void SerializeContent(XmlWriter writer, object obj)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (writer == null)
+            if (writer == null!)
                 Throw.ArgumentNullException(Argument.writer);
             Type objType = obj.GetType();
             try
@@ -154,7 +158,7 @@ namespace KGySoft.Serialization.Xml
                     if (!objType.IsReadWriteCollection(obj))
                         Throw.NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
 
-                    SerializeCollection(enumerable, objType.GetCollectionElementType(), false, writer, DesignerSerializationVisibility.Visible);
+                    SerializeCollection(enumerable, objType.GetCollectionElementType()!, false, writer, DesignerSerializationVisibility.Visible);
                     return;
                 }
 
@@ -174,7 +178,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing a collection by XmlWriter
         /// </summary>
-        private void SerializeCollection(IEnumerable collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeCollection(IEnumerable? collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
         {
             if (collection == null)
                 return;
@@ -228,7 +232,7 @@ namespace KGySoft.Serialization.Xml
                 // non-primitive type array or compact serialization is not enabled
                 if (elementType.IsPointer)
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
-                foreach (var item in array)
+                foreach (object? item in array)
                 {
                     writer.WriteStartElement(XmlSerializer.ElementItem);
                     if (item == null)
@@ -251,7 +255,7 @@ namespace KGySoft.Serialization.Xml
             SerializeMembers(collection, writer, visibility);
 
             // serializing items
-            foreach (var item in collection)
+            foreach (object? item in collection)
             {
                 writer.WriteStartElement(XmlSerializer.ElementItem);
                 if (item == null)
@@ -270,7 +274,7 @@ namespace KGySoft.Serialization.Xml
         /// obj.GetType and type can be different (properties)
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private void SerializeObject(object obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeObject(object? obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
         {
             #region Local Methods to reduce complexity
 
@@ -292,8 +296,8 @@ namespace KGySoft.Serialization.Xml
                     if (ctx.TypeNeeded)
                         ctx.Writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(ctx.Type));
 
-                    object key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Key));
-                    object value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Value));
+                    object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Key));
+                    object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Value));
 
                     ctx.Writer.WriteStartElement(nameof(KeyValuePair<_, _>.Key));
                     if (key == null)
@@ -324,7 +328,7 @@ namespace KGySoft.Serialization.Xml
                 // 1.) collection: if can be trusted in all circumstances
                 if (ctx.Object is IEnumerable enumerable)
                 {
-                    Type elementType = null;
+                    Type? elementType = null;
 
                     // if can be trusted in all circumstances
                     if (IsTrustedCollection(ctx.Type)
@@ -333,7 +337,7 @@ namespace KGySoft.Serialization.Xml
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || ctx.Type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
-                        SerializeCollection(enumerable, elementType ?? ctx.Type.GetCollectionElementType(), ctx.TypeNeeded, ctx.Writer, ctx.Visibility);
+                        SerializeCollection(enumerable, elementType ?? ctx.Type.GetCollectionElementType()!, ctx.TypeNeeded, ctx.Writer, ctx.Visibility);
                         return true;
                     }
 
@@ -390,9 +394,7 @@ namespace KGySoft.Serialization.Xml
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
-
-                // ReSharper disable once AssignNullToNotNullAttribute
-                writer.WriteString(converter.ConvertToInvariantString(obj));
+                WriteStringValue(converter.ConvertToInvariantString(obj), writer);
                 return;
             }
 
@@ -403,7 +405,7 @@ namespace KGySoft.Serialization.Xml
                 return;
 
             // e.) value type as binary only if enabled
-            if (type.IsValueType && CompactSerializationOfStructures && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[] data))
+            if (type.IsValueType && CompactSerializationOfStructures && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[]? data))
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -448,12 +450,12 @@ namespace KGySoft.Serialization.Xml
         {
             foreach (Member member in GetMembersToSerialize(obj))
             {
-                if (SkipMember(obj, member.MemberInfo, out object value, ref visibility))
+                if (SkipMember(obj, member.MemberInfo, out object? value, ref visibility))
                     continue;
 
-                PropertyInfo property = member.Property;
-                FieldInfo field = member.Field;
-                Type memberType = property != null ? property.PropertyType : field.FieldType;
+                PropertyInfo? property = member.Property;
+                FieldInfo? field = member.Field;
+                Type memberType = property != null ? property.PropertyType : field!.FieldType;
 
                 Type actualType = value?.GetType() ?? memberType;
 
@@ -461,7 +463,7 @@ namespace KGySoft.Serialization.Xml
                 Attribute[] attrs = Attribute.GetCustomAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
-                    ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
+                    ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                     object[] ctorParams = { memberType };
                     if (ctor == null)
                     {
@@ -476,10 +478,10 @@ namespace KGySoft.Serialization.Xml
                         {
                             writer.WriteStartElement(member.MemberInfo.Name);
                             if (member.SpecifyDeclaringType)
-                                writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType));
+                                writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType!));
 
-                            // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
-                            WriteStringValue(converter.ConvertToInvariantString(value), writer);
+                            if (value != null)
+                                WriteStringValue(converter.ConvertToInvariantString(value), writer);
                             writer.WriteEndElement();
                             continue;
                         }
@@ -489,7 +491,7 @@ namespace KGySoft.Serialization.Xml
                 // b.) any object
                 writer.WriteStartElement(member.MemberInfo.Name);
                 if (member.SpecifyDeclaringType)
-                    writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType));
+                    writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType!));
 
                 if (value == null)
                     writer.WriteEndElement();
@@ -504,7 +506,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing binary content by XmlWriter
         /// </summary>
-        private void SerializeBinary(object obj, XmlWriter writer)
+        private void SerializeBinary(object? obj, XmlWriter writer)
         {
             writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueBinary);
 
@@ -519,9 +521,11 @@ namespace KGySoft.Serialization.Xml
             writer.WriteString(Convert.ToBase64String(data));
         }
 
-        private void WriteStringValue(object obj, XmlWriter writer)
+        private void WriteStringValue(object? obj, XmlWriter writer)
         {
-            string s = GetStringValue(obj, out bool spacePreserved, out bool escaped);
+            string? s = GetStringValue(obj, out bool spacePreserved, out bool escaped);
+            if (s == null)
+                return;
             if (spacePreserved)
                 writer.WriteAttributeString(XmlSerializer.NamespaceXml, XmlSerializer.AttributeSpace, null, XmlSerializer.AttributeValuePreserve);
             if (escaped)

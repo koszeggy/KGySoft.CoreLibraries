@@ -557,7 +557,7 @@ namespace KGySoft.Resources
         [return:NotNullIfNotNull("rs")]
         private protected static ResourceSet? Unwrap(ResourceSet? rs)
             => rs == null ? null
-                : rs is ProxyResourceSet proxy ? proxy
+                : rs is ProxyResourceSet proxy ? proxy.WrappedResourceSet
                 : rs;
 
         private protected static bool IsProxy(ResourceSet? rs) => rs is ProxyResourceSet;

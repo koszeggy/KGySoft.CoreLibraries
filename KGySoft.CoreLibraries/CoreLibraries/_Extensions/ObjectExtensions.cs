@@ -231,7 +231,7 @@ namespace KGySoft.CoreLibraries
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
         [SecuritySafeCritical]
-        public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
+        [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             ISurrogateSelector? surrogate = null;
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
@@ -255,7 +255,7 @@ namespace KGySoft.CoreLibraries
                 if (surrogate is RemotingSurrogateSelector)
                     formatter.SurrogateSelector = null;
 #endif
-                return (T)formatter.DeserializeFromStream(stream);
+                return (T)formatter.DeserializeFromStream(stream)!;
             }
         }
 

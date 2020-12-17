@@ -31,16 +31,21 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
+
 using KGySoft.Collections;
+
+#endregion
+
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 
 #endregion
 
 namespace KGySoft.Serialization.Xml
 {
-#if NET35
-#pragma warning disable CS1574 // the documentation contains types that are not available in every target
-#endif
-
     /// <summary>
     /// Options for serializer methods of <see cref="Xml.XmlSerializer"/> class.
     /// </summary>

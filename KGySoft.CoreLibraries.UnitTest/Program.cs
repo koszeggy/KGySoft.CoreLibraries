@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.CoreLibraries.UnitTests.Resources;
 #if NETCOREAPP
 using System.IO;
 #elif !NETFRAMEWORK
@@ -55,6 +56,7 @@ namespace KGySoft.CoreLibraries
             // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
             // or just calling the method to debug directly
             Console.WriteLine(FrameworkVersion);
+
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");

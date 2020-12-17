@@ -117,7 +117,6 @@ namespace KGySoft
         /// <summary>Offset and length were out of bounds for the array.</summary>
         internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
 
-        // ReSharper disable InconsistentNaming
         /// <summary>Enumeration has either not started or has already finished.</summary>
         internal static string IEnumeratorEnumerationNotStartedOrFinished => Get("IEnumerator_EnumerationNotStartedOrFinished");
 
@@ -144,7 +143,6 @@ namespace KGySoft
 
         /// <summary>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</summary>
         internal static string IListInvalidOffsLen => Get("IList_InvalidOffsLen");
-        // ReSharper restore InconsistentNaming
 
         #endregion
 
@@ -498,10 +496,10 @@ namespace KGySoft
         internal static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must be one of the defined values.</summary>
-        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
+        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Enum instance of '{0}' type must consist of the defined flags.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -509,13 +507,11 @@ namespace KGySoft
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
 
-        // ReSharper disable InconsistentNaming
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type);
-        // ReSharper restore InconsistentNaming
 
         #endregion
 

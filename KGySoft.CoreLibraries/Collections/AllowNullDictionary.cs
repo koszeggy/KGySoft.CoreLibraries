@@ -32,7 +32,7 @@ using KGySoft.Diagnostics;
 #if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #else
-#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
+#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint. - TKey CAN be null here
 #endif
 
 #endregion
@@ -48,7 +48,7 @@ namespace KGySoft.Collections
     /// <seealso cref="IDictionary{TKey, TValue}" />
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    internal class AllowNullDictionary<[CanBeNull]TKey, TValue> : IDictionary<TKey, TValue>
+    internal class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         #region Constants
 

@@ -126,7 +126,7 @@ namespace KGySoft.Reflection
             try
             {
                 var stackTrace = new StackTrace(ve);
-                string? methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0).GetMethod().Name : null;
+                string? methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0)?.GetMethod()?.Name : null;
                 if (methodName == null)
                     return false;
                 return accessorPrefix == null ? methodName.ContainsAny(methodInvokerPrefix, ctorInvokerPrefix) : methodName.StartsWith(accessorPrefix, StringComparison.Ordinal);
@@ -229,8 +229,7 @@ namespace KGySoft.Reflection
                 bool forceMethod = (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
                 if (methodOrCtor is ConstructorInfo && !forceMethod)
                 {
-                    // ReSharper disable once PossibleNullReferenceException - already checked by caller
-                    name = ctorInvokerPrefix + methodOrCtor.DeclaringType.Name;
+                    name = ctorInvokerPrefix + methodOrCtor.DeclaringType!.Name;
                     parameters.Add(typeof(object[])); // ctor parameters
                 }
                 else

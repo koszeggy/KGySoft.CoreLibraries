@@ -833,7 +833,7 @@ namespace KGySoft.ComponentModel
         /// <param name="item">The changed item.</param>
         /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
         /// <param name="property">The descriptor of the changed property.</param>
-        private protected virtual void ItemPropertyChanged([NotNull]T item, int itemIndex, PropertyDescriptor? property) { }
+        private protected virtual void ItemPropertyChanged([DisallowNull]T item, int itemIndex, PropertyDescriptor? property) { }
 
         #endregion
 

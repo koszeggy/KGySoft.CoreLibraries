@@ -464,7 +464,8 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
         /// <param name="dictionary">The dictionary to create a thread-safe wrapper for.</param>
         /// <returns>A <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.</returns>
-        public static LockingDictionary<TKey, TValue> AsThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) => new LockingDictionary<TKey, TValue>(dictionary);
+        public static LockingDictionary<TKey, TValue> AsThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) where TKey : notnull
+            => new LockingDictionary<TKey, TValue>(dictionary);
 
         #endregion
     }
