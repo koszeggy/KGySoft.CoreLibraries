@@ -18,12 +18,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
 
-using KGySoft.CoreLibraries;
+#if NETFRAMEWORK || NETSTANDARD2_0
+using KGySoft.CoreLibraries; 
+#endif
 using KGySoft.Reflection;
 
 #endregion
@@ -102,15 +103,15 @@ namespace KGySoft.Serialization.Binary
 
             private protected readonly BinarySerializationOptions Options;
             private protected readonly StreamingContext Context;
-            private protected readonly SerializationBinder Binder;
+            private protected readonly SerializationBinder? Binder;
 
             #endregion
 
             #region Private Fields
 
-            private readonly ISurrogateSelector surrogateSelector;
-            private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>> surrogates;
-            private Dictionary<MemberInfo, TypeAttributes> typeAttributes;
+            private readonly ISurrogateSelector? surrogateSelector;
+            private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>>? surrogates;
+            private Dictionary<MemberInfo, TypeAttributes>? typeAttributes;
 
             #endregion
 
@@ -141,14 +142,14 @@ namespace KGySoft.Serialization.Binary
 
             #region Constructors
 
-            private protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
+            private protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector)
             {
                 Options = options;
                 Context = context;
                 Binder = binder;
                 this.surrogateSelector = surrogateSelector;
                 if (surrogateSelector != null)
-                    surrogates = new Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>>();
+                    surrogates = new Dictionary<Type, KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>>();
             }
 
             #endregion
@@ -157,17 +158,17 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Methods
 
-            private static IEnumerable<MethodInfo> GetMethodsWithAttribute(Type attribute, Type type)
+            private static IEnumerable<MethodInfo>? GetMethodsWithAttribute(Type attribute, Type type)
             {
-                Dictionary<Type, IEnumerable<MethodInfo>> cacheItem = methodsByAttributeCache[type];
+                Dictionary<Type, IEnumerable<MethodInfo>?> cacheItem = methodsByAttributeCache[type];
 
                 lock (cacheItem)
                 {
-                    if (cacheItem.TryGetValue(attribute, out IEnumerable<MethodInfo> cachedResult))
+                    if (cacheItem.TryGetValue(attribute, out IEnumerable<MethodInfo>? cachedResult))
                         return cachedResult;
 
                     List<MethodInfo> result = new List<MethodInfo>();
-                    for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+                    for (Type? t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
                     {
                         foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                         {
@@ -221,14 +222,14 @@ namespace KGySoft.Serialization.Binary
             /// Tries to get a surrogate for a type
             /// </summary>
             [SecurityCritical]
-            private protected bool TryGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
+            private protected bool TryGetSurrogate(Type type, out ISerializationSurrogate? surrogate, out ISurrogateSelector? selector)
             {
                 surrogate = null;
                 selector = null;
                 if (surrogateSelector == null)
                     return false;
 
-                if (surrogates.TryGetValue(type, out KeyValuePair<ISerializationSurrogate, ISurrogateSelector> result))
+                if (surrogates!.TryGetValue(type, out KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?> result))
                 {
                     if (result.Key == null)
                         return false;
@@ -239,7 +240,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 DoGetSurrogate(type, out surrogate, out selector);
-                surrogates[type] = new KeyValuePair<ISerializationSurrogate, ISurrogateSelector>(surrogate, selector);
+                surrogates[type] = new KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>(surrogate, selector);
                 return surrogate != null;
             }
 
@@ -257,20 +258,20 @@ namespace KGySoft.Serialization.Binary
 
             private protected bool IsValueType(DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
                 Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
                 return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.ValueType) != TypeAttributes.None
-                    : descriptor.Type.IsValueType;
+                    : descriptor.Type!.IsValueType;
             }
 
             private protected bool IsSealed(DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
                 Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
                 return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.Sealed) != TypeAttributes.None
-                    : descriptor.Type.IsSealed;
+                    : descriptor.Type!.IsSealed;
             }
 
             #endregion
@@ -278,8 +279,8 @@ namespace KGySoft.Serialization.Binary
             #region Private Methods
 
             [SecurityCritical]
-            private void DoGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
-                => surrogate = surrogateSelector.GetSurrogate(type, Context, out selector);
+            private void DoGetSurrogate(Type type, out ISerializationSurrogate? surrogate, out ISurrogateSelector? selector)
+                => surrogate = surrogateSelector!.GetSurrogate(type, Context, out selector);
 
             #endregion
 

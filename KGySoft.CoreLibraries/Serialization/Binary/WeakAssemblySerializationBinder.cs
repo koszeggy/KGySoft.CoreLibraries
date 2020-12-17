@@ -101,9 +101,9 @@ namespace KGySoft.Serialization.Binary
 #if !NET35
         override
 #endif
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
         {
-            if (serializedType == null)
+            if (serializedType == null!)
                 Throw.ArgumentNullException(Argument.serializedType);
 
 #if NET35
@@ -136,11 +136,11 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
         public override Type BindToType(string assemblyName, string typeName)
         {
-            Assembly assembly = GetAssembly(assemblyName);
+            Assembly? assembly = GetAssembly(assemblyName);
             var options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch;
             if (IgnoreAssemblyNameOnResolve)
                 options |= ResolveTypeOptions.AllowIgnoreAssemblyName;
-            Type result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
+            Type? result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
                 Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
@@ -155,7 +155,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Resolves an assembly by string
         /// </summary>
-        private Assembly GetAssembly(string name)
+        private Assembly? GetAssembly(string name)
         {
             if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
                 return null;

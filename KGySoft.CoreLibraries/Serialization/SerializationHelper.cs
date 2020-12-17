@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -50,7 +49,7 @@ namespace KGySoft.Serialization
             var result = new Dictionary<string, (FieldInfo Field, int Count)>();
 
             // ReSharper disable once PossibleNullReferenceException
-            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 FieldInfo[] fields = considerNonSerialized
@@ -67,7 +66,7 @@ namespace KGySoft.Serialization
                     }
 
                     // conflicting name 1st try: prefixing by type name
-                    string prefixedName = field.DeclaringType.Name + '+' + field.Name;
+                    string prefixedName = field.DeclaringType!.Name + '+' + field.Name;
                     if (!result.ContainsKey(prefixedName))
                     {
                         result[prefixedName] = (field, 1);
@@ -90,10 +89,10 @@ namespace KGySoft.Serialization
         /// </summary>
         internal static void CopyFields(object source, object target)
         {
-            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFields)}.");
-            Debug.Assert(!target.GetType().IsArray, $"Arrays are not expected in {nameof(CopyFields)}.");
+            Debug.Assert(target != null! && source != null! && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFields)}.");
+            Debug.Assert(!target!.GetType().IsArray, $"Arrays are not expected in {nameof(CopyFields)}.");
 
-            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            for (Type? t = target.GetType(); t != null; t = t.BaseType)
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                     field.Set(target, field.Get(source));

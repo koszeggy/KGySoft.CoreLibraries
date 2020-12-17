@@ -17,10 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
-#if NETCOREAPP3_0
-using System.Runtime.CompilerServices; 
-#endif
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
@@ -66,7 +62,7 @@ namespace KGySoft.Security.Cryptography
         /// <exception cref="ArgumentNullException"><paramref name="provider"/> is <see langword="null"/>.</exception>
         public SecureRandom(RandomNumberGenerator provider)
         {
-            if (provider == null)
+            if (provider == null!)
                 Throw.ArgumentNullException(Argument.provider);
             this.provider = provider;
         }
@@ -75,7 +71,6 @@ namespace KGySoft.Security.Cryptography
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
         /// To generate cryptographically secure random numbers, an <see cref="RNGCryptoServiceProvider"/> will be used internally.
         /// </summary>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Provider will be disposed by Dispose.")]
         public SecureRandom()
             : this(new RNGCryptoServiceProvider())
         {

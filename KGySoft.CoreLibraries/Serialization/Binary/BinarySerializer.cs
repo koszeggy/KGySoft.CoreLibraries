@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -77,7 +78,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written into the stream.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeToStream(Stream stream, object data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
+        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
@@ -86,7 +87,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized data.</returns>
-        public static object DeserializeFromStream(Stream stream, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
+        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -99,7 +100,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeByWriter(BinaryWriter writer, object data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
+        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
@@ -112,7 +113,7 @@ namespace KGySoft.Serialization.Binary
         /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
         /// </remarks>
         /// <returns>The deserialized data.</returns>
-        public static object DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
+        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
 
         /// <summary>
         /// Serializes a <see cref="ValueType"/> into a byte array.
@@ -127,10 +128,10 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public static byte[] SerializeValueType(ValueType obj)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            byte[] rawdata = new byte[Marshal.SizeOf(obj)];
-            GCHandle handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
+            byte[] rawData = new byte[Marshal.SizeOf(obj)];
+            GCHandle handle = GCHandle.Alloc(rawData, GCHandleType.Pinned);
             try
             {
                 Marshal.StructureToPtr(obj, handle.AddrOfPinnedObject(), false);
@@ -140,7 +141,7 @@ namespace KGySoft.Serialization.Binary
                 handle.Free();
             }
 
-            return rawdata;
+            return rawData;
         }
 
         /// <summary>
@@ -150,11 +151,11 @@ namespace KGySoft.Serialization.Binary
         /// <param name="result">The byte array representation of the <see cref="ValueType"/> object.</param>
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueType(ValueType obj, out byte[] result)
+        public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)]out byte[] result)
         {
             result = null;
 
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
             if (CanSerializeValueType(obj.GetType(), false))
             {
@@ -190,7 +191,7 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public static byte[] SerializeValueArray<T>(T[] array) where T : struct
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (array.Length == 0)
                 return Reflector.EmptyArray<byte>();
@@ -218,11 +219,11 @@ namespace KGySoft.Serialization.Binary
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.
         /// The <paramref name="array"/> can be serialized if <typeparamref name="T"/> contains only value type fields.</returns>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueArray<T>(T[] array, out byte[] result) where T : struct
+        public static bool TrySerializeValueArray<T>(T[] array, [MaybeNullWhen(false)]out byte[] result) where T : struct
         {
             result = null;
 
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (array.Length == 0)
             {
@@ -255,11 +256,11 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public static object DeserializeValueType(Type type, byte[] data)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             if (!type.IsValueType)
                 Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
-            if (data == null)
+            if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
             if (data.Length < Marshal.SizeOf(type))
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
@@ -267,7 +268,7 @@ namespace KGySoft.Serialization.Binary
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
             {
-                return Marshal.PtrToStructure(handle.AddrOfPinnedObject(), type);
+                return Marshal.PtrToStructure(handle.AddrOfPinnedObject(), type)!;
             }
             finally
             {
@@ -286,11 +287,11 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             if (!type.IsValueType)
                 Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
-            if (data == null)
+            if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
 
             int len = Marshal.SizeOf(type);
@@ -303,7 +304,7 @@ namespace KGySoft.Serialization.Binary
             try
             {
                 Marshal.Copy(data, offset, p, len);
-                return Marshal.PtrToStructure(p, type);
+                return Marshal.PtrToStructure(p, type)!;
             }
             finally
             {
@@ -324,7 +325,7 @@ namespace KGySoft.Serialization.Binary
         public static T[] DeserializeValueArray<T>(byte[] data, int offset, int count)
             where T : struct
         {
-            if (data == null)
+            if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -397,7 +398,7 @@ namespace KGySoft.Serialization.Binary
                     if (strict)
                         return false;
                     object[] attrs = field.GetCustomAttributes(typeof(MarshalAsAttribute), false);
-                    MarshalAsAttribute marshalAs = attrs.Length > 0 ? attrs[0] as MarshalAsAttribute : null;
+                    MarshalAsAttribute? marshalAs = attrs.Length > 0 ? attrs[0] as MarshalAsAttribute : null;
                     if (marshalAs != null && (field.FieldType.IsArray && marshalAs.Value == UnmanagedType.ByValArray ||
                         field.FieldType == Reflector.StringType && marshalAs.Value == UnmanagedType.ByValTStr))
                     {

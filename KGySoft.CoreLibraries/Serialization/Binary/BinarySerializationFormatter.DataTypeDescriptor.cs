@@ -58,7 +58,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Properties
 
-            internal DataTypeDescriptor ParentDescriptor { get; }
+            internal DataTypeDescriptor? ParentDescriptor { get; }
             internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
             internal DataTypes CollectionDataType => GetCollectionDataType(dataType);
@@ -76,9 +76,9 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Decoded type of self descriptor
             /// </summary>
-            internal Type Type { get; private set; }
+            internal Type? Type { get; private set; }
 
-            internal TypeByString StoredType { get; private set; }
+            internal TypeByString? StoredType { get; private set; }
 
             /// <summary>
             /// The array rank if <see cref="IsArray"/> is <see langword="true"/>. Gets 0 for zero-based arrays.
@@ -88,12 +88,12 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// The element the element/key descriptor for single collections and dictionaries.
             /// </summary>
-            internal DataTypeDescriptor ElementDescriptor { get; private set; }
+            internal DataTypeDescriptor? ElementDescriptor { get; private set; }
 
             /// <summary>
             /// The value descriptor for dictionaries.
             /// </summary>
-            internal DataTypeDescriptor ValueDescriptor { get; }
+            internal DataTypeDescriptor? ValueDescriptor { get; }
 
             internal bool CanHaveRecursion
             {
@@ -119,7 +119,7 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Initializing from stream by encoded <see cref="DataTypes"/>.
             /// </summary>
-            internal DataTypeDescriptor(DataTypeDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
+            internal DataTypeDescriptor(DataTypeDescriptor? parentDescriptor, DataTypes dataType, BinaryReader reader)
             {
                 ParentDescriptor = parentDescriptor;
                 this.dataType = dataType;
@@ -141,7 +141,7 @@ namespace KGySoft.Serialization.Binary
             /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
             /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
             /// </summary>
-            internal DataTypeDescriptor(Type type, TypeByString storedType = null)
+            internal DataTypeDescriptor(Type type, TypeByString? storedType = null)
             {
                 if (type.IsGenericTypeOf(compressibleType))
                 {
@@ -149,6 +149,7 @@ namespace KGySoft.Serialization.Binary
                     type = type.GetGenericArguments()[0];
                 }
 
+                // ReSharper disable once AssignNullToNotNullAttribute - false alarm for ReSharper in .NET Core - TODO: remove when fixed
                 dataType |= primitiveTypes.GetValueOrDefault(type);
                 Type = type;
                 StoredType = storedType;
@@ -279,7 +280,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal Type DecodeType(BinaryReader br, DeserializationManager manager, bool allowOpenTypes = false)
             {
-                DataTypeDescriptor existingDescriptor;
+                DataTypeDescriptor? existingDescriptor;
 
                 // Simple or impure type. Handling generics occurs in recursive ReadType if needed.
                 if (CollectionDataType == DataTypes.Null)
@@ -305,19 +306,19 @@ namespace KGySoft.Serialization.Binary
                     }
                     // complex element type: recursive decoding
                     else
-                        ElementDescriptor.DecodeType(br, manager, allowOpenTypes);
+                        ElementDescriptor!.DecodeType(br, manager, allowOpenTypes);
 
                     // Dictionary TValue
                     if (IsDictionary)
-                        ValueDescriptor.DecodeType(br, manager, allowOpenTypes);
+                        ValueDescriptor!.DecodeType(br, manager, allowOpenTypes);
 
                     if (IsArray)
                     {
                         // 0 means zero based 1D array
                         Rank = br.ReadByte();
                         return Type = Rank == 0
-                            ? ElementDescriptor.Type.MakeArrayType()
-                            : ElementDescriptor.Type.MakeArrayType(Rank);
+                            ? ElementDescriptor.Type!.MakeArrayType()
+                            : ElementDescriptor.Type!.MakeArrayType(Rank);
                     }
 
                     result = GetCollectionType(CollectionDataType);
@@ -327,13 +328,13 @@ namespace KGySoft.Serialization.Binary
 
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
                     result = typeDef.GetGenericArguments().Length == 1
-                        ? typeDef.GetGenericType(ElementDescriptor.Type)
-                        : typeDef.GetGenericType(ElementDescriptor.Type, ValueDescriptor.Type);
+                        ? typeDef.GetGenericType(ElementDescriptor.Type!)
+                        : typeDef.GetGenericType(ElementDescriptor.Type!, ValueDescriptor!.Type);
                     result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
                 if (result.IsGenericTypeDefinition)
-                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type;
+                    result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type!;
                 return Type = result;
             }
 
@@ -349,13 +350,14 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal Type GetTypeToCreate()
             {
+                Debug.Assert(Type != null);
                 switch (CollectionDataType)
                 {
                     case DataTypes.DictionaryEntryNullable:
                     case DataTypes.KeyValuePairNullable:
-                        return Nullable.GetUnderlyingType(Type);
+                        return Nullable.GetUnderlyingType(Type!)!;
                     default:
-                        return Type;
+                        return Type!;
                 }
             }
 
@@ -370,7 +372,7 @@ namespace KGySoft.Serialization.Binary
 
                 if ((attr & TypeAttributes.Enum) != TypeAttributes.None)
                 {
-                    if (!Type.IsEnum)
+                    if (!Type!.IsEnum)
                         Throw.SerializationException(Res.BinarySerializationNotAnEnum(Type));
                     dataType |= DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(Type)];
                     return;
@@ -396,7 +398,7 @@ namespace KGySoft.Serialization.Binary
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-            private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes, out DataTypeDescriptor existingDescriptor)
+            private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes, out DataTypeDescriptor? existingDescriptor)
             {
                 existingDescriptor = null;
                 switch (dt & ~DataTypes.Store7BitEncoded)
@@ -463,15 +465,15 @@ namespace KGySoft.Serialization.Binary
                         return Reflector.RuntimeType;
 
                     case DataTypes.Pointer:
-                        return ElementDescriptor.DecodeType(br, manager, allowOpenTypes).MakePointerType();
+                        return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:
-                        return ElementDescriptor.DecodeType(br, manager, allowOpenTypes).MakeByRefType();
+                        return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakeByRefType();
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
                         existingDescriptor = manager.ReadType(br, allowOpenTypes);
-                        return existingDescriptor.Type;
+                        return existingDescriptor.Type!;
 
                     default:
                         // nullable
@@ -486,7 +488,7 @@ namespace KGySoft.Serialization.Binary
                         if (IsEnum(dt))
                         {
                             existingDescriptor = manager.ReadType(br, allowOpenTypes);
-                            return existingDescriptor.Type;
+                            return existingDescriptor.Type!;
                         }
 
                         return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));

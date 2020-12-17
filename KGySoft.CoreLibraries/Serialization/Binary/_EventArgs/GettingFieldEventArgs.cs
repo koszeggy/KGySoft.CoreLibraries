@@ -67,14 +67,14 @@ namespace KGySoft.Serialization.Binary
         /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default serialization logic.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the value to be stored in the serialization stream.
         /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default serialization logic.
         /// </summary>
-        public object Value { get; set; }
+        public object? Value { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Type"/> to be stored in the serialization stream.
@@ -82,7 +82,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default serialization logic.
         /// </summary>
-        public Type Type { get; set; }
+        public Type Type { get; set; } = default!;
 
         #endregion
 

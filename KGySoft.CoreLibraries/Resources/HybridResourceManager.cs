@@ -728,9 +728,6 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <see langword="true"/>&#160;and
         /// the resource of the neutral culture was not found.</exception>
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
-#endif
         public override ResourceSet? GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
@@ -1060,9 +1057,6 @@ namespace KGySoft.Resources
         /// <returns>The specified resource set.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
-#endif
         protected override ResourceSet? InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             Debug.Assert(!ReferenceEquals(Assembly.GetCallingAssembly(), Assembly.GetExecutingAssembly()), "InternalGetResourceSet is called from CoreLibraries assembly.");

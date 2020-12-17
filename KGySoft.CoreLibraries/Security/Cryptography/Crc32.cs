@@ -17,9 +17,9 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
+
 using KGySoft.Collections;
 
 #endregion
@@ -131,7 +131,7 @@ namespace KGySoft.Security.Cryptography
         /// accumulated hash value appended by the current <paramref name="buffer"/>.</returns>
         public static uint CalculateHash(byte[] buffer, int offset, int count, uint initialCrc = 0U, uint polynomial = StandardPolynomial)
         {
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
             if (offset < 0 || count < 0 || offset + count > buffer.Length)
                 Throw.ArgumentOutOfRangeException(Argument.count);
@@ -150,7 +150,7 @@ namespace KGySoft.Security.Cryptography
         /// accumulated hash value appended by the current <paramref name="buffer"/>.</returns>
         public static uint CalculateHash(byte[] buffer, uint initialCrc = 0U, uint polynomial = StandardPolynomial)
         {
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
             return CalculateHash(tablesCache[polynomial], initialCrc, buffer, 0, buffer.Length);
         }
@@ -164,9 +164,9 @@ namespace KGySoft.Security.Cryptography
         /// <param name="polynomial">The polynomial to use to calculate the CRC value. This parameter is optional.
         /// <br/>Default value: <see cref="StandardPolynomial"/>.</param>
         /// <returns>The CRC-32 hash value of the specified <see cref="string"/>.</returns>
-        public static uint CalculateHash(string s, Encoding encoding = null, uint polynomial = StandardPolynomial)
+        public static uint CalculateHash(string s, Encoding? encoding = null, uint polynomial = StandardPolynomial)
         {
-            if (s == null)
+            if (s == null!)
                 Throw.ArgumentNullException(Argument.buffer);
             byte[] buffer = (encoding ?? Encoding.UTF8).GetBytes(s);
             return CalculateHash(tablesCache[polynomial], 0U, buffer, 0, buffer.Length);
@@ -278,7 +278,6 @@ namespace KGySoft.Security.Cryptography
         /// <param name="array">The input to compute the hash code for.</param>
         /// <param name="offset">The offset into the byte array from which to begin using data.</param>
         /// <param name="count">The number of bytes in the array to use as data.</param>
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", Justification = "Renaming was intended, base has unconventional Hungarian notation names.")]
         protected override void HashCore(byte[] array, int offset, int count) 
             => hash = CalculateHash(table, hash, array, offset, count);
 

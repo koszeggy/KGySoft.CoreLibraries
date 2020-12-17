@@ -1234,9 +1234,6 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="ThrowException"/> are <see langword="true"/>&#160;and the .resx file of the neutral culture was not found.</exception>
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
-#endif
         public override ResourceSet? GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
             => (ResourceSet?)GetExpandoResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
 
@@ -1479,9 +1476,6 @@ namespace KGySoft.Resources
         /// <returns>The specified resource set.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP)
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")] 
-#endif
         protected override ResourceSet? InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // Internally just call the internal GetResXResourceSet instead. Via public methods GetExpandoResourceSet is called, which adjusts safe mode of the result accordingly to this instance.

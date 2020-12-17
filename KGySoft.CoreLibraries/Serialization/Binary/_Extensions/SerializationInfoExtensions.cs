@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 #if NET35
 using System.Reflection; 
@@ -53,7 +54,7 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public static IEnumerable<SerializationEntry> ToEnumerable(this SerializationInfo info)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             if (info.MemberCount == 0)
@@ -73,9 +74,9 @@ namespace KGySoft.Serialization.Binary
         /// <returns>
         /// <see langword="true"/>, if <see cref="SerializationInfo"/> contains an element with the specified name; otherwise, <see langword="false"/>.
         /// </returns>
-        public static bool TryGetValue(this SerializationInfo info, string name, out object value)
+        public static bool TryGetValue(this SerializationInfo info, string name, out object? value)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             foreach (SerializationEntry entry in info)
@@ -103,11 +104,11 @@ namespace KGySoft.Serialization.Binary
         /// <see langword="true"/>, if <see cref="SerializationInfo"/> contains an element with the specified name
         /// and type of <typeparamref name="T"/>; otherwise, <see langword="false"/>.
         /// </returns>
-        public static bool TryGetValue<T>(this SerializationInfo info, string name, out T value)
+        public static bool TryGetValue<T>(this SerializationInfo info, string name, [MaybeNullWhen(false)]out T value)
         {
-            if (info.TryGetValue(name, out object result) && typeof(T).CanAcceptValue(result))
+            if (info.TryGetValue(name, out object? result) && typeof(T).CanAcceptValue(result))
             {
-                value = (T)result;
+                value = (T)result!;
                 return true;
             }
 
@@ -123,8 +124,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="defaultValue">The default value to return if <paramref name="name"/> was not found. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The found value or <see langword="null"/> if <paramref name="name"/> was not found in the <see cref="SerializationInfo"/>.</returns>
-        public static object GetValueOrDefault(this SerializationInfo info, string name, object defaultValue = null)
-            => info.TryGetValue(name, out object result) ? result : defaultValue;
+        public static object? GetValueOrDefault(this SerializationInfo info, string name, object? defaultValue = null)
+            => info.TryGetValue(name, out object? result) ? result : defaultValue;
 
         /// <summary>
         /// Tries to get a value from a <see cref="SerializationInfo"/> for the given <paramref name="name"/>.
@@ -135,8 +136,10 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
         /// <typeparam name="T">The type of the value with the corresponding <paramref name="name"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="name"/> was not found or its value cannot be cast to <typeparamref name="T"/>.</returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? result'")]
         public static T GetValueOrDefault<T>(this SerializationInfo info, string name, T defaultValue = default)
-            => info.TryGetValue(name, out T result) ? result : defaultValue;
+            => info.TryGetValue(name, out T result) ? result : defaultValue!;
 
         /// <summary>
         /// Gets whether an entry with the specified <paramref name="name"/> exists in the specified <see cref="SerializationInfo"/>.
@@ -147,7 +150,7 @@ namespace KGySoft.Serialization.Binary
         /// otherwise, <see langword="false"/>.</returns>
         public static bool ContainsName(this SerializationInfo info, string name)
         {
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             return info.ToEnumerable().Any(e => e.Name == name);
@@ -162,9 +165,9 @@ namespace KGySoft.Serialization.Binary
         /// and has been removed; otherwise, <see langword="false"/>.</returns>
         public static bool RemoveValue(this SerializationInfo info, string name)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
             if (info.MemberCount == 0)
@@ -196,16 +199,15 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns><see langword="true"/>&#160;if an update occurred (the <see cref="SerializationInfo"/> already contained an entry with the specified <paramref name="name"/>);
         /// <see langword="false"/>&#160;if the value has just been added as a new value.</returns>
-        public static bool UpdateValue(this SerializationInfo info, string name, object value, Type type = null)
+        public static bool UpdateValue(this SerializationInfo info, string name, object? value, Type? type = null)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
             if (info.MemberCount == 0 || !info.ContainsName(name))
             {
-                // that's why the method is generic: so we can specify a different type by specifying T explicitly
                 info.AddValue(name, value, type ?? value?.GetType() ?? Reflector.ObjectType);
                 return false;
             }
@@ -234,13 +236,13 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns><see langword="true"/>&#160;if an entry with the specified old name existed in the <see cref="SerializationInfo"/>
         /// and the replace has been performed; otherwise, <see langword="false"/>.</returns>
-        public static bool ReplaceValue(this SerializationInfo info, string oldName, string newName, object value, Type type = null)
+        public static bool ReplaceValue(this SerializationInfo info, string oldName, string newName, object? value, Type? type = null)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
-            if (oldName == null)
+            if (oldName == null!)
                 Throw.ArgumentNullException(Argument.oldName);
-            if (newName == null)
+            if (newName == null!)
                 Throw.ArgumentNullException(Argument.newName);
 
             if (info.MemberCount == 0 || !info.ContainsName(oldName))
@@ -266,8 +268,8 @@ namespace KGySoft.Serialization.Binary
         private static SerializationInfo InitEmptyInstanceFrom(SerializationInfo info)
         {
 #if NET35
-            Assembly asm = Reflector.ResolveAssembly(info.AssemblyName, ResolveAssemblyOptions.AllowPartialMatch | ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.ThrowError);
-            Type type = Reflector.ResolveType(asm, info.FullTypeName, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
+            Assembly asm = Reflector.ResolveAssembly(info.AssemblyName, ResolveAssemblyOptions.AllowPartialMatch | ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.ThrowError)!;
+            Type type = Reflector.ResolveType(asm, info.FullTypeName, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError)!;
             return new SerializationInfo(type, info.GetConverter())
             {
                 AssemblyName = info.AssemblyName,

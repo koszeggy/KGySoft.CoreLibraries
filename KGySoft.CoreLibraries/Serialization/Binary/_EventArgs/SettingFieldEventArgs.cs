@@ -58,14 +58,14 @@ namespace KGySoft.Serialization.Binary
         /// skip the default processing.
         /// <br/>Default value: The field identified as the matching field, or <see langword="null"/>, if such field was not found.
         /// </summary>
-        public FieldInfo Field { get; set; }
+        public FieldInfo? Field { get; set; }
 
         /// <summary>
         /// Gets or sets the value to be set.
         /// <br/>To prevent setting any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default deserialization logic.
         /// </summary>
-        public object Value { get; set; }
+        public object? Value { get; set; }
 
         #endregion
 

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -30,12 +29,16 @@ using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Serialization.Binary
-{
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.Serialization.Binary
+{
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
     /// <br/>See the <strong>Remarks</strong> section for details and some examples.
@@ -169,7 +172,7 @@ namespace KGySoft.Serialization.Binary
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            string fullName = type.FullName;
+            string? fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
@@ -177,28 +180,28 @@ namespace KGySoft.Serialization.Binary
             Debug.Assert(type == type.GetRootType(), "Root type expected");
 
             // getting/creating the map by type of the same full names
-            if (!mapping.TryGetValue(fullName, out Dictionary<Type, HashSet<string>> mapByType))
+            if (!mapping.TryGetValue(fullName, out Dictionary<Type, HashSet<string>>? mapByType))
             {
                 mapByType = new Dictionary<Type, HashSet<string>>();
                 mapping[fullName] = mapByType;
             }
 
             // getting/creating the identities set
-            if (!mapByType.TryGetValue(type, out var identites))
+            if (!mapByType.TryGetValue(type, out var identities))
             {
-                identites = new HashSet<string>();
-                mapByType[type] = identites;
+                identities = new HashSet<string>();
+                mapByType[type] = identities;
             }
 
             // no assembly identities or contains null: any assembly will be accepted
             if (assemblyIdentities.IsNullOrEmpty())
             {
-                identites.Add(String.Empty);
+                identities.Add(String.Empty);
                 return;
             }
 
             foreach (AssemblyName assemblyName in assemblyIdentities)
-                identites.Add(assemblyName.FullName);
+                identities.Add(assemblyName.FullName);
         }
 
         /// <summary>
@@ -214,11 +217,11 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public void AddTypes(params Type[] types)
         {
-            if (types == null)
+            if (types == null!)
                 Throw.ArgumentNullException(Argument.types);
             if (types.Length == 0)
                 Throw.ArgumentException(Argument.types, Res.CollectionEmpty);
-            if (types.Contains(null))
+            if (types.Contains(null!))
                 Throw.ArgumentException(Argument.types, Res.ArgumentContainsNull);
             foreach (Type type in types)
                 AddType(type);
@@ -242,7 +245,7 @@ namespace KGySoft.Serialization.Binary
 #if !NET35
         override
 #endif
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
         {
             #region Local Methods
 
@@ -251,10 +254,10 @@ namespace KGySoft.Serialization.Binary
                 Type key = t.GetRootType();
 
                 // we have a non-empty specified assembly name 
-                if (mapping.GetValueOrDefault(key.FullName)?.GetValueOrDefault(key).FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
+                if (mapping.GetValueOrDefault(key.FullName!)?.GetValueOrDefault(key)?.FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
                     return new AssemblyName(asmName);
 
-                string legacyName = AssemblyResolver.GetForwardedAssemblyName(key, false);
+                string? legacyName = AssemblyResolver.GetForwardedAssemblyName(key, false);
                 if (legacyName != null)
                     return new AssemblyName(legacyName);
 
@@ -264,7 +267,7 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
-            if (serializedType == null)
+            if (serializedType == null!)
                 Throw.ArgumentNullException(Argument.serializedType);
 #if NET35
             assemblyName = null;
@@ -294,19 +297,19 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
-        public override Type BindToType(string assemblyName, string typeName)
+        public override Type? BindToType(string assemblyName, string typeName)
         {
             #region Local Methods
 
-            Type ResolveType(AssemblyName assemblyName, string typeName)
+            Type? ResolveType(AssemblyName? asmName, string typName)
             {
                 // there is no rule for such type name
-                if (!mapping.TryGetValue(typeName, out var byTypeMap))
+                if (!mapping.TryGetValue(typName, out var byTypeMap))
                     return null;
 
                 foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
                 {
-                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), assemblyName, false)))
+                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), asmName, false)))
                         return map.Key;
                 }
 

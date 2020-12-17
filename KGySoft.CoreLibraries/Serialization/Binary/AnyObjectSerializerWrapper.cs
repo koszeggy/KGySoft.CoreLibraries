@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
@@ -29,6 +28,13 @@ using System.Security;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Xml;
 
+#endregion
+
+#region Suppressions
+
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0)
+#pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
+#endif
 
 #endregion
 
@@ -57,8 +63,7 @@ namespace KGySoft.Serialization.Binary
     {
         #region Fields
 
-        [NonSerialized]
-        private readonly object obj;
+        [NonSerialized]private readonly object? obj;
         private readonly bool isWeak;
         private readonly bool byFields;
 
@@ -80,7 +85,7 @@ namespace KGySoft.Serialization.Binary
         /// field-based serialization. Can be useful for types that implement <see cref="ISerializable"/> but the implementation throws a <see cref="PlatformNotSupportedException"/>
         /// (on .NET Core, for example). It still does not guarantee that the object will be deserializable on another platform. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
+        public AnyObjectSerializerWrapper(object? obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
         {
             this.obj = obj;
             isWeak = useWeakAssemblyBinding;
@@ -91,12 +96,10 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Constructors
 
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
-            Justification = "False alarm, serialization constructor has an exact signature.")]
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
-            byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType);
-            BinarySerializationFormatter serializer = new BinarySerializationFormatter();
+            byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType)!;
+            var serializer = new BinarySerializationFormatter();
             if (info.GetBoolean(nameof(isWeak)))
                 serializer.Binder = new WeakAssemblySerializationBinder();
             if (info.GetValueOrDefault<bool>(nameof(byFields)))
@@ -111,13 +114,12 @@ namespace KGySoft.Serialization.Binary
         #region Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
-            ISurrogateSelector surrogate = null;
+            ISurrogateSelector? surrogate = null;
 #if NETFRAMEWORK
             // ReSharper disable once LocalVariableHidesMember - intended, in non-Framework platforms the field is used.
             bool byFields = this.byFields;
@@ -141,8 +143,7 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        object IObjectReference.GetRealObject(StreamingContext context) => obj;
+        object? IObjectReference.GetRealObject(StreamingContext context) => obj;
 
         #endregion
     }

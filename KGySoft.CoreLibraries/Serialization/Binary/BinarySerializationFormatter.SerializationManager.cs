@@ -45,6 +45,15 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 
 #endregion
 
+#region Suppressions
+
+#if NETCOREAPP3_0
+#pragma warning disable CS8605 // Unboxing a possibly null value. - false alarm for iterating through a non-generic dictionary
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type. - 
+#endif
+
+#endregion
+
 namespace KGySoft.Serialization.Binary
 {
     public sealed partial class BinarySerializationFormatter
@@ -63,16 +72,16 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
-            private Dictionary<string, int> nameIndexCache;
-            private Dictionary<Assembly, int> assemblyIndexCache;
-            private Dictionary<Type, int> typeIndexCache;
-            private Dictionary<Type, (string AssemblyName, string TypeName)> binderCache;
-            private Dictionary<string, int> assemblyNameIndexCache;
-            private Dictionary<string, int> typeNameIndexCache;
+            private Dictionary<string, int>? nameIndexCache;
+            private Dictionary<Assembly, int>? assemblyIndexCache;
+            private Dictionary<Type, int>? typeIndexCache;
+            private Dictionary<Type, (string? AssemblyName, string? TypeName)>? binderCache;
+            private Dictionary<string, int>? assemblyNameIndexCache;
+            private Dictionary<string, int>? typeNameIndexCache;
 
             private int idCounter;
-            private Dictionary<object, int> idCacheByValue;
-            private Dictionary<object, int> idCacheByRef;
+            private Dictionary<object, int>? idCacheByValue;
+            private Dictionary<object, int>? idCacheByRef;
 
             #endregion
 
@@ -118,7 +127,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Constructors
 
-            internal SerializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector) :
+            internal SerializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector) :
                 base(context, options, binder, surrogateSelector)
             {
             }
@@ -129,7 +138,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Methods
 
-            private static string GetTypeNameIndexCacheKey(Type type, string binderAsmName, string binderTypeName)
+            private static string GetTypeNameIndexCacheKey(Type type, string? binderAsmName, string? binderTypeName)
                 => binderAsmName + ":" + (binderTypeName ?? type.GetName(TypeNameKind.LongName));
 
             /// <summary>
@@ -293,7 +302,7 @@ namespace KGySoft.Serialization.Binary
             /// (Impure objects are written by index at root level, too.)
             /// </summary>>
             [SecurityCritical]
-            internal void WriteRoot(BinaryWriter bw, object obj)
+            internal void WriteRoot(BinaryWriter bw, object? obj)
             {
                 // a.) null
                 if (obj == null)
@@ -329,21 +338,21 @@ namespace KGySoft.Serialization.Binary
             /// We don't do the same for parent fields because we don't write the fields types at all.
             /// </summary>>
             [SecurityCritical]
-            internal void WriteNonRoot(BinaryWriter bw, object obj, (DataTypesEnumerator DataTypes, Type Type) knownElementType = default)
+            internal void WriteNonRoot(BinaryWriter bw, object? obj, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType = default)
             {
                 // If we have an impure known collection element type we mark its attributes.
                 // Note: for fields it cannot be used because we don't write the field type anyway.
-                if (knownElementType.Type != null && IsImpureType(knownElementType.DataTypes.CurrentSeparated))
-                    MarkAttributes(bw, knownElementType.Type, GetUnderlyingSimpleType(knownElementType.DataTypes.Current));
+                if (knownElementType.Type != null && IsImpureType(knownElementType.DataTypes!.CurrentSeparated))
+                    MarkAttributes(bw, knownElementType.Type, GetUnderlyingSimpleType(knownElementType.DataTypes!.Current));
 
-                // a.) Existing object
+                // a.) Existing object or null
                 if (knownElementType.Type?.IsValueType != true)
                 {
                     if (WriteId(bw, obj))
                         return;
                 }
 
-                Type type = obj.GetType();
+                Type type = obj!.GetType();
                 DataTypes dataType = GetDataType(type);
 
                 // Pure simple types and enums
@@ -464,14 +473,10 @@ namespace KGySoft.Serialization.Binary
 
                     // supported collection
                     Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
-                        : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType
+                        : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType!
                         : t;
 
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    if (supportedCollections.TryGetValue(collType, out result))
-                        return true;
-
-                    return false;
+                    return supportedCollections.TryGetValue(collType, out result);
                 }
 
                 DataTypes GetImpureDataType(Type t)
@@ -488,11 +493,9 @@ namespace KGySoft.Serialization.Binary
                     if (RecursiveSerializationAsFallback || t.IsInterface || t.IsSerializable || CanUseSurrogate(t))
                         return DataTypes.RecursiveObjectGraph;
 
-#pragma warning disable 618, 612
                     // Any struct (obsolete but still supported as backward compatibility)
                     if (ForcedSerializationValueTypesAsFallback && t.IsValueType)
                         return DataTypes.RawStruct;
-#pragma warning restore 618, 612
 
                     // It is alright for a collection element type. If no recursive serialization is allowed it will turn out for the items.
                     return DataTypes.RecursiveObjectGraph;
@@ -511,7 +514,6 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void WriteSimpleObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
-                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WriteSimpleObject)}");
                 if (IsCompressible(dataType))
                 {
                     WriteCompressible(bw, obj, dataType, isRoot);
@@ -519,7 +521,6 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Type type = obj.GetType();
-
                 if (isRoot)
                 {
                     WriteDataType(bw, dataType);
@@ -628,8 +629,6 @@ namespace KGySoft.Serialization.Binary
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many cases.")]
             private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
             {
-                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WritePureObject)}");
-
                 switch (dataType)
                 {
                     case DataTypes.Bool:
@@ -728,7 +727,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteImpureObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypesEnumerator DataTypes, Type Type) knownElementType, bool isRoot)
+            private void WriteImpureObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 if (isRoot)
                     WriteDataType(bw, dataType);
@@ -777,16 +776,16 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteNonRootCollection(BinaryWriter bw, object data, DataTypes dataType, (DataTypesEnumerator DataTypes, Type Type) knownElementType)
+            private void WriteNonRootCollection(BinaryWriter bw, object data, DataTypes dataType, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType)
             {
-                Type type = null;
+                Type? type = null;
                 DataTypes knownElementDataType = (knownElementType.DataTypes?.CurrentSeparated).GetValueOrDefault();
                 bool canUseKnown = dataType == knownElementDataType
                     || dataType == DataTypes.DictionaryEntry && knownElementDataType == DataTypes.DictionaryEntryNullable
                     || dataType == DataTypes.KeyValuePair && knownElementDataType == DataTypes.KeyValuePairNullable;
 
                 // omitting type if collection is a struct element of a parent collection
-                IList<DataTypes> collectionType = null;
+                IList<DataTypes>? collectionType = null;
                 if (knownElementType.Type?.IsSealed != true)
                 {
                     collectionType = (canUseKnown ? knownElementType.DataTypes?.GetCurrentSegment() : null)
@@ -805,7 +804,7 @@ namespace KGySoft.Serialization.Binary
             /// Writes additional info after a [series of] DataType stream needed to completely describe an exact type.
             /// </summary>
             [SecurityCritical]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypesEnumerator enumerator, bool allowOpenTypes)
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypesEnumerator? enumerator, bool allowOpenTypes)
             {
                 if (enumerator == null)
                 {
@@ -821,16 +820,14 @@ namespace KGySoft.Serialization.Binary
                     DataTypes dataType = enumerator.CurrentSeparated;
 
                     // Impure types: type name
-                    if (!IsPureType(dataType))
+                    if (IsImpureType(dataType))
                     {
                         if (dataType.In(DataTypes.Pointer, DataTypes.ByRef))
                         {
-                            // ReSharper disable once PossibleNullReferenceException - pointer and ByFer types have element type
-                            type = type.GetElementType();
+                            type = type.GetElementType()!;
                             continue;
                         }
 
-                        // ReSharper disable once AssignNullToNotNullAttribute - false alarm, GetElementType above never returns null
                         WriteType(bw, Nullable.GetUnderlyingType(type) ?? type, null, allowOpenTypes);
                         Debug.Assert(!enumerator.MoveNextExtracted(), $"Unprocessed element: {dataType}");
                         return;
@@ -839,8 +836,7 @@ namespace KGySoft.Serialization.Binary
                     // Non-abstract array: recursion for element type, then writing rank
                     if (dataType == DataTypes.Array)
                     {
-                        // ReSharper disable once PossibleNullReferenceException - false alarm, type cannot be null here
-                        Type elementType = type.GetElementType();
+                        Type elementType = type.GetElementType()!;
                         WriteTypeNamesAndRanks(bw, elementType, enumerator, allowOpenTypes);
                         int rank = type.IsZeroBasedArray() ? 0 : type.GetArrayRank();
                         bw.Write((byte)rank);
@@ -848,7 +844,6 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // recursion for generic arguments
-                    // ReSharper disable once PossibleNullReferenceException - false alarm, type cannot be null here
                     if (type.IsGenericType)
                     {
                         foreach (Type genericArgument in type.GetGenericArguments())
@@ -876,7 +871,7 @@ namespace KGySoft.Serialization.Binary
                 // pointer/ByRef
                 if (dataType.In(DataTypes.Pointer, DataTypes.ByRef))
                 {
-                    Type elementType = type.GetElementType();
+                    Type elementType = type.GetElementType()!;
                     CircularList<DataTypes> result = EncodeDataType(elementType, GetDataType(elementType));
                     result.AddFirst(dataType);
                     return result;
@@ -920,9 +915,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private CircularList<DataTypes> EncodeArray(Type type)
             {
-                Type elementType = type.GetElementType();
-
-                // ReSharper disable once PossibleNullReferenceException - arrays have element types
+                Type elementType = type.GetElementType()!;
                 if (elementType.IsGenericParameter || elementType.IsGenericTypeDefinition)
                     return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph };
 
@@ -932,7 +925,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     if (elementDataType.In(DataTypes.Pointer, DataTypes.ByRef))
                     {
-                        Type subElementType = elementType.GetElementType();
+                        Type subElementType = elementType.GetElementType()!;
                         DataTypes subElementDataType = GetDataType(subElementType);
                         CircularList<DataTypes> nestedTypes = EncodeDataType(subElementType, subElementDataType);
                         nestedTypes.AddFirst(DataTypes.Array | elementDataType);
@@ -1002,6 +995,8 @@ namespace KGySoft.Serialization.Binary
                 return keyTypes;
             }
 
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+            [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
             [SecurityCritical]
             private void WriteCollection(BinaryWriter bw, DataTypesEnumerator collectionDataTypes, object obj)
             {
@@ -1026,9 +1021,9 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // 2. Write elements
-                    elementType = type.GetElementType();
+                    elementType = type.GetElementType()!;
+
                     // 2.a.) Primitive array
-                    // ReSharper disable once PossibleNullReferenceException - it is an array
                     if (elementType.IsPrimitive)
                     {
                         if (!(array is byte[] rawData))
@@ -1112,7 +1107,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void WriteCollectionElements(BinaryWriter bw, IEnumerable collection, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
-                foreach (object element in collection)
+                foreach (object? element in collection)
                     WriteElement(bw, element, elementCollectionDataTypes, collectionElementType);
             }
 
@@ -1134,13 +1129,13 @@ namespace KGySoft.Serialization.Binary
                 // If collection cannot be cast to non-generic IDictionary: Key and Value properties must be accessed by name
                 foreach (object element in collection)
                 {
-                    WriteElement(bw, Accessors.GetPropertyValue(element, nameof(KeyValuePair<_, _>.Key)), keyCollectionDataTypes, collectionKeyType);
-                    WriteElement(bw, Accessors.GetPropertyValue(element, nameof(KeyValuePair<_, _>.Value)), valueCollectionDataTypes, collectionValueType);
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_, _>.Key)), keyCollectionDataTypes, collectionKeyType);
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_, _>.Value)), valueCollectionDataTypes, collectionValueType);
                 }
             }
 
             [SecurityCritical]
-            private void WriteElement(BinaryWriter bw, object element, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
+            private void WriteElement(BinaryWriter bw, object? element, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
                 DataTypes collectionDataType = GetCollectionDataType(elementCollectionDataTypes.Current);
 
@@ -1191,11 +1186,11 @@ namespace KGySoft.Serialization.Binary
                     Debug.Assert(element != null, "When element is null, WriteId should return true");
                 }
 
-                WritePureObject(bw, element, elementDataType);
+                WritePureObject(bw, element!, elementDataType);
             }
 
             [SecurityCritical]
-            private void WriteObjectGraph(BinaryWriter bw, object data, Type knownElementType, bool isRoot)
+            private void WriteObjectGraph(BinaryWriter bw, object data, Type? knownElementType, bool isRoot)
             {
                 Debug.Assert(!(data is Array), "Arrays cannot be serialized as an object graph.");
 
@@ -1209,7 +1204,7 @@ namespace KGySoft.Serialization.Binary
                 OnSerializing(data);
 
                 Type type = data.GetType();
-                if (TryGetSurrogate(type, out ISerializationSurrogate surrogate, out var _) || (!IgnoreISerializable && data is ISerializable))
+                if (TryGetSurrogate(type, out ISerializationSurrogate? surrogate, out var _) || (!IgnoreISerializable && data is ISerializable))
                     WriteCustomObjectGraph(bw, data, surrogate, knownElementType);
                 else
                     WriteDefaultObjectGraph(bw, data, knownElementType);
@@ -1218,7 +1213,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteDefaultObjectGraph(BinaryWriter bw, object data, Type knownElementType)
+            private void WriteDefaultObjectGraph(BinaryWriter bw, object data, Type? knownElementType)
             {
                 Type type = data.GetType();
                 bool writeType = knownElementType == null || !knownElementType.IsSealed;
@@ -1235,15 +1230,13 @@ namespace KGySoft.Serialization.Binary
                 MarkCustomSerialized(bw, type, false);
 
                 // 3.) Serializing fields
-                // ReSharper disable once PossibleNullReferenceException - data is an object in all cases
-                for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+                for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
                 {
                     // writing fields of current level
                     FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
 
                     if (fields.Length != 0 || t == type)
                     {
-                        // ReSharper disable once PossibleNullReferenceException - type is never null
                         // writing name of base type
                         if (t != type)
                             WriteName(bw, t.Name);
@@ -1254,7 +1247,7 @@ namespace KGySoft.Serialization.Binary
                         {
                             WriteName(bw, field.Name);
                             Type fieldType = field.FieldType;
-                            object fieldValue = field.Get(data);
+                            object? fieldValue = field.Get(data);
                             if (fieldValue != null && fieldType.IsEnum)
                                 fieldValue = Convert.ChangeType(fieldValue, Enum.GetUnderlyingType(fieldType), CultureInfo.InvariantCulture);
                             WriteNonRoot(bw, fieldValue);
@@ -1267,7 +1260,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate surrogate, Type knownElementType)
+            private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate? surrogate, Type? knownElementType)
             {
                 Type type = data.GetType();
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
@@ -1282,9 +1275,9 @@ namespace KGySoft.Serialization.Binary
                     ((ISerializable)data).GetObjectData(si, Context);
                 }
 
-                Type typeToWrite = type;
+                Type? typeToWrite = type;
                 string explicitAsmName = si.AssemblyName;
-                string explicitTypeName = si.FullTypeName;
+                string? explicitTypeName = si.FullTypeName;
 #if NET35
                 if (explicitAsmName != type.Assembly.FullName || explicitTypeName != type.FullName)
                 {
@@ -1295,7 +1288,7 @@ namespace KGySoft.Serialization.Binary
                 }
 #else
                 if (si.ObjectType != type)
-                    typeToWrite = si.ObjectType?.FullName != null ? si.ObjectType : null;
+                    typeToWrite = si.ObjectType.FullName != null ? si.ObjectType : null;
                 else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
                 {
                     typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
@@ -1353,7 +1346,6 @@ namespace KGySoft.Serialization.Binary
 
             private void WriteName(BinaryWriter bw, string name)
             {
-                Debug.Assert(name != null, "name is null");
                 var names = nameIndexCache ??= new Dictionary<string, int>();
                 if (names.TryGetValue(name, out int id))
                 {
@@ -1388,12 +1380,12 @@ namespace KGySoft.Serialization.Binary
             /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when a RuntimeType instance is serialized.
             /// </summary>
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type, IList<DataTypes> encodedDataType, bool allowOpenTypes = false)
+            private void WriteType(BinaryWriter bw, Type type, IList<DataTypes>? encodedDataType, bool allowOpenTypes = false)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter),
                     $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
-                string boundAsmName = null;
-                string boundTypeName = null;
+                string? boundAsmName = null;
+                string? boundTypeName = null;
 
                 // 1.) Checking if type is already known without binder (because maybe it is an encoded supported type).
                 int index = GetTypeIndex(type);
@@ -1433,7 +1425,7 @@ namespace KGySoft.Serialization.Binary
                 WriteNewType(bw, type, allowOpenTypes, boundAsmName, boundTypeName);
             }
 
-            private void GetBoundNames(Type type, out string boundAsmName, out string boundTypeName)
+            private void GetBoundNames(Type type, out string? boundAsmName, out string? boundTypeName)
             {
                 Debug.Assert(!type.HasElementType, $"Arrays, pointers and ByRef types should be handled by {nameof(TryWriteTypeByDataType)}");
 
@@ -1452,10 +1444,8 @@ namespace KGySoft.Serialization.Binary
 
                 Debug.Assert(type.FullName != null, "A root type is expected here");
 
-                if (binderCache == null)
-                    binderCache = new Dictionary<Type, (string, string)>();
-
-                if (binderCache.TryGetValue(type, out (string AssemblyName, string TypeName) result))
+                binderCache ??= new Dictionary<Type, (string?, string?)>();
+                if (binderCache.TryGetValue(type, out (string? AssemblyName, string? TypeName) result))
                 {
                     boundAsmName = result.AssemblyName;
                     boundTypeName = result.TypeName;
@@ -1472,16 +1462,16 @@ namespace KGySoft.Serialization.Binary
                 binderCache.Add(type, (boundAsmName ?? GetForwardedAssemblyName(type, true), boundTypeName));
             }
 
-            private string GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
+            private string? GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
                 => IgnoreTypeForwardedFromAttribute ? null : AssemblyResolver.GetForwardedAssemblyName(type, omitIfCoreLibrary);
 
-            private int GetAssemblyIndex(Type type, ref string boundAsmName)
+            private int GetAssemblyIndex(Type type, ref string? boundAsmName)
             {
                 if (OmitAssemblyQualifiedNames)
                     return OmitAssemblyIndex;
                 if (boundAsmName == null && !IgnoreTypeForwardedFromAttribute)
                 {
-                    string forwardedAsmName = GetForwardedAssemblyName(type, false);
+                    string? forwardedAsmName = GetForwardedAssemblyName(type, false);
                     if (forwardedAsmName != null && AssemblyResolver.IsCoreLibAssemblyName(forwardedAsmName))
                         return 0;
                     boundAsmName = forwardedAsmName;
@@ -1492,7 +1482,7 @@ namespace KGySoft.Serialization.Binary
                     : AssemblyNameIndexCache.GetValueOrDefault(boundAsmName, -1);
             }
 
-            private int GetTypeIndex(Type type, string boundAsmName = null, string boundTypeName = null)
+            private int GetTypeIndex(Type type, string? boundAsmName = null, string? boundTypeName = null)
                 => boundAsmName == null && boundTypeName == null
                     ? TypeIndexCache.GetValueOrDefault(type, -1)
                     : TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, boundAsmName, boundTypeName), -1);
@@ -1502,7 +1492,7 @@ namespace KGySoft.Serialization.Binary
             /// Returning <see langword="true"/> even for partial success (array, generics) because then the beginning of the type is encoded by DataTypes.
             /// </summary>
             [SecurityCritical]
-            private bool TryWriteTypeByDataType(BinaryWriter bw, Type type, bool allowOpenTypes, ref IList<DataTypes> encodedDataTypes)
+            private bool TryWriteTypeByDataType(BinaryWriter bw, Type type, bool allowOpenTypes, [AllowNull]ref IList<DataTypes> encodedDataTypes)
             {
                 #region Local Methods
                 
@@ -1518,7 +1508,7 @@ namespace KGySoft.Serialization.Binary
                         WriteDataType(bw, encodedDt[0]);
 
                         // ReSharper disable once PossibleNullReferenceException - Pointers and ByRef types have element type
-                        t = t.GetElementType();
+                        t = t.GetElementType()!;
 
                         Debug.Assert(!encodedDt.IsReadOnly, "Non read-only encoded types are expected for pointers and ByRef types");
                         encodedDt.RemoveAt(0);
@@ -1548,7 +1538,7 @@ namespace KGySoft.Serialization.Binary
                 if (collectionDataType == DataTypes.Null)
                 {
                     DataTypes elementDataType = GetElementDataType(dataType);
-                    if (!IsPureType(elementDataType))
+                    if (IsImpureType(elementDataType))
                     {
                         // Impure type: will be handled by WriteType
                         if (!processed)
@@ -1574,12 +1564,7 @@ namespace KGySoft.Serialization.Binary
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
                 bool isGenericParam = type.IsGenericParameter;
-                Debug.Assert(!isGenericParam || type.DeclaringMethod == null, "Generics method arguments should be written by WriteNewType");
-
-                Type typeDef = isTypeDef ? type
-                    : isGeneric ? type.GetGenericTypeDefinition()
-                    : isGenericParam ? type.DeclaringType
-                    : null;
+                Debug.Assert(!isGenericParam || type.DeclaringMethod == null, "Generic method arguments should be written by WriteNewType");
 
                 // Arrays or non-generic/closed generic collections
                 if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
@@ -1588,8 +1573,6 @@ namespace KGySoft.Serialization.Binary
                     WriteTypeNamesAndRanks(bw, type, new DataTypesEnumerator(encodedDataTypes), allowOpenTypes);
                     return true;
                 }
-
-                Debug.Assert(typeDef != null, "Generics are expected at this point");
 
                 // Here we have a supported generic type definition or a constructed generic type with unsupported or impure arguments.
                 Debug.Assert(GetUnderlyingSimpleType(dataType) == DataTypes.GenericTypeDefinition, "Generic type definition element type expected");
@@ -1611,7 +1594,7 @@ namespace KGySoft.Serialization.Binary
                 return true;
             }
 
-            private void WriteNewAssembly(BinaryWriter bw, Assembly assembly, string boundAsmName)
+            private void WriteNewAssembly(BinaryWriter bw, Assembly assembly, string? boundAsmName)
             {
                 // by binder or forwarded name
                 if (boundAsmName != null)
@@ -1621,7 +1604,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                bw.Write(assembly.FullName);
+                bw.Write(assembly.FullName!);
                 AssemblyIndexCache.Add(assembly, AssemblyIndexCacheCount);
             }
 
@@ -1630,16 +1613,16 @@ namespace KGySoft.Serialization.Binary
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
-            private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string boundAsmName, string boundTypeName)
+            private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string? boundAsmName, string? boundTypeName)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
-                    : type.IsGenericParameter ? type.DeclaringType
+                    : type.IsGenericParameter ? type.DeclaringType!
                     : type;
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
                 bool isGenericParam = type.IsGenericParameter;
-                Type typeDef = isGeneric || isGenericParam ? rootType : null;
+                Type? typeDef = isGeneric || isGenericParam ? rootType : null;
 
                 // Actualizing bound names if needed
                 if (rootType != type)
@@ -1672,15 +1655,11 @@ namespace KGySoft.Serialization.Binary
                     else
                     {
                         Write7BitInt(bw, NewAssemblyIndex);
-
-                        // ReSharper disable once PossibleNullReferenceException - root type is never null here
                         WriteNewAssembly(bw, rootType.Assembly, boundAsmName);
                     }
 
                     // 3.) Root type name of new type
-                    // ReSharper disable once AssignNullToNotNullAttribute - FullName is not null for the root type
-                    // ReSharper disable once PossibleNullReferenceException - root type is never null here
-                    bw.Write(boundTypeName ?? rootType.FullName);
+                    bw.Write(boundTypeName ?? rootType.FullName!);
                     AddToTypeCache(rootType, boundAsmName, boundTypeName);
 
                     // for non generics we are done
@@ -1728,7 +1707,7 @@ namespace KGySoft.Serialization.Binary
                 Write7BitInt(bw, NewTypeIndex);
 
                 // 2.) Assembly index
-                index = GetAssemblyIndex(origType, ref explicitAsmName);
+                index = GetAssemblyIndex(origType, ref explicitAsmName!);
 
                 // known assembly
                 if (index != -1)
@@ -1741,7 +1720,6 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // 3.) Type name
-                // ReSharper disable once AssignNullToNotNullAttribute - FullName is not null for the root type
                 bw.Write(explicitTypeName);
                 AddToTypeCache(origType, explicitAsmName, explicitTypeName);
             }
@@ -1757,17 +1735,15 @@ namespace KGySoft.Serialization.Binary
 
                 // For generic method parameters no specifier is needed because the placeholder type has been written.
                 // Instead, writing the declaring type, method signature and parameter index
-                Type declaringType = type.DeclaringType;
+                Type declaringType = type.DeclaringType!;
                 WriteType(bw, declaringType, true);
-
-                // ReSharper disable once PossibleNullReferenceException - false alarm in release build, see assert above
-                bw.Write(type.DeclaringMethod.ToString());
+                bw.Write(type.DeclaringMethod!.ToString()!);
                 Write7BitInt(bw, type.GenericParameterPosition);
 
                 AddToTypeCache(type);
             }
 
-            private void AddToTypeCache(Type type, string storedAsmName = null, string storedTypeName = null)
+            private void AddToTypeCache(Type type, string? storedAsmName = null, string? storedTypeName = null)
             {
                 // Even if current binder names are null we must use the string based cache if there is a binder
                 // to avoid possibly conflicting type names between the custom and default binding and among binder type names.
@@ -1782,9 +1758,8 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Writes an ID and returns if it was already known.
-            /// If forceStructs is false, then only known immutable structs will get an id.
             /// </summary>
-            private bool WriteId(BinaryWriter bw, object data)
+            private bool WriteId(BinaryWriter bw, object? data)
             {
                 static bool IsComparedByValue(Type t) =>
                     t.IsPrimitive || t.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
@@ -1819,9 +1794,6 @@ namespace KGySoft.Serialization.Binary
                     return false;
                 }
 
-                //if (!forceStructs && type.IsValueType)
-                //    return false;
-
                 // Others are compared by reference. Structs as well, which are boxed into a reference here.
                 if (idCacheByRef == null)
                     idCacheByRef = new Dictionary<object, int>(ReferenceEqualityComparer.Comparer);
@@ -1840,7 +1812,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, (DataTypesEnumerator DataTypes, Type Type) knownElementType, bool isRoot)
+            private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
                 if (writeType)
@@ -1859,7 +1831,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteValueType(BinaryWriter bw, ValueType data, (DataTypesEnumerator DataTypes, Type Type) knownElementType, bool isRoot)
+            private void WriteValueType(BinaryWriter bw, ValueType data, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
                 if (writeType)

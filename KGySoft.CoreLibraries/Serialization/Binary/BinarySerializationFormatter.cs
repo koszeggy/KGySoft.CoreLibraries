@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -42,9 +41,16 @@ using KGySoft.Serialization.Xml;
 
 #endregion
 
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0)
+#pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
+#endif
+
+#endregion
 
 /* How to add a new type
  * =====
@@ -572,7 +578,7 @@ namespace KGySoft.Serialization.Binary
         #region Nested Classes
 
         /// <summary>
-        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has a tons of abstract methods.
+        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has tons of abstract methods.
         /// </summary>
         private sealed class TypeByString : MemberInfo
         {
@@ -580,14 +586,14 @@ namespace KGySoft.Serialization.Binary
 
             public override MemberTypes MemberType => MemberTypes.TypeInfo;
             public override string Name { get; }
-            public override Type DeclaringType => null;
-            public override Type ReflectedType => null;
+            public override Type? DeclaringType => null;
+            public override Type? ReflectedType => null;
 
             #endregion
 
             #region Constructors
 
-            public TypeByString(string assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
+            public TypeByString(string? assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
 
             #endregion
 
@@ -597,7 +603,7 @@ namespace KGySoft.Serialization.Binary
             public override bool IsDefined(Type attributeType, bool inherit) => false;
             public override object[] GetCustomAttributes(Type attributeType, bool inherit) => Reflector.EmptyObjects;
             public override string ToString() => Name;
-            public override bool Equals(object obj) => obj is TypeByString other && Name == other.Name;
+            public override bool Equals(object? obj) => obj is TypeByString other && Name == other.Name;
             public override int GetHashCode() => Name.GetHashCode();
 
             #endregion
@@ -795,7 +801,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer
-#if !NETCOREAPP
+#if NETFRAMEWORK || NETSTANDARD
                         | CollectionInfo.NonNullDefaultComparer
 #endif
                     ,
@@ -851,8 +857,8 @@ namespace KGySoft.Serialization.Binary
             { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } }
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
-            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
+            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(t => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
         // including string and the abstract enum and array types
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
@@ -978,7 +984,7 @@ namespace KGySoft.Serialization.Binary
         /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
         /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
         /// </remarks>
-        public SerializationBinder Binder { get; set; }
+        public SerializationBinder? Binder { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="StreamingContext"/> used for serialization and deserialization.
@@ -1157,8 +1163,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
         [SecuritySafeCritical]
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryWriter constructor will not leave the stream open.")]
-        public byte[] Serialize(object data)
+        public byte[] Serialize(object? data)
         {
             MemoryStream result;
             using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
@@ -1177,7 +1182,6 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryReader constructor will not leave the stream open.")]
         public object? Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
@@ -1201,7 +1205,7 @@ namespace KGySoft.Serialization.Binary
         /// <returns>The deserialized data.</returns>
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
             Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
-        public object DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
+        public object? DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -1213,9 +1217,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         [SecuritySafeCritical]
-        public void SerializeByWriter(BinaryWriter writer, object data)
+        public void SerializeByWriter(BinaryWriter writer, object? data)
         {
-            if (writer == null)
+            if (writer == null!)
                 Throw.ArgumentNullException(Argument.writer);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
             manager.WriteRoot(writer, data);
@@ -1231,9 +1235,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
         [SecuritySafeCritical]
-        public object DeserializeByReader(BinaryReader reader)
+        public object? DeserializeByReader(BinaryReader reader)
         {
-            if (reader == null)
+            if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
             var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector);
             return manager.Deserialize(reader);
@@ -1243,9 +1247,8 @@ namespace KGySoft.Serialization.Binary
 
         #region Explicitly Implemented Interface Methods
 
-        object IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
-
-        void IFormatter.Serialize(Stream serializationStream, object graph) => SerializeToStream(serializationStream, graph);
+        object? IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
+        void IFormatter.Serialize(Stream serializationStream, object? graph) => SerializeToStream(serializationStream, graph);
 
         #endregion
 

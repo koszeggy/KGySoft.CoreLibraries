@@ -166,7 +166,7 @@ namespace KGySoft.Reflection
                 || publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
         }
 
-        internal static bool IsCoreLibAssemblyName(string assemblyName) => IsCoreLibAssemblyName(new StringSegmentInternal(assemblyName));
+        internal static bool IsCoreLibAssemblyName(string? assemblyName) => assemblyName != null && IsCoreLibAssemblyName(new StringSegmentInternal(assemblyName));
 
         internal static bool IsCoreLibAssemblyName(StringSegmentInternal assemblyName)
         {

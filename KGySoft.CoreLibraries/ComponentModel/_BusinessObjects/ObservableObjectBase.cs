@@ -92,7 +92,7 @@ namespace KGySoft.ComponentModel
 
             #region Methods
 
-            [SecurityCritical] public object GetRealObject(StreamingContext context) => Value;
+            [SecurityCritical]public object GetRealObject(StreamingContext context) => Value;
             public override string ToString() => Res.ComponentModelMissingPropertyReference;
             public override bool Equals(object? obj) => obj is MissingPropertyReference;
             public override int GetHashCode() => 0;
