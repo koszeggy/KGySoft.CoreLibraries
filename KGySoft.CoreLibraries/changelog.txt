@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v5.5.1:
+! v5.6.0:
 ~~~~~~~~~
 
 * Assembly changes:
@@ -21,8 +21,12 @@
 ============================================
 - FastLookupCollection<T> class: Fixing binary deserialization
 
-- KGySoft.CoreLibraries namespace:
+! KGySoft.CoreLibraries namespace:
 ==================================
+! StringSegment struct:
+  ! Split methods use StringSegmentSplitOptions struct in place of the old bool removeEmptyEntries parameter.
+    There is a conversion from bool to StringSegmentSplitOptions (marked as obsolete) so the change is breaking
+    only if the various overloads were called with named removeEmptyEntries argument or by reflection.
 - RandomExtensions class:
   - NextObject methods: Fixing the interpretation of GenerateObjectSettings.ChanceOfNull property for all cases.
 - ThreadSafeRandom class:
@@ -30,6 +34,8 @@
     a NullReferenceException. Now a disposed instance will throw an ObjectDisposedException instead.
 - TypeExtensions class:
   - IsImplementationOfGenericType method: fixing possible infinite loop
++ New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
+  the TrimEntries flag on every platform target.
 
 - KGySoft.ComponentModel namespace:
 ===================================
