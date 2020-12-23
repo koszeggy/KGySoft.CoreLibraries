@@ -1722,7 +1722,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note>To invoke the constructor explicitly by dynamically created delegates use the <see cref="CreateInstanceAccessor"/> class.</note>
         /// </remarks>
-        public static object CreateInstance(ConstructorInfo ctor, params object[] parameters)
+        public static object CreateInstance(ConstructorInfo ctor, params object?[]? parameters)
             => CreateInstance(ctor, ReflectionWays.Auto, parameters);
 
         #endregion
