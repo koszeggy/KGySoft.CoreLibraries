@@ -19,7 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+
 using KGySoft.Collections;
+
 using NUnit.Framework;
 
 #endregion
@@ -75,7 +77,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 Iterations = 1_000_000,
             }
             .AddCase(() => s.Split((char[])null, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, RemoveEmptyEntries)")
-            .AddCase(() => s.AsSegment().Split(true), "StringSegment.Split(true)")
+            .AddCase(() => s.AsSegment().Split(StringSegmentSplitOptions.RemoveEmptyEntries), "StringSegment.Split(StringSegmentSplitOptions.RemoveEmptyEntries)")
             .AddCase(() =>
             {
                 StringSegment rest = s.AsSegment();
@@ -92,8 +94,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 TestName = $"Length: {s.Length}; Separator: White spaces; Count: {limitCount}",
                 Iterations = 1_000_000
             }
-            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, count)")
-            .AddCase(() => s.AsSegment().Split(limitCount, true), "StringSegment.Split(count, true)")
+            .AddCase(() => s.Split((char[])null, limitCount, StringSplitOptions.RemoveEmptyEntries), "String.Split(null, count, StringSplitOptions.RemoveEmptyEntries)")
+            .AddCase(() => s.AsSegment().Split(limitCount, StringSegmentSplitOptions.RemoveEmptyEntries), "StringSegment.Split(count, StringSegmentSplitOptions.RemoveEmptyEntries)")
             .AddCase(() =>
             {
                 StringSegment rest = s.AsSegment();
