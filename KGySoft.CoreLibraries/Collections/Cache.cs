@@ -793,7 +793,7 @@ namespace KGySoft.Collections
 
             [AllowNull]internal TKey Key;
             [AllowNull]internal TValue Value;
-            internal int Hash;
+            internal uint Hash;
 
             /// <summary>
             /// Zero-based index of a chained item in the current bucket or -1 if last
@@ -822,7 +822,6 @@ namespace KGySoft.Collections
         #region Constants
 
         private const int defaultCapacity = 128;
-        private const int minBucketSize = 4;
 
         #endregion
 
@@ -872,7 +871,6 @@ namespace KGySoft.Collections
 
         private CacheItem[]? items;
         private int[]? buckets; // 1-based indices for items. 0 means unused bucket.
-        private int mask; // same as bucket.Length - 1 but is cached for better performance
         private int usedCount; // used elements in items including deleted ones
         private int deletedCount;
         private int deletedItemsBucket = -1; // First deleted entry among used elements. -1 if there are no deleted elements.
@@ -1724,9 +1722,8 @@ namespace KGySoft.Collections
 
         private void Initialize(int suggestedCapacity)
         {
-            int bucketSize = Math.Max(minBucketSize, suggestedCapacity).GetNextPowerOfTwo();
+            int bucketSize = PrimeHelper.GetPrime(suggestedCapacity);
             buckets = new int[bucketSize];
-            mask = bucketSize - 1;
 
             // items.Length <= bucketSize!
             items = new CacheItem[capacity < bucketSize ? capacity : bucketSize];
@@ -1755,8 +1752,8 @@ namespace KGySoft.Collections
             if (buckets == null)
                 return -1;
 
-            int hashCode = comparer.GetHashCode(key);
-            for (int i = buckets[hashCode & mask] - 1; i >= 0; i = items[i].NextInBucket)
+            uint hashCode = (uint)comparer.GetHashCode(key);
+            for (int i = buckets[hashCode % (uint)buckets.Length] - 1; i >= 0; i = items[i].NextInBucket)
             {
                 if (items![i].Hash == hashCode && comparer.Equals(items[i].Key, key))
                     return i;
@@ -1793,8 +1790,8 @@ namespace KGySoft.Collections
             if (buckets == null)
                 return false;
 
-            int hashCode = comparer.GetHashCode(key);
-            int bucket = hashCode & mask;
+            uint hashCode = (uint)comparer.GetHashCode(key);
+            uint bucket = hashCode % (uint)buckets.Length;
             int prevInBucket = -1;
             for (int i = buckets[bucket] - 1; i >= 0; prevInBucket = i, i = items[i].NextInBucket)
             {
@@ -1869,8 +1866,8 @@ namespace KGySoft.Collections
             if (buckets == null)
                 Initialize(ensureCapacity ? capacity : 1);
 
-            int hashCode = comparer.GetHashCode(key);
-            ref int bucketRef = ref buckets![hashCode & mask];
+            uint hashCode = (uint)comparer.GetHashCode(key);
+            ref int bucketRef = ref buckets![hashCode % (uint)buckets.Length];
 
             // searching for an existing key
             for (int i = bucketRef - 1; i >= 0; i = items[i].NextInBucket)
@@ -1911,7 +1908,7 @@ namespace KGySoft.Collections
                     int oldSize = items.Length;
                     int newSize = capacity >> 1 > oldSize ? oldSize << 1 : capacity;
                     Resize(newSize);
-                    bucketRef = ref buckets[hashCode & mask];
+                    bucketRef = ref buckets[hashCode % (uint)buckets.Length];
                 }
 
                 index = usedCount;
@@ -1938,18 +1935,16 @@ namespace KGySoft.Collections
 
         private void Resize(int suggestedSize)
         {
-            int newBucketSize = suggestedSize.GetNextPowerOfTwo();
+            int newBucketSize = PrimeHelper.GetPrime(suggestedSize);
             var newBuckets = new int[newBucketSize];
-            mask = newBucketSize - 1;
-
             var newItems = new CacheItem[capacity < newBucketSize ? capacity : newBucketSize];
 
-            // if increasing capacity, then keeping also the deleted entries.
-            if (newItems.Length >= items!.Length)
+            // possible shortcut when increasing capacity
+            if (newItems.Length >= items!.Length && deletedCount == 0)
                 Array.Copy(items, 0, newItems, 0, usedCount);
             else
             {
-                // if shrinking, then keeping only the living elements while updating indices
+                // keeping only the living elements while updating indices
                 usedCount = 0;
                 for (int i = first; i != -1; i = items[i].NextInOrder)
                 {
@@ -1968,7 +1963,7 @@ namespace KGySoft.Collections
             // re-applying buckets for the new size
             for (int i = 0; i < usedCount; i++)
             {
-                int bucket = newItems[i].Hash & mask;
+                uint bucket = newItems[i].Hash % (uint)newBucketSize;
                 newItems[i].NextInBucket = newBuckets[bucket] - 1;
                 newBuckets[bucket] = i + 1;
             }
