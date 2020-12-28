@@ -40,6 +40,13 @@ namespace KGySoft.CoreLibraries
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
 #endif
 
+        internal static IEqualityComparer<T>? SpecialDefaultEqualityComparerOrNull { get; } =
+#if NETFRAMEWORK
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : null;
+#else
+            null;
+#endif
+
         #endregion
     }
 }
