@@ -68,6 +68,8 @@ namespace KGySoft.CoreLibraries
         private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type? T2), Type>? genericTypeCache;
         private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type? T2), MethodInfo>? genericMethodsCache;
         private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
+        private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
+
 
         #endregion
 
@@ -708,6 +710,29 @@ namespace KGySoft.CoreLibraries
                 default:
                     return Throw.InternalError<ulong>($"Unexpected enum base type code: {Type.GetTypeCode(type)}");
             }
+        }
+
+        internal static bool IsDefaultGetHashCode(this Type type)
+        {
+            #region Local Methods
+            
+            static bool LoadCacheItem(Type t)
+            {
+                if (!t.IsClass)
+                    return false;
+                return t.GetMethod(nameof(GetHashCode), Type.EmptyTypes)?.DeclaringType == Reflector.ObjectType;
+            }
+
+            #endregion
+
+            if (isDefaultGetHashCodeCache == null)
+            {
+                Interlocked.CompareExchange(ref isDefaultGetHashCodeCache,
+                    new Cache<Type, bool>(LoadCacheItem).GetThreadSafeAccessor(),
+                    null);
+            }
+
+            return isDefaultGetHashCodeCache[type];
         }
 
         #endregion

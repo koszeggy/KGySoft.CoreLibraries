@@ -5,4 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Style", "IDE0057:Use range operator", Justification = "Cannot be used because it is not supported in every targeted platform")]
 [assembly: SuppressMessage("Performance", "CA1806:Do not ignore method results", Justification = "In performance tests result is often ignored")]
