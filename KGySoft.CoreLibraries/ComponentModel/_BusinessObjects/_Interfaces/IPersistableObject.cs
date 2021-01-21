@@ -124,7 +124,7 @@ namespace KGySoft.ComponentModel
         /// <param name="originalValue">The original value.</param>
         /// <param name="newValue">The new value.</param>
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the originally stored value equals <paramref name="originalValue"/> and the replacement was successful; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the originally stored value equals <paramref name="originalValue"/> and the replacement was successful (even if <paramref name="originalValue"/> equals <paramref name="newValue"/>); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot get or set the property.</exception>
         bool TryReplaceProperty(string propertyName, object? originalValue, object? newValue, bool triggerChangedEvent = true);
 

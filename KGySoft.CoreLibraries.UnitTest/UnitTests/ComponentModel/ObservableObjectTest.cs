@@ -85,27 +85,32 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         }
 
         [Test]
-        public void TestMerge()
+        public void UsageTest()
         {
-            // Setting a property for the first time creates the locking storage
+            // Setting a property for the first time adds it in the underlying storage
             var obj = new Derived(false) { PublicProperty = true };
             Assert.IsTrue(obj.PublicProperty);
 
-            // changing in the locking storage
+            // changing triggers the changed event
+            bool changed = false;
+            obj.PropertyChanged += (sender, args) => changed = true;
             obj.PublicProperty = false;
             Assert.IsFalse(obj.PublicProperty);
-
-            // waiting until the timeout and letting the merge happen
-            Thread.Sleep(100);
-            Assert.IsFalse(obj.PublicProperty);
-
-            // now the change occurs in the non-locking storage
-            obj.PublicProperty = true;
-            Assert.IsTrue(obj.PublicProperty);
+            Assert.IsTrue(changed);
 
             // resetting the property
             Assert.IsTrue(obj.TryReplaceProperty(nameof(obj.PublicProperty), true, ObservableObjectBase.MissingProperty, true));
             Assert.IsFalse(obj.PublicProperty);
+
+            // disposing makes the properties unavailable
+            obj.Dispose();
+            Assert.Throws<ObjectDisposedException>(() => changed = obj.PublicProperty);
+        }
+
+        [Test]
+        public void SerializationTest()
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

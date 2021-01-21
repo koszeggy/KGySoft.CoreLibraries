@@ -71,21 +71,24 @@ namespace KGySoft.ComponentModel
 
         [SuppressMessage("CodeQuality", "IDE0004:Type cast is redundant", Justification = "Needed to avoid CS8619")]
         IDictionary<string, object?> IPersistableObject.GetProperties()
-            => PropertiesInternal.ToDictionary(p => p.Key,
-                p =>
-                {
-                    if (!CanGetProperty(p.Key))
-                        Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(p.Key));
-                    // ReSharper disable once RedundantCast
-                    return (object?)p.Value;
-                });
+        {
+            var result = new Dictionary<string, object?>(Capacity);
+            foreach (KeyValuePair<string, object?> item in Properties)
+            {
+                if (!CanGetProperty(item.Key))
+                    Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(item.Key));
+                result.Add(item.Key, item.Value);
+            }
+
+            return result;
+        }
 
         void IPersistableObject.SetProperties(IDictionary<string, object?> newProperties, bool triggerChangedEvent)
         {
             if (newProperties == null!)
                 Throw.ArgumentNullException(Argument.newProperties);
 
-            // Not locking properties can change even during the set.
+            // Properties can change even during the set.
             // This is desirable because OnChanging/changed events are raised during this process,
             // which may cause that consumers read/write the values.
             foreach (var property in newProperties)
