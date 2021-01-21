@@ -86,7 +86,7 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            public CustomEnumerator(CustomDictionary<TKey, TValue> owner)
+            internal CustomEnumerator(CustomDictionary<TKey, TValue> owner)
             {
                 usedCount = owner.usedCount;
                 entries = owner.entries;
@@ -98,7 +98,7 @@ namespace KGySoft.Collections
 
             #region Methods
 
-            public bool MoveNext()
+            internal bool MoveNext()
             {
                 while (pos < usedCount)
                 {

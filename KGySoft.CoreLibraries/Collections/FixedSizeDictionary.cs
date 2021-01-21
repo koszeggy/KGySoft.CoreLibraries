@@ -37,49 +37,10 @@ namespace KGySoft.Collections
     internal sealed class FixedSizeDictionary<TKey, TValue>
         where TKey : notnull
     {
-        #region Fields
+        #region Nested structs
 
-        #region Static Fields
-
-        #region Internal Fields
-
-        internal static readonly FixedSizeDictionary<TKey, TValue> Empty = new FixedSizeDictionary<TKey, TValue>();
-
-        #endregion
-
-        #region Private Fields
-
-        private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
-        private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
-
-        #endregion
-
-        #endregion
-
-        #region Instance Fields
-
-        private readonly bool isAndHash;
-
-        private Entry[] entries = default!;
-        private int[] buckets = default!; // 1-based indices for entries. 0 if unused.
-        private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
-        private int deletedCount;
-
-        #endregion
-
-        #endregion
-
-        #region Properties and Indexers
-
-        #region Properties
-
-        public int Count => entries.Length -
-#if NET35 || NET40
-            Thread.VolatileRead(ref deletedCount);
-#else
-            Volatile.Read(ref deletedCount);
-#endif
-
+        #region Entry struct
+        
         [DebuggerDisplay("[{" + nameof(Key) + "}; {" + nameof(DebugValue) + "}]")]
         private struct Entry
         {
@@ -114,21 +75,152 @@ namespace KGySoft.Collections
             #endregion
         }
 
+        #endregion
+
+        #region ValueHolder struct
+
         private struct ValueHolder
         {
+            #region Fields
+
+            #region Static Fields
+            
             internal static readonly ValueHolder Deleted = new ValueHolder();
 
-            internal TValue Value;
+            #endregion
+
+            #region Instance Fields
+            
             internal readonly bool IsLiving;
 
+            internal TValue Value;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+            
             internal ValueHolder(TValue value)
             {
-                Value = value;
                 IsLiving = true;
+                Value = value;
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region CustomEnumerator struct
+
+        internal struct Enumerator
+        {
+            #region Fields
+
+            #region Internal Fields
+
+            public KeyValuePair<TKey, TValue> Current { get; private set; }
+
+            #endregion
+
+            #region Private Fields
+
+            private readonly Entry[] entries;
+
+            private int pos;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(FixedSizeDictionary<TKey, TValue> owner)
+            {
+                entries = owner.entries;
+                pos = 0;
+                Current = default;
+            }
+
+            #endregion
+
+            #region Methods
+
+            public bool MoveNext()
+            {
+                while (pos < entries.Length)
+                {
+                    ref var entryRef = ref entries[pos];
+                    pos += 1;
+
+#if NET35 || NET40
+                    var box = entryRef.Value;
+#else
+                    var box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                    // skipping deleted items
+                    if (!box.Value.IsLiving)
+                        continue;
+
+                    Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value.Value);
+                    return true;
+                }
+
+                return false;
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Fields
+
+        #region Static Fields
+
+        #region Internal Fields
+
+        internal static readonly FixedSizeDictionary<TKey, TValue> Empty = new FixedSizeDictionary<TKey, TValue>();
+
+        #endregion
+
+        #region Private Fields
+
+        private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
+        private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
+
+        #endregion
+
+        #endregion
+
+        #region Instance Fields
+
         private readonly IEqualityComparer<TKey>? comparer;
+        private readonly bool isAndHash;
+
+        private Entry[] entries = default!;
+        private int[] buckets = default!; // 1-based indices for entries. 0 if unused.
+        private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
+        private int deletedCount;
+
+        #endregion
+
+        #endregion
+
+        #region Properties and Indexers
+
+        #region Properties
+
+        public int Count => entries.Length -
+#if NET35 || NET40
+            Thread.VolatileRead(ref deletedCount);
+#else
+            Volatile.Read(ref deletedCount);
+#endif
 
         #endregion
 
@@ -575,6 +667,8 @@ namespace KGySoft.Collections
             // not found
             return null;
         }
+
+        internal Enumerator GetEnumerator() => new Enumerator(this);
 
         #endregion
 

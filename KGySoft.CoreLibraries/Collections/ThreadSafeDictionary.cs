@@ -17,8 +17,10 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -33,7 +35,7 @@ namespace KGySoft.Collections
     /// Similar to ConcurrentDictionary, which is not available in .NET 3.5.
     /// NOTE: Should not be used for TValues larger that cannot be written atomically.
     /// </summary>
-    internal class ThreadSafeDictionary<TKey, TValue> //: IDictionary<TKey, TValue> // TODO: IDictionary, IReadOnlyDictionary
+    internal class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue> // TODO: IDictionary, IReadOnlyDictionary
         where TKey : notnull
     {
         #region Constants
@@ -67,6 +69,8 @@ namespace KGySoft.Collections
         #region Properties and Indexers
 
         #region Properties
+
+        #region Public Properties
 
         public int Count
         {
@@ -135,12 +139,41 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Internal Properties
+
+        internal IEnumerable<TKey> Keys
+        {
+            get
+            {
+                foreach (KeyValuePair<TKey, TValue> item in this)
+                    yield return item.Key;
+            }
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+
+        ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
+        ICollection<TValue> IDictionary<TKey, TValue>.Values => this.Select(item => item.Value).ToList();
+
+        #endregion
+
+        #endregion
+
         #region Indexers
 
         public TValue this[TKey key]
         {
             get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
-            set => TryInsertInternal(key, value, DictionaryInsertion.OverwriteIfExists);
+            set
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.OverwriteIfExists);
+            }
         }
 
         #endregion
@@ -195,7 +228,12 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        public void Add(TKey key, TValue value) => TryInsertInternal(key, value, DictionaryInsertion.ThrowIfExists);
+        public void Add(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.ThrowIfExists);
+        }
 
         //public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         //{
@@ -249,61 +287,53 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
 
             uint hashCode = GetHashCode(key);
-            bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);
-            if (success.HasValue)
-                return success.Value;
-
-            if (expandoStorage == null)
-                return false;
-
-            lock (syncRoot)
-            {
-                CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
-
-                // lost race
-                if (lockingStorage == null)
-                    return false;
-
-                bool result = lockingStorage.TryGetValueInternal(key, hashCode, out value);
-                MergeIfExpired();
-                return result;
-            }
+            return TryGetValueInternal(key, hashCode, out value);
         }
 
-        public bool TryAdd(TKey key, TValue value) => TryInsertInternal(key, value, DictionaryInsertion.DoNotOverwrite);
+        public bool ContainsKey(TKey key) => TryGetValue(key, out var _);
+
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            return TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.DoNotOverwrite);
+        }
 
         public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
         {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
             uint hashCode = GetHashCode(key);
+            return TryReplaceInternal(key, hashCode, newValue, originalValue);
+        }
+
+        public TValue AddOrUpdate(TKey key, TValue value, Func<TKey, TValue, TValue>? updateValueFactory = null)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            
+            uint hashCode = GetHashCode(key);
+            if (updateValueFactory == null)
+            {
+                TryInsertInternal(key, value, hashCode, DictionaryInsertion.OverwriteIfExists);
+                return value;
+            }
+
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue>? fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
-                if (success == true)
+                if (TryGetValueInternal(key, hashCode, out TValue oldValue))
                 {
-                    if (IsUpToDate(fastStorage))
-                        return true;
-                    continue;
+                    // Exists, trying to update
+                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
+                    if (TryReplaceInternal(key, hashCode, newValue, oldValue))
+                        return newValue;
                 }
-
-                // already deleted or originalValue does not match
-                if (success == false)
-                    return false;
-
-                if (expandoStorage == null)
-                    return false;
-
-                lock (syncRoot)
+                else
                 {
-                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
-
-                    // lost race
-                    if (lockingStorage == null)
-                        return false;
-
-                    bool result = lockingStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
-                    MergeIfExpired();
-                    return result;
+                    // Does not exist, try to add
+                    if (TryInsertInternal(key, value, hashCode, DictionaryInsertion.DoNotOverwrite))
+                        return value;
                 }
             }
         }
@@ -356,8 +386,47 @@ namespace KGySoft.Collections
             }
         }
 
-        public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
-            => TryRemoveInternal(key, out value);
+        public bool TryRemove(TKey key, [MaybeNullWhen(false)]out TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
+                bool? success = fastStorage.TryRemoveInternal(key, hashCode, out value);
+
+                // making sure that removed entry is returned even if multiple tries are necessary due to merging
+                if (success == true)
+                {
+                    if (IsUpToDate(fastStorage))
+                        return true;
+
+                    continue;
+                }
+
+                // item was already deleted
+                if (success == false)
+                    return false;
+
+                if (expandoStorage == null)
+                    return false;
+
+                lock (syncRoot)
+                {
+                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+
+                    // lost race
+                    if (lockingStorage == null)
+                        return false;
+
+                    bool result = lockingStorage.TryRemoveInternal(key, hashCode, out value);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
 
         public void Clear()
         {
@@ -390,16 +459,41 @@ namespace KGySoft.Collections
             }
         }
 
+        public FixedSizeDictionary<TKey, TValue>.Enumerator GetEnumerator()
+        {
+            EnsureMerged();
+            return fixedSizeStorage.GetEnumerator();
+        }
+
         #endregion
 
         #region Private Methods
 
-        private bool TryInsertInternal(TKey key, TValue value, DictionaryInsertion behavior)
+        private bool TryGetValueInternal(TKey key, uint hashCode, out TValue value)
         {
-            if (key == null!)
-                Throw.ArgumentNullException(Argument.key);
+            bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);
+            if (success.HasValue)
+                return success.Value;
 
-            uint hashCode = GetHashCode(key);
+            if (expandoStorage == null)
+                return false;
+
+            lock (syncRoot)
+            {
+                CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+
+                // lost race
+                if (lockingStorage == null)
+                    return false;
+
+                bool result = lockingStorage.TryGetValueInternal(key, hashCode, out value);
+                MergeIfExpired();
+                return result;
+            }
+        }
+
+        private bool TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
+        {
             while (true)
             {
                 FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
@@ -486,27 +580,20 @@ namespace KGySoft.Collections
         //    return false;
         //}
 
-        private bool TryRemoveInternal(TKey key, [MaybeNullWhen(false)]out TValue value)
+        private bool TryReplaceInternal(TKey key, uint hashCode, TValue newValue, TValue originalValue)
         {
-            if (key == null!)
-                Throw.ArgumentNullException(Argument.key);
-
-            uint hashCode = GetHashCode(key);
             while (true)
             {
                 FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryRemoveInternal(key, hashCode, out value);
-
-                // making sure that removed entry is returned even if multiple tries are necessary due to merging
+                bool? success = fastStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
                 if (success == true)
                 {
                     if (IsUpToDate(fastStorage))
                         return true;
-
                     continue;
                 }
 
-                // item was already deleted
+                // already deleted or originalValue does not match
                 if (success == false)
                     return false;
 
@@ -521,7 +608,7 @@ namespace KGySoft.Collections
                     if (lockingStorage == null)
                         return false;
 
-                    bool result = lockingStorage.TryRemoveInternal(key, hashCode, out value);
+                    bool result = lockingStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -606,6 +693,47 @@ namespace KGySoft.Collections
 
             return false;
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+        {
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (KeyValuePair<TKey, TValue> item in this)
+                yield return item;
+        }
+
+        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
+            => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
+
+        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
+            => TryGetValue(item.Key, out TValue value) && ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value);
+
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            Debug.Fail("It is not expected to call this method. Must be optimized if it will be a public class.");
+            this.ToList().CopyTo(array, arrayIndex);
+        }
+
+        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
+        {
+            Debug.Fail("It is not expected to call this method. A TryRemove(key, value) must be implemented if it will be a public class.");
+            while (true)
+            {
+                if (!TryRemove(item.Key, out TValue value))
+                    return false;
+                
+                if (ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value))
+                    return true;
+
+                // oops, we removed the wrong value
+                TryAdd(item.Key, value);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
         #endregion
 
