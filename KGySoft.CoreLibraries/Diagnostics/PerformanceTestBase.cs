@@ -103,14 +103,15 @@ namespace KGySoft.Diagnostics
         public int Iterations { get; set; }
 
         /// <summary>
-        /// Gets or sets the test duration, in milliseconds, for each test case and the warming-up sessions. If <see cref="Iterations"/> is greater than zero, then this property is ignored.
+        /// Gets or sets the test duration, in milliseconds, for each test case and the warming-up sessions.
+        /// If <see cref="Iterations"/> is greater than zero, then this property affects only the warm-up time.
         /// <br/>Default value: <c>2000</c>.
         /// </summary>
         public int TestTime { get; set; } = 2000;
 
         /// <summary>
         /// Gets or sets whether there is an untested warm-up session before each test.
-        /// Its duration or iteration count equals to <see cref="TestTime"/> or <see cref="Iterations"/>, respectively.
+        /// Its duration equals to <see cref="TestTime"/>.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         public bool WarmUp { get; set; } = true;

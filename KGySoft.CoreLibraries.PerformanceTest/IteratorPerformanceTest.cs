@@ -46,6 +46,9 @@ namespace KGySoft.CoreLibraries
 
         protected override object Invoke(Action<int> del)
         {
+            // can occur during warm-up
+            if (i == Iterations)
+                i = 0;
             del.Invoke(i);
             i += 1;
             return null;
@@ -86,7 +89,13 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        protected override T Invoke(Func<int, T> del) => del.Invoke(i++);
+        protected override T Invoke(Func<int, T> del)
+        {
+            // can occur during warm-up
+            if (i == Iterations)
+                i = 0;
+            return del.Invoke(i++);
+        }
 
         protected override void OnInitialize()
         {

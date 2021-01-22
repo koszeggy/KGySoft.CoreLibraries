@@ -520,18 +520,12 @@ namespace KGySoft.Diagnostics
 
             try
             {
-                if (Iterations > 0)
-                {
-                    for (int i = 0; i < Iterations; i++)
-                        Invoke(testCase);
-                    return;
-                }
-
+                long timeout = TimeSpan.FromMilliseconds(TestTime).Ticks;
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
                 do
                     Invoke(testCase);
-                while (stopwatch.ElapsedMilliseconds < TestTime);
+                while (stopwatch.ElapsedTicks < timeout);
             }
             catch (Exception e) when (!e.IsCritical())
             {
@@ -616,6 +610,7 @@ namespace KGySoft.Diagnostics
             var stopwatch = new Stopwatch();
             TResult result;
             int iterations = 0;
+            long timeout = TimeSpan.FromMilliseconds(TestTime).Ticks;
             stopwatch.Start();
             try
             {
@@ -623,7 +618,7 @@ namespace KGySoft.Diagnostics
                 {
                     iterations += 1;
                     result = Invoke(testCase);
-                } while (stopwatch.ElapsedMilliseconds < TestTime);
+                } while (stopwatch.ElapsedTicks < timeout);
             }
             catch (Exception e) when (!e.IsCritical())
             {
