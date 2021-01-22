@@ -35,7 +35,7 @@ namespace KGySoft.Collections
     /// Similar to ConcurrentDictionary, which is not available in .NET 3.5.
     /// NOTE: Should not be used for TValues larger that cannot be written atomically.
     /// </summary>
-    internal class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue> // TODO: IDictionary, IReadOnlyDictionary
+    internal class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         where TKey : notnull
     {
         #region Constants
@@ -48,18 +48,20 @@ namespace KGySoft.Collections
 
         private readonly object syncRoot = new object();
         private readonly IEqualityComparer<TKey>? comparer;
-        private readonly int initialExpandoCapacity;
+        private readonly int initialLockingCapacity;
         private readonly bool bitwiseAndHash;
 
         /// <summary>
         /// When reading, values here are accessed without locking.
         /// Once a new key is added, it is never removed anymore even for deleted entries.
         /// </summary>
-        private volatile FixedSizeDictionary<TKey, TValue> fixedSizeStorage;
+        private volatile FixedSizeDictionary<TKey, TValue> lockFreeStorage;
+
         /// <summary>
-        /// A temporary storage for new values. It is regularly merged with fixedSizeStorage into a new fixed size instance.
+        /// A temporary storage for new values. It is regularly merged with lockFreeStorage into a new fixed size instance.
         /// </summary>
-        private volatile CustomDictionary<TKey, TValue>? expandoStorage;
+        private volatile CustomDictionary<TKey, TValue>? lockingStorage;
+
         private TimeSpan mergeInterval = TimeSpan.FromMilliseconds(100);
         private DateTime nextMerge;
         private volatile bool isMerging;
@@ -76,18 +78,18 @@ namespace KGySoft.Collections
         {
             get
             {
-                if (expandoStorage == null)
-                    return fixedSizeStorage.Count;
+                if (lockingStorage == null)
+                    return lockFreeStorage.Count;
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                     // lost race
-                    if (lockingStorage == null)
-                        return fixedSizeStorage.Count;
+                    if (lockingValues == null)
+                        return lockFreeStorage.Count;
 
-                    int result = fixedSizeStorage.Count + lockingStorage.Count;
+                    int result = lockFreeStorage.Count + lockingValues.Count;
                     MergeIfExpired();
                     return result;
                 }
@@ -126,7 +128,7 @@ namespace KGySoft.Collections
 
                     mergeInterval = value;
 
-                    if (expandoStorage == null || value < TimeSpan.Zero)
+                    if (lockingStorage == null || value < TimeSpan.Zero)
                         return;
 
                     if (value > TimeSpan.Zero)
@@ -156,6 +158,7 @@ namespace KGySoft.Collections
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
+        // TODO: If this class is made public, then these solutions should be optimized:
         ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
         ICollection<TValue> IDictionary<TKey, TValue>.Values => this.Select(item => item.Value).ToList();
 
@@ -182,12 +185,8 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        public ThreadSafeDictionary() : this(defaultCapacity)
-        {
-        }
-
-        public ThreadSafeDictionary(IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
-            : this(defaultCapacity, comparer, strategy)
+        internal ThreadSafeDictionary(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
+            : this(capacity, null, strategy)
         {
         }
 
@@ -197,7 +196,7 @@ namespace KGySoft.Collections
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for the newly added keys. If 0, then a default value is used.</param>
         /// <param name="comparer">TODO</param>
         /// <param name="strategy">TODO</param>
-        public ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+        internal ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
         {
             if (!strategy.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
@@ -208,18 +207,18 @@ namespace KGySoft.Collections
                 capacity = defaultCapacity;
             }
 
-            fixedSizeStorage = FixedSizeDictionary<TKey, TValue>.Empty;
-            initialExpandoCapacity = capacity;
+            lockFreeStorage = FixedSizeDictionary<TKey, TValue>.Empty;
+            initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
             this.comparer = comparer;
         }
 
-        public ThreadSafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+        internal ThreadSafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
             : this(defaultCapacity, comparer, strategy)
         {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            fixedSizeStorage = new FixedSizeDictionary<TKey, TValue>(bitwiseAndHash, dictionary, comparer);
+            lockFreeStorage = new FixedSizeDictionary<TKey, TValue>(bitwiseAndHash, dictionary, comparer);
         }
 
         #endregion
@@ -234,52 +233,6 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
             TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.ThrowIfExists);
         }
-
-        //public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
-        //{
-        //    if (key == null!)
-        //        Throw.ArgumentNullException(Argument.key);
-
-        //    uint hashCode = GetHashCode(key);
-        //    //bool? found = fastStorage.TryGetValueInternal(key, out value, out hashCode);
-        //    //if (found == null) // deleted
-        //    //    return false;
-
-        //    ref TValue result = ref lockFreeStorage.TryGetValueInternal(key, hashCode, out bool deleted);
-        //    if (!Unsafe.IsNullRef(ref result))
-        //    {
-        //        value = result;
-        //        return true;
-        //    }
-
-        //    if (deleted)
-        //        goto NotFound;
-
-        //    if (lockingStorage == null)
-        //        goto NotFound;
-
-        //    lock (syncRoot)
-        //    {
-        //        CustomDictionary<TKey, TValue>? lockingStorage = lockingStorage;
-
-        //        // lost race
-        //        if (lockingStorage == null)
-        //            goto NotFound;
-
-        //        result = ref lockingStorage.TryGetValueInternal(key, hashCode);
-        //        MergeIfExpired();
-        //        if (!Unsafe.IsNullRef(ref result))
-        //        {
-        //            value = result;
-        //            return true;
-        //        }
-        //    }
-
-        //    // Exit point when value was not found. Could be avoided by duplicating this code everywhere but performance is more important here.
-        //NotFound:
-        //    value = default;
-        //    return false;
-        //}
 
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
@@ -348,8 +301,8 @@ namespace KGySoft.Collections
             bool removed = false;
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryRemoveInternal(key, hashCode);
+                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                bool? success = lockFreeValues.TryRemoveInternal(key, hashCode);
 
                 // making sure that correct result is returned even if multiple tries are necessary due to merging
                 if (success == true)
@@ -358,7 +311,7 @@ namespace KGySoft.Collections
                 // successfully removed from fixed-size storage (now, or in a previous attempt)
                 if (removed)
                 {
-                    if (IsUpToDate(fastStorage))
+                    if (IsUpToDate(lockFreeValues))
                         return true;
 
                     continue;
@@ -368,18 +321,18 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (expandoStorage == null)
+                if (lockingStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                     // lost race
-                    if (lockingStorage == null)
+                    if (lockingValues == null)
                         return false;
 
-                    bool result = lockingStorage.TryRemoveInternal(key, hashCode);
+                    bool result = lockingValues.TryRemoveInternal(key, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -394,13 +347,13 @@ namespace KGySoft.Collections
             uint hashCode = GetHashCode(key);
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryRemoveInternal(key, hashCode, out value);
+                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                bool? success = lockFreeValues.TryRemoveInternal(key, hashCode, out value);
 
                 // making sure that removed entry is returned even if multiple tries are necessary due to merging
                 if (success == true)
                 {
-                    if (IsUpToDate(fastStorage))
+                    if (IsUpToDate(lockFreeValues))
                         return true;
 
                     continue;
@@ -410,18 +363,18 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (expandoStorage == null)
+                if (lockingStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                     // lost race
-                    if (lockingStorage == null)
+                    if (lockingValues == null)
                         return false;
 
-                    bool result = lockingStorage.TryRemoveInternal(key, hashCode, out value);
+                    bool result = lockingValues.TryRemoveInternal(key, hashCode, out value);
                     MergeIfExpired();
                     return result;
                 }
@@ -430,29 +383,29 @@ namespace KGySoft.Collections
 
         public void Clear()
         {
-            // It is not a problem if a merge is in progress because it will nullify expandoStorage in the end anyway
-            expandoStorage = null;
+            // It is not a problem if a merge is in progress because it will nullify lockingStorage in the end anyway
+            lockingStorage = null;
 
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                fastStorage.Clear();
-                if (IsUpToDate(fastStorage))
+                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                lockFreeValues.Clear();
+                if (IsUpToDate(lockFreeValues))
                     return;
             }
         }
 
         public void EnsureMerged()
         {
-            if (expandoStorage == null)
+            if (lockingStorage == null)
                 return;
 
             lock (syncRoot)
             {
-                CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                 // lost race
-                if (lockingStorage == null)
+                if (lockingValues == null)
                     return;
 
                 DoMerge();
@@ -462,7 +415,7 @@ namespace KGySoft.Collections
         public FixedSizeDictionary<TKey, TValue>.Enumerator GetEnumerator()
         {
             EnsureMerged();
-            return fixedSizeStorage.GetEnumerator();
+            return lockFreeStorage.GetEnumerator();
         }
 
         #endregion
@@ -471,22 +424,22 @@ namespace KGySoft.Collections
 
         private bool TryGetValueInternal(TKey key, uint hashCode, out TValue value)
         {
-            bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);
+            bool? success = lockFreeStorage.TryGetValueInternal(key, hashCode, out value);
             if (success.HasValue)
                 return success.Value;
 
-            if (expandoStorage == null)
+            if (lockingStorage == null)
                 return false;
 
             lock (syncRoot)
             {
-                CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                 // lost race
-                if (lockingStorage == null)
+                if (lockingValues == null)
                     return false;
 
-                bool result = lockingStorage.TryGetValueInternal(key, hashCode, out value);
+                bool result = lockingValues.TryGetValueInternal(key, hashCode, out value);
                 MergeIfExpired();
                 return result;
             }
@@ -496,11 +449,11 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryInsertInternal(key, value, hashCode, behavior);
+                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                bool? success = lockFreeValues.TryInsertInternal(key, value, hashCode, behavior);
                 if (success == true)
                 {
-                    if (IsUpToDate(fastStorage))
+                    if (IsUpToDate(lockFreeValues))
                         return true;
                     continue;
                 }
@@ -512,83 +465,23 @@ namespace KGySoft.Collections
                 // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue> lockingStorage = GetCreateExpandoStorage();
-                    bool result = lockingStorage.TryInsertInternal(key, value, hashCode, behavior);
+                    CustomDictionary<TKey, TValue> lockingValues = GetCreatelockingStorage();
+                    bool result = lockingValues.TryInsertInternal(key, value, hashCode, behavior);
                     MergeIfExpired();
                     return result;
                 }
             }
         }
 
-        //private bool TryRemoveInternal(TKey key, [MaybeNullWhen(false)]out TValue value)
-        //{
-        //    if (key == null!)
-        //        Throw.ArgumentNullException(Argument.key);
-
-        //    uint hashCode = GetHashCode(key);
-        //    ref TValue toReturnRef = ref Unsafe.NullRef<TValue>();
-        //    while (true)
-        //    {
-        //        FixedSizeDictionary3<TKey, TValue> fastStorage = lockFreeStorage;
-
-        //        // note: StrongBox instead of an out parameter, which would cause problems with assigning toReturn
-        //        var isAlreadyDeleted = new StrongBox<bool>();
-        //        ref TValue removedValueRef = ref fastStorage.TryRemoveInternal(key, hashCode, isAlreadyDeleted);
-
-        //        // making sure that removed entry is returned even if multiple tries are necessary due to merging
-        //        if (!Unsafe.IsNullRef(ref removedValueRef))
-        //            toReturnRef = ref removedValueRef;
-
-        //        // successfully removed from lock-free storage (now, or in a previous attempt)
-        //        if (!Unsafe.IsNullRef(ref toReturnRef))
-        //        {
-        //            // if we could remove the value from the lock-free storage we have to make sure the removal is persistent
-        //            if (IsUpToDate(fastStorage))
-        //            {
-        //                Debug.Assert(!Unsafe.IsNullRef(ref toReturnRef));
-        //                value = toReturnRef;
-        //                return true;
-        //            }
-
-        //            continue;
-        //        }
-
-        //        // item was already deleted (if we removed it in a previous attempt, then it is returned above)
-        //        if (isAlreadyDeleted.Value)
-        //            goto Default;
-
-        //        if (lockingStorage == null)
-        //            goto Default;
-
-        //        lock (syncRoot)
-        //        {
-        //            CustomDictionary<TKey, TValue>? lockingStorage = lockingStorage;
-
-        //            // lost race
-        //            if (lockingStorage == null)
-        //                goto Default;
-
-        //            bool result = lockingStorage.TryRemoveInternal(key, hashCode, out value);
-        //            MergeIfExpired();
-        //            return result;
-        //        }
-        //    }
-
-        //// Exit point when key was not deleted. Could be avoided by duplicating this code everywhere but performance is more important here.
-        //Default:
-        //    value = default;
-        //    return false;
-        //}
-
         private bool TryReplaceInternal(TKey key, uint hashCode, TValue newValue, TValue originalValue)
         {
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> fastStorage = fixedSizeStorage;
-                bool? success = fastStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
+                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                bool? success = lockFreeValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
                 if (success == true)
                 {
-                    if (IsUpToDate(fastStorage))
+                    if (IsUpToDate(lockFreeValues))
                         return true;
                     continue;
                 }
@@ -597,18 +490,18 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (expandoStorage == null)
+                if (lockingStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingStorage = expandoStorage;
+                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
 
                     // lost race
-                    if (lockingStorage == null)
+                    if (lockingValues == null)
                         return false;
 
-                    bool result = lockingStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
+                    bool result = lockingValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -622,12 +515,12 @@ namespace KGySoft.Collections
             return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
         }
 
-        private CustomDictionary<TKey, TValue> GetCreateExpandoStorage()
+        private CustomDictionary<TKey, TValue> GetCreatelockingStorage()
         {
-            CustomDictionary<TKey, TValue>? result = expandoStorage;
+            CustomDictionary<TKey, TValue>? result = lockingStorage;
             if (result != null)
                 return result;
-            result = expandoStorage = new CustomDictionary<TKey, TValue>(bitwiseAndHash, initialExpandoCapacity, comparer);
+            result = lockingStorage = new CustomDictionary<TKey, TValue>(bitwiseAndHash, initialLockingCapacity, comparer);
             nextMerge = DateTime.UtcNow + mergeInterval;
             return result;
         }
@@ -643,18 +536,18 @@ namespace KGySoft.Collections
         private void DoMerge()
         {
             // Must be in a lock to work properly!
-            Debug.Assert(!isMerging || expandoStorage != null, "Make sure caller is in a lock");
+            Debug.Assert(!isMerging || lockingStorage != null, "Make sure caller is in a lock");
 
-            CustomDictionary<TKey, TValue> lockingStorage = expandoStorage!;
-            if (lockingStorage.Count != 0)
+            CustomDictionary<TKey, TValue> lockingValues = lockingStorage!;
+            if (lockingValues.Count != 0)
             {
-                // Indicating that from this point fixedSizeStorage cannot be considered safe even though its reference is not replaced yet.
-                // Note: we could spare the flag if we just nullified fixedSizeStorage before merging but this way can prevent that keys in the
+                // Indicating that from this point lockFreeStorage cannot be considered safe even though its reference is not replaced yet.
+                // Note: we could spare the flag if we just nullified lockFreeStorage before merging but this way can prevent that keys in the
                 // fixed-size storage reappear in the locking one.
                 isMerging = true;
                 try
                 {
-                    fixedSizeStorage = new FixedSizeDictionary<TKey, TValue>(fixedSizeStorage, lockingStorage);
+                    lockFreeStorage = new FixedSizeDictionary<TKey, TValue>(lockFreeStorage, lockingValues);
                 }
                 finally
                 {
@@ -663,17 +556,17 @@ namespace KGySoft.Collections
                 }
             }
 
-            expandoStorage = null;
+            lockingStorage = null;
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private bool IsUpToDate(FixedSizeDictionary<TKey, TValue> fastStorage)
+        private bool IsUpToDate(FixedSizeDictionary<TKey, TValue> lockFreeValues)
         {
             // fixed-size storage has been replaced
-            if (fastStorage != fixedSizeStorage)
+            if (lockFreeValues != lockFreeStorage)
                 return false;
 
-            // a merge has been started, values from fastStorage storage might be started to copied: preventing current thread from consuming CPU until merge is finished
+            // a merge has been started, values from lockFreeValues storage might be started to copied: preventing current thread from consuming CPU until merge is finished
             if (!isMerging)
                 return true;
 
@@ -713,7 +606,7 @@ namespace KGySoft.Collections
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            Debug.Fail("It is not expected to call this method. Must be optimized if it will be a public class.");
+            Debug.Fail("It is not expected to call this method. Must be optimized if this will be a public class.");
             this.ToList().CopyTo(array, arrayIndex);
         }
 

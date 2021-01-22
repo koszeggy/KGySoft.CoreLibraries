@@ -31,7 +31,7 @@ using KGySoft.Reflection;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a fixed size thread safe dictionary that supports updating values in a thread-safe manner,
+    /// Represents a lock-free fixed size thread safe dictionary that supports updating values in a thread-safe manner,
     /// though adding new values is not supported. Removing and re-setting keys are supported though, which is also thread-safe.
     /// </summary>
     internal sealed class FixedSizeDictionary<TKey, TValue>
@@ -51,18 +51,17 @@ namespace KGySoft.Collections
             internal TKey Key;
 
             /// <summary>
-            /// A reference to the actual value and its living status. As a reference, it can be used as locking object for atomic
-            /// modifications. The reference is replaced only on delete/restore. Volatile, because reading is lock-free.
-            /// Actually a Volatile.Read would be enough on reading (writing is always performed in a lock) but that is not available in .NET 3.5.
+            /// A reference to the actual value that can be accessed by volatile read. Value is null if the item is deleted.
+            /// The reference is replaced only on delete/restore. because the inner value is overwritten atomically.
             /// </summary>
 #if NET35 || NET40
             volatile // because there is no generic Volatile.Read in .NET 3.5/4.0
 #endif
-            internal StrongBox<ValueHolder> Value;
+            internal StrongBox<TValue>? Value;
 
             /// <summary>
             /// Zero-based index of a chained item in the current bucket or -1 if last.
-            /// In this collection this field is practically read-only. Deleted items are indicated by !ValueHolder.IsLiving.
+            /// In this collection this field is practically read-only. Deleted items are indicated by a null Value.
             /// </summary>
             internal int Next;
 
@@ -70,42 +69,7 @@ namespace KGySoft.Collections
 
             #region Properties
 
-            private object? DebugValue => !Value.Value.IsLiving ? "<Deleted>" : (object?)Value.Value.Value;
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ValueHolder struct
-
-        private struct ValueHolder
-        {
-            #region Fields
-
-            #region Static Fields
-            
-            internal static readonly ValueHolder Deleted = new ValueHolder();
-
-            #endregion
-
-            #region Instance Fields
-            
-            internal readonly bool IsLiving;
-
-            internal TValue Value;
-
-            #endregion
-
-            #endregion
-
-            #region Constructors
-            
-            internal ValueHolder(TValue value)
-            {
-                IsLiving = true;
-                Value = value;
-            }
+            private object? DebugValue => Value == null ? "<Deleted>" : (object?)Value.Value;
 
             #endregion
         }
@@ -161,10 +125,10 @@ namespace KGySoft.Collections
 #endif
 
                     // skipping deleted items
-                    if (!box.Value.IsLiving)
+                    if (box == null)
                         continue;
 
-                    Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value.Value);
+                    Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value);
                     return true;
                 }
 
@@ -289,15 +253,6 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
 
             return TryGetValueInternal(key, GetHashCode(key), out value) == true;
-            //ref TValue resultRef = ref TryGetValueInternal(key, GetHashCode(key), out var _);
-            //if (!Unsafe.IsNullRef(ref resultRef))
-            //{
-            //    value = resultRef;
-            //    return true;
-            //}
-
-            //value = default;
-            //return false;
         }
 
         public bool TryAdd(TKey key, TValue value)
@@ -319,15 +274,6 @@ namespace KGySoft.Collections
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return TryRemoveInternal(key, GetHashCode(key), out value) == true;
-            //ref TValue valueRef = ref TryRemoveInternal(key, GetHashCode(key), out var _);
-            //if (!Unsafe.IsNullRef(ref valueRef))
-            //{
-            //    value = valueRef;
-            //    return true;
-            //}
-
-            //value = default;
-            //return false;
         }
 
         public bool Remove(TKey key)
@@ -335,8 +281,6 @@ namespace KGySoft.Collections
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return TryRemoveInternal(key, GetHashCode(key)) == true;
-            //ref TValue valueRef = ref TryRemoveInternal(key, GetHashCode(key), out var _);
-            //return !Unsafe.IsNullRef(ref valueRef);
         }
 
         public void Clear()
@@ -344,22 +288,8 @@ namespace KGySoft.Collections
             int count = entries.Length;
             for (int i = 0; i < count; i++)
             {
-                while (true)
-                {
-                    StrongBox<ValueHolder> box = entries[i].Value;
-                    lock (box)
-                    {
-                        if (box != entries[i].Value)
-                            continue;
-
-                        if (!box.Value.IsLiving)
-                            break;
-
-                        entries[i].Value = new StrongBox<ValueHolder>(ValueHolder.Deleted);
-                        deletedCount += 1;
-                        break;
-                    }
-                }
+                if (Interlocked.Exchange(ref entries[i].Value, null) != null)
+                    Interlocked.Increment(ref deletedCount);
             }
         }
 
@@ -367,45 +297,8 @@ namespace KGySoft.Collections
 
         #region Internal Methods
 
-        //[MethodImpl(MethodImpl.AggressiveInlining)]
-        //internal ref TValue TryGetValueInternal(TKey key, uint hash, out bool deleted)
-        //{
-        //    int[] bucketsLocal = buckets;
-        //    Entry[] items = entries;
-        //    IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-
-        //    int i = bucketsLocal[GetBucketIndex(hash)] - 1;
-        //    while (i >= 0)
-        //    {
-        //        ref Entry entryRef = ref items[i];
-        //        if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
-        //        {
-        //            i = entryRef.Next;
-        //            continue;
-        //        }
-
-        //        // key found: lock-free reading
-        //        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value.Value);
-
-        //        // deleted
-        //        if (box == null)
-        //        {
-        //            deleted = true;
-        //            return ref Unsafe.NullRef<TValue>();
-        //        }
-
-        //        // exists
-        //        deleted = false;
-        //        return ref box.Value;
-        //    }
-
-        //    // not found
-        //    deleted = false;
-        //    return ref Unsafe.NullRef<TValue>();
-        //}
-
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal bool? TryGetValueInternal(TKey key, uint hash, [MaybeNull] out TValue value)
+        internal bool? TryGetValueInternal(TKey key, uint hash, [MaybeNull]out TValue value)
         {
             int[] bucketsLocal = buckets;
             Entry[] items = entries;
@@ -428,11 +321,10 @@ namespace KGySoft.Collections
                 var box = Volatile.Read(ref entryRef.Value);
 #endif
 
-                // If IsLiving is true, it will not change so Value can be read safely
-                if (box.Value.IsLiving)
+                if (box != null)
                 {
                     // works without locking because the private constructor ensures that TValue can be copied atomically
-                    value = box.Value.Value;
+                    value = box.Value;
                     return true;
                 }
 
@@ -467,31 +359,27 @@ namespace KGySoft.Collections
 
                 while (true)
                 {
-                    StrongBox<ValueHolder> box = entryRef.Value;
-                    lock (box)
+                    StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+
+                    // entry was deleted, adding
+                    if (box == null)
                     {
-                        // lost race (item has been deleted/restored)
-                        if (box != entryRef.Value)
+                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
                             continue;
 
-                        // entry was deleted
-                        if (!box.Value.IsLiving)
-                        {
-                            entryRef.Value = new StrongBox<ValueHolder>(new ValueHolder(value));
-                            deletedCount -= 1;
-                            return true;
-                        }
-
-                        // the value can be overridden
-                        if (behavior == DictionaryInsertion.OverwriteIfExists)
-                        {
-                            // due to the private ctor this operation is atomic
-                            box.Value.Value = value;
-                            return true;
-                        }
+                        Interlocked.Decrement(ref deletedCount);
+                        return true;
                     }
 
-                    // exists
+                    // value can be overwritten
+                    if (behavior == DictionaryInsertion.OverwriteIfExists)
+                    {
+                        // due to the private ctor this operation is atomic
+                        box.Value = value;
+                        return true;
+                    }
+
+                    // could not add
                     if (behavior == DictionaryInsertion.ThrowIfExists)
                         Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
                     return false;
@@ -523,63 +411,20 @@ namespace KGySoft.Collections
 
                 while (true)
                 {
-                    StrongBox<ValueHolder> box = entryRef.Value;
-                    lock (box)
-                    {
-                        // lost race (item has been deleted/restored)
-                        if (box != entryRef.Value)
-                            continue;
+                    var box = Volatile.Read(ref entryRef.Value);
 
-                        // deleted or original value does not match
-                        if (!box.Value.IsLiving || !valueComparer.Equals(box.Value.Value, originalValue))
-                            return false;
+                    // deleted or original value does not match
+                    if (box == null || !valueComparer.Equals(box.Value, originalValue))
+                        return false;
 
-                        box.Value.Value = newValue;
+                    if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) == box)
                         return true;
-                    }
                 }
             }
 
             // not found
             return null;
         }
-
-        //internal ref TValue TryRemoveInternal(TKey key, uint hash, StrongBox<bool> alreadyDeleted)
-        //{
-        //    Debug.Assert(!alreadyDeleted.Value);
-
-        //    int[] bucketsLocal = buckets;
-        //    Entry[] items = entries;
-        //    IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-
-        //    int i = bucketsLocal[GetBucketIndex(hash)] - 1;
-        //    while (i >= 0)
-        //    {
-        //        ref Entry entryRef = ref items[i];
-        //        if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
-        //        {
-        //            i = entryRef.Next;
-        //            continue;
-        //        }
-
-        //        var box = entryRef.Value;
-        //        lock (box)
-        //        {
-        //            // already deleted
-        //            if (box.Value.Deleted)
-        //            {
-        //                alreadyDeleted.Value = true;
-        //                return ref Unsafe.NullRef<TValue>();
-        //            }
-
-        //            deletedCount += 1;
-        //            return ref box.Value.Value;
-        //        }
-        //    }
-
-        //    // not found
-        //    return ref Unsafe.NullRef<TValue>();
-        //}
 
         internal bool? TryRemoveInternal(TKey key, uint hash, [MaybeNull]out TValue value)
         {
@@ -599,24 +444,19 @@ namespace KGySoft.Collections
 
                 while (true)
                 {
-                    StrongBox<ValueHolder> box = entryRef.Value;
-                    lock (box)
+                    var box = Volatile.Read(ref entryRef.Value);
+
+                    // already deleted
+                    if (box == null)
                     {
-                        // lost race (item has been deleted/restored)
-                        if (box != entryRef.Value)
-                            continue;
+                        value = default;
+                        return false;
+                    }
 
-                        // already deleted
-                        if (!box.Value.IsLiving)
-                        {
-                            value = default;
-                            return false;
-                        }
-
-                        // exists, delete
-                        entryRef.Value = new StrongBox<ValueHolder>(ValueHolder.Deleted);
-                        value = box.Value.Value;
-                        deletedCount += 1;
+                    if (Interlocked.CompareExchange(ref entryRef.Value, null, box) == box)
+                    {
+                        Interlocked.Increment(ref deletedCount);
+                        value = box.Value;
                         return true;
                     }
                 }
@@ -643,25 +483,11 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                while (true)
-                {
-                    StrongBox<ValueHolder> box = entryRef.Value;
-                    lock (box)
-                    {
-                        // lost race (item has been deleted/restored)
-                        if (box != entryRef.Value)
-                            continue;
+                if (Interlocked.Exchange(ref entryRef.Value, null) == null)
+                    return false;
 
-                        // already deleted
-                        if (!box.Value.IsLiving)
-                            return false;
-
-                        // exists, delete
-                        entryRef.Value = new StrongBox<ValueHolder>(ValueHolder.Deleted);
-                        deletedCount += 1;
-                        return true;
-                    }
-                }
+                Interlocked.Increment(ref deletedCount);
+                return true;
             }
 
             // not found
@@ -721,7 +547,7 @@ namespace KGySoft.Collections
                 itemRef.Hash = hashCode;
                 itemRef.Next = bucketRef - 1; // Next is zero-based
                 itemRef.Key = item.Key;
-                itemRef.Value = new StrongBox<ValueHolder>(new ValueHolder(item.Value));
+                itemRef.Value = new StrongBox<TValue>(item.Value);
                 bucketRef = ++index; // bucket indices are 1-based
             }
         }
@@ -752,7 +578,7 @@ namespace KGySoft.Collections
                 itemRef.Hash = hashCode;
                 itemRef.Next = bucketRef - 1; // Next is zero-based
                 itemRef.Key = item.Key;
-                itemRef.Value = new StrongBox<ValueHolder>(new ValueHolder(item.Value));
+                itemRef.Value = new StrongBox<TValue>(item.Value);
                 bucketRef = ++index; // bucket indices are 1-based
             }
         }
@@ -774,9 +600,9 @@ namespace KGySoft.Collections
                 newItemRef.Hash = oldItemRef.Hash;
                 newItemRef.Key = oldItemRef.Key;
 #if NET35 || NET40
-                newItemRef.Value = new StrongBox<ValueHolder>(oldItemRef.Value.Value);
+                newItemRef.Value = oldItemRef.Value;
 #else
-                newItemRef.Value = new StrongBox<ValueHolder>(Volatile.Read(ref oldItemRef.Value).Value);
+                newItemRef.Value = Volatile.Read(ref oldItemRef.Value);
 #endif
 
                 // assuming other was already consistent so not checking for duplicate keys
@@ -785,7 +611,7 @@ namespace KGySoft.Collections
                 bucketRef = ++index; // bucket indices are 1-based
 
                 // as the inner box is a copy deletedCount will not be invalid even if the original instance is modified
-                if (!newItemRef.Value.Value.IsLiving)
+                if (newItemRef.Value == null)
                     deletedCount += 1;
             }
         }
@@ -804,7 +630,7 @@ namespace KGySoft.Collections
                 itemRef.Hash = enumerator.Current.Hash;
                 itemRef.Next = bucketRef - 1; // Next is zero-based
                 itemRef.Key = enumerator.Current.Key;
-                itemRef.Value = new StrongBox<ValueHolder>(new ValueHolder(enumerator.Current.Value));
+                itemRef.Value = new StrongBox<TValue>(enumerator.Current.Value);
                 bucketRef = ++index; // bucket indices are 1-based
             }
         }

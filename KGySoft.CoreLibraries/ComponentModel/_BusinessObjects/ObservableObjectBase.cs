@@ -245,11 +245,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected ObservableObjectBase()
         {
-#if NET35
-            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, strategy: HashingStrategy.And);
-#else
-            properties = new ConcurrentDictionary<string, object?>(Environment.ProcessorCount, ReflectedProperties.Count); 
-#endif
+            properties = CreateThreadSafeStorage(ReflectedProperties.Count);
         }
 
         #endregion
@@ -279,6 +275,16 @@ namespace KGySoft.ComponentModel
                 PopulateProperties(result, t.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
             return result;
+        }
+
+        private static ThreadSafeStorage CreateThreadSafeStorage(int capacity)
+        {
+#if NET35
+            return new ThreadSafeDictionary<string, object?>(capacity, HashingStrategy.And);
+#else
+            // Unlike Dictionary, ConcurrentDictionary does not adjust capacity for a near prime but as the key is string we assume a good hash
+            return new ConcurrentDictionary<string, object?>(Environment.ProcessorCount, capacity);
+#endif
         }
 
         #endregion
@@ -377,12 +383,12 @@ namespace KGySoft.ComponentModel
         internal ThreadSafeStorage CloneProperties()
         {
 #if NET35
-            var result = new ThreadSafeDictionary<string, object?>(Properties.Count, strategy: HashingStrategy.And);
+            int capacity = Properties.Count;
 #else
             // Not using Properties.Count because that can be really slow in ConcurrentDictionary
-            var result = new ConcurrentDictionary<string, object?>(Environment.ProcessorCount, ReflectedProperties.Count);
+            int capacity = ReflectedProperties.Count;
 #endif
-
+            ThreadSafeStorage result = CreateThreadSafeStorage(capacity);
             foreach (KeyValuePair<string, object?> property in Properties)
             {
                 // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use cache now
