@@ -92,8 +92,6 @@ namespace KGySoft.Collections
 
         #region Instance Fields
 
-        private readonly IEqualityComparer<TKey>? comparer;
-        private readonly bool isAndHash;
         private readonly Bucket[] buckets;
 
         private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
@@ -107,13 +105,15 @@ namespace KGySoft.Collections
 
         #region Properties
 
-        public int Count => Volatile.Read(ref count);
+        internal IEqualityComparer<TKey>? Comparer { get; }
+        internal int Count => Volatile.Read(ref count);
+        internal bool IsAndHash { get; }
 
         #endregion
 
         #region Indexers
 
-        public TValue this[TKey key]
+        internal TValue this[TKey key]
         {
             get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
             set
@@ -132,8 +132,8 @@ namespace KGySoft.Collections
 
         internal GrowOnlyDictionary(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
         {
-            this.comparer = comparer;
-            this.isAndHash = isAndHash;
+            this.Comparer = comparer;
+            IsAndHash = isAndHash;
             buckets = new Bucket[GetBucketSize(capacity)];
         }
 
@@ -141,25 +141,21 @@ namespace KGySoft.Collections
 
         #region Methods
 
-        #region Public Methods
+        #region Internal Methods
 
-        public bool TryAdd(TKey key, TValue value)
+        internal bool TryAdd(TKey key, TValue value)
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return TryAddInternal(key, value, GetHashCode(key));
         }
 
-        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+        internal bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             return TryGetValueInternal(key, GetHashCode(key), out value);
         }
-
-        #endregion
-
-        #region Internal Methods
 
         internal bool TryAddInternal(TKey key, TValue value, uint hashCode)
         {
@@ -179,10 +175,11 @@ namespace KGySoft.Collections
                 }
 
                 // Here we have a lost race. Though Bucket is a struct, detecting change works because we stored a ref to the bucket.
+                Debug.Assert(bucketRef.First != null);
             }
 
             // iterating through the entries until we find key or the end of the list
-            IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+            IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
             Entry entry = bucketRef.First;
             while (true)
             {
@@ -209,7 +206,7 @@ namespace KGySoft.Collections
         {
             Debug.Assert(key != null!);
 
-            IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+            IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
             for (Entry? entry = buckets[GetBucketIndex(hashCode)].First; entry != null; entry = entry.Next)
             {
                 if (entry.Hash == hashCode && comp.Equals(key, entry.Key))
@@ -223,13 +220,58 @@ namespace KGySoft.Collections
             return false;
         }
 
+        internal TValue GetOrAddInternal(TKey key, Func<TKey, TValue> itemLoader, uint hashCode)
+        {
+            Debug.Assert(key != null!);
+            Debug.Assert(itemLoader != null!);
+
+            ref Bucket bucketRef = ref buckets[GetBucketIndex(hashCode)];
+            Entry? newEntry = null;
+
+            // bucket is empty: trying to add the first item
+            if (bucketRef.First == null)
+            {
+                newEntry = new Entry(hashCode, key, itemLoader.Invoke(key));
+                if (Interlocked.CompareExchange(ref bucketRef.First, newEntry, null) == null)
+                {
+                    Interlocked.Increment(ref count);
+                    return newEntry.Value;
+                }
+
+                // Here we have a lost race. Though Bucket is a struct, detecting change works because we stored a ref to the bucket.
+                Debug.Assert(bucketRef.First != null);
+            }
+
+            // iterating through the entries until we find key or the end of the list
+            IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
+            Entry entry = bucketRef.First;
+            while (true)
+            {
+                // item found
+                if (entry.Hash == hashCode && comp.Equals(key, entry.Key))
+                    return entry.Value;
+
+                // last item in the bucket: trying to chain the new one
+                if (entry.Next == null)
+                {
+                    if (Interlocked.CompareExchange(ref entry.Next, newEntry ??= new Entry(hashCode, key, itemLoader.Invoke(key)), null) == null)
+                    {
+                        Interlocked.Increment(ref count);
+                        return newEntry.Value;
+                    }
+                }
+
+                entry = entry.Next;
+            }
+        }
+
         #endregion
 
         #region Private Methods
 
         private uint GetBucketSize(int capacity)
         {
-            if (isAndHash)
+            if (IsAndHash)
             {
                 uint bucketSize = (uint)Math.Max(2, capacity).GetNextPowerOfTwo();
                 hashingOperand = bucketSize - 1;
@@ -243,14 +285,14 @@ namespace KGySoft.Collections
         /// An if in a non-virtual method is still faster than calling an abstract method, a delegate or even a C# 9 function pointer
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private uint GetBucketIndex(uint hashCode) => isAndHash
+        private uint GetBucketIndex(uint hashCode) => IsAndHash
             ? hashCode & hashingOperand
             : hashCode % hashingOperand;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private uint GetHashCode(TKey key)
         {
-            IEqualityComparer<TKey>? comp = comparer;
+            IEqualityComparer<TKey>? comp = Comparer;
             return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
         }
 
