@@ -32,10 +32,16 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// A thread-safe dictionary, which can be very fast when usually existing keys are read and written and set and new items are relatively rarely added.
-    /// Similar to ConcurrentDictionary, which is not available in .NET 3.5.
-    /// NOTE: Should not be used for TValues larger that cannot be written atomically.
+    /// Similar to ConcurrentDictionary, which is not available in .NET 3.5. Once merged, setting an existing element is faster than in ConcurrentDictionary but
+    /// access is not faster in .NET 5 and adding a new value is slower so not a real alternative.
+    /// NOTE: Before making it a public type:
+    /// - Special handling for larger TValues in FixedSizeDictionary that cannot be written atomically (replace box instead of overwrite its value).
+    /// - Current public GetEnumerator returns a public type from FixedSizeDictionary, which should be refactored.
+    /// - Add other public members from ConcurrentDictionary
+    /// - There are some interface members that are not used so their implementation is not optimal.
+    /// - Implement IReadOnlyDictionary, non-generic IDictionary
     /// </summary>
-    internal class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    internal partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         where TKey : notnull
     {
         #region Constants
@@ -465,7 +471,7 @@ namespace KGySoft.Collections
                 // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue> lockingValues = GetCreatelockingStorage();
+                    CustomDictionary<TKey, TValue> lockingValues = GetCreateLockingStorage();
                     bool result = lockingValues.TryInsertInternal(key, value, hashCode, behavior);
                     MergeIfExpired();
                     return result;
@@ -515,12 +521,13 @@ namespace KGySoft.Collections
             return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
         }
 
-        private CustomDictionary<TKey, TValue> GetCreatelockingStorage()
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private CustomDictionary<TKey, TValue> GetCreateLockingStorage()
         {
             CustomDictionary<TKey, TValue>? result = lockingStorage;
             if (result != null)
                 return result;
-            result = lockingStorage = new CustomDictionary<TKey, TValue>(bitwiseAndHash, initialLockingCapacity, comparer);
+            result = lockingStorage = new CustomDictionary<TKey, TValue>(initialLockingCapacity, comparer, bitwiseAndHash);
             nextMerge = DateTime.UtcNow + mergeInterval;
             return result;
         }

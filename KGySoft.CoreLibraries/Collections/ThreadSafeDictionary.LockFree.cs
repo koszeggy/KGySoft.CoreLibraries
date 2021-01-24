@@ -339,7 +339,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Tries to insert a value. Returns null if key not found. Succeeds only if a key was deleted previously.
+        /// Tries to insert a value. Returns null if key not found. Adding succeeds only if a key was deleted previously.
         /// </summary>
         internal bool? TryInsertInternal(TKey key, TValue value, uint hash, DictionaryInsertion behavior)
         {

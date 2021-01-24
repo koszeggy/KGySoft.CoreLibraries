@@ -201,7 +201,7 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        internal CustomDictionary(bool isAndHash, int capacity, IEqualityComparer<TKey>? comparer)
+        internal CustomDictionary(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
         {
             Debug.Assert(capacity > 0, "Nonzero initial capacity is expected in CustomDictionary");
             this.isAndHash = isAndHash;
@@ -243,7 +243,7 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
