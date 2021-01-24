@@ -61,12 +61,12 @@ namespace KGySoft.Collections
         /// When reading, values here are accessed without locking.
         /// Once a new key is added, it is never removed anymore even for deleted entries.
         /// </summary>
-        private volatile FixedSizeDictionary<TKey, TValue> lockFreeStorage;
+        private volatile LockFreeStorage lockFreeStorage;
 
         /// <summary>
         /// A temporary storage for new values. It is regularly merged with lockFreeStorage into a new fixed size instance.
         /// </summary>
-        private volatile CustomDictionary<TKey, TValue>? lockingStorage;
+        private volatile LockingStorage? lockingStorage;
 
         private TimeSpan mergeInterval = TimeSpan.FromMilliseconds(100);
         private DateTime nextMerge;
@@ -89,7 +89,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                    LockingStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -213,7 +213,7 @@ namespace KGySoft.Collections
                 capacity = defaultCapacity;
             }
 
-            lockFreeStorage = FixedSizeDictionary<TKey, TValue>.Empty;
+            lockFreeStorage = LockFreeStorage.Empty;
             initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
             this.comparer = comparer;
@@ -224,7 +224,7 @@ namespace KGySoft.Collections
         {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            lockFreeStorage = new FixedSizeDictionary<TKey, TValue>(bitwiseAndHash, dictionary, comparer);
+            lockFreeStorage = new LockFreeStorage(bitwiseAndHash, dictionary, comparer);
         }
 
         #endregion
@@ -307,7 +307,7 @@ namespace KGySoft.Collections
             bool removed = false;
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                LockFreeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode);
 
                 // making sure that correct result is returned even if multiple tries are necessary due to merging
@@ -332,7 +332,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                    LockingStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -353,7 +353,7 @@ namespace KGySoft.Collections
             uint hashCode = GetHashCode(key);
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                LockFreeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode, out value);
 
                 // making sure that removed entry is returned even if multiple tries are necessary due to merging
@@ -374,7 +374,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                    LockingStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -394,7 +394,7 @@ namespace KGySoft.Collections
 
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                LockFreeStorage lockFreeValues = lockFreeStorage;
                 lockFreeValues.Clear();
                 if (IsUpToDate(lockFreeValues))
                     return;
@@ -408,7 +408,7 @@ namespace KGySoft.Collections
 
             lock (syncRoot)
             {
-                CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                LockingStorage? lockingValues = lockingStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -418,7 +418,7 @@ namespace KGySoft.Collections
             }
         }
 
-        public FixedSizeDictionary<TKey, TValue>.Enumerator GetEnumerator()
+        public LockFreeStorage.Enumerator GetEnumerator()
         {
             EnsureMerged();
             return lockFreeStorage.GetEnumerator();
@@ -439,7 +439,7 @@ namespace KGySoft.Collections
 
             lock (syncRoot)
             {
-                CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                LockingStorage? lockingValues = lockingStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -455,7 +455,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                LockFreeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryInsertInternal(key, value, hashCode, behavior);
                 if (success == true)
                 {
@@ -471,7 +471,7 @@ namespace KGySoft.Collections
                 // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue> lockingValues = GetCreateLockingStorage();
+                    LockingStorage lockingValues = GetCreateLockingStorage();
                     bool result = lockingValues.TryInsertInternal(key, value, hashCode, behavior);
                     MergeIfExpired();
                     return result;
@@ -483,7 +483,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                FixedSizeDictionary<TKey, TValue> lockFreeValues = lockFreeStorage;
+                LockFreeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
                 if (success == true)
                 {
@@ -501,7 +501,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    CustomDictionary<TKey, TValue>? lockingValues = lockingStorage;
+                    LockingStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -522,12 +522,12 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private CustomDictionary<TKey, TValue> GetCreateLockingStorage()
+        private LockingStorage GetCreateLockingStorage()
         {
-            CustomDictionary<TKey, TValue>? result = lockingStorage;
+            LockingStorage? result = lockingStorage;
             if (result != null)
                 return result;
-            result = lockingStorage = new CustomDictionary<TKey, TValue>(initialLockingCapacity, comparer, bitwiseAndHash);
+            result = lockingStorage = new LockingStorage(initialLockingCapacity, comparer, bitwiseAndHash);
             nextMerge = DateTime.UtcNow + mergeInterval;
             return result;
         }
@@ -545,7 +545,7 @@ namespace KGySoft.Collections
             // Must be in a lock to work properly!
             Debug.Assert(!isMerging || lockingStorage != null, "Make sure caller is in a lock");
 
-            CustomDictionary<TKey, TValue> lockingValues = lockingStorage!;
+            LockingStorage lockingValues = lockingStorage!;
             if (lockingValues.Count != 0)
             {
                 // Indicating that from this point lockFreeStorage cannot be considered safe even though its reference is not replaced yet.
@@ -554,7 +554,7 @@ namespace KGySoft.Collections
                 isMerging = true;
                 try
                 {
-                    lockFreeStorage = new FixedSizeDictionary<TKey, TValue>(lockFreeStorage, lockingValues);
+                    lockFreeStorage = new LockFreeStorage(lockFreeStorage, lockingValues);
                 }
                 finally
                 {
@@ -567,7 +567,7 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private bool IsUpToDate(FixedSizeDictionary<TKey, TValue> lockFreeValues)
+        private bool IsUpToDate(LockFreeStorage lockFreeValues)
         {
             // fixed-size storage has been replaced
             if (lockFreeValues != lockFreeStorage)

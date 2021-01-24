@@ -58,6 +58,107 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
         #region Methods
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LockFreeStorageUsageTest(bool ignoreCase)
+        {
+            var dict = new ThreadSafeDictionary<string, int>.LockFreeStorage(default, new Dictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            }, ignoreCase ? StringComparer.OrdinalIgnoreCase : null);
+
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(1, dict["alpha"]);
+
+            // TryAdd
+            Assert.IsFalse(dict.TryAdd("alpha", 11));
+            Assert.IsFalse(dict.TryAdd("delta", 4));
+            Assert.AreEqual(3, dict.Count);
+
+            // Update
+            dict["alpha"] = 11;
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(11, dict["alpha"]);
+
+            // Remove
+            Assert.IsTrue(dict.TryRemove("alpha", out int value));
+            Assert.AreEqual(11, value);
+            Assert.AreEqual(2, dict.Count);
+            Assert.IsFalse(dict.TryRemove("alpha", out value));
+            Assert.AreEqual(0, value);
+            Assert.IsTrue(dict.Remove("beta"));
+
+            // Re-add
+            Assert.IsTrue(dict.TryAdd("alpha", -1));
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual(-1, dict["alpha"]);
+
+            // Replace
+            Assert.IsFalse(dict.TryReplace("alpha", 1, 11));
+            Assert.IsTrue(dict.TryReplace("alpha", 1, -1));
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual(1, dict["alpha"]);
+
+            // Clear
+            dict.Clear();
+            Assert.AreEqual(0, dict.Count);
+            Assert.IsTrue(dict.TryAdd("alpha", 42));
+            Assert.AreEqual(42, dict["alpha"]);
+            Assert.AreEqual(1, dict.Count);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LockingStorageUsageTest(bool ignoreCase)
+        {
+            var dict = new ThreadSafeDictionary<string, int>.LockingStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
+
+            // Add
+            dict.Add("alpha", 1);
+            dict.Add("beta", 2);
+            dict.Add("gamma", 3); // here resize is needed
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(1, dict["alpha"]);
+
+            // TryAdd
+            Assert.IsFalse(dict.TryAdd("alpha", 11));
+            Assert.IsTrue(dict.TryAdd("delta", 4));
+            Assert.AreEqual(4, dict.Count);
+
+            // Update
+            dict["alpha"] = 11;
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual(11, dict["alpha"]);
+
+            // Remove
+            Assert.IsTrue(dict.TryRemove("alpha", out int value));
+            Assert.AreEqual(11, value);
+            Assert.AreEqual(3, dict.Count);
+            Assert.IsFalse(dict.TryRemove("alpha", out value));
+            Assert.AreEqual(0, value);
+            Assert.IsTrue(dict.Remove("beta"));
+
+            // Re-add
+            dict.Add("alpha", -1);
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(-1, dict["alpha"]);
+
+            // Replace
+            Assert.IsFalse(dict.TryReplace("alpha", 1, 11));
+            Assert.IsTrue(dict.TryReplace("alpha", 1, -1));
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(1, dict["alpha"]);
+
+            // Clear
+            dict.Clear();
+            Assert.AreEqual(0, dict.Count);
+            dict.Add("alpha", 42);
+            Assert.AreEqual(42, dict["alpha"]);
+            Assert.AreEqual(1, dict.Count);
+        }
+
         [TestCaseSource(nameof(usageTestSource))]
         public void UsageTest(string testName, IEqualityComparer<string> comparer, int strategy, TimeSpan mergeInterval)
         {
