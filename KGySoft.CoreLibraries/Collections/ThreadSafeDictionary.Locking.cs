@@ -223,7 +223,6 @@ namespace KGySoft.Collections
                 isKeyManaged;
 #endif
 
-
             [MethodImpl(MethodImpl.AggressiveInlining)]
             private static bool IsValueManaged() =>
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
@@ -232,9 +231,6 @@ namespace KGySoft.Collections
 #else
                 isValueManaged;
 #endif
-
-
-            internal CustomEnumerator GetCustomEnumerator() => new CustomEnumerator(this);
 
             #endregion
 
@@ -325,27 +321,6 @@ namespace KGySoft.Collections
                 value = default;
                 return false;
             }
-
-            // TODO: delete
-            //[MethodImpl(MethodImpl.AggressiveInlining)]
-            //internal ref TValue TryGetValueInternal(TKey key, uint hashCode)
-            //{
-            //    int[] bucketsLocal = buckets;
-            //    Entry[] items = entries;
-            //    IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-
-            //    int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
-            //    while (i >= 0)
-            //    {
-            //        ref Entry entryRef = ref items[i];
-            //        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
-            //            return ref entryRef.Value;
-
-            //        i = entryRef.Next;
-            //    }
-
-            //    return ref Unsafe.NullRef<TValue>();
-            //}
 
             internal bool TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
             {
@@ -526,6 +501,8 @@ namespace KGySoft.Collections
                 // Not found
                 return false;
             }
+
+            internal CustomEnumerator GetCustomEnumerator() => new CustomEnumerator(this);
 
             #endregion
 

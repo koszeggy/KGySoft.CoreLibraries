@@ -191,6 +191,11 @@ namespace KGySoft.Collections
 
         #region Constructors
 
+        internal ThreadSafeDictionary() : this(defaultCapacity, null)
+        {
+            
+        }
+
         internal ThreadSafeDictionary(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
             : this(capacity, null, strategy)
         {
@@ -202,7 +207,7 @@ namespace KGySoft.Collections
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for the newly added keys. If 0, then a default value is used.</param>
         /// <param name="comparer">TODO</param>
         /// <param name="strategy">TODO</param>
-        internal ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+        internal ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
         {
             if (!strategy.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);

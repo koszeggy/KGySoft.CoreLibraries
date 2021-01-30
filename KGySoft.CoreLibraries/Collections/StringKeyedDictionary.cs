@@ -1053,7 +1053,7 @@ namespace KGySoft.Collections
             // not "caching" the result of this call because that would make the JIT-ed code slower
             RuntimeHelpers.IsReferenceOrContainsReferences<TValue>();
 #else
-        isValueManaged;
+            isValueManaged;
 #endif
 
 
