@@ -16,7 +16,7 @@
 
 namespace KGySoft.Collections
 {
-    internal enum HashingStrategy
+    public enum HashingStrategy
     {
         Auto,
         Modulo,

@@ -26,7 +26,7 @@ namespace KGySoft.CoreLibraries
             if (minValue > 0 && (minValue & (minValue - 1)) == 0)
                 return minValue;
 
-            // 0x40000000 (1 << 31) is a negative number
+            // 0x80000000 (1 << 31) is a negative number and also larger than max array size 0x7FEFFFFF
             if (minValue >= 0x40000000)
                 return 0x40000000;
 

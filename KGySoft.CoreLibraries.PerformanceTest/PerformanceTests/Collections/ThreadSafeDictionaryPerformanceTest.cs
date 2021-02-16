@@ -76,7 +76,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cDict = new ConcurrentDictionary<int, object>(dict);
 #endif
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
-            var gDict = new GrowOnlyDictionary<int, object>(count, null, true);
+            var gDict = new LockFreeCache<int, object>.GrowOnlyDictionary(count, null, true);
 
             new IteratorPerformanceTest { Iterations = count/*, Repeat = 5*/, WarmUp = false, TestName = "Sequential Add" }
                 .AddCase(i => lDict.Add(i, null), "LockingDictionary")
@@ -98,7 +98,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var lDict = new LockingDictionary<int, object>();
             var cDict = new ConcurrentDictionary<int, object>(dict);
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
-            var gDict = new GrowOnlyDictionary<int, object>(count, null, true);
+            var gDict = new LockFreeCache<int, object>.GrowOnlyDictionary(count, null, true);
 
             new PerformanceTest { Iterations = 1, CpuAffinity = null, TestName = "Parallel Add", WarmUp = false }
                 .AddCase(() => Parallel.For(0, count, i => lDict.Add(i, i)), "LockingDictionary")
@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cDict = new ConcurrentDictionary<int, object>(dict);
 #endif
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
-            var gDict = new GrowOnlyDictionary<int, object>(count, null, true);
+            var gDict = new LockFreeCache<int, object>.GrowOnlyDictionary(count, null, true);
             for (int i = 0; i < count; i++)
                 gDict[i] = null;
 
@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cDict = new ConcurrentDictionary<PoorHashTest, int>(dict);
 #endif
             var tDict = new ThreadSafeDictionary<PoorHashTest, int>(dict, strategy: HashingStrategy.And);
-            var gDict = new GrowOnlyDictionary<PoorHashTest, int>(count, null, true);
+            var gDict = new LockFreeCache<PoorHashTest, int>.GrowOnlyDictionary(count, null, true);
             foreach (var item in dict)
                 gDict[item.Key] = item.Value;
 

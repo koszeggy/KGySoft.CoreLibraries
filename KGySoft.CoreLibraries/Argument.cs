@@ -81,6 +81,7 @@ namespace KGySoft
         initialConfiguration,
         instance,
         item,
+        itemLoader,
         key,
         kind,
         interval,
