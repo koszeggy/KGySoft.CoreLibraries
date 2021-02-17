@@ -35,7 +35,7 @@ namespace KGySoft.Collections
         private readonly Func<TKey, TValue> itemLoader;
         private readonly IEqualityComparer<TKey>? comparer;
         private readonly int maxL2Capacity;
-        private readonly TimeSpan? mergeInterval;
+        private readonly long? mergeInterval;
         private readonly bool bitwiseAndHash;
 
         private volatile bool isMerging;
@@ -91,7 +91,7 @@ namespace KGySoft.Collections
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
             nextCapacity = options.InitialL2Capacity;
             maxL2Capacity = options.MaximumL2Capacity;
-            mergeInterval = options.MergeInterval;
+            mergeInterval = options.MergeInterval.HasValue ? TimeHelper.GetInterval(options.MergeInterval.Value) : null;
             readOnlyStorage = ReadOnlyDictionary.Empty;
         }
 
@@ -108,9 +108,8 @@ namespace KGySoft.Collections
                 if (result != null)
                     return result;
 
-                // if elements are not dropped while growing, then preallocating the final capacity in L2; otherwise, going with the initial capacity
                 if (Interlocked.CompareExchange(ref growingStorage, new GrowOnlyDictionary(Math.Max(16, nextCapacity), comparer, bitwiseAndHash), null) == null && mergeInterval.HasValue)
-                    Volatile.Write(ref nextMerge, (DateTime.UtcNow + mergeInterval.Value).Ticks);
+                    Volatile.Write(ref nextMerge, TimeHelper.GetTimeStamp() + mergeInterval.Value);
             }
         }
 
@@ -125,7 +124,7 @@ namespace KGySoft.Collections
             int l2Count = l2Cache.Count;
             int max = maxL2Capacity;
             bool byCapacity = l2Count >= threshold;
-            bool byInterval = !byCapacity && mergeInterval.HasValue && l1Count < max && DateTime.UtcNow.Ticks > Volatile.Read(ref nextMerge);
+            bool byInterval = !byCapacity && mergeInterval.HasValue && l1Count < max && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
             if (!(byCapacity || byInterval))
                 return;
 
@@ -137,7 +136,6 @@ namespace KGySoft.Collections
             try
             {
                 bool dropL1 = l2Count >= max || l1Count == 0;
-                //if (l1Count < max && (byCapacity || l1Count + l2Count > threshold))
                 if (byCapacity && threshold < max)
                 {
                     // TODO: range check or uint

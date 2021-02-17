@@ -19,6 +19,8 @@
 using System;
 using System.Collections.Generic;
 
+using KGySoft.CoreLibraries;
+
 #endregion
 
 namespace KGySoft.Collections
@@ -44,7 +46,7 @@ namespace KGySoft.Collections
                     {
                         if (cache.TryGetValue(key, out ValueHolder result))
                         {
-                            if (DateTime.UtcNow <= result.Expiration)
+                            if (TimeHelper.GetTimeStamp() <= result.Expiration)
                                 return result.Value;
                             expired = true;
                         }
@@ -76,7 +78,7 @@ namespace KGySoft.Collections
                         cache[key] = new ValueHolder
                         {
                             Value = newItem,
-                            Expiration = DateTime.UtcNow + expiration
+                            Expiration = TimeHelper.GetTimeStamp() + expiration
                         };
                     }
 
@@ -106,7 +108,7 @@ namespace KGySoft.Collections
             #region Fields
 
             internal TValue Value;
-            internal DateTime Expiration;
+            internal long Expiration;
 
             #endregion
 
@@ -125,7 +127,7 @@ namespace KGySoft.Collections
 
         private readonly Cache<TKey, ValueHolder> cache;
         private readonly Func<TKey, TValue> itemLoader;
-        private readonly TimeSpan expiration;
+        private readonly long expiration;
 
         #endregion
 
@@ -139,7 +141,7 @@ namespace KGySoft.Collections
                 {
                     if (cache.TryGetValue(key, out ValueHolder result))
                     {
-                        if (DateTime.UtcNow <= result.Expiration)
+                        if (TimeHelper.GetTimeStamp() <= result.Expiration)
                             return result.Value;
 
                         // manual dispose because this value will not be dropped by the cache but will be overwritten explicitly
@@ -152,7 +154,7 @@ namespace KGySoft.Collections
                     cache[key] = new ValueHolder
                     {
                         Value = newItem,
-                        Expiration = DateTime.UtcNow + expiration
+                        Expiration = TimeHelper.GetTimeStamp() + expiration
                     };
 
                     return newItem;
@@ -167,7 +169,7 @@ namespace KGySoft.Collections
         protected ExpiringValuesCache(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer, LockingCacheOptions options)
         {
             this.itemLoader = itemLoader;
-            expiration = options.Expiration!.Value;
+            expiration = TimeHelper.GetInterval(options.Expiration!.Value);
 
             cache = new Cache<TKey, ValueHolder>(options.Capacity, comparer)
             {

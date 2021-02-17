@@ -52,6 +52,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             new object[] { "AND hashing", null, HashingStrategy.And, defaultTimeout },
             new object[] { "No merge", null, HashingStrategy.And, infiniteTimeout },
             new object[] { "Immediate merge", null, HashingStrategy.And, TimeSpan.Zero },
+            new object[] { "1 ms merge", null, HashingStrategy.And, TimeSpan.FromMilliseconds(1) },
         };
 
         #endregion
@@ -178,7 +179,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             // TryAdd
             Assert.IsFalse(dict.TryAdd("alpha", 11));
-            Assert.IsTrue(dict.TryAdd("delta", 4)); // potentially to locking
+            Assert.IsTrue(dict.TryAdd("delta", 4)); // to locking
             Assert.AreEqual(4, dict.Count);
 
             // Update
@@ -218,7 +219,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             // Clear
             dict.Clear();
             Assert.AreEqual(0, dict.Count);
-            Assert.IsTrue(dict.TryAdd("alpha", 42)); // in locking, even after clear
+            Assert.IsTrue(dict.TryAdd("alpha", 42)); // in non-locking, even after clear
             Assert.AreEqual(42, dict["alpha"]);
             Assert.AreEqual(1, dict.Count);
             Assert.IsTrue(dict.TryAdd("delta", 13)); // maybe in locking unless already merged

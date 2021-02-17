@@ -68,8 +68,8 @@ namespace KGySoft.Collections
         /// </summary>
         private volatile LockingStorage? lockingStorage;
 
-        private TimeSpan mergeInterval = TimeSpan.FromMilliseconds(100);
-        private DateTime nextMerge;
+        private long mergeInterval = TimeHelper.GetInterval(100);
+        private long nextMerge;
         private volatile bool isMerging;
 
         #endregion
@@ -109,7 +109,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <remarks>
         /// <para>When the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, then adding new items are immediately merged to a new fast-accessing storage.
-        /// This is recommended only if new items are never added at the same time.</para>
+        /// This is not recommended unless new items are almost never added at the same time.</para>
         /// <para>When the value of this property is positive (the default is 100 milliseconds), then adding new items will be put in a temporary locking storage.
         /// Whenever the locking storage is accessed, it will be checked whether the specified time interval has been expired since its creation. If so, then
         /// it will be merged with the previous content of the fast storage into a new instance. This is the recommended behavior
@@ -123,22 +123,28 @@ namespace KGySoft.Collections
             get
             {
                 lock (syncRoot)
-                    return mergeInterval;
+                    return TimeHelper.GetTimeSpan(mergeInterval);
             }
             set
             {
                 lock (syncRoot)
                 {
-                    if (value == mergeInterval)
+                    long interval = TimeHelper.GetInterval(value);
+
+                    // adjusting to prevent immediate merging for nonzero value
+                    if (interval == 0L && value != TimeSpan.Zero)
+                        interval = value < TimeSpan.Zero ? -1L : 1L;
+
+                    if (interval == mergeInterval)
                         return;
 
-                    mergeInterval = value;
+                    mergeInterval = interval;
 
-                    if (lockingStorage == null || value < TimeSpan.Zero)
+                    if (lockingStorage == null || interval < 0L)
                         return;
 
-                    if (value > TimeSpan.Zero)
-                        nextMerge = DateTime.UtcNow + value;
+                    if (interval > 0L)
+                        nextMerge = TimeHelper.GetTimeStamp() + interval;
                     else
                         EnsureMerged();
                 }
@@ -533,16 +539,17 @@ namespace KGySoft.Collections
             if (result != null)
                 return result;
             result = lockingStorage = new LockingStorage(initialLockingCapacity, comparer, bitwiseAndHash);
-            nextMerge = DateTime.UtcNow + mergeInterval;
+            long interval = mergeInterval;
+            if (interval > 0L)
+                nextMerge = TimeHelper.GetTimeStamp() + interval;
             return result;
         }
 
         private void MergeIfExpired()
         {
             // must be called in lock
-            if (DateTime.UtcNow < nextMerge)
-                return;
-            DoMerge();
+            if (mergeInterval == 0L || TimeHelper.GetTimeStamp() > nextMerge)
+                DoMerge();
         }
 
         private void DoMerge()
