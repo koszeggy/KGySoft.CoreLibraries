@@ -1255,7 +1255,7 @@ namespace KGySoft.Collections
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="Behavior"/>
-        public Cache(IEqualityComparer<TKey> comparer) : this(null, defaultCapacity, comparer)
+        public Cache(IEqualityComparer<TKey>? comparer) : this(null, defaultCapacity, comparer)
         {
         }
 
@@ -1281,7 +1281,7 @@ namespace KGySoft.Collections
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="Behavior"/>
         [CollectionAccess(CollectionAccessType.UpdatedContent)]
-        public Cache(Func<TKey, TValue>? itemLoader, IEqualityComparer<TKey> comparer) : this(itemLoader, defaultCapacity, comparer)
+        public Cache(Func<TKey, TValue>? itemLoader, IEqualityComparer<TKey>? comparer) : this(itemLoader, defaultCapacity, comparer)
         {
         }
 
