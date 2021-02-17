@@ -176,12 +176,7 @@ namespace KGySoft.Collections
 
             #region Properties
 
-            public int Count => entries.Length -
-#if NET35 || NET40
-                Thread.VolatileRead(ref deletedCount);
-#else
-                Volatile.Read(ref deletedCount);
-#endif
+            public int Count => entries.Length - Volatile.Read(ref deletedCount);
 
             #endregion
 
@@ -313,9 +308,9 @@ namespace KGySoft.Collections
 
                     // key found: lock-free reading.
 #if NET35 || NET40
-                    var box = entryRef.Value;
+                    StrongBox<TValue>? box = entryRef.Value;
 #else
-                    var box = Volatile.Read(ref entryRef.Value);
+                    StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
 #endif
 
                     if (box != null)
@@ -356,7 +351,11 @@ namespace KGySoft.Collections
 
                     while (true)
                     {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
                         StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
 
                         // entry was deleted, adding
                         if (box == null)
@@ -408,7 +407,11 @@ namespace KGySoft.Collections
 
                     while (true)
                     {
-                        var box = Volatile.Read(ref entryRef.Value);
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
 
                         // deleted or original value does not match
                         if (box == null || !valueComparer.Equals(box.Value, originalValue))
@@ -441,7 +444,11 @@ namespace KGySoft.Collections
 
                     while (true)
                     {
-                        var box = Volatile.Read(ref entryRef.Value);
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
 
                         // already deleted
                         if (box == null)

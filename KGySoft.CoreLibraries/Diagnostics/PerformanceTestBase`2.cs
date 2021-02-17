@@ -633,11 +633,9 @@ namespace KGySoft.Diagnostics
 
         private void SortResults(List<TestResult> testResults)
         {
-            Comparison<TestResult> comparison = SortBySize
-                    ? (x, y) => Comparer<int>.Default.Compare(GetLength(x.Result), GetLength(y.Result))
-                        : Iterations > 0
-                        ? (x, y) => Comparer<TimeSpan>.Default.Compare(x.AverageTime, y.AverageTime)
-                            : (Comparison<TestResult>)((x, y) => -Comparer<double>.Default.Compare(x.AverageIterations, y.AverageIterations));
+            Comparison<TestResult> comparison = SortBySize ? (x, y) => Comparer<int>.Default.Compare(GetLength(x.Result), GetLength(y.Result))
+                : Iterations > 0 ? (TestResult x, TestResult y) => Comparer<TimeSpan>.Default.Compare(x.AverageTime, y.AverageTime)
+                : (Comparison<TestResult>)((x, y) => -Comparer<double>.Default.Compare(x.AverageIterations, y.AverageIterations));
             testResults.Sort(comparison);
         }
 
