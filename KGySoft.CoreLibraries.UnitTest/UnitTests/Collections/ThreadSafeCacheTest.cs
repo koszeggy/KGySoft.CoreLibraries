@@ -37,13 +37,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
         private static readonly object[][] usageTestSource =
         {
-            //new object[] { "Default settings, no comparer", false, null },
-            //new object[] { "Default settings with comparer", true, null },
-            //new object[] { "LockFree, immediate merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.Zero } },
-            //new object[] { "LockFree, 1 ms merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.FromMilliseconds(1) } },
-            //new object[] { "LockFree, 100 ms merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.FromMilliseconds(100) } },
-            //new object[] { "Locking, default, no comparer", false, new LockingCacheOptions() },
-            //new object[] { "Locking, default with comparer", true, new LockingCacheOptions() },
+            new object[] { "Default settings, no comparer", false, null },
+            new object[] { "Default settings with comparer", true, null },
+            new object[] { "LockFree, immediate merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.Zero } },
+            new object[] { "LockFree, 1 ms merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.FromMilliseconds(1) } },
+            new object[] { "LockFree, 100 ms merge, no comparer", false, new LockFreeCacheOptions{ MergeInterval = TimeSpan.FromMilliseconds(100) } },
+            new object[] { "Locking, default, no comparer", false, new LockingCacheOptions() },
+            new object[] { "Locking, default with comparer", true, new LockingCacheOptions() },
             new object[] { "Locking, 100 ms expiration, no comparer", true, new LockingCacheOptions { Expiration = TimeSpan.FromMilliseconds(100) } },
         };
 
@@ -96,8 +96,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Parallel.For(0, count, i => Assert.AreEqual(i, dict[i]));
         }
 
-        //[TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(int) })]
-        //[TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(string) })]
+        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(int) })]
+        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(string) })]
         [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(ConsoleColor) })]
         public void UsageTest<T>(string testName, bool useComparer, ThreadSafeCacheOptionsBase configuration)
             where T : notnull, IConvertible

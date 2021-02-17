@@ -19,8 +19,6 @@
 using System;
 using System.Collections.Generic;
 
-using KGySoft.Annotations;
-
 #endregion
 
 namespace KGySoft.Collections
@@ -91,7 +89,7 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal ExpiringValuesCacheAllowParallelLoad(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer, [NotNull] LockingCacheOptions options)
+            internal ExpiringValuesCacheAllowParallelLoad(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer, LockingCacheOptions options)
                 : base(itemLoader, comparer, options)
             {
             }
@@ -189,8 +187,9 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.itemLoader);
             if (options == null!)
                 Throw.ArgumentNullException(Argument.options);
-
-            Debug.Assert(options.Expiration != null);
+            if (options.Expiration == null || options.Expiration < TimeSpan.Zero)
+                Throw.ArgumentException(Argument.options, Res.ArgumentMustBeGreaterThanOrEqualTo(TimeSpan.Zero));
+            // other options are validated by the Cache constructor
 
             return options.ProtectItemLoader
                 ? new ExpiringValuesCache<TKey, TValue>(itemLoader, comparer, options)

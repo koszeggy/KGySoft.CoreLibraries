@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+using KGySoft.CoreLibraries;
+
 #endregion
 
 namespace KGySoft.Collections
@@ -75,7 +77,15 @@ namespace KGySoft.Collections
 
         internal LockFreeCache(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer, LockFreeCacheOptions options)
         {
-            // TODO: validation (maybe in caller)
+            if (itemLoader == null!)
+                Throw.ArgumentNullException(Argument.itemLoader);
+            if (options == null!)
+                Throw.ArgumentNullException(Argument.options);
+            if (!options.HashingStrategy.IsDefined())
+                Throw.ArgumentException(Argument.options, Res.EnumOutOfRange(options.HashingStrategy));
+            if (options.MergeInterval < TimeSpan.Zero)
+                Throw.ArgumentException(Argument.options, Res.ArgumentMustBeGreaterThanOrEqualTo(TimeSpan.Zero));
+
             this.itemLoader = itemLoader;
             this.comparer = comparer;
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
