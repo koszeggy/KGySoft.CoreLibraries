@@ -19,12 +19,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
+using KGySoft.Diagnostics;
 
 #endregion
 
@@ -41,6 +43,8 @@ namespace KGySoft.Collections
     /// - There are some interface members that are not used so their implementation is not optimal.
     /// - Implement IReadOnlyDictionary, non-generic IDictionary
     /// </summary>
+    [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     internal partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         where TKey : notnull
     {
@@ -626,7 +630,14 @@ namespace KGySoft.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             Debug.Fail("It is not expected to call this method. Must be optimized if this will be a public class.");
-            this.ToList().CopyTo(array, arrayIndex);
+            
+            // using an intermediate list because elements might be added while enumerating
+            var list = new List<KeyValuePair<TKey, TValue>>(Count);
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (KeyValuePair<TKey, TValue> item in this)
+                list.Add(item);
+            list.CopyTo(array, arrayIndex);
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)

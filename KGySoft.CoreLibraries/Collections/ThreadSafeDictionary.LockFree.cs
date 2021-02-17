@@ -83,19 +83,15 @@ namespace KGySoft.Collections
             {
                 #region Fields
 
-                #region Internal Fields
-
-                public KeyValuePair<TKey, TValue> Current { get; private set; }
-
-                #endregion
-
-                #region Private Fields
-
                 private readonly Entry[] entries;
 
                 private int pos;
 
                 #endregion
+
+                #region Properties
+
+                public KeyValuePair<TKey, TValue> Current { get; private set; }
 
                 #endregion
 

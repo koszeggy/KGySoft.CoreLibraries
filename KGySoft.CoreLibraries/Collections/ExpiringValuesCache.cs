@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 
 using KGySoft.CoreLibraries;
+using System.Diagnostics;
 
 #endregion
 
@@ -103,6 +104,7 @@ namespace KGySoft.Collections
 
         #region ValueHolder struct
 
+        [DebuggerDisplay("{" + nameof(Value) + "}")]
         protected struct ValueHolder : IDisposable
         {
             #region Fields

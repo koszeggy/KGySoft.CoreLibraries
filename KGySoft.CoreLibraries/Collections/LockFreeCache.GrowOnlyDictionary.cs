@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -33,12 +34,14 @@ namespace KGySoft.Collections
         /// <summary>
         /// Represents a lock-free thread safe dictionary where items can only be added and queried but not replaced or deleted.
         /// </summary>
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
         internal class GrowOnlyDictionary
         {
             #region Nested types
 
             #region Entry class
 
+            [DebuggerDisplay("[{" + nameof(Key) + "}; {" + nameof(Value) + "}]")]
             private sealed class Entry
             {
                 #region Fields
@@ -70,6 +73,7 @@ namespace KGySoft.Collections
             /// Just a volatile reference holder so array items can be treated volatile.
             /// This is needed because in older targeted platforms there is no generic Volatile.Read/Write
             /// </summary>
+            [DebuggerDisplay("{" + nameof(First) + "}")]
             private struct Bucket
             {
                 #region Fields

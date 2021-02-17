@@ -17,9 +17,7 @@
 #region Usings
 
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using KGySoft.Collections;
