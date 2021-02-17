@@ -593,19 +593,9 @@ namespace KGySoft.Collections
             if (!isMerging)
                 return true;
 
-#if !NET35
             var wait = new SpinWait();
-#endif
             while (isMerging)
-            {
-#if NET35
-                Thread.Sleep(1);
-#elif NETFRAMEWORK
                 wait.SpinOnce();
-#else
-                wait.SpinOnce(1);
-#endif
-            }
 
             return false;
         }

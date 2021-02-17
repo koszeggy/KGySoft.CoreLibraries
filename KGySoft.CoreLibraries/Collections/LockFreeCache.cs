@@ -162,19 +162,9 @@ namespace KGySoft.Collections
                 return true;
 
             // a merge has been started, values from growingStorage storage might be started to copied: preventing current thread from consuming CPU until merge is finished
-#if !NET35
             var wait = new SpinWait();
-#endif
             while (isMerging)
-            {
-#if NET35
-                Thread.Sleep(1);
-#elif NETFRAMEWORK
                 wait.SpinOnce();
-#else
-                wait.SpinOnce(1);
-#endif
-            }
 
             return false;
         }
