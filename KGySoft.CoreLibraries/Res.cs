@@ -489,6 +489,30 @@ namespace KGySoft
         /// <summary>Specified argument must be between {0} and {1}.</summary>
         internal static string ArgumentMustBeBetween<T>(T low, T high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
+        /// <summary>Property '{0}' must be greater than {1}.</summary>
+        internal static string PropertyMustBeGreaterThan<T>(string propertyName, T limit) => Get("General_PropertyMustBeGreaterThanFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be greater than or equal to {1}.</summary>
+        internal static string PropertyMustBeGreaterThanOrEqualTo<T>(string propertyName, T limit) => Get("General_PropertyMustBeGreaterThanOrEqualToFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be less than {1}.</summary>
+        internal static string PropertyMustBeLessThan<T>(string propertyName, T limit) => Get("General_PropertyMustBeLessThanFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be less than or equal to {1}.</summary>
+        internal static string PropertyMustBeLessThanOrEqualTo<T>(string propertyName, T limit) => Get("General_PropertyMustBeLessThanOrEqualToFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be between {1} and {2}.</summary>
+        internal static string PropertyMustBeBetween<T>(string propertyName, T low, T high) => Get("General_PropertyMustBeBetweenFormat", propertyName, low, high);
+
+        /// <summary>Property '{0}' must be greater than property '{1}'.</summary>
+        internal static string PropertyMustBeGreaterThanProperty(string propertyGreater, string propertyLess) => Get("General_PropertyMustBeGreaterThanPropertyFormat", propertyGreater, propertyLess);
+
+        /// <summary>Property '{0}' must be greater than or equal to property '{1}'.</summary>
+        internal static string PropertyMustBeGreaterThanOrEqualToProperty(string propertyGreater, string propertyLess) => Get("General_PropertyMustBeGreaterThanOrEqualToPropertyFormat", propertyGreater, propertyLess);
+
+        /// <summary>Property '{0}': {1}</summary>
+        internal static string PropertyMessage(string propertyName, string message) => Get("General_PropertyMessageFormat", propertyName, message);
+
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
 

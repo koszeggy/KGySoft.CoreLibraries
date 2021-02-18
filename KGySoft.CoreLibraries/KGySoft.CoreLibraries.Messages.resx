@@ -150,6 +150,30 @@
   <data name="General_MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
+  <data name="General_PropertyMustBeGreaterThanFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanOrEqualToFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than or equal to {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeLessThanFormat" xml:space="preserve">
+    <value>Property '{0}' must be less than {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeLessThanOrEqualToFormat" xml:space="preserve">
+    <value>Property '{0}' must be less than or equal to {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeBetweenFormat" xml:space="preserve">
+    <value>Property '{0}' must be between {1} and {2}.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanPropertyFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than property '{1}'.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanOrEqualToPropertyFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than or equal to property '{1}'.</value>
+  </data>
+  <data name="General_PropertyMessageFormat" xml:space="preserve">
+    <value>Property '{0}': {1}</value>
+  </data>
   <data name="General_Yes" xml:space="preserve">
     <value>Yes</value>
   </data>
