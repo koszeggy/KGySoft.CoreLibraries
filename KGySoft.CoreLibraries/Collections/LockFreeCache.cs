@@ -82,9 +82,13 @@ namespace KGySoft.Collections
             if (options == null!)
                 Throw.ArgumentNullException(Argument.options);
             if (!options.HashingStrategy.IsDefined())
-                Throw.ArgumentException(Argument.options, Res.EnumOutOfRange(options.HashingStrategy));
+                Throw.ArgumentException(Argument.options, Res.PropertyMessage(nameof(options.HashingStrategy), Res.EnumOutOfRange(options.HashingStrategy)));
             if (options.MergeInterval < TimeSpan.Zero)
-                Throw.ArgumentException(Argument.options, Res.ArgumentMustBeGreaterThanOrEqualTo(TimeSpan.Zero));
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualTo(nameof(options.MergeInterval), TimeSpan.Zero));
+            if (options.InitialL2Capacity <= 0)
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThan(nameof(options.InitialL2Capacity), 0));
+            if (options.MaximumL2Capacity < options.InitialL2Capacity)
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualToProperty(nameof(options.MaximumL2Capacity), nameof(options.InitialL2Capacity)));
 
             this.itemLoader = itemLoader;
             this.comparer = comparer;

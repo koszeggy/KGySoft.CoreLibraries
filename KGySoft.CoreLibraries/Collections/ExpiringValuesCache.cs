@@ -192,7 +192,7 @@ namespace KGySoft.Collections
             if (options == null!)
                 Throw.ArgumentNullException(Argument.options);
             if (options.Expiration == null || options.Expiration < TimeSpan.Zero)
-                Throw.ArgumentException(Argument.options, Res.ArgumentMustBeGreaterThanOrEqualTo(TimeSpan.Zero));
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualTo(nameof(options.Expiration), TimeSpan.Zero));
             // other options are validated by the Cache constructor
 
             return options.ProtectItemLoader
