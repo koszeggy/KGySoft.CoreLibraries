@@ -1720,7 +1720,7 @@ namespace KGySoft.Collections
 
         private void Initialize(int suggestedCapacity)
         {
-            int bucketSize = PrimeHelper.GetPrime(suggestedCapacity);
+            int bucketSize = HashHelper.GetPrime(suggestedCapacity);
             buckets = new int[bucketSize];
 
             // items.Length <= bucketSize!
@@ -1976,7 +1976,7 @@ namespace KGySoft.Collections
 
         private void Resize(int suggestedSize)
         {
-            int newBucketSize = PrimeHelper.GetPrime(suggestedSize);
+            int newBucketSize = HashHelper.GetPrime(suggestedSize);
             var newBuckets = new int[newBucketSize];
             var newItems = new Entry[capacity < newBucketSize ? capacity : newBucketSize];
             Entry[] items = entries!;

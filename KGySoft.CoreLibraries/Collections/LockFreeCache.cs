@@ -60,7 +60,7 @@ namespace KGySoft.Collections
                 do
                 {
                     l1Cache = readOnlyStorage;
-                    if (l1Cache.TryGetValueInternal(key, hashCode, out TValue value))
+                    if (l1Cache.TryGetValueInternal(key, hashCode, out TValue? value))
                         return value;
                 } while (!IsUpToDate(l1Cache));
 

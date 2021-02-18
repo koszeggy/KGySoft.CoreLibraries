@@ -160,11 +160,11 @@ namespace KGySoft.Collections
                 uint bucketSize;
                 if (isAndHash)
                 {
-                    bucketSize = (uint)Math.Max(2, capacity).GetNextPowerOfTwo();
+                    bucketSize = (uint)HashHelper.GetPowerOfTwo(Math.Max(2, capacity));
                     hashingOperand = bucketSize - 1;
                 }
                 else
-                    hashingOperand = bucketSize = (uint)PrimeHelper.GetPrime(capacity);
+                    hashingOperand = bucketSize = (uint)HashHelper.GetPrime(capacity);
 
                 buckets = new int[bucketSize];
                 entries = new Entry[capacity];

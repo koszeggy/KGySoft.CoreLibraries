@@ -18,7 +18,9 @@
 
 using System;
 using System.Linq;
-using System.Threading.Tasks;
+#if !NET35
+using System.Threading.Tasks; 
+#endif
 
 using KGySoft.Collections;
 
@@ -82,6 +84,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(3, dict.Count);
         }
 
+#if !NET35
         [Test]
         public void GrowOnlyDictionaryParallelUsageTest()
         {
@@ -92,7 +95,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             Assert.AreEqual(count, dict.Count);
             Parallel.For(0, count, i => Assert.AreEqual(i, dict[i]));
-        }
+        } 
+#endif
 
         [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(int) })]
         [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(string) })]
@@ -131,11 +135,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 : configuration is LockFreeCacheOptions lockFree ? lockFree.MaximumL2Capacity * 2
                 : throw new InvalidOperationException("Unexpected configuration type");
 
-            //for (int i = 0; i < maxCapacity; i++)
-            //    Assert.AreEqual(Key(i), cache[Key(i)]);
-
+#if NET35
+            for (int i = 0; i < maxCapacity; i++)
+                Assert.AreEqual(Key(i), cache[Key(i)]);
+#else
             // filling the cache concurrently
             Parallel.For(0, maxCapacity, i => Assert.AreEqual(Key(i), cache[Key(i)]));
+#endif
 
             // now key might have been dropped from cache (not necessarily true for lock free cache)
             Assert.AreEqual(key, cache[key]);

@@ -1355,7 +1355,7 @@ namespace KGySoft.Collections
 
         private void Initialize(int capacity)
         {
-            int bucketSize = Math.Max(minCapacity, capacity).GetNextPowerOfTwo();
+            int bucketSize = HashHelper.GetPowerOfTwo(Math.Max(minCapacity, capacity));
             mask = bucketSize - 1;
             deletedItemsBucket = -1;
             buckets = new int[bucketSize];
@@ -1597,9 +1597,9 @@ namespace KGySoft.Collections
 
         private void Resize(int newCapacity)
         {
-            int newBucketSize = Math.Max(newCapacity, minCapacity).GetNextPowerOfTwo();
+            int newBucketSize = HashHelper.GetPowerOfTwo(Math.Max(newCapacity, minCapacity));
             var newBuckets = new int[newBucketSize];
-            var newEntries = new Entry[newBucketSize];
+            var newEntries = new Entry[Math.Max(newCapacity, newBucketSize)];
             mask = newBucketSize - 1;
             Array.Copy(entries!, 0, newEntries, 0, usedCount);
 

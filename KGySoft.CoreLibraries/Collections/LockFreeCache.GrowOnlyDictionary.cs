@@ -338,12 +338,12 @@ namespace KGySoft.Collections
             {
                 if (IsAndHash)
                 {
-                    uint bucketSize = (uint)Math.Max(2, capacity).GetNextPowerOfTwo();
+                    uint bucketSize = (uint)HashHelper.GetPowerOfTwo(Math.Max(2, capacity));
                     hashingOperand = bucketSize - 1;
                     return bucketSize;
                 }
 
-                return hashingOperand = (uint)PrimeHelper.GetPrime(capacity);
+                return hashingOperand = (uint)HashHelper.GetPrime(capacity);
             }
 
             /// <summary>

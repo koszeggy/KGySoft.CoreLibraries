@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: PrimeHelper.cs
+//  File: HashHelper.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -22,7 +22,7 @@ using System.Linq;
 
 namespace KGySoft.Collections
 {
-    internal static class PrimeHelper
+    internal static class HashHelper
     {
         #region Constants
 
@@ -36,7 +36,7 @@ namespace KGySoft.Collections
         #region Fields
 
         /// <summary>
-        /// Contains nearest primes for 2 and 10 powers can be used for typical cache capacities
+        /// Contains nearest primes for 2 and 10 powers can be used for typical capacities
         /// as well as "near enough" primes for dynamically increased capacities.
         /// </summary>
         private static readonly int[] primes = new[]
@@ -59,6 +59,16 @@ namespace KGySoft.Collections
         #region Methods
 
         #region Internal Methods
+
+        internal static int GetPowerOfTwo(int capacity)
+        {
+            int next = GetNextPowerOfTwo(capacity);
+            if (capacity <= 128 || next <= capacity)
+                return next;
+
+            int prev = GetNextPowerOfTwo(capacity >> 1);
+            return next - capacity <= capacity - prev ? next : prev;
+        }
 
         internal static int GetPrime(int min)
         {
@@ -84,6 +94,23 @@ namespace KGySoft.Collections
         #endregion
 
         #region Private Methods
+
+        private static int GetNextPowerOfTwo(int minValue)
+        {
+            // if already power of 2:
+            if (minValue > 0 && (minValue & (minValue - 1)) == 0)
+                return minValue;
+
+            // 0x80000000 (1 << 31) is a negative number and also larger than max array size 0x7FEFFFFF
+            if (minValue >= 0x40000000)
+                return 0x40000000;
+
+            int result = 2;
+            while (result < minValue)
+                result <<= 1;
+
+            return result;
+        }
 
         private static int GetNextPrime(int min)
         {

@@ -17,7 +17,10 @@
 #region Usings
 
 using System;
-using System.Threading;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
+
+using KGySoft.Collections;
 
 using NUnit.Framework;
 
@@ -30,111 +33,171 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
     {
         #region Methods
 
-        #region Static Methods
-
-        static int LoadSlow(int key)
-        {
-            Thread.Sleep(0);
-            return key;
-        }
-
-        static int LoadFast(int key) => key;
-
-        #endregion
-
-        #region Instance Methods
-
         [Test]
-        public void GrowTest()
+        public void GrowOnlyTestNoDroppingSequential()
         {
-            const int iterations = 10_000;
-            const int max = 2048;
+            static int Load(int i) => i;
 
-            // TODO: lock vs lock free vs concurrent dictionary
-            //new PerformanceTest{ TestName = "Fast, Only new items", Repeat = 5, Iterations = 10_000 }
-            //    .AddCase(() =>
-            //    {
-            //        var drop = ThreadSafeCache.Create<int, int>(LoadFast, null, new LockFreeCacheOptions { DropElementsWhileGrowing = true });
-            //        for (int i = 0; i < max; i++)
-            //        {
-            //            var _ = drop[i];
-            //        }
-            //    }, "drop")
-            //    .AddCase(() =>
-            //    {
-            //        var noDrop = ThreadSafeCache.Create<int, int>(LoadFast, null, new LockFreeCacheOptions { DropElementsWhileGrowing = false });
-            //        for (int i = 0; i < max; i++)
-            //        {
-            //            var _ = noDrop[i];
-            //        }
-            //    }, "noDrop")
-            //    .DoTest()
-            //    .DumpResults(Console.Out);
+            const int capacity = 10_000;
+            const int count = capacity - 1;
 
-            //new PerformanceTest { TestName = "Slow" }
-            //    .AddCase(() =>
-            //    {
-            //        var drop = ThreadSafeCache.Create<int, int>(LoadSlow, null, new LockFreeCacheOptions { DropElementsWhileGrowing = true });
-            //        for (int i = 0; i < max; i++)
-            //        {
-            //            var _ = drop[i];
-            //        }
-            //    }, "drop")
-            //    .AddCase(() =>
-            //    {
-            //        var noDrop = ThreadSafeCache.Create<int, int>(LoadSlow, null, new LockFreeCacheOptions { DropElementsWhileGrowing = false });
-            //        for (int i = 0; i < max; i++)
-            //        {
-            //            var _ = noDrop[i];
-            //        }
-            //    }, "noDrop")
-            //    .DoTest()
-            //    .DumpResults(Console.Out);
+            //var c = new LockFreeCache2<int, int>(Load, null, new LockFreeCacheOptions { InitialL2Capacity = max, MaximumL2Capacity = max, HashingStrategy = HashingStrategy.And });
+            //for (int i = 0; i < max - 1; i++)
+            //{
+            //    var _ = c[i];
+            //}
+            //return;
 
-            //new RandomizedPerformanceTest { TestName = "Fast, Random", Repeat = 5 }
-            //    .AddCase(rnd =>
-            //    {
-            //        var drop = ThreadSafeCache.Create<int, int>(LoadFast, null, new LockFreeCacheOptions { DropElementsWhileGrowing = true });
-            //        for (int i = 0; i < iterations; i++)
-            //        {
-            //            var _ = drop[rnd.Next(max)];
-            //        }
-            //    }, "drop")
-            //    .AddCase(rnd =>
-            //    {
-            //        var noDrop = ThreadSafeCache.Create<int, int>(LoadFast, null, new LockFreeCacheOptions { DropElementsWhileGrowing = false });
-            //        for (int i = 0; i < iterations; i++)
-            //        {
-            //            var _ = noDrop[rnd.Next(max)];
-            //        }
-            //    }, "noDrop")
-            //    .DoTest()
-            //    .DumpResults(Console.Out);
-
-
-            //new RandomizedPerformanceTest { TestName = "Slow, Random", Repeat = 5 }
-            //    .AddCase(rnd =>
-            //    {
-            //        var drop = ThreadSafeCache.Create<int, int>(LoadSlow, null, new LockFreeCacheOptions { DropElementsWhileGrowing = true });
-            //        for (int i = 0; i < iterations; i++)
-            //        {
-            //            var _ = drop[rnd.Next(max)];
-            //        }
-            //    }, "drop")
-            //    .AddCase(rnd =>
-            //    {
-            //        var noDrop = ThreadSafeCache.Create<int, int>(LoadSlow, null, new LockFreeCacheOptions { DropElementsWhileGrowing = false });
-            //        for (int i = 0; i < iterations; i++)
-            //        {
-            //            var _ = noDrop[rnd.Next(max)];
-            //        }
-            //    }, "noDrop")
-            //    .DoTest()
-            //    .DumpResults(Console.Out);
-
-            // TODO: parallel
-            throw new NotImplementedException();
+            new PerformanceTest { TestName = "Sequential", Iterations = 1_000, Repeat = 5 }
+                //.AddCase(() =>
+                //{
+                //    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity });
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = cache[i];
+                //    }
+                //}, $"LockFree, Max = {capacity:N0}")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity });
+                    for (int i = 0; i < count; i++)
+                    {
+                        var _ = cache[i];
+                    }
+                }, $"LockFree, Min = Max = {capacity:N0}")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+                    for (int i = 0; i < count; i++)
+                    {
+                        var _ = cache[i];
+                    }
+                }, $"LockFree, Min = Max = {capacity:N0}, AND hash")
+                //.AddCase(() =>
+                //{
+                //    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity });
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = cache[i];
+                //    }
+                //}, $"Locking, Capacity = {max:N0}")
+                //.AddCase(() =>
+                //{
+                //    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, PreallocateCapacity = true });
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = cache[i];
+                //    }
+                //}, $"Locking, Capacity = {max:N0}, Preallocated")
+                //.AddCase(() =>
+                //{
+                //    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, PreallocateCapacity = true, Behavior = CacheBehavior.RemoveOldestElement });
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = cache[i];
+                //    }
+                //}, $"Locking, Capacity = {max:N0}, Preallocated, RemoveOldest")
+#if !NET35
+                //.AddCase(() =>
+                //{
+                //    var dict = new ConcurrentDictionary<int, int>();
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = dict.GetOrAdd(i, Load);
+                //    }
+                //}, "ConcurrentDictionary")
+#endif
+                //.AddCase(() =>
+                //{
+                //    var dict = new ThreadSafeDictionary<int, int>();
+                //    for (int i = 0; i < count; i++)
+                //    {
+                //        var _ = dict.GetOrAdd(i, Load);
+                //    }
+                //}, "ConcurrentDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
         }
+
+#if !NET35
+        [Test]
+        public void GrowOnlyTestNoDroppingParallel()
+        {
+            static int Load(int i) => i;
+
+            const int max = 10_000;
+
+            new PerformanceTest { TestName = "Parallel", Iterations = 1_000, CpuAffinity = null }
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = max });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"LockFree, Max = {max:N0}")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = max, MaximumL2Capacity = max });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"LockFree, Min = Max = {max:N0}")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = max, MaximumL2Capacity = max, HashingStrategy = HashingStrategy.And });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"LockFree, Min = Max = {max:N0}, AND hash")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = max });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"Locking, Capacity = {max:N0}")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = max, PreallocateCapacity = true });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"Locking, Capacity = {max:N0}, Preallocated")
+                .AddCase(() =>
+                {
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = max, PreallocateCapacity = true, Behavior = CacheBehavior.RemoveOldestElement });
+                    Parallel.For(0, max, i =>
+                    {
+                        var _ = cache[i];
+                    });
+                }, $"Locking, Capacity = {max:N0}, Preallocated, RemoveOldest")
+#if !NET35
+                .AddCase(() =>
+                {
+                    var dict = new ConcurrentDictionary<int, int>();
+                    for (int i = 0; i < max; i++)
+                    {
+                        var _ = dict.GetOrAdd(i, Load);
+                    }
+                }, "ConcurrentDictionary")
+#endif
+                //.AddCase(() =>
+                //{
+                //    var dict = new ThreadSafeDictionary<int, int>();
+                //    for (int i = 0; i < max; i++)
+                //    {
+                //        var _ = dict.GetOrAdd(i, Load);
+                //    }
+                //}, "ConcurrentDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+        } 
+#endif
 
         [Test]
         public void AccessExistingValuesTest()
@@ -142,8 +205,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             // TODO: lock vs lock free vs [non-]concurrent dictionary
             throw new NotImplementedException();
         }
-
-        #endregion
 
         #endregion
     }
