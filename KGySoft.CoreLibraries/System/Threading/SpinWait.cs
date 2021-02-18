@@ -1,4 +1,4 @@
-﻿#if NETFRAMEWORK || NETSTANDARD // actually only .NET 3.5 has no SpinWait but this implementation is more efficient
+﻿#if NETFRAMEWORK || NETSTANDARD // actually only .NET 3.5 has no SpinWait but this implementation is more efficient than the one in the framework
 
 // ReSharper disable once CheckNamespace
 namespace System.Threading
@@ -37,9 +37,9 @@ namespace System.Threading
 
         internal void SpinOnce()
         {
-            // count & 1 check: interleaving spinning and yield/sleep because Yield/Sleep(0) returns immediately when there are no waiting threads.
-            // This also can prevent switching threads between each other if there are more calling Yield/Sleep(0) at the same time
-            if (count > yieldThreshold && (count & 1) == 0 || isSingleProcessor)
+            // (count & 1) == 0: interleaving spinning and yield/sleep because Yield/Sleep(0) returns immediately when there are no waiting threads.
+            // This can prevent also switching threads between each other if there are more threads calling Yield/Sleep(0) at the same time
+            if (count >= sleep1Threshold || count >= yieldThreshold && (count & 1) == 0 || isSingleProcessor)
             {
 #if NET35
                 Thread.Sleep(count >= sleep1Threshold ? 1 : 0);
@@ -49,7 +49,7 @@ namespace System.Threading
                 else
                 {
                     int yieldsSoFar = count >= yieldThreshold ? (count - yieldThreshold) >> 1 : count;
-                    if ((yieldsSoFar % sleep0EveryHowManyYields) == (sleep0EveryHowManyYields - 1))
+                    if (yieldsSoFar % sleep0EveryHowManyYields == sleep0EveryHowManyYields - 1)
                         Thread.Sleep(0);
                     else
                         Thread.Yield();
