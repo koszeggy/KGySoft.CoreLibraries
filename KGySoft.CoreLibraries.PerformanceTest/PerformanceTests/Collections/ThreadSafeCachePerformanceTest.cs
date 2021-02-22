@@ -119,7 +119,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             new PerformanceTest { TestName = "Sequential Populate", Iterations = 1_000 }
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity });
                     for (int i = 0; i < count; i++)
                     {
                         var _ = cache[i];
@@ -127,7 +127,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 }, $"LockFree, Doubling until {capacity:N0}")
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialCapacity = capacity, ThresholdCapacity = capacity });
                     for (int i = 0; i < count; i++)
                     {
                         var _ = cache[i];
@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 }, $"LockFree, Preallocating {capacity:N0}")
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialCapacity = capacity, ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
                     for (int i = 0; i < count; i++)
                     {
                         var _ = cache[i];
@@ -207,7 +207,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             new PerformanceTest { TestName = "Parallel Populate", Iterations = 1_000, CpuAffinity = null }
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity });
                     Parallel.For(0, count, i =>
                     {
                         var _ = cache[i];
@@ -215,7 +215,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 }, $"LockFree, Doubling until {capacity:N0}")
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialCapacity = capacity, ThresholdCapacity = capacity });
                     Parallel.For(0, count, i =>
                     {
                         var _ = cache[i];
@@ -223,7 +223,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 }, $"LockFree, Preallocating {capacity:N0}")
                 .AddCase(() =>
                 {
-                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialL2Capacity = capacity, MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+                    var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { InitialCapacity = capacity, ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
                     Parallel.For(0, count, i =>
                     {
                         var _ = cache[i];
@@ -291,8 +291,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             const int capacity = 10_000;
 
-            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.Modulo });
-            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.Modulo });
+            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
@@ -356,8 +356,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             const int capacity = 10_000;
 
-            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.Modulo });
-            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.Modulo });
+            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
@@ -422,8 +422,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             const int capacity = 1_000;
             const int range = capacity * 4;
 
-            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.Modulo });
-            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.Modulo });
+            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
@@ -449,8 +449,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             const int range = capacity * 4;
             const int iterations = 10_000_000;
 
-            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.Modulo });
-            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { MaximumL2Capacity = capacity, HashingStrategy = HashingStrategy.And });
+            var lockFreeMod = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.Modulo });
+            var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);

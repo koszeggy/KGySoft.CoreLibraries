@@ -100,8 +100,8 @@ namespace KGySoft.Collections
 
             #region Internal Constructors
 
-            internal ReadOnlyDictionary(int maxCapacity, GrowOnlyDictionary primaryValues, ReadOnlyDictionary? additionalValues)
-                : this(primaryValues.IsAndHash, primaryValues.Comparer, Math.Min(maxCapacity, primaryValues.Count + (additionalValues?.Count ?? 0)))
+            internal ReadOnlyDictionary(int maxCapacity, GrowOnlyDictionary primaryValues, ReadOnlyDictionary additionalValues)
+                : this(primaryValues.IsAndHash, primaryValues.Comparer, Math.Min(maxCapacity, primaryValues.Count + additionalValues.Count))
             {
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
@@ -122,7 +122,7 @@ namespace KGySoft.Collections
                     bucketRef = ++index; // bucket indices are 1-based
                 }
 
-                if (additionalValues == null || index == capacity)
+                if (index == capacity)
                     return;
 
                 // Taking as many additional values as allowed by remaining capacity

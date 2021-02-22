@@ -26,6 +26,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Represents the options for a thread safe cache instance to be created by the <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see> methods.
     /// You can use the <see cref="LockingCacheOptions"/> and <see cref="LockFreeCacheOptions"/> types as built-in implementations.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> method for details.
     /// </summary>
     public abstract class ThreadSafeCacheOptionsBase
     {

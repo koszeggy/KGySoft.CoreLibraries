@@ -34,7 +34,7 @@ namespace KGySoft.Collections
 
         private readonly Func<TKey, TValue> itemLoader;
         private readonly IEqualityComparer<TKey>? comparer;
-        private readonly int maxL2Capacity;
+        private readonly int thresholdCapacity;
         private readonly long? mergeInterval;
         private readonly bool bitwiseAndHash;
 
@@ -85,16 +85,16 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Argument.options, Res.PropertyMessage(nameof(options.HashingStrategy), Res.EnumOutOfRange(options.HashingStrategy)));
             if (options.MergeInterval < TimeSpan.Zero)
                 Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualTo(nameof(options.MergeInterval), TimeSpan.Zero));
-            if (options.InitialL2Capacity <= 0)
-                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThan(nameof(options.InitialL2Capacity), 0));
-            if (options.MaximumL2Capacity < options.InitialL2Capacity)
-                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualToProperty(nameof(options.MaximumL2Capacity), nameof(options.InitialL2Capacity)));
+            if (options.InitialCapacity <= 0)
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThan(nameof(options.InitialCapacity), 0));
+            if (options.ThresholdCapacity < options.InitialCapacity)
+                Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualToProperty(nameof(options.ThresholdCapacity), nameof(options.InitialCapacity)));
 
             this.itemLoader = itemLoader;
             this.comparer = comparer;
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
-            nextCapacity = options.InitialL2Capacity;
-            maxL2Capacity = options.MaximumL2Capacity;
+            nextCapacity = options.InitialCapacity;
+            thresholdCapacity = options.ThresholdCapacity;
             mergeInterval = options.MergeInterval.HasValue ? TimeHelper.GetInterval(options.MergeInterval.Value) : null;
             readOnlyStorage = ReadOnlyDictionary.Empty;
         }
@@ -126,7 +126,7 @@ namespace KGySoft.Collections
             int threshold = nextCapacity;
             int l1Count = l1Cache.Count;
             int l2Count = l2Cache.Count;
-            int max = maxL2Capacity;
+            int max = thresholdCapacity;
             bool byCapacity = l2Count >= threshold;
             bool byInterval = !byCapacity && mergeInterval.HasValue && l1Count < max && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
             if (!(byCapacity || byInterval))
@@ -139,7 +139,6 @@ namespace KGySoft.Collections
 
             try
             {
-                bool dropL1 = l2Count >= max || l1Count == 0;
                 if (byCapacity && threshold < max)
                 {
                     // TODO: range check or uint
@@ -147,7 +146,7 @@ namespace KGySoft.Collections
                 }
 
                 growingStorage = null;
-                readOnlyStorage = new ReadOnlyDictionary(max, l2Cache, dropL1 ? null : l1Cache);
+                readOnlyStorage = new ReadOnlyDictionary(max, l2Cache, l1Cache);
             }
             finally
             {

@@ -23,6 +23,14 @@ using System.Collections.Generic;
 
 namespace KGySoft.Collections
 {
+    /// <summary>
+    /// Represents the options for creating a fast, lock-free, thread safe cache by the
+    /// <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see> methods.
+    /// <br/>To see when to use <see cref="LockFreeCacheOptions"/> or <see cref="LockingCacheOptions"/> see the <strong>Remarks</strong> section.
+    /// of the <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> method.
+    /// </summary>
+    /// <seealso cref="ThreadSafeCacheFactory" />
+    /// <seealso cref="ThreadSafeCacheOptionsBase" />
     public sealed class LockFreeCacheOptions : ThreadSafeCacheOptionsBase
     {
         #region Fields
@@ -36,28 +44,49 @@ namespace KGySoft.Collections
         #region Public Properties
 
         /// <summary>
-        /// Gets or sets the number of the required elements in the slower L2 cache, which triggers the first merge into the faster L1 cache.
-        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// Gets or sets the initial capacity of the cache.
+        /// <br/>Default value: <c>16</c>.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="ThresholdCapacity"/> property for details.
+        /// </summary>
+        public int InitialCapacity { get; set; } = 16;
+
+        /// <summary>
+        /// Gets or sets the maximum number of elements, which triggers a merge operation from the underlying dynamic growing storage into the faster read-only storage.
+        /// Specifies also the number of elements to be kept when older elements are dropped from the cache. The actual maximum number of stored items can be about twice of this value.
+        /// <br/>Default value: <c>1024</c>.
         /// </summary>
         /// <remarks>
-        /// <para>If the value of this property is much lower than the expected number of items to store, then a merge operation
-        /// may occur too often in the beginning, which has some cost.</para>
-        /// <para>If the value of this property is higher than the expected number of items to store, then cached elements might remain in the slower L2 cache.</para>
-        /// <para>The L1 capacity will be doubled in each merge operation until <see cref="MaximumL2Capacity"/> is reached.
-        /// A tiered cache instance may store about twice as many elements as it is specified by the <see cref="MaximumL2Capacity"/> when it is completely full.</para>
-        /// <para>If it cannot be really determined how many items in the cache will stored, then you can set the <see cref="MergeInterval"/> property,
-        /// which makes a regular merge operation possible even if the required capacity limit is not reached.</para>
-        /// // TODO: What faster/slower L1/L2 means: depending on implementation they can be the same type with/o lock, or
-        /// a fast Dictionary-like L1 cache vs a slower ConcurrentDictionary-like L2 cache (where L2 is somewhat faster than a ConcurrentDictionary and is also completely lock-free)
+        /// <para>The value of the <see cref="ThresholdCapacity"/> property must be greater or equal to the value of the <see cref="InitialCapacity"/> property.</para>
+        /// <para>When the first element is about to be stored a dynamic storage is allocated that can optimally store about as many elements as specified by the <see cref="InitialCapacity"/> property.
+        /// When the number of stored elements reaches <see cref="InitialCapacity"/> capacity, then content of the dynamic storage is copied into a faster read-only storage, and for additional elements
+        /// a new dynamic storage is allocated with either doubled capacity or the specified <see cref="ThresholdCapacity"/>, whichever is less.</para>
+        /// <para>Once the number of stored elements in the dynamically growing storage reaches <see cref="ThresholdCapacity"/>, the complete previous content of the faster read-only storage is replaced
+        /// by the elements in the growing storage. Therefore, when adding new items continuously, the number of stored elements will be between <see cref="ThresholdCapacity"/> and twice of <see cref="ThresholdCapacity"/>.</para>
+        /// <para>If it cannot be really determined how many items in the cache will be stored, then you can set the <see cref="MergeInterval"/> property,
+        /// which can trigger a merge operation to the faster storage by time, even if the required capacity limit is not reached yet.</para>
         /// </remarks>
-        public int InitialL2Capacity { get; set; } = 16;
+        public int ThresholdCapacity { get; set; } = 1024;
 
-        public int MaximumL2Capacity { get; set; } = 1024;
-
-        // if merge can occur also based on time. After merge the new expando capacity will be Min(doubledLockFree.Count, maxCapacity).
-        // If there is no merge but swapping the swap does not occur until expando.Count < lockFree.Count
+        /// <summary>
+        /// Gets or sets a time period, which may trigger a merge operation into the faster read-only storage even when no new elements are added.
+        /// If <see langword="null"/>, then time-based merging is disabled.
+        /// <br/>Default value: <see langword="null"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>Even if this property is set, capacity-based merging works as described in the <strong>Remarks</strong> section of the <see cref="ThresholdCapacity"/> property.</para>
+        /// <para>Even if this property is set, no extra resources (such as timer) are used. No merging occurs if elements are retrieved from the faster read-only cache.
+        /// A time-based merging may occur only if the dynamically growing storage is accessed.</para>
+        /// <para>Once the stored number of elements reaches <see cref="ThresholdCapacity"/> the value of this property is ignored.</para>
+        /// <para>Depending on the targeted platform it is possible that no time-based merging occurs more often than 15 milliseconds.</para>
+        /// <note type="tip">Set this property when it is likely that the number of stored elements will not reach the specified capacities (maybe even <see cref="InitialCapacity"/>)
+        /// and you still want to make sure that the stored elements are merged into the faster read-only storage even if no newer elements are added.</note>
+        /// </remarks>
         public TimeSpan? MergeInterval { get; set; }
 
+        /// <summary>
+        /// Gets or sets the hashing strategy to be used by the cache.
+        /// <br/>Default value: <see cref="Collections.HashingStrategy.Auto"/>.
+        /// </summary>
         public HashingStrategy HashingStrategy { get; set; }
 
         #endregion
@@ -66,6 +95,7 @@ namespace KGySoft.Collections
 
         #region Methods
 
+        /// <inheritdoc/>
         protected internal override IThreadSafeCacheAccessor<TKey, TValue> CreateInstance<TKey, TValue>(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer)
             => new LockFreeCache<TKey, TValue>(itemLoader, comparer, this);
 

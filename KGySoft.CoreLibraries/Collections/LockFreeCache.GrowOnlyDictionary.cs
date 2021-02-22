@@ -46,9 +46,9 @@ namespace KGySoft.Collections
             {
                 #region Fields
 
-                internal uint Hash;
-                internal TKey Key;
-                internal TValue Value;
+                internal readonly uint Hash;
+                internal readonly TKey Key;
+                internal readonly TValue Value;
                 internal volatile Entry? Next;
 
                 #endregion

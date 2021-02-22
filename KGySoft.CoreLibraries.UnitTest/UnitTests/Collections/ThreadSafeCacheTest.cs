@@ -132,7 +132,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             configuration ??= LockFreeCacheOptions.DefaultOptions;
             int maxCapacity = configuration is LockingCacheOptions locking ? locking.Capacity
-                : configuration is LockFreeCacheOptions lockFree ? lockFree.MaximumL2Capacity * 2
+                : configuration is LockFreeCacheOptions lockFree ? lockFree.ThresholdCapacity * 2
                 : throw new InvalidOperationException("Unexpected configuration type");
 
 #if NET35
