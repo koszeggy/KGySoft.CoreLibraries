@@ -109,13 +109,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             static T Key(int i) => i.Convert<T>();
 
             ThreadSafeDictionary<T, int> triggerCount = new ThreadSafeDictionary<T, int>();
-            Func<T, T> itemLoader = key =>
+
+            T ItemLoader(T key)
             {
                 triggerCount.AddOrUpdate(key, 1, (k, old) => old + 1);
                 return key;
-            };
+            }
 
-            IThreadSafeCacheAccessor<T, T> cache = ThreadSafeCacheFactory.Create(itemLoader, useComparer ? ComparerHelper<T>.EqualityComparer : null, configuration);
+            IThreadSafeCacheAccessor<T, T> cache = ThreadSafeCacheFactory.Create((Func<T, T>)ItemLoader, useComparer ? ComparerHelper<T>.EqualityComparer : null, configuration);
             T key = Key(-1);
 
             // Before usage:

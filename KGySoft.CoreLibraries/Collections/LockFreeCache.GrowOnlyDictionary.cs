@@ -178,7 +178,7 @@ namespace KGySoft.Collections
 
             internal TValue this[TKey key]
             {
-                get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
+                get => TryGetValue(key, out TValue? value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
                 set
                 {
                     if (key == null!)
@@ -222,7 +222,6 @@ namespace KGySoft.Collections
 
             internal bool TryAddInternal(TKey key, TValue value, uint hashCode)
             {
-                Debug.Assert(key != null!);
                 ref Bucket bucketRef = ref buckets[GetBucketIndex(hashCode)];
 
                 // we are optimistic
@@ -243,7 +242,7 @@ namespace KGySoft.Collections
 
                 // iterating through the entries until we find key or the end of the list
                 IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
-                Entry entry = bucketRef.First;
+                Entry entry = bucketRef.First!;
                 while (true)
                 {
                     // key already exists
@@ -285,9 +284,6 @@ namespace KGySoft.Collections
 
             internal TValue GetOrAddInternal(TKey key, Func<TKey, TValue> itemLoader, uint hashCode)
             {
-                Debug.Assert(key != null!);
-                Debug.Assert(itemLoader != null!);
-
                 ref Bucket bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 Entry? newEntry = null;
 
@@ -307,7 +303,7 @@ namespace KGySoft.Collections
 
                 // iterating through the entries until we find key or the end of the list
                 IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
-                Entry entry = bucketRef.First;
+                Entry entry = bucketRef.First!;
                 while (true)
                 {
                     // item found

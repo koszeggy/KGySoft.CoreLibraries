@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: ThreadSafeDictionary.LockFree.cs
+//  File: ThreadSafeDictionary.FixedSizeStorage.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
@@ -36,7 +36,7 @@ namespace KGySoft.Collections
         /// Represents a lock-free fixed size thread safe dictionary that supports updating values in a thread-safe manner,
         /// though adding new values is not supported. Removing and re-setting keys are supported though, which is also thread-safe.
         /// </summary>
-        internal sealed class LockFreeStorage
+        internal sealed class FixedSizeStorage
         {
             #region Nested structs
 
@@ -97,7 +97,7 @@ namespace KGySoft.Collections
 
                 #region Constructors
 
-                internal Enumerator(LockFreeStorage owner)
+                internal Enumerator(FixedSizeStorage owner)
                 {
                     entries = owner.entries;
                     pos = 0;
@@ -125,7 +125,7 @@ namespace KGySoft.Collections
                         if (box == null)
                             continue;
 
-                        Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value);
+                        Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value!);
                         return true;
                     }
 
@@ -145,7 +145,7 @@ namespace KGySoft.Collections
 
             #region Internal Fields
 
-            internal static readonly LockFreeStorage Empty = new LockFreeStorage();
+            internal static readonly FixedSizeStorage Empty = new FixedSizeStorage();
 
             #endregion
 
@@ -184,7 +184,7 @@ namespace KGySoft.Collections
 
             public TValue this[TKey key]
             {
-                get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
+                get => TryGetValue(key, out TValue? value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
                 set
                 {
                     if (key == null!)
@@ -201,7 +201,7 @@ namespace KGySoft.Collections
 
             #region Internal Constructors
 
-            internal LockFreeStorage(bool isAndHash, IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null)
+            internal FixedSizeStorage(bool isAndHash, IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null)
             {
                 if (dictionary == null!)
                     Throw.ArgumentNullException(Argument.dictionary);
@@ -210,7 +210,7 @@ namespace KGySoft.Collections
                 Initialize(dictionary);
             }
 
-            internal LockFreeStorage(LockFreeStorage other, LockingStorage mergeWith)
+            internal FixedSizeStorage(FixedSizeStorage other, RegularStorage mergeWith)
             {
                 isAndHash = mergeWith.IsAndHash;
                 comparer = mergeWith.Comparer;
@@ -221,7 +221,7 @@ namespace KGySoft.Collections
 
             #region Private Constructors
 
-            private LockFreeStorage()
+            private FixedSizeStorage()
             {
                 Debug.Assert(typeof(TValue).SizeOf() <= IntPtr.Size, $"TValue = {typeof(TValue).GetName(TypeNameKind.ShortName)} should not be used because it cannot be written atomically.");
 
@@ -261,7 +261,7 @@ namespace KGySoft.Collections
                 return TryReplaceInternal(key, newValue, originalValue, GetHashCode(key)) == true;
             }
 
-            public bool TryRemove(TKey key, out TValue value)
+            public bool TryRemove(TKey key, [MaybeNullWhen(false)]out TValue value)
             {
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
@@ -426,7 +426,7 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal bool? TryRemoveInternal(TKey key, uint hash, [MaybeNull]out TValue value)
+            internal bool? TryRemoveInternal(TKey key, uint hash, out TValue? value)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
@@ -516,7 +516,7 @@ namespace KGySoft.Collections
                     PopulateByComparer(dictionary);
             }
 
-            private void Initialize(LockFreeStorage other, LockingStorage mergeWith)
+            private void Initialize(FixedSizeStorage other, RegularStorage mergeWith)
             {
                 int otherCount = other.entries.Length;
                 int count = otherCount + mergeWith.Count;
@@ -587,7 +587,7 @@ namespace KGySoft.Collections
                 }
             }
 
-            private void CopyFrom(LockFreeStorage other)
+            private void CopyFrom(FixedSizeStorage other)
             {
                 // Writing this instance is non-volatile because we are coming from constructor.
                 // If items are overwritten/deleted in other during this initialization it should be handled by the caller.
@@ -620,12 +620,12 @@ namespace KGySoft.Collections
                 }
             }
 
-            private void CopyFrom(LockingStorage other, int index)
+            private void CopyFrom(RegularStorage other, int index)
             {
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
 
-                LockingStorage.CustomEnumerator enumerator = other.GetCustomEnumerator();
+                RegularStorage.CustomEnumerator enumerator = other.GetCustomEnumerator();
                 while (enumerator.MoveNext())
                 {
                     // assuming other was already consistent so not checking for duplicate keys

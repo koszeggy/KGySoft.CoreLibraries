@@ -88,6 +88,7 @@ namespace KGySoft.Collections
 
         #region Methods
 
+        /// <inheritdoc/>
         protected internal override IThreadSafeCacheAccessor<TKey, TValue> CreateInstance<TKey, TValue>(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey>? comparer)
         {
             // Regular Cache instance with thread safe accessor

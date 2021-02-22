@@ -57,7 +57,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             public override int GetHashCode() => 0;
 
-            public override bool Equals(object? obj) => obj is PoorHashTest pht && pht.value == value;
+            public override bool Equals(object obj) => obj is PoorHashTest pht && pht.value == value;
 
             #endregion
         }

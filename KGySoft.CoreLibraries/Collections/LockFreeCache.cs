@@ -140,10 +140,8 @@ namespace KGySoft.Collections
             try
             {
                 if (byCapacity && threshold < max)
-                {
-                    // TODO: range check or uint
-                    nextCapacity = Math.Min(max, Math.Max(l1Count + l2Count, threshold << 1));
-                }
+                    // Max(threshold, ...): guard against overflow
+                    nextCapacity = Math.Min(max, Math.Max(threshold, Math.Max(l1Count + l2Count, threshold << 1)));
 
                 growingStorage = null;
                 readOnlyStorage = new ReadOnlyDictionary(max, l2Cache, l1Cache);

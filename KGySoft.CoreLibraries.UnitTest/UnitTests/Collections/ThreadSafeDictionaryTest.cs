@@ -18,13 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
-using KGySoft.Annotations;
+
 using KGySoft.Collections;
-using KGySoft.Reflection;
+
 using NUnit.Framework;
 
 #endregion
@@ -36,15 +33,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
     {
         #region Fields
 
-        private static TimeSpan defaultTimeout = TimeSpan.FromMilliseconds(100);
-        private static TimeSpan infiniteTimeout =
+        private static readonly TimeSpan defaultTimeout = TimeSpan.FromMilliseconds(100);
+        private static readonly TimeSpan infiniteTimeout =
 #if NET35 || NET40
             TimeSpan.FromMilliseconds(Timeout.Infinite);
 #else
             Timeout.InfiniteTimeSpan;
 #endif
 
-        private static object[] usageTestSource =
+        private static readonly object[] usageTestSource =
         {
             new object[] { "Default settings", null, HashingStrategy.Auto, defaultTimeout },
             new object[] { "Explicit comparer", ComparerHelper<string>.EqualityComparer, HashingStrategy.Auto, defaultTimeout },
@@ -61,9 +58,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
         [TestCase(false)]
         [TestCase(true)]
-        public void LockFreeStorageUsageTest(bool ignoreCase)
+        public void FixedSizeStorageUsageTest(bool ignoreCase)
         {
-            var dict = new ThreadSafeDictionary<string, int>.LockFreeStorage(default, new Dictionary<string, int>
+            var dict = new ThreadSafeDictionary<string, int>.FixedSizeStorage(default, new Dictionary<string, int>
             {
                 ["alpha"] = 1,
                 ["beta"] = 2,
@@ -112,9 +109,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
         [TestCase(false)]
         [TestCase(true)]
-        public void LockingStorageUsageTest(bool ignoreCase)
+        public void RegularStorageUsageTest(bool ignoreCase)
         {
-            var dict = new ThreadSafeDictionary<string, int>.LockingStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
+            var dict = new ThreadSafeDictionary<string, int>.RegularStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
 
             // Add
             dict.Add("alpha", 1);

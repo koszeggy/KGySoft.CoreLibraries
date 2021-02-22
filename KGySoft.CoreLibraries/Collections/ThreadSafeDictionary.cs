@@ -65,12 +65,12 @@ namespace KGySoft.Collections
         /// When reading, values here are accessed without locking.
         /// Once a new key is added, it is never removed anymore even for deleted entries.
         /// </summary>
-        private volatile LockFreeStorage lockFreeStorage;
+        private volatile FixedSizeStorage lockFreeStorage;
 
         /// <summary>
         /// A temporary storage for new values. It is regularly merged with lockFreeStorage into a new fixed size instance.
         /// </summary>
-        private volatile LockingStorage? lockingStorage;
+        private volatile RegularStorage? lockingStorage;
 
         private long mergeInterval = TimeHelper.GetInterval(100);
         private long nextMerge;
@@ -93,7 +93,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    LockingStorage? lockingValues = lockingStorage;
+                    RegularStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -124,11 +124,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public TimeSpan MergeInterval
         {
-            get
-            {
-                lock (syncRoot)
-                    return TimeHelper.GetTimeSpan(mergeInterval);
-            }
+            get => TimeHelper.GetTimeSpan(Volatile.Read(ref mergeInterval));
             set
             {
                 lock (syncRoot)
@@ -186,7 +182,7 @@ namespace KGySoft.Collections
 
         public TValue this[TKey key]
         {
-            get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
+            get => TryGetValue(key, out TValue? value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
             set
             {
                 if (key == null!)
@@ -228,7 +224,7 @@ namespace KGySoft.Collections
                 capacity = defaultCapacity;
             }
 
-            lockFreeStorage = LockFreeStorage.Empty;
+            lockFreeStorage = FixedSizeStorage.Empty;
             initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
             this.comparer = comparer;
@@ -239,7 +235,7 @@ namespace KGySoft.Collections
         {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            lockFreeStorage = new LockFreeStorage(bitwiseAndHash, dictionary, comparer);
+            lockFreeStorage = new FixedSizeStorage(bitwiseAndHash, dictionary, comparer);
         }
 
         #endregion
@@ -296,7 +292,7 @@ namespace KGySoft.Collections
 
             while (true)
             {
-                if (TryGetValueInternal(key, hashCode, out TValue oldValue))
+                if (TryGetValueInternal(key, hashCode, out TValue? oldValue))
                 {
                     // Exists, trying to update
                     TValue newValue = updateValueFactory.Invoke(key, oldValue);
@@ -322,7 +318,7 @@ namespace KGySoft.Collections
             bool removed = false;
             while (true)
             {
-                LockFreeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode);
 
                 // making sure that correct result is returned even if multiple tries are necessary due to merging
@@ -347,7 +343,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    LockingStorage? lockingValues = lockingStorage;
+                    RegularStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -368,14 +364,16 @@ namespace KGySoft.Collections
             uint hashCode = GetHashCode(key);
             while (true)
             {
-                LockFreeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode, out value);
 
                 // making sure that removed entry is returned even if multiple tries are necessary due to merging
                 if (success == true)
                 {
                     if (IsUpToDate(lockFreeValues))
+#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition. - false alarm, TryRemoveInternal returned true
                         return true;
+#pragma warning restore CS8762
 
                     continue;
                 }
@@ -389,7 +387,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    LockingStorage? lockingValues = lockingStorage;
+                    RegularStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -409,7 +407,7 @@ namespace KGySoft.Collections
 
             while (true)
             {
-                LockFreeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = lockFreeStorage;
                 lockFreeValues.Clear();
                 if (IsUpToDate(lockFreeValues))
                     return;
@@ -423,7 +421,7 @@ namespace KGySoft.Collections
 
             lock (syncRoot)
             {
-                LockingStorage? lockingValues = lockingStorage;
+                RegularStorage? lockingValues = lockingStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -433,7 +431,7 @@ namespace KGySoft.Collections
             }
         }
 
-        public LockFreeStorage.Enumerator GetEnumerator()
+        public FixedSizeStorage.Enumerator GetEnumerator()
         {
             EnsureMerged();
             return lockFreeStorage.GetEnumerator();
@@ -443,7 +441,7 @@ namespace KGySoft.Collections
 
         #region Private Methods
 
-        private bool TryGetValueInternal(TKey key, uint hashCode, out TValue value)
+        private bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
         {
             bool? success = lockFreeStorage.TryGetValueInternal(key, hashCode, out value);
             if (success.HasValue)
@@ -454,7 +452,7 @@ namespace KGySoft.Collections
 
             lock (syncRoot)
             {
-                LockingStorage? lockingValues = lockingStorage;
+                RegularStorage? lockingValues = lockingStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -470,7 +468,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                LockFreeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryInsertInternal(key, value, hashCode, behavior);
                 if (success == true)
                 {
@@ -486,7 +484,7 @@ namespace KGySoft.Collections
                 // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
-                    LockingStorage lockingValues = GetCreateLockingStorage();
+                    RegularStorage lockingValues = GetCreateLockingStorage();
                     bool result = lockingValues.TryInsertInternal(key, value, hashCode, behavior);
                     MergeIfExpired();
                     return result;
@@ -498,7 +496,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                LockFreeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = lockFreeStorage;
                 bool? success = lockFreeValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
                 if (success == true)
                 {
@@ -516,7 +514,7 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    LockingStorage? lockingValues = lockingStorage;
+                    RegularStorage? lockingValues = lockingStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -537,12 +535,12 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private LockingStorage GetCreateLockingStorage()
+        private RegularStorage GetCreateLockingStorage()
         {
-            LockingStorage? result = lockingStorage;
+            RegularStorage? result = lockingStorage;
             if (result != null)
                 return result;
-            result = lockingStorage = new LockingStorage(initialLockingCapacity, comparer, bitwiseAndHash);
+            result = lockingStorage = new RegularStorage(initialLockingCapacity, comparer, bitwiseAndHash);
             long interval = mergeInterval;
             if (interval > 0L)
                 nextMerge = TimeHelper.GetTimeStamp() + interval;
@@ -561,7 +559,7 @@ namespace KGySoft.Collections
             // Must be in a lock to work properly!
             Debug.Assert(!isMerging || lockingStorage != null, "Make sure caller is in a lock");
 
-            LockingStorage lockingValues = lockingStorage!;
+            RegularStorage lockingValues = lockingStorage!;
             if (lockingValues.Count != 0)
             {
                 // Indicating that from this point lockFreeStorage cannot be considered safe even though its reference is not replaced yet.
@@ -570,7 +568,7 @@ namespace KGySoft.Collections
                 isMerging = true;
                 try
                 {
-                    lockFreeStorage = new LockFreeStorage(lockFreeStorage, lockingValues);
+                    lockFreeStorage = new FixedSizeStorage(lockFreeStorage, lockingValues);
                 }
                 finally
                 {
@@ -583,7 +581,7 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private bool IsUpToDate(LockFreeStorage lockFreeValues)
+        private bool IsUpToDate(FixedSizeStorage lockFreeValues)
         {
             // fixed-size storage has been replaced
             if (lockFreeValues != lockFreeStorage)
@@ -615,7 +613,7 @@ namespace KGySoft.Collections
             => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
-            => TryGetValue(item.Key, out TValue value) && ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value);
+            => TryGetValue(item.Key, out TValue? value) && ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value);
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
@@ -635,7 +633,7 @@ namespace KGySoft.Collections
             Debug.Fail("It is not expected to call this method. A TryRemove(key, value) must be implemented if it will be a public class.");
             while (true)
             {
-                if (!TryRemove(item.Key, out TValue value))
+                if (!TryRemove(item.Key, out TValue? value))
                     return false;
                 
                 if (ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value))

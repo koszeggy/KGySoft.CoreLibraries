@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: ThreadSafeDictionary.Locking.cs
+//  File: ThreadSafeDictionary.RegularStorage.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
@@ -34,7 +34,7 @@ namespace KGySoft.Collections
         /// When instantiated, always has a preallocated storage.
         /// Not thread-safe so the consumer must do the locking for the Try... members.
         /// </summary>
-        internal sealed class LockingStorage
+        internal sealed class RegularStorage
         {
             #region Nested structs
 
@@ -46,7 +46,7 @@ namespace KGySoft.Collections
                 #region Fields
 
                 internal uint Hash;
-                internal TKey Key;
+                [AllowNull]internal TKey Key;
                 [AllowNull]internal TValue Value;
 
                 /// <summary>
@@ -85,7 +85,7 @@ namespace KGySoft.Collections
 
                 #region Constructors
 
-                internal CustomEnumerator(LockingStorage owner)
+                internal CustomEnumerator(RegularStorage owner)
                 {
                     usedCount = owner.usedCount;
                     entries = owner.entries;
@@ -152,8 +152,8 @@ namespace KGySoft.Collections
             private readonly bool isAndHash;
 
             private int usedCount; // used elements in items including deleted ones
-            private Entry[] entries;
-            private int[] buckets; // 1-based indices for entries. 0 if unused.
+            private Entry[] entries = default!;
+            private int[] buckets = default!; // 1-based indices for entries. 0 if unused.
             private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
             private int deletedCount;
             private int deletedItemsBucket; // First deleted entry among used elements. -1 if there are no deleted elements.
@@ -185,7 +185,7 @@ namespace KGySoft.Collections
 
             public TValue this[TKey key]
             {
-                get => TryGetValue(key, out TValue value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
+                get => TryGetValue(key, out TValue? value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
                 set
                 {
                     if (key == null!)
@@ -200,7 +200,7 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal LockingStorage(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
+            internal RegularStorage(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
             {
                 Debug.Assert(capacity > 0, "Nonzero initial capacity is expected in CustomDictionary");
                 this.isAndHash = isAndHash;
@@ -243,16 +243,6 @@ namespace KGySoft.Collections
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
                 return TryGetValueInternal(key, GetHashCode(key), out value);
-                // TODO: delete
-                //ref TValue resultRef = ref TryGetValueInternal(key, GetHashCode(key));
-                //if (!Unsafe.IsNullRef(ref resultRef))
-                //{
-                //    value = resultRef;
-                //    return true;
-                //}
-
-                //value = default;
-                //return false;
             }
 
             public void Add(TKey key, TValue value)
