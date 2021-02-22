@@ -74,9 +74,13 @@ namespace KGySoft.Collections
         public bool ProtectItemLoader { get; set; }
 
         /// <summary>
-        /// Gets or sets an expiration time for the values to be stored in the cache.
-        /// If <see langword="null"/>, then the values will not expire.
+        /// Gets or sets an expiration time for the values to be stored in the cache. If <see langword="null"/>, then the values will not expire.
         /// <br/>Default value: <see langword="null"/>.
+        /// <remarks>
+        /// <para>Even if this property is <see langword="null"/>, values might be reloaded from time to time because if the cache is full (see <see cref="Capacity"/>)
+        /// oldest or least recent used elements (see <see cref="Behavior"/>) are dropped from the cache.</para>
+        /// <para>Depending on the targeted platform it is possible that values will not expire for at least 15 milliseconds.</para>
+        /// </remarks>
         /// </summary>
         public TimeSpan? Expiration { get; set; }
 

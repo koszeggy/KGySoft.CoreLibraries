@@ -54,6 +54,7 @@ namespace KGySoft.Collections
     /// <typeparam name="TKey">Type of the keys stored in the cache.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the cache.</typeparam>
     /// <remarks>
+    /// <note type="tip">To create a thread-safe <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that fits the best for your needs use the members of the <see cref="ThreadSafeCacheFactory"/> class.</note>
     /// <para><see cref="Cache{TKey,TValue}"/> type provides a fast-access storage with limited capacity and transparent access. If you need to store
     /// items that are expensive to retrieve (for example from a database or remote service) and you don't want to run out of memory because of
     /// just storing newer and newer elements without getting rid of old ones, then this type might fit your expectations.
@@ -87,6 +88,7 @@ namespace KGySoft.Collections
     /// <see cref="DictionaryExtensions.AsThreadSafe{TKey,TValue}">AsThreadSafe</see> extension method instead.
     /// <note>If a <see cref="Cache{TKey,TValue}"/> instance is wrapped into a <see cref="LockingDictionary{TKey, TValue}"/> instance, then the whole cache will be locked during the time when the item loader delegate is being called.
     /// If that is not desirable consider to use the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead with the default arguments and access the cache only via the returned accessor.</note>
+    /// <note type="tip">To create a thread-safe <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that fits the best for your needs use the members of the <see cref="ThreadSafeCacheFactory"/> class.</note>
     /// </threadsafety>
     /// <example>
     /// The following example shows the suggested usage of <see cref="Cache{TKey,TValue}"/>.
@@ -245,6 +247,7 @@ namespace KGySoft.Collections
     /// // Number of deletes: 2
     /// // Hit rate: 14,29%]]></code></example>
     /// <seealso cref="CacheBehavior"/>
+    /// <seealso cref="ThreadSafeCacheFactory"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
@@ -846,7 +849,7 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         /// <seealso cref="Behavior"/>
-        private static readonly Func<TKey, TValue> nullLoader = key => Throw.KeyNotFoundException<TValue>(Res.CacheNullLoaderInvoke);
+        private static readonly Func<TKey, TValue> nullLoader = _ => Throw.KeyNotFoundException<TValue>(Res.CacheNullLoaderInvoke);
 
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
@@ -1686,7 +1689,11 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
         /// <remarks>
-        /// <note type="tip">To access the whole <see cref="Cache{TKey,TValue}"/> in a thread-safe manner use it via a <see cref="LockingDictionary{TKey,TValue}"/> instance.</note>
+        /// <note type="tip">
+        /// <list type="bullet">
+        /// <item>To create a thread-safe <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that fits the best for your needs use the members of the <see cref="ThreadSafeCacheFactory"/> class.</item>
+        /// <item>To access all <see cref="IDictionary{TKey, TValue}"/> members of the <see cref="Cache{TKey,TValue}"/> in a thread-safe manner use it via a <see cref="LockingDictionary{TKey,TValue}"/> instance.</item>
+        /// </list></note>
         /// </remarks>
         public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false)
         {

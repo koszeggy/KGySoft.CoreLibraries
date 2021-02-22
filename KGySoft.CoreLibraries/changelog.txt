@@ -20,10 +20,10 @@
 * KGySoft.Collections namespace:
 ================================
 - ArraySection<T> struct: AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
-* Cache<TKey, TValue> class: balancing out hashing performance
 + New ThreadSafeCacheFactory class
 + New ThreadSafeCacheOptionsBase/LockFreeCacheOptions/LockingCacheOptions classes
 + New HashingStrategy enum
+* Cache<TKey, TValue> class: balancing out hashing performance
 
 - KGySoft.Collections.ObjectModel namespace:
 ============================================

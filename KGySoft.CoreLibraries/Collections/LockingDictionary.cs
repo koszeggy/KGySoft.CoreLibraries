@@ -79,15 +79,19 @@ namespace KGySoft.Collections
     /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
-    /// <note type="tip">For a <see cref="Cache{TKey,TValue}"/> use this class only if you want a thread-safe wrapper for all <see cref="IDictionary{TKey,TValue}"/> members and if it is not a problem if the cache remains locked
+    /// <note type="tip"><list type="bullet">
+    /// <item>For a <see cref="Cache{TKey,TValue}"/> use this class only if you want a thread-safe wrapper for all <see cref="IDictionary{TKey,TValue}"/> members and if it is not a problem if the cache remains locked
     /// during the invocation of the item loader delegate passed to the appropriate <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
-    /// Otherwise, it may worth to use an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instead, which can be obtained by the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.</note>
+    /// Otherwise, it may worth to use an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instead, which can be obtained by the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.</item>
+    /// <item>To create a thread-safe <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that fits the best for your needs use the members of the <see cref="ThreadSafeCacheFactory"/> class.</item>
+    /// </list></note>
     /// </para>
     /// </remarks>
     /// <threadsafety instance="true"/>
     /// <seealso cref="IDictionary{TKey,TValue}" />
     /// <seealso cref="LockingCollection{T}" />
     /// <seealso cref="LockingList{T}" />
+    /// <seealso cref="ThreadSafeCacheFactory"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
