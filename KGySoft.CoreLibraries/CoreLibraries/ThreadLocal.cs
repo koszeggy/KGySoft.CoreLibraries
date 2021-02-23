@@ -21,6 +21,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using KGySoft.Collections;
+
 #endregion
 
 namespace KGySoft.CoreLibraries
@@ -405,7 +407,7 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(table.Length < minLength);
 
             // Determine the size of the new table and allocate it.
-            int newLen = minLength.GetNextPowerOfTwo();
+            int newLen = HashHelper.GetNextPowerOfTwo(minLength);
             LinkedSlotVolatile[] newTable = new LinkedSlotVolatile[newLen];
 
             // The lock is necessary to avoid a race with ThreadLocal.Dispose. GrowTable has to point all
@@ -504,7 +506,7 @@ namespace KGySoft.CoreLibraries
             // If a slot array has not been created on this thread yet, create it.
             if (slots == null)
             {
-                slots = new LinkedSlotVolatile[(id + 1).GetNextPowerOfTwo()];
+                slots = new LinkedSlotVolatile[HashHelper.GetNextPowerOfTwo(id + 1)];
                 finalizationHelper = new FinalizationHelper(slots, trackAllValues);
                 slotArray = slots;
             }
