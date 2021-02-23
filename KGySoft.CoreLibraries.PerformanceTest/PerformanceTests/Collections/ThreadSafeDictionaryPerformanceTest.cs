@@ -273,6 +273,107 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
         }
 
+        [Test]
+        public void SetAndGetNonAtomicTest()
+        {
+            const int count = 1_000_000;
+            var seq = Enumerable.Range(0, count);
+            Dictionary<int, decimal> dict = seq.ToDictionary(i => i, i => (decimal)i);
+            var lDict = new LockingDictionary<int, decimal>(new Dictionary<int, decimal>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, decimal>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, decimal>(dict);
+
+            new IteratorPerformanceTest<object> { Iterations = count, Repeat = 5, TestName = "Sequential Access" }
+                .AddCase(i =>
+                {
+                    lDict[i] = i;
+                    return lDict[i] = i;
+                }, "LockingDictionary")
+#if !NET35
+                .AddCase(i =>
+                {
+                    cDict[i] = i;
+                    return cDict[i];
+                }, "ConcurrentDictionary")
+#endif
+                .AddCase(i =>
+                {
+                    tDict[i] = i;
+                    return tDict[i];
+                }, "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+#if !NET35
+            new PerformanceTest { Iterations = 1, CpuAffinity = null, TestName = "Parallel Access", Repeat = 5 }
+                .AddCase(() => Parallel.For(0, count, i =>
+                {
+                    lDict[i] = i;
+                    lDict.TryGetValue(i, out var _);
+                }), "LockingDictionary")
+                .AddCase(() => Parallel.For(0, count, i =>
+                {
+                    cDict[i] = i;
+                    cDict.TryGetValue(i, out var _);
+                }), "ConcurrentDictionary")
+                .AddCase(() => Parallel.For(0, count, i =>
+                {
+                    tDict[i] = i;
+                    tDict.TryGetValue(i, out var _);
+                }), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+#endif
+        }
+
+        [Test]
+        public void CountTest()
+        {
+            const int count = 1_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => (object)null);
+            var lDict = new LockingDictionary<int, object>(new Dictionary<int, object>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, object>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
+
+            new PerformanceTest<int>{ Iterations = 1_000_000, Repeat = 5 }
+                .AddCase(() => dict.Count, "Dictionary")
+                .AddCase(() => lDict.Count, "LockingDictionary")
+#if !NET35
+                .AddCase(() => cDict.Count, "ConcurrentDictionary")
+#endif
+                .AddCase(() => tDict.Count, "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void EnumerationTest()
+        {
+            const int count = 1_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => (object)null);
+            var lDict = new LockingDictionary<int, object>(new Dictionary<int, object>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, object>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
+
+            new PerformanceTest<int> { Iterations = 100_000, Repeat = 5 }
+                .AddCase(() => dict.Count(), "Dictionary")
+                .AddCase(() => lDict.Count(), "LockingDictionary")
+#if !NET35
+                .AddCase(() => cDict.Count(), "ConcurrentDictionary")
+#endif
+                .AddCase(() => tDict.Count(), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
         #endregion
     }
 }

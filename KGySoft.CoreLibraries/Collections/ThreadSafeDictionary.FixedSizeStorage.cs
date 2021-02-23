@@ -79,25 +79,29 @@ namespace KGySoft.Collections
 
             #region CustomEnumerator struct
 
-            internal struct Enumerator
+            internal struct CustomEnumerator
             {
                 #region Fields
 
-                private readonly Entry[] entries;
+                #region Internal Fields
 
-                private int pos;
+                internal (TKey Key, TValue Value) Current;
 
                 #endregion
 
-                #region Properties
+                #region Private Fields
 
-                public KeyValuePair<TKey, TValue> Current { get; private set; }
+                private readonly Entry[] entries;
+
+                private int pos; 
+
+                #endregion
 
                 #endregion
 
                 #region Constructors
 
-                internal Enumerator(FixedSizeStorage owner)
+                internal CustomEnumerator(FixedSizeStorage owner)
                 {
                     entries = owner.entries;
                     pos = 0;
@@ -108,7 +112,7 @@ namespace KGySoft.Collections
 
                 #region Methods
 
-                public bool MoveNext()
+                internal bool MoveNext()
                 {
                     while (pos < entries.Length)
                     {
@@ -125,7 +129,7 @@ namespace KGySoft.Collections
                         if (box == null)
                             continue;
 
-                        Current = new KeyValuePair<TKey, TValue>(entryRef.Key, box.Value!);
+                        Current = (entryRef.Key, box.Value!);
                         return true;
                     }
 
@@ -146,6 +150,12 @@ namespace KGySoft.Collections
             #region Internal Fields
 
             internal static readonly FixedSizeStorage Empty = new FixedSizeStorage();
+
+            #endregion
+
+            #region Private Fields
+
+            private static readonly bool isAtomic = typeof(TValue).SizeOf() <= IntPtr.Size;
 
             #endregion
 
@@ -210,7 +220,7 @@ namespace KGySoft.Collections
                 Initialize(dictionary);
             }
 
-            internal FixedSizeStorage(FixedSizeStorage other, RegularStorage mergeWith)
+            internal FixedSizeStorage(FixedSizeStorage other, TempStorage mergeWith)
             {
                 isAndHash = mergeWith.IsAndHash;
                 comparer = mergeWith.Comparer;
@@ -223,8 +233,6 @@ namespace KGySoft.Collections
 
             private FixedSizeStorage()
             {
-                Debug.Assert(typeof(TValue).SizeOf() <= IntPtr.Size, $"TValue = {typeof(TValue).GetName(TypeNameKind.ShortName)} should not be used because it cannot be written atomically.");
-
                 // this ctor is for the Empty instance
                 buckets = new int[1];
                 isAndHash = true;
@@ -315,7 +323,7 @@ namespace KGySoft.Collections
 
                     if (box != null)
                     {
-                        // works without locking because the private constructor ensures that TValue can be copied atomically
+                        // works without locking because the box is always replaced if TValue cannot be copied atomically
                         value = box.Value;
                         return true;
                     }
@@ -357,11 +365,11 @@ namespace KGySoft.Collections
                         StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
 #endif
 
-                        // entry was deleted, adding
+                        // entry was deleted, trying to add
                         if (box == null)
                         {
                             if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
-                                continue;
+                                continue; // lost race
 
                             Interlocked.Decrement(ref deletedCount);
                             return true;
@@ -370,8 +378,14 @@ namespace KGySoft.Collections
                         // value can be overwritten
                         if (behavior == DictionaryInsertion.OverwriteIfExists)
                         {
-                            // due to the private ctor this operation is atomic
-                            box.Value = value;
+                            if (isAtomic)
+                                box.Value = value;
+                            else
+                            {
+                                if (Interlocked.Exchange(ref entryRef.Value, new StrongBox<TValue>(value)) == null)
+                                    Interlocked.Decrement(ref deletedCount); // a deletion occurred after a lost race
+                            }
+
                             return true;
                         }
 
@@ -498,7 +512,7 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal Enumerator GetEnumerator() => new Enumerator(this);
+            internal CustomEnumerator GetEnumerator() => new CustomEnumerator(this);
 
             #endregion
 
@@ -516,7 +530,7 @@ namespace KGySoft.Collections
                     PopulateByComparer(dictionary);
             }
 
-            private void Initialize(FixedSizeStorage other, RegularStorage mergeWith)
+            private void Initialize(FixedSizeStorage other, TempStorage mergeWith)
             {
                 int otherCount = other.entries.Length;
                 int count = otherCount + mergeWith.Count;
@@ -620,12 +634,12 @@ namespace KGySoft.Collections
                 }
             }
 
-            private void CopyFrom(RegularStorage other, int index)
+            private void CopyFrom(TempStorage other, int index)
             {
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
 
-                RegularStorage.CustomEnumerator enumerator = other.GetCustomEnumerator();
+                TempStorage.CustomEnumerator enumerator = other.GetCustomEnumerator();
                 while (enumerator.MoveNext())
                 {
                     // assuming other was already consistent so not checking for duplicate keys

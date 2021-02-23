@@ -18,10 +18,12 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent; 
+#endif
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -33,19 +35,35 @@ using KGySoft.Diagnostics;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// A thread-safe dictionary, which can be very fast when usually existing keys are read and written and set and new items are relatively rarely added.
-    /// Similar to ConcurrentDictionary, which is not available in .NET 3.5. Once merged, setting an existing element is faster than in ConcurrentDictionary but
-    /// access is not faster in .NET 5 and adding a new value is slower so not a real alternative.
-    /// NOTE: Before making it a public type:
-    /// - Special handling for larger TValues in FixedSizeDictionary that cannot be written atomically (replace box instead of overwrite its value).
-    /// - Current public GetEnumerator returns a public type from FixedSizeDictionary, which should be refactored.
-    /// - Add other public members from ConcurrentDictionary
-    /// - There are some interface members that are not used so their implementation is not optimal.
-    /// - Implement IReadOnlyDictionary, non-generic IDictionary
+    /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET 3.5),
+    /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
+    /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
+    /// <para>TODO</para>
+    /// TODO:
+    /// - TSD vs CD (vs LD):
+    ///   - Fixed size lock-free storage + a temporary locking storage vs. Uses separate locks for updates, and for some operations acquires all locks at the same time (eg. Count)
+    ///   - Memory consumption
+    ///     - When adding new values
+    ///     - When merged (note for reference-containing TKey: deleted keys are not removed)
+    ///     - When TValue is not atomic (but this behavior is the same as for CD and it is mentioned at when to use, so maybe not needed here)
+    ///   - When to use TSD
+    ///     - Rare new items, mostly overwrite + get, maybe delete + re-add the same key
+    ///     - Count
+    ///     - Many possible collisions
+    ///     - Large struct values (non-atomic size)
+    ///   - Incompatibility:
+    ///     - Keys and Values property is not a snapshot but a living wrapper
+    ///     - ICollection.SyncRoot property throws a NotSupportedException even for Keys and Values
+    /// - Member by member performance comparison in .NET 5
+    ///   - TryGetValue
+    ///   - Setter
+    ///   - Count
+    ///   - GetEnumerator + enumeration
+    ///   - ...
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
-    internal partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
         where TKey : notnull
     {
         #region Constants
@@ -62,15 +80,15 @@ namespace KGySoft.Collections
         private readonly bool bitwiseAndHash;
 
         /// <summary>
-        /// When reading, values here are accessed without locking.
+        /// Values here are accessed without locking.
         /// Once a new key is added, it is never removed anymore even for deleted entries.
         /// </summary>
-        private volatile FixedSizeStorage lockFreeStorage;
+        private volatile FixedSizeStorage fixedSizeStorage;
 
         /// <summary>
-        /// A temporary storage for new values. It is regularly merged with lockFreeStorage into a new fixed size instance.
+        /// A temporary storage for new values. It is regularly merged with fixedSizeStorage into a new fixed size instance.
         /// </summary>
-        private volatile RegularStorage? lockingStorage;
+        private volatile TempStorage? expandableStorage;
 
         private long mergeInterval = TimeHelper.GetInterval(100);
         private long nextMerge;
@@ -84,22 +102,26 @@ namespace KGySoft.Collections
 
         #region Public Properties
 
+        /// <summary>
+        /// Gets the number of elements contained in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
         public int Count
         {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (lockingStorage == null)
-                    return lockFreeStorage.Count;
+                if (expandableStorage == null)
+                    return fixedSizeStorage.Count;
 
                 lock (syncRoot)
                 {
-                    RegularStorage? lockingValues = lockingStorage;
+                    TempStorage? lockingValues = expandableStorage;
 
                     // lost race
                     if (lockingValues == null)
-                        return lockFreeStorage.Count;
+                        return fixedSizeStorage.Count;
 
-                    int result = lockFreeStorage.Count + lockingValues.Count;
+                    int result = fixedSizeStorage.Count + lockingValues.Count;
                     MergeIfExpired();
                     return result;
                 }
@@ -108,8 +130,8 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Gets or sets the minimum lifetime for the temporarily created internal locking storage when adding new keys to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// <br/>Default value: 100 milliseconds.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>When the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, then adding new items are immediately merged to a new fast-accessing storage.
@@ -140,7 +162,7 @@ namespace KGySoft.Collections
 
                     mergeInterval = interval;
 
-                    if (lockingStorage == null || interval < 0L)
+                    if (expandableStorage == null || interval < 0L)
                         return;
 
                     if (interval > 0L)
@@ -151,28 +173,39 @@ namespace KGySoft.Collections
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Gets a collection reflecting the keys stored in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the keys in the original <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// Therefore, changes to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
+        /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        public ICollection<TKey> Keys => new KeysCollection(this);
 
-        #region Internal Properties
-
-        internal IEnumerable<TKey> Keys
-        {
-            get
-            {
-                foreach (KeyValuePair<TKey, TValue> item in this)
-                    yield return item.Key;
-            }
-        }
+        /// <summary>
+        /// Gets a collection reflecting the values stored in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the values in the original <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// Therefore, changes to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
+        /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        public ICollection<TValue> Values => new ValuesCollection(this);
 
         #endregion
 
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
-
-        // TODO: If this class is made public, then these solutions should be optimized:
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
-        ICollection<TValue> IDictionary<TKey, TValue>.Values => this.Select(item => item.Value).ToList();
+        bool IDictionary.IsFixedSize => false;
+        bool IDictionary.IsReadOnly => false;
+        ICollection IDictionary.Keys => new KeysCollection(this);
+        ICollection IDictionary.Values => new ValuesCollection(this);
+        bool ICollection.IsSynchronized => false;
+        object ICollection.SyncRoot => Throw.NotSupportedException<object>();
 
         #endregion
 
@@ -180,6 +213,15 @@ namespace KGySoft.Collections
 
         #region Indexers
 
+        #region Public Indexers
+
+        /// <summary>
+        /// Gets or sets the value associated with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key of the value to get or set.</param>
+        /// <returns>The value of the specified <paramref name="key"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <exception cref="KeyNotFoundException">The property is retrieved and <paramref name="key"/> does not exist in the collection.</exception>
         public TValue this[TKey key]
         {
             get => TryGetValue(key, out TValue? value) ? value : Throw.KeyNotFoundException<TValue>(Res.IDictionaryKeyNotFound);
@@ -193,16 +235,31 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Explicitly Implemented Interface Indexers
+
+        object? IDictionary.this[object key]
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #endregion
+
         #endregion
 
         #region Constructors
 
-        internal ThreadSafeDictionary() : this(defaultCapacity, null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
+        /// and uses the default comparer and <see cref="HashingStrategy.Auto"/> hashing strategy.
+        /// </summary>
+        public ThreadSafeDictionary() : this(defaultCapacity, null)
         {
-            
         }
 
-        internal ThreadSafeDictionary(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
+        public ThreadSafeDictionary(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
             : this(capacity, null, strategy)
         {
         }
@@ -213,7 +270,7 @@ namespace KGySoft.Collections
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for the newly added keys. If 0, then a default value is used.</param>
         /// <param name="comparer">TODO</param>
         /// <param name="strategy">TODO</param>
-        internal ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
+        public ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
         {
             if (!strategy.IsDefined())
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
@@ -224,18 +281,18 @@ namespace KGySoft.Collections
                 capacity = defaultCapacity;
             }
 
-            lockFreeStorage = FixedSizeStorage.Empty;
+            fixedSizeStorage = FixedSizeStorage.Empty;
             initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
             this.comparer = comparer;
         }
 
-        internal ThreadSafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+        public ThreadSafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
             : this(defaultCapacity, comparer, strategy)
         {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            lockFreeStorage = new FixedSizeStorage(bitwiseAndHash, dictionary, comparer);
+            fixedSizeStorage = new FixedSizeStorage(bitwiseAndHash, dictionary, comparer);
         }
 
         #endregion
@@ -251,6 +308,13 @@ namespace KGySoft.Collections
             TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.ThrowIfExists);
         }
 
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            return TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.DoNotOverwrite);
+        }
+
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             if (key == null!)
@@ -261,13 +325,6 @@ namespace KGySoft.Collections
         }
 
         public bool ContainsKey(TKey key) => TryGetValue(key, out var _);
-
-        public bool TryAdd(TKey key, TValue value)
-        {
-            if (key == null!)
-                Throw.ArgumentNullException(Argument.key);
-            return TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.DoNotOverwrite);
-        }
 
         public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
         {
@@ -318,7 +375,7 @@ namespace KGySoft.Collections
             bool removed = false;
             while (true)
             {
-                FixedSizeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode);
 
                 // making sure that correct result is returned even if multiple tries are necessary due to merging
@@ -338,12 +395,12 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (lockingStorage == null)
+                if (expandableStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    RegularStorage? lockingValues = lockingStorage;
+                    TempStorage? lockingValues = expandableStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -364,7 +421,7 @@ namespace KGySoft.Collections
             uint hashCode = GetHashCode(key);
             while (true)
             {
-                FixedSizeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode, out value);
 
                 // making sure that removed entry is returned even if multiple tries are necessary due to merging
@@ -382,12 +439,12 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (lockingStorage == null)
+                if (expandableStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    RegularStorage? lockingValues = lockingStorage;
+                    TempStorage? lockingValues = expandableStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -402,12 +459,12 @@ namespace KGySoft.Collections
 
         public void Clear()
         {
-            // It is not a problem if a merge is in progress because it will nullify lockingStorage in the end anyway
-            lockingStorage = null;
+            // It is not a problem if a merge is in progress because it will nullify expandableStorage in the end anyway
+            expandableStorage = null;
 
             while (true)
             {
-                FixedSizeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 lockFreeValues.Clear();
                 if (IsUpToDate(lockFreeValues))
                     return;
@@ -416,12 +473,12 @@ namespace KGySoft.Collections
 
         public void EnsureMerged()
         {
-            if (lockingStorage == null)
+            if (expandableStorage == null)
                 return;
 
             lock (syncRoot)
             {
-                RegularStorage? lockingValues = lockingStorage;
+                TempStorage? lockingValues = expandableStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -431,11 +488,7 @@ namespace KGySoft.Collections
             }
         }
 
-        public FixedSizeStorage.Enumerator GetEnumerator()
-        {
-            EnsureMerged();
-            return lockFreeStorage.GetEnumerator();
-        }
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
 
         #endregion
 
@@ -443,16 +496,16 @@ namespace KGySoft.Collections
 
         private bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
         {
-            bool? success = lockFreeStorage.TryGetValueInternal(key, hashCode, out value);
+            bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);
             if (success.HasValue)
                 return success.Value;
 
-            if (lockingStorage == null)
+            if (expandableStorage == null)
                 return false;
 
             lock (syncRoot)
             {
-                RegularStorage? lockingValues = lockingStorage;
+                TempStorage? lockingValues = expandableStorage;
 
                 // lost race
                 if (lockingValues == null)
@@ -468,7 +521,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                FixedSizeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryInsertInternal(key, value, hashCode, behavior);
                 if (success == true)
                 {
@@ -484,7 +537,7 @@ namespace KGySoft.Collections
                 // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
-                    RegularStorage lockingValues = GetCreateLockingStorage();
+                    TempStorage lockingValues = GetCreateLockingStorage();
                     bool result = lockingValues.TryInsertInternal(key, value, hashCode, behavior);
                     MergeIfExpired();
                     return result;
@@ -496,7 +549,7 @@ namespace KGySoft.Collections
         {
             while (true)
             {
-                FixedSizeStorage lockFreeValues = lockFreeStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
                 if (success == true)
                 {
@@ -509,12 +562,12 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                if (lockingStorage == null)
+                if (expandableStorage == null)
                     return false;
 
                 lock (syncRoot)
                 {
-                    RegularStorage? lockingValues = lockingStorage;
+                    TempStorage? lockingValues = expandableStorage;
 
                     // lost race
                     if (lockingValues == null)
@@ -535,12 +588,12 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private RegularStorage GetCreateLockingStorage()
+        private TempStorage GetCreateLockingStorage()
         {
-            RegularStorage? result = lockingStorage;
+            TempStorage? result = expandableStorage;
             if (result != null)
                 return result;
-            result = lockingStorage = new RegularStorage(initialLockingCapacity, comparer, bitwiseAndHash);
+            result = expandableStorage = new TempStorage(initialLockingCapacity, comparer, bitwiseAndHash);
             long interval = mergeInterval;
             if (interval > 0L)
                 nextMerge = TimeHelper.GetTimeStamp() + interval;
@@ -557,18 +610,18 @@ namespace KGySoft.Collections
         private void DoMerge()
         {
             // Must be in a lock to work properly!
-            Debug.Assert(!isMerging || lockingStorage != null, "Make sure caller is in a lock");
+            Debug.Assert(!isMerging || expandableStorage != null, "Make sure caller is in a lock");
 
-            RegularStorage lockingValues = lockingStorage!;
+            TempStorage lockingValues = expandableStorage!;
             if (lockingValues.Count != 0)
             {
-                // Indicating that from this point lockFreeStorage cannot be considered safe even though its reference is not replaced yet.
-                // Note: we could spare the flag if we just nullified lockFreeStorage before merging but this way can prevent that keys in the
+                // Indicating that from this point fixedSizeStorage cannot be considered safe even though its reference is not replaced yet.
+                // Note: we could spare the flag if we just nullified fixedSizeStorage before merging but this way can prevent that keys in the
                 // fixed-size storage reappear in the locking one.
                 isMerging = true;
                 try
                 {
-                    lockFreeStorage = new FixedSizeStorage(lockFreeStorage, lockingValues);
+                    fixedSizeStorage = new FixedSizeStorage(fixedSizeStorage, lockingValues);
                 }
                 finally
                 {
@@ -577,20 +630,21 @@ namespace KGySoft.Collections
                 }
             }
 
-            lockingStorage = null;
+            expandableStorage = null;
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool IsUpToDate(FixedSizeStorage lockFreeValues)
         {
             // fixed-size storage has been replaced
-            if (lockFreeValues != lockFreeStorage)
+            if (lockFreeValues != fixedSizeStorage)
                 return false;
 
-            // a merge has been started, values from lockFreeValues storage might be started to copied: preventing current thread from consuming CPU until merge is finished
             if (!isMerging)
                 return true;
 
+            // a merge has been started, values from lockFreeValues storage might be started to be copied:
+            // preventing current thread from consuming CPU until merge is finished
             var wait = new SpinWait();
             while (isMerging)
                 wait.SpinOnce();
@@ -602,13 +656,6 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Methods
 
-        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-        {
-            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-            foreach (KeyValuePair<TKey, TValue> item in this)
-                yield return item;
-        }
-
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
             => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
 
@@ -617,15 +664,16 @@ namespace KGySoft.Collections
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            Debug.Fail("It is not expected to call this method. Must be optimized if this will be a public class.");
+            throw new NotImplementedException();
+            //Debug.Fail("It is not expected to call this method. Must be optimized if this will be a public class.");
             
-            // using an intermediate list because elements might be added while enumerating
-            var list = new List<KeyValuePair<TKey, TValue>>(Count);
+            //// using an intermediate list because elements might be added while enumerating
+            //var list = new List<KeyValuePair<TKey, TValue>>(Count);
 
-            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-            foreach (KeyValuePair<TKey, TValue> item in this)
-                list.Add(item);
-            list.CopyTo(array, arrayIndex);
+            //// ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            //foreach (KeyValuePair<TKey, TValue> item in this)
+            //    list.Add(item);
+            //list.CopyTo(array, arrayIndex);
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
@@ -644,7 +692,29 @@ namespace KGySoft.Collections
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        IDictionaryEnumerator IDictionary.GetEnumerator() => new Enumerator(this, false);
+
+        void IDictionary.Add(object key, object? value)
+        {
+            throw new NotImplementedException();
+        }
+
+        bool IDictionary.Contains(object key)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IDictionary.Remove(object key)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion
 

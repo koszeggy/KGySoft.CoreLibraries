@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -111,7 +112,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [TestCase(true)]
         public void RegularStorageUsageTest(bool ignoreCase)
         {
-            var dict = new ThreadSafeDictionary<string, int>.RegularStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
+            var dict = new ThreadSafeDictionary<string, int>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
 
             // Add
             dict.Add("alpha", 1);
@@ -229,6 +230,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(42, dict["alpha"]);
             Assert.AreEqual(13, dict["delta"]);
         }
+
+        [Test]
+        public void EnumerationTest()
+        {
+            var referenceValues = new Dictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            };
+
+            var dict = new ThreadSafeDictionary<string, int>(referenceValues);
+            Assert.IsTrue(referenceValues.SequenceEqual(dict));
+
+            var keys = dict.Select(c => c.Key);
+            Assert.IsTrue(keys.SequenceEqual(dict.Keys));
+            var values = dict.Select(c => c.Value);
+            Assert.IsTrue(values.SequenceEqual(dict.Values));
+        }
+
 
         #endregion
     }

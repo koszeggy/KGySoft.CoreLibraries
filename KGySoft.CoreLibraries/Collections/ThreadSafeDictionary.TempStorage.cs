@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: ThreadSafeDictionary.RegularStorage.cs
+//  File: ThreadSafeDictionary.TempStorage.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
@@ -34,7 +34,7 @@ namespace KGySoft.Collections
         /// When instantiated, always has a preallocated storage.
         /// Not thread-safe so the consumer must do the locking for the Try... members.
         /// </summary>
-        internal sealed class RegularStorage
+        internal sealed class TempStorage
         {
             #region Nested structs
 
@@ -85,7 +85,7 @@ namespace KGySoft.Collections
 
                 #region Constructors
 
-                internal CustomEnumerator(RegularStorage owner)
+                internal CustomEnumerator(TempStorage owner)
                 {
                     usedCount = owner.usedCount;
                     entries = owner.entries;
@@ -200,7 +200,7 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal RegularStorage(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
+            internal TempStorage(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
             {
                 Debug.Assert(capacity > 0, "Nonzero initial capacity is expected in CustomDictionary");
                 this.isAndHash = isAndHash;

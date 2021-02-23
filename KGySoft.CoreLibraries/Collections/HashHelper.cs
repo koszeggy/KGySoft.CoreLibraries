@@ -91,11 +91,7 @@ namespace KGySoft.Collections
             return GetNextPrime(min);
         }
 
-        #endregion
-
-        #region Private Methods
-
-        private static int GetNextPowerOfTwo(int minValue)
+        internal static int GetNextPowerOfTwo(int minValue)
         {
             // if already power of 2:
             if (minValue > 0 && (minValue & (minValue - 1)) == 0)
@@ -111,6 +107,10 @@ namespace KGySoft.Collections
 
             return result;
         }
+
+        #endregion
+
+        #region Private Methods
 
         private static int GetNextPrime(int min)
         {
