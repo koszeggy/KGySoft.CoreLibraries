@@ -74,6 +74,14 @@ namespace KGySoft.Collections
 
         #region Fields
 
+        #region Static Fields
+
+        private static IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
+
+        #endregion
+
+        #region Instance Fields
+
         private readonly object syncRoot = new object();
         private readonly IEqualityComparer<TKey>? comparer;
         private readonly int initialLockingCapacity;
@@ -90,9 +98,14 @@ namespace KGySoft.Collections
         /// </summary>
         private volatile TempStorage? expandableStorage;
 
+        private volatile KeysCollection? keysCollection;
+        private volatile ValuesCollection? valuesCollection;
+
         private long mergeInterval = TimeHelper.GetInterval(100);
         private long nextMerge;
         private volatile bool isMerging;
+
+        #endregion
 
         #endregion
 
@@ -182,7 +195,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TKey> Keys => new KeysCollection(this);
+        public ICollection<TKey> Keys => keysCollection ??= new KeysCollection(this);
 
         /// <summary>
         /// Gets a collection reflecting the values stored in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
@@ -193,7 +206,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TValue> Values => new ValuesCollection(this);
+        public ICollection<TValue> Values => valuesCollection ??= new ValuesCollection(this);
 
         #endregion
 
@@ -239,8 +252,27 @@ namespace KGySoft.Collections
 
         object? IDictionary.this[object key]
         {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
+            get => key switch
+            {
+                TKey k => TryGetValue(k, out TValue? value) ? value : null,
+                null => Throw.ArgumentNullException<object>(Argument.key),
+                _ => null
+            };
+            set
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(value);
+                if (key is TKey k)
+                {
+                    if (value is TValue v)
+                        this[k] = v;
+                    else
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
+                }
+                else
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
+            }
         }
 
         #endregion
@@ -259,17 +291,30 @@ namespace KGySoft.Collections
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
+        /// and uses the default comparer and the specified hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for values with new keys.
+        /// If 0, then a default capacity is used.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
         public ThreadSafeDictionary(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
             : this(capacity, null, strategy)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class.
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
-        /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for the newly added keys. If 0, then a default value is used.</param>
-        /// <param name="comparer">TODO</param>
-        /// <param name="strategy">TODO</param>
+        /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for values with new keys.
+        /// If 0, then a default capacity is used.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
         public ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
         {
             if (!strategy.IsDefined())
@@ -287,12 +332,32 @@ namespace KGySoft.Collections
             this.comparer = comparer;
         }
 
-        public ThreadSafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class from the specified <paramref name="collection"/>
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="collection">The collection whose elements are coped to the new <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        public ThreadSafeDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
             : this(defaultCapacity, comparer, strategy)
         {
-            if (dictionary == null!)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            fixedSizeStorage = new FixedSizeStorage(bitwiseAndHash, dictionary, comparer);
+
+            // trying to initialize directly in the fixed storage
+#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - false alarm, this is the constructor so there are no other threads at this point
+            if (collection is ICollection<KeyValuePair<TKey, TValue>> c && FixedSizeStorage.TryInitialize(c, bitwiseAndHash, comparer, out fixedSizeStorage))
+                return;
+#pragma warning restore CS0420
+
+            // initializing in the expando storage (no locking is needed here as we are in the constructor)
+            fixedSizeStorage = FixedSizeStorage.Empty;
+            expandableStorage = new TempStorage(collection, comparer, bitwiseAndHash);
+            nextMerge = TimeHelper.GetTimeStamp() + mergeInterval;
         }
 
         #endregion
@@ -315,7 +380,7 @@ namespace KGySoft.Collections
             return TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.DoNotOverwrite);
         }
 
-        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
@@ -325,6 +390,35 @@ namespace KGySoft.Collections
         }
 
         public bool ContainsKey(TKey key) => TryGetValue(key, out var _);
+
+        public bool ContainsValue(TValue value)
+        {
+            FixedSizeStorage.CustomEnumerator lockFreeEnumerator = fixedSizeStorage.GetEnumerator();
+            while (lockFreeEnumerator.MoveNext())
+            {
+                if (valueComparer.Equals(value, lockFreeEnumerator.Current.Value))
+                    return true;
+            }
+
+            if (expandableStorage == null)
+                return false;
+
+            lock (syncRoot)
+            {
+                TempStorage? lockingValues = expandableStorage;
+
+                // lost race
+                if (lockingValues == null)
+                    return false;
+
+                bool result = false;
+                TempStorage.CustomEnumerator lockingEnumerator = lockingValues.GetCustomEnumerator();
+                while (!result && lockingEnumerator.MoveNext())
+                    result = valueComparer.Equals(value, lockingEnumerator.Current.Value);
+                MergeIfExpired();
+                return result;
+            }
+        }
 
         public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
         {
@@ -664,16 +758,24 @@ namespace KGySoft.Collections
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
-            //Debug.Fail("It is not expected to call this method. Must be optimized if this will be a public class.");
-            
-            //// using an intermediate list because elements might be added while enumerating
-            //var list = new List<KeyValuePair<TKey, TValue>>(Count);
+            if (array == null!)
+                Throw.ArgumentNullException(Argument.array);
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+            int length = array.Length;
+            if (length - arrayIndex < Count)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
-            //// ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-            //foreach (KeyValuePair<TKey, TValue> item in this)
-            //    list.Add(item);
-            //list.CopyTo(array, arrayIndex);
+            EnsureMerged();
+            FixedSizeStorage.CustomEnumerator enumerator = fixedSizeStorage.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                // if elements were added concurrently
+                if (arrayIndex == length)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                array[arrayIndex] = new KeyValuePair<TKey, TValue>(enumerator.Current.Key, enumerator.Current.Value);
+                arrayIndex += 1;
+            }
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
@@ -698,22 +800,86 @@ namespace KGySoft.Collections
 
         void IDictionary.Add(object key, object? value)
         {
-            throw new NotImplementedException();
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            Throw.ThrowIfNullIsInvalid<TValue>(value);
+            if (key is TKey k)
+            {
+                if (value is TValue v)
+                    Add(k, v);
+                else
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
+            }
+            else
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
         }
 
         bool IDictionary.Contains(object key)
-        {
-            throw new NotImplementedException();
-        }
+            => key switch
+            {
+                TKey k => ContainsKey(k),
+                null => Throw.ArgumentNullException<bool>(Argument.key),
+                _ => false
+            };
 
         void IDictionary.Remove(object key)
         {
-            throw new NotImplementedException();
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (key is TKey k)
+                Remove(k);
         }
 
         void ICollection.CopyTo(Array array, int index)
         {
-            throw new NotImplementedException();
+            if (array == null!)
+                Throw.ArgumentNullException(Argument.array);
+            if (index < 0 || index > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            int length = array.Length;
+            if (length - index < Count)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+            if (array.Rank != 1)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+            switch (array)
+            {
+                case KeyValuePair<TKey, TValue>[] keyValuePairs:
+                    ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
+                    return;
+
+                case DictionaryEntry[] dictionaryEntries:
+                    EnsureMerged();
+                    FixedSizeStorage.CustomEnumerator enumerator = fixedSizeStorage.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        // if elements were added concurrently
+                        if (index == length)
+                            Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                        dictionaryEntries[index] = new DictionaryEntry(enumerator.Current.Key, enumerator.Current.Value);
+                        index += 1;
+                    }
+
+                    return;
+
+                case object[] objectArray:
+                    EnsureMerged();
+                    enumerator = fixedSizeStorage.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        // if elements were added concurrently
+                        if (index == length)
+                            Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                        objectArray[index] = new KeyValuePair<TKey,TValue>(enumerator.Current.Key, enumerator.Current.Value);
+                        index += 1;
+                    }
+
+                    return;
+
+                default:
+                    Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+                    return;
+            }
         }
 
         #endregion

@@ -211,15 +211,6 @@ namespace KGySoft.Collections
 
             #region Internal Constructors
 
-            internal FixedSizeStorage(bool isAndHash, IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer = null)
-            {
-                if (dictionary == null!)
-                    Throw.ArgumentNullException(Argument.dictionary);
-                this.isAndHash = isAndHash;
-                this.comparer = comparer;
-                Initialize(dictionary);
-            }
-
             internal FixedSizeStorage(FixedSizeStorage other, TempStorage mergeWith)
             {
                 isAndHash = mergeWith.IsAndHash;
@@ -239,15 +230,36 @@ namespace KGySoft.Collections
                 entries = Reflector.EmptyArray<Entry>();
             }
 
+            private FixedSizeStorage(int capacity, bool isAndHash, IEqualityComparer<TKey>? comparer)
+            {
+                this.isAndHash = isAndHash;
+                this.comparer = comparer;
+                buckets = new int[GetBucketSize(capacity)];
+                entries = new Entry[capacity];
+            }
+
             #endregion
 
             #endregion
 
             #region Methods
 
+            #region Static Methods
+
+            internal static bool TryInitialize(ICollection<KeyValuePair<TKey, TValue>> collection, bool isAndHash, IEqualityComparer<TKey>? comparer, out FixedSizeStorage result)
+            {
+                // initialization may fail if collection.Count changes during the process
+                result = new FixedSizeStorage(collection.Count, isAndHash, comparer);
+                return result.TryInitialize(collection);
+            }
+
+            #endregion
+            
+            #region Instance Methods
+
             #region Public Methods
 
-            public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
+            public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
             {
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
@@ -269,7 +281,7 @@ namespace KGySoft.Collections
                 return TryReplaceInternal(key, newValue, originalValue, GetHashCode(key)) == true;
             }
 
-            public bool TryRemove(TKey key, [MaybeNullWhen(false)]out TValue value)
+            public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
             {
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
@@ -298,7 +310,7 @@ namespace KGySoft.Collections
             #region Internal Methods
 
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal bool? TryGetValueInternal(TKey key, uint hash, [MaybeNull]out TValue value)
+            internal bool? TryGetValueInternal(TKey key, uint hash, [MaybeNull] out TValue value)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
@@ -518,18 +530,6 @@ namespace KGySoft.Collections
 
             #region Private Methods
 
-            private void Initialize(IDictionary<TKey, TValue> dictionary)
-            {
-                int count = dictionary.Count;
-                buckets = new int[GetBucketSize(count)];
-                entries = new Entry[count];
-
-                if (comparer == null)
-                    PopulateDefault(dictionary);
-                else
-                    PopulateByComparer(dictionary);
-            }
-
             private void Initialize(FixedSizeStorage other, TempStorage mergeWith)
             {
                 int otherCount = other.entries.Length;
@@ -540,14 +540,23 @@ namespace KGySoft.Collections
                 CopyFrom(mergeWith, otherCount);
             }
 
-            private void PopulateDefault(IDictionary<TKey, TValue> dictionary)
+            private bool TryInitialize(ICollection<KeyValuePair<TKey, TValue>> collection)
+                => comparer == null ? TryInitializeDefault(collection) : TryInitializeByComparer(collection);
+
+            private bool TryInitializeDefault(IEnumerable<KeyValuePair<TKey, TValue>> collection)
             {
                 int index = 0;
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
+                int capacity = items.Length;
 
-                foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                foreach (KeyValuePair<TKey, TValue> item in collection)
                 {
+                    if (item.Key == null!)
+                        Throw.ArgumentNullException(Argument.key);
+                    if (index == capacity)
+                        return false;
+
                     uint hashCode = (uint)item.Key.GetHashCode();
                     ref int bucketRef = ref localBuckets[GetBucketIndex(hashCode)];
 
@@ -568,17 +577,25 @@ namespace KGySoft.Collections
                     itemRef.Value = new StrongBox<TValue>(item.Value);
                     bucketRef = ++index; // bucket indices are 1-based
                 }
+
+                return index == capacity;
             }
 
-            private void PopulateByComparer(IDictionary<TKey, TValue> dictionary)
+            private bool TryInitializeByComparer(IEnumerable<KeyValuePair<TKey, TValue>> collection)
             {
                 int index = 0;
                 IEqualityComparer<TKey> customComparer = comparer!;
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
+                int capacity = items.Length;
 
-                foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                foreach (KeyValuePair<TKey, TValue> item in collection)
                 {
+                    if (item.Key == null!)
+                        Throw.ArgumentNullException(Argument.key);
+                    if (index == capacity)
+                        return false;
+
                     uint hashCode = (uint)customComparer.GetHashCode(item.Key);
                     ref int bucketRef = ref localBuckets[GetBucketIndex(hashCode)];
 
@@ -599,6 +616,8 @@ namespace KGySoft.Collections
                     itemRef.Value = new StrongBox<TValue>(item.Value);
                     bucketRef = ++index; // bucket indices are 1-based
                 }
+
+                return index == capacity;
             }
 
             private void CopyFrom(FixedSizeStorage other)
@@ -679,6 +698,8 @@ namespace KGySoft.Collections
             private uint GetBucketIndex(uint hashCode) => isAndHash
                 ? hashCode & hashingOperand
                 : hashCode % hashingOperand;
+
+            #endregion
 
             #endregion
 

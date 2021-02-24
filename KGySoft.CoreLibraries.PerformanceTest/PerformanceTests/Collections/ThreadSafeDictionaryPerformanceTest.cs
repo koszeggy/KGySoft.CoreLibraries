@@ -21,6 +21,7 @@ using System;
 using System.Collections.Concurrent; 
 #endif
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 #if !NET35
 using System.Threading.Tasks;
@@ -352,6 +353,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void EnumerationTest()
         {
             const int count = 1_000;

@@ -61,12 +61,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [TestCase(true)]
         public void FixedSizeStorageUsageTest(bool ignoreCase)
         {
-            var dict = new ThreadSafeDictionary<string, int>.FixedSizeStorage(default, new Dictionary<string, int>
+            Assert.IsTrue(ThreadSafeDictionary<string, int>.FixedSizeStorage.TryInitialize(new Dictionary<string, int>
             {
                 ["alpha"] = 1,
                 ["beta"] = 2,
                 ["gamma"] = 3,
-            }, ignoreCase ? StringComparer.OrdinalIgnoreCase : null);
+            }, default, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, out var dict));
 
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
@@ -232,6 +232,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        public void InitFromCollectionTest()
+        {
+            var dict = new Dictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            };
+
+            // initializing as collection
+            Assert.IsTrue(dict.SequenceEqual(new ThreadSafeDictionary<string, int>(dict)));
+
+            // initializing as enumerable
+            Assert.IsTrue(dict.SequenceEqual(new ThreadSafeDictionary<string, int>(dict.Where(_ => true))));
+        }
+
+        [Test]
         public void EnumerationTest()
         {
             var referenceValues = new Dictionary<string, int>
@@ -248,6 +265,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(keys.SequenceEqual(dict.Keys));
             var values = dict.Select(c => c.Value);
             Assert.IsTrue(values.SequenceEqual(dict.Values));
+        }
+
+        [Test]
+        public void CopyToTest()
+        {
+            var dict = new ThreadSafeDictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            };
+
+            var arr = new KeyValuePair<string, int>[dict.Count];
+            ((ICollection<KeyValuePair<string, int>>)dict).CopyTo(arr, 0);
+            Assert.IsTrue(arr.SequenceEqual(dict));
         }
 
 

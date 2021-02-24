@@ -194,45 +194,93 @@ namespace KGySoft.Collections
 
             #region Methods
 
-            void ICollection<TKey>.Add(TKey item)
+            #region Public Methods
+
+            public bool Contains(TKey item)
             {
-                throw new System.NotImplementedException();
+                if (item == null!)
+                    Throw.ArgumentNullException(Argument.item);
+                return owner.ContainsKey(item);
             }
 
-            void ICollection<TKey>.Clear()
+            public void CopyTo(TKey[] array, int arrayIndex)
             {
-                throw new System.NotImplementedException();
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+                if (arrayIndex < 0 || arrayIndex > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+                int length = array.Length;
+                if (length - arrayIndex < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+
+                owner.EnsureMerged();
+                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    // if elements were added concurrently
+                    if (arrayIndex == length)
+                        Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                    array[arrayIndex] = enumerator.Current.Key;
+                    arrayIndex += 1;
+                }
             }
 
-            bool ICollection<TKey>.Contains(TKey item)
+            public IEnumerator<TKey> GetEnumerator()
             {
-                throw new System.NotImplementedException();
+                owner.EnsureMerged();
+                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                while (enumerator.MoveNext())
+                    yield return enumerator.Current.Key;
             }
 
-            void ICollection<TKey>.CopyTo(TKey[] array, int arrayIndex)
-            {
-                throw new System.NotImplementedException();
-            }
+            #endregion
 
-            IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
+            #region Explicitly Implemented Interface Methods
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
-
-            bool ICollection<TKey>.Remove(TKey item)
-            {
-                throw new System.NotImplementedException();
-            }
+            void ICollection<TKey>.Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TKey>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool ICollection<TKey>.Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
             {
-                throw new NotImplementedException();
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+
+                if (array is TKey[] keys)
+                {
+                    CopyTo(keys, index);
+                    return;
+                }
+
+                if (index < 0 || index > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.index);
+                int length = array.Length;
+                if (length - index < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                if (array.Rank != 1)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+                if (array is object[] objectArray)
+                {
+                    owner.EnsureMerged();
+                    var enumerator = owner.fixedSizeStorage.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        // if elements were added concurrently
+                        if (index == length)
+                            Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                        objectArray[index] = enumerator.Current.Key;
+                        index += 1;
+                    }
+
+                    return;
+                }
+
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
             }
+
+            #endregion
 
             #endregion
         }
@@ -275,50 +323,92 @@ namespace KGySoft.Collections
 
             #region Methods
 
-            void ICollection<TValue>.Add(TValue item)
+            #region Public Methods
+
+            public bool Contains(TValue item) => owner.ContainsValue(item);
+
+            public void CopyTo(TValue[] array, int arrayIndex)
             {
-                throw new System.NotImplementedException();
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+                if (arrayIndex < 0 || arrayIndex > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+                int length = array.Length;
+                if (length - arrayIndex < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+
+                owner.EnsureMerged();
+                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    // if elements were added concurrently
+                    if (arrayIndex == length)
+                        Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                    array[arrayIndex] = enumerator.Current.Value;
+                    arrayIndex += 1;
+                }
             }
 
-            void ICollection<TValue>.Clear()
+            public IEnumerator<TValue> GetEnumerator()
             {
-                throw new System.NotImplementedException();
+                owner.EnsureMerged();
+                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                while (enumerator.MoveNext())
+                    yield return enumerator.Current.Value;
             }
 
-            bool ICollection<TValue>.Contains(TValue item)
-            {
-                throw new System.NotImplementedException();
-            }
+            #endregion
 
-            void ICollection<TValue>.CopyTo(TValue[] array, int arrayIndex)
-            {
-                throw new System.NotImplementedException();
-            }
+            #region Explicitly Implemented Interface Methods
 
-            IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                throw new System.NotImplementedException();
-            }
-
-            bool ICollection<TValue>.Remove(TValue item)
-            {
-                throw new System.NotImplementedException();
-            }
+            void ICollection<TValue>.Add(TValue item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection<TValue>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool ICollection<TValue>.Remove(TValue item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
             {
-                throw new NotImplementedException();
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+
+                if (array is TValue[] values)
+                {
+                    CopyTo(values, index);
+                    return;
+                }
+
+                if (index < 0 || index > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.index);
+                int length = array.Length;
+                if (length - index < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                if (array.Rank != 1)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+                if (array is object?[] objectArray)
+                {
+                    owner.EnsureMerged();
+                    var enumerator = owner.fixedSizeStorage.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        // if elements were added concurrently
+                        if (index == length)
+                            Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                        objectArray[index] = enumerator.Current.Value;
+                        index += 1;
+                    }
+
+                    return;
+                }
+
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
             }
+
+            #endregion
 
             #endregion
         }
 
         #endregion
-
     }
 }

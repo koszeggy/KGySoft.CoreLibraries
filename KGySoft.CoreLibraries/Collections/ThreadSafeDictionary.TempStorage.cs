@@ -208,6 +208,13 @@ namespace KGySoft.Collections
                 Initialize(capacity);
             }
 
+            internal TempStorage(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer, bool isAndHash)
+                : this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? defaultCapacity, comparer, isAndHash)
+            {
+                foreach (KeyValuePair<TKey, TValue> item in collection)
+                    Add(item.Key, item.Value);
+            }
+
             #endregion
 
             #region Methods

@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
@@ -40,6 +41,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void CacheFullDropOldest()
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant(), 2) { Behavior = CacheBehavior.RemoveOldestElement };
@@ -59,6 +62,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void CacheFullDropLeastRecentUsed()
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant(), 2) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
@@ -76,6 +81,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void RemoveTest()
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant());
@@ -149,6 +156,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void TouchTest()
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant()) { Behavior = CacheBehavior.RemoveOldestElement };
@@ -222,6 +231,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Performance", "CA1829:Use Length/Count property instead of Count() when available",
+            Justification = "Intended for testing enumerators")]
         public void ChangeCapacityTest()
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant()) { EnsureCapacity = true };
