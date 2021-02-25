@@ -659,6 +659,8 @@ namespace KGySoft.Collections
                     objectArray[index] = GetItemInternal(i);
                     index += 1;
                 }
+
+                return;
             }
 
             Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);

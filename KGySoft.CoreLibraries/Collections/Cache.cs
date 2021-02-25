@@ -556,6 +556,8 @@ namespace KGySoft.Collections
                         objectArray[index] = owner.entries![current].Key;
                         index += 1;
                     }
+
+                    return;
                 }
 
                 Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
@@ -686,6 +688,8 @@ namespace KGySoft.Collections
                         objectArray[index] = owner.entries![current].Value;
                         index += 1;
                     }
+
+                    return;
                 }
 
                 Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);

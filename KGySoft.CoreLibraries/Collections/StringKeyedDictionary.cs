@@ -430,6 +430,8 @@ namespace KGySoft.Collections
                         if (entries![i].Next >= -1)
                             objectArray[index++] = entries[i].Key!;
                     }
+
+                    return;
                 }
 
                 Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
@@ -570,6 +572,8 @@ namespace KGySoft.Collections
                         if (entries![i].Next >= -1)
                             objectArray[index++] = entries[i].Value;
                     }
+
+                    return;
                 }
 
                 Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
