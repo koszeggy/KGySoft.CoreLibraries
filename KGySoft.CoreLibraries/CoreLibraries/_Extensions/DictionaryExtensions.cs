@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -466,6 +467,58 @@ namespace KGySoft.CoreLibraries
         /// <returns>A <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.</returns>
         public static LockingDictionary<TKey, TValue> AsThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) where TKey : notnull
             => new LockingDictionary<TKey, TValue>(dictionary);
+
+        public static ThreadSafeDictionary<TKey, TValue> ToThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) where TKey : notnull
+            => new ThreadSafeDictionary<TKey, TValue>(dictionary);
+
+        public static TValue AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
+            {
+                if (dictionary.TryGetValue(key, out TValue? oldValue))
+                {
+                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
+                    dictionary[key] = newValue;
+                    return newValue;
+                }
+
+                dictionary[key] = addValue;
+                return addValue;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.AddOrUpdate(key, addValue, updateValueFactory);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.AddOrUpdate(key, addValue, updateValueFactory);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValue, updateValueFactory);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValue, updateValueFactory);
+            }
+        }
 
         #endregion
     }
