@@ -47,7 +47,7 @@ namespace KGySoft.Collections
             private readonly bool isGeneric;
 
             private State state;
-            private FixedSizeStorage.CustomEnumerator wrappedEnumerator;
+            private FixedSizeStorage.InternalEnumerator wrappedEnumerator;
 
             #endregion
 
@@ -126,7 +126,7 @@ namespace KGySoft.Collections
                 {
                     case State.NotStarted:
                         owner.EnsureMerged();
-                        wrappedEnumerator = owner.fixedSizeStorage.GetEnumerator();
+                        wrappedEnumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                         state = State.Enumerating;
                         goto case State.Enumerating;
 
@@ -214,7 +214,7 @@ namespace KGySoft.Collections
                     Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
                 owner.EnsureMerged();
-                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                FixedSizeStorage.InternalEnumerator enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                 while (enumerator.MoveNext())
                 {
                     // if elements were added concurrently
@@ -228,7 +228,7 @@ namespace KGySoft.Collections
             public IEnumerator<TKey> GetEnumerator()
             {
                 owner.EnsureMerged();
-                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                FixedSizeStorage.InternalEnumerator enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                 while (enumerator.MoveNext())
                     yield return enumerator.Current.Key;
             }
@@ -264,7 +264,7 @@ namespace KGySoft.Collections
                 if (array is object[] objectArray)
                 {
                     owner.EnsureMerged();
-                    var enumerator = owner.fixedSizeStorage.GetEnumerator();
+                    var enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                     while (enumerator.MoveNext())
                     {
                         // if elements were added concurrently
@@ -338,7 +338,7 @@ namespace KGySoft.Collections
                     Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
                 owner.EnsureMerged();
-                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                FixedSizeStorage.InternalEnumerator enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                 while (enumerator.MoveNext())
                 {
                     // if elements were added concurrently
@@ -352,7 +352,7 @@ namespace KGySoft.Collections
             public IEnumerator<TValue> GetEnumerator()
             {
                 owner.EnsureMerged();
-                FixedSizeStorage.CustomEnumerator enumerator = owner.fixedSizeStorage.GetEnumerator();
+                FixedSizeStorage.InternalEnumerator enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                 while (enumerator.MoveNext())
                     yield return enumerator.Current.Value;
             }
@@ -388,7 +388,7 @@ namespace KGySoft.Collections
                 if (array is object?[] objectArray)
                 {
                     owner.EnsureMerged();
-                    var enumerator = owner.fixedSizeStorage.GetEnumerator();
+                    var enumerator = owner.fixedSizeStorage.GetInternalEnumerator();
                     while (enumerator.MoveNext())
                     {
                         // if elements were added concurrently

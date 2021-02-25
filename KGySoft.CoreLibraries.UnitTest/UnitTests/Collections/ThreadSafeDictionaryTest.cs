@@ -282,6 +282,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(arr.SequenceEqual(dict));
         }
 
+        [Test]
+        public void ToArrayTest()
+        {
+            var dict = new Dictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            };
+
+            var tDict = new ThreadSafeDictionary<string, int>(dict);
+
+            Assert.IsTrue(dict.SequenceEqual(tDict));
+            Assert.IsTrue(dict.ToArray().SequenceEqual(tDict.ToArray()));
+
+            tDict.Remove("alpha");
+            Assert.AreEqual(2, tDict.Count);
+            Assert.AreEqual(2, tDict.ToArray().Length);
+        }
 
         #endregion
     }

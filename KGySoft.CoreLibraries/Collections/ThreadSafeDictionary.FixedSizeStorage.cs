@@ -77,9 +77,9 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region CustomEnumerator struct
+            #region InternalEnumerator struct
 
-            internal struct CustomEnumerator
+            internal struct InternalEnumerator
             {
                 #region Fields
 
@@ -101,7 +101,7 @@ namespace KGySoft.Collections
 
                 #region Constructors
 
-                internal CustomEnumerator(FixedSizeStorage owner)
+                internal InternalEnumerator(FixedSizeStorage owner)
                 {
                     entries = owner.entries;
                     pos = 0;
@@ -524,7 +524,46 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal CustomEnumerator GetEnumerator() => new CustomEnumerator(this);
+            internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);
+
+            internal KeyValuePair<TKey, TValue>[] ToArray()
+            {
+                // we are optimistic and allocating an array for the current count
+                int len = Count;
+                var result = new KeyValuePair<TKey, TValue>[len];
+                KeyValuePair<TKey, TValue>[]? rest = null;
+
+                InternalEnumerator enumerator = GetInternalEnumerator();
+                int index = 0;
+                while (enumerator.MoveNext())
+                {
+                    if (index < len)
+                    {
+                        result[index] = new KeyValuePair<TKey, TValue>(enumerator.Current.Key, enumerator.Current.Value);
+                        index += 1;
+                        continue;
+                    }
+
+                    // If new elements were added, allocating array for the rest of the elements.
+                    // Now we are pessimistic and allocating the maximum possible capacity
+                    rest ??= new KeyValuePair<TKey, TValue>[entries.Length - len];
+                    rest[index - len] = new KeyValuePair<TKey, TValue>(enumerator.Current.Key, enumerator.Current.Value);
+                    index += 1;
+                }
+
+                // the optimistic allocation won: there was no count change during the enumeration
+                if (index == len)
+                    return result;
+
+                // elements were added or deleted: resizing result
+                Array.Resize(ref result, index);
+                if (index < len)
+                    return result;
+
+                // elements were added: copying rest into the enlarged result
+                Array.Copy(rest!, 0, result, len, index - len);
+                return result;
+            }
 
             #endregion
 
@@ -658,7 +697,7 @@ namespace KGySoft.Collections
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
 
-                TempStorage.CustomEnumerator enumerator = other.GetCustomEnumerator();
+                TempStorage.InternalEnumerator enumerator = other.GetInternalEnumerator();
                 while (enumerator.MoveNext())
                 {
                     // assuming other was already consistent so not checking for duplicate keys

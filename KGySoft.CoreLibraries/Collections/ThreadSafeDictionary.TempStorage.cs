@@ -60,9 +60,9 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region CustomEnumerator struct
+            #region InternalEnumerator struct
 
-            internal struct CustomEnumerator
+            internal struct InternalEnumerator
             {
                 #region Fields
 
@@ -85,7 +85,7 @@ namespace KGySoft.Collections
 
                 #region Constructors
 
-                internal CustomEnumerator(TempStorage owner)
+                internal InternalEnumerator(TempStorage owner)
                 {
                     usedCount = owner.usedCount;
                     entries = owner.entries;
@@ -499,7 +499,7 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            internal CustomEnumerator GetCustomEnumerator() => new CustomEnumerator(this);
+            internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);
 
             #endregion
 

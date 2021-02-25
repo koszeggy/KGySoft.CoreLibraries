@@ -76,7 +76,7 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
-        private static IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
+        private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
 
         #endregion
 
@@ -138,6 +138,17 @@ namespace KGySoft.Collections
                     MergeIfExpired();
                     return result;
                 }
+            }
+        }
+
+        public bool IsEmpty
+        {
+            get
+            {
+                // Note: here we access even expandableStorage without locking. Though expandableStorage.Count returns an
+                // expression where both operands are mutable we can accept it because we don't expect multiple changes at
+                // once (changes are in locks) and expandableStorage is volatile so Count will see valid values.
+                return fixedSizeStorage.Count == 0 && (expandableStorage?.Count ?? 0) == 0;
             }
         }
 
@@ -393,7 +404,7 @@ namespace KGySoft.Collections
 
         public bool ContainsValue(TValue value)
         {
-            FixedSizeStorage.CustomEnumerator lockFreeEnumerator = fixedSizeStorage.GetEnumerator();
+            FixedSizeStorage.InternalEnumerator lockFreeEnumerator = fixedSizeStorage.GetInternalEnumerator();
             while (lockFreeEnumerator.MoveNext())
             {
                 if (valueComparer.Equals(value, lockFreeEnumerator.Current.Value))
@@ -412,7 +423,7 @@ namespace KGySoft.Collections
                     return false;
 
                 bool result = false;
-                TempStorage.CustomEnumerator lockingEnumerator = lockingValues.GetCustomEnumerator();
+                TempStorage.InternalEnumerator lockingEnumerator = lockingValues.GetInternalEnumerator();
                 while (!result && lockingEnumerator.MoveNext())
                     result = valueComparer.Equals(value, lockingEnumerator.Current.Value);
                 MergeIfExpired();
@@ -565,6 +576,14 @@ namespace KGySoft.Collections
             }
         }
 
+        public void Reset()
+        {
+            if (isMerging)
+                WaitWhileMerging();
+            fixedSizeStorage = FixedSizeStorage.Empty;
+            expandableStorage = null;
+        }
+
         public void EnsureMerged()
         {
             if (expandableStorage == null)
@@ -583,6 +602,12 @@ namespace KGySoft.Collections
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
+
+        public KeyValuePair<TKey, TValue>[] ToArray()
+        {
+            EnsureMerged();
+            return fixedSizeStorage.ToArray();
+        }
 
         #endregion
 
@@ -739,11 +764,16 @@ namespace KGySoft.Collections
 
             // a merge has been started, values from lockFreeValues storage might be started to be copied:
             // preventing current thread from consuming CPU until merge is finished
+            WaitWhileMerging();
+            return false;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private void WaitWhileMerging()
+        {
             var wait = new SpinWait();
             while (isMerging)
                 wait.SpinOnce();
-
-            return false;
         }
 
         #endregion
@@ -767,7 +797,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
             EnsureMerged();
-            FixedSizeStorage.CustomEnumerator enumerator = fixedSizeStorage.GetEnumerator();
+            FixedSizeStorage.InternalEnumerator enumerator = fixedSizeStorage.GetInternalEnumerator();
             while (enumerator.MoveNext())
             {
                 // if elements were added concurrently
@@ -850,7 +880,7 @@ namespace KGySoft.Collections
 
                 case DictionaryEntry[] dictionaryEntries:
                     EnsureMerged();
-                    FixedSizeStorage.CustomEnumerator enumerator = fixedSizeStorage.GetEnumerator();
+                    FixedSizeStorage.InternalEnumerator enumerator = fixedSizeStorage.GetInternalEnumerator();
                     while (enumerator.MoveNext())
                     {
                         // if elements were added concurrently
@@ -864,7 +894,7 @@ namespace KGySoft.Collections
 
                 case object[] objectArray:
                     EnsureMerged();
-                    enumerator = fixedSizeStorage.GetEnumerator();
+                    enumerator = fixedSizeStorage.GetInternalEnumerator();
                     while (enumerator.MoveNext())
                     {
                         // if elements were added concurrently
