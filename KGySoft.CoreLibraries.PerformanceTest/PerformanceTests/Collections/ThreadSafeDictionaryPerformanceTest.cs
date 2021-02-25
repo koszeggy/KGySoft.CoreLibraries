@@ -23,6 +23,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+#if !(NET35 || NET40)
+using System.Threading; 
+#endif
 #if !NET35
 using System.Threading.Tasks;
 #endif
@@ -62,6 +65,17 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             #endregion
         }
+
+        #endregion
+
+        #region Fields
+
+        private static readonly TimeSpan infiniteTimeout =
+#if NET35 || NET40
+            TimeSpan.FromMilliseconds(Timeout.Infinite);
+#else
+            Timeout.InfiniteTimeSpan;
+#endif
 
         #endregion
 
@@ -366,13 +380,73 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
 
-            new PerformanceTest<int> { Iterations = 100_000, Repeat = 5 }
+            new PerformanceTest<int> { TestName = "Enumerating dictionary", Iterations = 100_000, Repeat = 5 }
                 .AddCase(() => dict.Count(), "Dictionary")
                 .AddCase(() => lDict.Count(), "LockingDictionary")
 #if !NET35
                 .AddCase(() => cDict.Count(), "ConcurrentDictionary")
 #endif
                 .AddCase(() => tDict.Count(), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            new PerformanceTest<int> { TestName = "Enumerating Keys", Iterations = 100_000, Repeat = 5 }
+                .AddCase(() => dict.Keys.Count(), "Dictionary")
+                .AddCase(() => lDict.Keys.Count(), "LockingDictionary")
+#if !NET35
+                .AddCase(() => cDict.Keys.Count(), "ConcurrentDictionary")
+#endif
+                .AddCase(() => tDict.Keys.Count(), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void ToArrayTest()
+        {
+            const int count = 1_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => (object)null);
+            var lDict = new LockingDictionary<int, object>(new Dictionary<int, object>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, object>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
+
+            new PerformanceTest<KeyValuePair<int, object>[]> { Iterations = 100_000, Repeat = 5 }
+                .AddCase(() => dict.ToArray(), "Dictionary (as extension)")
+                .AddCase(() => lDict.ToArray(), "LockingDictionary (as extension)")
+#if !NET35
+                .AddCase(() => cDict.ToArray(), "ConcurrentDictionary")
+                .AddCase(() => ((IDictionary<int, object>)cDict).ToArray(), "ConcurrentDictionary (as extension)")
+#endif
+                .AddCase(() => tDict.ToArray(), "ThreadSafeDictionary")
+                .AddCase(() => ((IDictionary<int, object>)tDict).ToArray(), "ThreadSafeDictionary (as extension)")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void AddOrUpdateTest()
+        {
+            static int Update(int key, int orig) => orig + 1;
+
+            const int count = 1_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => 0);
+            var lDict = new LockingDictionary<int, int>(new Dictionary<int, int>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, int>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, int>(dict, strategy: HashingStrategy.And);
+
+            new RandomizedPerformanceTest<int> { Iterations = 10_000_000, Repeat = 5 }
+                .AddCase(rnd => dict.AddOrUpdate(rnd.Next(count), 1, Update), "Dictionary (as extension)")
+                .AddCase(rnd => lDict.AddOrUpdate(rnd.Next(count), 1, Update), "LockingDictionary (as extension)")
+#if !NET35
+                .AddCase(rnd => cDict.AddOrUpdate(rnd.Next(count), 1, Update), "ConcurrentDictionary")
+#endif
+                .AddCase(rnd => tDict.AddOrUpdate(rnd.Next(count), 1, Update), "ThreadSafeDictionary")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

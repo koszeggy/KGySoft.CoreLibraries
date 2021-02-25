@@ -76,6 +76,7 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
+        private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
         private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
 
         #endregion
@@ -360,7 +361,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.dictionary);
 
             // trying to initialize directly in the fixed storage
-#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - false alarm, this is the constructor so there are no other threads at this point
+#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, this is the constructor so there are no other threads at this point
             if (collection is ICollection<KeyValuePair<TKey, TValue>> c && FixedSizeStorage.TryInitialize(c, bitwiseAndHash, comparer, out fixedSizeStorage))
                 return;
 #pragma warning restore CS0420
@@ -440,32 +441,32 @@ namespace KGySoft.Collections
             return TryReplaceInternal(key, hashCode, newValue, originalValue);
         }
 
-        public TValue AddOrUpdate(TKey key, TValue value, Func<TKey, TValue, TValue>? updateValueFactory = null)
+        public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
-            
-            uint hashCode = GetHashCode(key);
-            if (updateValueFactory == null)
-            {
-                TryInsertInternal(key, value, hashCode, DictionaryInsertion.OverwriteIfExists);
-                return value;
-            }
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
 
+            uint hashCode = GetHashCode(key);
+            TValue result;
             while (true)
             {
-                if (TryGetValueInternal(key, hashCode, out TValue? oldValue))
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryAddOrUpdate(key, addValue, updateValueFactory, hashCode, out result))
                 {
-                    // Exists, trying to update
-                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
-                    if (TryReplaceInternal(key, hashCode, newValue, oldValue))
-                        return newValue;
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
                 }
-                else
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
                 {
-                    // Does not exist, try to add
-                    if (TryInsertInternal(key, value, hashCode, DictionaryInsertion.DoNotOverwrite))
-                        return value;
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.AddOrUpdate(key, addValue, updateValueFactory, hashCode);
+                    MergeIfExpired();
+                    return result;
                 }
             }
         }

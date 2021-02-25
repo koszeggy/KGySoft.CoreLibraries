@@ -159,13 +159,6 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region Private Fields
-
-            private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
-            private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
-
-            #endregion
-
             #endregion
 
             #region Instance Fields
@@ -310,17 +303,17 @@ namespace KGySoft.Collections
             #region Internal Methods
 
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal bool? TryGetValueInternal(TKey key, uint hash, [MaybeNull] out TValue value)
+            internal bool? TryGetValueInternal(TKey key, uint hashCode, [MaybeNull]out TValue value)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hash)] - 1;
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
                     {
                         i = entryRef.Next;
                         continue;
@@ -353,17 +346,17 @@ namespace KGySoft.Collections
             /// <summary>
             /// Tries to insert a value. Returns null if key not found. Adding succeeds only if a key was deleted previously.
             /// </summary>
-            internal bool? TryInsertInternal(TKey key, TValue value, uint hash, DictionaryInsertion behavior)
+            internal bool? TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hash)] - 1;
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
                     {
                         i = entryRef.Next;
                         continue;
@@ -415,17 +408,17 @@ namespace KGySoft.Collections
             /// <summary>
             /// Tries to replace a value. Returns null if key not found.
             /// </summary>
-            internal bool? TryReplaceInternal(TKey key, TValue newValue, TValue originalValue, uint hash)
+            internal bool? TryReplaceInternal(TKey key, TValue newValue, TValue originalValue, uint hashCode)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hash)] - 1;
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
                     {
                         i = entryRef.Next;
                         continue;
@@ -443,6 +436,12 @@ namespace KGySoft.Collections
                         if (box == null || !valueComparer.Equals(box.Value, originalValue))
                             return false;
 
+                        if (isAtomic)
+                        {
+                            box.Value = newValue;
+                            return true;
+                        }
+
                         if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) == box)
                             return true;
                     }
@@ -452,17 +451,17 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal bool? TryRemoveInternal(TKey key, uint hash, out TValue? value)
+            internal bool? TryRemoveInternal(TKey key, uint hashCode, out TValue? value)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hash)] - 1;
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
                     {
                         i = entryRef.Next;
                         continue;
@@ -483,12 +482,12 @@ namespace KGySoft.Collections
                             return false;
                         }
 
-                        if (Interlocked.CompareExchange(ref entryRef.Value, null, box) == box)
-                        {
-                            Interlocked.Increment(ref deletedCount);
-                            value = box.Value;
-                            return true;
-                        }
+                        if (Interlocked.CompareExchange(ref entryRef.Value, null, box) != box)
+                            continue;
+
+                        Interlocked.Increment(ref deletedCount);
+                        value = box.Value;
+                        return true;
                     }
                 }
 
@@ -497,17 +496,17 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal bool? TryRemoveInternal(TKey key, uint hash)
+            internal bool? TryRemoveInternal(TKey key, uint hashCode)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hash)] - 1;
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hash || !comp.Equals(entryRef.Key, key))
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
                     {
                         i = entryRef.Next;
                         continue;
@@ -522,6 +521,72 @@ namespace KGySoft.Collections
 
                 // not found
                 return null;
+            }
+
+            internal bool TryAddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        // deleted, trying to add
+                        if (box == null)
+                        {
+                            if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(addValue), null) != null)
+                                continue;
+                            value = addValue;
+                            return true;
+                        }
+
+                        // creating new value by the factory delegate
+                        TValue newValue = updateValueFactory.Invoke(key, box.Value!);
+                        if (isAtomic)
+                        {
+                            box.Value = newValue;
+
+                            // as factoring may long last we check whether box is still valid
+#if NET35 || NET40
+                            if (box != entryRef.Value)
+#else
+                            if (box != Volatile.Read(ref entryRef.Value))
+#endif
+                            {
+                                continue;
+                            }
+
+                            value = newValue;
+                            return true;
+                        }
+
+                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) != box)
+                            continue;
+
+                        value = newValue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
             }
 
             internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);

@@ -134,9 +134,6 @@ namespace KGySoft.Collections
 
             #region Static Fields
 
-            private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
-            private static readonly IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
-
 #if NETFRAMEWORK || NETSTANDARD2_0
             // ReSharper disable StaticMemberInGenericType - they depend on type arguments
             private static readonly bool isKeyManaged = !typeof(TKey).IsUnmanaged();
@@ -497,6 +494,21 @@ namespace KGySoft.Collections
 
                 // Not found
                 return false;
+            }
+
+            internal TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
+            {
+                if (TryGetValueInternal(key, hashCode, out TValue? oldValue))
+                {
+                    // Exists, updating. As we are in lock, no TryReplaceInternal is needed
+                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
+                    TryInsertInternal(key, newValue, hashCode, DictionaryInsertion.OverwriteIfExists);
+                    return newValue;
+                }
+
+                // Does not exist, adding as new
+                TryInsertInternal(key, addValue, hashCode, DictionaryInsertion.DoNotOverwrite);
+                return addValue;
             }
 
             internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);

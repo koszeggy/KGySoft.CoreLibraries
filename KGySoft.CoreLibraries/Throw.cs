@@ -45,6 +45,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentNullException<T>(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg, string message) => throw CreateArgumentNullException(arg, message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(string arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
 
         internal static void ThrowIfNullIsInvalid<T>(object? value, Argument? arg = null)
         {
@@ -121,6 +122,7 @@ namespace KGySoft
         #region Private Methods
 
         private static Exception CreateArgumentNullException(Argument arg, string message) => new ArgumentNullException(Enum<Argument>.ToString(arg), message);
+        private static Exception CreateArgumentNullException(string arg, string message) => new ArgumentNullException(arg, message);
         private static Exception CreateArgumentException(Argument? arg, string message, Exception? inner = null) => arg.HasValue ? new ArgumentException(message, Enum<Argument>.ToString(arg.Value), inner) : new ArgumentException(message, inner);
         private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => new ArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);
