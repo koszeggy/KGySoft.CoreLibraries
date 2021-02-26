@@ -427,9 +427,11 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         }
 
         [Test]
+        [SuppressMessage("Style", "IDE0039:Use local function",
+            Justification = "False alarm, a function would be converted to a delegate in every iteration with terrible performance")]
         public void AddOrUpdateTest()
         {
-            static int Update(int key, int orig) => orig + 1;
+            Func<int, int, int> update = (_, v) => v + 1;
 
             const int count = 1_000;
             var seq = Enumerable.Range(0, count);
@@ -441,12 +443,35 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var tDict = new ThreadSafeDictionary<int, int>(dict, strategy: HashingStrategy.And);
 
             new RandomizedPerformanceTest<int> { Iterations = 10_000_000, Repeat = 5 }
-                .AddCase(rnd => dict.AddOrUpdate(rnd.Next(count), 1, Update), "Dictionary (as extension)")
-                .AddCase(rnd => lDict.AddOrUpdate(rnd.Next(count), 1, Update), "LockingDictionary (as extension)")
+                .AddCase(rnd => dict.AddOrUpdate(rnd.Next(count), 1, update), "Dictionary (as extension)")
+                .AddCase(rnd => lDict.AddOrUpdate(rnd.Next(count), 1, update), "LockingDictionary (as extension)")
 #if !NET35
-                .AddCase(rnd => cDict.AddOrUpdate(rnd.Next(count), 1, Update), "ConcurrentDictionary")
+                .AddCase(rnd => cDict.AddOrUpdate(rnd.Next(count), 1, update), "ConcurrentDictionary")
 #endif
-                .AddCase(rnd => tDict.AddOrUpdate(rnd.Next(count), 1, Update), "ThreadSafeDictionary")
+                .AddCase(rnd => tDict.AddOrUpdate(rnd.Next(count), 1, update), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void GetOrAddTest()
+        {
+            const int count = 1_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => 0);
+            var lDict = new LockingDictionary<int, int>(new Dictionary<int, int>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, int>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, int>(dict, strategy: HashingStrategy.And);
+
+            new RandomizedPerformanceTest<int> { Iterations = 10_000_000, Repeat = 5 }
+                .AddCase(rnd => dict.GetOrAdd(rnd.Next(count), 1), "Dictionary (as extension)")
+                .AddCase(rnd => lDict.GetOrAdd(rnd.Next(count), 1), "LockingDictionary (as extension)")
+#if !NET35
+                .AddCase(rnd => cDict.GetOrAdd(rnd.Next(count), 1), "ConcurrentDictionary")
+#endif
+                .AddCase(rnd => tDict.GetOrAdd(rnd.Next(count), 1), "ThreadSafeDictionary")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

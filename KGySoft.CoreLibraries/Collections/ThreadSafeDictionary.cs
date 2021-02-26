@@ -432,45 +432,6 @@ namespace KGySoft.Collections
             }
         }
 
-        public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
-        {
-            if (key == null!)
-                Throw.ArgumentNullException(Argument.key);
-
-            uint hashCode = GetHashCode(key);
-            return TryReplaceInternal(key, hashCode, newValue, originalValue);
-        }
-
-        public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
-        {
-            if (key == null!)
-                Throw.ArgumentNullException(Argument.key);
-            if (updateValueFactory == null!)
-                Throw.ArgumentNullException(nameof(updateValueFactory));
-
-            uint hashCode = GetHashCode(key);
-            TValue result;
-            while (true)
-            {
-                FixedSizeStorage lockFreeValues = fixedSizeStorage;
-                if (lockFreeValues.TryAddOrUpdate(key, addValue, updateValueFactory, hashCode, out result))
-                {
-                    if (IsUpToDate(lockFreeValues))
-                        return result;
-                    continue;
-                }
-
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
-                lock (syncRoot)
-                {
-                    TempStorage lockingValues = GetCreateLockingStorage();
-                    result = lockingValues.AddOrUpdate(key, addValue, updateValueFactory, hashCode);
-                    MergeIfExpired();
-                    return result;
-                }
-            }
-        }
-
         public bool Remove(TKey key)
         {
             // Note: we could re-use TryRemove but it is faster to do it this way
@@ -583,6 +544,194 @@ namespace KGySoft.Collections
                 WaitWhileMerging();
             fixedSizeStorage = FixedSizeStorage.Empty;
             expandableStorage = null;
+        }
+
+        public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            uint hashCode = GetHashCode(key);
+            return TryReplaceInternal(key, hashCode, newValue, originalValue);
+        }
+
+        public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
+        {
+            // Note: we could just return AddOrUpdate(key, _ => addValue, updateValueFactory) but creating a new delegate would be a great performance loss
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryAddOrUpdate(key, addValue, updateValueFactory, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.AddOrUpdate(key, addValue, updateValueFactory, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        public TValue AddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryAddOrUpdate(key, addValueFactory, updateValueFactory, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.AddOrUpdate(key, addValueFactory, updateValueFactory, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        public TValue AddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory, TArg factoryArgument)
+        {
+            // Note: we could just return AddOrUpdate(key, k => addValueFactory.Invoke(k, factoryArgument), (k, v) => updateValueFactory.Invoke(k, v, factoryArgument))
+            // but creating new delegates and invoking them from each other would be a great performance loss
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryAddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        public TValue GetOrAdd(TKey key, TValue addValue)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryGetOrAdd(key, addValue, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.GetOrAdd(key, addValue, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> addValueFactory)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryGetOrAdd(key, addValueFactory, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.GetOrAdd(key, addValueFactory, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        public TValue GetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryGetOrAdd(key, addValueFactory, factoryArgument, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.GetOrAdd(key, addValueFactory, factoryArgument, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
         }
 
         public void EnsureMerged()

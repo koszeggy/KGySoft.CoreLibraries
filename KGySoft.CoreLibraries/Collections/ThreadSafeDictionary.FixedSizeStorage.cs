@@ -539,6 +539,7 @@ namespace KGySoft.Collections
                         continue;
                     }
 
+                    // entry found, adding or updating will succeed now
                     while (true)
                     {
 #if NET35 || NET40
@@ -556,13 +557,13 @@ namespace KGySoft.Collections
                             return true;
                         }
 
-                        // creating new value by the factory delegate
+                        // existing value found, trying to update
                         TValue newValue = updateValueFactory.Invoke(key, box.Value!);
                         if (isAtomic)
                         {
                             box.Value = newValue;
 
-                            // as factoring may long last we check whether box is still valid
+                            // as factoring may last a longer time we check whether box is still up-to-date
 #if NET35 || NET40
                             if (box != entryRef.Value)
 #else
@@ -571,15 +572,278 @@ namespace KGySoft.Collections
                             {
                                 continue;
                             }
-
-                            value = newValue;
-                            return true;
                         }
-
-                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) != box)
+                        // no atomic update is possible, trying to replace the box
+                        else if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) != box)
                             continue;
 
                         value = newValue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
+            }
+
+            internal bool TryAddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory,
+                uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    // entry found, adding or updating will succeed now
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        // deleted, trying to add
+                        if (box == null)
+                        {
+                            value = addValueFactory.Invoke(key);
+                            if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
+                                continue;
+                            return true;
+                        }
+
+                        // existing value found, trying to update
+                        TValue newValue = updateValueFactory.Invoke(key, box.Value!);
+                        if (isAtomic)
+                        {
+                            box.Value = newValue;
+
+                            // as factoring may last a longer time we check whether box is still up-to-date
+#if NET35 || NET40
+                            if (box != entryRef.Value)
+#else
+                            if (box != Volatile.Read(ref entryRef.Value))
+#endif
+                            {
+                                continue;
+                            }
+                        }
+                        // no atomic update is possible, trying to replace the box
+                        else if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) != box)
+                            continue;
+
+                        value = newValue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
+            }
+
+            internal bool TryAddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory,
+                TArg factoryArgument, uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    // entry found, adding or updating will succeed now
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        // deleted, trying to add
+                        if (box == null)
+                        {
+                            value = addValueFactory.Invoke(key, factoryArgument);
+                            if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
+                                continue;
+                            return true;
+                        }
+
+                        // existing value found, trying to update
+                        TValue newValue = updateValueFactory.Invoke(key, box.Value!, factoryArgument);
+                        if (isAtomic)
+                        {
+                            box.Value = newValue;
+
+                            // as factoring may last a longer time we check whether box is still up-to-date
+#if NET35 || NET40
+                            if (box != entryRef.Value)
+#else
+                            if (box != Volatile.Read(ref entryRef.Value))
+#endif
+                            {
+                                continue;
+                            }
+                        }
+                        // no atomic update is possible, trying to replace the box
+                        else if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(newValue), box) != box)
+                            continue;
+
+                        value = newValue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
+            }
+
+            internal bool TryGetOrAdd(TKey key, TValue addValue, uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    // entry found, getting or adding will succeed now
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        if (box != null)
+                        {
+                            // works without locking because the box is always replaced if TValue cannot be copied atomically
+                            value = box.Value!;
+                            return true;
+                        }
+
+                        // deleted, trying to add
+                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(addValue), null) != null)
+                            continue;
+
+                        value = addValue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
+            }
+
+            internal bool TryGetOrAdd(TKey key, Func<TKey, TValue> addValueFactory, uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    // entry found, getting or adding will succeed now
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        if (box != null)
+                        {
+                            // works without locking because the box is always replaced if TValue cannot be copied atomically
+                            value = box.Value!;
+                            return true;
+                        }
+
+                        // deleted, trying to add
+                        value = addValueFactory.Invoke(key);
+                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
+                            continue;
+                        return true;
+                    }
+                }
+
+                // not found
+                value = default;
+                return false;
+            }
+
+            internal bool TryGetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument, uint hashCode, [MaybeNullWhen(false)]out TValue value)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    // entry found, getting or adding will succeed now
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
+
+                        if (box != null)
+                        {
+                            // works without locking because the box is always replaced if TValue cannot be copied atomically
+                            value = box.Value!;
+                            return true;
+                        }
+
+                        // deleted, trying to add
+                        value = addValueFactory.Invoke(key, factoryArgument);
+                        if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
+                            continue;
                         return true;
                     }
                 }

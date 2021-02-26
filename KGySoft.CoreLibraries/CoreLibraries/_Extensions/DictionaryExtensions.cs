@@ -520,6 +520,249 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        public static TValue AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key,
+            Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory)
+            {
+                if (dictionary.TryGetValue(key, out TValue? oldValue))
+                {
+                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
+                    dictionary[key] = newValue;
+                    return newValue;
+                }
+
+                TValue result = addValueFactory.Invoke(key);
+                dictionary[key] = result;
+                return result;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.AddOrUpdate(key, addValueFactory, updateValueFactory);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.AddOrUpdate(key, addValueFactory, updateValueFactory);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValueFactory, updateValueFactory);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValueFactory, updateValueFactory);
+            }
+        }
+
+        public static TValue AddOrUpdate<TKey, TValue, TArg>(this IDictionary<TKey, TValue> dictionary, TKey key,
+            Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory, TArg factoryArgument)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key,
+                Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory, TArg factoryArgument)
+            {
+                if (dictionary.TryGetValue(key, out TValue? oldValue))
+                {
+                    TValue newValue = updateValueFactory.Invoke(key, oldValue, factoryArgument);
+                    dictionary[key] = newValue;
+                    return newValue;
+                }
+
+                TValue result = addValueFactory.Invoke(key, factoryArgument);
+                dictionary[key] = result;
+                return result;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+            if (updateValueFactory == null!)
+                Throw.ArgumentNullException(nameof(updateValueFactory));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValueFactory, updateValueFactory, factoryArgument);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValueFactory, updateValueFactory, factoryArgument);
+            }
+        }
+
+        public static TValue GetOrAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue)
+            {
+                if (dictionary.TryGetValue(key, out TValue? value))
+                    return value;
+
+                dictionary[key] = addValue;
+                return addValue;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.GetOrAdd(key, addValue);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.GetOrAdd(key, addValue);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValue);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValue);
+            }
+        }
+
+        public static TValue GetOrAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> addValueFactory)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> addValueFactory)
+            {
+                if (dictionary.TryGetValue(key, out TValue? value))
+                    return value;
+
+                TValue result = addValueFactory.Invoke(key);
+                dictionary[key] = result;
+                return result;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.GetOrAdd(key, addValueFactory);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.GetOrAdd(key, addValueFactory);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValueFactory);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValueFactory);
+            }
+        }
+
+        public static TValue GetOrAdd<TKey, TValue, TArg>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key,
+                Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument)
+            {
+                if (dictionary.TryGetValue(key, out TValue? value))
+                    return value;
+
+                TValue result = addValueFactory.Invoke(key, factoryArgument);
+                dictionary[key] = result;
+                return result;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (addValueFactory == null!)
+                Throw.ArgumentNullException(nameof(addValueFactory));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.GetOrAdd(key, addValueFactory, factoryArgument);
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.GetOrAdd(key, addValueFactory, factoryArgument);
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValueFactory, factoryArgument);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValueFactory, factoryArgument);
+            }
+        }
+
         #endregion
     }
 }

@@ -32,7 +32,7 @@ namespace KGySoft.Collections
     {
         /// <summary>
         /// When instantiated, always has a preallocated storage.
-        /// Not thread-safe so the consumer must do the locking for the Try... members.
+        /// Not thread-safe so the consumer must do the locking when calling the internal members.
         /// </summary>
         internal sealed class TempStorage
         {
@@ -295,11 +295,10 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -318,17 +317,20 @@ namespace KGySoft.Collections
 
             internal bool TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-                int index;
-                ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
 
                 // searching for an existing key
-                for (index = bucketRef - 1; index >= 0; index = items[index].Next)
+                while (index >= 0)
                 {
-                    if (items[index].Hash != hashCode || !comp.Equals(items[index].Key, key))
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        index = entryRef.Next;
                         continue;
+                    }
 
                     // existing key found
                     if (behavior == DictionaryInsertion.DoNotOverwrite)
@@ -337,52 +339,21 @@ namespace KGySoft.Collections
                         Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
 
                     // overwriting existing element
-                    items[index].Value = value;
+                    entryRef.Value = value;
                     return true;
                 }
 
-                // Here existing key was not found
-                bool fromDeleted = deletedCount > 0;
-
-                // re-using the removed entries if possible
-                if (fromDeleted)
-                {
-                    index = deletedItemsBucket;
-                    deletedCount -= 1;
-                }
-                // otherwise, adding a new entry
-                else
-                {
-                    // storage expansion is needed
-                    if (usedCount == items.Length)
-                    {
-                        Resize(items.Length << 1, out bucketsLocal, out items);
-                        bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
-                    }
-
-                    index = usedCount;
-                    usedCount += 1;
-                }
-
-                ref Entry entryRef = ref items[index];
-                if (fromDeleted)
-                    deletedItemsBucket = deletedNextBase - entryRef.Next;
-                entryRef.Hash = hashCode;
-                entryRef.Next = bucketRef - 1; // Next is zero-based
-                entryRef.Key = key;
-                entryRef.Value = value;
-                bucketRef = index + 1; // bucket indices are 1-based
+                AddAsNew(key, value, hashCode, ref bucketRef);
                 return true;
             }
 
             internal bool TryReplaceInternal(TKey key, TValue newValue, TValue originalValue, uint hashCode)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
                 // searching for an existing key
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -498,17 +469,148 @@ namespace KGySoft.Collections
 
             internal TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
             {
-                if (TryGetValueInternal(key, hashCode, out TValue? oldValue))
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
                 {
-                    // Exists, updating. As we are in lock, no TryReplaceInternal is needed
-                    TValue newValue = updateValueFactory.Invoke(key, oldValue);
-                    TryInsertInternal(key, newValue, hashCode, DictionaryInsertion.OverwriteIfExists);
-                    return newValue;
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        index = entryRef.Next;
+                        continue;
+                    }
+
+                    // overwriting existing element
+                    entryRef.Value = updateValueFactory.Invoke(key, entryRef.Value);
+                    return entryRef.Value;
                 }
 
-                // Does not exist, adding as new
-                TryInsertInternal(key, addValue, hashCode, DictionaryInsertion.DoNotOverwrite);
+                AddAsNew(key, addValue, hashCode, ref bucketRef);
                 return addValue;
+            }
+
+            internal TValue AddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        index = entryRef.Next;
+                        continue;
+                    }
+
+                    // overwriting existing element
+                    entryRef.Value = updateValueFactory.Invoke(key, entryRef.Value);
+                    return entryRef.Value;
+                }
+
+                TValue result = addValueFactory.Invoke(key);
+                AddAsNew(key, result, hashCode, ref bucketRef);
+                return result;
+            }
+
+            internal TValue AddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory,
+                TArg factoryArgument, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        index = entryRef.Next;
+                        continue;
+                    }
+
+                    // overwriting existing element
+                    entryRef.Value = updateValueFactory.Invoke(key, entryRef.Value, factoryArgument);
+                    return entryRef.Value;
+                }
+
+                TValue result = addValueFactory.Invoke(key, factoryArgument);
+                AddAsNew(key, result, hashCode, ref bucketRef);
+                return result;
+            }
+
+            internal TValue GetOrAdd(TKey key, TValue addValue, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
+                        return entryRef.Value;
+
+                    index = entryRef.Next;
+                }
+
+                AddAsNew(key, addValue, hashCode, ref bucketRef);
+                return addValue;
+            }
+
+            internal TValue GetOrAdd(TKey key, Func<TKey, TValue> addValueFactory, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
+                        return entryRef.Value;
+
+                    index = entryRef.Next;
+                }
+
+                TValue result = addValueFactory.Invoke(key);
+                AddAsNew(key, result, hashCode, ref bucketRef);
+                return result;
+            }
+
+            internal TValue GetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
+                        return entryRef.Value;
+
+                    index = entryRef.Next;
+                }
+
+                TValue result = addValueFactory.Invoke(key, factoryArgument);
+                AddAsNew(key, result, hashCode, ref bucketRef);
+                return result;
             }
 
             internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);
@@ -554,6 +656,43 @@ namespace KGySoft.Collections
             {
                 IEqualityComparer<TKey>? comp = comparer;
                 return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+            }
+
+            private void AddAsNew(TKey key, TValue value, uint hashCode, ref int bucketRef)
+            {
+                Entry[] items = entries;
+                int index;
+                // Here existing key was not found
+                bool fromDeleted = deletedCount > 0;
+
+                // re-using the removed entries if possible
+                if (fromDeleted)
+                {
+                    index = deletedItemsBucket;
+                    deletedCount -= 1;
+                }
+                // otherwise, adding a new entry
+                else
+                {
+                    // storage expansion is needed
+                    if (usedCount == items.Length)
+                    {
+                        Resize(items.Length << 1, out int[] resizedBuckets, out items);
+                        bucketRef = ref resizedBuckets[GetBucketIndex(hashCode)];
+                    }
+
+                    index = usedCount;
+                    usedCount += 1;
+                }
+
+                ref Entry entryRef = ref items[index];
+                if (fromDeleted)
+                    deletedItemsBucket = deletedNextBase - entryRef.Next;
+                entryRef.Hash = hashCode;
+                entryRef.Next = bucketRef - 1; // Next is zero-based
+                entryRef.Key = key;
+                entryRef.Value = value;
+                bucketRef = index + 1; // bucket indices are 1-based
             }
 
             private void Resize(int newCapacity, out int[] newBuckets, out Entry[] newEntries)
