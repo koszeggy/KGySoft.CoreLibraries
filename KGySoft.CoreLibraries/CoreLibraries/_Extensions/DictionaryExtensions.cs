@@ -17,7 +17,9 @@
 #region Usings
 
 using System;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -342,7 +344,6 @@ namespace KGySoft.CoreLibraries
                     }
             }
         }
-
 #endif
 
         /// <summary>
@@ -471,6 +472,104 @@ namespace KGySoft.CoreLibraries
         public static ThreadSafeDictionary<TKey, TValue> ToThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) where TKey : notnull
             => new ThreadSafeDictionary<TKey, TValue>(dictionary);
 
+        // TODO: docs: Unlike CollectionExtensions.TryAdd, this one handles ConcurrentDictionary in a thread safe way, and checks IsReadOnly for other IDictionaries
+        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> item)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static bool Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+            {
+                if (dictionary.IsReadOnly || dictionary.ContainsKey(key))
+                    return false;
+                dictionary[key] = value;
+                return true;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (item.Key == null!)
+                Throw.ArgumentException(Argument.item, Res.PropertyNull(nameof(item.Key)));
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.TryAdd(item.Key, item.Value);
+#if !NET35
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.TryAdd(item.Key, item.Value);
+#endif
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+                case Dictionary<TKey, TValue> dict:
+                    return dict.TryAdd(item.Key, item.Value);
+#endif
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, item.Key, item.Value);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, item.Key, item.Value);
+            }
+        }
+
+        public static bool TryUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue newValue, TValue originalValue)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static bool Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue newValue, TValue originalValue)
+            {
+                if (dictionary.IsReadOnly
+                    || !dictionary.TryGetValue(key, out TValue? oldValue)
+                    || !ComparerHelper<TValue>.EqualityComparer.Equals(oldValue, originalValue))
+                {
+                    return false;
+                }
+
+                dictionary[key] = newValue;
+                return true;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.TryUpdate(key, newValue, originalValue);
+#if !NET35
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.TryUpdate(key, newValue, originalValue);
+#endif
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, newValue, originalValue);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, newValue, originalValue);
+            }
+        }
+
         public static TValue AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
             where TKey : notnull
         {
@@ -502,8 +601,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.AddOrUpdate(key, addValue, updateValueFactory);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.AddOrUpdate(key, addValue, updateValueFactory);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -555,8 +656,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.AddOrUpdate(key, addValueFactory, updateValueFactory);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.AddOrUpdate(key, addValueFactory, updateValueFactory);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -609,8 +712,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -652,8 +757,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.GetOrAdd(key, addValue);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.GetOrAdd(key, addValue);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -698,8 +805,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.GetOrAdd(key, addValueFactory);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.GetOrAdd(key, addValueFactory);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -745,8 +854,10 @@ namespace KGySoft.CoreLibraries
             {
                 case ThreadSafeDictionary<TKey, TValue> tDict:
                     return tDict.GetOrAdd(key, addValueFactory, factoryArgument);
+#if !NET35
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.GetOrAdd(key, addValueFactory, factoryArgument);
+#endif
                 case LockingDictionary<TKey, TValue> lDict:
                     lDict.Lock();
                     try
@@ -760,6 +871,67 @@ namespace KGySoft.CoreLibraries
 
                 default:
                     return Fallback(dictionary, key, addValueFactory, factoryArgument);
+            }
+        }
+
+        public static bool TryRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
+        {
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            return !dictionary.IsReadOnly && dictionary.Remove(key);
+        }
+
+        public static bool TryRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, [MaybeNullWhen(false)]out TValue value)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static bool Fallback(IDictionary<TKey, TValue> dictionary, TKey key, [MaybeNullWhen(false)]out TValue value)
+            {
+                if (!dictionary.IsReadOnly && dictionary.TryGetValue(key, out TValue? removedValue) && dictionary.Remove(key))
+                {
+                    value = removedValue;
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.TryRemove(key, out value);
+#if !NET35
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.TryRemove(key, out value);
+#endif
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+                case Dictionary<TKey, TValue> dict:
+                    return dict.Remove(key, out value);
+#endif
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, out value);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, out value);
             }
         }
 
