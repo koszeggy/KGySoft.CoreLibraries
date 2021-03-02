@@ -150,6 +150,9 @@
   <data name="General_MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
+  <data name="General_PropertyNullFormat" xml:space="preserve">
+    <value>Property '{0}' must not be null.</value>
+  </data>
   <data name="General_PropertyMustBeGreaterThanFormat" xml:space="preserve">
     <value>Property '{0}' must be greater than {1}.</value>
   </data>

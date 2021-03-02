@@ -178,6 +178,11 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Specified argument must be between {0} and {1}.</c></returns>
         public static string ArgumentMustBeBetween<T>(T low, T high) => Res.ArgumentMustBeBetween(low, high);
 
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must not be null.</c></summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must not be null.</c></returns>
+        public static string PropertyNull(string propertyName) => Res.PropertyNull(propertyName);
+
         /// <summary>Looks up a localized string similar to <c>Property '{0}' must be greater than {1}.</c></summary>
         /// <typeparam name="T">Type of the property.</typeparam>
         /// <param name="propertyName">The name of the property.</param>

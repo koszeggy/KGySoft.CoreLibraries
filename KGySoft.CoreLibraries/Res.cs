@@ -489,6 +489,9 @@ namespace KGySoft
         /// <summary>Specified argument must be between {0} and {1}.</summary>
         internal static string ArgumentMustBeBetween<T>(T low, T high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
+        /// <summary>Property '{0}' must not be null.</summary>
+        internal static string PropertyNull(string propertyName) => Get("General_PropertyNullFormat", propertyName);
+
         /// <summary>Property '{0}' must be greater than {1}.</summary>
         internal static string PropertyMustBeGreaterThan<T>(string propertyName, T limit) => Get("General_PropertyMustBeGreaterThanFormat", propertyName, limit);
 
