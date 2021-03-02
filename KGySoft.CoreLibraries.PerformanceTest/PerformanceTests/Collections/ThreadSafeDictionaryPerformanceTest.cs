@@ -126,7 +126,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
 
         [Test]
-        public void AccessWellDistributedKeysTest()
+        public void AccessValueTypeKeysTest()
         {
             const int count = 1_000_000;
             var seq = Enumerable.Range(0, count);
@@ -141,6 +141,42 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 gDict[i] = null;
 
             new IteratorPerformanceTest<object> { Iterations = count, Repeat = 5, TestName = "Sequential" }
+                .AddCase(i => lDict[i], "LockingDictionary")
+#if !NET35
+                .AddCase(i => cDict[i], "ConcurrentDictionary")
+#endif
+                .AddCase(i => tDict[i], "ThreadSafeDictionary")
+                .AddCase(i => gDict[i], "GrowOnlyDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+#if !NET35
+            new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "Parallel" }
+                .AddCase(() => Parallel.For(0, count, i => { var _ = lDict[i]; }), "LockingDictionary")
+                .AddCase(() => Parallel.For(0, count, i => { var _ = cDict[i]; }), "ConcurrentDictionary")
+                .AddCase(() => Parallel.For(0, count, i => { var _ = tDict[i]; }), "ThreadSafeDictionary")
+                .AddCase(() => Parallel.For(0, count, i => { var _ = gDict[i]; }), "GrowOnlyDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+#endif
+        }
+
+        [Test]
+        public void AccessReferenceTypeKeysTest()
+        {
+            const int count = 1_000_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => (object)i, i => i);
+            var lDict = new LockingDictionary<object, int>(new Dictionary<object, int>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<object, int>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<object, int>(dict, strategy: HashingStrategy.And);
+            var gDict = new LockFreeCache<object, int>.GrowOnlyDictionary(count, null, true);
+            for (int i = 0; i < count; i++)
+                gDict[i] = i;
+
+            new IteratorPerformanceTest<int> { Iterations = count, Repeat = 5, TestName = "Sequential" }
                 .AddCase(i => lDict[i], "LockingDictionary")
 #if !NET35
                 .AddCase(i => cDict[i], "ConcurrentDictionary")
@@ -214,12 +250,11 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
 
             new IteratorPerformanceTest { Iterations = count, Repeat = 5, TestName = "Sequential Update" }
-                //.AddCase(i => dict[i] = null, "Dictionary")
-                .AddCase(i => lDict[i] = null, "LockingDictionary")
+                .AddCase(i => lDict[i] = i, "LockingDictionary")
 #if !NET35
-                .AddCase(i => cDict[i] = null, "ConcurrentDictionary")
+                .AddCase(i => cDict[i] = i, "ConcurrentDictionary")
 #endif
-                .AddCase(i => tDict[i] = null, "ThreadSafeDictionary")
+                .AddCase(i => tDict[i] = i, "ThreadSafeDictionary")
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -228,6 +263,37 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .AddCase(() => Parallel.For(0, count, i => lDict[i] = i), "LockingDictionary")
                 .AddCase(() => Parallel.For(0, count, i => cDict[i] = i), "ConcurrentDictionary")
                 .AddCase(() => Parallel.For(0, count, i => tDict[i] = i), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+#endif
+        }
+
+        [Test]
+        public void TryUpdateTest()
+        {
+            const int count = 1_000_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => i, i => (object)null);
+            var lDict = new LockingDictionary<int, object>(new Dictionary<int, object>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<int, object>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
+
+            new IteratorPerformanceTest<bool> { Iterations = count, Repeat = 5, TestName = "Sequential Update" }
+                .AddCase(i => lDict.TryUpdate(i, i, i), "LockingDictionary (extension)")
+#if !NET35
+                .AddCase(i => cDict.TryUpdate(i, i, i), "ConcurrentDictionary")
+#endif
+                .AddCase(i => tDict.TryUpdate(i, i, i), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+#if !NET35
+            new PerformanceTest { Iterations = 1, CpuAffinity = null, TestName = "Parallel Update", Repeat = 5 }
+                .AddCase(() => Parallel.For(0, count, i => lDict.TryUpdate(i, i, i)), "LockingDictionary (extension)")
+                .AddCase(() => Parallel.For(0, count, i => cDict.TryUpdate(i, i, i)), "ConcurrentDictionary")
+                .AddCase(() => Parallel.For(0, count, i => tDict.TryUpdate(i, i, i)), "ThreadSafeDictionary")
                 .DoTest()
                 .DumpResults(Console.Out);
 #endif

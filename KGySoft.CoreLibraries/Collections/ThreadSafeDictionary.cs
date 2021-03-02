@@ -432,9 +432,9 @@ namespace KGySoft.Collections
             }
         }
 
-        public bool Remove(TKey key)
+        public bool TryRemove(TKey key)
         {
-            // Note: we could re-use TryRemove but it is faster to do it this way
+            // Note: we could re-use TryRemove(TKey, out TValue) but it is faster to do it this way
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
 
@@ -518,6 +518,54 @@ namespace KGySoft.Collections
                         return false;
 
                     bool result = lockingValues.TryRemoveInternal(key, hashCode, out value);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        [CLSCompliant(false)]
+        public bool TryRemove(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            uint hashCode = GetHashCode(key);
+            bool removed = false;
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                bool? success = lockFreeValues.TryRemoveInternal(key, value, hashCode);
+
+                // making sure that correct result is returned even if multiple tries are necessary due to merging
+                if (success == true)
+                    removed = true;
+
+                // successfully removed from fixed-size storage (now, or in a previous attempt)
+                if (removed)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return true;
+
+                    continue;
+                }
+
+                // item was already deleted (if we removed it in a previous attempt, then true is returned above)
+                if (success == false)
+                    return false;
+
+                if (expandableStorage == null)
+                    return false;
+
+                lock (syncRoot)
+                {
+                    TempStorage? lockingValues = expandableStorage;
+
+                    // lost race
+                    if (lockingValues == null)
+                        return false;
+
+                    bool result = lockingValues.TryRemoveInternal(key, value, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -930,6 +978,8 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Methods
 
+        bool IDictionary<TKey, TValue>.Remove(TKey key) => TryRemove(key);
+
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
             => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);
 
@@ -959,20 +1009,7 @@ namespace KGySoft.Collections
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
-        {
-            Debug.Fail("It is not expected to call this method. A TryRemove(key, value) must be implemented if it will be a public class.");
-            while (true)
-            {
-                if (!TryRemove(item.Key, out TValue? value))
-                    return false;
-                
-                if (ComparerHelper<TValue>.EqualityComparer.Equals(value, item.Value))
-                    return true;
-
-                // oops, we removed the wrong value
-                TryAdd(item.Key, value);
-            }
-        }
+            => TryRemove(item.Key, item.Value);
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -1007,7 +1044,7 @@ namespace KGySoft.Collections
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             if (key is TKey k)
-                Remove(k);
+                TryRemove(k);
         }
 
         void ICollection.CopyTo(Array array, int index)

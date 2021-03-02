@@ -279,6 +279,13 @@ namespace KGySoft.Collections
                 return TryRemoveInternal(key, GetHashCode(key), out value);
             }
 
+            public bool TryRemove(TKey key, TValue value)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                return TryRemoveInternal(key, value, GetHashCode(key));
+            }
+
             public bool Remove(TKey key)
             {
                 if (key == null!)
@@ -287,6 +294,22 @@ namespace KGySoft.Collections
             }
 
             public void Clear() => Initialize(0);
+
+            public TValue GetOrAdd(TKey key, TValue addValue)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                return GetOrAdd(key, addValue, GetHashCode(key));
+            }
+
+            public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                if (updateValueFactory == null!)
+                    Throw.ArgumentNullException(nameof(updateValueFactory));
+                return AddOrUpdate(key, addValue, updateValueFactory, GetHashCode(key));
+            }
 
             #endregion
 
@@ -376,6 +399,50 @@ namespace KGySoft.Collections
                 return false;
             }
 
+            internal bool TryRemoveInternal(TKey key, uint hashCode)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                int previous = -1;
+                ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
+                int i = bucketRef - 1;
+
+                // searching for an existing key
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        previous = i;
+                        i = items[i].Next;
+                        continue;
+                    }
+
+                    // removing entry from the original bucket
+                    if (previous < 0)
+                        bucketRef = entryRef.Next + 1;
+                    else
+                        items[previous].Next = entryRef.Next;
+
+                    // Moving entry to a special bucket of removed entries were indices have negative value less than -1
+                    entryRef.Next = deletedNextBase - deletedItemsBucket;
+                    deletedItemsBucket = i;
+                    deletedCount += 1;
+
+                    // cleanup
+                    if (IsKeyManaged())
+                        entryRef.Key = default;
+                    if (IsValueManaged())
+                        entryRef.Value = default;
+
+                    return true;
+                }
+
+                // Not found
+                return false;
+            }
+
             internal bool TryRemoveInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
                 int[] bucketsLocal = buckets;
@@ -423,7 +490,7 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            internal bool TryRemoveInternal(TKey key, uint hashCode)
+            internal bool TryRemoveInternal(TKey key, TValue value, uint hashCode)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
@@ -442,6 +509,10 @@ namespace KGySoft.Collections
                         i = items[i].Next;
                         continue;
                     }
+
+                    // checking value
+                    if (!valueComparer.Equals(entryRef.Value, value))
+                        return false;
 
                     // removing entry from the original bucket
                     if (previous < 0)

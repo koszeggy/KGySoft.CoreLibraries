@@ -53,7 +53,7 @@ namespace KGySoft.Collections
 
                 /// <summary>
                 /// A reference to the actual value that can be accessed by volatile read. Value is null if the item is deleted.
-                /// The reference is replaced only on delete/restore. because the inner value is overwritten atomically.
+                /// If the inner value can be overwritten atomically, then the reference is replaced only on delete/restore.
                 /// </summary>
 #if NET35 || NET40
                 volatile // because there is no generic Volatile.Read in .NET 3.5/4.0
@@ -281,6 +281,13 @@ namespace KGySoft.Collections
                 return TryRemoveInternal(key, GetHashCode(key), out value) == true;
             }
 
+            public bool TryRemove(TKey key, TValue value)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                return TryRemoveInternal(key, value, GetHashCode(key)) == true;
+            }
+
             public bool Remove(TKey key)
             {
                 if (key == null!)
@@ -296,6 +303,22 @@ namespace KGySoft.Collections
                     if (Interlocked.Exchange(ref entries[i].Value, null) != null)
                         Interlocked.Increment(ref deletedCount);
                 }
+            }
+
+            public bool TryGetOrAdd(TKey key, TValue addValue, [MaybeNullWhen(false)]out TValue value)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                return TryGetOrAdd(key, addValue, GetHashCode(key), out value);
+            }
+
+            public bool TryAddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, [MaybeNullWhen(false)]out TValue value)
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                if (updateValueFactory == null!)
+                    Throw.ArgumentNullException(nameof(updateValueFactory));
+                return TryAddOrUpdate(key, addValue, updateValueFactory, GetHashCode(key), out value);
             }
 
             #endregion
@@ -451,6 +474,33 @@ namespace KGySoft.Collections
                 return null;
             }
 
+            internal bool? TryRemoveInternal(TKey key, uint hashCode)
+            {
+                int[] bucketsLocal = buckets;
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+
+                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                while (i >= 0)
+                {
+                    ref Entry entryRef = ref items[i];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        i = entryRef.Next;
+                        continue;
+                    }
+
+                    if (Interlocked.Exchange(ref entryRef.Value, null) == null)
+                        return false;
+
+                    Interlocked.Increment(ref deletedCount);
+                    return true;
+                }
+
+                // not found
+                return null;
+            }
+
             internal bool? TryRemoveInternal(TKey key, uint hashCode, out TValue? value)
             {
                 int[] bucketsLocal = buckets;
@@ -496,7 +546,7 @@ namespace KGySoft.Collections
                 return null;
             }
 
-            internal bool? TryRemoveInternal(TKey key, uint hashCode)
+            internal bool? TryRemoveInternal(TKey key, TValue value, uint hashCode)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
@@ -512,14 +562,29 @@ namespace KGySoft.Collections
                         continue;
                     }
 
-                    if (Interlocked.Exchange(ref entryRef.Value, null) == null)
-                        return false;
+                    while (true)
+                    {
+#if NET35 || NET40
+                        StrongBox<TValue>? box = entryRef.Value;
+#else
+                        StrongBox<TValue>? box = Volatile.Read(ref entryRef.Value);
+#endif
 
-                    Interlocked.Increment(ref deletedCount);
-                    return true;
+                        // already deleted or value does not match
+                        if (box == null || !valueComparer.Equals(value, box.Value))
+                            return false;
+
+                        if (Interlocked.CompareExchange(ref entryRef.Value, null, box) != box)
+                            continue;
+
+                        Interlocked.Increment(ref deletedCount);
+                        value = box.Value;
+                        return true;
+                    }
                 }
 
                 // not found
+                value = default;
                 return null;
             }
 
@@ -553,6 +618,7 @@ namespace KGySoft.Collections
                         {
                             if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(addValue), null) != null)
                                 continue;
+                            Interlocked.Decrement(ref deletedCount);
                             value = addValue;
                             return true;
                         }
@@ -619,6 +685,7 @@ namespace KGySoft.Collections
                             value = addValueFactory.Invoke(key);
                             if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
                                 continue;
+                            Interlocked.Decrement(ref deletedCount);
                             return true;
                         }
 
@@ -684,6 +751,7 @@ namespace KGySoft.Collections
                             value = addValueFactory.Invoke(key, factoryArgument);
                             if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
                                 continue;
+                            Interlocked.Decrement(ref deletedCount);
                             return true;
                         }
 
@@ -753,6 +821,7 @@ namespace KGySoft.Collections
                         if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(addValue), null) != null)
                             continue;
 
+                        Interlocked.Decrement(ref deletedCount);
                         value = addValue;
                         return true;
                     }
@@ -799,6 +868,7 @@ namespace KGySoft.Collections
                         value = addValueFactory.Invoke(key);
                         if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
                             continue;
+                        Interlocked.Decrement(ref deletedCount);
                         return true;
                     }
                 }
@@ -844,6 +914,7 @@ namespace KGySoft.Collections
                         value = addValueFactory.Invoke(key, factoryArgument);
                         if (Interlocked.CompareExchange(ref entryRef.Value, new StrongBox<TValue>(value), null) != null)
                             continue;
+                        Interlocked.Decrement(ref deletedCount);
                         return true;
                     }
                 }

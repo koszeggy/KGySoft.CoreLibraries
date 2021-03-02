@@ -82,6 +82,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(11, dict["alpha"]);
 
             // Remove
+            Assert.IsFalse(dict.TryRemove("alpha", 1));
             Assert.IsTrue(dict.TryRemove("alpha", out int value));
             Assert.AreEqual(11, value);
             Assert.AreEqual(2, dict.Count);
@@ -106,11 +107,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(dict.TryAdd("alpha", 42));
             Assert.AreEqual(42, dict["alpha"]);
             Assert.AreEqual(1, dict.Count);
+
+            // GetOrAdd
+            Assert.IsTrue(dict.TryGetOrAdd("alpha", 100, out value));
+            Assert.AreEqual(42, value);
+            Assert.AreEqual(1, dict.Count);
+            Assert.IsTrue(dict.TryGetOrAdd("beta", 100, out value));
+            Assert.AreEqual(100, value);
+            Assert.AreEqual(2, dict.Count);
+            Assert.IsFalse(dict.TryGetOrAdd("delta", 100, out var _));
+            Assert.AreEqual(2, dict.Count);
+
+            // AddOrUpdate
+            Assert.IsTrue(dict.TryAddOrUpdate("alpha", 100, (_, v) => v + 1, out value));
+            Assert.AreEqual(43, value);
+            Assert.AreEqual(2, dict.Count);
+            Assert.IsTrue(dict.TryAddOrUpdate("gamma", 100, (_, v) => v + 1, out value));
+            Assert.AreEqual(100, value);
+            Assert.AreEqual(3, dict.Count);
+            Assert.IsFalse(dict.TryAddOrUpdate("delta", 100, (_, v) => v + 1, out value));
+            Assert.AreEqual(3, dict.Count);
         }
 
         [TestCase(false)]
         [TestCase(true)]
-        public void RegularStorageUsageTest(bool ignoreCase)
+        public void TempStorageUsageTest(bool ignoreCase)
         {
             var dict = new ThreadSafeDictionary<string, int>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
 
@@ -132,6 +153,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(11, dict["alpha"]);
 
             // Remove
+            Assert.IsFalse(dict.TryRemove("alpha", 1));
             Assert.IsTrue(dict.TryRemove("alpha", out int value));
             Assert.AreEqual(11, value);
             Assert.AreEqual(3, dict.Count);
@@ -156,6 +178,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             dict.Add("alpha", 42);
             Assert.AreEqual(42, dict["alpha"]);
             Assert.AreEqual(1, dict.Count);
+
+            // GetOrAdd
+            Assert.AreEqual(42, dict.GetOrAdd("alpha", 100));
+            Assert.AreEqual(1, dict.Count);
+            Assert.AreEqual(100, dict.GetOrAdd("beta", 100));
+            Assert.AreEqual(2, dict.Count);
+
+            // AddOrUpdate
+            Assert.AreEqual(43, dict.AddOrUpdate("alpha", 100, (_, v) => v + 1));
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual(100, dict.AddOrUpdate("gamma", 100, (_, v) => v + 1));
+            Assert.AreEqual(3, dict.Count);
         }
 
         [TestCaseSource(nameof(usageTestSource))]
@@ -189,12 +223,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(44, dict["delta"]);
 
             // Remove
+            Assert.IsFalse(dict.TryRemove("alpha", 1));
             Assert.IsTrue(dict.TryRemove("alpha", out int value));
             Assert.AreEqual(11, value);
             Assert.AreEqual(3, dict.Count);
             Assert.IsFalse(dict.TryRemove("alpha", out value));
             Assert.AreEqual(0, value);
-            Assert.IsTrue(dict.Remove("delta")); // maybe from locking
+            Assert.IsFalse(dict.TryRemove("delta", 4));
+            Assert.IsTrue(dict.TryRemove("delta")); // maybe from locking
             Assert.AreEqual(2, dict.Count);
 
             // Re-add
@@ -224,10 +260,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(2, dict.Count);
             Assert.AreEqual(13, dict["delta"]);
 
+            // GetOrAdd
+            Assert.AreEqual(42, dict.GetOrAdd("alpha", 100));
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual(100, dict.GetOrAdd("beta", 100)); // maybe in locking
+            Assert.AreEqual(3, dict.Count);
+
+            // AddOrUpdate
+            Assert.AreEqual(43, dict.AddOrUpdate("alpha", 100, (_, v) => v + 1)); // in non-locking
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual(100, dict.AddOrUpdate("epsilon", 100, (_, v) => v + 1)); // maybe in locking
+            Assert.AreEqual(4, dict.Count);
+
             // Forcing merge
             dict.EnsureMerged();
-            Assert.AreEqual(2, dict.Count);
-            Assert.AreEqual(42, dict["alpha"]);
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual(43, dict["alpha"]);
             Assert.AreEqual(13, dict["delta"]);
         }
 
@@ -297,7 +345,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(dict.SequenceEqual(tDict));
             Assert.IsTrue(dict.ToArray().SequenceEqual(tDict.ToArray()));
 
-            tDict.Remove("alpha");
+            tDict.TryRemove("alpha");
             Assert.AreEqual(2, tDict.Count);
             Assert.AreEqual(2, tDict.ToArray().Length);
         }
