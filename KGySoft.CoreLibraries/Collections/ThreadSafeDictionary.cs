@@ -42,28 +42,61 @@ namespace KGySoft.Collections
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
     /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
-    /// <para>TODO</para>
-    /// TODO:
-    /// - TSD vs CD (vs LD):
-    ///   - Fixed size lock-free storage + a temporary locking storage vs. Uses separate locks for updates, and for some operations acquires all locks at the same time (eg. Count)
-    ///   - Memory consumption
-    ///     - When adding new values
-    ///     - When merged (note for reference-containing TKey: deleted keys are not removed)
-    ///     - When TValue is not atomic (but this behavior is the same as for CD and it is mentioned at when to use, so maybe not needed here)
-    ///   - When to use TSD
-    ///     - Rare new items, mostly overwrite + get, maybe delete + re-add the same key
-    ///     - Count
-    ///     - Many possible collisions
-    ///     - Large struct values (non-atomic size)
-    ///   - Incompatibility:
-    ///     - Keys and Values property is not a snapshot but a living wrapper
-    ///     - ICollection.SyncRoot property throws a NotSupportedException even for Keys and Values
-    /// - Member by member performance comparison in .NET 5
-    ///   - TryGetValue
-    ///   - Setter
-    ///   - Count
-    ///   - GetEnumerator + enumeration
-    ///   - ...
+    /// <para>The purpose of <see cref="ThreadSafeDictionary{TKey,TValue}"/> is similar to <see cref="ConcurrentDictionary{TKey,TValue}"/> but its approach is somewhat different.
+    /// While <see cref="ConcurrentDictionary{TKey,TValue}"/> uses a group of locks to perform modifications (their amount can be configured or depends on the number of CPU cores);
+    /// on the other hand, <see cref="ThreadSafeDictionary{TKey,TValue}"/> uses two separate internal storage: items with new keys are added to a temporary storage using a single lock,
+    /// which might regularly be merged into a faster lock-free storage, depending on the value of the <see cref="MergeInterval"/> property. Once the items are merged, their access
+    /// (both read and write, but even delete and re-add) becomes lock free. Even deleting and re-adding a value for the same key becomes faster after the key is merged into the lock-free storage.
+    /// <note>Therefore, <see cref="ThreadSafeDictionary{TKey,TValue}"/> is not always a good alternative of <see cref="ConcurrentDictionary{TKey,TValue}"/>.
+    /// Using <see cref="ThreadSafeDictionary{TKey,TValue}"/> is <strong>NOT</strong> recommended if new keys are continuously added because the keys of merged items are not removed from
+    /// the <see cref="ThreadSafeDictionary{TKey,TValue}"/> even if they are deleted or when you <see cref="Clear">Clear</see> the dictionary. To remove even the merged keys
+    /// you must call the <see cref="Reset">Reset</see> method.</note></para>
+    /// <h1 class="heading">Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h1>
+    /// <para><strong>When to use</strong> <see cref="ThreadSafeDictionary{TKey,TValue}"/>:
+    /// <list type="bullet">
+    /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
+    /// or even deleted and re-added with any value.</item>
+    /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey,TValue}.AddOrUpdate">AddOrUpdate</see> methods,
+    /// which are separate try get/add/update operations at <see cref="ConcurrentDictionary{TKey,TValue}"/> but are optimized at <see cref="ThreadSafeDictionary{TKey,TValue}"/> to avoid
+    /// multiple lookups.</item>
+    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or <see cref="Keys"/>/<see cref="Values"/> or you need to call <see cref="ToArray">ToArray</see>,
+    /// which are particularly slow in case of <see cref="ConcurrentDictionary{TKey,TValue}"/>.</item>
+    /// <item>If it is expected that there will be many hash collisions.</item>
+    /// <item>If the dictionary is needed to be serialized.</item>
+    /// </list></para>
+    /// <para><strong>Performance comparison</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/> (default concurrency level depends on <see cref="Environment.ProcessorCount"/>):
+    /// <list type="table">
+    /// <listheader><term>Member(s) or operation</term><term><see cref="ThreadSafeDictionary{TKey,TValue}"/></term><term><see cref="ConcurrentDictionary{TKey,TValue}"/>, concurrency level = 2</term><term><see cref="ConcurrentDictionary{TKey,TValue}"/>, concurrency level = 8</term></listheader>
+    /// <item><term><see cref="Count">Count</see></term><term>Fastest</term><term>5.01x slower</term><term>530.44x slower</term></item>
+    /// <item><term><see cref="TryAdd">TryAdd</see> (10 million new keys, sequential)</term><term>1.07x slower</term><term>Fastest</term><term>1.25x slower</term></item>
+    /// <item><term><see cref="TryAdd">TryAdd</see> (10 million new keys, parallel)</term><term>1.02x slower</term><term>Fastest</term><term>1.53x slower</term></item>
+    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is value type)</term><term>1.55x slower</term><term>Fastest</term><term>Fastest</term></item>
+    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is reference type)</term><term>1.12x slower</term><term>Fastest</term><term>Fastest</term></item>
+    /// <item><term><see cref="TryGetValue">TryGetValue</see> (many key collisions)</term><term>Fastest</term><term>1.92x slower</term><term>2.01x slower</term></item>
+    /// <item><term><see cref="this">Indexer</see> set (sequential, <typeparamref name="TKey"/> is value type)</term><term>Fastest</term><term>1.07x slower</term><term>1.07x slower</term></item>
+    /// <item><term><see cref="this">Indexer</see> set (parallel, <typeparamref name="TKey"/> is value type)</term><term>Fastest</term><term>2.03x slower</term><term>1.01x slower</term></item>
+    /// <item><term><see cref="TryUpdate">TryUpdate</see> (sequential)</term><term>Fastest</term><term>1.21x slower</term><term>1.17x slower</term></item>
+    /// <item><term><see cref="TryUpdate">TryUpdate</see> (parallel)</term><term>Fastest</term><term>4.02x slower</term><term>1.27x slower</term></item>
+    /// <item><term><see cref="TryRemove(TKey)">TryRemove</see> + <see cref="TryAdd">TryAdd</see> (same key, sequential)</term><term>Fastest</term><term>1.12x slower</term><term>1.16x slower</term></item>
+    /// <item><term><see cref="TryRemove(TKey)">TryRemove</see> + <see cref="TryAdd">TryAdd</see> (same key, parallel)</term><term>Fastest</term><term>2.53x slower</term><term>2.43x slower</term></item>
+    /// <item><term>Enumerating items</term><term>Fastest</term><term>2.87x slower</term><term>262.45x slower</term></item>
+    /// <item><term>Enumerating <see cref="Keys"/></term><term>Fastest</term><term>117.92x slower</term><term>368.11x slower</term></item>
+    /// <item><term><see cref="ToArray">ToArray</see></term><term>1.69x slower</term><term>Fastest</term><term>2.12x slower</term></item>
+    /// <item><term><see cref="AddOrUpdate(TKey,TValue,Func{TKey,TValue,TValue})">AddOrUpdate</see> (random existing keys, sequential)</term><term>Fastest</term><term>3.35x slower</term><term>3.16x slower</term></item>
+    /// <item><term><see cref="AddOrUpdate(TKey,TValue,Func{TKey,TValue,TValue})">AddOrUpdate</see> (random existing keys, parallel)</term><term>Fastest</term><term>9.74x slower</term><term>2.27x slower</term></item>
+    /// <item><term><see cref="GetOrAdd(TKey,TValue)">GetOrAdd</see> (random existing keys)</term><term>1.11x slower</term><term>Fastest</term><term>Fastest</term></item>
+    /// </list></para>
+    /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
+    /// <list type="bullet">
+    /// <item>Constructor signatures are different</item>
+    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> has a <see cref="ConcurrentDictionary{TKey,TValue}.TryRemove(KeyValuePair{TKey,TValue})"/> method overload, while its signature
+    /// in <see cref="ThreadSafeDictionary{TKey,TValue}"/> is <see cref="TryRemove(TKey, TValue)"/>.</item>
+    /// <item>The <see cref="Keys"/> and <see cref="Values"/> property of <see cref="ThreadSafeDictionary{TKey,TValue}"/> return wrappers for the current keys and values
+    /// (enumerating the same instance again and again may yield different items), whereas <see cref="ConcurrentDictionary{TKey,TValue}"/> return a snapshot for these properties.</item>
+    /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> throw a <see cref="NotSupportedException"/> just like for their
+    /// owner <see cref="ThreadSafeDictionary{TKey,TValue}"/> instance. In contrast, in case of <see cref="ConcurrentDictionary{TKey,TValue}"/> only the dictionary itself throws an exception
+    /// when accessing the <see cref="ICollection.SyncRoot"/>, whereas its keys and values don't.</item>
+    /// </list></para>
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [Serializable]
@@ -108,8 +141,8 @@ namespace KGySoft.Collections
         /// </summary>
         private volatile TempStorage? expandableStorage;
 
-        private volatile KeysCollection? keysCollection;
-        private volatile ValuesCollection? valuesCollection;
+        private KeysCollection? keysCollection;
+        private ValuesCollection? valuesCollection;
         private SerializationInfo? deserializationInfo;
 
         #endregion
@@ -148,6 +181,9 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Gets whether this <see cref="ThreadSafeDictionary{TKey,TValue}"/> is empty.
+        /// </summary>
         public bool IsEmpty
         {
             get
@@ -165,15 +201,19 @@ namespace KGySoft.Collections
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
-        /// <para>When the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, then adding new items are immediately merged to a new fast-accessing storage.
-        /// This is not recommended unless new items are almost never added at the same time.</para>
-        /// <para>When the value of this property is positive (the default is 100 milliseconds), then adding new items will be put in a temporary locking storage.
+        /// <para>When adding items with new keys, they will be put in a temporary locking storage first.
         /// Whenever the locking storage is accessed, it will be checked whether the specified time interval has been expired since its creation. If so, then
-        /// it will be merged with the previous content of the fast storage into a new instance. This is the recommended behavior
-        /// if new keys are typically added together, rarely or periodically.</para>
-        /// <para>When the value of this property is negative (eg. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is never merged automatically
-        /// with the lock-free storage. You still can call the <see cref="EnsureMerged">EnsureMerged</see> method to perform a merge explicitly.</para>
-        /// <para>This property does not affect overwriting, removing or re-adding previously deleted keys that already present in the fast-accessing storage.</para>
+        /// it will be merged with the previous content of the fast non-locking storage into a new one.
+        /// If new keys are typically added together, rarely or periodically, then it is recommended to set some small positive value (up to a few seconds).</para>
+        /// <para>Even if the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, adding new items are not necessarily merged immediately
+        /// to the fast-accessing storage. Depending on the targeted platform a minimum 15 ms delay is possible. Setting <see cref="TimeSpan.Zero">TimeSpan.Zero</see>
+        /// is not recommended though, unless new items are almost never added at the same time.</para>
+        /// <para>When the value of this property is negative (eg. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
+        /// automatically with the lock-free storage. You still can call the <see cref="EnsureMerged">EnsureMerged</see> method to perform a merge explicitly.</para>
+        /// <para>This property is ignored if a value is accessed in the fast-accessing storage including removing and adding values of keys that have already been merged to the lock-free storage.</para>
+        /// <note>Some operations (such as enumerating the <see cref="ThreadSafeDictionary{TKey,TValue}"/> or its <see cref="Keys"/> and <see cref="Values"/>,
+        /// calling the <see cref="ToArray">ToArray</see> or the <see cref="ICollection.CopyTo">ICollection.CopyTo</see> implementations) as well as serializing the dictionary may trigger a merging
+        /// regardless of the value of this property.</note>
         /// </remarks>
         public TimeSpan MergeInterval
         {
@@ -196,10 +236,7 @@ namespace KGySoft.Collections
                     if (expandableStorage == null || interval < 0L)
                         return;
 
-                    if (interval > 0L)
-                        nextMerge = TimeHelper.GetTimeStamp() + interval;
-                    else
-                        EnsureMerged();
+                    nextMerge = TimeHelper.GetTimeStamp() + interval;
                 }
             }
         }
@@ -213,7 +250,15 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TKey> Keys => keysCollection ??= new KeysCollection(this);
+        public ICollection<TKey> Keys
+        {
+            get
+            {
+                if (keysCollection == null)
+                    Interlocked.CompareExchange(ref keysCollection, new KeysCollection(this), null);
+                return keysCollection;
+            }
+        }
 
         /// <summary>
         /// Gets a collection reflecting the values stored in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
@@ -224,7 +269,15 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TValue> Values => valuesCollection ??= new ValuesCollection(this);
+        public ICollection<TValue> Values
+        {
+            get
+            {
+                if (valuesCollection == null)
+                    Interlocked.CompareExchange(ref valuesCollection, new ValuesCollection(this), null);
+                return valuesCollection;
+            }
+        }
 
         #endregion
 
@@ -407,6 +460,22 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
+        /// <summary>
+        /// Adds an element with the provided key and value to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <remarks>
+        /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
+        /// In contrast, using the setter of the <see cref="this">indexer</see> property replaces the old value with the new one.</para>
+        /// <para>If multiple values are added to this <see cref="ThreadSafeDictionary{TKey,TValue}"/> concurrently, then you should use
+        /// the <see cref="TryAdd">TryAdd</see> method instead, which simply returns <see langword="false"/>&#160;if the <paramref name="key"/>
+        /// to add already exists in the dictionary.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
+        /// <seealso cref="this"/>
+        /// <seealso cref="TryAdd"/>
         public void Add(TKey key, TValue value)
         {
             if (key == null!)
@@ -414,6 +483,16 @@ namespace KGySoft.Collections
             TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.ThrowIfExists);
         }
 
+        /// <summary>
+        /// Tries to add the specified <paramref name="key"/> and <paramref name="value"/> to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <returns><see langword="true"/>&#160;if <paramref name="key"/> and <paramref name="value"/> was added to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> successfully;
+        /// <see langword="false"/>&#160;if the key already exists.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.GetOrAdd">GetOrAdd</seealso>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.AddOrUpdate">AddOrUpdate</seealso>
         public bool TryAdd(TKey key, TValue value)
         {
             if (key == null!)
@@ -421,6 +500,16 @@ namespace KGySoft.Collections
             return TryInsertInternal(key, value, GetHashCode(key), DictionaryInsertion.DoNotOverwrite);
         }
 
+        /// <summary>
+        /// Tries to gets the value associated with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <returns><see langword="true"/>&#160;if the key was found in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <param name="key">The key of the value to get.</param>
+        /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
+        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <seealso cref="this"/>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.GetOrAdd">GetOrAdd</seealso>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key == null!)
@@ -430,8 +519,24 @@ namespace KGySoft.Collections
             return TryGetValueInternal(key, hashCode, out value);
         }
 
+        /// <summary>
+        /// Determines whether the <see cref="ThreadSafeDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key to locate in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</param>
+        /// <returns><see langword="true"/> if the <see cref="ThreadSafeDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool ContainsKey(TKey key) => TryGetValue(key, out var _);
 
+        /// <summary>
+        /// Determines whether the <see cref="ThreadSafeDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The value to locate in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</param>
+        /// <returns><see langword="true"/> if the <see cref="ThreadSafeDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        /// </remarks>
         public bool ContainsValue(TValue value)
         {
             FixedSizeStorage.InternalEnumerator lockFreeEnumerator = fixedSizeStorage.GetInternalEnumerator();
@@ -461,6 +566,12 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Tries to remove the value with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">Key of the item to remove.</param>
+        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryRemove(TKey key)
         {
             // Note: we could re-use TryRemove(TKey, out TValue) but it is faster to do it this way
@@ -509,6 +620,15 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Tries to remove and return the <paramref name="value"/> with the specified <paramref name="key"/>
+        /// from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">Key of the item to remove.</param>
+        /// <param name="value">When this method returns, contains the value removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>,
+        /// or the default value of the <typeparamref name="TValue"/> type if <paramref name="key"/> does not exist.</param>
+        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryRemove(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key == null!)
@@ -553,6 +673,13 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Tries to remove the item from the <see cref="ThreadSafeDictionary{TKey,TValue}"/> that has the specified <paramref name="key"/> and <paramref name="value"/>.
+        /// </summary>
+        /// <param name="key">The key of the item to remove.</param>
+        /// <param name="value">The value of the item to remove.</param>
+        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public bool TryRemove(TKey key, TValue value)
         {
@@ -601,6 +728,17 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Removes all items from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method is an O(n) operation where n is the number of elements present in the inner lock-free storage.</para>
+        /// <note>Note that this method removes all values from the <see cref="ThreadSafeDictionary{TKey,TValue}"/> but does not remove
+        /// the keys that are already merged into the faster lock-free storage. This ensures that adding a new value with an already used key will be
+        /// a fast, lock-free operation. To remove all keys and values use the <see cref="Reset">Reset</see> method instead, which is an O(1) operation.</note>
+        /// </remarks>
+        /// <seealso cref="Reset"/>
         public void Clear()
         {
             // It is not a problem if a merge is in progress because it will nullify expandableStorage in the end anyway
@@ -615,6 +753,11 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Removes all keys and values from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Clear">Clear</see> method for details.
+        /// </summary>
+        /// <seealso cref="Clear"/>
         public void Reset()
         {
             if (isMerging)
@@ -623,6 +766,16 @@ namespace KGySoft.Collections
             expandableStorage = null;
         }
 
+        /// <summary>
+        /// Updates the value associated with <paramref name="key"/> to <paramref name="newValue"/>
+        /// if the existing value with <paramref name="key"/> is equal to <paramref name="originalValue"/>.
+        /// </summary>
+        /// <param name="key">The key of the item to replace.</param>
+        /// <param name="newValue">The replacement value of <paramref name="key"/> if its value equals to <paramref name="originalValue"/>.</param>
+        /// <param name="originalValue">The expected original value of the stored item with the associated <paramref name="key"/>.</param>
+        /// <returns><see langword="true"/>&#160;if the value with <paramref name="key"/> was equal to <paramref name="originalValue"/>
+        /// and was replaced with <paramref name="newValue"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
         {
             if (key == null!)
@@ -632,6 +785,16 @@ namespace KGySoft.Collections
             return TryReplaceInternal(key, hashCode, newValue, originalValue);
         }
 
+        /// <summary>
+        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> does not already exist,
+        /// or updates a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> by using the specified <paramref name="updateValueFactory"/> if the <paramref name="key"/> already exists.
+        /// </summary>
+        /// <param name="key">The key to be added or whose value should be updated.</param>
+        /// <param name="addValue">The value to be added for an absent key.</param>
+        /// <param name="updateValueFactory">A delegate used to generate a new value for an existing key based on the key's existing value.</param>
+        /// <returns>The new value for the <paramref name="key"/>. This will be either <paramref name="addValue"/> (if the key was absent)
+        /// or the result of <paramref name="updateValueFactory"/> (if the key was present).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> or <paramref name="updateValueFactory"/> is <see langword="null"/>.</exception>
         public TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory)
         {
             // Note: we could just return AddOrUpdate(key, _ => addValue, updateValueFactory) but creating a new delegate would be a great performance loss
@@ -651,7 +814,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -662,6 +824,16 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Uses the specified delegates to add a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> does not already exist,
+        /// or to update a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> already exists.
+        /// </summary>
+        /// <param name="key">The key to be added or whose value should be updated.</param>
+        /// <param name="addValueFactory">A delegate used to generate a value for an absent key.</param>
+        /// <param name="updateValueFactory">A delegate used to generate a new value for an existing key based on the key's existing value.</param>
+        /// <returns>The new value for the <paramref name="key"/>. This will be either the result of <paramref name="addValueFactory"/> (if the key was absent)
+        /// or the result of <paramref name="updateValueFactory"/> (if the key was present).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/>, <paramref name="addValueFactory"/> or <paramref name="updateValueFactory"/> is <see langword="null"/>.</exception>
         public TValue AddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory)
         {
             if (key == null!)
@@ -682,7 +854,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -693,6 +864,18 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Uses the specified delegates to add a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> does not already exist,
+        /// or to update a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> already exists.
+        /// </summary>
+        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</typeparam>
+        /// <param name="key">The key to be added or whose value should be updated.</param>
+        /// <param name="addValueFactory">A delegate used to generate a value for an absent key.</param>
+        /// <param name="updateValueFactory">A delegate used to generate a new value for an existing key based on the key's existing value.</param>
+        /// <param name="factoryArgument">An argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</param>
+        /// <returns>The new value for the <paramref name="key"/>. This will be either the result of <paramref name="addValueFactory"/> (if the key was absent)
+        /// or the result of <paramref name="updateValueFactory"/> (if the key was present).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/>, <paramref name="addValueFactory"/> or <paramref name="updateValueFactory"/> is <see langword="null"/>.</exception>
         public TValue AddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory, TArg factoryArgument)
         {
             // Note: we could just return AddOrUpdate(key, k => addValueFactory.Invoke(k, factoryArgument), (k, v) => updateValueFactory.Invoke(k, v, factoryArgument))
@@ -715,7 +898,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -726,6 +908,15 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the key does not already exist,
+        /// and returns either the added or the existing value.
+        /// </summary>
+        /// <param name="key">The key of the element to add or whose value should be returned.</param>
+        /// <param name="addValue">The value to be added, if the key does not already exist.</param>
+        /// <returns>The value for the key. This will be either the existing value for the <paramref name="key"/> if the key is already in the dictionary,
+        /// or the specified <paramref name="addValue"/> if the key was not in the dictionary.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public TValue GetOrAdd(TKey key, TValue addValue)
         {
             if (key == null!)
@@ -742,7 +933,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -753,6 +943,15 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> by using the specified <paramref name="addValueFactory"/>
+        /// if the key does not already exist, and returns either the added or the existing value.
+        /// </summary>
+        /// <param name="key">The key of the element to add or whose value should be returned.</param>
+        /// <param name="addValueFactory">The delegate to be used to generate the value, if the key does not already exist.</param>
+        /// <returns>The value for the key. This will be either the existing value for the <paramref name="key"/> if the key is already in the dictionary,
+        /// or the result of the specified <paramref name="addValueFactory"/> if the key was not in the dictionary.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> or <paramref name="addValueFactory"/> is <see langword="null"/>.</exception>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> addValueFactory)
         {
             if (key == null!)
@@ -771,7 +970,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -782,6 +980,17 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> by using the specified <paramref name="addValueFactory"/>
+        /// if the key does not already exist, and returns either the added or the existing value.
+        /// </summary>
+        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/>.</typeparam>
+        /// <param name="key">The key of the element to add or whose value should be returned.</param>
+        /// <param name="addValueFactory">The delegate to be used to generate the value, if the key does not already exist.</param>
+        /// <param name="factoryArgument">An argument to pass into <paramref name="addValueFactory"/>.</param>
+        /// <returns>The value for the key. This will be either the existing value for the <paramref name="key"/> if the key is already in the dictionary,
+        /// or the result of the specified <paramref name="addValueFactory"/> if the key was not in the dictionary.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> or <paramref name="addValueFactory"/> is <see langword="null"/>.</exception>
         public TValue GetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument)
         {
             if (key == null!)
@@ -800,7 +1009,6 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -811,6 +1019,10 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Ensures that all elements in this <see cref="ThreadSafeDictionary{TKey,TValue}"/> are merged into the faster lock-free storage.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="MergeInterval"/> property for details.
+        /// </summary>
         public void EnsureMerged()
         {
             if (expandableStorage == null)
@@ -828,8 +1040,23 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the keys and values of this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="Cache{TKey,TValue}"/>.
+        /// </returns>
+        /// <remarks>
+        /// <para>The enumerator returned from the dictionary is safe to use concurrently with reads and writes to the dictionary; however, it does not represent a moment-in-time snapshot of the dictionary.
+        /// The contents exposed through the enumerator may contain modifications made to the dictionary after <see cref="GetEnumerator">GetEnumerator</see> was called.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
 
+        /// <summary>
+        /// Copies the key and value pairs stored in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> to a new array.
+        /// </summary>
+        /// <returns>A new array containing a snapshot of key and value pairs copied from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</returns>
         public KeyValuePair<TKey, TValue>[] ToArray()
         {
             EnsureMerged();
@@ -900,7 +1127,6 @@ namespace KGySoft.Collections
                 if (success == false)
                     return false;
 
-                // TODO: if mergeInterval == Zero... - merge immediately (actually not really needed just for performance reasons)
                 lock (syncRoot)
                 {
                     TempStorage lockingValues = GetCreateLockingStorage();
@@ -961,7 +1187,7 @@ namespace KGySoft.Collections
                 return result;
             result = expandableStorage = new TempStorage(initialLockingCapacity, comparer, bitwiseAndHash);
             long interval = mergeInterval;
-            if (interval > 0L)
+            if (interval >= 0L)
                 nextMerge = TimeHelper.GetTimeStamp() + interval;
             return result;
         }
@@ -969,7 +1195,7 @@ namespace KGySoft.Collections
         private void MergeIfExpired()
         {
             // must be called in lock
-            if (mergeInterval == 0L || TimeHelper.GetTimeStamp() > nextMerge)
+            if (TimeHelper.GetTimeStamp() > nextMerge)
                 DoMerge();
         }
 
