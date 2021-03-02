@@ -350,6 +350,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(2, tDict.ToArray().Length);
         }
 
+        [Test]
+        public void SerializationTest()
+        {
+            var dict = new ThreadSafeDictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+                ["gamma"] = 3,
+            };
+
+            ThreadSafeDictionary<string, int> clone = dict.DeepClone();
+            Assert.IsTrue(dict.SequenceEqual(clone));
+        }
+
         #endregion
     }
 }

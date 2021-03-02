@@ -25,10 +25,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Security;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
+using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -63,7 +66,8 @@ namespace KGySoft.Collections
     ///   - ...
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
-    public partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
+    [Serializable]
+    public partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, ISerializable, IDeserializationCallback
         where TKey : notnull
     {
         #region Constants
@@ -84,9 +88,14 @@ namespace KGySoft.Collections
         #region Instance Fields
 
         private readonly object syncRoot = new object();
-        private readonly IEqualityComparer<TKey>? comparer;
-        private readonly int initialLockingCapacity;
-        private readonly bool bitwiseAndHash;
+
+        private IEqualityComparer<TKey>? comparer;
+        private int initialLockingCapacity;
+        private bool bitwiseAndHash;
+
+        private volatile bool isMerging;
+        private long mergeInterval = TimeHelper.GetInterval(100);
+        private long nextMerge;
 
         /// <summary>
         /// Values here are accessed without locking.
@@ -101,10 +110,7 @@ namespace KGySoft.Collections
 
         private volatile KeysCollection? keysCollection;
         private volatile ValuesCollection? valuesCollection;
-
-        private long mergeInterval = TimeHelper.GetInterval(100);
-        private long nextMerge;
-        private volatile bool isMerging;
+        private SerializationInfo? deserializationInfo;
 
         #endregion
 
@@ -294,6 +300,8 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
+        
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
@@ -371,6 +379,27 @@ namespace KGySoft.Collections
             expandableStorage = new TempStorage(collection, comparer, bitwiseAndHash);
             nextMerge = TimeHelper.GetTimeStamp() + mergeInterval;
         }
+
+        #endregion
+
+        #region Protected Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class from serialized data.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this deserialization.</param>
+        /// <remarks><note type="inherit">If an inherited type serializes data, which may affect the hashes of the keys, then override
+        /// the <see cref="OnDeserialization">OnDeserialization</see> method and use that to restore the data of the derived instance.</note></remarks>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable. - the fields will be initialized in IDeserializationCallback.OnDeserialization
+        protected ThreadSafeDictionary(SerializationInfo info, StreamingContext context)
+#pragma warning restore CS8618
+        {
+            // deferring the actual deserialization until all objects are finalized and hashes do not change anymore
+            deserializationInfo = info;
+        }
+
+        #endregion
 
         #endregion
 
@@ -809,6 +838,25 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Protected Methods
+
+        /// <summary>
+        /// In a derived class populates a <see cref="SerializationInfo" /> with the additional data of the derived type needed to serialize the target object.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> to populate with data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
+        [SecurityCritical]
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context) { }
+
+        /// <summary>
+        /// In a derived class restores the state the deserialized instance.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        [SecurityCritical]
+        protected virtual void OnDeserialization(SerializationInfo info) { }
+
+        #endregion
+
         #region Private Methods
 
         private bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
@@ -1097,6 +1145,44 @@ namespace KGySoft.Collections
                     Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
                     return;
             }
+        }
+
+        [SecurityCritical]
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null!)
+                Throw.ArgumentNullException(Argument.info);
+
+            info.AddValue(nameof(initialLockingCapacity), initialLockingCapacity);
+            info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
+            info.AddValue(nameof(comparer), comparer);
+            info.AddValue(nameof(mergeInterval), mergeInterval);
+            info.AddValue("items", ToArray());
+
+            // custom data of a derived class
+            GetObjectData(info, context);
+        }
+
+        [SecuritySafeCritical]
+        void IDeserializationCallback.OnDeserialization(object? sender)
+        {
+            SerializationInfo? info = deserializationInfo;
+
+            // may occur with remoting, which calls OnDeserialization twice.
+            if (info == null)
+                return;
+
+            initialLockingCapacity = info.GetInt32(nameof(initialLockingCapacity));
+            bitwiseAndHash = info.GetBoolean(nameof(bitwiseAndHash));
+            comparer = (IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>));
+            mergeInterval = info.GetInt64(nameof(mergeInterval));
+#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, deserialization is a single threaded-access
+            FixedSizeStorage.TryInitialize(info.GetValueOrDefault<KeyValuePair<TKey, TValue>[]>("items"), bitwiseAndHash, comparer, out fixedSizeStorage);
+#pragma warning restore CS0420
+            
+            OnDeserialization(info);
+
+            deserializationInfo = null;
         }
 
         #endregion
