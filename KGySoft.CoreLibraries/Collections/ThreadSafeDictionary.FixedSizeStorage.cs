@@ -328,11 +328,10 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             internal bool? TryGetValueInternal(TKey key, uint hashCode, [MaybeNull]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -371,11 +370,10 @@ namespace KGySoft.Collections
             /// </summary>
             internal bool? TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -433,11 +431,10 @@ namespace KGySoft.Collections
             /// </summary>
             internal bool? TryReplaceInternal(TKey key, TValue newValue, TValue originalValue, uint hashCode)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -476,11 +473,10 @@ namespace KGySoft.Collections
 
             internal bool? TryRemoveInternal(TKey key, uint hashCode)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -503,11 +499,10 @@ namespace KGySoft.Collections
 
             internal bool? TryRemoveInternal(TKey key, uint hashCode, out TValue? value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -548,11 +543,10 @@ namespace KGySoft.Collections
 
             internal bool? TryRemoveInternal(TKey key, TValue value, uint hashCode)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -590,11 +584,10 @@ namespace KGySoft.Collections
 
             internal bool TryAddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -656,11 +649,10 @@ namespace KGySoft.Collections
             internal bool TryAddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory,
                 uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -722,11 +714,10 @@ namespace KGySoft.Collections
             internal bool TryAddOrUpdate<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, Func<TKey, TValue, TArg, TValue> updateValueFactory,
                 TArg factoryArgument, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -787,11 +778,10 @@ namespace KGySoft.Collections
 
             internal bool TryGetOrAdd(TKey key, TValue addValue, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -834,11 +824,10 @@ namespace KGySoft.Collections
 
             internal bool TryGetOrAdd(TKey key, Func<TKey, TValue> addValueFactory, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];
@@ -880,11 +869,10 @@ namespace KGySoft.Collections
 
             internal bool TryGetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                int[] bucketsLocal = buckets;
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
 
-                int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
+                int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
                 {
                     ref Entry entryRef = ref items[i];

@@ -859,6 +859,7 @@ namespace KGySoft.Collections
 
         #region Private Methods
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
         {
             bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);

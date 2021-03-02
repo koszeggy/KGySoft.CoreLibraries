@@ -718,7 +718,7 @@ namespace KGySoft.CoreLibraries
             
             static bool LoadCacheItem(Type t)
             {
-                if (!t.IsClass)
+                if (!t.IsClass || !t.IsSealed)
                     return false;
                 return t.GetMethod(nameof(GetHashCode), Type.EmptyTypes)?.DeclaringType == Reflector.ObjectType;
             }

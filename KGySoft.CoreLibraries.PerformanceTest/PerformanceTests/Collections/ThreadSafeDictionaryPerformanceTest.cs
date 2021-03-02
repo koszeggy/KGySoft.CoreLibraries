@@ -410,6 +410,67 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         }
 
         [Test]
+        public void RemoveAndReAddTest()
+        {
+            const int iterations = 10_000_000;
+            var dict = new Dictionary<string, int>
+            {
+                ["alpha"] = 1,
+                ["beta"] = 2,
+            };
+
+            var lDict = new LockingDictionary<string, int>(new Dictionary<string, int>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<string, int>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<string, int>(dict);
+
+            new PerformanceTest { Iterations = iterations, Repeat = 5, TestName = "Sequential Update" }
+                .AddCase(() =>
+                {
+                    lDict.Remove("alpha");
+                    lDict.Add("alpha", 1);
+                }, "LockingDictionary")
+#if !NET35
+                .AddCase(() =>
+                {
+                    cDict.TryRemove("alpha", out var _);
+                    cDict.TryAdd("alpha", 1);
+                }, "ConcurrentDictionary")
+#endif
+                .AddCase(() =>
+                {
+                    tDict.TryRemove("alpha");
+                    tDict.Add("alpha", 1);
+                }, "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+#if !NET35
+            new PerformanceTest { Iterations = 1, CpuAffinity = null, TestName = "Parallel Update", Repeat = 5 }
+                .AddCase(() => Parallel.For(0, iterations, i =>
+                {
+                    lDict.Lock();
+                    lDict.Remove("alpha");
+                    lDict.Add("alpha", 1);
+                    lDict.Unlock();
+                }), "LockingDictionary")
+                .AddCase(() => Parallel.For(0, iterations, i =>
+                {
+                    cDict.TryRemove("alpha", out var _);
+                    cDict.TryAdd("alpha", 1);
+                }), "ConcurrentDictionary")
+                .AddCase(() => Parallel.For(0, iterations, i =>
+                {
+                    tDict.TryRemove("alpha");
+                    tDict.TryAdd("alpha", 1);
+                }), "ThreadSafeDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+#endif
+        }
+
+        [Test]
         public void CountTest()
         {
             const int count = 1_000;
