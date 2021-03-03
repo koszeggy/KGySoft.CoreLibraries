@@ -110,7 +110,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         [Test]
         public void SerializationTest()
         {
-            throw new NotImplementedException();
+            var test = new Derived(true);
+            var clone = test.DeepClone();
+            Assert.AreEqual(test.PublicProperty, clone.PublicProperty);
         }
 
         #endregion

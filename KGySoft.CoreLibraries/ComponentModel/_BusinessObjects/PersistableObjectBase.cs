@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 #endregion
 
@@ -72,7 +71,7 @@ namespace KGySoft.ComponentModel
         [SuppressMessage("CodeQuality", "IDE0004:Type cast is redundant", Justification = "Needed to avoid CS8619")]
         IDictionary<string, object?> IPersistableObject.GetProperties()
         {
-            var result = new Dictionary<string, object?>(Capacity);
+            var result = new Dictionary<string, object?>(Count);
             foreach (KeyValuePair<string, object?> item in Properties)
             {
                 if (!CanGetProperty(item.Key))

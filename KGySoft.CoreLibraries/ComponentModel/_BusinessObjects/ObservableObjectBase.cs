@@ -16,12 +16,7 @@
 
 #region Usings
 
-#region Used Namespaces
-
 using System;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -34,19 +29,6 @@ using System.Threading;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-
-#endregion
-
-#region Used Aliases
-
-using ThreadSafeStorage =
-#if NET35
-    KGySoft.Collections.ThreadSafeDictionary<string, object?>;
-#else
-    System.Collections.Concurrent.ConcurrentDictionary<string, object?>;
-#endif
-
-#endregion
 
 #endregion
 
@@ -130,11 +112,11 @@ namespace KGySoft.ComponentModel
 
         #region Instance Fields
 
-        private ThreadSafeStorage? properties;
+        private ThreadSafeDictionary<string, object?>? properties;
 
-        [NonSerialized] private Dictionary<string, Type>? reflectedProperties;
-        [NonSerialized] private int suspendCounter;
-        [NonSerialized] private PropertyChangedEventHandler? propertyChanged;
+        [NonSerialized]private Dictionary<string, Type>? reflectedProperties;
+        [NonSerialized]private int suspendCounter;
+        [NonSerialized]private PropertyChangedEventHandler? propertyChanged;
 
         private volatile bool isModified;
         private volatile bool isDisposed;
@@ -207,24 +189,18 @@ namespace KGySoft.ComponentModel
 
         #region Private Protected Properties
 
-        private protected ThreadSafeStorage Properties
+        private protected ThreadSafeDictionary<string, object?> Properties
         {
             get
             {
-                ThreadSafeStorage? result = properties;
+                ThreadSafeDictionary<string, object?>? result = properties;
                 if (result == null || isDisposed)
                     Throw.ObjectDisposedException();
                 return result;
             }
         }
 
-        private protected int Capacity =>
-#if !NET35
-            Properties.Count;
-#else
-            // avoiding to use ConcurrentDictionary.Count, which is very slow
-            ReflectedProperties.Count;
-#endif
+        private protected int Count => Properties.Count;
 
         #endregion
 
@@ -245,7 +221,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected ObservableObjectBase()
         {
-            properties = CreateThreadSafeStorage(ReflectedProperties.Count);
+            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count);
         }
 
         #endregion
@@ -275,16 +251,6 @@ namespace KGySoft.ComponentModel
                 PopulateProperties(result, t.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
             return result;
-        }
-
-        private static ThreadSafeStorage CreateThreadSafeStorage(int capacity)
-        {
-#if NET35
-            return new ThreadSafeDictionary<string, object?>(capacity, HashingStrategy.And);
-#else
-            // Unlike Dictionary, ConcurrentDictionary does not adjust capacity for a near prime but as the key is string we assume a good hash
-            return new ConcurrentDictionary<string, object?>(Environment.ProcessorCount, capacity);
-#endif
         }
 
         #endregion
@@ -380,25 +346,19 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
-        internal ThreadSafeStorage CloneProperties()
+        internal ThreadSafeDictionary<string, object?> CloneProperties()
         {
-#if NET35
-            int capacity = Properties.Count;
-#else
-            // Not using Properties.Count because that can be really slow in ConcurrentDictionary
-            int capacity = ReflectedProperties.Count;
-#endif
-            ThreadSafeStorage result = CreateThreadSafeStorage(capacity);
+            ThreadSafeDictionary<string, object?> result = new ThreadSafeDictionary<string, object?>(Properties.Count);
             foreach (KeyValuePair<string, object?> property in Properties)
             {
-                // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use cache now
+                // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use a cache now
                 object? clonedValue;
                 if (property.Value == null)
                     clonedValue = null;
+                else if (property.Value is string || property.Value.GetType().IsValueType || property.Value is Delegate)
+                    clonedValue = property.Value;
                 else if (property.Value is ICloneable cloneable)
                     clonedValue = cloneable.Clone();
-                else if (property.Value.GetType().IsValueType || property.Value is string || property.Value is Delegate)
-                    clonedValue = property.Value;
                 else
                     clonedValue = property.Value.DeepClone();
 
@@ -500,10 +460,10 @@ namespace KGySoft.ComponentModel
             if (!CanSetProperty(propertyName, value))
                 Throw.InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
 
-            ThreadSafeStorage values = Properties;
+            ThreadSafeDictionary<string, object?> values = Properties;
             bool changed = true;
             object? oldValue = MissingProperty;
-            values.AddOrUpdate(propertyName, value, (key, origValue) =>
+            values.AddOrUpdate(propertyName, value, (_, origValue) =>
             {
                 oldValue = origValue;
                 changed = !Equals(value, origValue);
@@ -530,7 +490,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
 
-            ThreadSafeStorage values = Properties;
+            ThreadSafeDictionary<string, object?> values = Properties;
             if (!values.TryRemove(propertyName, out object? oldValue))
                 return false;
 
