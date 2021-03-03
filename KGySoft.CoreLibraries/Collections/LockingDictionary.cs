@@ -45,6 +45,8 @@ namespace KGySoft.Collections
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
     /// <remarks>
+    /// <note>Use this class only if you want to wrap a generic <see cref="IDictionary{TKey,TValue}"/> instance to make it thread-safe.
+    /// If you want to use a thread-safe dictionary optimized for concurrent operations consider to use the <see cref="ThreadSafeDictionary{TKey,TValue}"/> class instead.</note>
     /// <para>Type safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
     /// This does not solve every issue of multi-threading automatically. Consider the following example:
     /// <code lang="C#"><![CDATA[
@@ -80,6 +82,7 @@ namespace KGySoft.Collections
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip"><list type="bullet">
+    /// <item>To use a thread-safe dictionary without wrapping any <see cref="IDictionary{TKey,TValue}"/> instance consider to use the <see cref="ThreadSafeDictionary{TKey,TValue}"/> class instead.</item>
     /// <item>For a <see cref="Cache{TKey,TValue}"/> use this class only if you want a thread-safe wrapper for all <see cref="IDictionary{TKey,TValue}"/> members and if it is not a problem if the cache remains locked
     /// during the invocation of the item loader delegate passed to the appropriate <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// Otherwise, it may worth to use an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instead, which can be obtained by the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.</item>
@@ -92,6 +95,7 @@ namespace KGySoft.Collections
     /// <seealso cref="LockingCollection{T}" />
     /// <seealso cref="LockingList{T}" />
     /// <seealso cref="ThreadSafeCacheFactory"/>
+    /// <seealso cref="ThreadSafeDictionary{TKey,TValue}"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]

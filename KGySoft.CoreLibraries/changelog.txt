@@ -20,6 +20,7 @@
 * KGySoft.Collections namespace:
 ================================
 - ArraySection<T> struct: AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
++ New ThreadSafeDictionary<TKey, TValue> class
 + New ThreadSafeCacheFactory class
 + New ThreadSafeCacheOptionsBase/LockFreeCacheOptions/LockingCacheOptions classes
 + New HashingStrategy enum
@@ -42,6 +43,7 @@
     a NullReferenceException. Now a disposed instance will throw an ObjectDisposedException instead.
 - TypeExtensions class:
   - IsImplementationOfGenericType method: fixing possible infinite loop
++ DictionaryExtensions class: New TryAdd, TryUpdate, AddOrUpdate, GetOrAdd and TryRemove methods.
 + New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
   the TrimEntries flag on every platform target.
 

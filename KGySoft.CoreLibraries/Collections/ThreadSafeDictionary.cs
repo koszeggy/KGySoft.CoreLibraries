@@ -42,6 +42,12 @@ namespace KGySoft.Collections
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
     /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
+    /// <note type="tip">
+    /// <list type="bullet">
+    /// <item>If you would only use the <see cref="GetOrAdd(TKey, Func{TKey, TValue})"/> method, then consider to create a thread safe cache by the <see cref="ThreadSafeCacheFactory"/> instead,
+    /// which is much faster than both <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>, and supports capacity management as well.</item>
+    /// <item>If you want to wrap any <see cref="IDictionary{TKey,TValue}"/> into a thread-safe wrapper without copying the actual items, then you can also use <see cref="LockingDictionary{TKey,TValue}"/>.</item>
+    /// </list></note>
     /// <para>The purpose of <see cref="ThreadSafeDictionary{TKey,TValue}"/> is similar to <see cref="ConcurrentDictionary{TKey,TValue}"/> but its approach is somewhat different.
     /// While <see cref="ConcurrentDictionary{TKey,TValue}"/> uses a group of locks to perform modifications (their amount can be configured or depends on the number of CPU cores);
     /// on the other hand, <see cref="ThreadSafeDictionary{TKey,TValue}"/> uses two separate internal storage: items with new keys are added to a temporary storage using a single lock,
@@ -97,6 +103,8 @@ namespace KGySoft.Collections
     /// owner <see cref="ThreadSafeDictionary{TKey,TValue}"/> instance. In contrast, in case of <see cref="ConcurrentDictionary{TKey,TValue}"/> only the dictionary itself throws an exception
     /// when accessing the <see cref="ICollection.SyncRoot"/>, whereas its keys and values don't.</item>
     /// </list></para>
+    /// <seealso cref="ThreadSafeCacheFactory"/>
+    /// <seealso cref="LockingDictionary{TKey,TValue}"/>
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [Serializable]
@@ -621,8 +629,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Tries to remove and return the <paramref name="value"/> with the specified <paramref name="key"/>
-        /// from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// Tries to remove and return the <paramref name="value"/> with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">Key of the item to remove.</param>
         /// <param name="value">When this method returns, contains the value removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>,
@@ -909,8 +916,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the key does not already exist,
-        /// and returns either the added or the existing value.
+        /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the key does not already exist, and returns either the added or the existing value.
         /// </summary>
         /// <param name="key">The key of the element to add or whose value should be returned.</param>
         /// <param name="addValue">The value to be added, if the key does not already exist.</param>

@@ -24,8 +24,8 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Contains generic collections.
-    /// Some of them are fully compatible with already existing collections in the .NET framework but provide better performance in several cases (such as <see cref="CircularList{T}"/> and <see cref="CircularSortedList{TKey,TValue}"/>),
-    /// while others provide new functionality, such as the <see cref="Cache{TKey,TValue}"/> class.
+    /// Some of them are fully compatible with already existing collections in the .NET framework but provide better performance in several cases (such as <see cref="CircularList{T}"/>, <see cref="CircularSortedList{TKey,TValue}"/>
+    /// or <see cref="ThreadSafeDictionary{TKey,TValue}"/>), while others provide new functionality, such as <see cref="Cache{TKey,TValue}"/> or <see cref="ThreadSafeCacheFactory"/>.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

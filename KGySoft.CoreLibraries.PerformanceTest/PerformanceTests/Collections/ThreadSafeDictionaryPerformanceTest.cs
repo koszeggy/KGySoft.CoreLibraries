@@ -68,17 +68,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
         #endregion
 
-        #region Fields
-
-        private static readonly TimeSpan infiniteTimeout =
-#if NET35 || NET40
-            TimeSpan.FromMilliseconds(Timeout.Infinite);
-#else
-            Timeout.InfiniteTimeSpan;
-#endif
-
-        #endregion
-
         #region Methods
 
         [Test]
