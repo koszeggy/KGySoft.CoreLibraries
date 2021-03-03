@@ -513,7 +513,7 @@ namespace KGySoft.CoreLibraries
             if (defaultCtorCache == null)
             {
                 Interlocked.CompareExchange(ref defaultCtorCache,
-                    new Cache<Type, ConstructorInfo?>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)).GetThreadSafeAccessor(),
+                    ThreadSafeCacheFactory.Create<Type, ConstructorInfo?>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null), LockFreeCacheOptions.Profile128),
                     null);
             }
 
@@ -526,7 +526,7 @@ namespace KGySoft.CoreLibraries
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
-                Interlocked.CompareExchange(ref sizeOfCache, new Cache<Type, int>(GetSize).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create<Type, int>(GetSize, LockFreeCacheOptions.Profile128), null);
             return sizeOfCache[type];
         }
 
@@ -578,7 +578,7 @@ namespace KGySoft.CoreLibraries
         internal static Type GetGenericType(this Type genTypeDef, Type t1, Type? t2 = null)
         {
             if (genericTypeCache == null)
-                Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type?), Type>(CreateGenericType, 256).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericTypeCache, ThreadSafeCacheFactory.Create<(Type, Type, Type?), Type>(CreateGenericType, LockFreeCacheOptions.Profile256), null);
             return genericTypeCache[(genTypeDef, t1, t2)];
         }
 
@@ -600,7 +600,7 @@ namespace KGySoft.CoreLibraries
         internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type t1, Type? t2 = null)
         {
             if (genericMethodsCache == null)
-                Interlocked.CompareExchange(ref genericMethodsCache, genericMethodsCache = new Cache<(MethodInfo, Type, Type?), MethodInfo>(CreateGenericMethod).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericMethodsCache, ThreadSafeCacheFactory.Create<(MethodInfo, Type, Type?), MethodInfo>(CreateGenericMethod, LockFreeCacheOptions.Profile128), null);
             return genericMethodsCache[(genMethodDef, t1, t2)];
         }
 
@@ -728,7 +728,7 @@ namespace KGySoft.CoreLibraries
             if (isDefaultGetHashCodeCache == null)
             {
                 Interlocked.CompareExchange(ref isDefaultGetHashCodeCache,
-                    new Cache<Type, bool>(LoadCacheItem).GetThreadSafeAccessor(),
+                    ThreadSafeCacheFactory.Create<Type, bool>(LoadCacheItem, LockFreeCacheOptions.Profile128),
                     null);
             }
 

@@ -54,10 +54,7 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        /// <summary>
-        /// This locks also the loader method but this is OK because a new accessor creation is fast.
-        /// </summary>
-        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192).GetThreadSafeAccessor(true);
+        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = ThreadSafeCacheFactory.Create<MemberInfo, MemberAccessor>(CreateAccessor, LockFreeCacheOptions.Profile8K);
 
         #endregion
 

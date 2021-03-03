@@ -85,7 +85,7 @@ namespace KGySoft.ComponentModel
         #region Static Fields
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache =
-            new Cache<Type, Dictionary<string, EventInfo>>(GetEvents).GetThreadSafeAccessor();
+            ThreadSafeCacheFactory.Create<Type, Dictionary<string, EventInfo>>(GetEvents, LockFreeCacheOptions.Profile128);
 
         #endregion
 

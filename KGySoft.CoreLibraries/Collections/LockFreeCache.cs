@@ -112,7 +112,7 @@ namespace KGySoft.Collections
                 if (result != null)
                     return result;
 
-                if (Interlocked.CompareExchange(ref growingStorage, new GrowOnlyDictionary(Math.Max(16, nextCapacity), comparer, bitwiseAndHash), null) == null && mergeInterval.HasValue)
+                if (Interlocked.CompareExchange(ref growingStorage, new GrowOnlyDictionary(Math.Max(4, nextCapacity), comparer, bitwiseAndHash), null) == null && mergeInterval.HasValue)
                     Volatile.Write(ref nextMerge, TimeHelper.GetTimeStamp() + mergeInterval.Value);
             }
         }

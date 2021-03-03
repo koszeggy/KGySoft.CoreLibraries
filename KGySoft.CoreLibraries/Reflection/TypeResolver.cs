@@ -24,6 +24,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -269,10 +270,24 @@ namespace KGySoft.Reflection
             => typeCacheByString ??= new Cache<string, Type?>(256).AsThreadSafe();
 
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
-            => typeCacheByAssembly ??= new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>().AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
+        {
+            get
+            {
+                if (typeCacheByAssembly == null)
+                    Interlocked.CompareExchange(ref typeCacheByAssembly, ThreadSafeCacheFactory.Create<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>().AsThreadSafe(), LockFreeCacheOptions.Profile128), null);
+                return typeCacheByAssembly;
+            }
+        }
 
         private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> TypeNameCache
-            => typeNameCache ??= new Cache<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe()).GetThreadSafeAccessor(true); // true because the inner creation is fast
+        {
+            get
+            {
+                if (typeNameCache == null)
+                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe(), LockFreeCacheOptions.Profile1K), null);
+                return typeNameCache;
+            }
+        }
 
         #endregion
 

@@ -198,10 +198,10 @@ namespace KGySoft.CoreLibraries
 
             #region Fields
 
-            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<Type, Delegate?> delegatesCache = new Cache<Type, Delegate?>(CreateDelegate).GetThreadSafeAccessor();
+            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = ThreadSafeCacheFactory.Create<Assembly, Type[]>(LoadAssemblyTypes, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = ThreadSafeCacheFactory.Create<Type, Type[]>(SearchForImplementors, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> defaultConstructedGenerics = ThreadSafeCacheFactory.Create<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<Type, Delegate?> delegatesCache = ThreadSafeCacheFactory.Create<Type, Delegate?>(CreateDelegate, LockFreeCacheOptions.Profile128);
 
 #if !NETSTANDARD2_0
             /// <summary>

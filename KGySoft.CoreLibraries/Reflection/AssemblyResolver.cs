@@ -17,13 +17,13 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -94,7 +94,14 @@ namespace KGySoft.Reflection
 
 #if !NET35
         private static IThreadSafeCacheAccessor<Type, (string? ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
-            => forwardedNamesCache ??= new Cache<Type, (string?, bool)>(DoGetForwardedAssemblyName).GetThreadSafeAccessor();
+        {
+            get
+            {
+                if (forwardedNamesCache == null)
+                    Interlocked.CompareExchange(ref forwardedNamesCache, ThreadSafeCacheFactory.Create<Type, (string?, bool)>(DoGetForwardedAssemblyName, LockFreeCacheOptions.Profile128), null);
+                return forwardedNamesCache;
+            }
+        }
 #endif
 
         #endregion

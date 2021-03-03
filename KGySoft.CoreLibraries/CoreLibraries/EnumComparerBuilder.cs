@@ -80,6 +80,8 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         internal static EnumComparer<TEnum> GetComparer<TEnum>()
         {
+            // Note: It is important that from this method no caches should be created because that would end up in a
+            // recursion through Enum<TEnum>.IsDefined calls. It is alright as the result of this method is also cached.
             if (!typeof(TEnum).IsEnum)
                 Throw.InvalidOperationException(Res.EnumTypeParameterInvalid);
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
@@ -89,7 +91,7 @@ namespace KGySoft.CoreLibraries
                 comparers[underlyingType] = comparerDefinition;
             }
 
-            Type type = comparerDefinition.GetGenericType(typeof(TEnum));
+            Type type = comparerDefinition.MakeGenericType(typeof(TEnum)); // not GetGenericType to avoid cache access
             return (EnumComparer<TEnum>)Activator.CreateInstance(type)!;
         }
 
@@ -105,7 +107,9 @@ namespace KGySoft.CoreLibraries
             TypeBuilder builder = ModuleBuilder.DefineType($"DynamicEnumComparer{underlyingType.Name}`1",
                 TypeAttributes.Public | TypeAttributes.Sealed,
                 typeof(EnumComparer<>));
-            builder.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetDefaultConstructor()!, Reflector.EmptyObjects));
+
+            // not GetDefaultConstructor to avoid cache access and thus recursion
+            builder.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetConstructor(Type.EmptyTypes)!, Reflector.EmptyObjects));
             GenericTypeParameterBuilder tEnum = builder.DefineGenericParameters("TEnum")[0];
             tEnum.SetGenericParameterAttributes(GenericParameterAttributes.NotNullableValueTypeConstraint);
             tEnum.SetBaseTypeConstraint(Reflector.EnumType);
@@ -127,7 +131,9 @@ namespace KGySoft.CoreLibraries
         private static void GenerateDynamicEnumComparerCtor(TypeBuilder type)
         {
             MethodBuilder ctor = type.DefineMethod(".ctor", MethodAttributes.Public | MethodAttributes.HideBySig);
-            ConstructorInfo baseCtor = typeof(EnumComparer<>).GetDefaultConstructor()!;
+
+            // not GetDefaultConstructor to avoid cache access and thus recursion
+            ConstructorInfo baseCtor = typeof(EnumComparer<>).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null)!;
             ctor.SetReturnType(Reflector.VoidType);
             ILGenerator il = ctor.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);

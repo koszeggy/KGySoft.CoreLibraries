@@ -18,7 +18,7 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents a thread-safe accessor for a cache, which provides a read-only indexer to access values.
-    /// An instance can be created by the <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see> methods,
+    /// An instance can be created by the <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create">Create</see> methods of the <see cref="ThreadSafeCacheFactory"/> class,
     /// or if you have a <see cref="Cache{TKey,TValue}"/> instance, you can retrieve a thread-safe accessor for it by the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.
     /// </summary>
     /// <typeparam name="TKey">The type of the key in the cache.</typeparam>

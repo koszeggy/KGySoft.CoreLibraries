@@ -30,6 +30,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Security;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -139,7 +140,14 @@ namespace KGySoft.Reflection
         #region Properties
 
         private static IThreadSafeCacheAccessor<Type, string?> DefaultMemberCache
-            => defaultMemberCache ??= new Cache<Type, string?>(GetDefaultMember).GetThreadSafeAccessor();
+        {
+            get
+            {
+                if (defaultMemberCache == null)
+                    Interlocked.CompareExchange(ref defaultMemberCache, ThreadSafeCacheFactory.Create<Type, string?>(GetDefaultMember, LockFreeCacheOptions.Profile128), null);
+                return defaultMemberCache;
+            }
+        }
 
         #endregion
 

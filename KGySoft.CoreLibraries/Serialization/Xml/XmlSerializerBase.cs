@@ -120,7 +120,7 @@ namespace KGySoft.Serialization.Xml
 
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = ThreadSafeCacheFactory.Create<Type, bool>(IsTypeTrusted, LockFreeCacheOptions.Profile128);
 
         #endregion
 

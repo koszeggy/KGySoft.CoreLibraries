@@ -419,7 +419,7 @@ namespace KGySoft.Reflection
             }
 
             if (properties == null)
-                Interlocked.CompareExchange(ref properties, new Cache<(Type, string), PropertyAccessor?>(GetPropertyAccessor).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref properties, ThreadSafeCacheFactory.Create<(Type, string), PropertyAccessor?>(GetPropertyAccessor, LockFreeCacheOptions.Profile128), null);
             return properties[(type, propertyName)];
         }
 
@@ -443,7 +443,7 @@ namespace KGySoft.Reflection
             }
 
             if (fields == null)
-                Interlocked.CompareExchange(ref fields, new Cache<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref fields, ThreadSafeCacheFactory.Create<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor, LockFreeCacheOptions.Profile128), null);
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
@@ -491,7 +491,7 @@ namespace KGySoft.Reflection
             }
 
             if (ctorMethods == null)
-                Interlocked.CompareExchange(ref ctorMethods, new Cache<(Type, Type?, Type?), ActionMethodAccessor?>(GetCtorMethodAccessor).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref ctorMethods, ThreadSafeCacheFactory.Create<(Type, Type?, Type?), ActionMethodAccessor?>(GetCtorMethodAccessor, LockFreeCacheOptions.Profile128), null);
             return ctorMethods[(type, ctorArgs.ElementAtOrDefault(0)?.GetType(), ctorArgs.ElementAtOrDefault(1)?.GetType())];
         }
 

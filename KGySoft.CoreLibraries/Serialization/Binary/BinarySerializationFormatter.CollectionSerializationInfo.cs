@@ -55,7 +55,7 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Can contain more elements only for generic collections. Will be instantiated only on deserialization.
-            /// Locking accessor because the serialization info is stored in a static shared dictionary.
+            /// Thread safe accessor because the serialization info is stored in a static shared dictionary.
             /// </summary>
             private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor>? ctorCache;
 
@@ -240,7 +240,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 if (addMethodCache == null)
-                    Interlocked.CompareExchange(ref addMethodCache, new Cache<Type, MethodAccessor>(GetAddMethodAccessor).GetThreadSafeAccessor(), null);
+                    Interlocked.CompareExchange(ref addMethodCache, ThreadSafeCacheFactory.Create<Type, MethodAccessor>(GetAddMethodAccessor, LockFreeCacheOptions.Profile128), null);
                 return addMethodCache[descriptor.Type!];
             }
 
@@ -339,7 +339,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 if (ctorCache == null)
-                    Interlocked.CompareExchange(ref ctorCache, new Cache<Type, CreateInstanceAccessor>(GetCtorAccessor).GetThreadSafeAccessor(), null);
+                    Interlocked.CompareExchange(ref ctorCache, ThreadSafeCacheFactory.Create<Type, CreateInstanceAccessor>(GetCtorAccessor, LockFreeCacheOptions.Profile128), null);
                 return ctorCache[descriptor.Type!];
             }
 

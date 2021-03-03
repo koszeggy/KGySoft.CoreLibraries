@@ -36,6 +36,11 @@ namespace KGySoft.Collections
         #region Fields
 
         internal static readonly LockFreeCacheOptions DefaultOptions = new LockFreeCacheOptions();
+        internal static readonly LockFreeCacheOptions Profile4 = new LockFreeCacheOptions { InitialCapacity = 4, ThresholdCapacity = 4, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromSeconds(1) };
+        internal static readonly LockFreeCacheOptions Profile128 = new LockFreeCacheOptions { ThresholdCapacity = 128, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromSeconds(1) };
+        internal static readonly LockFreeCacheOptions Profile256 = new LockFreeCacheOptions { ThresholdCapacity = 256, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromSeconds(1) };
+        internal static readonly LockFreeCacheOptions Profile1K = new LockFreeCacheOptions { ThresholdCapacity = 1024, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromSeconds(1) };
+        internal static readonly LockFreeCacheOptions Profile8K = new LockFreeCacheOptions { ThresholdCapacity = 8192, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromSeconds(1) };
 
         #endregion
 
@@ -52,7 +57,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Gets or sets the maximum number of elements, which triggers a merge operation from the underlying dynamic growing storage into the faster read-only storage.
-        /// Specifies also the number of elements to be kept when older elements are dropped from the cache. The actual maximum number of stored items can be about twice of this value.
+        /// Specifies also the number of elements to be kept when older elements are dropped from the cache. The actual maximum number of stored items may be about twice of this value.
         /// <br/>Default value: <c>1024</c>.
         /// </summary>
         /// <remarks>
@@ -62,8 +67,8 @@ namespace KGySoft.Collections
         /// a new dynamic storage is allocated with either doubled capacity or the specified <see cref="ThresholdCapacity"/>, whichever is less.</para>
         /// <para>Once the number of stored elements in the dynamically growing storage reaches <see cref="ThresholdCapacity"/>, the complete previous content of the faster read-only storage is replaced
         /// by the elements in the growing storage. Therefore, when adding new items continuously, the number of stored elements will be between <see cref="ThresholdCapacity"/> and twice of <see cref="ThresholdCapacity"/>.</para>
-        /// <para>If it cannot be really determined how many items in the cache will be stored, then you can set the <see cref="MergeInterval"/> property,
-        /// which can trigger a merge operation to the faster storage by time, even if the required capacity limit is not reached yet.</para>
+        /// <para>If it cannot be really estimated how many items in the cache will be stored, then you can set the <see cref="MergeInterval"/> property,
+        /// which can trigger a merge operation to the faster storage by time, regardless of reaching the required capacity limit.</para>
         /// </remarks>
         public int ThresholdCapacity { get; set; } = 1024;
 

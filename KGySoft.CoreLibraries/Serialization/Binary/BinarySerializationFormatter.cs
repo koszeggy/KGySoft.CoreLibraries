@@ -858,7 +858,7 @@ namespace KGySoft.Serialization.Binary
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
-            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(t => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
+            = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(t => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
 
         // including string and the abstract enum and array types
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>

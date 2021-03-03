@@ -1880,7 +1880,7 @@ namespace KGySoft.CoreLibraries
         private static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
         {
             if (genericEnumerableCache == null)
-                Interlocked.CompareExchange(ref genericEnumerableCache, new Cache<Type, Type>(t => Reflector.IEnumerableGenType.GetGenericType(t)).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericEnumerableCache, ThreadSafeCacheFactory.Create<Type, Type>(t => Reflector.IEnumerableGenType.GetGenericType(t), LockFreeCacheOptions.Profile4), null);
             return genericEnumerableCache[genericArgument].IsInstanceOfType(collection);
         }
 

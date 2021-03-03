@@ -106,7 +106,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, Type>> reflectedPropertiesCache = new Cache<Type, Dictionary<string, Type>>(GetReflectedProperties).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, Type>> reflectedPropertiesCache =
+            ThreadSafeCacheFactory.Create<Type, Dictionary<string, Type>>(GetReflectedProperties, LockFreeCacheOptions.Profile128);
 
         #endregion
 

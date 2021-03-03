@@ -54,8 +54,8 @@ namespace KGySoft.Collections
         /// the same key is accessed consecutively and <paramref name="itemLoader"/> is also invoked multiple times when the first call occurred during an internal merge session.</item>
         /// <item><see cref="LockingCacheOptions"/>: Use this one if you need strict capacity management, you want to dispose the dropped-out values, you want to ensure that the oldest
         /// or least recent used element should be dropped in the first place, you want to protect the <paramref name="itemLoader"/> delegate from calling it concurrently, or if you want
-        /// to specify an expiration time period for the values. Depending on the property values the actual type of the returned instance may vary but in all cases an instance of the
-        /// public <see cref="Cache{TKey,TValue}"/> type will be wrapped internally.</item>
+        /// to specify an expiration time period for the values. If elements are often dropped, then it also uses less memory than the lock-free implementation. Depending on the configuration
+        /// the actual type of the returned instance may vary but in all cases an instance of the public <see cref="Cache{TKey,TValue}"/> type will be wrapped internally.</item>
         /// </list>
         /// </note>
         /// </remarks>
