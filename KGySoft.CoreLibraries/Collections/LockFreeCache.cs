@@ -27,7 +27,7 @@ using KGySoft.CoreLibraries;
 
 namespace KGySoft.Collections
 {
-    internal sealed partial class LockFreeCache<TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>
+    internal partial class LockFreeCache<TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>
         where TKey : notnull
     {
         #region Fields
@@ -46,9 +46,17 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Properties and Indexers
+
+        #region Properties
+
+        protected ReadOnlyDictionary ReadOnlyStorage => readOnlyStorage;
+
+        #endregion
+
         #region Indexers
 
-        public TValue this[TKey key]
+        public virtual TValue this[TKey key]
         {
             get
             {
@@ -57,19 +65,22 @@ namespace KGySoft.Collections
 
                 uint hashCode = GetHashCode(key);
                 ReadOnlyDictionary l1Cache;
+                TValue? result;
                 do
                 {
                     l1Cache = readOnlyStorage;
-                    if (l1Cache.TryGetValueInternal(key, hashCode, out TValue? value))
-                        return value;
+                    if (l1Cache.TryGetValueInternal(key, hashCode, out result))
+                        return result;
                 } while (!IsUpToDate(l1Cache));
 
                 GrowOnlyDictionary l2Cache = GetCreateLevel2Cache();
-                TValue result = l2Cache.GetOrAddInternal(key, itemLoader, hashCode);
+                result = l2Cache.GetOrAddInternal(key, itemLoader, hashCode);
                 MergeIfNeeded(l1Cache, l2Cache);
                 return result;
             }
         }
+
+        #endregion
 
         #endregion
 
@@ -104,7 +115,7 @@ namespace KGySoft.Collections
         #region Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private GrowOnlyDictionary GetCreateLevel2Cache()
+        protected GrowOnlyDictionary GetCreateLevel2Cache()
         {
             while (true)
             {
@@ -117,7 +128,7 @@ namespace KGySoft.Collections
             }
         }
 
-        private void MergeIfNeeded(ReadOnlyDictionary l1Cache, GrowOnlyDictionary l2Cache)
+        protected void MergeIfNeeded(ReadOnlyDictionary l1Cache, GrowOnlyDictionary l2Cache)
         {
             if (isMerging)
                 return;
@@ -153,7 +164,7 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private bool IsUpToDate(ReadOnlyDictionary l1Cache)
+        protected bool IsUpToDate(ReadOnlyDictionary l1Cache)
         {
             // L1 cache has been replaced
             if (l1Cache != readOnlyStorage)
@@ -171,7 +182,7 @@ namespace KGySoft.Collections
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private uint GetHashCode(TKey key)
+        protected uint GetHashCode(TKey key)
         {
             IEqualityComparer<TKey>? comp = comparer;
             return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));

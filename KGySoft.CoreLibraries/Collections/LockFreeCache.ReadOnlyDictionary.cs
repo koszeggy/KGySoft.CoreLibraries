@@ -32,7 +32,7 @@ namespace KGySoft.Collections
     partial class LockFreeCache<TKey, TValue>
     {
         [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
-        private sealed class ReadOnlyDictionary
+        protected sealed class ReadOnlyDictionary
         {
             #region Nested structs
 

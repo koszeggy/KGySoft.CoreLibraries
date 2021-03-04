@@ -1,0 +1,91 @@
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ConditionallyStoringLockFreeCache.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+
+#endregion
+
+namespace KGySoft.Collections
+{
+    internal class ConditionallyStoringLockFreeCache<TKey, TValue> : LockFreeCache<TKey, TValue>
+        where TKey : notnull
+    {
+        #region Fields
+
+        #region Static Fields
+
+        private static readonly Func<TKey, TValue> dummyLoader = _ => default!;
+
+        #endregion
+
+        #region Instance Fields
+
+        private readonly ConditionallyStoringItemLoader<TKey, TValue> itemLoader;
+
+        #endregion
+
+        #endregion
+
+        #region Indexers
+
+        public override TValue this[TKey key]
+        {
+            get
+            {
+                if (key == null!)
+                    Throw.ArgumentNullException(Argument.key);
+                uint hashCode = GetHashCode(key);
+                ReadOnlyDictionary l1Cache;
+                TValue? result;
+                do
+                {
+                    l1Cache = ReadOnlyStorage;
+                    if (l1Cache.TryGetValueInternal(key, hashCode, out result))
+                        return result;
+                } while (!IsUpToDate(l1Cache));
+
+                GrowOnlyDictionary l2Cache = GetCreateLevel2Cache();
+                if (!l2Cache.TryGetValueInternal(key, hashCode, out result))
+                {
+                    result = itemLoader.Invoke(key, out bool storeValue);
+                    if (storeValue && !l2Cache.TryAddInternal(key, result, hashCode))
+                    {
+                        // TODO: actually we should convert TryAdd to GetOrAdd without delegate (TryAdd is used only in the tests anyway)
+                        if (!l2Cache.TryGetValueInternal(key, hashCode, out result))
+                            Throw.InternalError("TryAdd was false so keys should exist.");
+                    }
+                }
+
+                MergeIfNeeded(l1Cache, l2Cache);
+                return result!;
+            }
+        }
+
+        #endregion
+
+        #region Constructors
+
+        internal ConditionallyStoringLockFreeCache(ConditionallyStoringItemLoader<TKey, TValue> itemLoader, LockFreeCacheOptions options)
+            : base(dummyLoader, null, options)
+        {
+            this.itemLoader = itemLoader;
+        }
+
+        #endregion
+    }
+}
