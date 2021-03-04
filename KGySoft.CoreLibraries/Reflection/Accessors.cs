@@ -57,7 +57,7 @@ namespace KGySoft.Reflection
         #region CollectionExtensions
 
         private static MethodInfo? addRangeExtensionMethod;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsCollectionExtensions_AddRange;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsCollectionExtensions_AddRange;
 
         #endregion
 
@@ -66,35 +66,35 @@ namespace KGySoft.Reflection
         private static MethodInfo? insertRangeExtensionMethod;
         private static MethodInfo? removeRangeExtensionMethod;
         private static MethodInfo? replaceRangeExtensionMethod;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_InsertRange;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_RemoveRange;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsListExtensions_ReplaceRange;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_InsertRange;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_RemoveRange;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_ReplaceRange;
 
         #endregion
 
         #region ICollection<T>
 
-        private static IDictionary<Type, SimplePropertyAccessor>? propertiesICollection_IsReadOnly;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsICollection_Add;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsICollection_Clear;
-        private static IDictionary<Type, SimplePropertyAccessor>? propertiesICollection_Count;
-        private static IDictionary<Type, FunctionMethodAccessor>? methodsICollection_Remove;
+        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesICollection_IsReadOnly;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Add;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Clear;
+        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesICollection_Count;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Remove;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static IDictionary<Type, FunctionMethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        private static IDictionary<Type, ActionMethodAccessor>? methodsIList_Insert;
-        private static IDictionary<Type, ActionMethodAccessor>? methodsIList_RemoveAt;
-        private static IDictionary<Type, IndexerAccessor>? propertiesIList_Item;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIList_Insert;
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIList_RemoveAt;
+        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesIList_Item;
 
         #endregion
 
@@ -153,14 +153,16 @@ namespace KGySoft.Reflection
         private static MethodAccessor CollectionExtensions_AddRange(Type genericArgument)
         {
             if (methodsCollectionExtensions_AddRange == null)
-                Interlocked.CompareExchange(ref methodsCollectionExtensions_AddRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsCollectionExtensions_AddRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor((addRangeExtensionMethod ??= typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))!).GetGenericMethod(genericArgument));
-                methodsCollectionExtensions_AddRange[genericArgument] = accessor;
+                if (addRangeExtensionMethod == null)
+                    Interlocked.CompareExchange(ref addRangeExtensionMethod, typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange)), null);
+
+                Interlocked.CompareExchange(ref methodsCollectionExtensions_AddRange, 
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(addRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
+                    null);
             }
 
-            return accessor;
+            return methodsCollectionExtensions_AddRange[genericArgument];
         }
 
         #endregion
@@ -169,44 +171,47 @@ namespace KGySoft.Reflection
 
         private static MethodAccessor ListExtensions_InsertRange(Type genericArgument)
         {
-            // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_InsertRange == null)
-                Interlocked.CompareExchange(ref methodsListExtensions_InsertRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_InsertRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor((insertRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))!).GetGenericMethod(genericArgument));
-                methodsListExtensions_InsertRange[genericArgument] = accessor;
+                if (insertRangeExtensionMethod == null)
+                    Interlocked.CompareExchange(ref insertRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange)), null);
+
+                Interlocked.CompareExchange(ref methodsListExtensions_InsertRange,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(insertRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
+                    null);
             }
 
-            return accessor;
+            return methodsListExtensions_InsertRange[genericArgument];
         }
 
         private static MethodAccessor ListExtensions_RemoveRange(Type genericArgument)
         {
-            // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_RemoveRange == null)
-                Interlocked.CompareExchange(ref methodsListExtensions_RemoveRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_RemoveRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor((removeRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))!).GetGenericMethod(genericArgument));
-                methodsListExtensions_RemoveRange[genericArgument] = accessor;
+                if (removeRangeExtensionMethod == null)
+                    Interlocked.CompareExchange(ref removeRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange)), null);
+
+                Interlocked.CompareExchange(ref methodsListExtensions_RemoveRange,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(removeRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
+                    null);
             }
 
-            return accessor;
+            return methodsListExtensions_RemoveRange[genericArgument];
         }
 
         private static MethodAccessor ListExtensions_ReplaceRange(Type genericArgument)
         {
-            // Could be an IEnumerable extension but caller needs to check the method before executing
             if (methodsListExtensions_ReplaceRange == null)
-                Interlocked.CompareExchange(ref methodsListExtensions_ReplaceRange, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsListExtensions_ReplaceRange.TryGetValue(genericArgument, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor((replaceRangeExtensionMethod ??= typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))!).GetGenericMethod(genericArgument));
-                methodsListExtensions_ReplaceRange[genericArgument] = accessor;
+                if (replaceRangeExtensionMethod == null)
+                    Interlocked.CompareExchange(ref replaceRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange)), null);
+
+                Interlocked.CompareExchange(ref methodsListExtensions_ReplaceRange,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(replaceRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
+                    null);
             }
 
-            return accessor;
+            return methodsListExtensions_ReplaceRange[genericArgument];
         }
 
 
@@ -214,69 +219,64 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        private static SimplePropertyAccessor ICollection_IsReadOnly(Type collectionInterface)
+        private static PropertyAccessor ICollection_IsReadOnly(Type collectionInterface)
         {
             if (propertiesICollection_IsReadOnly == null)
-                Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
-            if (!propertiesICollection_IsReadOnly.TryGetValue(collectionInterface, out SimplePropertyAccessor? accessor))
             {
-                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))!);
-                propertiesICollection_IsReadOnly[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly,
+                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.IsReadOnly))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return propertiesICollection_IsReadOnly[collectionInterface];
         }
 
-        private static ActionMethodAccessor ICollection_Add(Type collectionInterface)
+        private static MethodAccessor ICollection_Add(Type collectionInterface)
         {
             if (methodsICollection_Add == null)
-                Interlocked.CompareExchange(ref methodsICollection_Add, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsICollection_Add.TryGetValue(collectionInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Add))!);
-                methodsICollection_Add[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsICollection_Add,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Add))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsICollection_Add[collectionInterface];
         }
 
-        private static ActionMethodAccessor ICollection_Clear(Type collectionInterface)
+        private static MethodAccessor ICollection_Clear(Type collectionInterface)
         {
             if (methodsICollection_Clear == null)
-                Interlocked.CompareExchange(ref methodsICollection_Clear, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsICollection_Clear.TryGetValue(collectionInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Clear))!);
-                methodsICollection_Clear[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsICollection_Clear,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Clear))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsICollection_Clear[collectionInterface];
         }
 
-        private static SimplePropertyAccessor ICollection_Count(Type collectionInterface)
+        private static PropertyAccessor ICollection_Count(Type collectionInterface)
         {
             if (propertiesICollection_Count == null)
-                Interlocked.CompareExchange(ref propertiesICollection_Count, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
-            if (!propertiesICollection_Count.TryGetValue(collectionInterface, out SimplePropertyAccessor? accessor))
             {
-                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.Count))!);
-                propertiesICollection_Count[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref propertiesICollection_Count,
+                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.Count))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return propertiesICollection_Count[collectionInterface];
         }
 
-        private static FunctionMethodAccessor ICollection_Remove(Type collectionInterface)
+        private static MethodAccessor ICollection_Remove(Type collectionInterface)
         {
             if (methodsICollection_Remove == null)
-                Interlocked.CompareExchange(ref methodsICollection_Remove, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
-            if (!methodsICollection_Remove.TryGetValue(collectionInterface, out FunctionMethodAccessor? accessor))
             {
-                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Remove))!);
-                methodsICollection_Remove[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsICollection_Remove,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Remove))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsICollection_Remove[collectionInterface];
         }
 
         #endregion
@@ -284,17 +284,16 @@ namespace KGySoft.Reflection
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static FunctionMethodAccessor IProducerConsumerCollection_TryAdd(Type collectionInterface)
+        private static MethodAccessor IProducerConsumerCollection_TryAdd(Type collectionInterface)
         {
             if (methodsIProducerConsumerCollection_TryAdd == null)
-                Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
-            if (!methodsIProducerConsumerCollection_TryAdd.TryGetValue(collectionInterface, out FunctionMethodAccessor? accessor))
             {
-                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!);
-                methodsIProducerConsumerCollection_TryAdd[collectionInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsIProducerConsumerCollection_TryAdd[collectionInterface];
         }
 #endif
 
@@ -302,43 +301,40 @@ namespace KGySoft.Reflection
 
         #region IList<T>
 
-        private static ActionMethodAccessor IList_Insert(Type listInterface)
+        private static MethodAccessor IList_Insert(Type listInterface)
         {
             if (methodsIList_Insert == null)
-                Interlocked.CompareExchange(ref methodsIList_Insert, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsIList_Insert.TryGetValue(listInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.Insert))!);
-                methodsIList_Insert[listInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsIList_Insert,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.Insert))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsIList_Insert[listInterface];
         }
 
-        private static ActionMethodAccessor IList_RemoveAt(Type listInterface)
+        private static MethodAccessor IList_RemoveAt(Type listInterface)
         {
             if (methodsIList_RemoveAt == null)
-                Interlocked.CompareExchange(ref methodsIList_RemoveAt, new LockingDictionary<Type, ActionMethodAccessor>(), null);
-            if (!methodsIList_RemoveAt.TryGetValue(listInterface, out ActionMethodAccessor? accessor))
             {
-                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.RemoveAt))!);
-                methodsIList_RemoveAt[listInterface] = accessor;
+                Interlocked.CompareExchange(ref methodsIList_RemoveAt,
+                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.RemoveAt))!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return methodsIList_RemoveAt[listInterface];
         }
 
-        private static IndexerAccessor IList_Item(Type listInterface)
+        private static PropertyAccessor IList_Item(Type listInterface)
         {
             if (propertiesIList_Item == null)
-                Interlocked.CompareExchange(ref propertiesIList_Item, new LockingDictionary<Type, IndexerAccessor>(), null);
-            if (!propertiesIList_Item.TryGetValue(listInterface, out IndexerAccessor? accessor))
             {
-                accessor = new IndexerAccessor(listInterface.GetProperty("Item")!);
-                propertiesIList_Item[listInterface] = accessor;
+                Interlocked.CompareExchange(ref propertiesIList_Item,
+                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty("Item")!), LockFreeCacheOptions.Profile16),
+                    null);
             }
 
-            return accessor;
+            return propertiesIList_Item[listInterface];
         }
 
         #endregion

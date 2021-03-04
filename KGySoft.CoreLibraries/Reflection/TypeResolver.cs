@@ -284,7 +284,7 @@ namespace KGySoft.Reflection
             get
             {
                 if (typeNameCache == null)
-                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe(), LockFreeCacheOptions.Profile1K), null);
+                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe(), LockFreeCacheOptions.Profile128), null);
                 return typeNameCache;
             }
         }

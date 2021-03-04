@@ -199,7 +199,7 @@ namespace KGySoft.CoreLibraries
                 if (context.LastUsedConversion != null && context.LastUsedConversion.TryGetValue((sourceType, targetType), out Delegate? conversion) && TryUseConversion(ref context, obj, targetType, conversion, out value))
                     return true;
 
-                IList<Delegate> conversions = sourceType.GetConversions(targetType, exactTypeMatch);
+                List<Delegate> conversions = sourceType.GetConversions(targetType, exactTypeMatch);
                 value = null;
                 if (conversions.Count == 0)
                     return false;
@@ -442,7 +442,7 @@ namespace KGySoft.CoreLibraries
                 value = null;
 
                 // if there are registered converters to the target type, then we try to convert the value for those
-                IList<Type> sourceTypes = targetType.GetConversionSourceTypes();
+                List<Type> sourceTypes = targetType.GetConversionSourceTypes();
                 if (sourceTypes.Count == 0)
                     return false;
 

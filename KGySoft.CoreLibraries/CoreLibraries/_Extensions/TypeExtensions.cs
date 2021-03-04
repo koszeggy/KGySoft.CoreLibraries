@@ -62,7 +62,8 @@ namespace KGySoft.CoreLibraries
         /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
         /// Main key is the target type, the inner one is the source type.
         /// </summary>
-        private static readonly IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
+        private static readonly ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> conversions = new();
+        private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate>();
 
         private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
         private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type? T2), Type>? genericTypeCache;
@@ -530,19 +531,22 @@ namespace KGySoft.CoreLibraries
             return sizeOfCache[type];
         }
 
-        internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
+        internal static List<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
             var result = new List<Delegate>();
 
             // the exact match first
-            if (exactMatch != false && conversions.TryGetValue(targetType, out IDictionary<Type, Delegate>? conversionsOfTarget) && conversionsOfTarget.TryGetValue(sourceType, out Delegate? conversion))
+            if (exactMatch != false && conversions.TryGetValue(targetType, out ThreadSafeDictionary<Type, Delegate>? conversionsOfTarget)
+                && conversionsOfTarget.TryGetValue(sourceType, out Delegate? conversion))
+            {
                 result.Add(conversion);
+            }
 
             if (exactMatch == true)
                 return result;
 
             // non-exact matches: targets can match generic type, sources can match also interfaces and abstract types
-            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForTarget in conversions)
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in conversions)
             {
                 if (conversionsForTarget.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(conversionsForTarget.Key))
                 {
@@ -560,7 +564,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static IList<Type> GetConversionSourceTypes(this Type targetType)
+        internal static List<Type> GetConversionSourceTypes(this Type targetType)
         {
             var result = new List<Type>();
 
@@ -569,8 +573,11 @@ namespace KGySoft.CoreLibraries
                 result.AddRange(conversionsForTarget.Keys);
 
             // adding sources for generic target matches
-            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForGenericTarget in conversions.Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForGenericTarget in conversions
+                .Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+            {
                 result.AddRange(conversionsForGenericTarget.Value.Keys);
+            }
 
             return result;
         }
@@ -764,13 +771,7 @@ namespace KGySoft.CoreLibraries
             if (conversion == null!)
                 Throw.ArgumentNullException(Argument.conversion);
 
-            if (!conversions.TryGetValue(targetType, out IDictionary<Type, Delegate>? conversionsOfTarget))
-            {
-                conversionsOfTarget = new LockingDictionary<Type, Delegate>();
-                conversions[targetType] = conversionsOfTarget;
-            }
-
-            conversionsOfTarget[sourceType] = conversion;
+            conversions.GetOrAdd(targetType, conversionAddValueFactory)[sourceType] = conversion;
         }
 
         private static int GetSize(Type type)

@@ -183,6 +183,7 @@ namespace KGySoft.Serialization.Binary
                         }
                     }
 
+                    // to make sure that most derived is considered first (could be a CircularList but a List consumes less memory)
                     if (result.Count > 1)
                         result.Reverse();
 

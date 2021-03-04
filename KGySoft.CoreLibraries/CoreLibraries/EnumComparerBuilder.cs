@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
         /// Key: Enum underlying type.
         /// Value: A <![CDATA[DynamicEnumComparer<TEnum>]]> generic type definition using the matching size and sign.
         /// </summary>
-        private static readonly IDictionary<Type, Type> comparers = new LockingDictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> comparers = new Dictionary<Type, Type>();
 
         private static ModuleBuilder? moduleBuilder;
 
@@ -85,10 +85,17 @@ namespace KGySoft.CoreLibraries
             if (!typeof(TEnum).IsEnum)
                 Throw.InvalidOperationException(Res.EnumTypeParameterInvalid);
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
-            if (!comparers.TryGetValue(underlyingType, out Type? comparerDefinition))
+            Type? comparerDefinition;
+
+            // Locking the whole generating process to prevent building the same type concurrently
+            // Locking is alright because this will executed once per enum type at the first EnumComparer<TEnum>.Comparer access.
+            lock (comparers)
             {
-                comparerDefinition = BuildGenericComparer(underlyingType);
-                comparers[underlyingType] = comparerDefinition;
+                if (!comparers.TryGetValue(underlyingType, out comparerDefinition))
+                {
+                    comparerDefinition = BuildGenericComparer(underlyingType);
+                    comparers[underlyingType] = comparerDefinition;
+                }
             }
 
             Type type = comparerDefinition.MakeGenericType(typeof(TEnum)); // not GetGenericType to avoid cache access

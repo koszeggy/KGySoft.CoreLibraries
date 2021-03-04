@@ -23,7 +23,6 @@ using System.ComponentModel;
 #if !NET35
 using System.Dynamic;
 #endif
-using System.Linq;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -85,7 +84,7 @@ namespace KGySoft.ComponentModel
 
         #region Fields
 
-        private readonly LockingDictionary<string, object?> stateProperties = new Dictionary<string, object?> { [nameof(Enabled)] = true }.AsThreadSafe();
+        private readonly ThreadSafeDictionary<string, object?> stateProperties = new ThreadSafeDictionary<string, object?> { [nameof(Enabled)] = true };
 
         #endregion
 
@@ -132,11 +131,11 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<KeyValuePair<string, object?>>.IsReadOnly => false;
-        ICollection<string> IDictionary<string, object?>.Keys => stateProperties.Keys.ToArray();
-        ICollection<object?> IDictionary<string, object?>.Values => stateProperties.Values.ToArray();
+        ICollection<string> IDictionary<string, object?>.Keys => stateProperties.Keys;
+        ICollection<object?> IDictionary<string, object?>.Values => stateProperties.Values;
 #if !(NET35 || NET40)
-        IEnumerable<string> IReadOnlyDictionary<string, object?>.Keys => stateProperties.Keys.ToArray();
-        IEnumerable<object?> IReadOnlyDictionary<string, object?>.Values => stateProperties.Values.ToArray();
+        IEnumerable<string> IReadOnlyDictionary<string, object?>.Keys => stateProperties.Keys;
+        IEnumerable<object?> IReadOnlyDictionary<string, object?>.Values => stateProperties.Values;
 #endif
 
         #endregion
@@ -157,17 +156,13 @@ namespace KGySoft.ComponentModel
                 if (key == nameof(Enabled) && !(value is bool))
                     Throw.ArgumentException(Argument.value, Res.ComponentModelEnabledMustBeBool);
 
-                bool differs;
-                stateProperties.Lock();
-                try
+                bool differs = true;
+                stateProperties.AddOrUpdate(key, value, (_, oldValue) =>
                 {
-                    differs = !stateProperties.TryGetValue(key, out object? oldValue) || !Equals(oldValue, value);
-                    stateProperties[key] = value;
-                }
-                finally
-                {
-                    stateProperties.Unlock();
-                }
+                    if (Equals(oldValue, value))
+                        differs = false;
+                    return value;
+                });
 
                 if (differs)
                     OnPropertyChanged(key);
@@ -191,7 +186,7 @@ namespace KGySoft.ComponentModel
             if (initialConfiguration == null)
                 return;
 
-            foreach (var state in initialConfiguration)
+            foreach (KeyValuePair<string, object?> state in initialConfiguration)
             {
                 if (state.Key == nameof(Enabled) && !(state.Value is bool))
                     Throw.ArgumentException(Argument.initialConfiguration, Res.ComponentModelEnabledMustBeBool);
@@ -229,19 +224,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentException">An item with the same key has already been added</exception>
         public void Add(string key, object? value)
         {
-            stateProperties.Lock();
-            try
-            {
-                if (stateProperties.ContainsKey(key))
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
-
-                stateProperties.Add(key, value);
-            }
-            finally
-            {
-                stateProperties.Unlock();
-            }
-
+            stateProperties.Add(key, value);
             OnPropertyChanged(key);
         }
 
@@ -307,8 +290,12 @@ namespace KGySoft.ComponentModel
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         void ICollection<KeyValuePair<string, object?>>.Add(KeyValuePair<string, object?> item) => Add(item.Key, item.Value);
-        bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item) => stateProperties.Contains(item);
-        void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex) => stateProperties.CopyTo(array, arrayIndex);
+
+        bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item)
+            => ((ICollection<KeyValuePair<string, object?>>)stateProperties).Contains(item);
+        
+        void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
+            => ((ICollection<KeyValuePair<string, object?>>)stateProperties).CopyTo(array, arrayIndex);
 
         void ICollection<KeyValuePair<string, object?>>.Clear()
         {
@@ -321,7 +308,7 @@ namespace KGySoft.ComponentModel
         {
             if (item.Key == nameof(Enabled))
                 return false;
-            return stateProperties.Remove(item);
+            return ((ICollection<KeyValuePair<string, object?>>)stateProperties).Remove(item);
         }
 
         bool IDictionary<string, object?>.Remove(string key)
@@ -330,7 +317,7 @@ namespace KGySoft.ComponentModel
                 return false;
 
             // not calling PropertyChanged because a removed property has no effect on update
-            return stateProperties.Remove(key);
+            return stateProperties.TryRemove(key);
         }
 
         AttributeCollection ICustomTypeDescriptor.GetAttributes() => new AttributeCollection(null);
