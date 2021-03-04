@@ -17,6 +17,9 @@
 #region Usings
 
 using System;
+#if NET35
+using System.Diagnostics.CodeAnalysis; 
+#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -40,7 +43,7 @@ namespace KGySoft.Reflection
         #region Constants
 
 #if !NETFRAMEWORK
-        private const string mscorlibName = "mscorlib"; 
+        private const string mscorlibName = "mscorlib";
 #endif
 
         #endregion
@@ -57,10 +60,10 @@ namespace KGySoft.Reflection
         #region Private Fields
 
         private static Assembly? mscorlibAssembly;
-        private static LockingDictionary<string, Assembly>? assemblyCache;
+        private static IThreadSafeCacheAccessor<(string, ResolveAssemblyOptions), Assembly?>? assemblyCache;
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache; 
+        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache;
 #endif
 
         private static readonly string[] coreLibNames =
@@ -89,8 +92,19 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private static LockingDictionary<string, Assembly> AssemblyCache
-            => assemblyCache ??= new Cache<string, Assembly>().AsThreadSafe();
+        /// <summary>
+        /// Key: Assembly name + options
+        /// Value: Assembly, an Exception or null
+        /// </summary>
+        private static IThreadSafeCacheAccessor<(string, ResolveAssemblyOptions), Assembly?> AssemblyCache
+        {
+            get
+            {
+                if (assemblyCache == null)
+                    Interlocked.CompareExchange(ref assemblyCache, ThreadSafeCacheFactory.Create<(string, ResolveAssemblyOptions), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
+                return assemblyCache;
+            }
+        }
 
 #if !NET35
         private static IThreadSafeCacheAccessor<Type, (string? ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
@@ -121,19 +135,7 @@ namespace KGySoft.Reflection
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            AssemblyName asmName;
-            try
-            {
-                asmName = new AssemblyName(assemblyName);
-            }
-            catch (Exception e) when (!e.IsCritical())
-            {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(assemblyName), e);
-                return null;
-            }
-
-            return GetOrResolve(asmName, options);
+            return AssemblyCache[(assemblyName, options)];
         }
 
         internal static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
@@ -142,7 +144,7 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.assemblyName);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
-            return GetOrResolve(assemblyName, options);
+            return AssemblyCache[(assemblyName.FullName, options)];
         }
 
         internal static bool IdentityMatches(AssemblyName refName, AssemblyName? toCheck, bool allowPartialMatch)
@@ -209,31 +211,43 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private static Assembly? GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        private static Assembly? TryResolveAssembly((string AssemblyName, ResolveAssemblyOptions Options) key, out bool storeValue)
         {
-            string key = ((int)(options & ~ResolveAssemblyOptions.ThrowError)).ToString(CultureInfo.InvariantCulture) + assemblyName.FullName;
-            if (AssemblyCache.TryGetValue(key, out Assembly? result))
-                return result;
-
+            // Note: even if the original source was an AssemblyName we resolve it from string because AssemblyName has no proper GetHashCode/Equals
+            // It is not a problem as this is the item loader method of the cache so it will not be recreated most of the time.
+            AssemblyName asmName;
             try
             {
-                result = Resolve(assemblyName, options);
+                asmName = new AssemblyName(key.AssemblyName);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(key.AssemblyName), e);
+                storeValue = false;
+                return null;
+            }
+
+            Assembly? result;
+            try
+            {
+                result = Resolve(asmName, key.Options);
             }
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName), e);
+                storeValue = false;
                 return null;
             }
 
+            storeValue = result != null;
             if (result == null)
             {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
-                return null;
+                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName));
             }
 
-            assemblyCache![key] = result;
             return result;
         }
 
