@@ -133,7 +133,7 @@ namespace KGySoft.Collections
             if (isMerging)
                 return;
 
-            Debug.Assert(l2Cache.Count > 0);
+            Debug.Assert(l2Cache.Count > 0 || GetType() != typeof(LockFreeCache<TKey, TValue>), "Unless using a derived type, L2 cache is not expected to be empty here");
             int threshold = nextCapacity;
             int l1Count = l1Cache.Count;
             int l2Count = l2Cache.Count;

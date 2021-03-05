@@ -60,10 +60,10 @@ namespace KGySoft.Reflection
         #region Private Fields
 
         private static Assembly? mscorlibAssembly;
-        private static IThreadSafeCacheAccessor<(string, ResolveAssemblyOptions), Assembly?>? assemblyCache;
+        private static IThreadSafeCacheAccessor<(string, int), Assembly?>? assemblyCache; // Key: Assembly name + options (as int due to faster GetHashCode)
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache;
+        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache; // Value: Forwarded assembly name + is core identity flag
 #endif
 
         private static readonly string[] coreLibNames =
@@ -92,16 +92,12 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        /// <summary>
-        /// Key: Assembly name + options
-        /// Value: Assembly, an Exception or null
-        /// </summary>
-        private static IThreadSafeCacheAccessor<(string, ResolveAssemblyOptions), Assembly?> AssemblyCache
+        private static IThreadSafeCacheAccessor<(string, int), Assembly?> AssemblyCache
         {
             get
             {
                 if (assemblyCache == null)
-                    Interlocked.CompareExchange(ref assemblyCache, ThreadSafeCacheFactory.Create<(string, ResolveAssemblyOptions), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref assemblyCache, ThreadSafeCacheFactory.Create<(string, int), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
                 return assemblyCache;
             }
         }
@@ -135,7 +131,7 @@ namespace KGySoft.Reflection
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            return AssemblyCache[(assemblyName, options)];
+            return AssemblyCache[(assemblyName, (int)options)];
         }
 
         internal static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
@@ -144,7 +140,7 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.assemblyName);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
-            return AssemblyCache[(assemblyName.FullName, options)];
+            return AssemblyCache[(assemblyName.FullName, (int)options)];
         }
 
         internal static bool IdentityMatches(AssemblyName refName, AssemblyName? toCheck, bool allowPartialMatch)
@@ -211,7 +207,7 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private static Assembly? TryResolveAssembly((string AssemblyName, ResolveAssemblyOptions Options) key, out bool storeValue)
+        private static Assembly? TryResolveAssembly((string AssemblyName, int Options) key, out bool storeValue)
         {
             // Note: even if the original source was an AssemblyName we resolve it from string because AssemblyName has no proper GetHashCode/Equals
             // It is not a problem as this is the item loader method of the cache so it will not be recreated most of the time.
@@ -222,7 +218,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e) when (!e.IsCritical())
             {
-                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                if ((key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
                     Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(key.AssemblyName), e);
                 storeValue = false;
                 return null;
@@ -231,23 +227,20 @@ namespace KGySoft.Reflection
             Assembly? result;
             try
             {
-                result = Resolve(asmName, key.Options);
+                result = Resolve(asmName, (ResolveAssemblyOptions)key.Options);
             }
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
-                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
+                if ((key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
                     Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName), e);
                 storeValue = false;
                 return null;
             }
 
-            storeValue = result != null;
-            if (result == null)
-            {
-                if ((key.Options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName));
-            }
+            if (result == null && (key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
+                Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName));
 
+            storeValue = result != null;
             return result;
         }
 

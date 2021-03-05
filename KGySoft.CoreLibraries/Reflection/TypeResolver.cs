@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -126,7 +125,7 @@ namespace KGySoft.Reflection
             #region Fields
 
             private readonly TextReader reader;
-            private readonly Stack<State> stack; 
+            private readonly Stack<State> stack;
             private readonly StringBuilder buf;
 
             #endregion
@@ -166,7 +165,7 @@ namespace KGySoft.Reflection
             #region Methods
 
             #region Public Methods
-            
+
             public void Dispose() => reader.Dispose();
             public override string ToString() => Enum<State>.ToString(State);
 
@@ -240,9 +239,9 @@ namespace KGySoft.Reflection
 
         #region Static Fields
 
-        private static LockingDictionary<string, Type?>? typeCacheByString;
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>>? typeCacheByAssembly;
-        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>>? typeNameCache;
+        private static IThreadSafeCacheAccessor<(string, int), Type?>? typeCacheByString; // Key: Type name + options (as int due to faster GetHashCode)
+        private static IThreadSafeCacheAccessor<(Assembly, string, int), Type?>? typeCacheByAssembly; // Key: Assembly + type name + options
+        private static IThreadSafeCacheAccessor<(Type, int), string>? typeNameCache; // Key: Type + kind (as int due to faster GetHashCode)
 
         #endregion
 
@@ -266,25 +265,32 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        private static LockingDictionary<string, Type?> TypeCacheByString
-            => typeCacheByString ??= new Cache<string, Type?>(256).AsThreadSafe();
+        private static IThreadSafeCacheAccessor<(string, int), Type?> TypeCacheByString
+        {
+            get
+            {
+                if (typeCacheByString == null)
+                    Interlocked.CompareExchange(ref typeCacheByString, ThreadSafeCacheFactory.Create<(string, int), Type?>(TryResolveType, LockFreeCacheOptions.Profile256), null);
+                return typeCacheByString;
+            }
+        }
 
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
+        private static IThreadSafeCacheAccessor<(Assembly, string, int), Type?> TypeCacheByAssembly
         {
             get
             {
                 if (typeCacheByAssembly == null)
-                    Interlocked.CompareExchange(ref typeCacheByAssembly, ThreadSafeCacheFactory.Create<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>().AsThreadSafe(), LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref typeCacheByAssembly, ThreadSafeCacheFactory.Create<(Assembly, string, int), Type?>(TryResolveTypeByAssembly, LockFreeCacheOptions.Profile256), null);
                 return typeCacheByAssembly;
             }
         }
 
-        private static IThreadSafeCacheAccessor<Type, LockingDictionary<TypeNameKind, string>> TypeNameCache
+        private static IThreadSafeCacheAccessor<(Type, int), string> TypeNameCache
         {
             get
             {
                 if (typeNameCache == null)
-                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<Type, LockingDictionary<TypeNameKind, string>>(t => new Dictionary<TypeNameKind, string>(1, ComparerHelper<TypeNameKind>.EqualityComparer).AsThreadSafe(), LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<(Type, int), string>(FormatType, LockFreeCacheOptions.Profile256), null);
                 return typeNameCache;
             }
         }
@@ -350,7 +356,7 @@ namespace KGySoft.Reflection
             {
                 assembly = type.Assembly;
                 if (kind.In(TypeNameKind.AssemblyQualifiedName, TypeNameKind.ForcedAssemblyQualifiedName))
-                    assemblyName =  assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
+                    assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
                 return;
             }
 
@@ -374,20 +380,19 @@ namespace KGySoft.Reflection
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            string? key = null;
             Type? result;
 
             // Trying to use the cache but only if no resolver is specified
             if (typeResolver == null)
             {
-                ResolveTypeOptions prefix = options & ~ResolveTypeOptions.ThrowError;
-                if ((prefix & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
-                    prefix &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
-                key = ((int)prefix).ToString(CultureInfo.InvariantCulture) + typeName;
-                if (TypeCacheByString.TryGetValue(key, out result))
-                    return result;
+                if ((options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
+                    options &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
+
+                // The item loader can throw an exception and only non-null values will be stored in the cache
+                return TypeCacheByString[(typeName, (int)options)];
             }
 
+            // going on with resolver, whose result is not cached
             try
             {
                 result = new TypeResolver(typeName, options).Resolve(typeResolver);
@@ -402,9 +407,6 @@ namespace KGySoft.Reflection
             if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
                 Throw.ReflectionException(Res.ReflectionNotAType(typeName));
 
-            if (key != null && result != null)
-                TypeCacheByString[key] = result;
-
             return result;
         }
 
@@ -417,38 +419,11 @@ namespace KGySoft.Reflection
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            ResolveTypeOptions prefix = options & ~ResolveTypeOptions.ThrowError;
-            if ((prefix & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
-                prefix &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
-            string key = ((int)prefix).ToString(CultureInfo.InvariantCulture) + typeName;
-            LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
-            if (cache.TryGetValue(key, out Type? result))
-                return result;
+            if ((options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None)
+                options &= ~ResolveTypeOptions.AllowPartialAssemblyMatch;
 
-            if (GetAssemblyNamePos(typeName) >= 0)
-            {
-                if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    Throw.ArgumentException(Argument.typeName, Res.ReflectionTypeWithAssemblyName);
-                return null;
-            }
-
-            try
-            {
-                result = assembly.GetType(typeName) ?? new TypeResolver(assembly, typeName, options).Resolve(null);
-            }
-            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
-            {
-                if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                    Throw.ReflectionException(Res.ReflectionNotAType(typeName), e);
-                return null;
-            }
-
-            if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
-                Throw.ReflectionException(Res.ReflectionNotAType(typeName));
-
-            if (result != null)
-                cache[key] = result;
-            return result;
+            // the item loader can throw an exception and only non-null values will be stored in the cache
+            return TypeCacheByAssembly[(assembly, typeName, (int)options)];
         }
 
         internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
@@ -462,14 +437,7 @@ namespace KGySoft.Reflection
             if (assemblyNameResolver != null || typeNameResolver != null)
                 return new TypeResolver(type, kind, assemblyNameResolver, typeNameResolver).GetName(kind)!;
 
-            LockingDictionary<TypeNameKind, string> cache = TypeNameCache[type];
-            if (cache.TryGetValue(kind, out string? result))
-                return result;
-
-            result = new TypeResolver(type, kind, null, null).GetName(kind);
-
-            cache[kind] = result!;
-            return result!;
+            return TypeNameCache[(type, (int)kind)];
         }
 
         internal static string StripName(string typeName, bool stripVersionOnly)
@@ -479,11 +447,70 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private static int GetAssemblyNamePos(string typeName)
+        private static Type? TryResolveType((string TypeName, int Options) key, out bool storeValue)
         {
-            int compoundNameEnd = typeName.LastIndexOf(']');
-            return typeName.IndexOf(',', compoundNameEnd + 1);
+            Type? result;
+            try
+            {
+                result = new TypeResolver(key.TypeName, (ResolveTypeOptions)key.Options).Resolve(null);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if ((key.Options & (int)ResolveTypeOptions.ThrowError) != 0)
+                    Throw.ReflectionException(Res.ReflectionNotAType(key.TypeName), e);
+                storeValue = false;
+                return null;
+            }
+
+            if (result == null && (key.Options & (int)ResolveTypeOptions.ThrowError) != 0)
+                Throw.ReflectionException(Res.ReflectionNotAType(key.TypeName));
+
+            storeValue = result != null;
+            return result;
         }
+
+        private static Type? TryResolveTypeByAssembly((Assembly Assembly, string TypeName, int Options) key, out bool storeValue)
+        {
+            #region Local Methods
+
+            static int GetAssemblyNamePos(string typeName)
+            {
+                int compoundNameEnd = typeName.LastIndexOf(']');
+                return typeName.IndexOf(',', compoundNameEnd + 1);
+            }
+
+            #endregion
+
+            Type? result;
+            if (GetAssemblyNamePos(key.TypeName) >= 0)
+            {
+                if ((key.Options & (int)ResolveTypeOptions.ThrowError) != 0)
+                    Throw.ArgumentException(Argument.typeName, Res.ReflectionTypeWithAssemblyName);
+                storeValue = false;
+                return null;
+            }
+
+            try
+            {
+                result = key.Assembly.GetType(key.TypeName) ?? new TypeResolver(key.Assembly, key.TypeName, (ResolveTypeOptions)key.Options).Resolve(null);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if ((key.Options & (int)ResolveTypeOptions.ThrowError) != 0)
+                    Throw.ReflectionException(Res.ReflectionNotAType(key.TypeName), e);
+                storeValue = false;
+                return null;
+            }
+
+            if (result == null && (key.Options & (int)ResolveTypeOptions.ThrowError) != 0)
+                Throw.ReflectionException(Res.ReflectionNotAType(key.TypeName));
+
+            storeValue = result != null;
+            return result;
+        }
+
+        private static string FormatType((Type Type, int Kind) key)
+            => new TypeResolver(key.Type, (TypeNameKind)key.Kind, null, null).GetName((TypeNameKind)key.Kind)!;
 
         #endregion
 
