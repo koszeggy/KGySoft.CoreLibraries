@@ -1194,8 +1194,6 @@ namespace KGySoft.Serialization.Binary
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
         [SecuritySafeCritical]
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
         public void SerializeToStream(Stream stream, object? data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
@@ -1203,8 +1201,6 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
         public object? DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
 
         /// <summary>

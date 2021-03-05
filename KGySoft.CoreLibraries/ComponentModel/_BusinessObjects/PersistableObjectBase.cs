@@ -68,7 +68,6 @@ namespace KGySoft.ComponentModel
         bool IPersistableObject.TryReplaceProperty(string propertyName, object? originalValue, object? newValue, bool invokeChangedEvent)
             => TryReplaceProperty(propertyName, originalValue, newValue, invokeChangedEvent);
 
-        [SuppressMessage("CodeQuality", "IDE0004:Type cast is redundant", Justification = "Needed to avoid CS8619")]
         IDictionary<string, object?> IPersistableObject.GetProperties()
         {
             var result = new Dictionary<string, object?>(Count);

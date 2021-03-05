@@ -324,8 +324,6 @@ namespace KGySoft.Resources
             /// Gets whether this proxy has been loaded by <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and trying parents.
             /// In this case there might be unloaded parents for this resource set.
             /// </summary>
-            [SuppressMessage("Reliability", "CA2002:Do not lock on objects with weak identity",
-                Justification = "False alarm, this is not accessible as a public reference")]
             internal bool CanHaveLoadableParent
             {
                 get
@@ -1281,7 +1279,6 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         internal ResXResourceSet? GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {

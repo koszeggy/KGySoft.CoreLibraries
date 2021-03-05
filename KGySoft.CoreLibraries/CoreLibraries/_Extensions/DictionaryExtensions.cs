@@ -29,6 +29,9 @@ using KGySoft.Collections;
 
 #region Suppressions
 
+#if NETFRAMEWORK || NETSTANDARD2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 #if NETCOREAPP3_0 // Only in .NET Core 3 the IDictionary<TKey, TValue> has the TKey : notnull constraint. In .NET 5 this has already been removed
 #pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
 #endif

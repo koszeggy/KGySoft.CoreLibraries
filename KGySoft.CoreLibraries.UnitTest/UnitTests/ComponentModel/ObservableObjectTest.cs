@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using KGySoft.ComponentModel;
 using KGySoft.Diagnostics;
@@ -37,6 +38,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             #region Properties
 
+            [SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "<Pending>")]
             private bool PrivateProperty { get => Get<bool>(); set => Set(value); }
 
             #endregion

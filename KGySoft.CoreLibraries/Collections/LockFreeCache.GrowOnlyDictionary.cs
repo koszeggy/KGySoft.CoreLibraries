@@ -27,6 +27,14 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     partial class LockFreeCache<TKey, TValue>

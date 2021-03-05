@@ -87,7 +87,7 @@ namespace KGySoft.Collections
 
         #region Internal Methods
         
-        internal static IThreadSafeCacheAccessor<TKey, TValue> Create<TKey, TValue>(ConditionallyStoringItemLoader<TKey, TValue> itemLoader, LockFreeCacheOptions? options)
+        internal static IThreadSafeCacheAccessor<TKey, TValue> Create<TKey, TValue>(ConditionallyStoringItemLoader<TKey, TValue> itemLoader, LockFreeCacheOptions options)
             where TKey : notnull
         {
             return new ConditionallyStoringLockFreeCache<TKey, TValue>(itemLoader, options);

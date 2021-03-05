@@ -428,7 +428,6 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with a <see cref="SortableBindingList{T}"/> internally.
         /// </summary>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposed by Dispose method")]
         public ObservableBindingList() : this(new SortableBindingList<T>())
         {
         }

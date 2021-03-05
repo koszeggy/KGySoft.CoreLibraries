@@ -25,6 +25,14 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
+#region Suppressions
+
+#if NET40 || NET45 || NET472 || NETSTANDARD
+#pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     internal partial class LockFreeCache<TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>

@@ -35,6 +35,20 @@ using KGySoft.Serialization.Binary;
 
 #endregion
 
+#region Suppressions
+
+#if NET35 || NET40
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+#if NET40 || NET45 || NET472 || NETSTANDARD
+#pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
+#endif
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     /// <summary>
@@ -95,8 +109,6 @@ namespace KGySoft.Collections
     /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>
-    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> has a <see cref="ConcurrentDictionary{TKey,TValue}.TryRemove(KeyValuePair{TKey,TValue})"/> method overload, while its signature
-    /// in <see cref="ThreadSafeDictionary{TKey,TValue}"/> is <see cref="TryRemove(TKey, TValue)"/>.</item>
     /// <item>The <see cref="Keys"/> and <see cref="Values"/> property of <see cref="ThreadSafeDictionary{TKey,TValue}"/> return wrappers for the current keys and values
     /// (enumerating the same instance again and again may yield different items), whereas <see cref="ConcurrentDictionary{TKey,TValue}"/> return a snapshot for these properties.</item>
     /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> throw a <see cref="NotSupportedException"/> just like for their
