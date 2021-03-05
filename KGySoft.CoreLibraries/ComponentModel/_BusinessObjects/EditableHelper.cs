@@ -32,7 +32,7 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly ObservableObjectBase owner;
-        private readonly LockingList<IDictionary<string, object?>> snapshots = new List<IDictionary<string, object?>>().AsThreadSafe();
+        private readonly List<IDictionary<string, object?>> snapshots = new List<IDictionary<string, object?>>();
 
         #endregion
 
@@ -55,24 +55,21 @@ namespace KGySoft.ComponentModel
         public void BeginNewEdit()
         {
             int oldLevel = EditLevel;
-            snapshots.Add(owner.CloneProperties());
+            ThreadSafeDictionary<string, object?> clone = owner.CloneProperties();
+            lock (snapshots)
+                snapshots.Add(clone);
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldLevel, oldLevel + 1, nameof(EditLevel)));
         }
 
         public void CommitLastEdit()
         {
             int currentLevel;
-            snapshots.Lock();
-            try
+            lock (snapshots)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
                     Throw.InvalidOperationException(Res.ComponentModelNotEditing);
                 snapshots.RemoveAt(currentLevel - 1);
-            }
-            finally
-            {
-                snapshots.Unlock();
             }
 
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, currentLevel - 1, nameof(EditLevel)));
@@ -80,9 +77,8 @@ namespace KGySoft.ComponentModel
 
         public void RevertLastEdit()
         {
-            snapshots.Lock();
             int currentLevel;
-            try
+            lock (snapshots)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
@@ -101,10 +97,6 @@ namespace KGySoft.ComponentModel
                 undoable?.ClearUndoHistory();
                 snapshots.RemoveAt(currentLevel - 1);
             }
-            finally
-            {
-                snapshots.Unlock();
-            }
 
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, currentLevel - 1, nameof(EditLevel)));
         }
@@ -112,28 +104,22 @@ namespace KGySoft.ComponentModel
         public bool TryCommitAllEdits()
         {
             int currentLevel;
-            snapshots.Lock();
-            try
+            lock (snapshots)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
                     return false;
                 snapshots.Clear();
             }
-            finally
-            {
-                snapshots.Unlock();
-            }
-            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, 0, nameof(EditLevel)));
 
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, 0, nameof(EditLevel)));
             return true;
         }
 
         public bool TryRevertAllEdits()
         {
-            snapshots.Lock();
             int currentLevel;
-            try
+            lock (snapshots)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
@@ -151,10 +137,6 @@ namespace KGySoft.ComponentModel
 
                 undoable?.ClearUndoHistory();
                 snapshots.Clear();
-            }
-            finally
-            {
-                snapshots.Unlock();
             }
 
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, 0, nameof(EditLevel)));
