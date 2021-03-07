@@ -851,11 +851,9 @@ namespace KGySoft.ComponentModel
             HookPropertyChangedAll();
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void HookPropertyChanged(T item)
         {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+            if (item is not INotifyPropertyChanged notifyPropertyChanged)
                 return;
 
             notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
@@ -863,11 +861,9 @@ namespace KGySoft.ComponentModel
                 trackedSubscriptions?.Add(item);
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void UnhookPropertyChanged(T item)
         {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+            if (item is not INotifyPropertyChanged notifyPropertyChanged)
                 return;
 
             notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
@@ -902,12 +898,10 @@ namespace KGySoft.ComponentModel
 
         #region Event handlers
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             // Invalid sender or property name: simply resetting
-            if (e == null! || !(sender is T item) || String.IsNullOrEmpty(e.PropertyName))
+            if (e == null! || sender is not T item || String.IsNullOrEmpty(e.PropertyName))
             {
                 ResetBindings();
                 return;

@@ -898,21 +898,17 @@ namespace KGySoft.ComponentModel
                 HookPropertyChanged(item);
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void HookPropertyChanged(T item)
         {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+            if (item is not INotifyPropertyChanged notifyPropertyChanged)
                 return;
 
             notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void UnhookPropertyChanged(T item)
         {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+            if (item is not INotifyPropertyChanged notifyPropertyChanged)
                 return;
 
             notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
@@ -1132,7 +1128,7 @@ namespace KGySoft.ComponentModel
                             return;
 
                         // note: in case of replace we can't retrieve the old item
-                        T item = e.NewIndex >= 0 && e.NewIndex < Count ? this[e.NewIndex] : default;
+                        T? item = e.NewIndex >= 0 && e.NewIndex < Count ? this[e.NewIndex] : default;
                         OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
                         break;
                     default:
@@ -1178,15 +1174,13 @@ namespace KGySoft.ComponentModel
             ProcessListChanged(e);
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (!RaiseItemChangedEvents || (!RaiseListChangedEvents && !RaiseCollectionChangedEvents))
                 return;
 
             // Invalid sender or property name: simply resetting
-            if (e == null! || !(sender is T item) || string.IsNullOrEmpty(e.PropertyName))
+            if (e == null! || sender is not T item || string.IsNullOrEmpty(e.PropertyName))
             {
                 ResetBindings();
                 return;

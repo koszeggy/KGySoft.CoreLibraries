@@ -33,6 +33,9 @@ using System.Runtime.CompilerServices;
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+// ReSharper disable UnusedMember.Local - Array3DDebugView.Items
+#endif
 
 #endregion
 
@@ -72,8 +75,6 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 3D array debug items")]
-            // ReSharper disable once UnusedMember.Local
             public T[,,]? Items => array.To3DArray();
 
             #endregion
@@ -198,7 +199,6 @@ namespace KGySoft.Collections
         /// <param name="z">The depth index of the plane to obtain.</param>
         /// <returns>An <see cref="Array2D{T}"/> instance that represents a plane of this <see cref="Array3D{T}"/> instance.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Index is a typical indexer argument")]
         public Array2D<T> this[Index z]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -212,7 +212,6 @@ namespace KGySoft.Collections
         /// <param name="range">The range of planes to get.</param>
         /// <returns>The subrange of planes of the current <see cref="Array3D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         public Array3D<T> this[Range range]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -238,8 +237,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="ArraySection{T}"/> instance that represents the original array.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-                Justification = "See the Buffer property")]
         public static implicit operator ArraySection<T>(Array3D<T> array) => array.buffer;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -250,8 +247,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="Array3D{T}"/>.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-                Justification = "False alarm, see AsSpan")]
         public static implicit operator Span<T>(Array3D<T> array) => array.AsSpan;
 #endif
 
@@ -440,7 +435,6 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "See ToJaggedArray")]
         public T[,,]? To3DArray()
         {
             if (buffer.IsNull)

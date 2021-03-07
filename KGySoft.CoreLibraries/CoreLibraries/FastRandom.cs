@@ -164,8 +164,7 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public override unsafe void NextBytes(byte[] buffer)
         {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm: it CAN be null
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
 
             fixed (byte* pBuf = buffer)

@@ -163,7 +163,6 @@ namespace KGySoft.Diagnostics
 
         #region Constructors
 
-        [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline", Justification = "Cannot initialize fully inline due to event subscriptions.")]
         static Profiler()
         {
             Enabled = true;

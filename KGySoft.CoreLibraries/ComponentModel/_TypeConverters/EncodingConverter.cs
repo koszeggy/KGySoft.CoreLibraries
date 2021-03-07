@@ -99,11 +99,9 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (!(value is Encoding encoding))
+            if (value is not Encoding encoding)
                 return base.ConvertTo(context, culture, value, destinationType);
 
             if (destinationType == Reflector.IntType)

@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
@@ -64,7 +63,6 @@ namespace KGySoft.ComponentModel
         /// <param name="initialState">The initial state of the binding.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned")]
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
         {
             if (source == null!)
@@ -308,7 +306,6 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned")]
         internal static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, object[]? targets, bool syncTargets, bool? awaitCompletion)
         {
             if (source == null!)

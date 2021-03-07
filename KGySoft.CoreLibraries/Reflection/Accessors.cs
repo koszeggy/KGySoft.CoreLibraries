@@ -443,10 +443,10 @@ namespace KGySoft.Reflection
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
-        private static T GetFieldValueOrDefault<T>(object obj, T defaultValue = default, string? fieldNamePattern = null)
+        private static T? GetFieldValueOrDefault<T>(object obj, T? defaultValue = default, string? fieldNamePattern = null)
         {
             FieldAccessor? field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
-            return field == null ? defaultValue! : (T)field.Get(obj)!;
+            return field == null ? defaultValue : (T)field.Get(obj)!;
         }
 
         private static T GetFieldValueOrDefault<T>(object obj, Func<T> defaultValueFactory)

@@ -69,7 +69,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
         /// <returns>The found property value or <paramref name="defaultValue"/> if <paramref name="propertyName"/> was not found in this <see cref="IPersistableObject"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot get the property.</exception>
-        T GetPropertyOrDefault<T>(string propertyName, T defaultValue = default);
+        T GetPropertyOrDefault<T>(string propertyName, T defaultValue = default!);
 
         /// <summary>
         /// Sets the property to specified <paramref name="value"/>.

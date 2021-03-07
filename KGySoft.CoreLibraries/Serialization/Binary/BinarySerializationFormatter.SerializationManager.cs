@@ -49,7 +49,7 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 
 #if NETCOREAPP3_0
 #pragma warning disable CS8605 // Unboxing a possibly null value. - false alarm for iterating through a non-generic dictionary
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type. - 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type. - dictionary key/value pairs are never null
 #endif
 
 #endregion
@@ -995,8 +995,6 @@ namespace KGySoft.Serialization.Binary
                 return keyTypes;
             }
 
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-            [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
             [SecurityCritical]
             private void WriteCollection(BinaryWriter bw, DataTypesEnumerator collectionDataTypes, object obj)
             {
@@ -1026,7 +1024,7 @@ namespace KGySoft.Serialization.Binary
                     // 2.a.) Primitive array
                     if (elementType.IsPrimitive)
                     {
-                        if (!(array is byte[] rawData))
+                        if (array is not byte[] rawData)
                         {
                             rawData = new byte[Buffer.ByteLength(array)];
                             Buffer.BlockCopy(array, 0, rawData, 0, rawData.Length);
@@ -1506,8 +1504,6 @@ namespace KGySoft.Serialization.Binary
                     do
                     {
                         WriteDataType(bw, encodedDt[0]);
-
-                        // ReSharper disable once PossibleNullReferenceException - Pointers and ByRef types have element type
                         t = t.GetElementType()!;
 
                         Debug.Assert(!encodedDt.IsReadOnly, "Non read-only encoded types are expected for pointers and ByRef types");

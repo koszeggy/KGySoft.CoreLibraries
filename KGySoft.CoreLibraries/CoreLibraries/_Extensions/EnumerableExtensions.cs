@@ -1561,9 +1561,7 @@ namespace KGySoft.CoreLibraries
                             return true;
                         }
 
-#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition. - false alarm, the result can be true if a null item is found
                         return result == null && default(T) == null;
-#pragma warning restore CS8762
 
                     default:
                         if (index < 0)
@@ -1782,7 +1780,7 @@ namespace KGySoft.CoreLibraries
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
-        [return:MaybeNull]public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
+        public static T? GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
             => GetRandomElement(source, new FastRandom(), defaultIfEmpty);
 
         /// <summary>
@@ -1797,7 +1795,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A random element from the <paramref name="source"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="source"/> contains no elements and <paramref name="defaultIfEmpty"/> is <see langword="false"/>.</exception>
-        [return:MaybeNull]public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
+        public static T? GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);

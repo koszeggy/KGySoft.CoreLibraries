@@ -14,7 +14,6 @@
 
 #endregion
 
-
 #region Usings
 
 using System;
@@ -32,12 +31,20 @@ using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Collections
-{
+#region Suppressions
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+// ReSharper disable UnusedMember.Local - ArraySectionDebugView.Items
+#endif
 
+
+#endregion
+
+namespace KGySoft.Collections
+{
     /// <summary>
     /// Represents a one dimensional array or a section of an array.
     /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way
@@ -81,8 +88,6 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
             public T[]? Items => array.ToArray();
 
             #endregion
@@ -269,8 +274,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="ArraySection{T}"/> instance that represents the original array.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "The alternative exists as a constructor")]
         public static implicit operator ArraySection<T>(T[]? array) => array == null ? Null : new ArraySection<T>(array);
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -281,8 +284,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="ArraySection{T}"/>.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "False alarm, see AsSpan")]
         public static implicit operator Span<T>(ArraySection<T> arraySection) => arraySection.AsSpan;
 #endif
 
@@ -316,7 +317,8 @@ namespace KGySoft.Collections
         /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
 #if NETFRAMEWORK || NETSTANDARD2_0
-        [SuppressMessage("Microsoft.Usage", "CA1801:Review unused parameters", Justification = "Used in .NET Core 3.0/Standard 2.1 and above")] 
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Used in .NET Core 3.0/Standard 2.1 and above")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
 #endif
         public ArraySection(int length, bool assureClean = true)
         {
@@ -433,15 +435,20 @@ namespace KGySoft.Collections
         /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/>&#160;statement.
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/>&#160;if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
-        public unsafe ref T GetPinnableReference()
+        public ref T GetPinnableReference()
         {
             if (IsNullOrEmpty)
-            { 
+            {
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
+#elif NETCOREAPP3_0
+                unsafe
+                {
+                    return ref Unsafe.AsRef<T>(null);
+                }
 #else
-                // This is the workaround to return ref null. Unfortunately this works only for .NET Core 3.0 and above
-                return ref Unsafe.AsRef<T>(null);
+                return ref Unsafe.NullRef<T>();
+
 #endif
             }
 

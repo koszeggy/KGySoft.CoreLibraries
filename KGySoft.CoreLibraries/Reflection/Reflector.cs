@@ -2091,8 +2091,6 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8762", Justification = "Not a real CS8762 warning just a false alarm by ReSharper")]
         public static bool TryCreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
         {
             if (type == null!)

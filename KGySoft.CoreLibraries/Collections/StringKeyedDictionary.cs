@@ -43,6 +43,9 @@ using KGySoft.Serialization.Binary;
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+// ReSharper disable UnusedMember.Local - StringKeyedDictionaryDebugView.Items
+#endif
 
 #endregion
 
@@ -254,8 +257,6 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
             public KeyValuePair<string, TValue>[] Items => dictionary.ToArray();
 
             #endregion
@@ -289,8 +290,6 @@ namespace KGySoft.Collections
                 #region Properties
 
                 [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-                [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
                 public string[] Items => keys.ToArray();
 
                 #endregion
@@ -881,9 +880,7 @@ namespace KGySoft.Collections
         }
 
 
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.this[StringSegment]" but that kills ReSharper
-        /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(KGySoft.CoreLibraries.StringSegment)"/>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It is actually string")]
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.this[StringSegment]"/>
         public TValue this[StringSegment key]
         {
             get
@@ -896,9 +893,7 @@ namespace KGySoft.Collections
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]" but that kills ReSharper
-        /// <inheritdoc cref="P:KGySoft.Collections.IStringKeyedDictionary`1.Item(System.ReadOnlySpan{System.Char})"/>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Can be treated as string")]
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]"/>
         public TValue this[ReadOnlySpan<char> key]
         {
             get
@@ -915,14 +910,12 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         object? IDictionary.this[object key]
         {
             get => key switch
             {
-                string stringKey => TryGetValue(stringKey, out TValue value) ? (object?)value : null,
-                StringSegment stringSegmentKey => TryGetValue(stringSegmentKey, out TValue value) ? (object?)value : null,
+                string stringKey => TryGetValue(stringKey, out TValue? value) ? value : null,
+                StringSegment stringSegmentKey => TryGetValue(stringSegmentKey, out TValue? value) ? value : null,
                 _ => null
             };
             set
@@ -1158,8 +1151,7 @@ namespace KGySoft.Collections
             return false;
         }
 
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.TryGetValue(StringSegment,out TValue)" but that kills ReSharper
-        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.TryGetValue(KGySoft.CoreLibraries.StringSegment,`0@)"/>
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.TryGetValue(StringSegment,out TValue)"/>
         public bool TryGetValue(StringSegment key, [MaybeNullWhen(false)]out TValue value)
         {
             int i = GetItemIndex(key);
@@ -1174,8 +1166,7 @@ namespace KGySoft.Collections
         }
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.TryGetValue(ReadOnlySpan{char},out TValue)" but that kills ReSharper
-        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.TryGetValue(System.ReadOnlySpan{System.Char},`0@)"/>
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.TryGetValue(ReadOnlySpan{char},out TValue)"/>
         public bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)]out TValue value)
         {
             int i = GetItemIndex(key);
@@ -1191,62 +1182,44 @@ namespace KGySoft.Collections
 #endif
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(string)"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        [return:MaybeNull]public TValue GetValueOrDefault(string key) => TryGetValue(key, out TValue value) ? value : default;
+        public TValue? GetValueOrDefault(string key) => TryGetValue(key, out TValue? value) ? value : default;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(string, TActualValue)"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        public TActualValue GetValueOrDefault<TActualValue>(string key, TActualValue defaultValue = default) where TActualValue : TValue
-            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue!;
+        public TActualValue GetValueOrDefault<TActualValue>(string key, TActualValue defaultValue = default!) where TActualValue : TValue
+            => TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValue;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(string, Func{TActualValue})"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public TActualValue GetValueOrDefault<TActualValue>(string key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
             => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing MaybeNull return value
                 ? GetValueOrDefault(key, default(TActualValue)!)
-                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+                : TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(StringSegment)"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        [return:MaybeNull]public TValue GetValueOrDefault(StringSegment key) => TryGetValue(key, out TValue value) ? value : default;
+        public TValue? GetValueOrDefault(StringSegment key) => TryGetValue(key, out TValue? value) ? value : default;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(StringSegment, TActualValue)"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, TActualValue defaultValue = default) where TActualValue : TValue
-            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue!;
+        public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, TActualValue defaultValue = default!) where TActualValue : TValue
+            => TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValue;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(StringSegment, Func{TActualValue})"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
             => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing MaybeNull return value
                 ? GetValueOrDefault(key, default(TActualValue)!)
-                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+                : TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(ReadOnlySpan{char})"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        [return:MaybeNull]public TValue GetValueOrDefault(ReadOnlySpan<char> key) => TryGetValue(key, out TValue value) ? value : default;
+        public TValue? GetValueOrDefault(ReadOnlySpan<char> key) => TryGetValue(key, out TValue? value) ? value : default;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(ReadOnlySpan{char}, TActualValue)"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
-        public TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default) where TActualValue : TValue
-            => TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue!;
+        public TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default!) where TActualValue : TValue
+            => TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValue;
 
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault{TActualValue}(ReadOnlySpan{char}, Func{TActualValue})"/>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         public TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue
             => defaultValueFactory == null! // null is tolerated but defaultValueFactory is not nullable to avoid the confusing nullable return value
                 ? GetValueOrDefault(key, default(TActualValue)!)
-                : TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
+                : TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 #endif
 
         /// <summary>
@@ -1258,13 +1231,11 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool ContainsKey(string key) => GetItemIndex(key) >= 0;
 
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.ContainsKey(StringSegment)" but that kills ReSharper
-        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.ContainsKey(KGySoft.CoreLibraries.StringSegment)"/>
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(StringSegment)"/>
         public bool ContainsKey(StringSegment key) => GetItemIndex(key) >= 0;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
-        // Bug: could be cref="IStringKeyedDictionary{TValue}.ContainsKey(ReadOnlySpan{char})" but that kills ReSharper
-        /// <inheritdoc cref="M:KGySoft.Collections.IStringKeyedDictionary`1.ContainsKey(System.ReadOnlySpan{System.Char})"/>
+        /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(ReadOnlySpan{char})"/>
         public bool ContainsKey(ReadOnlySpan<char> key) => GetItemIndex(key) >= 0;
 #endif
 

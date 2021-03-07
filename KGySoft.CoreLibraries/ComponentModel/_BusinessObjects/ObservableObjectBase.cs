@@ -282,7 +282,6 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// A new object that is a copy of this instance.
         /// </returns>
-        // ReSharper disable once MethodOverloadWithOptionalParameter - false alarm, the "overload" is an explicit interface implementation
         public virtual ObservableObjectBase Clone(bool clonePropertyChanged = false)
         {
             Type type = GetType();
@@ -429,8 +428,8 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(T defaultValue = default, [CallerMemberName] string propertyName = null!)
-            => TryGetPropertyValue(propertyName, true, out object? value) && typeof(T).CanAcceptValue(value) ? (T)value! : defaultValue!;
+        protected T Get<T>(T defaultValue = default!, [CallerMemberName]string propertyName = null!)
+            => TryGetPropertyValue(propertyName, true, out object? value) && typeof(T).CanAcceptValue(value) ? (T)value! : defaultValue;
 
         /// <summary>
         /// Sets the value of a property.

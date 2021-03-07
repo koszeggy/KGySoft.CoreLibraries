@@ -172,7 +172,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            internal static bool TryParse<T>(string? s, CultureInfo? culture, [MaybeNull]out T value, out Exception? error)
+            internal static bool TryParse<T>(string? s, CultureInfo? culture, out T? value, out Exception? error)
             {
                 Throw.ThrowIfNullIsInvalid<T>(s, Argument.s);
                 error = null;

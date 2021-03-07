@@ -440,7 +440,8 @@ namespace KGySoft.Resources
         /// Gets or sets the relative path to .resx resource files.
         /// <br/>Default value: <c>Resources</c>
         /// </summary>
-        [AllowNull]public string ResXResourcesDir
+        [AllowNull]
+        public string ResXResourcesDir
         {
             get => resxResourcesDir;
             set
@@ -547,7 +548,8 @@ namespace KGySoft.Resources
 #if NET35
         private Hashtable? InternalResourceSets => base.ResourceSets;
 
-        [AllowNull]private new Hashtable ResourceSets
+        [AllowNull]
+        private new Hashtable ResourceSets
         {
             get
             {
@@ -1136,8 +1138,6 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (culture == null!)
@@ -1150,7 +1150,7 @@ namespace KGySoft.Resources
                     return false;
             }
 
-            if (!(rs is ResXResourceSet resx) || !(force || resx.IsModified))
+            if (rs is not ResXResourceSet resx || !(force || resx.IsModified))
                 return false;
 
             resx.Save(GetResourceFileName(culture), compatibleFormat);
@@ -1171,8 +1171,6 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
@@ -1185,7 +1183,7 @@ namespace KGySoft.Resources
                 bool first = true;
                 while (enumerator.MoveNext())
                 {
-                    if (!(enumerator.Value is ResXResourceSet rs) || (!rs.IsModified && !force))
+                    if (enumerator.Value is not ResXResourceSet rs || (!rs.IsModified && !force))
                         continue;
 
                     if (first)
@@ -1430,9 +1428,6 @@ namespace KGySoft.Resources
         /// Creates an empty resource set for the given culture so it can be expanded.
         /// Does not make the resource set dirty until it is actually edited.
         /// </summary>
-#if NET35
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")] 
-#endif
         internal ResXResourceSet CreateResourceSet(CultureInfo culture)
         {
             ResourceSet result = new ResXResourceSet(basePath: GetResourceDirName());
@@ -1654,8 +1649,6 @@ namespace KGySoft.Resources
             return resxDirFullPath;
         }
 
-        [SuppressMessage("Style", "IDE0083:Use pattern matching",
-            Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         [OnSerializing]
         private void OnSerializing(StreamingContext ctx)
         {
@@ -1671,7 +1664,7 @@ namespace KGySoft.Resources
                     .Cast<DictionaryEntry>()
 #endif
 
-                    where !(res.Value is ResXResourceSet resx) || !resx.IsModified
+                    where res.Value is not ResXResourceSet resx || !resx.IsModified
                     select res.Key;
 
                 foreach (var key in keys.ToList()) // key is object in .NET 3.5, and is string above

@@ -29,6 +29,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK
+// ReSharper disable ConstantNullCoalescingCondition - ToString CAN be null
+#endif
+
+#endregion
+
 namespace KGySoft.Resources
 {
     internal static class ResXCommon
@@ -193,7 +201,6 @@ namespace KGySoft.Resources
             return soapFormatter;
         }
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")]
         internal static MemoryStream? ToMemoryStream(string name, object? value, bool safeMode)
         {
             if (value == null)
@@ -247,9 +254,6 @@ namespace KGySoft.Resources
             return true;
         }
 
-#if NETFRAMEWORK
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is returned.")] 
-#endif
         private static MemoryStream? ToStreamSafe(ResXDataNode node)
         {
             object? value = node.ValueInternal;

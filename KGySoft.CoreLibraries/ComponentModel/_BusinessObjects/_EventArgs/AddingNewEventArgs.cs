@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -33,10 +32,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets the object to be added to the binding list. If <see langword="null"/>,
         /// then a new instance of <typeparamref name="T"/> is tried to be created automatically.
         /// </summary>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Global",
-            Justification = "False alarm, property can be set.")] // TODO: remove this if T? will be tolerated by ReSharper and initializer can be removed
-        [AllowNull][MaybeNull]public T NewObject { get; set; } = default!;
+        public T? NewObject { get; set; }
 
         #endregion
     }

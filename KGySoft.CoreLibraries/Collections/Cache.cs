@@ -747,23 +747,20 @@ namespace KGySoft.Collections
 
             #region Indexers
 
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-            [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? result'")]
             public TValue this[TKey key]
             {
                 get
                 {
                     lock (cache.syncRootForThreadSafeAccessor!)
                     {
-                        if (cache.TryGetValue(key, out TValue result))
+                        if (cache.TryGetValue(key, out TValue? result))
                             return result;
                     }
 
-                    // ReSharper disable once InconsistentlySynchronizedField - intended: item loading is not locked
                     TValue newItem = cache.itemLoader.Invoke(key);
                     lock (cache.syncRootForThreadSafeAccessor)
                     {
-                        if (cache.TryGetValue(key, out TValue result))
+                        if (cache.TryGetValue(key, out TValue? result))
                         {
                             if (cache.DisposeDroppedValues && newItem is IDisposable disposable)
                                 disposable.Dispose();
@@ -1156,8 +1153,6 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Indexers
 
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out TValue? value'")]
         object? IDictionary.this[object key]
         {
             get
@@ -1166,7 +1161,7 @@ namespace KGySoft.Collections
                 if (!CanAcceptKey(key))
                     return null;
 
-                return TryGetValue((TKey)key, out TValue value) ? (object)value! : null;
+                return TryGetValue((TKey)key, out TValue? value) ? (object)value! : null;
             }
             set
             {
@@ -1812,7 +1807,7 @@ namespace KGySoft.Collections
             last = index;
         }
 
-        private bool InternalRemove(TKey key, [AllowNull]TValue value, bool checkValue)
+        private bool InternalRemove(TKey key, TValue? value, bool checkValue)
         {
             int[]? bucketsLocal = buckets;
             if (bucketsLocal == null)

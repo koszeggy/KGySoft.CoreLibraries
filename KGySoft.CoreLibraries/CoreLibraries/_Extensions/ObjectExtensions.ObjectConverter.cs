@@ -65,8 +65,8 @@ namespace KGySoft.CoreLibraries
             {
                 // Practically the [u]long -> IConvertible conversion makes no sense but these make possible every IConvertible
                 // conversion via an intermediate [u]long step. Thus float types -> char/enum conversions are also possible.
-                Reflector.LongType.RegisterConversion(typeof(IConvertible), (obj, type, culture) => obj);
-                Reflector.ULongType.RegisterConversion(typeof(IConvertible), (obj, type, culture) => obj);
+                Reflector.LongType.RegisterConversion(typeof(IConvertible), (obj, _, _) => obj);
+                Reflector.ULongType.RegisterConversion(typeof(IConvertible), (obj, _, _) => obj);
 
                 // KeyValuePair and Dictionary entry conversions
                 Reflector.KeyValuePairType.RegisterConversion(Reflector.KeyValuePairType, TryConvertKeyValuePair);
@@ -333,8 +333,6 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            [SuppressMessage("Style", "IDE0083:Use pattern matching",
-                Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
             private static bool TryConvertToArray(ref ConversionContext context, IEnumerable sourceCollection, Type targetType, out object? value)
             {
                 value = null;
@@ -345,7 +343,7 @@ namespace KGySoft.CoreLibraries
                 // multi dimension target array is supported only if the source is also an array and has the same dimension
                 if (rank > 1)
                 {
-                    if (!(sourceCollection is Array sourceArray) || sourceArray.Rank != rank)
+                    if (sourceCollection is not Array sourceArray || sourceArray.Rank != rank)
                         return false;
 
                     int[] lengths = new int[rank];

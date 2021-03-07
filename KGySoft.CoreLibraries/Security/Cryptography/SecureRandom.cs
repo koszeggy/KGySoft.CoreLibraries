@@ -84,8 +84,7 @@ namespace KGySoft.Security.Cryptography
         /// <param name="buffer">An array of bytes to contain random numbers.</param>
         public override void NextBytes(byte[] buffer)
         {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm: it CAN be null
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
             provider.GetBytes(buffer);
         }

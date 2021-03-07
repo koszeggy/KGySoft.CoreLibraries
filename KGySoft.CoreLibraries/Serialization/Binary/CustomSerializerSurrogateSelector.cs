@@ -349,9 +349,7 @@ namespace KGySoft.Serialization.Binary
                         Handled = !IgnoreNonSerializedAttribute && field.IsNotSerialized,
                     };
 
-                    // ReSharper disable once AssignNullToNotNullAttribute - false alarm for ReSharper in .NET Core - TODO: remove when fixed
                     int usedCount = existingNames.GetValueOrDefault(e.Name);
-
                     if (usedCount == 0)
                         existingNames[e.Name] = 1;
                     else

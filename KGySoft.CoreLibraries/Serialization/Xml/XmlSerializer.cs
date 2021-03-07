@@ -20,7 +20,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+#if NET35
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -403,8 +405,6 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "XmlTextReader must not be disposed because that would close the underlying reader.")]
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
@@ -470,8 +470,6 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "XmlTextReader must not be disposed because that would close the underlying stream.")]
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif

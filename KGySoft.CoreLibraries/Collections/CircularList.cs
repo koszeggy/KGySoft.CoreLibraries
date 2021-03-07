@@ -98,7 +98,7 @@ namespace KGySoft.Collections
 
             #region Methods
 
-            public int Compare([AllowNull]T x, [AllowNull]T y) => comparison(x!, y!);
+            public int Compare(T? x, T? y) => comparison(x!, y!);
 
             #endregion
         }
@@ -123,7 +123,7 @@ namespace KGySoft.Collections
 
             private int index;
             private int steps;
-            [AllowNull]private T current = default!; // TODO: T? when ReSharper allows it
+            [AllowNull]private T current = default!;
 
             #endregion
 
@@ -219,7 +219,7 @@ namespace KGySoft.Collections
             private readonly int version;
 
             private int index;
-            [AllowNull]private T current = default!; // TODO: T? when ReSharper allows it
+            [AllowNull]private T current = default!;
 
             #endregion
 
@@ -428,9 +428,9 @@ namespace KGySoft.Collections
         private static readonly Type typeOfT = typeof(T);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
+        // ReSharper disable once StaticMemberInGenericType  
         private static readonly bool isManaged = !typeOfT.IsUnmanaged(); 
 #endif
-        // ReSharper restore StaticMemberInGenericType  
 
         private static BinarySearchHelper<T>? binarySearchHelper;
 
@@ -1572,8 +1572,7 @@ namespace KGySoft.Collections
         /// <returns>The first element that matches the conditions defined by the specified predicate, if found;
         /// otherwise, the default value for type <typeparamref name="T"/>.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        [return:MaybeNull]
-        public T Find(Predicate<T> match)
+        public T? Find(Predicate<T> match)
         {
             if (match == null!)
                 Throw.ArgumentNullException(Argument.match);
@@ -1606,8 +1605,7 @@ namespace KGySoft.Collections
         /// <returns>The last element that matches the conditions defined by the specified predicate, if found;
         /// otherwise, the default value for type <typeparamref name="T"/>.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        [return:MaybeNull]
-        public T FindLast(Predicate<T> match)
+        public T? FindLast(Predicate<T> match)
         {
             if (match == null!)
                 Throw.ArgumentNullException(Argument.match);

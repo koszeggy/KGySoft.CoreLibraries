@@ -520,7 +520,6 @@ namespace KGySoft.Resources
 #endif
             }
 
-            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, stream is passed to the overloaded constructor.")]
 #if NET35 || NET40 || NET45
             [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the called overloaded constructor.")] 
 #endif
@@ -1325,7 +1324,6 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
-        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "There is the public Close method. Same as System.Resources.ResXResourceReader.")]
         void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);

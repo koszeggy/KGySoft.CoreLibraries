@@ -51,7 +51,7 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        bool IEqualityComparer<T>.Equals([AllowNull]T x, [AllowNull]T y) => ReferenceEquals(x, y);
+        bool IEqualityComparer<T>.Equals(T? x, T? y) => ReferenceEquals(x, y);
 
         int IEqualityComparer<T>.GetHashCode([DisallowNull]T obj) => RuntimeHelpers.GetHashCode(obj);
 

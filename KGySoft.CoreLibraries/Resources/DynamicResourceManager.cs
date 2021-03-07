@@ -782,17 +782,17 @@ namespace KGySoft.Resources
             }
         }
 
-        [SuppressMessage("Style", "IDE0019:Use pattern matching", Justification = "False alarm, cannot use pattern matching for result because type must be nullable")]
-        [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
+        [SuppressMessage("Style", "IDE0019:Use pattern matching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
+        [SuppressMessage("ReSharper", "UsePatternMatching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
         private static object? AsString(object? value)
         {
-            // ReSharper disable once UsePatternMatching - False alarm, cannot use pattern matching because type must be nullable
             string? result = value as string;
             if (result != null)
                 return result;
 
             // even if a FileRef contains a string, we cannot add prefix to the referenced file so returning null here
-            if (!(value is ResXDataNode node) || node.FileRef != null)
+            if (value is not ResXDataNode node || node.FileRef != null)
                 return null;
 
             // already deserialized: returning the string or null
@@ -1262,7 +1262,6 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         private protected override object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
         {
             #region Local Methods to reduce complexity
@@ -1544,7 +1543,6 @@ namespace KGySoft.Resources
         /// Applies the AppendOnLoad rule.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The result of InternalGetResourceSet must not be disposed.")]
         private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             #region Local Methods to reduce complexity

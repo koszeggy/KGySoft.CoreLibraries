@@ -27,14 +27,6 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
-#region Suppressions
-
-#if NET35
-#pragma warning disable CS8604 // Possible null reference argument.
-#endif
-
-#endregion
-
 namespace KGySoft.Collections
 {
     partial class LockFreeCache<TKey, TValue>
@@ -274,8 +266,6 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                Debug.Assert(key != null!);
-
                 IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
                 for (Entry? entry = buckets[GetBucketIndex(hashCode)].First; entry != null; entry = entry.Next)
                 {

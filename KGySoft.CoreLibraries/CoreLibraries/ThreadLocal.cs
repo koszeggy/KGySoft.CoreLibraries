@@ -289,8 +289,7 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        [AllowNull, MaybeNull]
-        internal T Value
+        internal T? Value
         {
             get
             {
@@ -480,7 +479,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-        [return:MaybeNull]private T GetValueSlow()
+        private T? GetValueSlow()
         {
             // If the object has been disposed, the id will be -1.
             int id = ~idComplement;
@@ -488,14 +487,14 @@ namespace KGySoft.CoreLibraries
                 throw new ObjectDisposedException(Res.ObjectDisposed);
 
             // Determine the initial value
-            T value = valueFactory == null ? default : valueFactory.Invoke();
+            T? value = valueFactory == null ? default : valueFactory.Invoke();
 
             // Since the value has been previously uninitialized, we also need to set it (according to the ThreadLocal semantics).
             Value = value;
             return value;
         }
 
-        private void SetValueSlow([AllowNull]T value, LinkedSlotVolatile[]? slots)
+        private void SetValueSlow(T? value, LinkedSlotVolatile[]? slots)
         {
             int id = ~idComplement;
 
@@ -546,7 +545,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Creates a LinkedSlot and inserts it into the linked list for this ThreadLocal instance.
         /// </summary>
-        private void CreateLinkedSlot(LinkedSlotVolatile[] slots, int id, [AllowNull]T value)
+        private void CreateLinkedSlot(LinkedSlotVolatile[] slots, int id, T? value)
         {
             var slot = new LinkedSlot(slots);
 

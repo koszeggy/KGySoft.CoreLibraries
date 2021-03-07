@@ -703,8 +703,6 @@ namespace KGySoft.CoreLibraries
                 return null;
             }
 
-            [SuppressMessage("Style", "IDE0083:Use pattern matching",
-                Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
             private static MemberInfo? TryPickMemberInfo(Type? type, MemberTypes memberTypes, ref GeneratorContext context, bool? constants)
             {
                 if (type == null)
@@ -733,7 +731,7 @@ namespace KGySoft.CoreLibraries
                     if (constants == null)
                         return member;
 
-                    if (!(member is FieldInfo field))
+                    if (member is not FieldInfo field)
                         continue;
 
                     if (constants == true && field.IsLiteral || constants == false && !field.IsLiteral)

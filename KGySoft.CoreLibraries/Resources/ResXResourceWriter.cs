@@ -257,7 +257,6 @@ namespace KGySoft.Resources
             public override void WriteStartAttribute(string? prefix, string localName, string? ns)
             {
                 isInsideAttribute = true;
-                // xReSharper disable AssignNullToNotNullAttribute - 
                 base.WriteStartAttribute(prefix, localName, ns);
             }
 
@@ -417,7 +416,6 @@ namespace KGySoft.Resources
             : and then encoded with base64 encoding.
     -->";
 
-        [SuppressMessage("Microsoft.Performance", "CA1802:UseLiteralsWhereAppropriate", Justification = "Such a huge string is just more nice not to be inlined")]
         private static readonly string resourceSchema = @"
     <xsd:schema id=""root"" xmlns="""" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:msdata=""urn:schemas-microsoft-com:xml-msdata"">
         <xsd:import namespace=""http://www.w3.org/XML/1998/namespace""/>

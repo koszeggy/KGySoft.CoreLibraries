@@ -326,7 +326,7 @@ namespace KGySoft.Collections
             #region Internal Methods
 
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal bool? TryGetValueInternal(TKey key, uint hashCode, [MaybeNull]out TValue value)
+            internal bool? TryGetValueInternal(TKey key, uint hashCode, out TValue? value)
             {
                 Entry[] items = entries;
                 IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
@@ -572,13 +572,11 @@ namespace KGySoft.Collections
                             continue;
 
                         Interlocked.Increment(ref deletedCount);
-                        value = box.Value;
                         return true;
                     }
                 }
 
                 // not found
-                value = default;
                 return null;
             }
 

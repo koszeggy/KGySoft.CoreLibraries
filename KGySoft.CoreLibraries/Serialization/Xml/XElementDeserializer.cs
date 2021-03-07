@@ -99,7 +99,6 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes inner content of an object or collection.
         /// </summary>
-        [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         public static void DeserializeContent(XElement parent, object obj)
         {
             if (obj == null!)
@@ -112,7 +111,7 @@ namespace KGySoft.Serialization.Xml
             XAttribute? attrFormat = parent.Attribute(XmlSerializer.AttributeFormat!);
             if (attrFormat != null && attrFormat.Value == XmlSerializer.AttributeValueCustom)
             {
-                if (!(obj is IXmlSerializable xmlSerializable))
+                if (obj is not IXmlSerializable xmlSerializable)
                 {
                     Throw.ArgumentException(Argument.objType, Res.XmlSerializationNotAnIXmlSerializable(objType));
                     return;
@@ -216,7 +215,6 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        [SuppressMessage("Style", "IDE0083:Use pattern matching", Justification = "'is not Type name' is not tolerated by ReSharper")] // TODO: fix when possible
         private static bool TryDeserializeObject(Type? type, XElement element, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
@@ -351,7 +349,7 @@ namespace KGySoft.Serialization.Xml
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
                     ? type.IsValueType ? Activator.CreateInstance(type)! : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
                     : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(type)));
-                if (!(instance is IXmlSerializable xmlSerializable))
+                if (instance is not IXmlSerializable xmlSerializable)
                 {
                     result = default;
                     Throw.ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));

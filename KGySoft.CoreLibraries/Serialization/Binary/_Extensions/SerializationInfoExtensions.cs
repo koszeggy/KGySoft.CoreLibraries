@@ -136,10 +136,8 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
         /// <typeparam name="T">The type of the value with the corresponding <paramref name="name"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="name"/> was not found or its value cannot be cast to <typeparamref name="T"/>.</returns>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? result'")]
-        public static T GetValueOrDefault<T>(this SerializationInfo info, string name, T defaultValue = default)
-            => info.TryGetValue(name, out T result) ? result : defaultValue!;
+        public static T GetValueOrDefault<T>(this SerializationInfo info, string name, T defaultValue = default!)
+            => info.TryGetValue(name, out T? result) ? result! : defaultValue;
 
         /// <summary>
         /// Gets whether an entry with the specified <paramref name="name"/> exists in the specified <see cref="SerializationInfo"/>.

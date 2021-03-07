@@ -383,11 +383,9 @@ namespace KGySoft.CoreLibraries
         /// If a type converter can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
         /// </remarks>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? value'")]
         [return:MaybeNull]public static T Parse<T>(this ReadOnlySpan<char> s, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, culture, out T value, out Exception? error))
+            if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, typeof(T)), error);
             return value;
         }

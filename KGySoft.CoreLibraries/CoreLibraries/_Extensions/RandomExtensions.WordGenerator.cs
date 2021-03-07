@@ -24,8 +24,7 @@ using System.Security;
 
 #region Suppressions
 
-// ReSharper disable PatternAlwaysMatches - ReSharper does not tolerate switch range operators
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
 #pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(char) method in some targeted platforms  
 #endif
 
@@ -262,6 +261,7 @@ namespace KGySoft.CoreLibraries
             {
                 switch (context.Random.NextDouble())
                 {
+                    // ReSharper disable once PatternAlwaysMatches - object pattern is less readable
                     // 10% chance for multiple vowels
                     case double d when d < 0.1 && CanAddAnyVowel(ref context):
                         char c;

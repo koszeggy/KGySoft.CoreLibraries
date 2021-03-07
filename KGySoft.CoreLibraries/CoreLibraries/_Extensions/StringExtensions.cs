@@ -32,7 +32,7 @@ using KGySoft.Reflection;
 
 #region Suppressions
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0 || NETCOREAPP3_0)
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
 #pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(string, StrongComparison) method in some targeted platforms  
 #endif
 
@@ -264,11 +264,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
-        [SuppressMessage("ReSharper", "CS8600", Justification = "ReSharper does not tolerate 'out T? value'")]
         [return:NotNullIfNotNull("s")]public static T Parse<T>(this string? s, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, culture, out T value, out Exception? error))
+            if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, typeof(T)), error);
             return value!;
         }
@@ -307,7 +305,7 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse<T>(this string? s, CultureInfo? culture, [MaybeNull]out T value)
+        public static bool TryParse<T>(this string? s, CultureInfo? culture, out T? value)
             => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
@@ -322,7 +320,7 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse<T>(this string? s, [MaybeNull]out T value) => TryParse(s, null, out value);
+        public static bool TryParse<T>(this string? s, out T? value) => TryParse(s, null, out value);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.

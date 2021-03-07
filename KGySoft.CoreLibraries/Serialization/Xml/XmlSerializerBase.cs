@@ -295,8 +295,7 @@ namespace KGySoft.Serialization.Xml
 
             // getting non read-only instance fields
             IEnumerable<MemberInfo> fields = ExcludeFields
-                    // ReSharper disable once RedundantCast
-                    ? (IEnumerable<MemberInfo>)Reflector.EmptyArray<MemberInfo>()
+                    ? Reflector.EmptyArray<MemberInfo>()
                     : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                         .Where(f => !f.IsInitOnly
                             // read-only fields are serialized only if forced

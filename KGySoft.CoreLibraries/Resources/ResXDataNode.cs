@@ -912,7 +912,6 @@ namespace KGySoft.Resources
                 return fileRef.ToString();
             object? valueCopy = cachedValue;
             if (valueCopy != null)
-                // ReSharper disable once ConstantNullCoalescingCondition - ToString CAN return null
                 return valueCopy.ToString() ?? String.Empty;
             DataNodeInfo? nodeInfoCopy = nodeInfo;
             if (nodeInfoCopy != null)
@@ -986,8 +985,6 @@ namespace KGySoft.Resources
             // we can already throw an exception. But type is checked once again at the end, after deserialization.
             string stringName = Reflector.StringType.FullName!;
             string? aqn = AssemblyQualifiedName;
-
-            // ReSharper disable once AssignNullToNotNullAttribute - string has a full name
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
@@ -1203,7 +1200,6 @@ namespace KGySoft.Resources
 
                 using (var ms = new MemoryStream())
                 {
-                    // ReSharper disable once PossibleNullReferenceException - type is array
                     bool wrap = !type.IsSerializable || type.IsArray && type.GetArrayRank() == 1 && !type.GetElementType()!.IsPrimitive && !type.GetInterfaces().Any(i => i.IsGenericType);
                     binaryFormatter.Serialize(ms, wrap ? new AnyObjectSerializerWrapper(cachedValue, true) : cachedValue);
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
