@@ -273,7 +273,21 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all white-space
         /// characters are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment Trim() => TrimStart().TrimEnd();
+        public StringSegment Trim()
+        {
+            if (length == 0)
+                return this;
+
+            int start = 0;
+            while (start < length && Char.IsWhiteSpace(GetCharInternal(start)))
+                start += 1;
+
+            int end = length - 1;
+            while (end >= start && Char.IsWhiteSpace(GetCharInternal(end)))
+                end -= 1;
+
+            return SubstringInternal(start, end - start + 1);
+        }
 
         /// <summary>
         /// Removes all the leading white-space characters from the current <see cref="StringSegment"/>.
@@ -355,7 +369,23 @@ namespace KGySoft.CoreLibraries
         /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment Trim(params char[]? trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+        public StringSegment Trim(params char[]? trimChars)
+        {
+            if (length == 0)
+                return this;
+            if ((trimChars?.Length ?? 0) == 0)
+                return Trim();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            int end = length - 1;
+            while (end >= start && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(start, end - start + 1);
+        }
 
         /// <summary>
         /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
@@ -404,7 +434,23 @@ namespace KGySoft.CoreLibraries
         /// <param name="trimChars">The characters to remove. If empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
-        public StringSegment Trim(ReadOnlySpan<char> trimChars) => TrimStart(trimChars).TrimEnd(trimChars);
+        public StringSegment Trim(ReadOnlySpan<char> trimChars)
+        {
+            if (length == 0)
+                return this;
+            if (trimChars.Length == 0)
+                return Trim();
+
+            int start = 0;
+            while (start < length && GetCharInternal(start).In(trimChars))
+                start += 1;
+
+            int end = length - 1;
+            while (end >= start && GetCharInternal(end).In(trimChars))
+                end -= 1;
+
+            return SubstringInternal(start, end - start + 1);
+        }
 
         /// <summary>
         /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.

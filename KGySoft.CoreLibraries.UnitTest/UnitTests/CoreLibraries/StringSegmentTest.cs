@@ -410,6 +410,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("", null)]
         [TestCase(null, "")]
         [TestCase("", "")]
+        [TestCase(" ", null)]
         [TestCase(" x ", null)]
         [TestCase(" x ", "")]
         [TestCase(" x ", " ")]
