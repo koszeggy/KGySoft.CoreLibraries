@@ -9,8 +9,10 @@
 ! v5.6.0:
 ~~~~~~~~~
 
-* Assembly changes:
+! Assembly changes:
 ===================
+! The module initializer initializes the internal resources so configuring LanguageSettings from a consumer code
+  affects the configuration of the resources even if no actual resource was accessed before.
 * Members are annotated for using C# 8.0 nullable references
 
 + KGySoft namespace:

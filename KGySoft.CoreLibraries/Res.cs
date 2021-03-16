@@ -474,6 +474,13 @@ namespace KGySoft
 
         #region General
 
+        /// <summary>
+        /// Just an empty method to be able to trigger the static constructor without running any code other than field initializations.
+        /// </summary>
+        internal static void Initialize()
+        {
+        }
+
         /// <summary>Specified argument must be greater than {0}.</summary>
         internal static string ArgumentMustBeGreaterThan<T>(T limit) => Get("General_ArgumentMustBeGreaterThanFormat", limit);
 
