@@ -138,8 +138,8 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public event PropertyChangedEventHandler? PropertyChanged
         {
-            add => propertyChanged += value;
-            remove => propertyChanged -= value;
+            add => value.AddSafe(ref propertyChanged);
+            remove => value.RemoveSafe(ref propertyChanged);
         }
 
         #endregion

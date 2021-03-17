@@ -210,8 +210,8 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public event ListChangedEventHandler? ListChanged
         {
-            add => listChangedHandler += value;
-            remove => listChangedHandler -= value;
+            add => value.AddSafe(ref listChangedHandler);
+            remove => value.RemoveSafe(ref listChangedHandler);
         }
 
         /// <summary>
@@ -228,8 +228,8 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public event NotifyCollectionChangedEventHandler? CollectionChanged
         {
-            add => collectionChangedHandler += value;
-            remove => collectionChangedHandler -= value;
+            add => value.AddSafe(ref collectionChangedHandler);
+            remove => value.RemoveSafe(ref collectionChangedHandler);
         }
 
         /// <summary>
@@ -237,8 +237,8 @@ namespace KGySoft.ComponentModel
         /// </summary>
         public event PropertyChangedEventHandler? PropertyChanged
         {
-            add => propertyChangedHandler += value;
-            remove => propertyChangedHandler -= value;
+            add => value.AddSafe(ref propertyChangedHandler);
+            remove => value.RemoveSafe(ref propertyChangedHandler);
         }
 
         #endregion

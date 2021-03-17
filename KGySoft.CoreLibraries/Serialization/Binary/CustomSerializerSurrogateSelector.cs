@@ -160,8 +160,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<SerializingEventArgs>? Serializing
         {
-            add => serializingEventHandler += value;
-            remove => serializingEventHandler -= value;
+            add => value.AddSafe(ref serializingEventHandler);
+            remove => value.RemoveSafe(ref serializingEventHandler);
         }
 
         /// <summary>
@@ -170,8 +170,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<ObjectDataObtainedEventArgs>? ObjectDataObtained
         {
-            add => objectDataObtainedEventHandler += value;
-            remove => objectDataObtainedEventHandler -= value;
+            add => value.AddSafe(ref objectDataObtainedEventHandler);
+            remove => value.RemoveSafe(ref objectDataObtainedEventHandler);
         }
 
         /// <summary>
@@ -181,8 +181,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<DeserializingEventArgs>? Deserializing
         {
-            add => deserializingEventHandler += value;
-            remove => deserializingEventHandler -= value;
+            add => value.AddSafe(ref deserializingEventHandler);
+            remove => value.RemoveSafe(ref deserializingEventHandler);
         }
 
         /// <summary>
@@ -190,8 +190,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<ObjectDataRestoredEventArgs>? ObjectDataRestored
         {
-            add => objectDataRestoredEventHandler += value;
-            remove => objectDataRestoredEventHandler -= value;
+            add => value.AddSafe(ref objectDataRestoredEventHandler);
+            remove => value.RemoveSafe(ref objectDataRestoredEventHandler);
         }
 
         /// <summary>
@@ -204,8 +204,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<GettingFieldEventArgs>? GettingField
         {
-            add => gettingFieldEventHandler += value;
-            remove => gettingFieldEventHandler -= value;
+            add => value.AddSafe(ref gettingFieldEventHandler);
+            remove => value.RemoveSafe(ref gettingFieldEventHandler);
         }
 
         /// <summary>
@@ -215,8 +215,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public event EventHandler<SettingFieldEventArgs>? SettingField
         {
-            add => settingFieldEventHandler += value;
-            remove => settingFieldEventHandler -= value;
+            add => value.AddSafe(ref settingFieldEventHandler);
+            remove => value.RemoveSafe(ref settingFieldEventHandler);
         }
 
         #endregion

@@ -63,12 +63,8 @@ namespace KGySoft.Collections
                 if (!l2Cache.TryGetValueInternal(key, hashCode, out result))
                 {
                     result = itemLoader.Invoke(key, out bool storeValue);
-                    if (storeValue && !l2Cache.TryAddInternal(key, result, hashCode))
-                    {
-                        // TODO: actually we should convert TryAdd to GetOrAdd without delegate (TryAdd is used only in the tests anyway)
-                        if (!l2Cache.TryGetValueInternal(key, hashCode, out result))
-                            Throw.InternalError("TryAdd was false so keys should exist.");
-                    }
+                    if (storeValue)
+                        result = l2Cache.GetOrAddInternal(key, result, hashCode);
                 }
 
                 MergeIfNeeded(l1Cache, l2Cache);

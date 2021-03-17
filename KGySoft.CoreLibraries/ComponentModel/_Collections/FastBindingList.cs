@@ -131,8 +131,8 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public event EventHandler<AddingNewEventArgs<T>>? AddingNew
         {
-            add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AllowNew
-            remove => addingNewHandler -= value;
+            add => value.AddSafe(ref addingNewHandler); // no need to fire ListChange as in the original version because we don't change AllowNew
+            remove => value.RemoveSafe(ref addingNewHandler);
         }
 
         /// <summary>
@@ -140,8 +140,8 @@ namespace KGySoft.ComponentModel
         /// </summary>
         public event ListChangedEventHandler? ListChanged
         {
-            add => listChangedHandler += value;
-            remove => listChangedHandler -= value;
+            add => value.AddSafe(ref listChangedHandler);
+            remove => value.RemoveSafe(ref listChangedHandler);
         }
 
         #endregion

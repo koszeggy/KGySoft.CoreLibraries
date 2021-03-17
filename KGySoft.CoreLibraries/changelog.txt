@@ -45,6 +45,7 @@
     a NullReferenceException. Now a disposed instance will throw an ObjectDisposedException instead.
 - TypeExtensions class:
   - IsImplementationOfGenericType method: fixing possible infinite loop
++ New DelegateExtensions class.
 + DictionaryExtensions class: New TryAdd, TryUpdate, AddOrUpdate, GetOrAdd and TryRemove methods.
 + New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
   the TrimEntries flag on every platform target.

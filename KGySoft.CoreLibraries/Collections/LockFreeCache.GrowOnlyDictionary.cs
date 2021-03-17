@@ -322,6 +322,48 @@ namespace KGySoft.Collections
                 }
             }
 
+            internal TValue GetOrAddInternal(TKey key, TValue value, uint hashCode)
+            {
+                ref Bucket bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                Entry? newEntry = null;
+
+                // bucket is empty: trying to add the first item
+                if (bucketRef.First == null)
+                {
+                    newEntry = new Entry(hashCode, key, value);
+                    if (Interlocked.CompareExchange(ref bucketRef.First, newEntry, null) == null)
+                    {
+                        Interlocked.Increment(ref count);
+                        return newEntry.Value;
+                    }
+
+                    // Here we have a lost race. Though Bucket is a struct, detecting change works because we stored a ref to the bucket.
+                    Debug.Assert(bucketRef.First != null);
+                }
+
+                // iterating through the entries until we find key or the end of the list
+                IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
+                Entry entry = bucketRef.First!;
+                while (true)
+                {
+                    // item found
+                    if (entry.Hash == hashCode && comp.Equals(key, entry.Key))
+                        return entry.Value;
+
+                    // last item in the bucket: trying to chain the new one
+                    if (entry.Next == null)
+                    {
+                        if (Interlocked.CompareExchange(ref entry.Next, newEntry ??= new Entry(hashCode, key, value), null) == null)
+                        {
+                            Interlocked.Increment(ref count);
+                            return newEntry.Value;
+                        }
+                    }
+
+                    entry = entry.Next;
+                }
+            }
+
             internal CustomEnumerator GetCustomEnumerator() => new CustomEnumerator(this);
 
             #endregion

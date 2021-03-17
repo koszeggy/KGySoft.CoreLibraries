@@ -111,14 +111,14 @@ namespace KGySoft.ComponentModel
 
         public event EventHandler<ExecuteCommandEventArgs>? Executing
         {
-            add => executing += value;
-            remove => executing -= value;
+            add => value.AddSafe(ref executing);
+            remove => value.RemoveSafe(ref executing);
         }
 
         public event EventHandler<ExecuteCommandEventArgs>? Executed
         {
-            add => executed += value;
-            remove => executed -= value;
+            add => value.AddSafe(ref executed);
+            remove => value.RemoveSafe(ref executed);
         }
 
         #endregion
