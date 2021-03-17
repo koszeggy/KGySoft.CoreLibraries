@@ -16,6 +16,8 @@
 
 #region Usings
 
+using KGySoft.Collections;
+
 #region Used Namespaces
 
 using System;
@@ -386,7 +388,7 @@ namespace KGySoft.Serialization.Binary
             private List<string>? cachedNames;
             private List<(Assembly, string?)>? cachedAssemblies;
             private List<DataTypeDescriptor>? cachedTypes;
-            private Dictionary<string, Assembly>? assemblyByNameCache;
+            private StringKeyedDictionary<Assembly>? assemblyByNameCache;
             private Dictionary<int, object?>? idCache;
             private Dictionary<object, UsageReferences>? objectsBeingDeserialized;
             private List<IDeserializationCallback>? deserializationRegObjects;
@@ -1334,7 +1336,7 @@ namespace KGySoft.Serialization.Binary
 
                 // reading original fields into si
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
-                var existingNames = new Dictionary<string, int>();
+                var existingNames = new StringKeyedDictionary<int>();
                 string? currentTypeName = null;
                 do
                 {
@@ -1392,7 +1394,7 @@ namespace KGySoft.Serialization.Binary
             {
                 // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
                 // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
-                Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
+                StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
 
                 // Reading the custom content and trying to identify them as fields
                 int count = Read7BitInt(br);
@@ -1720,7 +1722,7 @@ namespace KGySoft.Serialization.Binary
 
                 if (result == null)
                     Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name));
-                assemblyByNameCache ??= new Dictionary<string, Assembly>(1);
+                assemblyByNameCache ??= new StringKeyedDictionary<Assembly>(1);
                 assemblyByNameCache.Add(name, result);
                 return result;
             }

@@ -28,6 +28,7 @@ using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
@@ -593,7 +594,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
         /// </summary>
-        private Dictionary<string, string>? activeAliases;
+        private StringKeyedDictionary<string>? activeAliases;
 
         private ICollection<KeyValuePair<string, string>>? aliases;
         private ICollection<KeyValuePair<string, ResXDataNode>>? resources;
@@ -868,7 +869,7 @@ namespace KGySoft.Resources
 
         private static void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
         {
-            if (collection is Dictionary<string, ResXDataNode> dict)
+            if (collection is StringKeyedDictionary<ResXDataNode> dict)
                 dict[key] = value;
             else
                 collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
@@ -958,7 +959,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Special initialization for ResXResourceSet. No lock is needed because called from ctor. Reads raw xml content only.
         /// </summary>
-        internal void ReadAllInternal(Dictionary<string, ResXDataNode> linkedResources, Dictionary<string, ResXDataNode> linkedMetadata, Dictionary<string, string> linkedAliases)
+        internal void ReadAllInternal(StringKeyedDictionary<ResXDataNode> linkedResources, StringKeyedDictionary<ResXDataNode> linkedMetadata, StringKeyedDictionary<string> linkedAliases)
         {
             Debug.Assert(state == States.Created);
             resources = linkedResources;
@@ -1006,16 +1007,16 @@ namespace KGySoft.Resources
                             resources = new List<KeyValuePair<string, ResXDataNode>>();
                             metadata = new List<KeyValuePair<string, ResXDataNode>>();
                             aliases = new List<KeyValuePair<string, string>>();
-                            activeAliases = new Dictionary<string, string>();
+                            activeAliases = new StringKeyedDictionary<string>();
                             state = States.Reading;
                             enumerator = new LazyEnumerator(this, mode);
                             return enumerator;
                         }
 
                         // no duplication (non-lazy mode): allocating dictionaries and caching for the first time, too.
-                        resources = new Dictionary<string, ResXDataNode>();
-                        metadata = new Dictionary<string, ResXDataNode>();
-                        aliases = activeAliases = new Dictionary<string, string>();
+                        resources = new StringKeyedDictionary<ResXDataNode>();
+                        metadata = new StringKeyedDictionary<ResXDataNode>();
+                        aliases = activeAliases = new StringKeyedDictionary<string>();
                         ReadAll();
                         state = States.Read;
                         return new ResXResourceEnumerator(this, mode);
@@ -1170,8 +1171,8 @@ namespace KGySoft.Resources
         private IEnumerable<KeyValuePair<string, ResXDataNode>> ReadToEnd(ResXEnumeratorModes mode)
         {
             ICollection<KeyValuePair<string, ResXDataNode>> result = allowDuplicatedKeys
-                ? (ICollection<KeyValuePair<string, ResXDataNode>>)new List<KeyValuePair<string, ResXDataNode>>()
-                : new Dictionary<string, ResXDataNode>();
+                ? new List<KeyValuePair<string, ResXDataNode>>()
+                : new StringKeyedDictionary<ResXDataNode>();
             while (ReadNext(mode, out string? key, out ResXDataNode? value))
                 AddNode(result, key, value);
 
@@ -1247,7 +1248,7 @@ namespace KGySoft.Resources
 
         private void AddAlias(string key, string assemblyName)
         {
-            if (aliases is Dictionary<string, string> dict)
+            if (aliases is StringKeyedDictionary<string> dict)
             {
                 dict[key] = assemblyName;
                 Debug.Assert(ReferenceEquals(aliases, activeAliases), "activeAliases should be the same as aliases");

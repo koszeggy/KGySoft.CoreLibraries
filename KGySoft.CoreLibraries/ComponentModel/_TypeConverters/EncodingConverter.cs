@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 
 #endregion
@@ -37,7 +38,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private static Dictionary<string, Encoding>? encodingByName;
+        private static StringKeyedDictionary<Encoding>? encodingByName;
         private static Encoding[]? encodings;
 
         #endregion
@@ -61,14 +62,14 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private static Dictionary<string, Encoding> EncodingByName
+        private static StringKeyedDictionary<Encoding> EncodingByName
         {
             get
             {
                 if (encodingByName != null)
                     return encodingByName;
 
-                encodingByName = new Dictionary<string, Encoding>();
+                encodingByName = new StringKeyedDictionary<Encoding>();
                 foreach (Encoding e in Encodings)
                     encodingByName.Add($"{e.CodePage.ToString(CultureInfo.InvariantCulture)} | {e.EncodingName}", e);
 

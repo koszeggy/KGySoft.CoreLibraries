@@ -84,8 +84,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache =
-            ThreadSafeCacheFactory.Create<Type, Dictionary<string, EventInfo>>(GetEvents, LockFreeCacheOptions.Profile128);
+        private static readonly IThreadSafeCacheAccessor<Type, StringKeyedDictionary<EventInfo>> eventsCache =
+            ThreadSafeCacheFactory.Create<Type, StringKeyedDictionary<EventInfo>>(GetEvents, LockFreeCacheOptions.Profile128);
 
         #endregion
 
@@ -152,9 +152,9 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static Dictionary<string, EventInfo> GetEvents(Type type)
+        private static StringKeyedDictionary<EventInfo> GetEvents(Type type)
         {
-            static void PopulateEvents(Dictionary<string, EventInfo> dict, IEnumerable<EventInfo> events)
+            static void PopulateEvents(StringKeyedDictionary<EventInfo> dict, IEnumerable<EventInfo> events)
             {
                 foreach (EventInfo eventInfo in events)
                 {
@@ -165,7 +165,7 @@ namespace KGySoft.ComponentModel
             }
 
             // public events of all levels
-            var result = new Dictionary<string, EventInfo>();
+            var result = new StringKeyedDictionary<EventInfo>();
             PopulateEvents(result, type.GetEvents());
 
             // non-public events by type (because private events cannot be obtained for all levels in one step)

@@ -23,6 +23,8 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
+
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 
@@ -429,7 +431,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreSame(rsInv, manager.GetResourceSet(huHU, loadIfExists: false, tryParents: true));
 
             // now the hu branch is up-to-date but en-GB has unloaded parents because en actually exists but not loaded
-            var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            var resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
             int sets = resourceSets.Count;
 
             // "loading" hu does not change anything, since it is up-to date
@@ -454,7 +456,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsInv = manager.GetResourceSet(inv, loadIfExists: true, tryParents: false);
             Assert.AreSame(rsInv, manager.GetResourceSet(en, loadIfExists: false, tryParents: true));
             Assert.AreSame(rsInv, manager.GetResourceSet(hu, loadIfExists: true, tryParents: true));
-            resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
             sets = resourceSets.Count;
 
             // accessing en-GB will replace en proxy and returns that for en-GB

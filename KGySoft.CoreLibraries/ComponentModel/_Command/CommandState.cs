@@ -84,7 +84,7 @@ namespace KGySoft.ComponentModel
 
         #region Fields
 
-        private readonly ThreadSafeDictionary<string, object?> stateProperties = new ThreadSafeDictionary<string, object?> { [nameof(Enabled)] = true };
+        private readonly ThreadSafeDictionary<string, object?> stateProperties = new ThreadSafeDictionary<string, object?>(StringSegmentComparer.Ordinal) { [nameof(Enabled)] = true };
 
         #endregion
 
@@ -207,7 +207,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => new Dictionary<string, object?>(stateProperties).GetEnumerator();
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => stateProperties.GetEnumerator();
 
         /// <summary>
         /// Determines whether the <see cref="CommandState" /> contains an element with the specified <paramref name="key"/>.

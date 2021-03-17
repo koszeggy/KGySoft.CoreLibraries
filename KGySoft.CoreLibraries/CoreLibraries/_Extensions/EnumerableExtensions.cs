@@ -1664,6 +1664,38 @@ namespace KGySoft.CoreLibraries
             return new CircularList<T>(source);
         }
 
+        public static StringKeyedDictionary<TValue> ToStringKeyedDictionary<TSource, TValue>(this IEnumerable<TSource> source, Func<TSource, string> keySelector, Func<TSource, TValue> valueSelector, StringSegmentComparer? comparer = null)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (keySelector == null!)
+                Throw.ArgumentNullException(nameof(keySelector));
+            if (valueSelector == null!)
+                Throw.ArgumentNullException(nameof(valueSelector));
+
+            StringKeyedDictionary<TValue> result = source is ICollection<TSource> coll
+                ? new StringKeyedDictionary<TValue>(coll.Count, comparer)
+                : new StringKeyedDictionary<TValue>(comparer);
+            foreach (TSource item in source)
+                result.Add(keySelector.Invoke(item), valueSelector.Invoke(item));
+            return result;
+        }
+
+        public static StringKeyedDictionary<TValue> ToStringKeyedDictionary<TValue>(this IEnumerable<TValue> source, Func<TValue, string> keySelector, StringSegmentComparer? comparer = null)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (keySelector == null!)
+                Throw.ArgumentNullException(nameof(keySelector));
+
+            StringKeyedDictionary<TValue> result = source is ICollection<TValue> coll
+                ? new StringKeyedDictionary<TValue>(coll.Count, comparer)
+                : new StringKeyedDictionary<TValue>(comparer);
+            foreach (TValue item in source)
+                result.Add(keySelector.Invoke(item), item);
+            return result;
+        }
+
         /// <summary>
         /// Concatenates the items of the <paramref name="source"/> collection into a new <see cref="string">string</see> instance
         /// using the specified <paramref name="separator"/> between the items.

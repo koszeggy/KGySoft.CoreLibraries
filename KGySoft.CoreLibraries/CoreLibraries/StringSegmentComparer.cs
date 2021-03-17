@@ -35,7 +35,6 @@ namespace KGySoft.CoreLibraries
     /// allowing comparing strings by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
     /// <br/>See the static properties for more details.
     /// </summary>
-    /// <remarks><note></note></remarks>
     [Serializable]
     public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>,
         IEqualityComparer<string>, IComparer<string>,

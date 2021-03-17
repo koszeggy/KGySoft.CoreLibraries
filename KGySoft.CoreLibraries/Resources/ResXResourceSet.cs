@@ -27,6 +27,9 @@ using System.Resources;
 using System.Threading;
 using System.Xml;
 
+using KGySoft.Collections;
+using KGySoft.CoreLibraries;
+
 #if NETFRAMEWORK || NETSTANDARD2_0
 using KGySoft.CoreLibraries;
 #endif
@@ -389,11 +392,11 @@ namespace KGySoft.Resources
 
         private readonly string? origFileName;
 
-        private Dictionary<string, ResXDataNode>? resources;
-        [NonSerialized]private Dictionary<string, ResXDataNode>? resourcesIgnoreCase;
-        private Dictionary<string, ResXDataNode>? metadata;
-        [NonSerialized]private Dictionary<string, ResXDataNode>? metadataIgnoreCase;
-        private Dictionary<string, string>? aliases;
+        private StringKeyedDictionary<ResXDataNode>? resources;
+        [NonSerialized]private StringKeyedDictionary<ResXDataNode>? resourcesIgnoreCase;
+        private StringKeyedDictionary<ResXDataNode>? metadata;
+        [NonSerialized]private StringKeyedDictionary<ResXDataNode>? metadataIgnoreCase;
+        private StringKeyedDictionary<string>? aliases;
 
         private bool safeMode;
         private bool autoFreeXmlData = true;
@@ -603,9 +606,9 @@ namespace KGySoft.Resources
             Table = null;
 #endif
             this.basePath = basePath;
-            resources = new Dictionary<string, ResXDataNode>();
-            metadata = new Dictionary<string, ResXDataNode>(0);
-            aliases = new Dictionary<string, string>(0);
+            resources = new StringKeyedDictionary<ResXDataNode>();
+            metadata = new StringKeyedDictionary<ResXDataNode>(0);
+            aliases = new StringKeyedDictionary<string>(0);
         }
 
         #endregion
@@ -632,16 +635,16 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        private static Dictionary<string, ResXDataNode> InitCaseInsensitive(Dictionary<string, ResXDataNode> data)
+        private static StringKeyedDictionary<ResXDataNode> InitCaseInsensitive(StringKeyedDictionary<ResXDataNode> data)
         {
-            var result = new Dictionary<string, ResXDataNode>(data.Count, StringComparer.OrdinalIgnoreCase);
+            var result = new StringKeyedDictionary<ResXDataNode>(data.Count, StringSegmentComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, ResXDataNode> item in data)
                 result[item.Key] = item.Value;
 
             return result;
         }
 
-        private static bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode>? data, ref Dictionary<string, ResXDataNode>? dataCaseInsensitive)
+        private static bool ContainsInternal(string name, bool ignoreCase, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataCaseInsensitive)
         {
             if (data == null)
                 Throw.ObjectDisposedException();
@@ -854,7 +857,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="alias"/> is <see langword="null"/>.</exception>
         public string? GetAliasValue(string alias)
         {
-            Dictionary<string, string>? dict = aliases;
+            StringKeyedDictionary<string>? dict = aliases;
             if (dict == null)
                 Throw.ObjectDisposedException();
 
@@ -917,7 +920,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> or <paramref name="alias"/> is <see langword="null"/>.</exception>
         public void SetAliasValue(string alias, string assemblyName)
         {
-            Dictionary<string, string>? dict = aliases;
+            StringKeyedDictionary<string>? dict = aliases;
             if (dict == null)
                 Throw.ObjectDisposedException();
 
@@ -962,7 +965,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="alias"/> is <see langword="null"/>.</exception>
         public void RemoveAliasValue(string alias)
         {
-            Dictionary<string, string>? dict = aliases;
+            StringKeyedDictionary<string>? dict = aliases;
             if (dict == null)
                 Throw.ObjectDisposedException();
 
@@ -1104,7 +1107,7 @@ namespace KGySoft.Resources
 
         private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
         {
-            Dictionary<string, ResXDataNode>? syncObj = resources;
+            StringKeyedDictionary<ResXDataNode>? syncObj = resources;
             if (syncObj == null)
                 Throw.ObjectDisposedException();
 
@@ -1114,9 +1117,9 @@ namespace KGySoft.Resources
 
         private void Save(ResXResourceWriter writer, bool forceEmbeddedResources)
         {
-            Dictionary<string, ResXDataNode>? resourcesLocal = resources;
-            Dictionary<string, ResXDataNode>? metadataLocal = metadata;
-            Dictionary<string, string>? aliasesLocal = aliases;
+            StringKeyedDictionary<ResXDataNode>? resourcesLocal = resources;
+            StringKeyedDictionary<ResXDataNode>? metadataLocal = metadata;
+            StringKeyedDictionary<string>? aliasesLocal = aliases;
 
             if ((resourcesLocal ?? metadataLocal ?? (object?)aliasesLocal) == null)
                 Throw.ObjectDisposedException();
@@ -1167,7 +1170,7 @@ namespace KGySoft.Resources
             return node;
         }
 
-        private object? GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue, Dictionary<string, ResXDataNode>? data, ref Dictionary<string, ResXDataNode>? dataCaseInsensitive)
+        private object? GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataCaseInsensitive)
         {
             if (data == null)
                 Throw.ObjectDisposedException();
@@ -1198,7 +1201,7 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private void SetValueInternal(string name, object? value, Dictionary<string, ResXDataNode>? data, ref Dictionary<string, ResXDataNode>? dataIgnoreCase)
+        private void SetValueInternal(string name, object? value, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataIgnoreCase)
         {
             if (data == null)
                 Throw.ObjectDisposedException();
@@ -1222,7 +1225,7 @@ namespace KGySoft.Resources
             Interlocked.Increment(ref version);
         }
 
-        private void RemoveValueInternal(string name, Dictionary<string, ResXDataNode>? data, ref Dictionary<string, ResXDataNode>? dataIgnoreCase)
+        private void RemoveValueInternal(string name, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataIgnoreCase)
         {
             if (data == null)
                 Throw.ObjectDisposedException();

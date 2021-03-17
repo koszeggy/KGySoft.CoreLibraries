@@ -27,6 +27,7 @@ using System.Security;
 using System.Text;
 using System.Xml.Linq;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -116,7 +117,7 @@ namespace KGySoft.Diagnostics
 
         #region Fields
 
-        private static readonly Dictionary<string, MeasureItem> items;
+        private static readonly StringKeyedDictionary<MeasureItem> items;
         private static string profilerDir;
 
         #endregion
@@ -174,7 +175,7 @@ namespace KGySoft.Diagnostics
             else
                 AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
 
-            items = new Dictionary<string, MeasureItem>();
+            items = new StringKeyedDictionary<MeasureItem>();
             profilerDir = GetDefaultDir();
         }
 

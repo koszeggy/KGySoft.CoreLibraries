@@ -66,7 +66,7 @@ namespace KGySoft.Serialization.Xml
 
             #region Private Fields
 
-            private readonly Dictionary<string, int> memberNamesCounts;
+            private readonly StringKeyedDictionary<int> memberNamesCounts;
 
             #endregion
 
@@ -82,7 +82,7 @@ namespace KGySoft.Serialization.Xml
 
             #region Constructors
 
-            internal Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
+            internal Member(MemberInfo memberInfo, StringKeyedDictionary<int> memberNamesCounts)
             {
                 MemberInfo = memberInfo;
                 this.memberNamesCounts = memberNamesCounts;
@@ -309,7 +309,7 @@ namespace KGySoft.Serialization.Xml
                 ;
 
             var result = new List<Member>();
-            var memberNameCounts = new Dictionary<string, int>();
+            var memberNameCounts = new StringKeyedDictionary<int>();
             foreach (MemberInfo mi in fields.Concat(properties))
             {
                 if (!memberNameCounts.TryGetValue(mi.Name, out int count))

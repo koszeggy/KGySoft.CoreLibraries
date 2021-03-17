@@ -27,6 +27,7 @@ using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -768,7 +769,7 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
-        private static void ToDictionary(ResourceSet source, Dictionary<string, object?> target)
+        private static void ToDictionary(ResourceSet source, StringKeyedDictionary<object?> target)
         {
             // when merging resource sets, always cloning the values because they meant to be different (and when loading from file later they will be)
             IDictionaryEnumerator enumerator = source.GetEnumerator();
@@ -826,7 +827,7 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private static void MergeResourceSet(Dictionary<string, object?> source, IExpandoResourceSet target, bool rebuildSource)
+        private static void MergeResourceSet(StringKeyedDictionary<object?> source, IExpandoResourceSet target, bool rebuildSource)
         {
             string prefix = LanguageSettings.UntranslatedResourcePrefix;
             foreach (KeyValuePair<string, object?> resource in source)
@@ -1639,7 +1640,7 @@ namespace KGySoft.Resources
                 context.ToMerge.Pop();
                 Debug.Assert(context.ToMerge.Count > 0, "Cultures to be merged are expected on the stack");
                 KeyValuePair<CultureInfo, bool> current;
-                var acc = new Dictionary<string, object?>();
+                var acc = new StringKeyedDictionary<object?>();
                 if (rs != null)
                     ToDictionary(rs, acc);
 

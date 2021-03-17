@@ -29,6 +29,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
@@ -474,12 +475,12 @@ namespace KGySoft.Resources
         /// <summary>
         /// Stores the alias mapping that should be used when writing assemblies.
         /// </summary>
-        private Dictionary<string, string>? aliases;
+        private StringKeyedDictionary<string>? aliases;
 
         /// <summary>
         /// Stores the already written and active alias mapping.
         /// </summary>
-        private Dictionary<string, string>? activeAliases;
+        private StringKeyedDictionary<string>? activeAliases;
 
         private bool autoGenerateAlias = true;
         private ResXWriter? writer;
@@ -735,7 +736,7 @@ namespace KGySoft.Resources
             if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
 
-            aliases ??= new Dictionary<string, string>();
+            aliases ??= new StringKeyedDictionary<string>();
             aliases[assemblyName] = aliasName;
 
             if (forceWriteImmediately)
@@ -1009,7 +1010,7 @@ namespace KGySoft.Resources
             w.WriteAttributeString(ResXCommon.AliasStr, alias);
             w.WriteAttributeString(ResXCommon.NameStr, assembly);
             w.WriteEndElement();
-            activeAliases ??= new Dictionary<string, string>();
+            activeAliases ??= new StringKeyedDictionary<string>();
             activeAliases[assembly] = alias;
         }
 

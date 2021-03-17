@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -126,7 +127,7 @@ namespace KGySoft.Serialization.Binary
         /// Value.Value: AssemblyName.FullName, or empty string, if any assemblies are allowed.
         ///              Not AssemblyNames because they have no overridden Equals.
         /// </summary>
-        private readonly Dictionary<string, Dictionary<Type, HashSet<string>>> mapping = new Dictionary<string, Dictionary<Type, HashSet<string>>>();
+        private readonly StringKeyedDictionary<Dictionary<Type, HashSet<string>>> mapping = new StringKeyedDictionary<Dictionary<Type, HashSet<string>>>();
 
         #endregion
 

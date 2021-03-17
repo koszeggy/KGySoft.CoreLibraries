@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using KGySoft.Collections;
+
 #endregion
 
 namespace KGySoft.ComponentModel
@@ -70,7 +72,7 @@ namespace KGySoft.ComponentModel
 
         IDictionary<string, object?> IPersistableObject.GetProperties()
         {
-            var result = new Dictionary<string, object?>(Count);
+            var result = new StringKeyedDictionary<object?>(Count);
             foreach (KeyValuePair<string, object?> item in Properties)
             {
                 if (!CanGetProperty(item.Key))

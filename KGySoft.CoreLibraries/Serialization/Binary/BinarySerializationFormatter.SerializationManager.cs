@@ -72,12 +72,12 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
-            private Dictionary<string, int>? nameIndexCache;
+            private StringKeyedDictionary<int>? nameIndexCache;
             private Dictionary<Assembly, int>? assemblyIndexCache;
             private Dictionary<Type, int>? typeIndexCache;
             private Dictionary<Type, (string? AssemblyName, string? TypeName)>? binderCache;
-            private Dictionary<string, int>? assemblyNameIndexCache;
-            private Dictionary<string, int>? typeNameIndexCache;
+            private StringKeyedDictionary<int>? assemblyNameIndexCache;
+            private StringKeyedDictionary<int>? typeNameIndexCache;
 
             private int idCounter;
             private Dictionary<object, int>? idCacheByValue;
@@ -113,8 +113,8 @@ namespace KGySoft.Serialization.Binary
                     return typeIndexCache;
                 }
             }
-            private Dictionary<string, int> AssemblyNameIndexCache => assemblyNameIndexCache ??= new Dictionary<string, int>(1);
-            private Dictionary<string, int> TypeNameIndexCache => typeNameIndexCache ??= new Dictionary<string, int>(1);
+            private StringKeyedDictionary<int> AssemblyNameIndexCache => assemblyNameIndexCache ??= new StringKeyedDictionary<int>(1);
+            private StringKeyedDictionary<int> TypeNameIndexCache => typeNameIndexCache ??= new StringKeyedDictionary<int>(1);
        
             private int AssemblyIndexCacheCount => (assemblyIndexCache?.Count ?? KnownAssemblies.Length) + (assemblyNameIndexCache?.Count ?? 0);
             private int OmitAssemblyIndex => AssemblyIndexCacheCount;
@@ -1344,7 +1344,7 @@ namespace KGySoft.Serialization.Binary
 
             private void WriteName(BinaryWriter bw, string name)
             {
-                var names = nameIndexCache ??= new Dictionary<string, int>();
+                var names = nameIndexCache ??= new StringKeyedDictionary<int>();
                 if (names.TryGetValue(name, out int id))
                 {
                     Write7BitInt(bw, id);

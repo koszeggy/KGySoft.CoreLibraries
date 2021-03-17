@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection;
 
 using KGySoft.Collections;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -44,9 +45,9 @@ namespace KGySoft.Serialization
 
         internal static FieldInfo[] GetSerializableFields(Type t) => serializableFieldsCache[t];
 
-        internal static Dictionary<string, FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
+        internal static StringKeyedDictionary<FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
         {
-            var result = new Dictionary<string, (FieldInfo Field, int Count)>();
+            var result = new StringKeyedDictionary<(FieldInfo Field, int Count)>();
 
             // ReSharper disable once PossibleNullReferenceException
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
@@ -81,7 +82,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            return result.ToDictionary(e => e.Key, e => e.Value.Field);
+            return result.ToStringKeyedDictionary(e => e.Key, e => e.Value.Field);
         }
 
         /// <summary>

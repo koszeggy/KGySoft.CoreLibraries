@@ -27,6 +27,8 @@ using System.Reflection;
 using System.Resources;
 #if !NET35
 using System.Runtime.CompilerServices;
+
+using KGySoft.Collections;
 #endif
 using System.Runtime.Serialization;
 using System.Security;
@@ -387,7 +389,7 @@ namespace KGySoft.Resources
 #if NET35
             internal Hashtable ResourceSets;
 #else
-            internal Dictionary<string, ResourceSet> ResourceSets;
+            internal StringKeyedDictionary<ResourceSet> ResourceSets;
 #endif
             internal ResourceSet? Result;
             internal ProxyResourceSet? Proxy;
@@ -427,7 +429,7 @@ namespace KGySoft.Resources
         /// Local cache of the resource sets.
         /// Before serializing we remove proxies and unmodified sets.
         /// </summary>
-        private Dictionary<string, ResourceSet>? resourceSets;
+        private StringKeyedDictionary<ResourceSet>? resourceSets;
 #endif
 
         #endregion
@@ -561,17 +563,17 @@ namespace KGySoft.Resources
             set => base.ResourceSets = value;
         }
 #else
-        private Dictionary<string, ResourceSet>? InternalResourceSets => resourceSets;
+        private StringKeyedDictionary<ResourceSet>? InternalResourceSets => resourceSets;
 
         [AllowNull]
 #if NETFRAMEWORK
         new
 #endif
-        private Dictionary<string, ResourceSet> ResourceSets
+        private StringKeyedDictionary<ResourceSet> ResourceSets
         {
             get
             {
-                Dictionary<string, ResourceSet>? result = resourceSets;
+                StringKeyedDictionary<ResourceSet>? result = resourceSets;
                 if (result == null)
                     Throw.ObjectDisposedException();
                 return result;
@@ -728,10 +730,10 @@ namespace KGySoft.Resources
         }
 #else
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool TryGetResource(Dictionary<string, ResourceSet> localResourceSets, string cultureName, [MaybeNullWhen(false)]out ResourceSet rs)
+        private static bool TryGetResource(StringKeyedDictionary<ResourceSet> localResourceSets, string cultureName, [MaybeNullWhen(false)]out ResourceSet rs)
             => localResourceSets.TryGetValue(cultureName, out rs);
 
-        private static void AddResourceSet(Dictionary<string, ResourceSet> localResourceSets, string cultureName, ref ResourceSet rs)
+        private static void AddResourceSet(StringKeyedDictionary<ResourceSet> localResourceSets, string cultureName, ref ResourceSet rs)
         {
             // GetResXResourceSet is both recursive and reentrant -
             // assembly load callbacks in particular are a way we can call
@@ -794,7 +796,7 @@ namespace KGySoft.Resources
 
         private static void ReleaseResourceSets(IDictionary resourceSets)
         {
-            // this enumerates both Hashtable and Dictionary the same way.
+            // this enumerates both Hashtable and StringKeyedDictionary the same way.
             // The non-generic enumerator is not a problem, values must be cast anyway.
             IDictionaryEnumerator enumerator = resourceSets.GetEnumerator();
             while (enumerator.MoveNext())
@@ -1142,7 +1144,7 @@ namespace KGySoft.Resources
         {
             if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
-            var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
+            var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is StringKeyedDictionary above
             ResourceSet? rs;
             lock (SyncRoot)
             {
@@ -1173,7 +1175,7 @@ namespace KGySoft.Resources
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
-            var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
+            IDictionary localResourceSets = ResourceSets; // type is Hashtable in .NET 3.5 and is StringKeyedDictionary above
             bool result = false;
             lock (SyncRoot)
             {
@@ -1505,7 +1507,7 @@ namespace KGySoft.Resources
 #if NET35
         private void ResetResourceSets() => base.ResourceSets = new Hashtable();
 #else
-        private void ResetResourceSets() => resourceSets = new Dictionary<string, ResourceSet>();
+        private void ResetResourceSets() => resourceSets = new StringKeyedDictionary<ResourceSet>();
 #endif
 
         private object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)

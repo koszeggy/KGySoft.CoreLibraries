@@ -27,6 +27,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Xml;
@@ -335,7 +336,7 @@ namespace KGySoft.Serialization.Binary
         private void GetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             Type type = obj.GetType();
-            var existingNames = new Dictionary<string, int>();
+            var existingNames = new StringKeyedDictionary<int>();
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 FieldInfo[] fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
@@ -423,7 +424,7 @@ namespace KGySoft.Serialization.Binary
             Type type = obj.GetType();
 
             // Initially, mapping the fields with the same names as it is produced by GetDefaultObjectData
-            Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(type, false);
+            StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(type, false);
             foreach (SerializationEntry entry in info)
             {
                 var e = new SettingFieldEventArgs(obj, context, info, entry)

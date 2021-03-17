@@ -27,6 +27,7 @@ using System.Linq;
 using System.Reflection;
 using System.Resources;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.IO;
 
@@ -340,7 +341,7 @@ namespace KGySoft.Resources
         private ResourceManagerSources source = ResourceManagerSources.CompiledAndResX;
         private bool throwException = true;
 
-        [NonSerialized]private Dictionary<string, ResourceSet>? resourceSets;
+        [NonSerialized]private StringKeyedDictionary<ResourceSet>? resourceSets;
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
@@ -1539,7 +1540,7 @@ namespace KGySoft.Resources
             // assembly load callbacks in particular are a way we can call
             // back into the ResourceManager in unexpectedly on the same thread.
             if (resourceSets == null)
-                resourceSets = new Dictionary<string, ResourceSet> { { cultureName, rs } };
+                resourceSets = new StringKeyedDictionary<ResourceSet> { { cultureName, rs } };
             else if (resourceSets.TryGetValue(cultureName, out ResourceSet? lostRace))
             {
                 if (!ReferenceEquals(lostRace, rs))

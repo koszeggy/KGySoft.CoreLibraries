@@ -106,8 +106,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, Type>> reflectedPropertiesCache =
-            ThreadSafeCacheFactory.Create<Type, Dictionary<string, Type>>(GetReflectedProperties, LockFreeCacheOptions.Profile128);
+        private static readonly IThreadSafeCacheAccessor<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache =
+            ThreadSafeCacheFactory.Create<Type, StringKeyedDictionary<Type>>(GetReflectedProperties, LockFreeCacheOptions.Profile128);
 
         #endregion
 
@@ -115,7 +115,7 @@ namespace KGySoft.ComponentModel
 
         private ThreadSafeDictionary<string, object?>? properties;
 
-        [NonSerialized]private Dictionary<string, Type>? reflectedProperties;
+        [NonSerialized]private StringKeyedDictionary<Type>? reflectedProperties;
         [NonSerialized]private int suspendCounter;
         [NonSerialized]private PropertyChangedEventHandler? propertyChanged;
 
@@ -207,7 +207,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Properties
 
-        private Dictionary<string, Type> ReflectedProperties => reflectedProperties ??= reflectedPropertiesCache[GetType()];
+        private StringKeyedDictionary<Type> ReflectedProperties => reflectedProperties ??= reflectedPropertiesCache[GetType()];
 
         #endregion
 
@@ -222,7 +222,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected ObservableObjectBase()
         {
-            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count);
+            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, StringSegmentComparer.Ordinal);
         }
 
         #endregion
@@ -231,9 +231,9 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static Dictionary<string, Type> GetReflectedProperties(Type type)
+        private static StringKeyedDictionary<Type> GetReflectedProperties(Type type)
         {
-            static void PopulateProperties(Dictionary<string, Type> dict, IEnumerable<PropertyInfo> props)
+            static void PopulateProperties(StringKeyedDictionary<Type> dict, IEnumerable<PropertyInfo> props)
             {
                 foreach (PropertyInfo prop in props)
                 {
@@ -244,7 +244,7 @@ namespace KGySoft.ComponentModel
             }
 
             // public properties of all levels
-            var result = new Dictionary<string, Type>();
+            var result = new StringKeyedDictionary<Type>();
             PopulateProperties(result, type.GetProperties(BindingFlags.Instance | BindingFlags.Public));
 
             // non-public properties by type (because private properties cannot be obtained for all levels in one step)
