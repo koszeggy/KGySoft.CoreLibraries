@@ -1322,7 +1322,7 @@ namespace KGySoft.Collections
         {
             this.itemLoader = itemLoader ?? nullLoader;
             Capacity = capacity;
-            this.comparer = comparer ?? ComparerHelper<TKey>.SpecialDefaultEqualityComparerOrNull;
+            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
         }
 
         /// <summary>
@@ -1349,7 +1349,7 @@ namespace KGySoft.Collections
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
             itemLoader = nullLoader;
-            this.comparer = comparer ?? ComparerHelper<TKey>.SpecialDefaultEqualityComparerOrNull;
+            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
             int count = dictionary.Count;
             if (count == 0)
                 return;
@@ -2182,7 +2182,7 @@ namespace KGySoft.Collections
 
             info.AddValue(nameof(capacity), capacity);
             info.AddValue(nameof(ensureCapacity), ensureCapacity);
-            info.AddValue(nameof(comparer), comparer);
+            info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer);
             info.AddValue(nameof(itemLoader), itemLoader.Equals(nullLoader) ? null : itemLoader);
             info.AddValue(nameof(behavior), (byte)behavior);
             info.AddValue(nameof(disposeDroppedValues), disposeDroppedValues);
@@ -2224,7 +2224,7 @@ namespace KGySoft.Collections
 
             capacity = info.GetInt32(nameof(capacity));
             ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
-            comparer = (IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)) ?? ComparerHelper<TKey>.SpecialDefaultEqualityComparerOrNull;
+            comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
             behavior = (CacheBehavior)info.GetByte(nameof(behavior));
             itemLoader = (Func<TKey, TValue>?)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
             disposeDroppedValues = info.GetBoolean(nameof(disposeDroppedValues));

@@ -16,7 +16,10 @@
 
 #region Usings
 
+using System;
 using System.Collections.Generic;
+
+using KGySoft.Reflection;
 
 #endregion
 
@@ -40,12 +43,22 @@ namespace KGySoft.CoreLibraries
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
 #endif
 
-        internal static IEqualityComparer<T>? SpecialDefaultEqualityComparerOrNull { get; } =
-#if NETFRAMEWORK
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : null;
+        #endregion
+
+        #region Methods
+
+        internal static IEqualityComparer<T>? GetSpecialDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer)
+        {
+#if NETSTANDARD2_0
+            return IsDefaultComparer(comparer) ? null : comparer;
 #else
-            null;
+            return IsDefaultComparer(comparer) ? (typeof(T).IsEnum ? EnumComparer<T>.Comparer : null) : comparer;
 #endif
+        }
+
+        internal static bool IsDefaultComparer(IEqualityComparer<T>? comparer)
+            // Last part can be optimized away by JIT but only if we use typeof(string) and not Reflector.StringType
+            => comparer == null || comparer == EqualityComparer || typeof(T) == typeof(string) && comparer == StringComparer.Ordinal;
 
         #endregion
     }

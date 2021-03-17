@@ -90,11 +90,11 @@ namespace KGySoft.Collections
     /// <item><term><see cref="Count">Count</see></term><term>Fastest</term><term>5.01x slower</term><term>530.44x slower</term></item>
     /// <item><term><see cref="TryAdd">TryAdd</see> (10 million new keys, sequential)</term><term>1.07x slower</term><term>Fastest</term><term>1.25x slower</term></item>
     /// <item><term><see cref="TryAdd">TryAdd</see> (10 million new keys, parallel)</term><term>1.02x slower</term><term>Fastest</term><term>1.53x slower</term></item>
-    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is value type)</term><term>1.55x slower</term><term>Fastest</term><term>Fastest</term></item>
-    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is reference type)</term><term>1.12x slower</term><term>Fastest</term><term>Fastest</term></item>
+    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is <see cref="int">int</see>)</term><term>1.55x slower</term><term>Fastest</term><term>Fastest</term></item>
+    /// <item><term><see cref="TryGetValue">TryGetValue</see> (no collisions, <typeparamref name="TKey"/> is <see cref="string">string</see>)</term><term>Fastest</term><term>1.26x slower</term><term>1.26x slower</term></item>
     /// <item><term><see cref="TryGetValue">TryGetValue</see> (many key collisions)</term><term>Fastest</term><term>1.92x slower</term><term>2.01x slower</term></item>
-    /// <item><term><see cref="this">Indexer</see> set (sequential, <typeparamref name="TKey"/> is value type)</term><term>Fastest</term><term>1.07x slower</term><term>1.07x slower</term></item>
-    /// <item><term><see cref="this">Indexer</see> set (parallel, <typeparamref name="TKey"/> is value type)</term><term>Fastest</term><term>2.03x slower</term><term>1.01x slower</term></item>
+    /// <item><term><see cref="this">Indexer</see> set (sequential, <typeparamref name="TKey"/> is <see cref="int">int</see>)</term><term>Fastest</term><term>1.07x slower</term><term>1.07x slower</term></item>
+    /// <item><term><see cref="this">Indexer</see> set (parallel, <typeparamref name="TKey"/> is <see cref="int">int</see>)</term><term>Fastest</term><term>2.03x slower</term><term>1.01x slower</term></item>
     /// <item><term><see cref="TryUpdate">TryUpdate</see> (sequential)</term><term>Fastest</term><term>1.21x slower</term><term>1.17x slower</term></item>
     /// <item><term><see cref="TryUpdate">TryUpdate</see> (parallel)</term><term>Fastest</term><term>4.02x slower</term><term>1.27x slower</term></item>
     /// <item><term><see cref="TryRemove(TKey)">TryRemove</see> + <see cref="TryAdd">TryAdd</see> (same key, sequential)</term><term>Fastest</term><term>1.12x slower</term><term>1.16x slower</term></item>
@@ -105,7 +105,9 @@ namespace KGySoft.Collections
     /// <item><term><see cref="AddOrUpdate(TKey,TValue,Func{TKey,TValue,TValue})">AddOrUpdate</see> (random existing keys, sequential)</term><term>Fastest</term><term>3.35x slower</term><term>3.16x slower</term></item>
     /// <item><term><see cref="AddOrUpdate(TKey,TValue,Func{TKey,TValue,TValue})">AddOrUpdate</see> (random existing keys, parallel)</term><term>Fastest</term><term>9.74x slower</term><term>2.27x slower</term></item>
     /// <item><term><see cref="GetOrAdd(TKey,TValue)">GetOrAdd</see> (random existing keys)</term><term>1.11x slower</term><term>Fastest</term><term>Fastest</term></item>
-    /// </list></para>
+    /// </list>
+    /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+    /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.</note></para>
     /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>
@@ -401,6 +403,24 @@ namespace KGySoft.Collections
         /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
+        public ThreadSafeDictionary(IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
+            : this(defaultCapacity, comparer, strategy)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeDictionary{TKey, TValue}"/> class that is empty
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
+        /// </summary>
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for values with new keys.
         /// If 0, then a default capacity is used.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
@@ -408,6 +428,10 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
         public ThreadSafeDictionary(int capacity, IEqualityComparer<TKey>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
         {
             if (!strategy.IsDefined())
@@ -422,7 +446,7 @@ namespace KGySoft.Collections
             fixedSizeStorage = FixedSizeStorage.Empty;
             initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
-            this.comparer = comparer;
+            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
         }
 
         /// <summary>
@@ -435,6 +459,10 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
         public ThreadSafeDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
             : this(defaultCapacity, comparer, strategy)
         {

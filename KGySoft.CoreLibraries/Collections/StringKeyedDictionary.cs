@@ -978,7 +978,7 @@ namespace KGySoft.Collections
         {
             if (capacity < 0)
                 Throw.ArgumentOutOfRangeException(Argument.capacity, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-            this.comparer = comparer;
+            this.comparer = comparer == StringSegmentComparer.Ordinal ? null : comparer;
             if (capacity > 0)
                 Initialize(capacity);
         }
