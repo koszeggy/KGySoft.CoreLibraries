@@ -19,9 +19,12 @@
 ====================
 + PublicResource class: New publicly available localizable resources.
 
-* KGySoft.Collections namespace:
+! KGySoft.Collections namespace:
 ================================
-- ArraySection<T> struct: AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
+! ArraySection<T> struct:
+  ! The indexer and the GetElementReference method do not allow out-of-range indices anymore, even if the underlying
+    array is large enough.
+  - AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
 + New ThreadSafeDictionary<TKey, TValue> class
 + New ThreadSafeCacheFactory class
 + New ThreadSafeCacheOptionsBase/LockFreeCacheOptions/LockingCacheOptions classes
