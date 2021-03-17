@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
@@ -735,6 +734,7 @@ namespace KGySoft.Collections
 
         #region Constants
 
+        private const int minCapacity = 4;
         private const int deletedNextBase = -3;
 
         #endregion
@@ -744,10 +744,6 @@ namespace KGySoft.Collections
         #region Static Fields
 
         private static readonly Type typeValue = typeof(TValue);
-#if (NETFRAMEWORK || NETSTANDARD2_0)
-        // ReSharper disable once StaticMemberInGenericType - depends on TValue
-        private static readonly bool isValueManaged = !typeValue.IsUnmanaged();
-#endif
 
         #endregion
 
@@ -1041,24 +1037,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Methods
-
-        #region Static Methods
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool IsValueManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            // not "caching" the result of this call because that would make the JIT-ed code slower
-            RuntimeHelpers.IsReferenceOrContainsReferences<TValue>();
-#else
-            isValueManaged;
-#endif
-
-
-        private const int minCapacity = 4;
-
-        #endregion
-
-        #region Instance Methods
 
         #region Public Methods
 
@@ -1484,7 +1462,7 @@ namespace KGySoft.Collections
 
                 // cleanup
                 entry.Key = null;
-                if (IsValueManaged())
+                if (Reflector<TValue>.IsManaged)
                     entry.Value = default;
 
                 version += 1;
@@ -1749,8 +1727,6 @@ namespace KGySoft.Collections
 
             deserializationInfo = null;
         }
-
-        #endregion
 
         #endregion
 

@@ -51,25 +51,11 @@ namespace KGySoft.Reflection
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
-        #region Nested Classes
-
-        private static class EmptyArrayHelper<T>
-        {
-            internal static readonly T[] Instance =
-#if NET35 || NET40 || NET45
-                new T[0];
-#else
-                Array.Empty<T>();
-#endif
-        }
-
-        #endregion
-
         #region Fields
 
         #region Internal Fields
 
-        internal static readonly object[] EmptyObjects = EmptyArrayHelper<object>.Instance;
+        internal static readonly object[] EmptyObjects = Reflector<object>.EmptyArray;
 
         internal static readonly Type VoidType = typeof(void);
 
@@ -2856,22 +2842,11 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="T">The element type of the returned array.</typeparam>
         /// <returns>An empty array of <typeparamref name="T"/>.</returns>
-        public static T[] EmptyArray<T>() => EmptyArrayHelper<T>.Instance;
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static T[] EmptyArray<T>() => Reflector<T>.EmptyArray;
 #if NET35 || NET40
 #pragma warning restore CS1574
 #endif
-
-        internal static int SizeOf<T>()
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var type = typeof(T);
-            if (type.IsPrimitive)
-                return Buffer.ByteLength(new T[1]);
-            return type.SizeOf();
-#else
-            return Unsafe.SizeOf<T>();
-#endif
-        }
 
         #endregion
 

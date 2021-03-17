@@ -22,7 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -132,19 +132,6 @@ namespace KGySoft.Collections
 
             #region Fields
 
-            #region Static Fields
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-            // ReSharper disable StaticMemberInGenericType - they depend on type arguments
-            private static readonly bool isKeyManaged = !typeof(TKey).IsUnmanaged();
-            private static readonly bool isValueManaged = !typeof(TValue).IsUnmanaged();
-            // ReSharper restore StaticMemberInGenericType
-#endif
-
-            #endregion
-
-            #region Instance Fields
-
             private readonly IEqualityComparer<TKey>? comparer;
             private readonly bool isAndHash;
 
@@ -154,8 +141,6 @@ namespace KGySoft.Collections
             private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
             private int deletedCount;
             private int deletedItemsBucket; // First deleted entry among used elements. -1 if there are no deleted elements.
-
-            #endregion
 
             #endregion
 
@@ -215,30 +200,6 @@ namespace KGySoft.Collections
             #endregion
 
             #region Methods
-
-            #region Static Methods
-
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            private static bool IsKeyManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-                // not "caching" the result of this call because that would make the JIT-ed code slower
-                RuntimeHelpers.IsReferenceOrContainsReferences<TKey>();
-#else
-                isKeyManaged;
-#endif
-
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            private static bool IsValueManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-                // not "caching" the result of this call because that would make the JIT-ed code slower
-                RuntimeHelpers.IsReferenceOrContainsReferences<TValue>();
-#else
-                isValueManaged;
-#endif
-
-            #endregion
-
-            #region Instance Methods
 
             #region Public Methods
 
@@ -431,9 +392,9 @@ namespace KGySoft.Collections
                     deletedCount += 1;
 
                     // cleanup
-                    if (IsKeyManaged())
+                    if (Reflector<TKey>.IsManaged)
                         entryRef.Key = default;
-                    if (IsValueManaged())
+                    if (Reflector<TValue>.IsManaged)
                         entryRef.Value = default;
 
                     return true;
@@ -477,9 +438,9 @@ namespace KGySoft.Collections
                     value = entryRef.Value;
 
                     // cleanup
-                    if (IsKeyManaged())
+                    if (Reflector<TKey>.IsManaged)
                         entryRef.Key = default;
-                    if (IsValueManaged())
+                    if (Reflector<TValue>.IsManaged)
                         entryRef.Value = default;
 
                     return true;
@@ -526,9 +487,9 @@ namespace KGySoft.Collections
                     deletedCount += 1;
 
                     // cleanup
-                    if (IsKeyManaged())
+                    if (Reflector<TKey>.IsManaged)
                         entryRef.Key = default;
-                    if (IsValueManaged())
+                    if (Reflector<TValue>.IsManaged)
                         entryRef.Value = default;
 
                     return true;
@@ -784,8 +745,6 @@ namespace KGySoft.Collections
                 buckets = newBuckets;
                 entries = newEntries;
             }
-
-            #endregion
 
             #endregion
 

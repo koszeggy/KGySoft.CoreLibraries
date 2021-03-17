@@ -427,11 +427,6 @@ namespace KGySoft.Collections
 
         private static readonly Type typeOfT = typeof(T);
 
-#if NETFRAMEWORK || NETSTANDARD2_0
-        // ReSharper disable once StaticMemberInGenericType  
-        private static readonly bool isManaged = !typeOfT.IsUnmanaged(); 
-#endif
-
         private static BinarySearchHelper<T>? binarySearchHelper;
 
         #endregion
@@ -659,15 +654,6 @@ namespace KGySoft.Collections
         #region Static Methods
 
         private static bool CanAccept(object? value) => value is T || value == null && default(T) == null;
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool IsManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            // not "caching" the result of this call because that would make the JIT-ed code slower
-            RuntimeHelpers.IsReferenceOrContainsReferences<T>();
-#else
-            isManaged;
-#endif
 
         #endregion
 
@@ -927,7 +913,7 @@ namespace KGySoft.Collections
             if (pos >= items.Length)
                 pos -= items.Length;
 
-            if (IsManaged())
+            if (Reflector<T>.IsManaged)
                 items[pos] = default(T)!;
 
             if (size == 0)
@@ -947,7 +933,7 @@ namespace KGySoft.Collections
             if (size == 0)
                 return false;
 
-            if (IsManaged())
+            if (Reflector<T>.IsManaged)
                 items[startIndex] = default(T)!;
             startIndex += 1;
 
@@ -1074,7 +1060,7 @@ namespace KGySoft.Collections
             if (size == 0)
                 return;
 
-            if (IsManaged())
+            if (Reflector<T>.IsManaged)
             {
                 int carry = startIndex + size - items.Length;
                 Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
@@ -2339,11 +2325,11 @@ namespace KGySoft.Collections
             }
 
             int carry = startIndex + count - items.Length;
-            if (IsManaged())
+            if (Reflector<T>.IsManaged)
                 Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
             if (carry > 0)
             {
-                if (IsManaged())
+                if (Reflector<T>.IsManaged)
                     Array.Clear(items, 0, carry);
                 startIndex = carry;
             }
@@ -2374,7 +2360,7 @@ namespace KGySoft.Collections
             if (pos >= items.Length)
                 pos -= items.Length;
 
-            if (IsManaged())
+            if (Reflector<T>.IsManaged)
             {
                 int carry = pos + count - items.Length;
                 Array.Clear(items, pos, carry <= 0 ? count : count - carry);
@@ -2520,7 +2506,7 @@ namespace KGySoft.Collections
             if (index <= size >> 1)
             {
                 ShiftUp(startIndex, index);
-                if (IsManaged())
+                if (Reflector<T>.IsManaged)
                     items[startIndex] = default(T)!;
                 startIndex += 1;
                 if (startIndex == items.Length)
@@ -2535,7 +2521,7 @@ namespace KGySoft.Collections
                     pos -= length;
 
                 ShiftDown(pos, size - index);
-                if (IsManaged())
+                if (Reflector<T>.IsManaged)
                     items[pos] = default(T)!;
             }
 
@@ -2550,7 +2536,7 @@ namespace KGySoft.Collections
             if (index <= size >> 1)
             {
                 ShiftUp(startIndex, index, count);
-                if (IsManaged())
+                if (Reflector<T>.IsManaged)
                 {
                     int carry = startIndex + count - capacity;
                     Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
@@ -2569,7 +2555,7 @@ namespace KGySoft.Collections
                     topIndex -= capacity;
 
                 ShiftDown(topIndex, size - index - count, count);
-                if (IsManaged())
+                if (Reflector<T>.IsManaged)
                 {
                     int carry = -(topIndex - count + 1);
                     if (carry <= 0)

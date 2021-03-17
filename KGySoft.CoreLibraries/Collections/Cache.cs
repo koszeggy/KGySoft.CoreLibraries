@@ -29,6 +29,7 @@ using System.Threading;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -855,12 +856,6 @@ namespace KGySoft.Collections
 
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
-#if NETFRAMEWORK || NETSTANDARD2_0
-        // ReSharper disable StaticMemberInGenericType - they depend on type arguments
-        private static readonly bool isKeyManaged = !typeKey.IsUnmanaged(); 
-        private static readonly bool isValueManaged = !typeValue.IsUnmanaged(); 
-        // ReSharper restore StaticMemberInGenericType
-#endif
 
         #endregion
 
@@ -1393,24 +1388,6 @@ namespace KGySoft.Collections
             return key is TKey;
         }
 
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool IsKeyManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            // not "caching" the result of this call because that would make the JIT-ed code slower
-            RuntimeHelpers.IsReferenceOrContainsReferences<TKey>();
-#else
-            isKeyManaged;
-#endif
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static bool IsValueManaged() =>
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            // not "caching" the result of this call because that would make the JIT-ed code slower
-            RuntimeHelpers.IsReferenceOrContainsReferences<TValue>();
-#else
-            isValueManaged;
-#endif
-
         #endregion
 
         #region Instance Methods
@@ -1859,9 +1836,9 @@ namespace KGySoft.Collections
                     items[itemRef.NextInOrder].PrevInOrder = itemRef.PrevInOrder;
 
                 // cleanup
-                if (IsKeyManaged())
+                if (Reflector<TKey>.IsManaged)
                     itemRef.Key = default;
-                if (IsValueManaged())
+                if (Reflector<TValue>.IsManaged)
                     itemRef.Value = default;
 
                 cacheDeletes += 1;

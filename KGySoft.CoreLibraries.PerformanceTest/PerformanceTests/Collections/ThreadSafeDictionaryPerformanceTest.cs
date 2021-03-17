@@ -159,7 +159,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var dict = seq.ToDictionary(i => i.ToString(CultureInfo.InvariantCulture));
             var lDict = new LockingDictionary<string, int>(new Dictionary<string, int>(dict));
             var tDict = new ThreadSafeDictionary<string, int>(dict);
-            var cDict = new ConcurrentDictionary<string, int>(dict);
+#if !NET35
+            var cDict = new ConcurrentDictionary<string, int>(dict); 
+#endif
             var tDictSsc = new ThreadSafeDictionary<string, int>(dict, StringSegmentComparer.Ordinal);
 
             new IteratorPerformanceTest<int> { Iterations = count, Repeat = 5, TestName = "Sequential" }

@@ -668,20 +668,6 @@ namespace KGySoft.CoreLibraries
             ? Activator.CreateInstance(type)
             : null;
 
-        internal static bool IsUnmanaged(this Type type)
-        {
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            Debug.Fail("Use RuntimeHelpers.IsReferenceOrContainsReferences instead");
-#endif
-            // not caching results so should be called from static field initializers only
-            if (!type.IsValueType)
-                return false;
-            if (type.IsPrimitive || type.IsPointer || type.IsEnum)
-                return true;
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            return fields.All(f => f.FieldType.IsUnmanaged());
-        }
-
         internal static bool IsSignedIntegerType(this Type type)
         {
             switch (Type.GetTypeCode(type))

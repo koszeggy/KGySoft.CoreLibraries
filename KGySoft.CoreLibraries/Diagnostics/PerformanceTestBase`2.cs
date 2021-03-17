@@ -379,7 +379,7 @@ namespace KGySoft.Diagnostics
                 case IEnumerable e:
                     return e.Cast<object>().Count();
                 default:
-                    return Reflector.SizeOf<TResult>();
+                    return Reflector<TResult>.SizeOf;
             }
         }
 

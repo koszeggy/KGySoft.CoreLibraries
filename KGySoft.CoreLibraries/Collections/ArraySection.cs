@@ -115,14 +115,14 @@ namespace KGySoft.Collections
         /// <summary>
         /// Represents the empty <see cref="ArraySection{T}"/>. This field is read-only.
         /// </summary>
-        public static readonly ArraySection<T> Empty = new ArraySection<T>(Reflector.EmptyArray<T>());
+        public static readonly ArraySection<T> Empty = new ArraySection<T>(Reflector<T>.EmptyArray);
 
         #endregion
 
         #region Private Fields
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
-        private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector.SizeOf<T>());
+        private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector<T>.SizeOf);
 #endif
 
         #endregion
@@ -574,7 +574,11 @@ namespace KGySoft.Collections
         {
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
             if (array != null && poolArray)
+            {
+                if (Reflector<T>.IsManaged)
+                    Array.Clear(array, offset, length);
                 ArrayPool<T>.Shared.Return(array);
+            }
 #endif
             // this is required to prevent possible multiple returns to ArrayPool
             this = Null;

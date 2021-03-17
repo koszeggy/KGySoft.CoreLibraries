@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries
             #region Fields
 
             internal static readonly bool IsPrimitive = typeof(T).IsPrimitive;
-            internal static readonly int ElementSizeExponent = IsPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
+            internal static readonly int ElementSizeExponent = IsPrimitive ? (int)Math.Log(Reflector<T>.SizeOf, 2) : 0;
 
             #endregion
         }

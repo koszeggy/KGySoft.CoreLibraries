@@ -17,9 +17,11 @@
 #region Usings
 
 using System;
+#if !NET35
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+#endif
 
 using KGySoft.Collections;
 
@@ -295,7 +297,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
+#if !NET35
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
+#endif
 
             // populating once
             for (int i = 0; i < capacity; i++)
@@ -304,7 +308,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 _ = lockFreeAnd[i];
                 _ = lockingOldest[i];
                 _ = lockingLeastUsed[i];
+#if !NET35
                 _ = cDict[i];
+#endif
             }
 
             new PerformanceTest { TestName = "Sequential Access", Iterations = 10_000 }
@@ -349,6 +355,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .DumpResults(Console.Out);
         }
 
+#if !NET35
         [Test]
         public void ExistingValuesAccessParallel()
         {
@@ -401,7 +408,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         var _ = lockingLeastUsed[i];
                     });
                 }, "Locking, Least Recent Used")
-#if !NET35
                 .AddCase(() =>
                 {
                     Parallel.For(0, capacity, i =>
@@ -409,10 +415,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         var _ = cDict[i];
                     });
                 }, "ConcurrentDictionaryBasedCache")
-#endif
                 .DoTest()
                 .DumpResults(Console.Out);
         }
+#endif
 
         [Test]
         public void RandomAccessWithDropTest()
@@ -426,7 +432,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var lockFreeAnd = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity, HashingStrategy = HashingStrategy.And });
             var lockingOldest = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveOldestElement });
             var lockingLeastUsed = ThreadSafeCacheFactory.Create<int, int>(Load, new LockingCacheOptions { Capacity = capacity, Behavior = CacheBehavior.RemoveLeastRecentUsedElement });
+#if !NET35
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
+#endif
 
             new RandomizedPerformanceTest<int> { TestName = "Sequential Access", Iterations = 10_000_000 }
                 .AddCase(rnd => lockFreeMod[rnd.Next(range)], "LockFree, MOD hashing")
@@ -440,6 +448,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .DumpResults(Console.Out);
         }
 
+#if !NET35
         [Test]
         public void RandomAccessWithDropTestParallel()
         {
@@ -486,7 +495,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         var _ = lockingLeastUsed[rnd.Next(range)];
                     });
                 }, "Locking, Least Recent Used")
-#if !NET35
                 .AddCase(() =>
                 {
                     Parallel.For(0, iterations, i =>
@@ -494,10 +502,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                         var _ = cDict[rnd.Next(range)];
                     });
                 }, "ConcurrentDictionaryBasedCache")
-#endif
                 .DoTest()
                 .DumpResults(Console.Out);
         }
+#endif
 
         #endregion
     }
