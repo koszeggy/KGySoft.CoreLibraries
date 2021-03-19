@@ -130,9 +130,9 @@ namespace KGySoft.Diagnostics
 
         /// <summary>
         /// Gets or sets the CPU affinity to be used for executing tests. If <see langword="null"/>, or is too large for the executing system, then the affinity is not adjusted for the test.
-        /// <br/>Default value: <c>2</c>.
+        /// <br/>Default value: <c>null</c>.
         /// </summary>
-        public int? CpuAffinity { get; set; } = 2;
+        public int? CpuAffinity { get; set; }
 
         /// <summary>
         /// Gets or sets whether the results should be sorted by the size of the produced result instead of iterations count or time results.

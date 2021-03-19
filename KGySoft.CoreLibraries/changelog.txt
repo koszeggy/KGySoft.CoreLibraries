@@ -64,6 +64,9 @@
 
 ! KGySoft.Diagnostics namespace:
 ================================
+! PerformanceTestBase class:
+  ! Default value of CpuAffinity is null. So from now on it must be explicitly set to restrict test execution to a
+    single core.
 ! PerformanceTestBase<TDelegate, TResult> class:
   ! Warming up is time based even if Iterations is greater than 0. This provides more reliable results for low
     iteration counts.
