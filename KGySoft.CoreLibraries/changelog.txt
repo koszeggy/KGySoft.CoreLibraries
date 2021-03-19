@@ -70,6 +70,7 @@
 ! PerformanceTestBase<TDelegate, TResult> class:
   ! Warming up is time based even if Iterations is greater than 0. This provides more reliable results for low
     iteration counts.
+  + New Initialize, TearDown, BeforeCase and AfterCase events.
 
 * KGySoft.Resources namespace:
 ==============================

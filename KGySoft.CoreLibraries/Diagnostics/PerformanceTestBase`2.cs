@@ -304,6 +304,30 @@ namespace KGySoft.Diagnostics
 
         #endregion
 
+        #region Events
+
+        /// <summary>
+        /// Occurs before running the test cases.
+        /// </summary>
+        public event EventHandler? Initialize;
+
+        /// <summary>
+        /// Occurs after running the tests, even after a failure.
+        /// </summary>
+        public event EventHandler? TearDown;
+
+        /// <summary>
+        /// Occurs before each repetition of a test case, including the warming-up session.
+        /// </summary>
+        public event EventHandler? BeforeCase;
+
+        /// <summary>
+        /// Occurs after each repetition of a test case, including the warming-up session.
+        /// </summary>
+        public event EventHandler? AfterCase;
+
+        #endregion
+
         #region Methods
 
         #region Static Methods
@@ -345,7 +369,7 @@ namespace KGySoft.Diagnostics
             if (cases.Count == 0)
                 Throw.InvalidOperationException(Res.PerformanceTestNoTestCases);
 
-            Initialize();
+            DoInitialize();
             try
             {
                 List<TestResult> testResults = DoTestCases();
@@ -354,7 +378,7 @@ namespace KGySoft.Diagnostics
             }
             finally
             {
-                TearDown();
+                DoTearDown();
             }
         }
 
@@ -448,31 +472,35 @@ namespace KGySoft.Diagnostics
         protected abstract TResult Invoke(TDelegate del);
 
         /// <summary>
-        /// Called before running the test cases.
+        /// Raises the <see cref="Initialize"/> event. This method is called before running the test cases.
         /// </summary>
-        protected virtual void OnInitialize() { }
+        // Note: unlike regular event invoker methods, this one has no EventArgs parameter to maintain compatibility with <5.6.0 versions that had no events.
+        protected virtual void OnInitialize() => Initialize?.Invoke(this, EventArgs.Empty);
 
         /// <summary>
-        /// Called after running the tests, even after a failure.
+        /// Raises the <see cref="TearDown"/> event. Called after running the tests, even after a failure.
         /// </summary>
-        protected virtual void OnTearDown() { }
+        // Note: unlike regular event invoker methods, this one has no EventArgs parameter to maintain compatibility with <5.6.0 versions that had no events.
+        protected virtual void OnTearDown() => TearDown?.Invoke(this, EventArgs.Empty);
 
         /// <summary>
-        /// Called before each repetition of a test case.
+        /// Raises the <see cref="BeforeCase"/> event. Called before each repetition of a test case, including the warming-up session.
         /// </summary>
-        protected virtual void OnBeforeCase() { }
+        // Note: unlike regular event invoker methods, this one has no EventArgs parameter to maintain compatibility with <5.6.0 versions that had no events.
+        protected virtual void OnBeforeCase() => BeforeCase?.Invoke(this, EventArgs.Empty);
 
         /// <summary>
-        /// Called after each repetition of a test case.
+        /// Raises the <see cref="AfterCase"/> event. Called after each repetition of a test case, including the warming-up session.
         /// </summary>
-        protected virtual void OnAfterCase() { }
+        // Note: unlike regular event invoker methods, this one has no EventArgs parameter to maintain compatibility with <5.6.0 versions that had no events.
+        protected virtual void OnAfterCase() => AfterCase?.Invoke(this, EventArgs.Empty);
 
         #endregion
 
         #region Private Methods
 
         [SecuritySafeCritical]
-        private void Initialize()
+        private void DoInitialize()
         {
             OnInitialize();
             if (!IsValidAffinity())
@@ -496,7 +524,7 @@ namespace KGySoft.Diagnostics
         private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value > 0 && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
 
         [SecuritySafeCritical]
-        private void TearDown()
+        private void DoTearDown()
         {
             if (IsValidAffinity())
                 ResetCpuAffinity();
