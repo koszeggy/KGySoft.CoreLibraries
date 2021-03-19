@@ -43,8 +43,8 @@ namespace KGySoft.CoreLibraries
 
         #region Instance Fields
 
-        private float interval;
-        private float ignoreElapsedThreshold = Single.PositiveInfinity;
+        private volatile float interval;
+        private volatile float ignoreElapsedThreshold = Single.PositiveInfinity;
         private volatile bool isRunning;
 
         #endregion
@@ -71,14 +71,17 @@ namespace KGySoft.CoreLibraries
         /// The interval in milliseconds. For example, <c>1000</c> represents one second and <c>0.001</c> represents one microsecond.
         /// </value>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is negative or <see cref="Single.NaN"/>.</exception>
+        /// <remarks>
+        /// <note>Please note that if <see cref="Interval"/> is smaller than <c>16</c>, then the timer may consume much CPU when running.</note>
+        /// </remarks>
         public float Interval
         {
-            get => Interlocked.CompareExchange(ref interval, -1f, -1f);
+            get => interval;
             set
             {
                 if (value < 0f || Single.IsNaN(value))
                     Throw.ArgumentOutOfRangeException(Argument.value);
-                Interlocked.Exchange(ref interval, value);
+                interval = value;
             }
         }
 
@@ -96,12 +99,12 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is zero or negative or <see cref="Single.NaN"/>.</exception>
         public float IgnoreElapsedThreshold
         {
-            get => Interlocked.CompareExchange(ref ignoreElapsedThreshold, -1f, -1f);
+            get => ignoreElapsedThreshold;
             set
             {
                 if (value <= 0f || Single.IsNaN(value))
                     Throw.ArgumentOutOfRangeException(Argument.value);
-                Interlocked.Exchange(ref ignoreElapsedThreshold, value);
+                ignoreElapsedThreshold = value;
             }
         }
 
@@ -183,6 +186,11 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+        /// <summary>
+        /// The timer loop on a dedicated thread.
+        /// Works like an inverse SpinWait in terms of sleeping/spinning strategy: while SpinWait spins for short periods in the beginning and then starts to sleep,
+        /// this timer sleeps more often in the beginning (if there is enough time), and starts to spin just before triggering the next event.
+        /// </summary>
         private void ExecuteTimer()
         {
             int fallouts = 0;
@@ -193,7 +201,7 @@ namespace KGySoft.CoreLibraries
 
             while (isRunning)
             {
-                float intervalLocal = Interlocked.CompareExchange(ref interval, -1f, -1f);
+                float intervalLocal = interval;
                 nextTrigger += intervalLocal;
                 float elapsed;
 
@@ -206,15 +214,22 @@ namespace KGySoft.CoreLibraries
 
                     if (diff < 1f)
                         Thread.SpinWait(10);
-                    else if (diff < 5f)
+                    else if (diff < 10f)
                         Thread.SpinWait(100);
-                    else if (diff < 15f)
-                        Thread.Sleep(1);
                     else
                     {
+                        // By default Sleep(1) lasts about 15.5 ms (if not configured otherwise for the application by WinMM, for example)
+                        // so not allowing sleeping under 16 ms. Not sleeping for more than 50 ms so interval changes/stopping can be detected.
+                        if (diff >= 16f)
+                            Thread.Sleep(diff >= 100f ? 50 : 1);
+                        else
+                        {
+                            Thread.SpinWait(1000);
+                            Thread.Sleep(0);
+                        }
+
                         // if we have a larger time to wait, we check if the interval has been changed in the meantime
-                        Thread.Sleep(10);
-                        float newInterval = Interlocked.CompareExchange(ref interval, -1f, -1f);
+                        float newInterval = interval;
 
                         // ReSharper disable once CompareOfFloatsByEqualityOperator
                         if (intervalLocal != newInterval)
@@ -230,7 +245,7 @@ namespace KGySoft.CoreLibraries
 
 
                 float delay = elapsed - nextTrigger;
-                if (delay >= Interlocked.CompareExchange(ref ignoreElapsedThreshold, -1f, -1f))
+                if (delay >= ignoreElapsedThreshold)
                 {
                     fallouts += 1;
                     continue;
@@ -248,8 +263,6 @@ namespace KGySoft.CoreLibraries
 #else
                     stopwatch.Restart();
 #endif
-
-
                     nextTrigger = 0f;
                 }
             }
