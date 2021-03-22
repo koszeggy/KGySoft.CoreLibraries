@@ -597,6 +597,71 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
+        /// Adds or updates a key/value pair in the <paramref name="dictionary"/> based on whether the specified <paramref name="key"/> already exists.
+        /// The operation is thread safe if <paramref name="dictionary"/> is a <see cref="ThreadSafeDictionary{TKey,TValue}"/>, <see cref="ConcurrentDictionary{TKey,TValue}"/>
+        /// or <see cref="LockingDictionary{TKey,TValue}"/> instance. For other <see cref="IDictionary{TKey,TValue}"/> implementations the caller should care about thread safety if needed.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
+        /// <param name="dictionary">The target dictionary.</param>
+        /// <param name="key">The key to be added or whose value should be updated.</param>
+        /// <param name="addValue">The value to be added for an absent key.</param>
+        /// <param name="updateValue">The value to be set for an existing key.</param>
+        /// <returns>The new value for the <paramref name="key"/>. This will be either <paramref name="addValue"/> (if the key was absent)
+        /// or <paramref name="updateValue"/> (if the key was present).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> or <paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException"><paramref name="dictionary"/> is read-only.</exception>
+        public static TValue AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue, TValue updateValue)
+            where TKey : notnull
+        {
+            #region Local Methods
+
+            static TValue Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue addValue, TValue updateValue)
+            {
+                if (dictionary.IsReadOnly)
+                    Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+                if (dictionary.ContainsKey(key))
+                {
+                    dictionary[key] = updateValue;
+                    return updateValue;
+                }
+
+                dictionary[key] = addValue;
+                return addValue;
+            }
+
+            #endregion
+
+            if (dictionary == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            switch (dictionary)
+            {
+                case ThreadSafeDictionary<TKey, TValue> tDict:
+                    return tDict.AddOrUpdate(key, addValue, updateValue);
+#if !NET35
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.AddOrUpdate(key, addValue, (_, _) => updateValue);
+#endif
+                case LockingDictionary<TKey, TValue> lDict:
+                    lDict.Lock();
+                    try
+                    {
+                        return Fallback(lDict, key, addValue, updateValue);
+                    }
+                    finally
+                    {
+                        lDict.Unlock();
+                    }
+
+                default:
+                    return Fallback(dictionary, key, addValue, updateValue);
+            }
+        }
+
+        /// <summary>
         /// Adds a key/value pair to the <paramref name="dictionary"/> if the <paramref name="key"/> does not already exist,
         /// or updates a key/value pair in the <paramref name="dictionary"/> by using the specified <paramref name="updateValueFactory"/> if the <paramref name="key"/> already exists.
         /// The operation is thread safe if <paramref name="dictionary"/> is a <see cref="ThreadSafeDictionary{TKey,TValue}"/>, <see cref="ConcurrentDictionary{TKey,TValue}"/>

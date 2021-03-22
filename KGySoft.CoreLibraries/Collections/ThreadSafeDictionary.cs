@@ -833,6 +833,42 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Adds or updates a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> based on whether the specified <paramref name="key"/> already exists.
+        /// </summary>
+        /// <param name="key">The key to be added or whose value should be updated.</param>
+        /// <param name="addValue">The value to be added for an absent key.</param>
+        /// <param name="updateValue">The value to be set for an existing key.</param>
+        /// <returns>The new value for the <paramref name="key"/>. This will be either <paramref name="addValue"/> (if the key was absent)
+        /// or <paramref name="updateValue"/> (if the key was present).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public TValue AddOrUpdate(TKey key, TValue addValue, TValue updateValue)
+        {
+            // Note: we could just return AddOrUpdate(key, _ => addValue, _ => updateValue) but creating a new delegate would be a great performance loss
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            uint hashCode = GetHashCode(key);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                if (lockFreeValues.TryAddOrUpdate(key, addValue, updateValue, hashCode, out TValue? result))
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return result;
+                    continue;
+                }
+
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    result = lockingValues.AddOrUpdate(key, addValue, updateValue, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>
         /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> does not already exist,
         /// or updates a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> by using the specified <paramref name="updateValueFactory"/> if the <paramref name="key"/> already exists.
         /// </summary>

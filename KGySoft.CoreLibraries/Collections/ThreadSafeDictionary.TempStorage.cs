@@ -499,6 +499,32 @@ namespace KGySoft.Collections
                 return false;
             }
 
+            internal TValue AddOrUpdate(TKey key, TValue addValue, TValue updateValue, uint hashCode)
+            {
+                Entry[] items = entries;
+                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
+                int index = bucketRef - 1;
+
+                // searching for an existing key
+                while (index >= 0)
+                {
+                    ref Entry entryRef = ref items[index];
+                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Key, key))
+                    {
+                        index = entryRef.Next;
+                        continue;
+                    }
+
+                    // overwriting existing element
+                    entryRef.Value = updateValue;
+                    return updateValue;
+                }
+
+                AddAsNew(key, addValue, hashCode, ref bucketRef);
+                return addValue;
+            }
+
             internal TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
             {
                 Entry[] items = entries;
