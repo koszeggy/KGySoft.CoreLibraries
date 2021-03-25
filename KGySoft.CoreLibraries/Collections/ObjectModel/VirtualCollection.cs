@@ -228,7 +228,7 @@ namespace KGySoft.Collections.ObjectModel
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            if ((uint)index >= (uint)Count)
+            if ((uint)index > (uint)Count)
                 Throw.ArgumentOutOfRangeException(Argument.index);
 
             InsertItem(index, item);
