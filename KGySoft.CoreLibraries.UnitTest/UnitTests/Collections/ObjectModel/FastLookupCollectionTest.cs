@@ -16,9 +16,7 @@
 
 #region Usings
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 
 using KGySoft.Collections;
@@ -36,107 +34,88 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
     {
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
 
-        [Test]
-        public void Construction()
+        private static void AssertConsistency<T>(FastLookupCollection<T> coll, bool expectNull = false)
         {
-            AssertConsistency(new FastLookupCollection<int>());
-            AssertConsistency(new FastLookupCollection<int>(new List<int> { 1, 2, 3, 4, 5 }));
-            AssertConsistency(new FastLookupCollection<int>(new List<int> { 1, 1, 2, 2, 1 }));
-            AssertConsistency(new FastLookupCollection<string>(new List<string> { null, null, "1", "2", "1" }));
-        }
+            var actualItemToIndex = (AllowNullDictionary<T, int>)Reflector.GetField(coll, "itemToIndex");
+            if (expectNull)
+            {
+                Assert.IsNull(actualItemToIndex);
+                return;
+            }
 
-        [Test]
-        public void AddExplicit()
-        {
-            var coll = new FastLookupCollection<int>();
-            coll.Add(1);
-            coll.Add(2);
-            coll.Add(1);
-            coll.Insert(0, 1);
-            AssertConsistency(coll);
-        }
+            Assert.IsNotNull(actualItemToIndex);
+            var itemToIndex = new AllowNullDictionary<T, int>();
+            for (int i = 0; i < coll.Count; i++)
+            {
+                T item = coll[i];
+                if (!itemToIndex.TryGetValue(item, out int index))
+                    itemToIndex[item] = i;
+                else if (index >= 0)
+                    itemToIndex[item] = ~index;
+            }
 
-        [Test]
-        public void SetExplicit()
-        {
-            var coll = new FastLookupCollection<int>(new[] { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
-            coll[1] = 1;
-            coll[4] = 2;
-            AssertConsistency(coll);
-        }
+            AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
 
-        [Test]
-        public void RemoveExplicit()
-        {
-            var coll = new FastLookupCollection<int>(new List<int> { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
-            coll.Remove(1); // first 1
-            coll.RemoveAt(1); // 3
-            coll.Remove(1); // last 1
-            AssertConsistency(coll);
-        }
-
-        [Test]
-        public void AddInner()
-        {
-            var inner = new List<string>();
-            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
-            inner.Add("a");
-            Throws<AssertionException>(() => AssertConsistency(coll));
-            coll.CheckConsistency = true;
-            coll.Insert(0, "b");
-            AssertConsistency(coll);
-        }
-
-        [Test]
-        public void SetInner()
-        {
-            var inner = new List<string> { "1", "2", "3", "2", "1" };
-            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
-            inner[2] = null;
-            Throws<AssertionException>(() => AssertConsistency(coll));
-            coll.CheckConsistency = true;
-            coll[2] = "x";
-            AssertConsistency(coll);
-        }
-
-        [Test]
-        public void RemoveInner()
-        {
-            var inner = new List<string> { "1", "2", "3", "2", "1" };
-            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
-            inner.RemoveAt(2);
-            Throws<AssertionException>(() => AssertConsistency(coll));
-            coll.CheckConsistency = true;
-            coll.RemoveAt(0);
-            AssertConsistency(coll);
+            IEnumerable Sorted(AllowNullDictionary<T, int> dict)
+                => new AllowNullDictionary<T, int>(dict.OrderBy(item => item.Key));
         }
 
         #endregion
 
-        #region Private Methods
+        #region Instance Methods
 
-        private void AssertConsistency<T>(FastLookupCollection<T> coll)
+        [Test]
+        public void UsageTest()
         {
-            var itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
-            for (int i = 0; i < coll.Count; i++)
-            {
-                T item = coll[i];
-                if (!itemToIndex.TryGetValue(item, out CircularList<int> indices))
-                {
-                    indices = new CircularList<int>();
-                    itemToIndex[item] = indices;
-                }
+            var coll = new FastLookupCollection<int> { CheckConsistency = true };
+            coll.Add(1);
+            Assert.AreEqual(0, coll.IndexOf(1));
 
-                indices.Add(i);
-            }
+            coll.Add(2);
+            Assert.AreEqual(1, coll.IndexOf(2));
 
-            var actualItemToIndex = (AllowNullDictionary<T, CircularList<int>>)Reflector.GetField(coll, "itemToIndex");
-            AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
+            // adding a duplicate: still the first index is returned
+            coll.Add(1);
+            Assert.AreEqual(0, coll.IndexOf(1));
 
-            IEnumerable Sorted(AllowNullDictionary<T, CircularList<int>> dict)
-                => new AllowNullDictionary<T, CircularList<int>>(dict.OrderBy(item => item.Key));
+            // inserting at the first position
+            coll.Insert(0, 1);
+            Assert.AreEqual(0, coll.IndexOf(1));
+            Assert.AreEqual(2, coll.IndexOf(2));
+            AssertConsistency(coll);
+
+            // non existing
+            Assert.AreEqual(-1, coll.IndexOf(0));
+
+            // adding and removing unique at the end
+            coll.Add(100);
+            AssertConsistency(coll);
+            Assert.AreEqual(coll.Count - 1, coll.IndexOf(100));
+            coll.Remove(100);
+            AssertConsistency(coll);
+            Assert.AreEqual(-1, coll.IndexOf(100));
+
+            // inserting and removing clears the mapping, IndexOf rebuilds it
+            coll.Insert(0, -100);
+            AssertConsistency(coll, true);
+            Assert.AreEqual(0, coll.IndexOf(-100));
+            AssertConsistency(coll);
+            coll.Remove(-100);
+            AssertConsistency(coll, true);
+            Assert.AreEqual(-1, coll.IndexOf(-100));
+            AssertConsistency(coll);
+
+            // setting a duplicate clears the mapping, IndexOf rebuilds it
+            coll[0] = -1;
+            AssertConsistency(coll, true);
+            Assert.AreEqual(0, coll.IndexOf(-1));
+            AssertConsistency(coll);
+
+            // removing a duplicate at the end clears the mapping
+            coll.RemoveAt(coll.Count - 1);
+            AssertConsistency(coll, true);
         }
 
         #endregion

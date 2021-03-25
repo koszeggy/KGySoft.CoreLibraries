@@ -17,15 +17,13 @@
 
 #region Usings
 
-using System;
-
 using KGySoft.ComponentModel;
 
 using NUnit.Framework;
 
 #endregion
 
-namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
+namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
 {
     [TestFixture]
     public class ObservableBindingListTest

@@ -31,9 +31,20 @@
 + New HashingStrategy enum
 * Cache<TKey, TValue> class: balancing out hashing performance
 
-- KGySoft.Collections.ObjectModel namespace:
+! KGySoft.Collections.ObjectModel namespace:
 ============================================
-- FastLookupCollection<T> class: Fixing binary deserialization
+! VirtualCollection<T> class:
+  ! The protected RemoveItem(int) method was renamed to RemoveItemAt(int) and a new virtual RemoveItem(T) method
+    has been introduced.
+  * Count property and ContainsItem method have been made virtual, too.
+! FastLookupCollection<T> class:
+  ! Inconsistency detection has been changed (may not detect the same cases as before) because the internal map is
+    simply dropped when it would be too expensive to maintain.
+  - Fixing binary deserialization
+  * Improving performance, reducing memory consumption
+* SortableBindingList<T> class:
+  * Improving performance, reducing memory consumption
+  * Faster sorted enumerator implementation (from now on it supports also the Reset method)
 
 ! KGySoft.CoreLibraries namespace:
 ==================================

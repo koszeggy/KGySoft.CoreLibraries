@@ -71,7 +71,12 @@ namespace KGySoft.ComponentModel
     /// <item><see cref="AddNewCore">AddNewCore</see> returns <typeparamref name="T"/> instead of <see cref="object">object</see>.</item>
     /// <item>If <see cref="AddNewCore">AddNewCore</see> is called for a <typeparamref name="T"/> type, which cannot be instantiated automatically and the <see cref="AddingNew"/> event is not subscribed or returns <see langword="null"/>,
     /// then an <see cref="InvalidOperationException"/> will be thrown. In contrast, <see cref="BindingList{T}.AddNewCore"><![CDATA[BindingList<T>.AddNewCore]]></see> can throw an <see cref="InvalidCastException"/> or <see cref="NotSupportedException"/>.</item>
+    /// <item><see cref="FastBindingList{T}"/> might not work properly if items can change their hash code while they are added to the collection.</item>
     /// </list>
+    /// <note type="warning">Do not store elements in a <see cref="FastBindingList{T}"/> that may change their hash code while they are added to the collection.
+    /// Finding such elements may fail even if <see cref="FastLookupCollection{T}.CheckConsistency"/> is <see langword="true"/>. If hash code is derived from some identifier property or field, you can prepare
+    /// a <typeparamref name="T"/> instance by overriding the <see cref="AddNewCore">AddNewCore</see> method or by subscribing the <see cref="AddingNew"/> event
+    /// to make <see cref="IBindingList.AddNew">IBindingList.AddNew</see> implementation work properly.</note> 
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <see cref="BindingList{T}"/>:
     /// <list type="bullet">
@@ -510,8 +515,8 @@ namespace KGySoft.ComponentModel
             if (addNewPos < 0 || addNewPos != itemIndex)
                 return;
 
-            // Attention: this is a virtual method, meaning of index can be different in a derived class
-            RemoveItem(addNewPos);
+            // Attention: this is a virtual method, meaning that index can be different in a derived class
+            RemoveItemAt(addNewPos);
         }
 
         /// <summary>
@@ -732,7 +737,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
         /// </remarks>
-        protected override void RemoveItem(int index)
+        protected override void RemoveItemAt(int index)
         {
             if (disposed)
                 Throw.ObjectDisposedException();
@@ -745,7 +750,7 @@ namespace KGySoft.ComponentModel
             if (canRaiseItemChange)
                 UnhookPropertyChanged(base.GetItem(index));
 
-            base.RemoveItem(index);
+            base.RemoveItemAt(index);
             FireListChanged(ListChangedType.ItemDeleted, index);
         }
 

@@ -33,12 +33,14 @@ namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
     /// Similar to <see cref="Collection{T}"/> but provides virtual members not just for writing an setting but also for getting elements
-    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties such as <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
+    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties
+    /// such as <see cref="Count"/>, <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <seealso cref="IList{T}" />
     /// <seealso cref="Collection{T}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
     public class VirtualCollection<T> : IList<T>, IList
 #if !(NET35 || NET40)
@@ -60,8 +62,9 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Gets the number of elements actually contained in the <see cref="VirtualCollection{T}"/>.
+        /// <br/>The base implementation returns the <see cref="ICollection{T}.Count"/> property of the underlying collection.
         /// </summary>
-        public int Count => items.Count;
+        public virtual int Count => items.Count;
 
         /// <summary>
         /// Gets whether the <see cref="VirtualCollection{T}" /> is read-only. Affects the behavior of <see cref="Add">Add</see>, <see cref="Insert">Insert</see>,
@@ -133,7 +136,7 @@ namespace KGySoft.Collections.ObjectModel
             [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, ArgumentOutOfRangeException is expected")]
             get
             {
-                if (index < 0 || index >= Count)
+                if ((uint)index >= (uint)Count)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 return GetItem(index);
             }
@@ -141,7 +144,7 @@ namespace KGySoft.Collections.ObjectModel
             {
                 if (!CanSetItem)
                     Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-                if (index < 0 || index >= Count)
+                if ((uint)index >= (uint)Count)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 SetItem(index, value);
             }
@@ -225,7 +228,7 @@ namespace KGySoft.Collections.ObjectModel
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            if (index < 0 || index > Count)
+            if ((uint)index >= (uint)Count)
                 Throw.ArgumentOutOfRangeException(Argument.index);
 
             InsertItem(index, item);
@@ -233,7 +236,7 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Removes one occurrence of a specific object from the <see cref="VirtualCollection{T}"/>.
-        /// <br/>Calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItem">RemoveItem</see> methods.
+        /// <br/>Calls the overridable <see cref="RemoveItem">RemoveItem</see> method.
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
         /// <returns><see langword="true"/>, if an occurrence of <paramref name="item"/> was removed; otherwise, <see langword="false"/>.</returns>
@@ -242,18 +245,12 @@ namespace KGySoft.Collections.ObjectModel
         {
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-            int index = GetItemIndex(item);
-            if (index < 0)
-                return false;
-
-            RemoveItem(index);
-            return true;
+            return RemoveItem(item);
         }
-
+        
         /// <summary>
         /// Removes the element at the specified index of the <see cref="VirtualCollection{T}"/>.
-        /// <br/>Calls the overridable <see cref="RemoveItem">RemoveItem</see> method.
+        /// <br/>Calls the overridable <see cref="RemoveItemAt">RemoveItem</see> method.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
         /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
@@ -263,10 +260,10 @@ namespace KGySoft.Collections.ObjectModel
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            if (index < 0 || index >= Count)
+            if ((uint)index >= (uint)Count)
                 Throw.ArgumentOutOfRangeException(Argument.index);
 
-            RemoveItem(index);
+            RemoveItemAt(index);
         }
 
         /// <summary>
@@ -304,7 +301,8 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <returns>An <see cref="IEnumerator{T}" /> for the <see cref="VirtualCollection{T}"/>.</returns>
         /// <remarks>
-        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method; otherwise, it depends on the wrapped collection.</note>
+        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then the returned enumerator supports
+        /// the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method; otherwise, it depends on the enumerator of the wrapped collection.</note>
         /// </remarks>
         public virtual IEnumerator<T> GetEnumerator() => items.GetEnumerator();
 
@@ -322,7 +320,7 @@ namespace KGySoft.Collections.ObjectModel
             int length = Count;
             if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
-            if (arrayIndex < 0 || arrayIndex > array.Length)
+            if ((uint)arrayIndex > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
@@ -351,7 +349,7 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
-        protected bool ContainsItem(T item) => GetItemIndex(item) >= 0;
+        protected virtual bool ContainsItem(T item) => GetItemIndex(item) >= 0;
 
         /// <summary>
         /// Gets the element at the specified <paramref name="index"/>.
@@ -382,7 +380,23 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>The base implementation calls the <see cref="IList{T}.RemoveAt">RemoveAt</see> method of the underlying collection.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        protected virtual void RemoveItem(int index) => items.RemoveAt(index);
+        protected virtual void RemoveItemAt(int index) => items.RemoveAt(index);
+
+        /// <summary>
+        /// Removes one occurrence of a specific object from the <see cref="VirtualCollection{T}"/>.
+        /// <br/>The base implementation calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItemAt">RemoveItem</see> methods.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
+        /// <returns><see langword="true"/>, if an occurrence of <paramref name="item"/> was removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
+        protected virtual bool RemoveItem(T item)
+        {
+            int index = GetItemIndex(item);
+            if (index < 0)
+                return false;
+            RemoveItemAt(index);
+            return true;
+        }
 
         /// <summary>
         /// Removes all elements from the <see cref="VirtualCollection{T}"/>.
@@ -408,7 +422,7 @@ namespace KGySoft.Collections.ObjectModel
             }
 
             int length = Count;
-            if (index < 0 || index > array.Length)
+            if ((uint)index > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (array.Length - index < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);

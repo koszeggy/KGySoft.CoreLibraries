@@ -556,10 +556,10 @@ namespace KGySoft.ComponentModel
         /// The removed binding will be disposed.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        protected override void RemoveItem(int index)
+        protected override void RemoveItemAt(int index)
         {
             this[index].Dispose();
-            base.RemoveItem(index);
+            base.RemoveItemAt(index);
         }
 
         /// <summary>
@@ -570,7 +570,7 @@ namespace KGySoft.ComponentModel
         {
             var length = Count;
             for (int i = length - 1; i >= 0; i--)
-                RemoveItem(i);
+                RemoveItemAt(i);
         }
 
         /// <summary>

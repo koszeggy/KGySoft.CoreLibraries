@@ -24,17 +24,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace KGySoft.ComponentModel
 {
-    #region Usings
-
-    using SortIndex = KeyValuePair<int, object?>;
-
-    #endregion
-
     /// <summary>
     /// Helper class for providing sort logic for the <see cref="SortableBindingList{T}"/> class.
     /// Not a nested private class because the code is identical for all types of the enclosing class.
     /// </summary>
-    internal sealed class ItemComparer : IComparer<SortIndex>
+    internal sealed class ItemComparer : IComparer<(int Index, object? Value)>
     {
         #region Fields
 
@@ -52,7 +46,7 @@ namespace KGySoft.ComponentModel
 
         [SuppressMessage("Globalization", "CA1309:Use ordinal string comparison",
             Justification = "Intended fallback logic because ToString can depend on current culture, too")]
-        public int Compare(SortIndex x, SortIndex y)
+        public int Compare((int Index, object? Value) x, (int Index, object? Value) y)
         {
             int sign = ascending ? 1 : -1;
 
