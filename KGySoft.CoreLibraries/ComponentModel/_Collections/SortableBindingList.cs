@@ -28,6 +28,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 
 using KGySoft.Collections;
+using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -56,6 +57,10 @@ namespace KGySoft.ComponentModel
     /// binding a <see cref="SortableBindingList{T}"/> instance to UI controls (eg. to a grid) enables sorting automatically in several GUI frameworks.</para>
     /// <note>Sorting does not change the order of the elements in the wrapped underlying collection. When items are added while <see cref="FastBindingList{T}.IsSorted"/> returns <see langword="true"/>, then new items are added
     /// to the end of the underlying list.</note>
+    /// <note type="warning">Do not store elements in a <see cref="SortableBindingList{T}"/> that may change their hash code while they are added to the collection.
+    /// Finding such elements may fail even if <see cref="FastLookupCollection{T}.CheckConsistency"/> is <see langword="true"/>. If hash code is derived from some identifier property or field, you can prepare
+    /// a <typeparamref name="T"/> instance by overriding the <see cref="FastBindingList{T}.AddNewCore">AddNewCore</see> method or by subscribing the <see cref="FastBindingList{T}.AddingNew"/> event
+    /// to make <see cref="IBindingList.AddNew">IBindingList.AddNew</see> implementation work properly.</note> 
     /// </remarks>
     [Serializable]
     public class SortableBindingList<T> : FastBindingList<T>

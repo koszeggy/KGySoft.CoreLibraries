@@ -660,7 +660,11 @@ namespace KGySoft.ComponentModel
         {
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get.</param>
+        /// <returns>The element at the specified <paramref name="index"/>.</returns>
         protected override T GetItem(int index)
         {
             T result = base.GetItem(index);
@@ -891,6 +895,7 @@ namespace KGySoft.ComponentModel
                 UnhookPropertyChanged(item);
             if (trackedSubscriptions?.Count > 0)
             {
+                // ToList is intended because UnhookPropertyChanged changes trackedSubscriptions
                 foreach (T item in trackedSubscriptions.ToList())
                     UnhookPropertyChanged(item);
             }
