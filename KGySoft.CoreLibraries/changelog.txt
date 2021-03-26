@@ -72,6 +72,7 @@
 - SortableBindingList<T>:
   - SetItem/InsertItem methods: Not throwing an ArgumentNullException if the list is sorted by a property and a null
     item is set or inserted
+- StringSegmentConverter: Differentiating null and empty segments.
 
 ! KGySoft.Diagnostics namespace:
 ================================

@@ -81,8 +81,7 @@ namespace KGySoft.ComponentModel
         public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             if (value == null)
-                return null;
-
+                return StringSegment.Null;
             if (value is string str)
                 return str.AsSegment();
             return base.ConvertFrom(context!, culture!, value);

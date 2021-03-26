@@ -264,11 +264,11 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [return:NotNullIfNotNull("s")]public static T Parse<T>(this string? s, CultureInfo? culture = null)
+        [return:NotNullIfNotNull("s")]public static T? Parse<T>(this string? s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, typeof(T)), error);
-            return value!;
+            return value;
         }
 
         /// <summary>
@@ -285,11 +285,11 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed value. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
-        [return:NotNullIfNotNull("s")]public static object Parse(this string? s, Type type, CultureInfo? culture = null)
+        [return:NotNullIfNotNull("s")]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);
-            return value!;
+            return value;
         }
 
         /// <summary>
