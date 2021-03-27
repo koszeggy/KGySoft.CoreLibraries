@@ -75,7 +75,7 @@ namespace KGySoft.Resources
     /// <note>If you call any of the <c>SetObject</c> methods of the list above by any <see cref="object"/>, then a <see cref="ResXDataNode"/> instance will be implicitly created.
     /// A <see cref="ResXDataNode"/> instance should be explicitly created only if you want to set the <see cref="Comment"/> property.</note>
     /// </para>
-    /// <para>To retrieve an existing <see cref="ResXDataNode"/> object, you can select one of the following options:
+    /// <para>To retrieve a <see cref="ResXDataNode"/> object from a resource you have the following options:
     /// <list type="bullet">
     /// <item>Enumerate the <see cref="ResXDataNode"/> objects in an XML (.resx file) by instantiating a <see cref="ResXResourceReader"/> object,
     /// setting the <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> property to <see langword="true"/>, and calling the
@@ -97,6 +97,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Collections;
     /// using System.IO;
+    /// 
     /// using KGySoft.Resources;
     /// 
     /// public class Example
@@ -120,7 +121,7 @@ namespace KGySoft.Resources
     /// 
     ///   <data name='color' type='System.Drawing.Color, CustomAlias'>
     ///     <value>Red</value>
-    ///     <comment>When this entry is deserialized, System.Drawing assembly will be loaded.</comment>
+    ///     <comment>When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.</comment>
     ///   </data>
     /// 
     ///   <data name='bytes' type='System.Byte[]'>
@@ -159,12 +160,21 @@ namespace KGySoft.Resources
     ///             Console.WriteLine($"  Raw value:   {node.ValueData}");
     ///             try
     ///             {
-    ///                 var value = node.GetValue();
+    ///                 var value = node.GetValueSafe();
     ///                 Console.WriteLine($"  Real value:  {value} ({value.GetType()})");
     ///             }
     ///             catch (Exception e)
     ///             {
-    ///                 Console.WriteLine($"Deserialization of the node thrown an exception: {e.Message}");
+    ///                 Console.WriteLine($"  Safe deserialization of the node thrown an exception: {e.Message}");
+    ///                 try
+    ///                 {
+    ///                     var value = node.GetValue();
+    ///                     Console.WriteLine($"  Real value (unsafe):  {value} ({value.GetType()})");
+    ///                 }
+    ///                 catch (Exception)
+    ///                 {
+    ///                     Console.WriteLine($"  Unsafe deserialization of the node thrown an exception: {e.Message}");
+    ///                 }
     ///             }
     ///             Console.WriteLine();
     ///         }
@@ -172,55 +182,58 @@ namespace KGySoft.Resources
     /// }]]>
     /// 
     /// // The example displays the following output:
-    /// // ____Resources in .resx:____
+    /// //  ____Resources in .resx:____
     /// // Name: string
-    /// //   Type:        
-    /// //   Alias value: 
-    /// //   MIME type:   
+    /// //   Type:
+    /// //   Alias value:
+    /// //   MIME type:
     /// //   Comment:     Default data type is string.
     /// //   Raw value:   Test string
     /// //   Real value:  Test string (System.String)
     /// // 
     /// // Name: int
     /// //   Type:        System.Int32
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //   Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   42
     /// //   Real value:  42 (System.Int32)
     /// // 
     /// // Name: color
     /// //   Type:        System.Drawing.Color, CustomAlias
     /// //   Alias value: System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
-    /// //   MIME type:   
-    /// //   Comment:     When this entry is deserialized, System.Drawing assembly will be loaded.
+    /// //   MIME type:
+    /// //   Comment:     When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.
     /// //   Raw value:   Red
-    /// //   Real value:  Color[Red] (System.Drawing.Color)
+    /// //   Safe deserialization of the node thrown an exception: Type "System.Drawing.Color, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" in the data at line 18, position 4 cannot be resolved.
+    /// // You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.
+    /// //   Real value (unsafe):  Color[Red] (System.Drawing.Color)
     /// // 
     /// // Name: bytes
-    /// //   Type:        System.Byte[]
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //  Type:        System.Byte[]
+    /// //  Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   VGVzdCBieXRlcw==
     /// //   Real value:  System.Byte[] (System.Byte[])
     /// // 
     /// // Name: dangerous
-    /// //   Type:        
-    /// //   Alias value: 
+    /// //   Type:
+    /// //   Alias value:
     /// //   MIME type:   application/x-microsoft.net.object.binary.base64
     /// //   Comment:     BinaryFormatter will throw an exception for this invalid content.
     /// //   Raw value:   YmluYXJ5
-    /// // Deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// //   Safe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// //   Unsafe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
     /// // 
     /// // ____Metadata in .resx:____
     /// // Name: meta string
-    /// //   Type:        
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //   Type:
+    /// //   Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   Meta String
-    /// //   Real value:  Meta String (System.String)</code>
+    /// //   Real value:  Meta String (System.String) </code>
     /// </example>
     /// <h1 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h1>
     /// <para>
@@ -230,7 +243,7 @@ namespace KGySoft.Resources
     /// </para>
     /// <para>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
     /// really preserves the original information stored in the .resx file. No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly
-    /// requested by calling the <see cref="GetValue">GetValue</see> method.</para>
+    /// requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.</para>
     /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
     /// the result will be able to be parsed by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
@@ -253,7 +266,7 @@ namespace KGySoft.Resources
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
     /// <item>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.getvalue.aspx" target="_blank">System.Resources.ResXDataNode.GetValue</a> method often throws <see cref="XmlException"/> if the node contains invalid data. In contrast,
-    /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
+    /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/>, <see cref="SerializationException"/> or <see cref="NotSupportedException"/> instead, depending on the actual issue.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
@@ -264,8 +277,9 @@ namespace KGySoft.Resources
     /// <item><term>Raw content</term><description>You can use the <see cref="ValueData"/> property to read the original raw <see cref="string"/> content stored in the .resx file for this element.</description></item>
     /// <item><term>Advanced string representation</term><description>The <see cref="ToString">ToString</see> method displays the string representation (either of the deserialized object if already cached, or the raw content) so can be used easily in a format argument and provides more debugging information.</description></item>
     /// <item><term>Security</term>
-    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> method.
-    /// If a .resx file is read from an untrusted source, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
+    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.
+    /// If you use the <see cref="GetValueSafe">GetValueSafe</see> method, then it is guaranteed that no new assembly is loaded during the deserialization, even if the resource was serialized by <see cref="BinaryFormatter"/>.
+    /// Additionally, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
     /// about the type before obtaining the object. You can even check the raw string content by the <see cref="ValueData"/> property.
     /// </description></item>
     /// <item><term>Performance</term>
@@ -1254,12 +1268,12 @@ namespace KGySoft.Resources
 
                 // char/byte/sbyte/short/ushort/int/uint/long/ulong/bool/DBNull
                 case IConvertible _:
-                {
-                    nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
-                    if (cachedValue is DBNull)
-                        nodeInfo.CompatibleFormat = false;
-                    return;
-                }
+                    {
+                        nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
+                        if (cachedValue is DBNull)
+                            nodeInfo.CompatibleFormat = false;
+                        return;
+                    }
             }
 
             // the types below are supported natively only in non-compatibility mode
@@ -1506,7 +1520,7 @@ namespace KGySoft.Resources
         private object? CloneValue(ITypeResolutionService? typeResolver, string? basePath)
         {
             Debug.Assert(!(cachedValue is string || cachedValue is ResXNullRef), "String or null value should never be cloned.");
-            
+
             // we have no value yet: deserializing from FileRef or .resx data
             if (cachedValue == null)
                 return GetValue(typeResolver, basePath); // not cleaning up if cloning
