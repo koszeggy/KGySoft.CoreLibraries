@@ -19,10 +19,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
-using KGySoft.Reflection;
 using KGySoft.Resources;
 
 using NUnit.Framework;

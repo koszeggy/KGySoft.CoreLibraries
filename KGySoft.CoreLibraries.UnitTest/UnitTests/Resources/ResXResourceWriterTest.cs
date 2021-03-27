@@ -612,13 +612,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new Uri(@"x:\teszt"),
                     new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
                     Color.Blue,
+                    StringSegment.Empty,
+                    StringSegment.Null,
 
                     // special handling to escape built-in
                     CultureInfo.InvariantCulture,
                     CultureInfo.GetCultureInfo("en"),
                     CultureInfo.GetCultureInfo("en-US"),
 
-                // partly working built-in
+                    // partly working built-in
 #if NETFRAMEWORK
                     Cursors.Arrow, // a default cursor: by string
 #endif
@@ -631,7 +633,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
 #endif
 #endif
-
                     // pure custom
                     new Version(1, 2, 3, 4),
 #if !NET

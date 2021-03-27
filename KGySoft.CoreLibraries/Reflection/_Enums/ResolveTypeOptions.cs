@@ -43,7 +43,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// <para>If this flag is enabled, then the <see cref="O:KGySoft.Reflection.Reflector.ResolveType">Reflector.ResolveType</see> methods
         /// allow to resolve assembly names optionally present in the type name by partial name.
-        /// If this flag is disabled, then the provided assembly information must match (which still can be partial names).</para>
+        /// If this flag is disabled, then the provided assembly information must match (which still can be partially specified).</para>
         /// <para>If a type name is specified without an assembly, then this flag is ignored (as if the <see cref="AllowIgnoreAssemblyName"/> was set).</para>
         /// <note>Depending on the type system of the current platform it can happen that new assemblies of unmatching identity are loaded even if this flag is disabled.
         /// In such case the loaded assemblies are ignored.</note>

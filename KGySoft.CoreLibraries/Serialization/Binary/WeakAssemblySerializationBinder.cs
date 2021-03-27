@@ -31,9 +31,26 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can ignore version and token information
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
-    /// <br/>See the also the <strong>Remarks</strong> section of the <see cref="ForwardedTypesSerializationBinder"/> for details and some examples.
+    /// It also can make any <see cref="IFormatter"/> safe in terms of prohibiting loading assemblies during the deserialization if the <see cref="SafeMode"/>
+    /// property is <see langword="true"/>.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <seealso cref="ForwardedTypesSerializationBinder"/>
+    /// <seealso cref="CustomSerializationBinder"/>
+    /// <remarks>
+    /// <note>This binder does not use exact type mapping just tries to resolve type information automatically.
+    /// To customize type mapping or use a custom resolve logic you can use the <see cref="ForwardedTypesSerializationBinder"/>
+    /// or <see cref="CustomSerializationBinder"/> classes, respectively.</note>
+    /// <para>The <see cref="WeakAssemblySerializationBinder"/> class allows resolving type information by weak assembly identity,
+    /// or by completely ignoring assembly information (if <see cref="IgnoreAssemblyNameOnResolve"/> property is <see langword="true"/>.)</para>
+    /// <para>It also makes possible to prevent loading assembles during deserialization if the <see cref="SafeMode"/> property is <see langword="true"/>.
+    /// <note type="tip">You can make even a <see cref="BinaryFormatter"/> safe by assigning a <see cref="WeakAssemblySerializationBinder"/>
+    /// with <see cref="SafeMode"/> = <see langword="true"/>&#160;to its <see cref="IFormatter.Binder"/> property so it cannot resolve any type
+    /// whose assembly is not already loaded.
+    /// </note></para>
+    /// <para>If <see cref="WeakAssemblySerializationBinder"/> is used on serialization, then it can omit assembly information from the serialization stream
+    /// if the <see cref="OmitAssemblyNameOnSerialize"/> property is <see langword="true"/>.</para>
+    /// </remarks>
     public sealed class WeakAssemblySerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Constants
@@ -77,6 +94,18 @@ namespace KGySoft.Serialization.Binary
         /// from the provided assembly in the first place.</para>
         /// </remarks>
         public bool IgnoreAssemblyNameOnResolve { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets whether loading assemblies is prohibited on deserialization.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then no assembly loading will occur on deserialization.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
+        /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
+        /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
+        /// </remarks>
+        public bool SafeMode { get; set; }
 
         #endregion
 
@@ -137,14 +166,17 @@ namespace KGySoft.Serialization.Binary
         public override Type BindToType(string assemblyName, string typeName)
         {
             Assembly? assembly = GetAssembly(assemblyName);
-            var options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch;
-            if (IgnoreAssemblyNameOnResolve)
-                options |= ResolveTypeOptions.AllowIgnoreAssemblyName;
+            var options = IgnoreAssemblyNameOnResolve
+                ? ResolveTypeOptions.AllowIgnoreAssemblyName
+                : ResolveTypeOptions.AllowPartialAssemblyMatch;
+            if (!SafeMode)
+                options |= ResolveTypeOptions.TryToLoadAssemblies;
             Type? result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
-                Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
-
+                Throw.SerializationException(SafeMode
+                    ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName)
+                    : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
             return result;
         }
 
@@ -160,14 +192,19 @@ namespace KGySoft.Serialization.Binary
             if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
                 return null;
 
-            var options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch;
-            if (!IgnoreAssemblyNameOnResolve)
-                options |= ResolveAssemblyOptions.ThrowError;
-            return AssemblyResolver.ResolveAssembly(name, options);
+            var options = ResolveAssemblyOptions.AllowPartialMatch;
+            if (!SafeMode)
+                options |= ResolveAssemblyOptions.TryToLoadAssembly;
+            Assembly? result = AssemblyResolver.ResolveAssembly(name, options);
+
+            // Note: the ThrowError flag would throw a ReflectionException with the same message but BindToType should throw SerializationException
+            if (result == null)
+                Throw.SerializationException(Res.ReflectionCannotResolveAssembly(name));
+            return result;
         }
 
         #endregion
-       
+
         #endregion
     }
 }

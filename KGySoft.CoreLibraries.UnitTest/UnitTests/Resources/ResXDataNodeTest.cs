@@ -16,7 +16,10 @@
 
 #region Usings
 
+using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
 
 using KGySoft.Resources;
@@ -104,6 +107,48 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(node.ValueData);
             node.GetValue(cleanupRawData: true);
             Assert.IsNull(node.ValueData);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SafeModeWithTypeConverterTest(bool customResolver)
+        {
+            var nodeInfo = new DataNodeInfo()
+            {
+                Name = "dangerous",
+                TypeName = "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+            };
+
+            var nodeRaw = new ResXDataNode(nodeInfo, null);
+            var resolver = customResolver ? new TestTypeResolver() : null;
+
+            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SafeModeWithFileRefTest(bool customResolver)
+        {
+            var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
+            var nodeRaw = new ResXDataNode("dangerous", fileRef);
+            var resolver = customResolver ? new TestTypeResolver() : null;
+
+            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
+        }
+
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void TypeLoadErrorWithFormatterTest(bool compatibleFormat, bool customResolver)
+        {
+            var nodeWithObject = new ResXDataNode("dangerous", new Collection<int>());
+            var info = nodeWithObject.GetDataNodeInfo(t => "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", compatibleFormat);
+            var resolver = customResolver ? new TestTypeResolver() : null;
+
+            Throws<SerializationException>(() => new ResXDataNode(info, null).GetValue(resolver));
+            Throws<SerializationException>(() => new ResXDataNode(info, null).GetValueSafe(resolver));
         }
 
         #endregion

@@ -157,7 +157,7 @@ namespace KGySoft.CoreLibraries
             var e = Assert.Throws<T>(code);
             Assert.IsInstanceOf(typeof(T), e);
             Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
-            Console.WriteLine($"Expected exception {typeof(T)} has been thrown.");
+            Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 
         protected static bool ThrowsOnFramework<T>(TestDelegate code, params TargetFramework[] targets)
@@ -320,7 +320,7 @@ namespace KGySoft.CoreLibraries
             checkedObjects.Add(reference);
             try
             {
-                if (!(reference is string) && reference is IEnumerable enumerable)
+                if (!(reference is string || reference is StringSegment) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
                         ? CheckMembersAndItemsEqual(enumerable, check, errors, checkedObjects)
                         : CheckItemsEqual(enumerable, (IEnumerable)check, false, errors, checkedObjects);
