@@ -61,6 +61,9 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item><term>Parsing</term><description>A string can parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</description></item>
     /// </list></para>
+    /// <note type="security">The <see cref="TypeConverter"/> that is assigned to the <see cref="ResXFileRef"/> type may load assemblies when its <see cref="TypeConverter.ConvertFrom(ITypeDescriptorContext,CultureInfo,object)">ConvertFrom</see> method is called.
+    /// The recommended way to retrieve a file resource is via the <see cref="ResXDataNode"/> class. Its <see cref="ResXDataNode.GetValueSafe">GetValueSafe</see> method guarantees that no assembly is loaded
+    /// during the deserialization, including retrieving resources from file references.</note>
     /// </remarks>
     /// <seealso cref="ResXDataNode"/>
     /// <seealso cref="ResXResourceWriter"/>
@@ -133,7 +136,11 @@ namespace KGySoft.Resources
                 if (!String.IsNullOrEmpty(basePath) && !Path.IsPathRooted(fileName))
                     fileName = Path.Combine(basePath!, fileName);
 
-                Type? toCreate = objectType ?? TypeResolver.ResolveType(parts[1], null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
+                // Security note: the TryToLoadAssemblies flag makes possible to load any (potentially harmful) assemblies,
+                // but it does not affect any public access via the ResXDataNode, which resolves the type in a safe or unsafe way,
+                // and then passes non-null objectType here.
+                Type? toCreate = objectType ?? TypeResolver.ResolveType(parts[1], null,
+                    ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.ThrowError);
 
                 // string: consider encoding
                 if (toCreate == Reflector.StringType)
