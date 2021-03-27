@@ -86,10 +86,19 @@
 
 * KGySoft.Resources namespace:
 ==============================
++ ResXDataNode class:
+  + New GetValueSafe method that ensures that no assemblies are loaded during the deserialization.
 * ResXResourceWriter class:
+  + New SafeMode property that ensures that no assemblies are loaded when writing ResXDataNode instances
+    whose raw data has to be regenerated to create a compatible .resx content.
   * AddResource(string, byte[]) method: allowing null array to be conform with the nullability of the
     IResourceWriter interface.
   * AddMetadata(string, byte[]) method: allowing null array to be conform with AddResource(string, byte[]).
+
++ KGySoft.Serialization.Binary namespace:
+=========================================
++ WeakAssemblySerializationBinder class:
+  + New SafeMode property that ensures that no assemblies are loaded when resolving types
 
 
 ~~~~~~~~~
