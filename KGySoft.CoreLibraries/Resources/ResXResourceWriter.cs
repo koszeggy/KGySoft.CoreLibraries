@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
@@ -269,18 +268,18 @@ namespace KGySoft.Resources
 
             public override void WriteString(string? text)
             {
-                if (String.IsNullOrEmpty(text))
+                if (text == null)
                     return;
 
                 if (isInsideAttribute)
                 {
-                    base.WriteString(text!);
+                    base.WriteString(text);
                     return;
                 }
-
+                
                 string newLine = Environment.NewLine;
                 StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < text!.Length; i++)
+                for (int i = 0; i < text.Length; i++)
                 {
                     char c = text[i];
                     switch (c)
@@ -489,6 +488,7 @@ namespace KGySoft.Resources
         private bool initialized;
         private bool compatibleFormat = true;
         private bool omitHeader = true;
+        private bool safeMode;
 
         #endregion
 
@@ -572,8 +572,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether an alias should be auto-generated for referenced assemblies.
-        /// <br/>
-        /// Default value: <see langword="true"/>.
+        /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="AutoGenerateAlias"/> is <see langword="false"/>, then the assembly names will be referenced by fully qualified names
@@ -591,6 +590,28 @@ namespace KGySoft.Resources
                 if (writer == null)
                     Throw.ObjectDisposedException();
                 autoGenerateAlias = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether it is prohibited to load assemblies when writing <see cref="ResXDataNode"/> instances whose raw .resx content
+        /// needs to be regenerated and whose value has not been deserialized yet. This can occur only if <see cref="CompatibleFormat"/> is <see langword="true"/>,
+        /// and when the <see cref="ResXDataNode"/> instances to write have been read from another .resx source.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This property affects only <see cref="AddResource(ResXDataNode)"/> and <see cref="AddMetadata(ResXDataNode)"/> methods when <see cref="CompatibleFormat"/>
+        /// is <see langword="true"/>, and the <see cref="ResXDataNode"/> to write contains no deserialized value but only raw .resx data that is not compatible with
+        /// the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.</para>
+        /// </remarks>
+        public bool SafeMode
+        {
+            get => safeMode;
+            set
+            {
+                if (writer == null)
+                    Throw.ObjectDisposedException();
+                safeMode = value;
             }
         }
 
@@ -922,7 +943,7 @@ namespace KGySoft.Resources
 
         private void AddDataRow(string elementName, string name, ResXDataNode node)
         {
-            DataNodeInfo info = node.GetDataNodeInfo(typeNameConverter, compatibleFormat);
+            DataNodeInfo info = node.GetDataNodeInfo(typeNameConverter, compatibleFormat, safeMode);
             string? value = info.ValueData;
             ResXFileRef? fileRef;
             if (basePath != null && (fileRef = node.FileRef) != null && Path.IsPathRooted(fileRef.FileName))
@@ -988,15 +1009,16 @@ namespace KGySoft.Resources
             if (value != null && mimeType == null && (typeWithAlias == null || !typeWithAlias.StartsWith("System.Byte[]", StringComparison.Ordinal)) && PreserveSpaces(value))
                 w.WriteAttributeString(ResXCommon.XmlStr, ResXCommon.SpaceStr, null, ResXCommon.PreserveStr);
 
+            // for empty strings writing <value/> for compatibility reasons; otherwise, null and empty string representation is differentiated
             w.WriteStartElement(ResXCommon.ValueStr);
-            if (!String.IsNullOrEmpty(value))
-                w.WriteString(value!);
+            if (value != null && (value.Length > 0 || typeWithAlias != null))
+                w.WriteString(value);
 
             w.WriteEndElement();
             if (!String.IsNullOrEmpty(comment))
             {
                 w.WriteStartElement(ResXCommon.CommentStr);
-                w.WriteString(comment!);
+                w.WriteString(comment);
                 w.WriteEndElement();
             }
 

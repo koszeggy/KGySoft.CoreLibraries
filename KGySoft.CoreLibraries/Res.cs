@@ -604,6 +604,10 @@ namespace KGySoft
         /// <summary>Could not resolve type "{0}" in assembly "{1}".</summary>
         internal static string BinarySerializationCannotResolveTypeInAssembly(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblyFormat", typeName, asmName);
 
+        /// <summary>Could not resolve type "{0}" in assembly "{1}".
+        /// You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</summary>
+        internal static string BinarySerializationCannotResolveTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblySafeFormat", typeName, asmName);
+
         /// <summary>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</summary>
         internal static string BinarySerializationUnexpectedSerializationInfoElement(string elementName) => Get("BinarySerialization_UnexpectedSerializationInfoElementFormat", elementName);
 
@@ -917,8 +921,16 @@ namespace KGySoft
         /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</summary>
         internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
 
+        /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        internal static string ResourcesTypeLoadExceptionSafeAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionSafeAtFormat", typeName, line, pos);
+
         /// <summary>Type "{0}" cannot be resolved.</summary>
         internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
+
+        /// <summary>Type "{0}" cannot be resolved using safe mode.
+        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        internal static string ResourcesTypeLoadExceptionSafe(string typeName) => Get("Resources_TypeLoadExceptionSafeFormat", typeName);
 
         /// <summary>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</summary>
         internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);

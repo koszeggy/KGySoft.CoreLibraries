@@ -625,6 +625,10 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_CannotResolveTypeInAssemblyFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
   </data>
+  <data name="BinarySerialization_CannotResolveTypeInAssemblySafeFormat" xml:space="preserve">
+    <value>Could not resolve type "{0}" in assembly "{1}".
+You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
+  </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</value>
   </data>
@@ -835,8 +839,16 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_TypeLoadExceptionAtFormat" xml:space="preserve">
     <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</value>
   </data>
+  <data name="Resources_TypeLoadExceptionSafeAtFormat" xml:space="preserve">
+    <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
+  </data>
   <data name="Resources_TypeLoadExceptionFormat" xml:space="preserve">
     <value>Type "{0}" cannot be resolved.</value>
+  </data>
+  <data name="Resources_TypeLoadExceptionSafeFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be resolved using safe mode.
+You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="General_ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>

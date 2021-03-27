@@ -648,6 +648,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
         /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
@@ -666,6 +667,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
@@ -1298,8 +1300,9 @@ namespace KGySoft.Resources
                     // could be a <value> or a <comment>
                     if (reader.NodeType == XmlNodeType.Element)
                     {
+                        // Compatibility: <value/> will be an empty string for strings and null for other types
                         if (name == ResXCommon.ValueStr)
-                            nodeInfo.ValueData = reader.ReadString();
+                            nodeInfo.ValueData = reader.IsEmptyElement && nodeInfo.TypeName != null ? null : reader.ReadString();
                         else if (name == ResXCommon.CommentStr)
                             nodeInfo.Comment = reader.ReadString();
                         else
