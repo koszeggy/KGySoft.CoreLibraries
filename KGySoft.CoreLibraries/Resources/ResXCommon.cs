@@ -262,8 +262,16 @@ namespace KGySoft.Resources
             if (value == null)
             {
                 string? typeName = node.FileRef?.TypeName ?? node.AssemblyQualifiedName;
-                if (typeName != null && Reflector.ResolveType(typeName) is Type type && type.In(Reflector.ByteArrayType, Reflector.StringType, typeof(MemoryStream)))
-                    value = node.GetValue();
+                if (typeName != null)
+                {
+                    string fullName = TypeResolver.StripName(typeName, false);
+                    if (fullName == TypeResolver.StringTypeFullName
+                        || fullName == Reflector.ByteArrayType.GetName(TypeNameKind.FullName)
+                        || fullName == typeof(MemoryStream).GetName(TypeNameKind.FullName))
+                    {
+                        value = node.GetValueSafe();
+                    }
+                }
             }
 
             if (value is ResXNullRef)

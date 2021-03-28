@@ -829,7 +829,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, CloneValues);
+        public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, false);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified <paramref name="culture"/>.
@@ -852,7 +852,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, CloneValues);
+        public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, false);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/>.
