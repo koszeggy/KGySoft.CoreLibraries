@@ -24,6 +24,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Xml;
 
@@ -194,7 +195,7 @@ namespace KGySoft.Resources
     ///         Console.WriteLine("Saved .resx content:");
     ///         Console.WriteLine(savedContent);
     ///     }
-    ///}
+    /// }
     ///
     /// // The example displays the following output:
     /// // Getting a non-existing key: <null>
@@ -353,8 +354,9 @@ namespace KGySoft.Resources
     /// <item>There are no constructors with single <see cref="string"/> and <see cref="Stream"/> arguments; though if using pure C# (without reflection) this is a compatible change as the second parameter of the constructors is optional.</item>
     /// <item>The constructors of <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> throw an <see cref="ArgumentException"/> on any
     /// kind of error, including when an object cannot be deserialized. This <see cref="ResXResourceSet"/> implementation does not deserialize anything on construction just parses the raw XML content. If there is a syntax error in the .resx
-    /// content an <see cref="XmlException"/> will be thrown from the constructors. If an entry cannot be deserialized, the <see cref="GetObject(string)">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see> or
-    /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> methods will throw an <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> based on the nature of the error.</item>
+    /// content an <see cref="XmlException"/> will be thrown from the constructors. If an entry cannot be deserialized, the <see cref="GetObject(string)">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
+    /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> and <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods will throw
+    /// an <see cref="XmlException"/>, <see cref="TypeLoadException"/>, <see cref="SerializationException"/> or <see cref="NotSupportedException"/> based on the nature of the error.</item>
     /// <item>This <see cref="ResXResourceSet"/> is a sealed class.</item>
     /// </list>
     /// </para>
@@ -425,8 +427,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
-        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
-        /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized objects by calling
+        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects. For non-string elements the raw XML string value will be returned.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node

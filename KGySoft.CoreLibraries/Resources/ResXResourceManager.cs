@@ -237,7 +237,7 @@ namespace KGySoft.Resources
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>&#160;the return value of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see>
     /// and <see cref="GetMetaObject">GetMetaObject</see> methods is a <see cref="ResXDataNode"/> rather than the resource or metadata value.
     /// This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source.
-    /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.
+    /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.
     /// See also the third example at the <see cref="ResXResourceSet"/> class.</item>
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>
     /// and <see cref="GetMetaString">GetMetaString</see> methods will not throw an <see cref="InvalidOperationException"/>
@@ -491,8 +491,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
-        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
-        /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized objects by calling
+        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects. For non-string values the raw XML string value will be returned.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
