@@ -163,5 +163,13 @@ namespace KGySoft.Serialization.Binary
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         TryUseSurrogateSelectorForAnyType = 1 << 11,
+
+        /// <summary>
+        /// <para>If this flag is enabled, then no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
+        /// is specified that can load assemblies.</para>
+        /// <para>This flag is considered on deserialization.</para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// </summary>
+        SafeMode = 1 << 12,
     }
 }

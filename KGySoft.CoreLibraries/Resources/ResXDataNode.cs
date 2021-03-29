@@ -379,23 +379,23 @@ namespace KGySoft.Resources
             public override Type? BindToType(string assemblyName, string typeName)
             {
                 Debug.Assert(typeResolver != null, "typeResolver must be assigned on deserialization");
-                string aqn = typeName + ", " + assemblyName;
+                string aqnOrFullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + ", " + assemblyName;
 
-                Type? result = typeResolver!.GetType(aqn);
+                Type? result = typeResolver!.GetType(aqnOrFullName);
                 if (result != null)
                     return result;
 
                 // The original WinForms version fails for generic types. We do the same in a working way: we strip either the version
                 // or full assembly part from the type
-                string strippedName = TypeResolver.StripName(aqn, true);
-                if (strippedName != aqn)
+                string strippedName = TypeResolver.StripName(aqnOrFullName, true);
+                if (strippedName != aqnOrFullName)
                     result = typeResolver.GetType(strippedName);
 
                 if (result != null)
                     return result;
 
-                strippedName = TypeResolver.StripName(aqn, false);
-                if (strippedName != aqn)
+                strippedName = TypeResolver.StripName(aqnOrFullName, false);
+                if (strippedName != aqnOrFullName)
                     result = typeResolver.GetType(strippedName);
 
                 // If it is still null, then the binder couldn't handle it. If safe mode is disabled, then letting the formatter take over.
@@ -404,9 +404,14 @@ namespace KGySoft.Resources
 
                 // In safe mode we try to resolve the type without loading any assembly.
                 // We do not allow returning a null result because if this binder is used by a BinaryFormatter it may try to load a potentially dangerous assembly.
-                result = TypeResolver.ResolveType(aqn, null, ResolveTypeOptions.AllowPartialAssemblyMatch);
+                result = TypeResolver.ResolveType(aqnOrFullName, null, ResolveTypeOptions.AllowPartialAssemblyMatch);
                 if (result == null)
-                    Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
+                {
+                    string message = String.IsNullOrEmpty(assemblyName)
+                        ? Res.BinarySerializationCannotResolveType(typeName)
+                        : Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName);
+                    Throw.SerializationException(message);
+                }
 
                 return result;
             }

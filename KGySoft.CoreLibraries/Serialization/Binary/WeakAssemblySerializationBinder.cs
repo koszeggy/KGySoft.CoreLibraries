@@ -174,9 +174,15 @@ namespace KGySoft.Serialization.Binary
             Type? result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
-                Throw.SerializationException(SafeMode
-                    ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName)
-                    : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
+            {
+                string message = String.IsNullOrEmpty(assemblyName)
+                    ? Res.BinarySerializationCannotResolveType(typeName)
+                    : SafeMode
+                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+                Throw.SerializationException(message);
+            }
+
             return result;
         }
 

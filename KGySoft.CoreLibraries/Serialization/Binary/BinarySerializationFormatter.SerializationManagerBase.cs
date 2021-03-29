@@ -135,6 +135,7 @@ namespace KGySoft.Serialization.Binary
             private protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
             private protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
             private protected bool IgnoreTypeForwardedFromAttribute => (Options & BinarySerializationOptions.IgnoreTypeForwardedFromAttribute) != BinarySerializationOptions.None;
+            private protected bool SafeMode => (Options & BinarySerializationOptions.SafeMode) != BinarySerializationOptions.None;
 
             private protected Dictionary<MemberInfo, TypeAttributes> TypeAttributesCache => typeAttributes ??= new Dictionary<MemberInfo, TypeAttributes>();
 

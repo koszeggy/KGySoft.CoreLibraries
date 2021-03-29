@@ -423,7 +423,8 @@ namespace KGySoft.Serialization.Binary
                     options & (BinarySerializationOptions.IgnoreSerializationMethods 
                         | BinarySerializationOptions.IgnoreObjectChanges 
                         | BinarySerializationOptions.IgnoreISerializable 
-                        | BinarySerializationOptions.IgnoreIObjectReference),
+                        | BinarySerializationOptions.IgnoreIObjectReference
+                        | BinarySerializationOptions.SafeMode),
                     binder, surrogateSelector)
             {
             }
@@ -666,11 +667,26 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 string typeName = br.ReadString();
-                type = ReadBoundType(assembly.StoredName, typeName)
-                    ?? (assembly.StoredName == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly!, typeName));
+                type = ReadBoundType(assembly.StoredName, typeName);
+                if (type == null)
+                {
+                    var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+                    if (!SafeMode)
+                        options |= ResolveTypeOptions.TryToLoadAssemblies;
+                    type = assembly.StoredName == null
+                        ? Reflector.ResolveType(typeName, options)
+                        : Reflector.ResolveType(assembly.Assembly!, typeName, options);
+                }
 
                 if (type == null)
-                    Throw.SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+                {
+                    string message = assembly.StoredName == null
+                        ? Res.BinarySerializationCannotResolveType(typeName)
+                        : SafeMode
+                            ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assembly.StoredName)
+                            : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
+                    Throw.SerializationException(message);
+                }
 
                 result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
                 CachedTypes.Add(result);

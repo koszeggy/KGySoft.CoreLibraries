@@ -33,7 +33,7 @@ using KGySoft.Reflection;
 namespace KGySoft.Serialization.Binary
 {
     /// <summary>
-    /// Provides public static methods for binary serialization. Most of its methods will use an <see cref="BinarySerializationFormatter"/> instance internally.
+    /// Provides public static methods for binary serialization. Most of its methods will use a <see cref="BinarySerializationFormatter"/> instance internally.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for details and an example.
     /// </summary>
     /// <seealso cref="BinarySerializationFormatter"/>
