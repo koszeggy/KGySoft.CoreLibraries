@@ -138,7 +138,7 @@ namespace KGySoft.Collections
 
         protected void MergeIfNeeded(ReadOnlyDictionary l1Cache, GrowOnlyDictionary l2Cache)
         {
-            if (isMerging)
+            if (isMerging || l2Cache.Count == 0)
                 return;
 
             Debug.Assert(l2Cache.Count > 0 || GetType() != typeof(LockFreeCache<TKey, TValue>), "Unless using a derived type, L2 cache is not expected to be empty here");
