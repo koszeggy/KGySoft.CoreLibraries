@@ -64,8 +64,10 @@
 + New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
   the TrimEntries flag on every platform target.
 
-- KGySoft.ComponentModel namespace:
+! KGySoft.ComponentModel namespace:
 ===================================
+! BinaryTypeConverter:
+  ! ConvertFrom method: using SafeMode to prevent loading assemblies during the conversion.
 - FastBindingList<T>:
   - FindCore method: The default implementation could throw an ArgumentNullException if the binding list contained
     a null element.
@@ -97,8 +99,15 @@
 
 + KGySoft.Serialization.Binary namespace:
 =========================================
++ BinarySerializationOptions enum:
+  + New SafeMode flag that ensures that no assemblies are loaded during deserialization.
 + WeakAssemblySerializationBinder class:
-  + New SafeMode property that ensures that no assemblies are loaded when resolving types
+  + New SafeMode property that ensures that no assemblies are loaded when resolving types.
+
++ KGySoft.Serialization.Xml namespace:
+======================================
++ XmlSerializer class:
+  + New DeserializeSafe and DeserializeContentSafe methods.
 
 
 ~~~~~~~~~

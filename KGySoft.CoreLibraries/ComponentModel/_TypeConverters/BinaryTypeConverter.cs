@@ -89,7 +89,7 @@ namespace KGySoft.ComponentModel
             else if (value?.GetType() == Reflector.ByteArrayType) // cast is dangerous: works also from sbyte[] so type check must be performed
                 bytes = (byte[])value;
 
-            return bytes != null ? BinarySerializer.Deserialize(bytes) : base.ConvertFrom(context!, culture!, value);
+            return bytes != null ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode) : base.ConvertFrom(context!, culture!, value);
         }
 
         #endregion
