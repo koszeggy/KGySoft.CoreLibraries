@@ -255,8 +255,9 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// uses them to load the assemblies in advance occasionally by calling the obsolete <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadPartial</see> method. However, this <see cref="ResXResourceReader"/>
-    /// implementation can handle finding and loading assemblies automatically. If an assembly needs to be loaded from a partial name, the <see cref="Reflector.ResolveAssembly(string,ResolveAssemblyOptions)">Reflector.ResolveAssembly</see> method is called, which does not use
-    /// obsolete techniques. If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
+    /// implementation uses the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method, which does not use obsolete techniques (and if <see cref="SafeMode"/> is <see langword="true"/>,
+    /// then no type resolving, assembly loading and deserialization occurs at all, until explicit request).
+    /// If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
     /// <item>This <see cref="ResXResourceReader"/> is a sealed class.</item>
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown
     /// on calling <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.</item>
@@ -290,8 +291,9 @@ namespace KGySoft.Resources
     /// This <see cref="ResXResourceReader"/> implementation has separated <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see>
     /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
     /// <item><term>Security</term>
-    /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method
-    /// on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
+    /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested
+    /// by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
     /// <item><term>Base path</term>
     /// <description>The <see cref="BasePath"/> property, which is used for resolving file references can be set during the enumeration, too.</description></item>
     /// <item><term>New MIME type</term>

@@ -166,7 +166,10 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// <para>If this flag is enabled, then no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
-        /// is specified that can load assemblies.</para>
+        /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
+        /// <note>In safe mode no version mismatch is tolerated even for system assemblies. If you want to deserialize a stream in safe mode that contains
+        /// different assembly identities to the loaded ones, then use <see cref="WeakAssemblySerializationBinder"/> instead, and set
+        /// its <see cref="WeakAssemblySerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>

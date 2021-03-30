@@ -812,9 +812,10 @@ namespace KGySoft.Resources
 
             if (result == null)
             {
-                result = TypeResolver.ResolveType(assemblyQualifiedName, null, safeMode
-                    ? ResolveTypeOptions.AllowPartialAssemblyMatch
-                    : ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch);
+                var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+                if (!safeMode)
+                    options |= ResolveTypeOptions.TryToLoadAssemblies;
+                result = TypeResolver.ResolveType(assemblyQualifiedName, null, options);
             }
 
             if (result == null)

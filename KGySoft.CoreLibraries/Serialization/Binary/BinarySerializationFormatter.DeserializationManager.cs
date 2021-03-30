@@ -647,7 +647,7 @@ namespace KGySoft.Serialization.Binary
                 // new assembly: assembly and type names are both stored as strings
                 if (index == NewAssemblyIndex)
                 {
-                    // assembly qualified name (GetType uses binder if set)
+                    // assembly qualified name
                     string storedAssemblyName = br.ReadString();
                     string storedTypeName = br.ReadString();
                     result = ReadNewTypeWithAssembly(storedAssemblyName, storedTypeName);
@@ -670,21 +670,16 @@ namespace KGySoft.Serialization.Binary
                 type = ReadBoundType(assembly.StoredName, typeName);
                 if (type == null)
                 {
-                    var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
-                    if (!SafeMode)
-                        options |= ResolveTypeOptions.TryToLoadAssemblies;
                     type = assembly.StoredName == null
-                        ? Reflector.ResolveType(typeName, options)
-                        : Reflector.ResolveType(assembly.Assembly!, typeName, options);
+                        ? Reflector.ResolveType(typeName, ResolveTypeOptions.None)
+                        : Reflector.ResolveType(assembly.Assembly!, typeName, ResolveTypeOptions.None);
                 }
 
                 if (type == null)
                 {
                     string message = assembly.StoredName == null
                         ? Res.BinarySerializationCannotResolveType(typeName)
-                        : SafeMode
-                            ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assembly.StoredName)
-                            : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
                     Throw.SerializationException(message);
                 }
 
@@ -1692,9 +1687,11 @@ namespace KGySoft.Serialization.Binary
                     CachedAssemblies.Add((type.Assembly, assemblyName));
                 else
                 {
-
+                    // Assembly resolve depends on SafeMode
                     Assembly assembly = GetAssembly(assemblyName);
-                    type = Reflector.ResolveType(assembly, typeName);
+
+                    // ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
+                    type = Reflector.ResolveType(assembly, typeName, ResolveTypeOptions.None);
                     if (type == null)
                         Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
                     CachedAssemblies.Add((assembly, assemblyName));
@@ -1716,9 +1713,12 @@ namespace KGySoft.Serialization.Binary
                 // 1.) Iterating through loaded assemblies
                 result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
 
-                // 2.) Trying to load assembly
+                // 2.) Trying to load assembly. Not using AssemblyResolver because Assembly.Load allows version mismatch for some System assemblies.
                 if (result == null)
                 {
+                    if (SafeMode)
+                        Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
+
                     try
                     {
                         result = Assembly.Load(new AssemblyName(name));
