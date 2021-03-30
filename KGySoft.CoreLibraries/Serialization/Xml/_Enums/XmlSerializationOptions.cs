@@ -33,6 +33,7 @@ using System.Xml;
 using System.Xml.Serialization;
 
 using KGySoft.Collections;
+using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -47,7 +48,7 @@ using KGySoft.Collections;
 namespace KGySoft.Serialization.Xml
 {
     /// <summary>
-    /// Options for serializer methods of <see cref="Xml.XmlSerializer"/> class.
+    /// Options for serializer methods of <see cref="XmlSerializer"/> class.
     /// </summary>
     [Flags]
     public enum XmlSerializationOptions
@@ -85,21 +86,28 @@ namespace KGySoft.Serialization.Xml
         None,
 
         /// <summary>
-        /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name, otherwise, only by full type name.
-        /// Using fully qualified names makes possible to restore types that are declared in any external referenced assembly. While using not fully qualified type names makes possible
-        /// to restore a type declared in the caller assembly even if the version of the assembly has been modified since last serialization.</para>
+        /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name; otherwise, only by full type name.
+        /// Using fully qualified names makes possible to automatically load the assembly of a referenced type (unless safe mode is used on deserialization). Partial identity match is allowed,
+        /// so type resolving tolerates assembly version change. When resolving non-fully qualified type names, its assembly must be loaded before the deserialization;
+        /// otherwise, the type resolving will fail.</para>
+        /// <note type="security">When using <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
+        /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods, no assemblies will be loaded
+        /// during the deserialization, even when types use fully qualified names.</note>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         FullyQualifiedNames = 1,
 
         /// <summary>
         /// <para>If a type cannot be parsed natively and has no <see cref="TypeConverter"/> with <see cref="string"/> support, then
-        /// enabling this option makes possible to store its content in binary format within the XML.</para>
-        /// <para>Though trusted collections and objects with only public read-write properties and fields can be serialized with <see cref="None"/> options
+        /// enabling this option makes possible to store its content in binary format (using the <see cref="BinarySerializationFormatter"/> class) within the XML.</para>
+        /// <para>Though trusted collections and objects with only public read-write properties and fields can be serialized with the <see cref="None"/> options
         /// as well, using this option will cause to serialize them in binary format, too.</para>
         /// <para>If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
         /// has higher priority, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
+        /// <note type="security">When using <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
+        /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods, then
+        /// deserialization will throw an <see cref="InvalidOperationException"/> if the XML stream contains such content.</note>
         /// </summary>
         BinarySerializationAsFallback = 1 << 1,
 
@@ -151,7 +159,7 @@ namespace KGySoft.Serialization.Xml
         IgnoreShouldSerialize = 1 << 6,
 
         /// <summary>
-        /// <para>If enabled, <see cref="Xml.XmlSerializer"/> ignores <see cref="IXmlSerializable"/> implementations.</para>
+        /// <para>If enabled, <see cref="XmlSerializer"/> ignores <see cref="IXmlSerializable"/> implementations.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreIXmlSerializable = 1 << 7,

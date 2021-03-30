@@ -621,7 +621,7 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="BinarySerialization_CannotResolveAssemblySafeFormat" xml:space="preserve">
     <value>Cannot resolve assembly in safe mode: "{0}".
-You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
+You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</value>
   </data>
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type name "{0}".</value>
@@ -712,7 +712,11 @@ You may try to preload the assembly before deserialization or disable SafeMode i
     <value>Could not determine type of element in collection "{0}".</value>
   </data>
   <data name="XmlSerialization_CannotResolveTypeFormat" xml:space="preserve">
-    <value>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</value>
+    <value>Could not resolve type: "{0}".</value>
+  </data>
+  <data name="XmlSerialization_CannotResolveTypeSafeFormat" xml:space="preserve">
+    <value>Could not resolve type in safe mode: "{0}".
+In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</value>
   </data>
   <data name="XmlSerialization_SerializingTypeNotSupportedFormat" xml:space="preserve">
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
@@ -806,6 +810,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="XmlSerialization_UnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
+  </data>
+  <data name="XmlSerialization_BinarySerializerSafe" xml:space="preserve">
+    <value>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</value>
   </data>
   <data name="Profiler_Uncategorized" xml:space="preserve">
     <value>&lt;Uncategorized&gt;</value>

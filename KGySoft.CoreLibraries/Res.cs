@@ -464,6 +464,9 @@ namespace KGySoft
         /// <summary>Unexpected end of XML content.</summary>
         internal static string XmlSerializationUnexpectedEnd => Get("XmlSerialization_UnexpectedEnd");
 
+        /// <summary>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</summary>
+        internal static string XmlSerializationBinarySerializerSafe => Get("XmlSerialization_BinarySerializerSafe");
+
         #endregion
 
         #endregion
@@ -599,7 +602,7 @@ namespace KGySoft
         internal static string BinarySerializationReadOnlyCollectionNotSupported(string dataType) => Get("BinarySerialization_ReadOnlyCollectionNotSupportedFormat", dataType);
 
         /// <summary>Cannot resolve assembly in safe mode: "{0}".
-        /// You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</summary>
+        /// You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</summary>
         internal static string BinarySerializationCannotResolveAssemblySafe(string name) => Get("BinarySerialization_CannotResolveAssemblySafeFormat", name);
 
         /// <summary>Could not resolve type name "{0}".</summary>
@@ -993,8 +996,12 @@ namespace KGySoft
         /// <summary>Root named "object" expected but "{0}" found.</summary>
         internal static string XmlSerializationRootObjectExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
 
-        /// <summary>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</summary>
+        /// <summary>Could not resolve type: "{0}".</summary>
         internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
+
+        /// <summary>Could not resolve type in safe mode: "{0}".
+        /// In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</summary>
+        internal static string XmlSerializationCannotResolveTypeSafe(string typeName) => Get("XmlSerialization_CannotResolveTypeSafeFormat", typeName);
 
         /// <summary>Deserializing type "{0}" is not supported.</summary>
         internal static string XmlSerializationDeserializingTypeNotSupported(Type type) => Get("XmlSerialization_DeserializingTypeNotSupportedFormat", type);

@@ -28,6 +28,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Xml.Linq;
 
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
@@ -1237,6 +1238,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObject(referenceObjects); // There was an error generating the XML document.
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames);
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.IgnoreTypeForwardedFromAttribute);
+        }
+
+        [Test]
+        public void SafeModeTypeResolveTest()
+        {
+            var xml = @"<object type=""MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""></object>";
+            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(new StringReader(xml)));
+        }
+
+        [Test]
+        public void SafeModeBinarySerializedContentTest()
+        {
+            var obj = new CustomGenericCollection<int> { 1, 2, 3 };
+
+            XElement serialized = XmlSerializer.Serialize(obj, XmlSerializationOptions.BinarySerializationAsFallback);
+            Console.WriteLine(serialized);
+
+            // in safe mode, binary content throws an exception
+            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(serialized), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
+
+            // bit it works in non-sage mode
+            var deserialized = XmlSerializer.Deserialize(serialized);
+
+            AssertDeepEquals(obj, deserialized);
         }
 
         #endregion

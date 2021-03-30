@@ -41,9 +41,8 @@ namespace KGySoft.Serialization.Xml
 {
     /// <summary>
     /// XElement version of XML deserialization.
-    /// Actually a static class with base types - hence marked as abstract. Unlike on serialization no fields are used so no instance is needed.
     /// </summary>
-    internal abstract class XElementDeserializer : XmlDeserializerBase
+    internal class XElementDeserializer : XmlDeserializerBase
     {
         #region TryDeserializeObjectContext Struct
 
@@ -61,14 +60,72 @@ namespace KGySoft.Serialization.Xml
 
         #endregion
 
+        #region Constructors
+
+        internal XElementDeserializer(bool safeMode) : base(safeMode)
+        {
+        }
+
+        #endregion
+
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
+
+        [SecuritySafeCritical]
+        private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
+        {
+            byte[] data = Convert.FromBase64String(ctx.Element.Value);
+            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
+                    Throw.ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
+        }
+
+        private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XContainer parent)
+        {
+            XElement? content = parent.Elements().FirstOrDefault();
+            if (content == null)
+                Throw.ArgumentException(Res.XmlSerializationNoContent(xmlSerializable.GetType()));
+            using (XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
+            {
+                ConformanceLevel = ConformanceLevel.Fragment,
+                IgnoreWhitespace = true,
+                CloseInput = true
+            }))
+            {
+                xr.Read();
+
+                // passing the reader to the object to read itself
+                xmlSerializable.ReadXml(xr);
+            }
+        }
+
+        private static string? ReadStringValue(XElement element)
+        {
+            if (element.IsEmpty)
+                return null;
+
+            XAttribute? attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped!);
+            return attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue
+                ? element.Value
+                : Unescape(element.Value);
+        }
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Internal Methods
 
         /// <summary>
         /// Deserializes an XML content to an object.
         /// </summary>
-        public static object? Deserialize(XElement content)
+        internal object? Deserialize(XElement content)
         {
             if (content == null!)
                 Throw.ArgumentNullException(Argument.content);
@@ -82,11 +139,7 @@ namespace KGySoft.Serialization.Xml
             XAttribute? attrType = content.Attribute(XmlSerializer.AttributeType!);
             Type? objType = null;
             if (attrType != null)
-            {
-                objType = Reflector.ResolveType(attrType.Value);
-                if (objType == null)
-                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType.Value));
-            }
+                objType = ResolveType(attrType.Value);
 
             if (TryDeserializeObject(objType, content, null, out var result))
                 return result;
@@ -99,7 +152,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes inner content of an object or collection.
         /// </summary>
-        public static void DeserializeContent(XElement parent, object obj)
+        internal void DeserializeContent(XElement parent, object obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
@@ -151,7 +204,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
         /// </summary>
-        private static object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
+        private object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
         {
             IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
             var members = new Dictionary<MemberInfo, object?>();
@@ -165,7 +218,7 @@ namespace KGySoft.Serialization.Xml
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/>&#160;only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private static void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
+        private void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {
             foreach (XElement memberOrItem in parent.Elements())
             {
@@ -215,11 +268,11 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private static bool TryDeserializeObject(Type? type, XElement element, object? existingInstance, out object? result)
+        private bool TryDeserializeObject(Type? type, XElement element, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
 
-            static bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
+            bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
                 {
@@ -228,26 +281,18 @@ namespace KGySoft.Serialization.Xml
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingKey);
                     XAttribute? xType = xItem.Attribute(XmlSerializer.AttributeType!);
-                    Type? keyType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
+                    Type keyType = xType != null ? ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
                     if (!TryDeserializeObject(keyType, xItem, null, out object? key))
-                    {
-                        if (xType != null && keyType == null)
-                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType!));
-                    }
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
 
                     // value
                     xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Value)!);
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingValue);
                     xType = xItem.Attribute(XmlSerializer.AttributeType!);
-                    Type? valueType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
+                    Type valueType = xType != null ? ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
                     if (!TryDeserializeObject(valueType, xItem, null, out object? value))
-                    {
-                        if (xType != null && valueType == null)
-                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType!));
-                    }
+                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
 
                     ctx.Result = Activator.CreateInstance(ctx.Type)!;
                     Accessors.SetKeyValue(ctx.Result, key, value);
@@ -257,10 +302,13 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
-            static void DeserializeBinary(ref TryDeserializeObjectContext ctx)
+            void DeserializeBinary(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Element.IsEmpty)
                     return;
+                if (SafeMode)
+                    Throw.InvalidOperationException(Res.XmlSerializationBinarySerializerSafe);
+
                 byte[] data = Convert.FromBase64String(ctx.Element.Value);
                 XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
                 if (attrCrc != null)
@@ -272,7 +320,7 @@ namespace KGySoft.Serialization.Xml
                 ctx.Result = BinarySerializer.Deserialize(data);
             }
 
-            static bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
+            bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type == null || ctx.Element.IsEmpty)
                     return false;
@@ -408,24 +456,10 @@ namespace KGySoft.Serialization.Xml
             return false;
         }
 
-        [SecuritySafeCritical]
-        private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
-        {
-            byte[] data = Convert.FromBase64String(ctx.Element.Value);
-            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
-            if (attrCrc != null)
-            {
-                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
-                    Throw.ArgumentException(Res.XmlSerializationCrcError);
-            }
-
-            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
-        }
-
         /// <summary>
         /// Array deserialization, XElement version
         /// </summary>
-        private static Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
+        private Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
             if (array == null && elementType == null)
                 Throw.ArgumentNullException(Argument.elementType);
@@ -471,7 +505,7 @@ namespace KGySoft.Serialization.Xml
                 Type? itemType = null;
                 XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType!);
                 if (attrType != null)
-                    itemType = Reflector.ResolveType(attrType.Value);
+                    itemType = ResolveType(attrType.Value);
                 if (itemType == null)
                     itemType = elementType;
 
@@ -495,35 +529,7 @@ namespace KGySoft.Serialization.Xml
             return array;
         }
 
-        private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XContainer parent)
-        {
-            XElement? content = parent.Elements().FirstOrDefault();
-            if (content == null)
-                Throw.ArgumentException(Res.XmlSerializationNoContent(xmlSerializable.GetType()));
-            using (XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
-            {
-                ConformanceLevel = ConformanceLevel.Fragment,
-                IgnoreWhitespace = true,
-                CloseInput = true
-            }))
-            {
-                xr.Read();
-
-                // passing the reader to the object to read itself
-                xmlSerializable.ReadXml(xr);
-            }
-        }
-
-        private static string? ReadStringValue(XElement element)
-        {
-            if (element.IsEmpty)
-                return null;
-
-            XAttribute? attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped!);
-            return attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue
-                ? element.Value
-                : Unescape(element.Value);
-        }
+        #endregion
 
         #endregion
 

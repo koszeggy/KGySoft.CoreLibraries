@@ -49,6 +49,13 @@ namespace KGySoft.Serialization.Xml
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
     /// are supported (except <see cref="XmlRootAttribute"/> for the root element of <see cref="IXmlSerializable"/> implementations). Instead, this class is
     /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
+    /// <note type="security"><para>This <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
+    /// type of the stored instance. If the XML content to deserialize is from an untrusted source it is recommended to use the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
+    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods for deserialization to prevent loading assemblies during the deserialization.</para>
+    /// <para>In safe mode you must preload every assembly that are referred in the XML content. Additionally, in safe mode an <see cref="InvalidOperationException"/> is thrown for content
+    /// that is serialized by <see cref="BinarySerializationFormatter"/> (see the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option)
+    /// because while the binary serializer also has a <see cref="BinarySerializationOptions.SafeMode"/>, it does not automatically eliminate all possible threats, especially when targeting the .NET Framework.</para>
+    /// </note>
     /// </para>
     /// <para>Several <a href="https://msdn.microsoft.com/en-us/library/System.ComponentModel.aspx" target="_blank">System.ComponentModel</a> techniques are supported,
     /// which also makes possible to use the <see cref="XmlSerializer"/> for types that can be edited in a property grid, such as components, configurations or any types in a custom designer.
@@ -368,7 +375,7 @@ namespace KGySoft.Serialization.Xml
 
         /// <summary>
         /// Deserializes an XML content to an object.
-        /// Works for results of <see cref="Serialize(object,XmlSerializationOptions)"/> method.
+        /// Works for the results of the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
         /// <returns>The deserialized object.</returns>
@@ -376,7 +383,21 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
-        public static object? Deserialize(XElement content) => XElementDeserializer.Deserialize(content);
+        public static object? Deserialize(XElement content) => new XElementDeserializer(false).Deserialize(content);
+
+        /// <summary>
+        /// Deserializes an XML content to an object in safe mode.
+        /// Works for the results of the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="content">XML content of the object.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        public static object? DeserializeSafe(XElement content) => new XElementDeserializer(true).Deserialize(content);
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
@@ -393,7 +414,26 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        public static object? Deserialize(XmlReader reader) => XmlReaderDeserializer.Deserialize(reader);
+        public static object? Deserialize(XmlReader reader) => new XmlReaderDeserializer(false).Deserialize(reader);
+
+        /// <summary>
+        /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for deserialization.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <remarks>
+        /// <note>
+        /// The <paramref name="reader"/> position must be <em>before</em> the content to deserialize.
+        /// </note>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static object? DeserializeSafe(XmlReader reader) => new XmlReaderDeserializer(true).Deserialize(reader);
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
@@ -428,6 +468,40 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
+        /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for deserialization. The reader is not closed after deserialization.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+#if NET35
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
+#endif
+        public static object? DeserializeSafe(TextReader reader)
+        {
+            if (reader == null!)
+                Throw.ArgumentNullException(Argument.reader);
+
+            // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
+            XmlTextReader xmlReader = new XmlTextReader(reader)
+            {
+                WhitespaceHandling = WhitespaceHandling.Significant,
+                Normalization = false,
+                XmlResolver = null,
+#if !NET35
+                DtdProcessing = DtdProcessing.Prohibit
+#endif
+            };
+
+            return DeserializeSafe(xmlReader);
+        }
+
+        /// <summary>
         /// Deserializes an object from the specified file passed in <paramref name="fileName"/> parameter.
         /// </summary>
         /// <param name="fileName">Name of the file that contains the serialized content.</param>
@@ -457,6 +531,41 @@ namespace KGySoft.Serialization.Xml
             })
             {
                 return Deserialize(xmlReader);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes an object from the specified file passed in <paramref name="fileName"/> parameter.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="fileName">Name of the file that contains the serialized content.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+#if NET35
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
+#endif
+        public static object? DeserializeSafe(string fileName)
+        {
+            if (fileName == null!)
+                Throw.ArgumentNullException(Argument.fileName);
+
+            // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
+            using (var xmlReader = new XmlTextReader(fileName)
+            {
+                WhitespaceHandling = WhitespaceHandling.Significant,
+                Normalization = false,
+                XmlResolver = null,
+#if !NET35
+                DtdProcessing = DtdProcessing.Prohibit
+#endif
+            })
+            {
+                return DeserializeSafe(xmlReader);
             }
         }
 
@@ -498,8 +607,40 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
+        /// Deserializes an object from the provided <see cref="Stream"/> in <paramref name="stream"/> parameter.
+        /// </summary>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for deserialization. The stream is not closed after deserialization.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+#if NET35
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
+#endif
+        public static object? DeserializeSafe(Stream stream)
+        {
+            if (stream == null!)
+                Throw.ArgumentNullException(Argument.stream);
+
+            XmlTextReader xmlReader = new XmlTextReader(stream)
+            {
+                WhitespaceHandling = WhitespaceHandling.Significant,
+                Normalization = false,
+                XmlResolver = null,
+#if !NET35
+                DtdProcessing = DtdProcessing.Prohibit
+#endif
+            };
+
+            return DeserializeSafe(xmlReader);
+        }
+
+        /// <summary>
         /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for results of <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> and other <c>SerializeContent</c> overloads.
+        /// Works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="content">XML content of the object.</param>
@@ -508,11 +649,26 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
-        public static void DeserializeContent(XElement content, object obj) => XElementDeserializer.DeserializeContent(content, obj);
+        public static void DeserializeContent(XElement content, object obj) => new XElementDeserializer(false).DeserializeContent(content, obj);
 
         /// <summary>
         /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for results of <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> and other <c>SerializeContent</c> overloads.
+        /// Works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="content">XML content of the object.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        public static void DeserializeContentSafe(XElement content, object obj) => new XElementDeserializer(true).DeserializeContent(content, obj);
+
+        /// <summary>
+        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
+        /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. Reader must be in at correct position for the successful deserialization.</param>
@@ -521,7 +677,22 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
-        public static void DeserializeContent(XmlReader reader, object obj) => XmlReaderDeserializer.DeserializeContent(reader, obj);
+        public static void DeserializeContent(XmlReader reader, object obj) => new XmlReaderDeserializer(false).DeserializeContent(reader, obj);
+
+        /// <summary>
+        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
+        /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. Reader must be in at correct position for the successful deserialization.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static void DeserializeContentSafe(XmlReader reader, object obj) => new XmlReaderDeserializer(true).DeserializeContent(reader, obj);
 
         #endregion
     }

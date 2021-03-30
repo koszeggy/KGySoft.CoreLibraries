@@ -41,7 +41,7 @@ namespace KGySoft.Serialization.Xml
     /// XmlReader version of XML deserialization.
     /// Actually a static class with base types - hence marked as abstract. Unlike on serialization no fields are used so no instance is needed.
     /// </summary>
-    internal abstract class XmlReaderDeserializer : XmlDeserializerBase
+    internal class XmlReaderDeserializer : XmlDeserializerBase
     {
         #region TryDeserializeObjectContext Struct
 
@@ -59,14 +59,102 @@ namespace KGySoft.Serialization.Xml
 
         #endregion
 
+        #region Constructors
+
+        internal XmlReaderDeserializer(bool safeMode) : base(safeMode)
+        {
+        }
+
+        #endregion
+
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
+
+        [SecuritySafeCritical]
+        private static void DeserializeStructBinary(ref TryDeserializeObjectContext context)
+        {
+            string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
+            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
+            byte[] data = context.Reader.NodeType == XmlNodeType.Text
+                ? Convert.FromBase64String(context.Reader.Value)
+                : Reflector.EmptyArray<byte>();
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
+                    Throw.ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            context.Result = BinarySerializer.DeserializeValueType(context.Type!, data);
+            if (data.Length > 0)
+                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
+        }
+
+        private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XmlReader reader)
+        {
+            // to XmlRoot or type name
+            ReadToNodeType(reader, XmlNodeType.Element);
+
+            // passing the reader to the object to read itself
+            xmlSerializable.ReadXml(reader);
+
+            // to end of XmlRoot or type name
+            ReadToNodeType(reader, XmlNodeType.EndElement);
+        }
+
+        /// <summary>
+        /// Reads a string from XmlReader.
+        /// At start, reader is in container element, at the end in the end element.
+        /// </summary>
+        private static string? ReadStringValue(XmlReader reader)
+        {
+            // empty: remaining in element position and returning null
+            if (reader.IsEmptyElement)
+                return null;
+
+            bool escaped = reader[XmlSerializer.AttributeEscaped] == XmlSerializer.AttributeValueTrue;
+
+            // non-empty: reading to en element and returning content
+            StringBuilder result = new StringBuilder();
+            do
+            {
+                reader.Read();
+                if (reader.NodeType.In(XmlNodeType.Text, XmlNodeType.SignificantWhitespace, XmlNodeType.EntityReference, XmlNodeType.Whitespace))
+                    result.Append(reader.Value);
+            }
+            while (reader.NodeType != XmlNodeType.EndElement);
+
+            return escaped ? Unescape(result.ToString()) : result.ToString();
+        }
+
+        private static void ReadToNodeType(XmlReader reader, params XmlNodeType[] nodeTypes)
+        {
+            do
+            {
+                if (!reader.Read())
+                    Throw.ArgumentException(Res.XmlSerializationUnexpectedEnd);
+
+                if (reader.NodeType.In(nodeTypes))
+                    return;
+
+                if (reader.NodeType.In(XmlNodeType.Whitespace, XmlNodeType.Comment, XmlNodeType.XmlDeclaration))
+                    continue;
+
+                Throw.ArgumentException(Res.XmlSerializationUnexpectedElement(Enum<XmlNodeType>.ToString(reader.NodeType)));
+            }
+            while (true);
+        }
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Internal Methods
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
         /// </summary>
-        public static object? Deserialize(XmlReader reader)
+        internal object? Deserialize(XmlReader reader)
         {
             if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
@@ -81,11 +169,7 @@ namespace KGySoft.Serialization.Xml
             string? attrType = reader[XmlSerializer.AttributeType];
             Type? objType = null;
             if (attrType != null)
-            {
-                objType = Reflector.ResolveType(attrType);
-                if (objType == null)
-                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-            }
+                objType = ResolveType(attrType);
 
             if (TryDeserializeObject(objType, reader, null, out var result))
                 return result;
@@ -99,7 +183,7 @@ namespace KGySoft.Serialization.Xml
         /// Deserializes an object or collection of objects.
         /// Position is before content (on parent start element). On exit position is in parent close element.
         /// </summary>
-        public static void DeserializeContent(XmlReader reader, object obj)
+        public void DeserializeContent(XmlReader reader, object obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
@@ -151,7 +235,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
         /// </summary>
-        private static object DeserializeContentByInitializerCollection(XmlReader reader, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
+        private object DeserializeContentByInitializerCollection(XmlReader reader, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
         {
             IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
             var members = new Dictionary<MemberInfo, object?>();
@@ -165,7 +249,7 @@ namespace KGySoft.Serialization.Xml
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/>&#160;only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private static void DeserializeMembersAndElements(XmlReader reader, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
+        private void DeserializeMembersAndElements(XmlReader reader, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {
             while (true)
             {
@@ -226,11 +310,11 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private static bool TryDeserializeObject(Type? type, XmlReader reader, object? existingInstance, out object? result)
+        private bool TryDeserializeObject(Type? type, XmlReader reader, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
 
-            static bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
+            bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) != true)
                     return false;
@@ -254,13 +338,9 @@ namespace KGySoft.Serialization.Xml
 
                                     keyRead = true;
                                     string? attrType = ctx.Reader[XmlSerializer.AttributeType];
-                                    Type? keyType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[0];
+                                    Type keyType = attrType != null ? ResolveType(attrType) : ctx.Type.GetGenericArguments()[0];
                                     if (!TryDeserializeObject(keyType, ctx.Reader, null, out key))
-                                    {
-                                        if (attrType != null && keyType == null)
-                                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType!));
-                                    }
+                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
                                     break;
 
                                 case nameof(KeyValuePair<_, _>.Value):
@@ -269,13 +349,9 @@ namespace KGySoft.Serialization.Xml
 
                                     valueRead = true;
                                     attrType = ctx.Reader[XmlSerializer.AttributeType];
-                                    Type? valueType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[1];
+                                    Type valueType = attrType != null ? ResolveType(attrType) : ctx.Type.GetGenericArguments()[1];
                                     if (!TryDeserializeObject(valueType, ctx.Reader, null, out value))
-                                    {
-                                        if (attrType != null && valueType == null)
-                                            Throw.ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType!));
-                                    }
+                                        Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
                                     break;
 
                                 default:
@@ -298,10 +374,12 @@ namespace KGySoft.Serialization.Xml
                 }
             }
 
-            static void DeserializeBinary(ref TryDeserializeObjectContext ctx)
+            void DeserializeBinary(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Reader.IsEmptyElement)
                     return;
+                if (SafeMode)
+                    Throw.InvalidOperationException(Res.XmlSerializationBinarySerializerSafe);
 
                 string? attrCrc = ctx.Reader[XmlSerializer.AttributeCrc];
                 ReadToNodeType(ctx.Reader, XmlNodeType.Text);
@@ -316,7 +394,7 @@ namespace KGySoft.Serialization.Xml
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 
-            static bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
+            bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type == null || ctx.Reader.IsEmptyElement)
                     return false;
@@ -452,31 +530,12 @@ namespace KGySoft.Serialization.Xml
             return false;
         }
 
-        [SecuritySafeCritical]
-        private static void DeserializeStructBinary(ref TryDeserializeObjectContext context)
-        {
-            string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
-            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
-            byte[] data = context.Reader.NodeType == XmlNodeType.Text
-                ? Convert.FromBase64String(context.Reader.Value)
-                : Reflector.EmptyArray<byte>();
-            if (attrCrc != null)
-            {
-                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                    Throw.ArgumentException(Res.XmlSerializationCrcError);
-            }
-
-            context.Result = BinarySerializer.DeserializeValueType(context.Type!, data);
-            if (data.Length > 0)
-                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
-        }
-
         /// <summary>
         /// Array deserialization
         /// XmlReader version. Position is before content (on parent start element). On exit position is on parent close element.
         /// Parent is not empty here.
         /// </summary>
-        private static Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
+        private Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
         {
             if (array == null && elementType == null)
                 Throw.ArgumentNullException(Argument.elementType);
@@ -529,7 +588,7 @@ namespace KGySoft.Serialization.Xml
                             Type? itemType = null;
                             string? attrType = reader[XmlSerializer.AttributeType];
                             if (attrType != null)
-                                itemType = Reflector.ResolveType(attrType);
+                                itemType = ResolveType(attrType);
                             if (itemType == null)
                                 itemType = elementType;
 
@@ -564,60 +623,7 @@ namespace KGySoft.Serialization.Xml
             while (true);
         }
 
-        private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XmlReader reader)
-        {
-            // to XmlRoot or type name
-            ReadToNodeType(reader, XmlNodeType.Element);
-
-            // passing the reader to the object to read itself
-            xmlSerializable.ReadXml(reader);
-
-            // to end of XmlRoot or type name
-            ReadToNodeType(reader, XmlNodeType.EndElement);
-        }
-
-        /// <summary>
-        /// Reads a string from XmlReader.
-        /// At start, reader is in container element, at the end in the end element.
-        /// </summary>
-        private static string? ReadStringValue(XmlReader reader)
-        {
-            // empty: remaining in element position and returning null
-            if (reader.IsEmptyElement)
-                return null;
-
-            bool escaped = reader[XmlSerializer.AttributeEscaped] == XmlSerializer.AttributeValueTrue;
-
-            // non-empty: reading to en element and returning content
-            StringBuilder result = new StringBuilder();
-            do
-            {
-                reader.Read();
-                if (reader.NodeType.In(XmlNodeType.Text, XmlNodeType.SignificantWhitespace, XmlNodeType.EntityReference, XmlNodeType.Whitespace))
-                    result.Append(reader.Value);
-            }
-            while (reader.NodeType != XmlNodeType.EndElement);
-
-            return escaped ? Unescape(result.ToString()) : result.ToString();
-        }
-
-        private static void ReadToNodeType(XmlReader reader, params XmlNodeType[] nodeTypes)
-        {
-            do
-            {
-                if (!reader.Read())
-                    Throw.ArgumentException(Res.XmlSerializationUnexpectedEnd);
-
-                if (reader.NodeType.In(nodeTypes))
-                    return;
-
-                if (reader.NodeType.In(XmlNodeType.Whitespace, XmlNodeType.Comment, XmlNodeType.XmlDeclaration))
-                    continue;
-
-                Throw.ArgumentException(Res.XmlSerializationUnexpectedElement(Enum<XmlNodeType>.ToString(reader.NodeType)));
-            }
-            while (true);
-        }
+        #endregion
 
         #endregion
 
