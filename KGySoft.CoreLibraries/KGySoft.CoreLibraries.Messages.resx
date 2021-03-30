@@ -619,6 +619,10 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_SetStructPropertyNetStandard20Format" xml:space="preserve">
     <value>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>
+  <data name="BinarySerialization_CannotResolveAssemblySafeFormat" xml:space="preserve">
+    <value>Cannot resolve assembly in safe mode: "{0}".
+You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
+  </data>
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type name "{0}".</value>
   </data>

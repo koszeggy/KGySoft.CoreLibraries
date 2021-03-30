@@ -111,6 +111,14 @@ namespace KGySoft.Serialization.Binary
     /// field values (including private ones), which can change from version to version. Therefore, binary serialization is recommended only for in-process purposes,
     /// such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
+    /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
+    /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
+    /// loading assemblies during the deserialization. When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly manually that are referred by the serialization stream.</para>
+    /// <para>Please note though that even some system types can be dangerous. For example, in .NET Framework the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.codedom.compiler.tempfilecollection" target="_blank">TempFileCollection</a>
+    /// class resides in <c>System.dll</c>. A prepared stream that uses this type can be used to delete files when the instance is garbage collected. Starting with .NET Core this type
+    /// has been moved into a separate NuGet package, which means that <see cref="BinarySerializationOptions.SafeMode"/> can protect you against such an attack in .NET Core and above but not in .NET Framework.</para>
+    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/> instance that uses strict mapping.
+    /// For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
@@ -858,7 +866,7 @@ namespace KGySoft.Serialization.Binary
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
-            = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(t => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
+            = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
 
         // including string and the abstract enum and array types
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
@@ -976,7 +984,7 @@ namespace KGySoft.Serialization.Binary
         /// then the binder is called for the non-primitive natively supported types.</para>
         /// <para>This formatter does not call the binder types that have element types, for constructed generic types and generic parameter types.
         /// Instead, the binder is called only for the element types, the generic type definition and the generic arguments separately.</para>
-        /// <note>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
+        /// <note>In .NET Framework 3.5 setting this property has no effect during serialization unless the binder implements
         /// the <see cref="ISerializationBinder"/> interface.</note>
         /// <note type="tip">If you serialize forwarded types that have no defined forwarding by the <see cref="TypeForwardedToAttribute"/> and <see cref="TypeForwardedFromAttribute"/>
         /// attributes, then to ensure emitting compatible assembly identities on different .NET platforms use the <see cref="ForwardedTypesSerializationBinder"/>,

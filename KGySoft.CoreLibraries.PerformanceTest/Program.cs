@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using KGySoft.CoreLibraries.PerformanceTests.CoreLibraries;
 #if NETCOREAPP
 using System.IO;
 #elif !NETFRAMEWORK

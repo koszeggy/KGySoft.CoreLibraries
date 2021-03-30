@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ObservableCollection{T}" />
     /// <seealso cref="IBindingList" />
     /// <remarks>
-    /// <note>In NET 3.5 this class is not available because it would require to reference <c>System.WindowsBase.dll</c>.</note>
+    /// <note>In NET Framework 3.5 this class is not available because it would require to reference <c>System.WindowsBase.dll</c>.</note>
     /// <para>The <see cref="ObservableBindingList{T}"/> can be used in any environment where either <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> (mainly <see cref="ObservableCollection{T}"/>) types are supported.</para>
     /// <para>If initialized by another <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> implementations, the <see cref="ObservableBindingList{T}"/> will capture and delegate also the events of the inner collections.</para>
     /// <para>If the <see cref="ObservableBindingList{T}"/> is initialized by the default constructor it will use a <see cref="SortableBindingList{T}"/> inside.</para>

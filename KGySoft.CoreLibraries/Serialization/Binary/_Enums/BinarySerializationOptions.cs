@@ -167,9 +167,15 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>If this flag is enabled, then no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
         /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
+        /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core assemblies
+        /// such as <c>mscorlib.dll</c>, <c>System.dll</c>, <c>System.Core.dll</c>, etc., which contain only type forwards on recent .NET platforms.
+        /// You can avoid this if the stream was serialized with the <see cref="IgnoreTypeForwardedFromAttribute"/> option (so every non-natively supported type
+        /// was serialized with its actual identity), or with the <see cref="OmitAssemblyQualifiedNames"/> option (so types can be located in any already loaded assembly).</para>
         /// <note>In safe mode no version mismatch is tolerated even for system assemblies. If you want to deserialize a stream in safe mode that contains
         /// different assembly identities to the loaded ones, then use <see cref="WeakAssemblySerializationBinder"/> instead, and set
         /// its <see cref="WeakAssemblySerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
+        /// <note type="security">Please note that even enabling this flag may not prevent every possible attacks, especially when targeting the .NET Framework.
+        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>

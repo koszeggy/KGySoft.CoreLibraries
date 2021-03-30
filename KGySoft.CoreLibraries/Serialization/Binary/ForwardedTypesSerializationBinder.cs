@@ -138,7 +138,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
-        /// <note>In .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
+        /// <note>In Framework .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
         /// value of this property. <see cref="BinarySerializationFormatter"/> is able to use the <see cref="ForwardedTypesSerializationBinder"/>
         /// as an <see cref="ISerializationBinder"/> implementation and consider the value of this property even in .NET 3.5.</note>
         /// <para>If the value of this property is <see langword="true"/>, then on serialization a legacy identity is tried to be written for the serialized type.
@@ -240,7 +240,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/>&#160;when this method returns, then contains the full name of the <paramref name="serializedType"/>,
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
-        /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
+        /// <note>In .NET Framework 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
         /// serializer handles the <see cref="ISerializationBinder"/> interface or calls it directly.</note>
         /// </remarks>
 #if !NET35

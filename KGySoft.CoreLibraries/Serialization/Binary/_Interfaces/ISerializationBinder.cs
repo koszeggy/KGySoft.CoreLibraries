@@ -29,7 +29,7 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <para>Provides the same functionality as the <see cref="SerializationBinder"/> class but makes the
-    /// <see cref="BindToName">BindToName</see> method available also in .NET 3.5.</para>
+    /// <see cref="BindToName">BindToName</see> method available also in .NET Framework 3.5.</para>
     /// <para>If a binder class is used in <see cref="BinarySerializationFormatter"/> and the class is derived from <see cref="SerializationBinder"/> and implements
     /// this interface, then the <see cref="BinarySerializationFormatter"/> class is able to bind a <see cref="Type"/> in both directions even in .NET 3.5</para>
     /// </remarks>

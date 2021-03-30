@@ -598,6 +598,10 @@ namespace KGySoft
         /// <summary>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</summary>
         internal static string BinarySerializationReadOnlyCollectionNotSupported(string dataType) => Get("BinarySerialization_ReadOnlyCollectionNotSupportedFormat", dataType);
 
+        /// <summary>Cannot resolve assembly in safe mode: "{0}".
+        /// You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</summary>
+        internal static string BinarySerializationCannotResolveAssemblySafe(string name) => Get("BinarySerialization_CannotResolveAssemblySafeFormat", name);
+
         /// <summary>Could not resolve type name "{0}".</summary>
         internal static string BinarySerializationCannotResolveType(string dataType) => Get("BinarySerialization_CannotResolveTypeFormat", dataType);
 

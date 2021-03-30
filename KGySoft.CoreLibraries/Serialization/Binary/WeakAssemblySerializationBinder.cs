@@ -69,7 +69,7 @@ namespace KGySoft.Serialization.Binary
         /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>In .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
+        /// <note>In .NET Framework 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
         /// value of this property. <see cref="BinarySerializationFormatter"/> is able to use the <see cref="WeakAssemblySerializationBinder"/>
         /// as an <see cref="ISerializationBinder"/> implementation and consider the value of this property even in .NET 3.5.</note>
         /// <note>The value of this property is used only on serialization; however, it affects deserialization as well:
@@ -124,7 +124,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="typeName">If <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, then returns the full name of the type without assembly information;
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
-        /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
+        /// <note>In .NET Framework 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
         /// serializer handles the <see cref="ISerializationBinder"/> interface or calls it directly.</note>
         /// </remarks>
 #if !NET35
