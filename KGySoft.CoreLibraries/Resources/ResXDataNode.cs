@@ -1381,7 +1381,7 @@ namespace KGySoft.Resources
 
             // 1.) Native type - type converter is slower and will not convert negative zeros, for example.
             if (type.CanBeParsedNatively())
-                return valueData.Parse(type) ?? ResXNullRef.Value;
+                return valueData.Parse(type, safeMode) ?? ResXNullRef.Value;
 
             // 2.) null
             if (type == typeof(ResXNullRef))

@@ -583,7 +583,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     typeof(int[,]), // multi-dim array
                     typeof(int[][,]), // mixed jagged array
                     Array.CreateInstance(typeof(int), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
-                    typeof(List<>).GetGenericArguments()[0] // this can be only binary serialized  
+                    typeof(List<>).GetGenericArguments()[0] // generic type parameter
                 };
 
 #if NETFRAMEWORK

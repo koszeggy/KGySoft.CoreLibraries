@@ -460,7 +460,7 @@ namespace KGySoft.Serialization.Xml
             if (type != null && type.CanBeParsedNatively())
             {
                 string? value = ReadStringValue(reader);
-                result = value.Parse(type);
+                result = value.Parse(type, SafeMode);
                 return true;
             }
 

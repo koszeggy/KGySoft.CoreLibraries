@@ -406,7 +406,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object? Parse(this ReadOnlySpan<char> s, Type type, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
+            if (!Parser.TryParse(s, type, culture, true, false, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, type), error);
             return value;
         }
@@ -453,7 +453,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, CultureInfo culture, out object? value)
-            => Parser.TryParse(s, type, culture, true, out value, out var _);
+            => Parser.TryParse(s, type, culture, true, false, out value, out var _);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value.
@@ -468,7 +468,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, out object? value)
-            => Parser.TryParse(s, type, null, true, out value, out var _);
+            => Parser.TryParse(s, type, null, true, false, out value, out var _);
 
         #endregion
 

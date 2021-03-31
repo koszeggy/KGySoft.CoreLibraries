@@ -88,7 +88,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, out object? value, out Exception? error)
+            internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, bool safeMode, out object? value, out Exception? error)
             {
                 if (type == null)
                     Throw.ArgumentNullException(Argument.type);
@@ -131,7 +131,10 @@ namespace KGySoft.CoreLibraries
 #endif
                     ))
                     {
-                        value = Reflector.ResolveType(s.ToString());
+                        var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+                        if (!safeMode)
+                            options |= ResolveTypeOptions.TryToLoadAssemblies;
+                        value = Reflector.ResolveType(s.ToString(), options);
                         return value != null;
                     }
 
@@ -179,7 +182,7 @@ namespace KGySoft.CoreLibraries
                     return true;
 
                 // The slow path: for value types boxing will occur
-                if (!TryParse(s, type, culture, false, out object? result, out error) || !type.CanAcceptValue(result))
+                if (!TryParse(s, type, culture, false, false, out object? result, out error) || !type.CanAcceptValue(result))
                 {
                     value = default;
                     return false;
