@@ -115,10 +115,14 @@ namespace KGySoft.Serialization.Binary
     /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
     /// loading assemblies during the deserialization. When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly manually that are referred by the serialization stream.</para>
     /// <para>Please note though that even some system types can be dangerous. For example, in .NET Framework the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.codedom.compiler.tempfilecollection" target="_blank">TempFileCollection</a>
-    /// class resides in <c>System.dll</c>. A prepared stream that uses this type can be used to delete files when the instance is garbage collected. Starting with .NET Core this type
-    /// has been moved into a separate NuGet package, which means that <see cref="BinarySerializationOptions.SafeMode"/> can protect you against such an attack in .NET Core and above but not in .NET Framework.</para>
+    /// class resides in <c>System.dll</c>. A prepared stream that refers this type can be used to delete files when the instance is garbage collected. Starting with .NET Core this type
+    /// has been moved into a separate NuGet package, which means that <see cref="BinarySerializationOptions.SafeMode"/> can protect you against such an attack in .NET Core and above but not in the .NET Framework.</para>
     /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/> instance that uses strict mapping.
-    /// For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para></note>
+    /// For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
+    /// <para>Please also note that if the <see cref="Binder"/> is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
+    /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
+    /// type resolving, such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
+    /// Make sure to set them to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
@@ -991,6 +995,11 @@ namespace KGySoft.Serialization.Binary
         /// define the missing mappings by the <see cref="ForwardedTypesSerializationBinder.AddType">AddType</see> method and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
         /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
         /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
+        /// <note type="security"><para>If you use binders for deserialization, then setting the <see cref="BinarySerializationOptions.SafeMode"/> flag in the <see cref="Options"/>
+        /// cannot prevent loading assemblies by the binder itself. The binders in this library that can perform automatic type resolving,
+        /// such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
+        /// Make sure to set them to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+        /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
         /// </remarks>
         public SerializationBinder? Binder { get; set; }
 

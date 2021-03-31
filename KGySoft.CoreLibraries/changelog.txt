@@ -101,8 +101,11 @@ MOST IMPORTANT CHANGES: Safe deserialization support (BinarySerializationFormatt
     IResourceWriter interface.
   * AddMetadata(string, byte[]) method: allowing null array to be conform with AddResource(string, byte[]).
 
-+ KGySoft.Serialization.Binary namespace:
+! KGySoft.Serialization.Binary namespace:
 =========================================
+! AnyObjectSerializerWrapper class:
+  ! When deserializing an AnyObjectSerializerWrapper instance is not allowed to automatically load assemblies
+    anymore. All assemblies that are involved must be preloaded before starting deserialization.
 + BinarySerializationOptions enum:
   + New SafeMode flag that can ensure that no assemblies are loaded during deserialization when using
     BinarySerializer and BinarySerializationFormatter classes.

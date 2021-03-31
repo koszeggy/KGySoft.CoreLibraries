@@ -43,20 +43,22 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// Provides a wrapper class for serializing any kind of object, including the ones
     /// that are not marked by the <see cref="SerializableAttribute"/>, or which are not supported by <see cref="BinaryFormatter"/>.
-    /// Can be useful when an object cannot be serialized by <see cref="BinarySerializationFormatter"/> so a <see cref="BinaryFormatter"/> must be used.
+    /// Can be useful when a <see cref="BinarySerializationFormatter"/> payload cannot be used, so a <see cref="BinaryFormatter"/>-compatible stream must be produced.
     /// When this object is deserialized, the clone of the wrapped original object is returned.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks><para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>
     /// <para>In .NET Framework this class supports serialization of remote objects, too.</para>
-    /// <note type="warning">
-    /// <para>This class cannot guarantee that an object serialized in a framework can be deserialized in another one.
+    /// <note type="warning"><para>This class cannot guarantee that an object serialized in one platform can be deserialized in another one.
     /// For such cases some text-based serialization might be better (see also the <see cref="XmlSerializer"/>).</para>
-    /// <para>In .NET Core the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
+    /// <para>In .NET Core and above the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
     /// For such cases setting the <c>forceSerializationByFields</c> in the constructor can be a solution.</para>
-    /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para>
-    /// </note>
+    /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para></note>
+    /// <note type="security"><para>When deserializing a stream that has an <see cref="AnyObjectSerializerWrapper"/> reference, it is ensured that no assemblies
+    /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
+    /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// </remarks>
     [Serializable]
     public sealed class AnyObjectSerializerWrapper : ISerializable, IObjectReference
@@ -99,9 +101,9 @@ namespace KGySoft.Serialization.Binary
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
             byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType)!;
-            var serializer = new BinarySerializationFormatter();
+            var serializer = new BinarySerializationFormatter(BinarySerializationOptions.SafeMode);
             if (info.GetBoolean(nameof(isWeak)))
-                serializer.Binder = new WeakAssemblySerializationBinder();
+                serializer.Binder = new WeakAssemblySerializationBinder { SafeMode = true };
             if (info.GetValueOrDefault<bool>(nameof(byFields)))
                 serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true };
             obj = serializer.Deserialize(rawData);
