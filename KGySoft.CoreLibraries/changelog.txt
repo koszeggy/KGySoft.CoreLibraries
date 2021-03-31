@@ -9,10 +9,12 @@
 ! v5.6.0:
 ~~~~~~~~~
 
+MOST IMPORTANT CHANGES: Safe deserialization support (BinarySerializationFormatter, XmlSerializer, ResXDataNode)
+
 ! Assembly changes:
 ===================
 ! The module initializer initializes the internal resources so configuring LanguageSettings from a consumer code
-  affects the configuration of the resources even if no actual resource was accessed before.
+  is able to configure the resources even if no actual resource was accessed before.
 * Members are annotated for using C# 8.0 nullable references
 
 + KGySoft namespace:
@@ -24,6 +26,7 @@
 ! ArraySection<T> struct:
   ! The indexer and the GetElementReference method do not allow out-of-range indices anymore, even if the underlying
     array is large enough.
+  ! Serialization saves the represented array only instead of the whole underlying array and offset/length.
   - AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
 + New ThreadSafeDictionary<TKey, TValue> class
 + New ThreadSafeCacheFactory class
@@ -60,14 +63,15 @@
 - TypeExtensions class:
   - IsImplementationOfGenericType method: fixing possible infinite loop
 + New DelegateExtensions class.
-+ DictionaryExtensions class: New TryAdd, TryUpdate, AddOrUpdate, GetOrAdd and TryRemove methods.
++ DictionaryExtensions class:
+  + New TryAdd, TryUpdate, AddOrUpdate, GetOrAdd and TryRemove methods.
 + New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
   the TrimEntries flag on every platform target.
 
 ! KGySoft.ComponentModel namespace:
 ===================================
 ! BinaryTypeConverter:
-  ! ConvertFrom method: using SafeMode to prevent loading assemblies during the conversion.
+  ! ConvertFrom method: using safe mode deserialization to prevent loading assemblies during the conversion.
 - FastBindingList<T>:
   - FindCore method: The default implementation could throw an ArgumentNullException if the binding list contained
     a null element.
@@ -100,9 +104,12 @@
 + KGySoft.Serialization.Binary namespace:
 =========================================
 + BinarySerializationOptions enum:
-  + New SafeMode flag that ensures that no assemblies are loaded during deserialization.
+  + New SafeMode flag that can ensure that no assemblies are loaded during deserialization when using
+    BinarySerializer and BinarySerializationFormatter classes.
++ ForwardedTypesSerializationBinder class:
+  + New SafeMode property that can ensure that no assemblies are loaded when resolving types by the fallback logic.
 + WeakAssemblySerializationBinder class:
-  + New SafeMode property that ensures that no assemblies are loaded when resolving types.
+  + New SafeMode property that can ensure that no assemblies are loaded when resolving types.
 
 + KGySoft.Serialization.Xml namespace:
 ======================================

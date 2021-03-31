@@ -45,11 +45,14 @@ namespace KGySoft.Serialization.Binary
     /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <remarks>
+    /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
+    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types by the fallback logic.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
     /// <para>To resolve types that are not forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
-    /// given identity use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
+    /// given identity you can use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
     /// <see cref="AddTypes">AddTypes</see> methods.</para>
     /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, then mapping works also on serialization.
     /// For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/> attribute will be written if it is defined.
@@ -117,6 +120,7 @@ namespace KGySoft.Serialization.Binary
     /// </example>
     /// <seealso cref="WeakAssemblySerializationBinder"/>
     /// <seealso cref="CustomSerializationBinder"/>
+    /// <seealso cref="BinarySerializationFormatter"/>
     public sealed class ForwardedTypesSerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Fields
@@ -147,6 +151,21 @@ namespace KGySoft.Serialization.Binary
         /// if it is specified for the type.</para>
         /// </remarks>
         public bool WriteLegacyIdentity { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether loading assemblies is prohibited on deserialization, when there is no rule specified for a type
+        /// and using default resolve logic.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, and there is no rule specified for a type, then it ensures that no assembly loading will occur when using the default type resolving logic.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
+        /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
+        /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
 
         #endregion
 
@@ -321,7 +340,22 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + "," + assemblyName;
-            return Reflector.ResolveType(fullName, ResolveType);
+            var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+            if (!SafeMode)
+                options |= ResolveTypeOptions.TryToLoadAssemblies;
+            Type? result = Reflector.ResolveType(fullName, ResolveType);
+
+            if (result == null)
+            {
+                string message = String.IsNullOrEmpty(assemblyName)
+                    ? Res.BinarySerializationCannotResolveType(typeName)
+                    : SafeMode
+                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+                Throw.SerializationException(message);
+            }
+
+            return result;
         }
 
         #endregion
@@ -329,7 +363,7 @@ namespace KGySoft.Serialization.Binary
         #region Private Methods
 
         #endregion
-       
+
         #endregion
     }
 }

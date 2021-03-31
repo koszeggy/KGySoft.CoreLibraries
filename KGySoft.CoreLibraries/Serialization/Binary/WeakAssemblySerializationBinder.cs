@@ -35,9 +35,10 @@ namespace KGySoft.Serialization.Binary
     /// property is <see langword="true"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <seealso cref="ForwardedTypesSerializationBinder"/>
-    /// <seealso cref="CustomSerializationBinder"/>
     /// <remarks>
+    /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
+    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <note>This binder does not use exact type mapping just tries to resolve type information automatically.
     /// To customize type mapping or use a custom resolve logic you can use the <see cref="ForwardedTypesSerializationBinder"/>
     /// or <see cref="CustomSerializationBinder"/> classes, respectively.</note>
@@ -51,6 +52,9 @@ namespace KGySoft.Serialization.Binary
     /// <para>If <see cref="WeakAssemblySerializationBinder"/> is used on serialization, then it can omit assembly information from the serialization stream
     /// if the <see cref="OmitAssemblyNameOnSerialize"/> property is <see langword="true"/>.</para>
     /// </remarks>
+    /// <seealso cref="ForwardedTypesSerializationBinder"/>
+    /// <seealso cref="CustomSerializationBinder"/>
+    /// <seealso cref="BinarySerializationFormatter"/>
     public sealed class WeakAssemblySerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Constants
@@ -104,7 +108,9 @@ namespace KGySoft.Serialization.Binary
         /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
         /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
         /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
         /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
         public bool SafeMode { get; set; }
 
         #endregion
