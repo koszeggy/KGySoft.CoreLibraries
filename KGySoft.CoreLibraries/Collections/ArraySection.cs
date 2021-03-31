@@ -22,12 +22,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Security;
 #if !(NETFRAMEWORK || NETSTANDARD2_0)
 using System.Buffers;
 #endif
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -69,7 +72,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
-    public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
+    public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>, ISerializable
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
@@ -302,6 +305,8 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
+        
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct using an internally allocated buffer.
@@ -384,6 +389,19 @@ namespace KGySoft.Collections
         public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
         {
         }
+
+        #endregion
+
+        #region Private Constructors
+
+        private ArraySection(SerializationInfo info, StreamingContext context) : this()
+        {
+            // deserialized instances never use array pool
+            array = info.GetValueOrDefault<T[]>(nameof(array));
+            length = array?.Length ?? 0;
+        }
+
+        #endregion
 
         #endregion
 
@@ -675,6 +693,13 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+        [SecurityCritical]
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            // as the underlying array and the offset is not exposed by public members serializing the represented array only
+            info.AddValue(nameof(array), length == 0 || length == array!.Length ? array : ToArray());
+        }
 
         #endregion
 
