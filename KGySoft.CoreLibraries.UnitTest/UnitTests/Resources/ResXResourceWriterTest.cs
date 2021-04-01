@@ -17,6 +17,7 @@
 #region Usings
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 using KGySoft.Drawing;
 
@@ -60,8 +61,6 @@ using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 #endregion
 
 #endregion
-
-#pragma warning disable 618
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
@@ -277,7 +276,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 #endif
 
-        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
+        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
         {
             Console.WriteLine($"------------------KGySoft ResXResourceWriter (Items Count: {referenceObjects.Length}; Compatibility mode: {compatibilityMode})--------------------");
             StringBuilder sb = new StringBuilder();
@@ -294,9 +293,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             List<object> deserializedObjects = new List<object>();
             using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
             {
+                reader.SafeMode = safeMode;
                 foreach (DictionaryEntry item in reader)
                 {
-                    deserializedObjects.Add(item.Value);
+                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe() : item.Value);
                 }
             }
 
@@ -375,9 +375,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     DBNull.Value,
                     new IntPtr(1),
                     new UIntPtr(1),
-#if !NETCOREAPP2_0 // in .NET Core throws PlatformNotSupportedException
-                    1.GetType(), // supported natively in non-compatible format
-#endif
                     new TimeSpan(1, 2, 3, 4, 5),
                 };
 
@@ -406,7 +403,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
                     BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
 
+#pragma warning disable 618
                     BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
+#pragma warning restore 618
                     (BinarySerializationOptions)(-1), // KGySoft.Libraries enum, non-existing value
 
                 };
@@ -588,9 +587,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects);
 #endif
-
-            KGySerializeObjects(referenceObjects); 
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -642,7 +640,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#else
+            // To be able to resolve Uri in safe mode
+            Reflector.ResolveAssembly("System");
 #endif
+
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
         }
@@ -695,13 +697,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
 
-            // system serializer fails here: cannot cast string[*] to object[]
+            // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
             referenceObjects = new[]
             {
                 Array.CreateInstance(typeof(string), new int[] { 3 }, new int[] { -1 }) // array with -1..1 index interval
             };
 
-            KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -759,6 +760,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
+
+#if !NETFRAMEWORK
+            // To be able to resolve HashSet in safe mode
+            Reflector.ResolveAssembly("System.Core");
+#endif
             KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing
             KGySerializeObjects(referenceObjects, false);
         }
@@ -766,15 +772,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeNonSerializableType()
         {
-            // - winforms.FileRef/ResXDataNode - valszeg külön teszt, mert az egyenlőség nem fog stimmelni
             object[] referenceObjects =
                 {
                     new NonSerializableClass(),
                 };
 
-            // SystemSerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, false);
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects));
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false));
+
+            KGySerializeObjects(referenceObjects, safeMode: false);
+            KGySerializeObjects(referenceObjects, false, safeMode: false);
         }
 
         [Test]
@@ -784,11 +791,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
+#pragma warning disable 618
                 // binary wrapper
                 new AnyObjectSerializerWrapper("test", false),
-                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false),
-                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false, true),
-
+#pragma warning restore 618
 #if NETFRAMEWORK
                 // legacy formats: KGy version converts these to self formats
                 new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName),
@@ -818,27 +824,44 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        public void SerializeMemoryStream()
+        {
+            // Starting with .NET Core it is not serializable anymore but still has to be supported even in safe mode
+            // to maintain compatibility (as even the VS designer embeds MemoryStream into .resx in some cases)
+            object[] referenceObjects =
+            {
+                new MemoryStream(new byte[] { 1, 2, 3 }),
+            };
+
+#if NETFRAMEWORK
+            SystemSerializeObjects(referenceObjects);
+#endif
+            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, false);
+        }
+
+        [Test]
         public void TestResXSerializationBinder()
         {
             // The ResXSerializationBinder is used during (de)serialization if there is a typeResolver/typeNameConverter for a BinaryFormatted type
-            object[] referenceObjects =
-                {
-                    DBNull.Value, // type name must not be set -> UnitySerializationHolder is used
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // '932 | Japanese (Shift-JIS)' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
-                    Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
-#endif
-                    CultureInfo.CurrentCulture, // special handling for culture info
-                    new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
-                    {
-                        new int[][,] { new int[,] { { 11, 12 }, { 21, 22 } } }
-                    }
-                };
-
             // ReSharper disable once ConvertToLocalFunction - it will be a delegate in the end when passed to the methods
 #pragma warning disable IDE0039 // Use local function
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
 #pragma warning restore IDE0039 // Use local function
             ITypeResolutionService typeResolver = new TestTypeResolver();
+
+            object[] referenceObjects =
+            {
+                DBNull.Value, // type name must not be set -> UnitySerializationHolder is used
+#if NETFRAMEWORK
+                //Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
+#endif
+                CultureInfo.CurrentCulture, // special handling for culture info
+                new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
+                {
+                    new int[][,] { new int[,] { { 11, 12 }, { 21, 22 } } }
+                }
+            };
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);

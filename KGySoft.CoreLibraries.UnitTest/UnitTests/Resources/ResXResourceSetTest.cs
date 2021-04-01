@@ -23,6 +23,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 #if NETFRAMEWORK
 using System.Windows.Forms; 
@@ -308,16 +309,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var rs = new ResXResourceSet();
             rs.SetObject("x", new NonSerializableClass { Prop = 1 });
 
+            // compatible format
             var sb = new StringBuilder();
             rs.Save(new StringWriter(sb), true);
-
             var rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
+            
+            rsCheck.SafeMode = true;
+            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe());
+
+            rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));
 
+            // non-compatible format
             sb = new StringBuilder();
             rs.Save(new StringWriter(sb), false);
-
             rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
+
+            rsCheck.SafeMode = true;
+            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe());
+
+            rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));
         }
 

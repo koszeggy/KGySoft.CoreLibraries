@@ -47,6 +47,17 @@ namespace KGySoft.Serialization.Binary
     /// When this object is deserialized, the clone of the wrapped original object is returned.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <note type="security">
+    /// <para>This type has been made obsolete because just from the payload to deserialize it cannot be determined whether the consumer formatter
+    /// is used in a safe context. Therefore <see cref="AnyObjectSerializerWrapper"/> deserialization uses safe mode,
+    /// which denies deserializing non-serializable types. It renders this type practically useless, but it was
+    /// meant for <see cref="BinaryFormatter"/> anyway, which is also being obsoleted in upcoming .NET versions. To serialize
+    /// non-serializable types you still can use <see cref="BinarySerializationFormatter"/>, which now supports <see cref="BinarySerializationOptions.SafeMode"/>,
+    /// which should be enabled when deserializing anything from an untrusted source.</para>
+    /// <para>When deserializing a stream that has an <see cref="AnyObjectSerializerWrapper"/> reference, it is ensured that no assemblies
+    /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
+    /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <remarks><para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>
     /// <para>In .NET Framework this class supports serialization of remote objects, too.</para>
@@ -55,12 +66,10 @@ namespace KGySoft.Serialization.Binary
     /// <para>In .NET Core and above the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
     /// For such cases setting the <c>forceSerializationByFields</c> in the constructor can be a solution.</para>
     /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para></note>
-    /// <note type="security"><para>When deserializing a stream that has an <see cref="AnyObjectSerializerWrapper"/> reference, it is ensured that no assemblies
-    /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
-    /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
-    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// </remarks>
     [Serializable]
+    [Obsolete("This type cannot be used anymore to make any type serializable by BinaryFormatter due to security reasons. " +
+        "Use BinarySerializationFormatter instead, whose entire deserialization can work in safe mode if needed.")]
     public sealed class AnyObjectSerializerWrapper : ISerializable, IObjectReference
     {
         #region Fields
@@ -105,7 +114,7 @@ namespace KGySoft.Serialization.Binary
             if (info.GetBoolean(nameof(isWeak)))
                 serializer.Binder = new WeakAssemblySerializationBinder { SafeMode = true };
             if (info.GetValueOrDefault<bool>(nameof(byFields)))
-                serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true };
+                serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, SafeMode = true };
             obj = serializer.Deserialize(rawData);
         }
 

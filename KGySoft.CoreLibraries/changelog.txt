@@ -103,16 +103,25 @@ MOST IMPORTANT CHANGES: Safe deserialization support (BinarySerializationFormatt
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================
-! AnyObjectSerializerWrapper class:
-  ! When deserializing an AnyObjectSerializerWrapper instance is not allowed to automatically load assemblies
-    anymore. All assemblies that are involved must be preloaded before starting deserialization.
 + BinarySerializationOptions enum:
   + New SafeMode flag that can ensure that no assemblies are loaded during deserialization when using
-    BinarySerializer and BinarySerializationFormatter classes.
+    BinarySerializer/BinarySerializationFormatter classes. It also prevents deserializing non-serializable types.
+! The AnyObjectSerializerWrapper class has been made obsolete:
+  ! As the safety context of the consumer formatter cannot be determined, AnyObjectSerializerWrapper deserialization
+    uses safe mode, which denies deserializing non-serializable types. It renders this type useless, though it was
+    meant for BinaryFormatter anyway, which is also being obsoleted in upcoming .NET versions. To serialize
+    non-serializable types you still can use BinarySerializationFormatter, which now supports SafeMode (see above),
+    which should be enabled when deserializing anything from an untrusted source.
 + ForwardedTypesSerializationBinder class:
   + New SafeMode property that can ensure that no assemblies are loaded when resolving types by the fallback logic.
 + WeakAssemblySerializationBinder class:
   + New SafeMode property that can ensure that no assemblies are loaded when resolving types.
++ CustomSerializerSurrogateSelector class:
+  + New IsTypeSupported property that can be assigned by a delegate to explicitly tell what types are supported.
+  + New SafeMode property that can ensure that non-serializable types are not serialized and deserialized if
+    the IsTypeSupported property is null.
++ NameInvariantSurrogateSelector class:
+  + New SafeMode property that can ensure that non-serializable types are not serialized and deserialized.
 
 + KGySoft.Serialization.Xml namespace:
 ======================================

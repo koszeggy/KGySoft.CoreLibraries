@@ -1224,8 +1224,11 @@ namespace KGySoft.Resources
 
                 using (var ms = new MemoryStream())
                 {
-                    bool wrap = !type.IsSerializable || type.IsArray && type.GetArrayRank() == 1 && !type.GetElementType()!.IsPrimitive && !type.GetInterfaces().Any(i => i.IsGenericType);
-                    binaryFormatter.Serialize(ms, wrap ? new AnyObjectSerializerWrapper(cachedValue, true) : cachedValue);
+                    // When serializing, we allow unsafe handling. On deserialization safe mode can be specified.
+                    // Known regression: AnyObjectSerializerWrapper used to be support non-zero based, non-primitive arrays in compatible mode
+                    if (!type.IsSerializable)
+                        binaryFormatter.SurrogateSelector = new CustomSerializerSurrogateSelector();
+                    binaryFormatter.Serialize(ms, cachedValue);
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
                 }
 
@@ -1433,9 +1436,15 @@ namespace KGySoft.Resources
             if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
             {
                 byte[] serializedData = FromBase64WrappedString(text);
+                using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
+#if !NETFRAMEWORK
+                // Supporting MemoryStream even where it is not serializable anymore
+                if (safeMode)
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || t.IsSerializable;
+#endif
                 var binaryFormatter = new BinaryFormatter
                 {
-                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    SurrogateSelector = surrogate,
                     Binder = typeResolver != null
                         ? new ResXSerializationBinder(typeResolver, safeMode)
                         : new WeakAssemblySerializationBinder { SafeMode = safeMode }
@@ -1496,9 +1505,15 @@ namespace KGySoft.Resources
             if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
             {
                 byte[] serializedData = FromBase64WrappedString(text);
-                var serializer = new BinarySerializationFormatter()
+                using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
+#if !NETFRAMEWORK
+                // Supporting MemoryStream even where it is not serializable anymore
+                if (safeMode)
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || t.IsSerializable;
+#endif
+                var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {
-                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    SurrogateSelector = surrogate,
                     Binder = typeResolver != null
                         ? new ResXSerializationBinder(typeResolver, safeMode)
                         : new WeakAssemblySerializationBinder { SafeMode = safeMode }
