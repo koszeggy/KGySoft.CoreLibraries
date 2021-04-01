@@ -17,6 +17,10 @@
 #region Usings
 
 using System;
+#if NETFRAMEWORK
+using System.CodeDom.Compiler;
+using System.Collections;
+#endif
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -45,6 +49,19 @@ namespace KGySoft.Serialization.Binary
 
         internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures;
 
+        #endregion
+
+        #region Fields
+#if NETFRAMEWORK
+
+        private static readonly Type[] unsafeTypes =
+        {
+            typeof(TempFileCollection),
+            StructuralComparisons.StructuralComparer.GetType(),
+            StructuralComparisons.StructuralEqualityComparer.GetType(),
+        };
+
+#endif
         #endregion
 
         #region Methods
@@ -412,6 +429,18 @@ namespace KGySoft.Serialization.Binary
             }
 
             return true;
+        }
+
+        internal static bool IsSafeType(Type type)
+        {
+#if NETFRAMEWORK
+            // These types are serializable in the .NET Framework but still we must not support them
+            // in SafeMode because they can be used for known attacks
+            if (type.In(unsafeTypes))
+                return false;
+#endif
+
+            return type.IsSerializable;
         }
 
         #endregion

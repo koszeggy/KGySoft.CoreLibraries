@@ -72,7 +72,8 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>Makes possible to serialize any object even if object is not marked with <see cref="SerializableAttribute"/>.</para>
         /// <para>This flag is considered on serialization.
-        /// <note>Unlike in case of <see cref="BinaryFormatter"/>, <see cref="BinarySerializationFormatter"/> does not check whether the deserialized object has <see cref="SerializableAttribute"/>.</note>
+        /// <note type="caution">Though this flag makes possible to serialize non-serializable types, deserializing such stream will not work
+        /// when the <see cref="SafeMode"/> flag is enabled (unless an applicable <see cref="BinarySerializationFormatter.SurrogateSelector"/> is used).</note>
         /// </para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
@@ -110,7 +111,7 @@ namespace KGySoft.Serialization.Binary
         /// When this option is enabled, names of the base classes, and fields that have been serialized but have been since then
         /// removed, will be ignored.
         /// <note type="caution">When this flag is enabled, an erroneous deserialization may silently succeed. When a field has
-        /// been renamed or relocated into another base class,  use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead.</note></para>
+        /// been renamed or relocated into another base class, use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead.</note></para>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
@@ -165,14 +166,16 @@ namespace KGySoft.Serialization.Binary
         TryUseSurrogateSelectorForAnyType = 1 << 11,
 
         /// <summary>
-        /// <para>If this flag is enabled, then no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
+        /// <para>If this flag is enabled, then non-serializable and some other types are not allowed to be deserialized, unless the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
+        /// property is set that allows deserializing a type explicitly.</para>
+        /// <para>It also ensures that no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
         /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
-        /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core assemblies
+        /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core legacy assemblies
         /// such as <c>mscorlib.dll</c>, <c>System.dll</c>, <c>System.Core.dll</c>, etc., which contain only type forwards on recent .NET platforms.
         /// You can avoid this if the stream was serialized with the <see cref="IgnoreTypeForwardedFromAttribute"/> option (so every non-natively supported type
         /// was serialized with its actual identity), or with the <see cref="OmitAssemblyQualifiedNames"/> option (so types can be located in any already loaded assembly).</para>
         /// <note>In safe mode no version mismatch is tolerated even for system assemblies. If you want to deserialize a stream in safe mode that contains
-        /// different assembly identities to the loaded ones, then use <see cref="WeakAssemblySerializationBinder"/> instead, and set
+        /// different assembly identities from the loaded ones, then use <see cref="WeakAssemblySerializationBinder"/>, and set
         /// its <see cref="WeakAssemblySerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
         /// <note type="security">Please note that even enabling this flag may not prevent every possible attacks, especially when targeting the .NET Framework.
         /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>

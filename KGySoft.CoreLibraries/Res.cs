@@ -562,7 +562,8 @@ namespace KGySoft
 
         #region BinarySerialization
 
-        /// <summary>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</summary>
+        /// <summary>Serialization of type {0} is not supported with following serialization options: {1}.
+        /// You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</summary>
         internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type, options.ToString<BinarySerializationOptions>());
 
         /// <summary>An IEnumerable type expected but {0} found during deserialization.</summary>
@@ -629,6 +630,9 @@ namespace KGySoft
 
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
+
+        /// <summary>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</summary>
+        internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type);
 
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
         internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type);

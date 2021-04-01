@@ -17,6 +17,9 @@
 #region Usings
 
 using System;
+#if NETFRAMEWORK
+using System.CodeDom.Compiler;
+#endif
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -1873,6 +1876,133 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
+        }
+
+        [Test]
+        public void SafeModeNonSerializableTest()
+        {
+            object[] referenceObjects =
+            {
+                new NonSerializableClass { IntProp = 42 }
+            };
+
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode));
+        }
+
+        [Test]
+        public void SafeModeAssemblyLoadingTest()
+        {
+#if NET35
+            string asmName = "System.Design, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089"; 
+            string typeName = "System.Windows.Forms.Design.Behavior.SnapLineType";
+#else
+            string asmName = "System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089";
+            string typeName = "System.Numerics.BigInteger";
+#endif
+
+            if (Reflector.ResolveAssembly(asmName, ResolveAssemblyOptions.AllowPartialMatch) != null)
+            {
+                Assert.Inconclusive($"Assembly {asmName} is already loaded, test is ignored. Try to run this test alone.");
+                return;
+            }
+
+            // using a proxy type and a binder to serialize a type information that is not already loaded (content is not relevant)
+            Type proxyType = typeof(SystemSerializableClass);
+            object[] referenceObjects =
+            {
+                Reflector.CreateInstance(proxyType)
+            };
+
+            // only serialization way is set
+            var binder = new CustomSerializationBinder()
+            {
+                AssemblyNameResolver = t => t == proxyType ? asmName : null,
+                TypeNameResolver = t => t == proxyType ? typeName : null
+            };
+
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), "Cannot resolve assembly in safe mode");
+        }
+
+#if NETFRAMEWORK // starting with .NET Core it is not part of the core framework anymore
+        [Test]
+        public void SafeModeDeleteAttackTest()
+        {
+            using var obj = new TempFileCollection();
+            obj.AddFile("VeryImportantSystemFile", false);
+            object[] referenceObjects =
+            {
+                obj
+            };
+
+            // As TempFileCollection is serializable in .NET Framework, it can be deserialized without fallback options
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            // But throws an exception in SafeMode
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode));
+        }
+#endif
+
+        [Test]
+        public void SafeModeDoSAttackTest()
+        {
+            // Exploit: using a StructuralEqualityComparer with hopelessly complex hash computing
+            // A Hashtable can accept such a non-generic comparer. We add it to the hashtable _before_ making it too complex.
+            // On .NET Core and above this is safe with BinaryFormatter because StructuralEqualityComparer is not serializable anymore
+            var key = new object[2];
+            var obj = new Hashtable(StructuralComparisons.StructuralEqualityComparer) { { key, null } };
+
+            // now doing the complications... - actually this makes it impossible to find it (as the hash changes) but it's not important
+            var s1 = key;
+            var s2 = new object[2];
+            for (int i = 0; i < 50; i++)
+            {
+                var t1 = new object[2];
+                var t2 = new object[2];
+                s1[0] = t1;
+                s1[1] = t2;
+                s2[0] = t1;
+                s2[1] = t2;
+                s1 = t1;
+                s2 = t2;
+            }
+
+            object[] referenceObjects =
+            {
+                obj
+            };
+
+            // SystemSerializeObjects(referenceObjects); // on .NET Framework this lasts forever
+
+            // In SafeMode this cannot be deserialized even in .NET Framework
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode));
+
+            // But actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreISerializable, safeCompare: true);
+        }
+
+        [Test]
+        public void SafeModeStackOverflowAttackTest()
+        {
+            // similar to the previous one
+            var key = new object[1];
+            var comp = StructuralComparisons.StructuralEqualityComparer;
+            var obj = new Hashtable(comp);
+            obj.Add(key, null);
+            key[0] = key;
+
+            object[] referenceObjects =
+            {
+                obj
+            };
+
+            // SystemSerializeObjects(referenceObjects); // on .NET Framework this causes StackOverflowException
+
+            // In SafeMode this cannot be deserialized even in .NET Framework
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode));
+
+            // But actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreISerializable, safeCompare: true);
         }
 
         #endregion

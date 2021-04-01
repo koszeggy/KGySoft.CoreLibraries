@@ -211,7 +211,13 @@ namespace KGySoft.Serialization.Binary
 
             // Note: the ThrowError flag would throw a ReflectionException with the same message but BindToType should throw SerializationException
             if (result == null)
-                Throw.SerializationException(Res.ReflectionCannotResolveAssembly(name));
+            {
+                string message = SafeMode
+                    ? Res.BinarySerializationCannotResolveAssemblySafe(name)
+                    : Res.ReflectionCannotResolveAssembly(name);
+                Throw.SerializationException(message);
+            }
+
             return result;
         }
 

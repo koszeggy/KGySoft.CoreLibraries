@@ -107,7 +107,7 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentNullException(Argument.type);
 
             selector = this;
-            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) && (!SafeMode || type.IsSerializable)
+            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) && (!SafeMode || BinarySerializer.IsSafeType(type))
                 ? this
                 : next?.GetSurrogate(type, context, out selector);
         }

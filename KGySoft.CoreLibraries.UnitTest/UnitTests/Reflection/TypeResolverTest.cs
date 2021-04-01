@@ -63,12 +63,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public void TestAssemblyPartialResolve()
         {
-#if NETFRAMEWORK
-            string asmName = "System.Design"; 
-#elif NETCOREAPP
-            string asmName = "System.Data";
+#if NET35
+            string asmName = "System.Design, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089"; 
 #else
-#error .NET version is not supported
+            string asmName = "System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089";
 #endif
             if (Reflector.ResolveAssembly(asmName, ResolveAssemblyOptions.AllowPartialMatch) != null)
             {

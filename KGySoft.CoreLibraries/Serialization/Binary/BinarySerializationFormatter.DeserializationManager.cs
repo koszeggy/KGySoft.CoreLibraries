@@ -1193,9 +1193,8 @@ namespace KGySoft.Serialization.Binary
                     type = ReadType(br, false).Type!;
 
                 // Creating initial instance, registration
-                if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
-                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 bool useSurrogate = TryGetSurrogate(type, out ISerializationSurrogate? surrogate, out ISurrogateSelector? selector);
+                object obj = CreateEmptyObject(useSurrogate, type);
                 bool isISerializable = !IgnoreISerializable && obj is ISerializable;
                 IObjectReference? objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
                 int id = 0;
@@ -1439,6 +1438,16 @@ namespace KGySoft.Serialization.Binary
                 OnDeserializing(result);
                 OnDeserialized(result);
                 return result;
+            }
+
+            [SecurityCritical]
+            private object CreateEmptyObject(bool useSurrogate, Type type)
+            {
+                if (!useSurrogate && SafeMode && !BinarySerializer.IsSafeType(type))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                return obj;
             }
 
             private void OnDeserializing(object obj) => ExecuteMethodsOfAttribute(obj, onDeserializingAttribute);

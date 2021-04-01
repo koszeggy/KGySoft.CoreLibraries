@@ -584,7 +584,8 @@ Hit rate: {8:P2}</value>
     <value>Generic method with signature "{0}" was not found in type "{1}".</value>
   </data>
   <data name="BinarySerialization_NotSupportedFormat" xml:space="preserve">
-    <value>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</value>
+    <value>Serialization of type {0} is not supported with following serialization options: {1}.
+You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</value>
   </data>
   <data name="BinarySerialization_SurrogateChangedObjectFormat" xml:space="preserve">
     <value>The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: {0}</value>
@@ -665,6 +666,9 @@ You may try to preload the assembly before deserialization or disable SafeMode i
   </data>
   <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
+  </data>
+  <data name="BinarySerialization_CannotCreateObjectSafeFormat" xml:space="preserve">
+    <value>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</value>
   </data>
   <data name="BinarySerialization_NotBinarySerializableFormat" xml:space="preserve">
     <value>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</value>

@@ -1440,7 +1440,7 @@ namespace KGySoft.Resources
 #if !NETFRAMEWORK
                 // Supporting MemoryStream even where it is not serializable anymore
                 if (safeMode)
-                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || t.IsSerializable;
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || BinarySerializer.IsSafeType(t);
 #endif
                 var binaryFormatter = new BinaryFormatter
                 {
@@ -1509,7 +1509,7 @@ namespace KGySoft.Resources
 #if !NETFRAMEWORK
                 // Supporting MemoryStream even where it is not serializable anymore
                 if (safeMode)
-                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || t.IsSerializable;
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || BinarySerializer.IsSafeType(t);
 #endif
                 var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {
