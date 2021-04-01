@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -43,6 +42,10 @@ namespace KGySoft.Serialization.Binary
     /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <remarks>
+    /// <note type="security"><para>Do no use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
+    /// from an untrusted source. If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
+    /// which prevents supporting non-serializable types, or set the <see cref="IsTypeSupported"/> property to explicitly tell what types are supported.</para>
+    /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>By using the <see cref="CustomSerializerSurrogateSelector"/> you can serialize and deserialize any types.
     /// <note>The <see cref="BinarySerializationFormatter"/> is also able to serialize non-serializable types by itself
     /// by using the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option. But the
@@ -252,6 +255,26 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public bool IgnoreNonExistingFields { get; set; }
 
+        /// <summary>
+        /// Gets or sets a delegate that can tell whether this <see cref="CustomSerializerSurrogateSelector"/> instance can be used
+        /// to serialize and deserialize a type. If this property is <see langword="null"/>, and <see cref="SafeMode"/> is <see langword="true"/>,
+        /// then only serializable types are supported. Primitive types, <see cref="string"/>, arrays, pointers any by-ref types are not supported,
+        /// regardless of the <see cref="SafeMode">SafeMode</see> property.
+        /// <br/>Default value: <see langword="null"/>.
+        /// </summary>
+        public Func<Type, bool>? IsTypeSupported { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether it is prohibited to serialize and deserialize types that are not marked by <see cref="SerializableAttribute"/>
+        /// if the <see cref="IsTypeSupported"/> property is not set.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
+
         #endregion
 
         #region Methods
@@ -307,7 +330,7 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentNullException(Argument.type);
 
             selector = this;
-            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType
+            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && (IsTypeSupported?.Invoke(type) ?? (!SafeMode || type.IsSerializable))
                 ? this
                 : next?.GetSurrogate(type, context, out selector);
         }
@@ -327,6 +350,7 @@ namespace KGySoft.Serialization.Binary
             objectDataRestoredEventHandler = null;
             gettingFieldEventHandler = null;
             settingFieldEventHandler = null;
+            IsTypeSupported = null;
         }
 
         #endregion
@@ -430,7 +454,7 @@ namespace KGySoft.Serialization.Binary
                 var e = new SettingFieldEventArgs(obj, context, info, entry)
                 {
                     Value = entry.Value,
-                    Field = fields!.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name))
+                    Field = fields!.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name)!)
                 };
 
                 OnSettingField(e);
