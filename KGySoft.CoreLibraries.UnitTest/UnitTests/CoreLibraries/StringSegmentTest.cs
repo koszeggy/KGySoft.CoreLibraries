@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using KGySoft.Collections;
+using KGySoft.Reflection;
+
 using NUnit.Framework;
 
 #endregion
@@ -235,11 +237,32 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("  ,,  ", ",,")]
         public void SplitTest(string s, string separator)
         {
-            var optionsArray = new[] { StringSegmentSplitOptions.None, StringSegmentSplitOptions.RemoveEmptyEntries, StringSegmentSplitOptions.TrimEntries, StringSegmentSplitOptions.TrimEntries | StringSegmentSplitOptions.RemoveEmptyEntries };
+            static string[] SystemSplit(string s, string[] separators, StringSegmentSplitOptions options)
+            {
+#if NET
+                return s.Split(separators, (StringSplitOptions)options);
+#else
+                var sso = (StringSplitOptions)options;
+                sso &= (StringSplitOptions)~StringSegmentSplitOptions.TrimEntries;
+                string[] result = s.Split(separators, sso);
+                if (options.IsTrim && separators?.All(String.IsNullOrEmpty) != true)
+                    result = result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
+                return result;
+#endif
+            }
+
+            var optionsArray = new[]
+            {
+                StringSegmentSplitOptions.None,
+                StringSegmentSplitOptions.RemoveEmptyEntries,
+                StringSegmentSplitOptions.TrimEntries,
+                StringSegmentSplitOptions.TrimEntries | StringSegmentSplitOptions.RemoveEmptyEntries
+            };
+
             foreach (StringSegmentSplitOptions options in optionsArray)
             {
                 // as string
-                string[] strings = s.Split(new[] { separator }, (StringSplitOptions)options);
+                string[] strings = SystemSplit(s, new[] { separator }, options);
                 string expected = strings.Join("|");
 
                 IList<StringSegment> segments = s.AsSegment().Split(separator, options);
@@ -261,7 +284,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 #endif
 
                 // as string array with multiple values
-                strings = s.Split(new[] { separator, null }, (StringSplitOptions)options);
+                strings = SystemSplit(s, new[] { separator, null }, options);
                 expected = strings.Join("|");
 
                 segments = s.AsSegment().Split(new[] { separator, null }, options);
@@ -274,7 +297,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expected, actual);
 
                 // no separator (splitting by whitespaces)
-                strings = s.Split(default(string[]), (StringSplitOptions)options);
+                strings = SystemSplit(s, default, options);
                 expected = strings.Join("|");
 
                 segments = s.AsSegment().Split(options);
@@ -286,7 +309,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 if (separator?.Length == 1)
                 {
                     // as char
-                    strings = s.Split(new[] { separator[0] }, (StringSplitOptions)options);
+                    strings = SystemSplit(s, new[] { separator[0].ToString() }, options);
                     expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(separator[0], options);
@@ -296,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     Assert.AreEqual(expected, actual);
 
                     // as char array
-                    strings = s.Split(new[] { separator[0], '\0' }, (StringSplitOptions)options);
+                    strings = SystemSplit(s, new[] { separator[0].ToString(), '\0'.ToString() }, options);
                     expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(new[] { separator[0], '\0' }, options);
@@ -328,13 +351,43 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("  ,,  ", ",,")]
         public void SplitTestWithLength(string s, string separator)
         {
+            static string[] SystemSplit(string s, string[] separators, int count, StringSegmentSplitOptions options)
+            {
+#if NET
+                return s.Split(separators, count (StringSplitOptions)options);
+#else
+                var sso = (StringSplitOptions)options;
+                sso &= (StringSplitOptions)~StringSegmentSplitOptions.TrimEntries;
+                string[] result = s.Split(separators, count, sso);
+                if (options.IsTrim && count > 0 && result.Length > 0)
+                    result = count == 1
+                        ? result[0].Trim() is { } trimmed && options.IsRemoveEmpty && trimmed.Length == 0
+                            ? Reflector.EmptyArray<string>()
+                            : new[] { result[0].Trim() }
+                        : separators?.All(String.IsNullOrEmpty) == true
+                            ? result
+                            : separators == null && result.Length == count
+                                ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Append(result[result.Length - 1]).ToArray()
+                                : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
+
+                return result;
+#endif
+            }
+
             for (int count = 0; count < 4; count++)
             {
-                var optionsArray = new[] { StringSegmentSplitOptions.None, StringSegmentSplitOptions.RemoveEmptyEntries, StringSegmentSplitOptions.TrimEntries, StringSegmentSplitOptions.TrimEntries | StringSegmentSplitOptions.RemoveEmptyEntries };
+                var optionsArray = new[]
+                {
+                    StringSegmentSplitOptions.None,
+                    StringSegmentSplitOptions.RemoveEmptyEntries,
+                    StringSegmentSplitOptions.TrimEntries,
+                    StringSegmentSplitOptions.TrimEntries | StringSegmentSplitOptions.RemoveEmptyEntries
+                };
+
                 foreach (StringSegmentSplitOptions options in optionsArray)
                 {
                     // as string
-                    string[] strings = s.Split(new[] { separator }, count, (StringSplitOptions)options);
+                    string[] strings = SystemSplit(s, new[] { separator }, count, options);
                     string expected = strings.Join("|");
 
                     IList<StringSegment> segments = s.AsSegment().Split(separator, count, options);
@@ -349,7 +402,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     Assert.AreEqual(expected, actual);
 
                     // as string array with multiple values
-                    strings = s.Split(new[] { separator, null }, count, (StringSplitOptions)options);
+                    strings = SystemSplit(s, new[] { separator, null }, count, options);
                     expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(new[] { separator, null }, count, options);
@@ -363,7 +416,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     Assert.AreEqual(expected, actual);
 
                     // no separator (splitting by whitespaces)
-                    strings = s.Split(default(string[]), count, (StringSplitOptions)options);
+                    strings = SystemSplit(s, default, count, options);
                     expected = strings.Join("|");
 
                     segments = s.AsSegment().Split(count, options);
@@ -375,7 +428,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                     if (separator?.Length == 1)
                     {
                         // as char
-                        strings = s.Split(new[] { separator[0] }, count, (StringSplitOptions)options);
+                        strings = SystemSplit(s, new[] { separator[0].ToString() }, count, options);
                         expected = strings.Join("|");
 
                         segments = s.AsSegment().Split(separator[0], count, options);
@@ -384,7 +437,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                         Assert.AreEqual(expected, actual);
 
                         // as char array
-                        strings = s.Split(new[] { separator[0], '\0' }, count, (StringSplitOptions)options);
+                        strings = SystemSplit(s, new[] { separator[0].ToString(), '\0'.ToString() }, count, (StringSplitOptions)options);
                         expected = strings.Join("|");
 
                         segments = s.AsSegment().Split(new[] { separator[0], '\0' }, count, options);
