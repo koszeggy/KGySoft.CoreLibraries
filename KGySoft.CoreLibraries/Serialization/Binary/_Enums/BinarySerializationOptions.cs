@@ -166,10 +166,10 @@ namespace KGySoft.Serialization.Binary
         TryUseSurrogateSelectorForAnyType = 1 << 11,
 
         /// <summary>
-        /// <para>If this flag is enabled, then non-serializable and some other types are not allowed to be deserialized, unless the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
-        /// property is set that allows deserializing a type explicitly.</para>
-        /// <para>It also ensures that no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
+        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
         /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
+        /// <para>It also disallows deserializing non-serializable types, unless the <see cref="BinarySerializationFormatter.SurrogateSelector"/> property is set that allows
+        /// deserializing a type explicitly. Please note that deserializing non-serializable types are allowed without this flag by default (see also the <see cref="RecursiveSerializationAsFallback"/> flag).</para>
         /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core legacy assemblies
         /// such as <c>mscorlib.dll</c>, <c>System.dll</c>, <c>System.Core.dll</c>, etc., which contain only type forwards on recent .NET platforms.
         /// You can avoid this if the stream was serialized with the <see cref="IgnoreTypeForwardedFromAttribute"/> option (so every non-natively supported type

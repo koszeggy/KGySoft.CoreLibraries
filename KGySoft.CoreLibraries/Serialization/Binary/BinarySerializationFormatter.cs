@@ -113,16 +113,22 @@ namespace KGySoft.Serialization.Binary
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
     /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
-    /// loading assemblies during the deserialization. When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly manually that are referred by the serialization stream.</para>
-    /// <para>Please note though that even some system types can be dangerous. For example, in .NET Framework the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.codedom.compiler.tempfilecollection" target="_blank">TempFileCollection</a>
-    /// class resides in <c>System.dll</c>. A prepared stream that refers this type can be used to delete files when the instance is garbage collected. Starting with .NET Core this type
-    /// has been moved into a separate NuGet package, which means that <see cref="BinarySerializationOptions.SafeMode"/> can protect you against such an attack in .NET Core and above but not in the .NET Framework.</para>
-    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/> instance that uses strict mapping.
-    /// For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
-    /// <para>Please also note that if the <see cref="Binder"/> is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
+    /// deserializing loading assemblies during the deserialization as well as instantiating non-serializable types. When using <see cref="BinarySerializationOptions.SafeMode"/>
+    /// you must preload every assembly manually that are referred by the serialization stream.</para>
+    /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
+    /// can be exploited for several attacks (causing files to delete, unresponsiveness or <see cref="StackOverflowException"/>). Starting with .NET Core these types are not
+    /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against these.
+    /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against some of the known security issues
+    /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
+    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), or set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
+    /// instance that uses strict mapping. For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
+    /// <para>Please also note that if the <see cref="Binder"/> property is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
     /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
     /// type resolving, such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
-    /// Make sure to set them to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para></note>
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+    /// <para>Similarly, if the <see cref="SurrogateSelector"/> property is set, then they provide a custom serialization even for types that are not serializable. The surrogate selectors in this library,
+    /// such as the <see cref="CustomSerializerSurrogateSelector"/> and <see cref="NameInvariantSurrogateSelector"/> types have their own <c>SafeMode</c> property.
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent deserializing non-serializable types.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.

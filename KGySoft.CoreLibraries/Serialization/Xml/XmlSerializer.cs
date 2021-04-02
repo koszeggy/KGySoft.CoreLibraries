@@ -44,18 +44,19 @@ namespace KGySoft.Serialization.Xml
     /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
     /// </summary>
     /// <remarks>
+    /// <note type="security"><para>The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
+    /// type of the stored instance. If the XML content to deserialize is from an untrusted source make sure to use the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
+    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods to prevent loading assemblies during the deserialization.
+    /// Please note though that it cannot protect you from all possible threats if a type of the already loaded assemblies can be exploited for a security attack.
+    /// The <see cref="XmlSerializer"/> can only create objects by using their default constructor and is able to set the public fields and properties.
+    /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</para>
+    /// <para>In safe mode you must preload every assembly that are referred in the XML content. Additionally, in safe mode an <see cref="InvalidOperationException"/> is thrown for content
+    /// that is serialized by <see cref="BinarySerializationFormatter"/> (see the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option).</para></note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
     /// <note>Unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
     /// are supported (except <see cref="XmlRootAttribute"/> for the root element of <see cref="IXmlSerializable"/> implementations). Instead, this class is
     /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
-    /// <note type="security"><para>This <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
-    /// type of the stored instance. If the XML content to deserialize is from an untrusted source it is recommended to use the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
-    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods for deserialization to prevent loading assemblies during the deserialization.</para>
-    /// <para>In safe mode you must preload every assembly that are referred in the XML content. Additionally, in safe mode an <see cref="InvalidOperationException"/> is thrown for content
-    /// that is serialized by <see cref="BinarySerializationFormatter"/> (see the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option)
-    /// because while the binary serializer also has a <see cref="BinarySerializationOptions.SafeMode"/>, it does not automatically eliminate all possible threats, especially when targeting the .NET Framework.</para>
-    /// </note>
     /// </para>
     /// <para>Several <a href="https://msdn.microsoft.com/en-us/library/System.ComponentModel.aspx" target="_blank">System.ComponentModel</a> techniques are supported,
     /// which also makes possible to use the <see cref="XmlSerializer"/> for types that can be edited in a property grid, such as components, configurations or any types in a custom designer.
