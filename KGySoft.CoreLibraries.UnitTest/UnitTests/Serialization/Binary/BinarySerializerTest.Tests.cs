@@ -141,7 +141,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             referenceObjects = new object[]
             {
                 null,
-                FormatterServices.GetUninitializedObject(typeof(void)), // doesn't really make sense as an instance but even BinaryFormatter supports it (only in .NET Framework)
+#if !NET6_0_OR_GREATER
+		        FormatterServices.GetUninitializedObject(typeof(void)), // doesn't really make sense as an instance but even BinaryFormatter supports it
+#endif
                 DBNull.Value,
                 new BitVector32(13),
                 BitVector32.CreateSection(13),

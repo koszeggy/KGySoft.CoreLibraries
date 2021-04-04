@@ -524,13 +524,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void IgnoreISerializableTest()
         {
-            using var obj = new DataTable("tableName", "namespaceName");
+            var obj = new Exception("message");
             var surrogate = new CustomSerializerSurrogateSelector();
             var formatter = new BinarySerializationFormatter { SurrogateSelector = surrogate };
 
             DoTest(formatter, surrogate, obj, true, true, true);
             surrogate.IgnoreISerializable = true;
-            formatter.Options = BinarySerializationOptions.IgnoreSerializationMethods; // TextInfo.OnDeserialization in .NET Core
             surrogate.IgnoreNonSerializedAttribute = true;
             DoTest(formatter, surrogate, obj, true, true, true);
         }

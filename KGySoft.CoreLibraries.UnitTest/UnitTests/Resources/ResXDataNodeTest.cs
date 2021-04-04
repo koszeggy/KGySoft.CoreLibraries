@@ -34,7 +34,7 @@ using NUnit.Framework;
 #region Suppressions
 
 #if NET
-#if NET5_0
+#if NET5_0 || NET6_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
 #pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  

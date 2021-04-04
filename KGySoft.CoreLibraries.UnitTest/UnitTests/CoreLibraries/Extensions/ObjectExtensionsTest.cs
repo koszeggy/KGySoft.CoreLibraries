@@ -21,12 +21,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+
 using KGySoft.Collections;
+
 using NUnit.Framework;
 
 #endregion
@@ -69,7 +70,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             new List<int> { 1 },
 
             // custom serializable types
-            new DataTable("table"),
+            new Exception("message"),
 
             // non serializable
             new BitVector32(13),
@@ -84,7 +85,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             {
                 VoidPointer = (void*)new IntPtr(1),
                 IntPointer = (int*)new IntPtr(1),
-                PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
+                PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, // - not supported
                 PointerOfPointer = (void**)new IntPtr(1)
             },
         };
@@ -156,6 +157,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             AssertDeepEquals(obj, obj.DeepClone(true));
         }
 
+#if !NET6_0
         [Test]
         public void DeepCloneDelegateTest()
         {
@@ -164,7 +166,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             Assert.AreNotEqual(del, clone);
             Assert.AreEqual(del.Invoke(1), clone.Invoke(1));
-        }
+        } 
+#endif
 
         #endregion
     }
