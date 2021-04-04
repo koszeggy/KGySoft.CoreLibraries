@@ -1943,6 +1943,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 #endif
 
+#if !NET35
         [Test]
         public void SafeModeDoSAttackTest()
         {
@@ -2004,6 +2005,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // But actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreISerializable, safeCompare: true);
         }
+#endif
 
         #endregion
     }

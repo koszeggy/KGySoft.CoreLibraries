@@ -354,7 +354,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             static string[] SystemSplit(string s, string[] separators, int count, StringSegmentSplitOptions options)
             {
 #if NET
-                return s.Split(separators, count (StringSplitOptions)options);
+                return s.Split(separators, count, (StringSplitOptions)options);
 #else
                 var sso = (StringSplitOptions)options;
                 sso &= (StringSplitOptions)~StringSegmentSplitOptions.TrimEntries;
@@ -367,7 +367,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                         : separators?.All(String.IsNullOrEmpty) == true
                             ? result
                             : separators == null && result.Length == count
-                                ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Append(result[result.Length - 1]).ToArray()
+                                ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Concat(new[] { result[result.Length - 1] }).ToArray()
                                 : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
 
                 return result;

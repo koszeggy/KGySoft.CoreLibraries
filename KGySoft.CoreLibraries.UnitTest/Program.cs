@@ -61,6 +61,9 @@ namespace KGySoft.CoreLibraries
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");
             ITestResult result = runner.Run(null, TestFilter.Empty);
+            Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
+                : result.SkipCount > 0 ? ConsoleColor.Yellow
+                : ConsoleColor.Green;
             Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Skipped: {result.SkipCount}");
             Console.WriteLine($"Message: {result.Message}");
             ProcessChildren(result.Children);

@@ -19,8 +19,14 @@
 using System;
 using System.IO;
 using System.Linq;
+#if !NETFRAMEWORK
 using System.Runtime.Serialization;
+#endif
+#if NETFRAMEWORK
+using System.Reflection; 
+#endif
 using System.Xml;
+
 using KGySoft.Resources;
 
 using NUnit.Framework;

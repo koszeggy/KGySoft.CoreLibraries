@@ -372,7 +372,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     (float)1,
                     (double)1,
                     (decimal)1,
-                    DBNull.Value,
                     new IntPtr(1),
                     new UIntPtr(1),
                     new TimeSpan(1, 2, 3, 4, 5),
@@ -611,7 +610,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
                     Color.Blue,
                     StringSegment.Empty,
-                    StringSegment.Null,
+#if !NETFRAMEWORK // System serializer dumps <value/> both for null and empty, and reads empty string for both
+                    StringSegment.Null,  
+#endif
 
                     // special handling to escape built-in
                     CultureInfo.InvariantCulture,
@@ -852,7 +853,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             object[] referenceObjects =
             {
-                DBNull.Value, // type name must not be set -> UnitySerializationHolder is used
+#if !NETCOREAPP2_0 // throws PlatformNotSupportedException on .NET Core 2.0
+		        DBNull.Value, // type name must not be set -> UnitySerializationHolder is used  
+#endif
 #if NETFRAMEWORK
                 //Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
 #endif

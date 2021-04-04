@@ -17,7 +17,12 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
+#if NETFRAMEWORK
+using System.CodeDom.Compiler;
+#if !NET35
+using System.Collections;
+#endif
+#endif
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -38,6 +43,19 @@ namespace KGySoft.Serialization
             t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => !f.IsNotSerialized)
                 .OrderBy(f => f.MetadataToken).ToArray(), LockFreeCacheOptions.Profile1K);
+
+#if NETFRAMEWORK
+
+        private static readonly Type[] unsafeTypes =
+        {
+            typeof(TempFileCollection),
+#if !NET35
+            StructuralComparisons.StructuralComparer.GetType(),
+            StructuralComparisons.StructuralEqualityComparer.GetType(),
+#endif
+        };
+
+#endif
 
         #endregion
 
@@ -98,6 +116,18 @@ namespace KGySoft.Serialization
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                     field.Set(target, field.Get(source));
             }
+        }
+
+        internal static bool IsSafeType(Type type)
+        {
+#if NETFRAMEWORK
+            // These types are serializable in the .NET Framework but still we must not support them
+            // in SafeMode because they can be used for known attacks
+            if (type.In(unsafeTypes))
+                return false;
+#endif
+
+            return type.IsSerializable;
         }
 
         #endregion

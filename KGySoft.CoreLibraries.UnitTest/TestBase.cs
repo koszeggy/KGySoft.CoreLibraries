@@ -288,8 +288,10 @@ namespace KGySoft.CoreLibraries
             if (!Check(typeRef != null && typeChk != null, $"'{reference ?? "<null>"}' compared to '{check ?? "<null>"}'", errors))
                 return false;
 
+#pragma warning disable CS0618 // Type or member is obsolete
             if (typeRef == typeof(AnyObjectSerializerWrapper))
                 return CheckDeepEquals(Reflector.GetField(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
+#pragma warning restore CS0618
 
             if (typeRef != typeChk)
             {

@@ -23,7 +23,6 @@ using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -33,6 +32,7 @@ using System.Xml;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -1440,7 +1440,7 @@ namespace KGySoft.Resources
 #if !NETFRAMEWORK
                 // Supporting MemoryStream even where it is not serializable anymore
                 if (safeMode)
-                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || BinarySerializer.IsSafeType(t);
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
 #endif
                 var binaryFormatter = new BinaryFormatter
                 {
@@ -1509,7 +1509,7 @@ namespace KGySoft.Resources
 #if !NETFRAMEWORK
                 // Supporting MemoryStream even where it is not serializable anymore
                 if (safeMode)
-                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || BinarySerializer.IsSafeType(t);
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
 #endif
                 var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {

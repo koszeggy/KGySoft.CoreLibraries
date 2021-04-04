@@ -1443,7 +1443,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private object CreateEmptyObject(bool useSurrogate, Type type)
             {
-                if (!useSurrogate && SafeMode && !BinarySerializer.IsSafeType(type))
+                if (!useSurrogate && SafeMode && !SerializationHelper.IsSafeType(type))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
