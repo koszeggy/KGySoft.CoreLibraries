@@ -27,6 +27,20 @@ using NUnit.Framework;
 
 #endregion
 
+#region Suppressions
+
+#if NET
+#if NET5_0
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - test class
+#pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
+#pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#else
+#error Check whether IFormatter is still available in this .NET version
+#endif
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
@@ -124,14 +138,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             CollectionAssert.AreEqual(dict, clone);
 
             // By BinaryFormatter
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: this is a test
             var formatter = new BinaryFormatter();
             using var ms = new MemoryStream();
             formatter.Serialize(ms, dict);
             ms.Position = 0;
             clone = (StringKeyedDictionary<int>)formatter.Deserialize(ms);
             CollectionAssert.AreEqual(dict, clone);
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
         }
 
         #endregion

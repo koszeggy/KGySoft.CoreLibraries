@@ -28,12 +28,8 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Xml;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Collections;
-using KGySoft.CoreLibraries;
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-using KGySoft.CoreLibraries;
-#endif
 
 #endregion
 

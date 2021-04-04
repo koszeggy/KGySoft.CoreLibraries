@@ -651,7 +651,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")]
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETCOREAPP3_0)
+        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")] 
+#endif
         public void SerializeByteArrays()
         {
             IList[] referenceObjects =
@@ -708,7 +710,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")]
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETCOREAPP3_0)
+        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")] 
+#endif
         public void SerializeSimpleArrays()
         {
             IList[] referenceObjects =
