@@ -65,7 +65,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A <see cref="double"/> value, from which the original value can be parsed without losing any information.</returns>
         /// <remarks>
         /// The result of this method can be parsed by <see cref="double.Parse(string,IFormatProvider)">Double.Parse</see>; however, to retrieve exactly the
-        /// original value, including a negative zero value, use the <see cref="StringExtensions.Parse">Parse</see>&#160;<see cref="string"/> extension method instead.
+        /// original value, including a negative zero value, use the <see cref="StringExtensions.Parse{T}(string,CultureInfo)">Parse</see>&#160;<see cref="string"/> extension method instead.
         /// </remarks>
         public static string ToRoundtripString(this double value) 
             => IsNegativeZero(value) ? "-0" : value.ToString("R", NumberFormatInfo.InvariantInfo);

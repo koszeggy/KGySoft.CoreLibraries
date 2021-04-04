@@ -65,7 +65,7 @@ namespace KGySoft.Reflection
     ///         FieldInfo field = instance.GetType().GetField(nameof(TestClass.TestField));
     ///         FieldAccessor accessor = FieldAccessor.GetAccessor(field);
     /// 
-    ///         new PerformanceTest { TestName = "Set Field", Iterations = 1000000 }
+    ///         new PerformanceTest { TestName = "Set Field", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestField = 1, "Direct set")
     ///             .AddCase(() => field.SetValue(instance, 1), "FieldInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "FieldAccessor.Set")
@@ -87,7 +87,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct set: average time: 2.58 ms
@@ -99,7 +99,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct get: average time: 2.99 ms

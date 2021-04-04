@@ -62,14 +62,14 @@ namespace KGySoft.Reflection
     ///         PropertyInfo property = instance.GetType().GetProperty(nameof(TestClass.TestProperty));
     ///         PropertyAccessor accessor = PropertyAccessor.GetAccessor(property);
     /// 
-    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1000000 }
+    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty = 1, "Direct set")
     ///             .AddCase(() => property.SetValue(instance, 1), "PropertyInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "PropertyAccessor.Set")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     /// 
-    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1000000 }
+    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty, "Direct get")
     ///             .AddCase(() => (int)property.GetValue(instance), "PropertyInfo.GetValue")
     ///             .AddCase(() => (int)accessor.Get(instance), "PropertyAccessor.Get")
@@ -84,7 +84,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct set: average time: 2.93 ms
@@ -96,7 +96,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct get: average time: 2.58 ms

@@ -43,7 +43,7 @@ namespace KGySoft.Diagnostics
     ///
     ///     static void Main(string[] args)
     ///     {
-    ///         new PerformanceTest<byte[]> { Iterations = 10000, Repeat = 5 }
+    ///         new PerformanceTest<byte[]> { Iterations = 10_000, Repeat = 5 }
     ///             .AddCase(() =>
     ///             {
     ///                 using (var ms = new MemoryStream())
@@ -65,7 +65,7 @@ namespace KGySoft.Diagnostics
     /// // Test cases: 2
     /// // Repeats: 5
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. BinarySerializer: average time: 27.16 ms

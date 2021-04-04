@@ -1664,6 +1664,18 @@ namespace KGySoft.CoreLibraries
             return new CircularList<T>(source);
         }
 
+        /// <summary>
+        /// Creates a <see cref="StringKeyedDictionary{TValue}"/> from an <see cref="IEnumerable{T}"/> instance using the specified key and value selector delegates and a comparer.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements in the <paramref name="source"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the value returned by the specified <paramref name="valueSelector"/>.</typeparam>
+        /// <param name="source">The source collection to create a <see cref="StringKeyedDictionary{TValue}"/> from.</param>
+        /// <param name="keySelector">A delegate to produce a key for each element in the <paramref name="source"/> collection.</param>
+        /// <param name="valueSelector">A delegate to produce a value for each element in the <paramref name="source"/> collection.</param>
+        /// <param name="comparer">A <see cref="StringSegmentComparer"/> to compare keys. If <see langword="null"/>, then ordinal comparison will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A <see cref="StringKeyedDictionary{TValue}"/> that contains values of type <typeparamref name="TValue"/> created by the specified <paramref name="valueSelector"/>
+        /// for each elements in the <paramref name="source"/> collection.</returns>
         public static StringKeyedDictionary<TValue> ToStringKeyedDictionary<TSource, TValue>(this IEnumerable<TSource> source, Func<TSource, string> keySelector, Func<TSource, TValue> valueSelector, StringSegmentComparer? comparer = null)
         {
             if (source == null!)
@@ -1681,6 +1693,16 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        /// <summary>
+        /// Creates a <see cref="StringKeyedDictionary{TValue}"/> from an <see cref="IEnumerable{T}"/> instance using the specified <paramref name="keySelector"/> delegate and a <paramref name="comparer"/>.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="source"/> collection and the type of the values in the returned <see cref="StringKeyedDictionary{TValue}"/>.</typeparam>
+        /// <param name="source">The source collection to create a <see cref="StringKeyedDictionary{TValue}"/> from.</param>
+        /// <param name="keySelector">A delegate to produce a key for each element in the <paramref name="source"/> collection.</param>
+        /// <param name="comparer">A <see cref="StringSegmentComparer"/> to compare keys. If <see langword="null"/>, then ordinal comparison will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A <see cref="StringKeyedDictionary{TValue}"/> that contains the same values that are in <paramref name="source"/> associated with keys returned created
+        /// by the specified <paramref name="keySelector"/>.</returns>
         public static StringKeyedDictionary<TValue> ToStringKeyedDictionary<TValue>(this IEnumerable<TValue> source, Func<TValue, string> keySelector, StringSegmentComparer? comparer = null)
         {
             if (source == null!)

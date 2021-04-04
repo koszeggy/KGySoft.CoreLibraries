@@ -65,7 +65,7 @@ namespace KGySoft.Reflection
     ///         CreateInstanceAccessor accessorForType = CreateInstanceAccessor.GetAccessor(testType);
     ///         CreateInstanceAccessor accessorForCtor = CreateInstanceAccessor.GetAccessor(ctorWithParameters);
     /// 
-    ///         new PerformanceTest { Iterations = 1000000 }
+    ///         new PerformanceTest { Iterations = 1_000_000 }
     ///             .AddCase(() => new TestClass(), "Default constructor direct call")
     ///             .AddCase(() => new TestClass(1), "Parameterized constructor direct call")
     ///             .AddCase(() => Activator.CreateInstance(testType), "Activator.CreateInstance by type")
@@ -85,7 +85,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 8
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Default constructor direct call: average time: 4.27 ms

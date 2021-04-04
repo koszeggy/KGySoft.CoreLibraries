@@ -51,7 +51,7 @@ namespace KGySoft.Diagnostics
     /// // Warming up: Yes
     /// // Test cases: 2
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by fulfilled iterations (most first)
     /// // --------------------------------------------------
     /// // 1. Enum<TEnum>.ToString: 26,104,501 iterations in 2,000.00 ms. Adjusted for 2,000 ms: 26,104,498.39
@@ -88,7 +88,7 @@ namespace KGySoft.Diagnostics
     /// // Test cases: 2
     /// // Repeats: 2
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by fulfilled iterations (most first)
     /// // --------------------------------------------------
     /// // 1. Enum<TEnum>.ToString: 57,500,126 iterations in 4,000.00 ms. Adjusted for 2,000 ms: 28,750,060.12
@@ -162,7 +162,7 @@ namespace KGySoft.Diagnostics
     /// // Test cases: 2
     /// // Repeats: 5
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Enum<TEnum>.ToString: average time: 1.66 ms

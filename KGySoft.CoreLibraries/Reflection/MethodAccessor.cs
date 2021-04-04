@@ -64,7 +64,7 @@ namespace KGySoft.Reflection
     ///         MethodInfo method = instance.GetType().GetMethod(nameof(TestClass.TestMethod));
     ///         MethodAccessor accessor = MethodAccessor.GetAccessor(method);
     /// 
-    ///         new PerformanceTest { Iterations = 1000000 }
+    ///         new PerformanceTest { Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestMethod(1), "Direct call")
     ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "MethodInfo.Invoke")
     ///             .AddCase(() => accessor.Invoke(instance, 1), "MethodAccessor.Invoke")
@@ -79,7 +79,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct call: average time: 2.87 ms
