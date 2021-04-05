@@ -147,14 +147,6 @@ The [`AddRange`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Co
 
 Depending on the actual implementation inserting/removing/setting elements in an `IEnumerable` type might be possible. See the `Try...` methods of the [`EnumerableExtensions`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_EnumerableExtensions.htm) class. All of these methods have a **Remarks** section in the documentation that precisely describes the conditions when the corresponding method can be used successfully.
 
-- #### [`AsThreadSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_CollectionExtensions_AsThreadSafe__1.htm) extension methods:
-
-Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries, in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members (such as the `Count` property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements. So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.
-
-Therefore, an `AsThreadSafe` method is available for the `ICollection<T>`, `IList<T>` and `IDictionary<TKey, TValue>` types, which simply wrap the collection into a [`LockingCollection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingCollection_1.htm), [`LockingList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingCollection_1.htm) or [`LockingDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingDictionary_2.htm) instance, respectively.
-
-> _Note:_ Using a locking collection does not solve all concurrent issues magically. See the **Remarks** section in the descriptions of these classes for more details.
-
 - #### [`Object.Convert<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_ObjectExtensions_Convert.htm) extension method:
 
 > _Tip:_ Try also [online](https://dotnetfiddle.net/rzg8If).
@@ -256,6 +248,12 @@ var threadSafeCache = personCache.GetThreadSafeAccessor(protectItemLoader: false
 
 person = threadSafeCache[id];
 ```
+
+> _Tip:_ To obtain a thread-safe cache accessor it is recommended to use the [`ThreadSafeCacheFactory`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeCacheFactory.htm) class, where you can configure the characteristics of the cache to create. You can create completely lock-free caches, or caches with strict capacity management, expiring values, etc. See the ***Remarks*** section of the [`ThreadSafeCacheFactory.Create`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Collections_ThreadSafeCacheFactory_Create__2_1.htm) method for details.
+
+- #### [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm):
+
+Similar to `ConcurrentDictionary` but has a bit different characteristic and can be used even in .NET Framework 3.5 where `ConcurrentDictionary` is not available. It can be a good alternative when a fixed number of keys have to be stored or when the `Count` property has to be frequently accessed, which is particularly slow at `ConcurrentDictionary`. See the ***Remarks*** section of the [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm) class for details.
 
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 
@@ -481,7 +479,7 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
-The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in all circumstances) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
+The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used on all platforms) and they got a bunch of improvements at the same time. Most importantly, they all have a `SafeMode` property, which guarantees that no assembly loading and deserialization occurs unless it is explicitly requested. But even if `SafeMode` is false, an item is not deserialized until it is explicitly obtained. Or, the [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) class is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
 On top of those, KGy SOFT Core Libraries introduce a sort of new types that can be used the same way as a standard `ResourceManager` class:
 - [`ResXResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceManager.htm) works the same way as the regular `ResourceManager` but works on .resx files instead of compiled resources and supports adding and saving new resources, .resx metadata and assembly aliases.

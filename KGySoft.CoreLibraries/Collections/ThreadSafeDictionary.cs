@@ -56,6 +56,9 @@ namespace KGySoft.Collections
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
     /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
+    /// <typeparam name="TKey">Type of the keys stored in the dictionary.</typeparam>
+    /// <typeparam name="TValue">Type of the values stored in the dictionary.</typeparam>
+    /// <remarks>
     /// <note type="tip">
     /// <list type="bullet">
     /// <item>If you would only use the <see cref="GetOrAdd(TKey, Func{TKey, TValue})"/> method, then consider to create a thread safe cache by the <see cref="ThreadSafeCacheFactory"/> instead,
@@ -76,7 +79,7 @@ namespace KGySoft.Collections
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
     /// or even deleted and re-added with any value.</item>
-    /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey,TValue}.AddOrUpdate">AddOrUpdate</see> methods,
+    /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</see> methods,
     /// which are separate try get/add/update operations at <see cref="ConcurrentDictionary{TKey,TValue}"/> but are optimized at <see cref="ThreadSafeDictionary{TKey,TValue}"/> to avoid
     /// multiple lookups.</item>
     /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or <see cref="Keys"/>/<see cref="Values"/> or you need to call <see cref="ToArray">ToArray</see>,
@@ -117,6 +120,7 @@ namespace KGySoft.Collections
     /// owner <see cref="ThreadSafeDictionary{TKey,TValue}"/> instance. In contrast, in case of <see cref="ConcurrentDictionary{TKey,TValue}"/> only the dictionary itself throws an exception
     /// when accessing the <see cref="ICollection.SyncRoot"/>, whereas its keys and values don't.</item>
     /// </list></para>
+    /// </remarks>
     /// <seealso cref="ThreadSafeCacheFactory"/>
     /// <seealso cref="LockingDictionary{TKey,TValue}"/>
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
@@ -539,8 +543,8 @@ namespace KGySoft.Collections
         /// <returns><see langword="true"/>&#160;if <paramref name="key"/> and <paramref name="value"/> was added to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> successfully;
         /// <see langword="false"/>&#160;if the key already exists.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.GetOrAdd">GetOrAdd</seealso>
-        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.AddOrUpdate">AddOrUpdate</seealso>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary`2.GetOrAdd">GetOrAdd</seealso>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</seealso>
         public bool TryAdd(TKey key, TValue value)
         {
             if (key == null!)
@@ -557,7 +561,7 @@ namespace KGySoft.Collections
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <seealso cref="this"/>
-        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary{TKey, TValue}.GetOrAdd">GetOrAdd</seealso>
+        /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary`2.GetOrAdd">GetOrAdd</seealso>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key == null!)
