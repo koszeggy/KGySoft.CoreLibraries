@@ -253,7 +253,7 @@ person = threadSafeCache[id];
 
 - #### [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm):
 
-Similar to `ConcurrentDictionary` but has a bit different characteristic and can be used even in .NET Framework 3.5 where `ConcurrentDictionary` is not available. It can be a good alternative when a fixed number of keys have to be stored or when the `Count` property has to be frequently accessed, which is particularly slow at `ConcurrentDictionary`. See the ***Remarks*** section of the [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm) class for details.
+Similar to `ConcurrentDictionary` but has a bit different characteristic and can be used even in .NET Framework 3.5 where `ConcurrentDictionary` is not available. It can be a good alternative when a fixed number of keys have to be stored or when the `Count` property has to be frequently accessed, which is particularly slow at `ConcurrentDictionary`. See the ***Remarks*** section of the [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm) class for details, including speed comparison of different members.
 
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 

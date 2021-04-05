@@ -1356,7 +1356,6 @@ namespace KGySoft.Serialization.Binary
                     {
                         string name = ReadName(br);
 
-                        // ReSharper disable once AssignNullToNotNullAttribute - false alarm for ReSharper in .NET Core - TODO: remove when fixed
                         // conflicting names can occur if there are fields of the same name in the base class
                         int usedCount = existingNames.GetValueOrDefault(name);
                         if (usedCount == 0)

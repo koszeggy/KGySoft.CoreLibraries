@@ -47,8 +47,9 @@ namespace KGySoft.Serialization.Binary
     /// When this object is deserialized, the clone of the wrapped original object is returned.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <remarks>
     /// <note type="security">
-    /// <para>This type has been made obsolete because just from the payload to deserialize it cannot be determined whether the consumer formatter
+    /// <para>This type has been made obsolete because just from the stream to deserialize it cannot be determined whether the consumer formatter
     /// is used in a safe context. Therefore <see cref="AnyObjectSerializerWrapper"/> deserialization uses safe mode,
     /// which denies deserializing non-serializable types. It renders this type practically useless, but it was
     /// meant for <see cref="BinaryFormatter"/> anyway, which is also being obsoleted in upcoming .NET versions. To serialize
@@ -58,7 +59,7 @@ namespace KGySoft.Serialization.Binary
     /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
     /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
-    /// <remarks><para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
+    /// <para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>
     /// <para>In .NET Framework this class supports serialization of remote objects, too.</para>
     /// <note type="warning"><para>This class cannot guarantee that an object serialized in one platform can be deserialized in another one.

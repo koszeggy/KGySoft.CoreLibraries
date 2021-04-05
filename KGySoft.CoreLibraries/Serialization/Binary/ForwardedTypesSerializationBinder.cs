@@ -154,7 +154,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets whether loading assemblies is prohibited on deserialization, when there is no rule specified for a type
-        /// and using default resolve logic.
+        /// and the default resolve logic is used.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>

@@ -27,13 +27,14 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Provides factory methods to create thread-safe cache instances as <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> implementations.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="Create{TKey, TValue}(Func{TKey, TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> method for details.
     /// </summary>
     public static class ThreadSafeCacheFactory
     {
         #region Methods
 
         #region Public Methods
-        
+
         /// <summary>
         /// Creates a thread safe cache instance that can be accessed as an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance.
         /// <br/>See the <strong>Remarks</strong> section for details.
@@ -56,10 +57,10 @@ namespace KGySoft.Collections
         /// <note type="tip">
         /// <list type="bullet">
         /// <item><see cref="LockFreeCacheOptions"/>: Use this one if you want the fastest, well scalable solution and it is not a problem that the <paramref name="itemLoader"/> delegate might
-        /// be called concurrently, or capacity management is not too strict (when cache is full, about the half of the elements are dropped at once). Though rarely, it may also happen that
-        /// the same key is accessed consecutively and <paramref name="itemLoader"/> is also invoked multiple times when the first call occurred during an internal merge session.</item>
+        /// be called concurrently, or capacity management is not too strict (when cache is full, about the half of the elements are dropped at once). Though rarely, it may also happen
+        /// that <paramref name="itemLoader"/> is invoked multiple times when accessing the same key consecutively and the first call occurred during an internal merge session.</item>
         /// <item><see cref="LockingCacheOptions"/>: Use this one if you need strict capacity management, you want to dispose the dropped-out values, you want to ensure that the oldest
-        /// or least recent used element should be dropped in the first place, you want to protect the <paramref name="itemLoader"/> delegate from calling it concurrently, or if you want
+        /// or least recent used element is dropped in the first place, you want to protect the <paramref name="itemLoader"/> delegate from calling it concurrently, or if you want
         /// to specify an expiration time period for the values. If elements are often dropped, then it also uses less memory than the lock-free implementation. Depending on the configuration
         /// the actual type of the returned instance may vary but in all cases an instance of the public <see cref="Cache{TKey,TValue}"/> type will be wrapped internally.</item>
         /// </list>

@@ -75,14 +75,14 @@ namespace KGySoft.Collections
     /// the <see cref="ThreadSafeDictionary{TKey,TValue}"/> even if they are deleted or when you <see cref="Clear">Clear</see> the dictionary. To remove even the merged keys
     /// you must call the <see cref="Reset">Reset</see> method.</note></para>
     /// <h1 class="heading">Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h1>
-    /// <para><strong>When to use</strong> <see cref="ThreadSafeDictionary{TKey,TValue}"/>:
+    /// <para><strong>When to use</strong>&#160;<see cref="ThreadSafeDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
     /// or even deleted and re-added with any value.</item>
     /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</see> methods,
     /// which are separate try get/add/update operations at <see cref="ConcurrentDictionary{TKey,TValue}"/> but are optimized at <see cref="ThreadSafeDictionary{TKey,TValue}"/> to avoid
     /// multiple lookups.</item>
-    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or <see cref="Keys"/>/<see cref="Values"/> or you need to call <see cref="ToArray">ToArray</see>,
+    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or <see cref="Keys"/>/<see cref="Values"/>, or you need to call <see cref="ToArray">ToArray</see>,
     /// which are particularly slow in case of <see cref="ConcurrentDictionary{TKey,TValue}"/>.</item>
     /// <item>If it is expected that there will be many hash collisions.</item>
     /// <item>If the dictionary is needed to be serialized.</item>

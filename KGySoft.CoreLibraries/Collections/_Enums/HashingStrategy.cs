@@ -29,8 +29,8 @@ namespace KGySoft.Collections
     {
         /// <summary>
         /// The hashing strategy is determined by the type of the key in the storage.
-        /// For <see cref="string">string</see> keys and sealed key types without an overloaded <see cref="Object.GetHashCode">GetHashCode</see> it will use
-        /// the <see cref="And"/> hashing strategy, while for any other key types it will use the <see cref="Modulo"/> hashing strategy.
+        /// For <see cref="string">string</see> keys and sealed key types without an overloaded <see cref="Object.GetHashCode">GetHashCode</see>
+        /// the <see cref="And"/> hashing strategy will be used, while for any other key types the <see cref="Modulo"/> hashing strategy will be used.
         /// </summary>
         Auto,
 

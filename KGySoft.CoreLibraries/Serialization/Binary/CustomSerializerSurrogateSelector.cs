@@ -133,7 +133,7 @@ namespace KGySoft.Serialization.Binary
     /// return (MyChangedClass)formatter.Deserialize(streamContainingOldData);]]></code>
     /// <note type="tip">If the name of the type changed too, you can use the <see cref="CustomSerializationBinder"/> class.</note></description></item>
     /// </list></para>
-    /// <note type="tip">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
+    /// <note type="caution">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
     /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// </remarks>

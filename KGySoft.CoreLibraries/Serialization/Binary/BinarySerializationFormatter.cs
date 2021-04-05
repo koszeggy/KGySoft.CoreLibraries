@@ -116,8 +116,8 @@ namespace KGySoft.Serialization.Binary
     /// deserializing loading assemblies during the deserialization as well as instantiating non-serializable types. When using <see cref="BinarySerializationOptions.SafeMode"/>
     /// you must preload every assembly manually that are referred by the serialization stream.</para>
     /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
-    /// can be exploited for several attacks (causing files to delete, unresponsiveness or <see cref="StackOverflowException"/>). Starting with .NET Core these types are not
-    /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against these.
+    /// can be exploited for several attacks (causing unresponsiveness, <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not
+    /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against such attacks.
     /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against some of the known security issues
     /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
     /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), or set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
@@ -158,7 +158,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
     /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), and also there are some others, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
-    /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types are not recommended anymore. If you still must serialize or deserialize such types
+    /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
     /// <h1 class="heading">Natively supported simple types</h1>
     /// <para>Following types are natively supported. When these types are serialized, no recursive traversal of the fields occurs:
