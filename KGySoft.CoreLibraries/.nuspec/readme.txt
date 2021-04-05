@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 5.5.0
+Thank you for installing KGy SOFT Core Libraries 5.6.0
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 
@@ -26,7 +26,7 @@ Some Highlights of KGy SOFT Core Libraries:
 - Useful extensions for simple types, collections, and others
 - High-performance collections
 - High-performance reflection API
-- Very compact binary serializer
+- Very compact binary serializer with safe mode
 - Powerful XML serializer 
 - Resource managers for .resx resources with dynamic expansion support
 - Base classes for business objects and model classes with change tracking, editing, undo/redo capability and validation
