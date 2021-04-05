@@ -43,29 +43,30 @@ namespace KGySoft.CoreLibraries
     public static partial class Enum<TEnum> where TEnum : struct, Enum
     {
         #region Fields
-
         // ReSharper disable StaticMemberInGenericType - all fields in this class depend on TEnum
-        private static readonly bool isFlags = typeof(TEnum).IsFlagsEnum();
 
         // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
         // but that is alright. Once a field is set no more locks will be requested for it again.
+        // Note: it is important that this is the first field
         private static readonly object syncRoot = new object();
+
+        private static readonly bool isFlags = typeof(TEnum).IsFlagsEnum();
 
         // These fields share the same data per underlying type
         private static readonly EnumComparer<TEnum> converter = EnumComparer<TEnum>.Comparer; // The comparer contains also some internal converter methods.
         private static readonly EnumUnderlyingInfo underlyingInfo = EnumUnderlyingInfo.GetUnderlyingInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 
         // These members can vary per TEnum and are initialized only on demand
-        private static TEnum[] values;
-        private static string[] names;
-        private static Dictionary<TEnum, string> valueNamePairs;
-        private static StringKeyedDictionary<TEnum> nameValuePairs;
-        private static (ulong[] RawValues, string[] Names) rawValueNamePairs;
-        private static StringKeyedDictionary<ulong> nameRawValuePairs;
-        private static StringKeyedDictionary<ulong> nameRawValuePairsIgnoreCase;
+        private static TEnum[]? values;
+        private static string[]? names;
+        private static Dictionary<TEnum, string>? valueNamePairs;
+        private static StringKeyedDictionary<TEnum>? nameValuePairs;
+        private static (ulong[]? RawValues, string[]? Names) rawValueNamePairs;
+        private static StringKeyedDictionary<ulong>? nameRawValuePairs;
+        private static StringKeyedDictionary<ulong>? nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
-        // ReSharper restore StaticMemberInGenericType
 
+        // ReSharper restore StaticMemberInGenericType
         #endregion
 
         #region Properties
@@ -77,10 +78,16 @@ namespace KGySoft.CoreLibraries
         private static StringKeyedDictionary<ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
         private static StringKeyedDictionary<ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
 
-        private static string Zero =>
-            rawValueNamePairs.RawValues.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
-                ? rawValueNamePairs.Names[0]
-                : "0";
+        private static string Zero
+        {
+            get
+            {
+                Debug.Assert(rawValueNamePairs.RawValues != null, $"{nameof(EnsureRawValueNamePairs)} was not called");
+                return rawValueNamePairs.RawValues!.Length > 0 && rawValueNamePairs.RawValues![0] == 0UL
+                    ? rawValueNamePairs.Names![0]
+                    : "0";
+            }
+        }
 
         private static ulong FlagsMask
             => flagsMask ??= Values.Select(converter.ToUInt64).Where(UInt64Extensions.IsSingleFlag).Aggregate(0UL, (acc, value) => acc | value);
@@ -99,7 +106,7 @@ namespace KGySoft.CoreLibraries
         public static TEnum[] GetValues()
         {
             TEnum[] result = new TEnum[Values.Length];
-            Array.Copy(values, result, values.Length);
+            Array.Copy(values!, result, values!.Length);
             return result;
         }
 
@@ -111,7 +118,7 @@ namespace KGySoft.CoreLibraries
         public static string[] GetNames()
         {
             string[] result = new string[Names.Length];
-            Array.Copy(names, result, names.Length);
+            Array.Copy(names!, result, names!.Length);
             return result;
         }
 
@@ -120,9 +127,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The <see langword="enum"/>&#160;value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
-        public static string GetName(TEnum value)
+        public static string? GetName(TEnum value)
         {
-            ValueNamePairs.TryGetValue(value, out string result);
+            ValueNamePairs.TryGetValue(value, out string? result);
             return result;
         }
 
@@ -131,7 +138,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value of the required field.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
-        public static string GetName(long value)
+        public static string? GetName(long value)
         {
             if (value < underlyingInfo.MinValue
                 || underlyingInfo.IsSigned && value > (long)underlyingInfo.MaxValue
@@ -147,7 +154,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value of the required field.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         [CLSCompliant(false)]
-        public static string GetName(ulong value) => value > underlyingInfo.MaxValue ? null : TryGetNameByValue(value);
+        public static string? GetName(ulong value) => value > underlyingInfo.MaxValue ? null : TryGetNameByValue(value);
 
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
@@ -396,7 +403,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString(TEnum value, EnumFormattingOptions format, string separator = EnumExtensions.DefaultFormatSeparator)
+        public static string ToString(TEnum value, EnumFormattingOptions format, string? separator = EnumExtensions.DefaultFormatSeparator)
         {
             if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
                 Throw.EnumArgumentOutOfRange(Argument.format, value);
@@ -409,7 +416,7 @@ namespace KGySoft.CoreLibraries
                 return FormatCompoundFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
 
             // defined value exists
-            if (ValueNamePairs.TryGetValue(value, out string name))
+            if (ValueNamePairs.TryGetValue(value, out string? name))
                 return name;
 
             // if single value is requested returning a number
@@ -428,7 +435,7 @@ namespace KGySoft.CoreLibraries
                 return FormatCompoundFlags(value, EnumExtensions.DefaultFormatSeparator, false);
 
             // defined value exists
-            if (ValueNamePairs.TryGetValue(value, out string name))
+            if (ValueNamePairs.TryGetValue(value, out string? name))
                 return name;
 
             // defined value does not exist: returning a number
@@ -441,7 +448,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (<c>, </c>) separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
-        public static string ToString(TEnum value, string separator) => ToString(value, EnumFormattingOptions.Auto, separator);
+        public static string ToString(TEnum value, string? separator) => ToString(value, EnumFormattingOptions.Auto, separator);
 
         /// <summary>
         /// Gets the defined flags in <typeparamref name="TEnum"/>, where each flags are returned as distinct values.
@@ -456,7 +463,7 @@ namespace KGySoft.CoreLibraries
         public static IEnumerable<TEnum> GetFlags()
         {
             EnsureRawValueNamePairs();
-            return rawValueNamePairs.RawValues.Where(UInt64Extensions.IsSingleFlag).Select(converter.ToEnum);
+            return rawValueNamePairs.RawValues!.Where(UInt64Extensions.IsSingleFlag).Select(converter.ToEnum);
         }
 
         /// <summary>
@@ -525,11 +532,11 @@ namespace KGySoft.CoreLibraries
             int length = Values.Length;
             for (int i = 0; i < length; i++)
             {
-                ulong value = converter.ToUInt64(values[i]);
+                ulong value = converter.ToUInt64(values![i]);
 
                 // avoiding duplicated keys (multiple names for the same value)
                 if (!result.ContainsKey(value))
-                    result.Add(value, names[i]);
+                    result.Add(value, names![i]);
             }
 
             rawValueNamePairs.RawValues = result.Keys.ToArray();
@@ -552,7 +559,7 @@ namespace KGySoft.CoreLibraries
         {
             lock (syncRoot)
             {
-                StringKeyedDictionary<TEnum> result = nameValuePairs;
+                StringKeyedDictionary<TEnum>? result = nameValuePairs;
 
                 // lost race
                 if (result != null)
@@ -560,7 +567,7 @@ namespace KGySoft.CoreLibraries
 
                 result = new StringKeyedDictionary<TEnum>(Names.Length);
                 for (int i = 0; i < Values.Length; i++)
-                    result.Add(names[i], values[i]);
+                    result.Add(names![i], values![i]);
                 return nameValuePairs = result;
             }
         }
@@ -569,7 +576,7 @@ namespace KGySoft.CoreLibraries
         {
             lock (syncRoot)
             {
-                Dictionary<TEnum, string> result = valueNamePairs;
+                Dictionary<TEnum, string>? result = valueNamePairs;
 
                 // lost race
                 if (result != null)
@@ -579,8 +586,8 @@ namespace KGySoft.CoreLibraries
                 for (int i = 0; i < Values.Length; i++)
                 {
                     // avoiding duplicated keys (multiple names for the same value)
-                    if (!result.ContainsKey(values[i]))
-                        result.Add(values[i], names[i]);
+                    if (!result.ContainsKey(values![i]))
+                        result.Add(values[i], names![i]);
                 }
 
                 return valueNamePairs = result;
@@ -591,7 +598,7 @@ namespace KGySoft.CoreLibraries
         {
             lock (syncRoot)
             {
-                StringKeyedDictionary<ulong> result = nameRawValuePairs;
+                StringKeyedDictionary<ulong>? result = nameRawValuePairs;
 
                 // lost race
                 if (result != null)
@@ -599,7 +606,7 @@ namespace KGySoft.CoreLibraries
 
                 result = new StringKeyedDictionary<ulong>(Names.Length);
                 for (int i = 0; i < Values.Length; i++)
-                    result.Add(names[i], converter.ToUInt64(values[i]));
+                    result.Add(names![i], converter.ToUInt64(values![i]));
 
                 return nameRawValuePairs = result;
             }
@@ -609,7 +616,7 @@ namespace KGySoft.CoreLibraries
         {
             lock (syncRoot)
             {
-                StringKeyedDictionary<ulong> result = nameRawValuePairsIgnoreCase;
+                StringKeyedDictionary<ulong>? result = nameRawValuePairsIgnoreCase;
 
                 // lost race
                 if (result != null)
@@ -625,14 +632,18 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static int FindIndex(ulong value) => Array.BinarySearch(rawValueNamePairs.RawValues, 0, rawValueNamePairs.RawValues.Length, value);
+        private static int FindIndex(ulong value)
+        {
+            Debug.Assert(rawValueNamePairs.RawValues != null, $"{nameof(EnsureRawValueNamePairs)} was not called");
+            return Array.BinarySearch(rawValueNamePairs.RawValues!, 0, rawValueNamePairs.RawValues!.Length, value);
+        }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static string TryGetNameByValue(ulong value)
+        private static string? TryGetNameByValue(ulong value)
         {
             EnsureRawValueNamePairs();
             int index = FindIndex(value);
-            return index >= 0 ? rawValueNamePairs.Names[index] : null;
+            return index >= 0 ? rawValueNamePairs.Names![index] : null;
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -651,7 +662,7 @@ namespace KGySoft.CoreLibraries
         private static bool HasFlagCore(TEnum value, ulong flags) => flags == 0UL || (converter.ToUInt64(value) & flags) == flags;
 
         [SecuritySafeCritical]
-        private static unsafe string FormatDistinctFlags(TEnum e, string separator)
+        private static unsafe string FormatDistinctFlags(TEnum e, string? separator)
         {
             EnsureRawValueNamePairs();
             ulong origRawValue = converter.ToUInt64(e);
@@ -686,10 +697,10 @@ namespace KGySoft.CoreLibraries
                 {
                     // The value can be covered by a single name
                     if (origRawValue == flagValue)
-                        return rawValueNamePairs.Names[nameIndex];
+                        return rawValueNamePairs.Names![nameIndex];
 
                     resultsQueue[i] = nameIndex;
-                    resultLength += rawValueNamePairs.Names[nameIndex].Length;
+                    resultLength += rawValueNamePairs.Names![nameIndex].Length;
                 }
                 // flag without name
                 else
@@ -712,7 +723,7 @@ namespace KGySoft.CoreLibraries
                 separator = EnumExtensions.DefaultFormatSeparator;
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator.Length * (origRawValue.GetFlagsCount() - 1));
+            string result = new String('\0', resultLength + separator!.Length * (origRawValue.GetFlagsCount() - 1));
 
             fixed (char* pinnedResult = result)
             {
@@ -722,7 +733,7 @@ namespace KGySoft.CoreLibraries
                 for (int i = 0; i <= maxFlag; i++)
                 {
                     if (resultsQueue[i] >= 0)
-                        sb.Append(rawValueNamePairs.Names[resultsQueue[i]]);
+                        sb.Append(rawValueNamePairs.Names![resultsQueue[i]]);
                     else if (resultsQueue[i] == Int32.MinValue)
                         continue;
                     else
@@ -737,7 +748,7 @@ namespace KGySoft.CoreLibraries
         }
 
         [SecuritySafeCritical]
-        private static unsafe string FormatCompoundFlags(TEnum e, string separator, bool allowNumberWithNames)
+        private static unsafe string FormatCompoundFlags(TEnum e, string? separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();
             ulong origRawValue = converter.ToUInt64(e);
@@ -747,7 +758,7 @@ namespace KGySoft.CoreLibraries
             // Finally, thanks to the changes in .NET Core 3.0 (see https://github.com/dotnet/coreclr/pull/21254/files)
             // the System.Enum.ToString performance is not terrible anymore. This is also a similar solution (apart
             // from the feature differences). We can't use Span here because that is not available for all targets.
-            ulong[] rawValues = rawValueNamePairs.RawValues;
+            ulong[] rawValues = rawValueNamePairs.RawValues!;
             ulong value = origRawValue;
 
             // Unlike in FormatDistinctFlags it is used as a stack because the largest value is added first.
@@ -767,10 +778,10 @@ namespace KGySoft.CoreLibraries
                 {
                     // The value can be covered by a single name
                     if (origRawValue == biggestUnprocessedValue)
-                        return rawValueNamePairs.Names[i];
+                        return rawValueNamePairs.Names![i];
 
                     resultsStack[resultsCount] = i;
-                    resultLength += rawValueNamePairs.Names[i].Length;
+                    resultLength += rawValueNamePairs.Names![i].Length;
                     resultsCount += 1;
                     value &= ~biggestUnprocessedValue;
                 }
@@ -792,7 +803,7 @@ namespace KGySoft.CoreLibraries
             }
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator.Length * (resultsCount - 1));
+            string result = new String('\0', resultLength + separator!.Length * (resultsCount - 1));
             fixed (char* pinnedResult = result)
             {
                 var sb = new MutableStringBuilder(pinnedResult, result.Length);
@@ -809,7 +820,7 @@ namespace KGySoft.CoreLibraries
                 // Applying the names
                 for (int i = resultsCount - 1; i >= 0; i--)
                 {
-                    sb.Append(rawValueNamePairs.Names[resultsStack[i]]);
+                    sb.Append(rawValueNamePairs.Names![resultsStack[i]]);
 
                     if (i > 0)
                         sb.Append(separator);

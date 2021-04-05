@@ -58,7 +58,7 @@ namespace KGySoft.Serialization
 
         internal ArrayIndexer(Array array)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             totalLength = array.Length;
@@ -77,7 +77,7 @@ namespace KGySoft.Serialization
 
         }
 
-        internal ArrayIndexer(int[] lengths, int[] lowerBounds = null)
+        internal ArrayIndexer(int[] lengths, int[]? lowerBounds = null)
         {
             lastIndexLength = lengths[lengths.Length - 1];
             totalLength = lengths[0];

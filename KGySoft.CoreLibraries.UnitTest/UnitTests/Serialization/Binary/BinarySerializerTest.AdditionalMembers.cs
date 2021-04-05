@@ -33,8 +33,21 @@ using NUnit.Framework.Internal;
 
 #endregion
 
+#region Suppressions
+
 #pragma warning disable 162 // Unreachable code may occur depending on values of constant fields
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - IFormatter instances are not necessarily BinaryFormatters
+
+#if NET
+#if NET5_0 || NET6_0
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
+#pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
+#pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#else
+#error Check whether IFormatter is still available in this .NET version
+#endif
+#endif
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
@@ -241,7 +254,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            protected string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "SerializeByWriter").Join(" < ");
+            private static string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "SerializeByWriter").Join(" < ");
 
             #endregion
 
@@ -482,7 +495,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            protected string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "Deserialize").Join(" < ");
+            private static string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "Deserialize").Join(" < ");
 
             #endregion
 
@@ -494,8 +507,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #endregion
 
         #region Methods
-
-        #region Static Methods
 
         private static byte[] SerializeObject(object obj, IFormatter formatter)
         {
@@ -579,11 +590,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        #endregion
-
-        #region Instance Methods
-
-        private void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -607,7 +614,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -631,7 +638,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private  static void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = obj.GetType().ToString();
@@ -653,7 +660,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -674,8 +681,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 throw;
             }
         }
-
-        #endregion
 
         #endregion
     }

@@ -16,7 +16,6 @@
 
 #region Usings
 
-using System;
 using System.IO;
 
 using KGySoft.CoreLibraries;
@@ -76,7 +75,7 @@ namespace KGySoft.IO
 
         public override void WriteTo(Stream stream)
         {
-            if (stream == null)
+            if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
             byte[] buffer = ToArray();
             stream.Write(buffer, 0, buffer.Length);

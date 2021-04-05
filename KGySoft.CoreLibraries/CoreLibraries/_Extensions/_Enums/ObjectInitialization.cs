@@ -24,7 +24,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// When initializing a new random object the public fields and public read-write properties are set (including non-public setters).
         /// </summary>
-        PublicFieldsAndPropeties,
+        PublicFieldsAndProperties,
 
         /// <summary>
         /// When initializing a new random object the public read-write properties (including non-public setters) are set.

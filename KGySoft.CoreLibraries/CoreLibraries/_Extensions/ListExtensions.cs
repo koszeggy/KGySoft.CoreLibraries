@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using KGySoft.Collections;
 
 #endregion
@@ -56,9 +57,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void InsertRange<T>(this IList<T> target, int index, IEnumerable<T> collection)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             switch (target)
@@ -92,7 +93,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void RemoveRange<T>(this IList<T> collection, int index, int count)
         {
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             switch (collection)
@@ -134,9 +135,9 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void ReplaceRange<T>(this IList<T> target, int index, int count, IEnumerable<T> collection)
         {
-            if (target == null)
+            if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
-            if (collection == null)
+            if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
             switch (target)

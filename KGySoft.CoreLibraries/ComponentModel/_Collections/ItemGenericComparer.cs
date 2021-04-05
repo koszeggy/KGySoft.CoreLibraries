@@ -23,17 +23,11 @@ using System.Collections.Generic;
 
 namespace KGySoft.ComponentModel
 {
-    #region Usings
-
-    using SortIndex = KeyValuePair<int, object>;
-
-    #endregion
-
     /// <summary>
     /// Helper class for providing sort logic for the <see cref="SortableBindingList{T}"/> class.
     /// Not a nested private class because it has a different type parameter than the parent class, whose type parameter is irrelevant here.
     /// </summary>
-    internal sealed class ItemGenericComparer<TElement> : IComparer<SortIndex>
+    internal sealed class ItemGenericComparer<TElement> : IComparer<(int Index, object? Value)>
     {
         #region Fields
 
@@ -49,12 +43,14 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
-        public int Compare(SortIndex x, SortIndex y)
+        public int Compare((int Index, object? Value) x, (int Index, object? Value) y)
         {
             int sign = ascending ? 1 : -1;
 
             if (x.Value == null)
                 return y.Value == null ? 0 : -sign;
+            if (y.Value == null)
+                return sign;
             return sign * ((IComparable<TElement>)x.Value).CompareTo((TElement)y.Value);
         }
 

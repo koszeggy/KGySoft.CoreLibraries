@@ -74,7 +74,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the item to reload.</param>
         /// <returns>Loaded value</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        object GetValueUncached(object key);
+        object? GetValueUncached(object key);
 
         /// <summary>
         /// Clears the cache and resets statistics.

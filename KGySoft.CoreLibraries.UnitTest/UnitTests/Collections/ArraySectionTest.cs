@@ -85,6 +85,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 #endif
         }
 
+        [Test]
+        public void SerializationTest()
+        {
+            var section = ArraySection<int>.Null;
+            Assert.AreEqual(section, section.DeepClone());
+
+            section = new[] { 1, 2, 3, 4, 5 }.AsSection(1, 3);
+            Assert.IsTrue(section.SequenceEqual(section.DeepClone()));
+        }
+
         #endregion
     }
 }

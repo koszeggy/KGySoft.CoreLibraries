@@ -4,7 +4,7 @@
     <!--.NET Core 2.0 is needed because .NET Standard 2.0 lacks many features.-->
     <!--.NET Core 3.0 is needed because if .NET Core 2.0 version exists, then a .NET Core 3.0 consumer references that instead of the .NET Standard 2.1 version.-->
     <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
-    <!--<TargetFrameworks>netcoreapp3.0;net5.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>net6.0</TargetFrameworks>-->
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>-->
     <!--For help-->
@@ -21,6 +21,10 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <Authors>György Kőszeg</Authors>
+    <Nullable>enable</Nullable>
+
+    <!--Suppression NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended -->
+    <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,11 +47,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <!--<ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>-->
 
   <ItemGroup>
     <EmbeddedResource Update="KGySoft.CoreLibraries.Messages.resx">

@@ -91,7 +91,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private ValidationResultsCollection cachedValidationResults;
+        private ValidationResultsCollection? cachedValidationResults;
         private bool lastIsValid = true;
         private bool? isValid;
 
@@ -150,14 +150,14 @@ namespace KGySoft.ComponentModel
         public ValidationResultsCollection Validate()
         {
             ValidationResultsCollection result = DoValidation();
-            if (result == null)
+            if (result == null!)
                 Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
 
             bool newIsValid = !result.HasErrors;
             bool raiseIsValidChanged = newIsValid != lastIsValid;
             isValid = lastIsValid = newIsValid;
 
-            ValidationResultsCollection lastResult = cachedValidationResults;
+            ValidationResultsCollection? lastResult = cachedValidationResults;
             bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
             cachedValidationResults = result.ToReadOnly();
 
@@ -197,11 +197,11 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
-            if (e == null)
+            if (e == null!)
                 Throw.ArgumentNullException(Argument.e);
 
             // Invalidating cached validation results if an affected property has changed.
-            if (isValid != null && AffectsModifiedState(e.PropertyName))
+            if (isValid != null && AffectsModifiedState(e.PropertyName!))
             {
                 isValid = null;
                 cachedValidationResults = null;

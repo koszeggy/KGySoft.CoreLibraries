@@ -32,7 +32,7 @@ namespace KGySoft
 #endif
 
         [Conditional("DEBUG")]
-        internal static void Assert(bool condition, string message = null)
+        internal static void Assert(bool condition, string? message = null)
         {
 #if NETFRAMEWORK
             SystemDebug.Assert(condition, message);
@@ -43,10 +43,10 @@ namespace KGySoft
         }
 
         [Conditional("DEBUG")]
-        internal static void Fail(string message)
+        internal static void Fail(string? message)
         {
 #if NETFRAMEWORK
-            SystemDebug.Fail(message);
+            SystemDebug.Fail(message ?? "No message");
 #else
             SystemDebug.WriteLine("Debug failure occurred - " + (message ?? "No message"));
 

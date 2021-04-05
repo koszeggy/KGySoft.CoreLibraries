@@ -6,6 +6,130 @@
 ===============================================================================
 
 ~~~~~~~~~
+! v5.6.0:
+~~~~~~~~~
+
+MOST IMPORTANT CHANGES: Safe deserialization support (BinarySerializationFormatter, XmlSerializer, ResXDataNode)
+
+! Assembly changes:
+===================
+! The module initializer initializes the internal resources so configuring LanguageSettings from a consumer code
+  is able to configure the resources even if no actual resource was accessed before.
+* Members are annotated for using C# 8.0 nullable references
+
++ KGySoft namespace:
+====================
++ PublicResource class: New publicly available localizable resources.
+
+! KGySoft.Collections namespace:
+================================
+! ArraySection<T> struct:
+  ! The indexer and the GetElementReference method do not allow out-of-range indices anymore, even if the underlying
+    array is large enough.
+  ! Serialization saves the represented array only instead of the whole underlying array and offset/length.
+  - AsArraySegment property returns a default ArraySegment<T> if the underlying array is null.
++ New ThreadSafeDictionary<TKey, TValue> class
++ New ThreadSafeCacheFactory class
++ New ThreadSafeCacheOptionsBase/LockFreeCacheOptions/LockingCacheOptions classes
++ New HashingStrategy enum
+* Cache<TKey, TValue> class: balancing out hashing performance
+
+! KGySoft.Collections.ObjectModel namespace:
+============================================
+! VirtualCollection<T> class:
+  ! The protected RemoveItem(int) method was renamed to RemoveItemAt(int) and a new virtual RemoveItem(T) method
+    has been introduced.
+  * Count property and ContainsItem method have been made virtual, too.
+! FastLookupCollection<T> class:
+  ! Inconsistency detection has been changed (may not detect the same cases as before) because the internal map is
+    simply dropped when it would be too expensive to maintain.
+  - Fixing binary deserialization
+  * Improving performance, reducing memory consumption
+* SortableBindingList<T> class:
+  * Improving performance, reducing memory consumption
+  * Faster sorted enumerator implementation (from now on it supports also the Reset method)
+
+! KGySoft.CoreLibraries namespace:
+==================================
+! StringSegment struct:
+  ! Split methods use StringSegmentSplitOptions struct in place of the old bool removeEmptyEntries parameter.
+    There is a conversion from bool to StringSegmentSplitOptions (marked as obsolete) so the change is breaking
+    only if the various overloads were called with named removeEmptyEntries argument or by reflection.
+- RandomExtensions class:
+  - NextObject methods: Fixing the interpretation of GenerateObjectSettings.ChanceOfNull property for all cases.
+- ThreadSafeRandom class:
+  - If an instance was created by the factory constructor, then after disposing the Next... members could throw
+    a NullReferenceException. Now a disposed instance will throw an ObjectDisposedException instead.
+- TypeExtensions class:
+  - IsImplementationOfGenericType method: fixing possible infinite loop
++ New DelegateExtensions class.
++ DictionaryExtensions class:
+  + New TryAdd, TryUpdate, AddOrUpdate, GetOrAdd and TryRemove methods.
++ New StringSegmentSplitOptions struct: Implicitly compatible with StringSplitOptions enumeration but contains
+  the TrimEntries flag on every platform target.
+
+! KGySoft.ComponentModel namespace:
+===================================
+! BinaryTypeConverter:
+  ! ConvertFrom method: using safe mode deserialization to prevent loading assemblies during the conversion.
+- FastBindingList<T>:
+  - FindCore method: The default implementation could throw an ArgumentNullException if the binding list contained
+    a null element.
+- SortableBindingList<T>:
+  - SetItem/InsertItem methods: Not throwing an ArgumentNullException if the list is sorted by a property and a null
+    item is set or inserted
+- StringSegmentConverter: Differentiating null and empty segments.
+
+! KGySoft.Diagnostics namespace:
+================================
+! PerformanceTestBase class:
+  ! Default value of CpuAffinity is null. So from now on it must be explicitly set to restrict test execution to a
+    single core.
+! PerformanceTestBase<TDelegate, TResult> class:
+  ! Warming up is time based even if Iterations is greater than 0. This provides more reliable results for low
+    iteration counts.
+  + New Initialize, TearDown, BeforeCase and AfterCase events.
+
+* KGySoft.Resources namespace:
+==============================
++ ResXDataNode class:
+  + New GetValueSafe method that ensures that no assemblies are loaded during the deserialization.
+* ResXResourceWriter class:
+  + New SafeMode property that ensures that no assemblies are loaded when writing ResXDataNode instances
+    whose raw data has to be regenerated to create a compatible .resx content.
+  * AddResource(string, byte[]) method: allowing null array to be conform with the nullability of the
+    IResourceWriter interface.
+  * AddMetadata(string, byte[]) method: allowing null array to be conform with AddResource(string, byte[]).
+
+! KGySoft.Serialization.Binary namespace:
+=========================================
++ BinarySerializationOptions enum:
+  + New SafeMode flag that can ensure that no assemblies are loaded during deserialization when using
+    BinarySerializer/BinarySerializationFormatter classes. It also prevents deserializing non-serializable types.
+! The AnyObjectSerializerWrapper class has been made obsolete:
+  ! As the safety context of the consumer formatter cannot be determined, AnyObjectSerializerWrapper deserialization
+    uses safe mode, which denies deserializing non-serializable types. It renders this type useless, though it was
+    meant for BinaryFormatter anyway, which is also being obsoleted in upcoming .NET versions. To serialize
+    non-serializable types you still can use BinarySerializationFormatter, which now supports SafeMode (see above),
+    which should be enabled when deserializing anything from an untrusted source.
++ ForwardedTypesSerializationBinder class:
+  + New SafeMode property that can ensure that no assemblies are loaded when resolving types by the fallback logic.
++ WeakAssemblySerializationBinder class:
+  + New SafeMode property that can ensure that no assemblies are loaded when resolving types.
++ CustomSerializerSurrogateSelector class:
+  + New IsTypeSupported property that can be assigned by a delegate to explicitly tell what types are supported.
+  + New SafeMode property that can ensure that non-serializable types are not serialized and deserialized if
+    the IsTypeSupported property is null.
++ NameInvariantSurrogateSelector class:
+  + New SafeMode property that can ensure that non-serializable types are not serialized and deserialized.
+
++ KGySoft.Serialization.Xml namespace:
+======================================
++ XmlSerializer class:
+  + New DeserializeSafe and DeserializeContentSafe methods.
+
+
+~~~~~~~~~
 * v5.5.0:
 ~~~~~~~~~
 

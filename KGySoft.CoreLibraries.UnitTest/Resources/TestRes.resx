@@ -147,6 +147,15 @@
     <value/>
   </data>
 
+  <!--If type is specified, then empty value means null-->
+  <data name="null4" type="System.String">
+    <value/>
+  </data>
+
+  <data name="empty3" type="System.String">
+    <value></value>
+  </data>
+
   <!--Duplicated so cached enumerator will return String2 (sensitive) or String3 (insensitive); lazy enumerator String, then String2, then String3-->
   <data name="string" type="System.String">
     <value>String</value>

@@ -97,7 +97,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private EditableHelper editable;
+        private EditableHelper? editable;
 
         #endregion
 

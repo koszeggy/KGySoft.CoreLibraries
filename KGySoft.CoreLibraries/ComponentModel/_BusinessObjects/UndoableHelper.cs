@@ -36,8 +36,8 @@ namespace KGySoft.ComponentModel
         {
             #region Fields
 
-            internal object From;
-            internal object To;
+            internal object? From;
+            internal object? To;
 
             #endregion
         }
@@ -143,7 +143,7 @@ namespace KGySoft.ComponentModel
 
             // These calls are already locked inside because steps can be accessed from other methods in this class, too
             ClearSteps(redoSteps, nameof(CanRedo));
-            AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName, new UndoEntry { From = e.NewValue, To = e.OldValue }));
+            AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName!, new UndoEntry { From = e.NewValue, To = e.OldValue }));
         }
 
         #endregion

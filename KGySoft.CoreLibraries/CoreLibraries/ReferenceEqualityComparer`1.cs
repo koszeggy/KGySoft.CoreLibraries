@@ -17,7 +17,16 @@
 #region Usings
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+
+#endregion
+
+#region Suppressions
+
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#pragma warning disable CS8769 // Nullability of reference types in type of parameter doesn't match implemented member (possibly because of nullability attributes).
+#endif
 
 #endregion
 
@@ -30,7 +39,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static ReferenceEqualityComparer<T> comparer;
+        private static ReferenceEqualityComparer<T>? comparer;
 
         #endregion
 
@@ -42,9 +51,9 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        bool IEqualityComparer<T>.Equals(T x, T y) => ReferenceEquals(x, y);
+        bool IEqualityComparer<T>.Equals(T? x, T? y) => ReferenceEquals(x, y);
 
-        int IEqualityComparer<T>.GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
+        int IEqualityComparer<T>.GetHashCode([DisallowNull]T obj) => RuntimeHelpers.GetHashCode(obj);
 
         #endregion
     }

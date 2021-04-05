@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -59,16 +58,34 @@ namespace KGySoft.CoreLibraries
                 Reflector.IntPtrType, Reflector.UIntPtrType
             };
 
+        private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate>();
+
         /// <summary>
-        /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
+        /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse(string,Type,bool)"/> methods.
         /// Main key is the target type, the inner one is the source type.
         /// </summary>
-        private static readonly IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
+        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conversions;
 
-        private static IThreadSafeCacheAccessor<Type, int> sizeOfCache;
-        private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type T2), Type> genericTypeCache;
-        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type T2), MethodInfo> genericMethodsCache;
-        private static IThreadSafeCacheAccessor<Type, ConstructorInfo> defaultCtorCache;
+        private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
+        private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type? T2), Type>? genericTypeCache;
+        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type? T2), MethodInfo>? genericMethodsCache;
+        private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
+        private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
+
+
+        #endregion
+
+        #region Properties
+
+        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> Conversions
+        {
+            get
+            {
+                if (conversions == null)
+                    Interlocked.CompareExchange(ref conversions, new ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>(), null);
+                return conversions;
+            }
+        }
 
         #endregion
 
@@ -89,9 +106,9 @@ namespace KGySoft.CoreLibraries
         /// <para>If <paramref name="type"/> is passed by reference, then the element type is checked.</para>
         /// <para>If either <paramref name="type"/> or <paramref name="value"/> is <see langword="enum"/>, then its underlying type is also accepted because both can be unboxed from an <see cref="object"/> without casting errors.</para>
         /// </remarks>
-        public static bool CanAcceptValue(this Type type, object value)
+        public static bool CanAcceptValue(this Type type, object? value)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             // checking null value: if not reference or nullable, null is wrong
@@ -107,7 +124,7 @@ namespace KGySoft.CoreLibraries
             // if parameter is passed by reference (ref, out modifiers) the element type must be checked
             // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above
             if (type.IsByRef)
-                type = type.GetElementType();
+                type = type.GetElementType()!;
 
             // getting the type of the real instance
             Type instanceType = value.GetType();
@@ -138,7 +155,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullable(this Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             return type.IsGenericTypeOf(Reflector.NullableType);
         }
@@ -151,7 +168,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsFlagsEnum(this Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             return type.IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
         }
@@ -164,7 +181,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             return Reflector.DelegateType.IsAssignableFrom(type);
         }
@@ -178,9 +195,9 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
         public static bool IsGenericTypeOf(this Type type, Type genericTypeDefinition)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            if (genericTypeDefinition == null)
+            if (genericTypeDefinition == null!)
                 Throw.ArgumentNullException(Argument.genericTypeDefinition);
             return type.IsConstructedGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
@@ -202,11 +219,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="genericType">When this method returns <see langword="true"/>, then this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
         /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
-        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, out Type genericType)
+        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, [MaybeNullWhen(false)]out Type genericType)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            if (genericTypeDefinition == null)
+            if (genericTypeDefinition == null!)
                 Throw.ArgumentNullException(Argument.genericTypeDefinition);
 
             genericType = null;
@@ -228,7 +245,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            for (Type t = type; type != null; type = type.BaseType)
+            for (Type? t = type; t != null; t = t.BaseType)
             {
                 if (t.Name == rootName && t.IsGenericTypeOf(genericTypeDefinition))
                 {
@@ -253,11 +270,9 @@ namespace KGySoft.CoreLibraries
         /// after the registering may continue to return the original converter. So make sure you register your custom converters
         /// at the start of your application.</note></remarks>
         [SecuritySafeCritical]
-        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter",
-            Justification = "Intended. Method<T>() is more simple than Method(Type)")]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             TypeConverterAttribute attr = new TypeConverterAttribute(typeof(TConverter));
 
@@ -351,7 +366,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The name of the <paramref name="type"/> by the specified <paramref name="kind"/> using the specified custom callbacks.</returns>
         /// <seealso cref="TypeNameKind"/>
         /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>
-        public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName> assemblyNameResolver, Func<Type, string> typeNameResolver)
+        public static string GetName(this Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
             => TypeResolver.GetName(type, kind, assemblyNameResolver, typeNameResolver);
 
         #endregion
@@ -364,17 +379,17 @@ namespace KGySoft.CoreLibraries
         internal static bool CanBeParsedNatively(this Type type)
             => type.IsEnum || nativelyParsedTypes.Contains(type) || type == Reflector.RuntimeType;
 
-        internal static Type GetCollectionElementType(this Type type)
+        internal static Type? GetCollectionElementType(this Type type)
         {
             // Array
             if (type.IsArray)
-                return type.GetElementType();
+                return type.GetElementType()!;
 
             // not IEnumerable
             if (!Reflector.IEnumerableType.IsAssignableFrom(type))
                 return null;
 
-            if (type.IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type genericEnumerableType))
+            if (type.IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type? genericEnumerableType))
                 return genericEnumerableType.GetGenericArguments()[0];
             return Reflector.IDictionaryType.IsAssignableFrom(type) ? Reflector.DictionaryEntryType
                 : type == Reflector.BitArrayType ? Reflector.BoolType
@@ -393,7 +408,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="elementType">The element type. For non-generic collections it is <see cref="object"/>.</param>
         /// <param name="isDictionary"><see langword="true"/>&#160;<paramref name="type"/> is a dictionary.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
-        internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo defaultCtor, out ConstructorInfo collectionCtor, out Type elementType, out bool isDictionary)
+        internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, [MaybeNullWhen(false)]out Type elementType, out bool isDictionary)
         {
             defaultCtor = null;
             collectionCtor = null;
@@ -404,7 +419,7 @@ namespace KGySoft.CoreLibraries
             if (!Reflector.IEnumerableType.IsAssignableFrom(type) || type.IsAbstract)
                 return false;
 
-            elementType = type.GetCollectionElementType();
+            elementType = type.GetCollectionElementType()!;
             isDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
 
             // Array
@@ -475,7 +490,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to test</param>
         /// <param name="instance">The object instance to test</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <see langword="false"/>.</returns>
-        internal static bool IsReadWriteCollection(this Type type, object instance)
+        internal static bool IsReadWriteCollection(this Type type, object? instance)
         {
             if (instance == null)
                 return false;
@@ -492,7 +507,7 @@ namespace KGySoft.CoreLibraries
             return IsGenericReadWriteCollection(type, instance);
         }
 
-        internal static bool IsPopulatableCollection(this Type type, object instance)
+        internal static bool IsPopulatableCollection(this Type type, object? instance)
         {
             if (instance == null)
                 return false;
@@ -509,12 +524,12 @@ namespace KGySoft.CoreLibraries
             return IsGenericReadWriteCollection(type, instance);
         }
 
-        internal static ConstructorInfo GetDefaultConstructor(this Type type)
+        internal static ConstructorInfo? GetDefaultConstructor(this Type type)
         {
             if (defaultCtorCache == null)
             {
                 Interlocked.CompareExchange(ref defaultCtorCache,
-                    new Cache<Type, ConstructorInfo>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)).GetThreadSafeAccessor(),
+                    ThreadSafeCacheFactory.Create<Type, ConstructorInfo?>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null), LockFreeCacheOptions.Profile128),
                     null);
             }
 
@@ -527,23 +542,27 @@ namespace KGySoft.CoreLibraries
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
-                Interlocked.CompareExchange(ref sizeOfCache, new Cache<Type, int>(GetSize).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create<Type, int>(GetSize, LockFreeCacheOptions.Profile128), null);
             return sizeOfCache[type];
         }
 
-        internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
+        internal static List<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
             var result = new List<Delegate>();
 
             // the exact match first
-            if (exactMatch != false && conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget) && conversionsOfTarget.TryGetValue(sourceType, out Delegate conversion))
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> conv = Conversions;
+            if (exactMatch != false && conv.TryGetValue(targetType, out ThreadSafeDictionary<Type, Delegate>? conversionsOfTarget)
+                && conversionsOfTarget.TryGetValue(sourceType, out Delegate? conversion))
+            {
                 result.Add(conversion);
+            }
 
             if (exactMatch == true)
                 return result;
 
             // non-exact matches: targets can match generic type, sources can match also interfaces and abstract types
-            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForTarget in conversions)
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in conv)
             {
                 if (conversionsForTarget.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(conversionsForTarget.Key))
                 {
@@ -561,31 +580,35 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static IList<Type> GetConversionSourceTypes(this Type targetType)
+        internal static List<Type> GetConversionSourceTypes(this Type targetType)
         {
             var result = new List<Type>();
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> conv = Conversions;
 
             // adding sources for exact target match
-            if (conversions.TryGetValue(targetType, out var conversionsForTarget))
+            if (conv.TryGetValue(targetType, out var conversionsForTarget))
                 result.AddRange(conversionsForTarget.Keys);
 
             // adding sources for generic target matches
-            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForGenericTarget in conversions.Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForGenericTarget in conv
+                .Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+            {
                 result.AddRange(conversionsForGenericTarget.Value.Keys);
+            }
 
             return result;
         }
 
-        internal static Type GetGenericType(this Type genTypeDef, Type t1, Type t2 = null)
+        internal static Type GetGenericType(this Type genTypeDef, Type t1, Type? t2 = null)
         {
             if (genericTypeCache == null)
-                Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type), Type>(CreateGenericType, 256).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericTypeCache, ThreadSafeCacheFactory.Create<(Type, Type, Type?), Type>(CreateGenericType, LockFreeCacheOptions.Profile256), null);
             return genericTypeCache[(genTypeDef, t1, t2)];
         }
 
         internal static Type GetGenericType(this Type genTypeDef, Type[] args)
         {
-            if (args == null)
+            if (args == null!)
                 Throw.ArgumentNullException(Argument.args);
             switch (args.Length)
             {
@@ -598,16 +621,16 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type t1, Type t2 = null)
+        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type t1, Type? t2 = null)
         {
             if (genericMethodsCache == null)
-                Interlocked.CompareExchange(ref genericMethodsCache, genericMethodsCache = new Cache<(MethodInfo, Type, Type), MethodInfo>(CreateGenericMethod).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericMethodsCache, ThreadSafeCacheFactory.Create<(MethodInfo, Type, Type?), MethodInfo>(CreateGenericMethod, LockFreeCacheOptions.Profile128), null);
             return genericMethodsCache[(genMethodDef, t1, t2)];
         }
 
         internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type[] args)
         {
-            if (args == null)
+            if (args == null!)
                 Throw.ArgumentNullException(Argument.args);
             switch (args.Length)
             {
@@ -622,7 +645,7 @@ namespace KGySoft.CoreLibraries
 
         internal static bool IsZeroBasedArray(this Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
 #if NET35 || NET40 || NET45 || NET472
@@ -636,18 +659,19 @@ namespace KGySoft.CoreLibraries
 
         internal static Type GetRootType(this Type type)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            // ReSharper disable once PossibleNullReferenceException - false alarm, see condition
             while (type.HasElementType)
-                type = type.GetElementType();
+                type = type.GetElementType()!;
             if (type.IsConstructedGenericType())
                 type = type.GetGenericTypeDefinition();
             return type;
         }
 
-        internal static bool IsRuntimeType(this Type type) => type?.GetType() == Reflector.RuntimeType;
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+        [SuppressMessage("ReSharper", "PossibleMistakenCallToGetType.2")]
+        internal static bool IsRuntimeType(this Type type) => type.GetType() == Reflector.RuntimeType;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsConstructedGenericType(this Type type) =>
@@ -657,23 +681,9 @@ namespace KGySoft.CoreLibraries
             type.IsConstructedGenericType;
 #endif
 
-        internal static object GetDefaultValue(this Type type) => type.IsValueType
+        internal static object? GetDefaultValue(this Type type) => type.IsValueType
             ? Activator.CreateInstance(type)
             : null;
-
-        internal static bool IsUnmanaged(this Type type)
-        {
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
-            Debug.Fail("Use RuntimeHelpers.IsReferenceOrContainsReferences instead");
-#endif
-            // not caching results so should be called from static field initializers only
-            if (!type.IsValueType)
-                return false;
-            if (type.IsPrimitive || type.IsPointer || type.IsEnum)
-                return true;
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            return fields.All(f => f.FieldType.IsUnmanaged());
-        }
 
         internal static bool IsSignedIntegerType(this Type type)
         {
@@ -712,6 +722,29 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        internal static bool IsDefaultGetHashCode(this Type type)
+        {
+            #region Local Methods
+            
+            static bool LoadCacheItem(Type t)
+            {
+                if (!t.IsClass || !t.IsSealed)
+                    return false;
+                return t.GetMethod(nameof(GetHashCode), Type.EmptyTypes)?.DeclaringType == Reflector.ObjectType;
+            }
+
+            #endregion
+
+            if (isDefaultGetHashCodeCache == null)
+            {
+                Interlocked.CompareExchange(ref isDefaultGetHashCodeCache,
+                    ThreadSafeCacheFactory.Create<Type, bool>(LoadCacheItem, LockFreeCacheOptions.Profile128),
+                    null);
+            }
+
+            return isDefaultGetHashCodeCache[type];
+        }
+
         #endregion
 
         #region Private Methods
@@ -724,31 +757,24 @@ namespace KGySoft.CoreLibraries
                     continue;
                 if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
                 {
-                    PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
-                    return !(bool)pi.Get(instance);
+                    PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly))!;
+                    return !(bool)pi.Get(instance)!;
                 }
             }
 
             return false;
         }
 
-        [SuppressMessage("Style", "IDE0016:Use 'throw' expression", Justification = "Throwing at the beginning may spare a lot of calculations")]
         private static void DoRegisterConversion(Type sourceType, Type targetType, Delegate conversion)
         {
-            if (sourceType == null)
+            if (sourceType == null!)
                 Throw.ArgumentNullException(Argument.sourceType);
-            if (targetType == null)
+            if (targetType == null!)
                 Throw.ArgumentNullException(Argument.targetType);
-            if (conversion == null)
+            if (conversion == null!)
                 Throw.ArgumentNullException(Argument.conversion);
 
-            if (!conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget))
-            {
-                conversionsOfTarget = new LockingDictionary<Type, Delegate>();
-                conversions[targetType] = conversionsOfTarget;
-            }
-
-            conversionsOfTarget[sourceType] = conversion;
+            Conversions.GetOrAdd(targetType, conversionAddValueFactory)[sourceType] = conversion;
         }
 
         private static int GetSize(Type type)
@@ -784,10 +810,10 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
-        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key)
+        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type? T2) key)
             => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
-        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type T2) key)
+        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type? T2) key)
             => key.GenMethodDef.MakeGenericMethod(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
         #endregion

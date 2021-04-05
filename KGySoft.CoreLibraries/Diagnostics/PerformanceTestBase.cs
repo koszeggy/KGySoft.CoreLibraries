@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -93,7 +94,7 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets or sets the name of the test.
         /// </summary>
-        public string TestName { get; set; }
+        public string? TestName { get; set; }
 
         /// <summary>
         /// Gets or sets number of iterations of test cases. If greater than zero, then <see cref="TestTime"/> is ignored.
@@ -102,14 +103,15 @@ namespace KGySoft.Diagnostics
         public int Iterations { get; set; }
 
         /// <summary>
-        /// Gets or sets the test duration, in milliseconds, for each test case and the warming-up sessions. If <see cref="Iterations"/> is greater than zero, then this property is ignored.
+        /// Gets or sets the test duration, in milliseconds, for each test case and the warming-up sessions.
+        /// If <see cref="Iterations"/> is greater than zero, then this property affects only the warm-up time.
         /// <br/>Default value: <c>2000</c>.
         /// </summary>
         public int TestTime { get; set; } = 2000;
 
         /// <summary>
         /// Gets or sets whether there is an untested warm-up session before each test.
-        /// Its duration or iteration count equals to <see cref="TestTime"/> or <see cref="Iterations"/>, respectively.
+        /// Its duration equals to <see cref="TestTime"/>.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         public bool WarmUp { get; set; } = true;
@@ -128,9 +130,9 @@ namespace KGySoft.Diagnostics
 
         /// <summary>
         /// Gets or sets the CPU affinity to be used for executing tests. If <see langword="null"/>, or is too large for the executing system, then the affinity is not adjusted for the test.
-        /// <br/>Default value: <c>2</c>.
+        /// <br/>Default value: <c>null</c>.
         /// </summary>
-        public int? CpuAffinity { get; set; } = 2;
+        public int? CpuAffinity { get; set; }
 
         /// <summary>
         /// Gets or sets whether the results should be sorted by the size of the produced result instead of iterations count or time results.

@@ -40,7 +40,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         #region Fields
 
         private static readonly Func<int, string> loader = i => i.ToString();
-        private static readonly Func<string, int> loaderStr = s => s.Length;
 
         #endregion
 

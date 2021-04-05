@@ -17,9 +17,16 @@
 #region Usings
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Security;
+
+#endregion
+
+#region Suppressions
+
+#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(char) method in some targeted platforms  
+#endif
 
 #endregion
 
@@ -57,9 +64,7 @@ namespace KGySoft.CoreLibraries
                 #region Properties
 
                 internal int CurrentWordStartPosition { get; private set; }
-
                 internal int RemainingWordLength { get; private set; }
-
                 internal int RemainingSentenceLength { get; private set; }
 
                 internal char CurrentWordFirstLetter
@@ -256,6 +261,7 @@ namespace KGySoft.CoreLibraries
             {
                 switch (context.Random.NextDouble())
                 {
+                    // ReSharper disable once PatternAlwaysMatches - object pattern is less readable
                     // 10% chance for multiple vowels
                     case double d when d < 0.1 && CanAddAnyVowel(ref context):
                         char c;

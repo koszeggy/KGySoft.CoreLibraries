@@ -28,9 +28,11 @@ namespace KGySoft.ComponentModel
     {
         #region Properties
 
-        /// <summary>Gets or sets the object to be added to the binding list.</summary>
-        /// <returns>The <typeparamref name="T"/> to be added as a new item to the associated collection. </returns>
-        public T NewObject { get; set; }
+        /// <summary>
+        /// Gets or sets the object to be added to the binding list. If <see langword="null"/>,
+        /// then a new instance of <typeparamref name="T"/> is tried to be created automatically.
+        /// </summary>
+        public T? NewObject { get; set; }
 
         #endregion
     }

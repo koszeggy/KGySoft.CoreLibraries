@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -37,14 +36,13 @@ namespace KGySoft.Serialization.Binary
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
-    /// You can use this surrogate selector for any non-primitive types that does not implement <see cref="ISerializable"/> interface.
-    /// <note>
-    /// Versioning by this surrogate selector can be accomplished only if new fields are always defined after the old ones on every level of the hierarchy.
-    /// You might to use also <see cref="WeakAssemblySerializationBinder"/> to ignore version information of assemblies on deserialization.
-    /// </note>
-    /// <note type="caution">
-    /// Please note that this surrogate selector does not identify field names on deserialization so reordering members may corrupt or fail deserialization.
-    /// </note>
+    /// <note type="security"><para>If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
+    /// which prevents supporting non-serializable types.</para>
+    /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
+    /// <para>You can use this surrogate selector for any non-primitive types that does not implement <see cref="ISerializable"/> interface.</para>
+    /// <note>Versioning by this surrogate selector can be accomplished only if new fields are always defined after the old ones on every level of the hierarchy.
+    /// You might want to use also the <see cref="WeakAssemblySerializationBinder"/> class to ignore version information of assemblies on deserialization.</note>
+    /// <note type="caution">Please note that this surrogate selector does not identify field names on deserialization so reordering members may corrupt or fail deserialization.</note>
     /// </remarks>
     /// <seealso cref="WeakAssemblySerializationBinder" />
     /// <seealso cref="CustomSerializerSurrogateSelector" />
@@ -53,7 +51,21 @@ namespace KGySoft.Serialization.Binary
     {
         #region Fields
 
-        private ISurrogateSelector next;
+        private ISurrogateSelector? next;
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets whether it is prohibited to serialize and deserialize types that are not marked by <see cref="SerializableAttribute"/>.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
 
         #endregion
 
@@ -67,7 +79,6 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">The next surrogate selector to examine.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
         /// <summary>
@@ -77,8 +88,7 @@ namespace KGySoft.Serialization.Binary
         /// The next surrogate selector in the chain or null.
         /// </returns>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        public ISurrogateSelector GetNextSelector() => next;
+        public ISurrogateSelector? GetNextSelector() => next;
 
         /// <summary>
         /// Finds the surrogate that represents the specified object's type, starting with the specified surrogate selector for the specified serialization context.
@@ -91,23 +101,15 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">When this method returns, contains a <see cref="ISurrogateSelector"/> that holds a reference to the surrogate selector where the appropriate surrogate was found.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
+        public ISerializationSurrogate? GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
                 Throw.ArgumentNullException(Argument.type);
 
-            if (!type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) )
-            {
-                selector = this;
-                return this;
-            }
-
-            if (next != null)
-                return next.GetSurrogate(type, context, out selector);
-
-            selector = null;
-            return null;
+            selector = this;
+            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && !typeof(ISerializable).IsAssignableFrom(type) && (!SafeMode || SerializationHelper.IsSafeType(type))
+                ? this
+                : next?.GetSurrogate(type, context, out selector);
         }
 
         #endregion
@@ -115,20 +117,18 @@ namespace KGySoft.Serialization.Binary
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             Type type = obj.GetType();
 
             int level = 0;
 
-            // ReSharper disable once PossibleNullReferenceException - cannot be null die to the condition
-            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
@@ -141,12 +141,11 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             // can occur if the original type was ISerializable and GetObjectData has changed the type to a non-ISerializable one
@@ -208,9 +207,7 @@ namespace KGySoft.Serialization.Binary
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))
                 {
                     level += 1;
-
-                    // ReSharper disable once PossibleNullReferenceException - see first line inside the loop
-                    type = type.BaseType;
+                    type = type.BaseType!;
                     fields = SerializationHelper.GetSerializableFields(type);
                     fieldIndex = 0;
                 }

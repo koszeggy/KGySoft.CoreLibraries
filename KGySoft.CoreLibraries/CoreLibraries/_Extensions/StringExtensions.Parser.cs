@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         {
             #region Delegates
 
-            private delegate bool ParseDelegate(string s, CultureInfo culture, out object value);
+            private delegate bool ParseDelegate(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value);
 
             #endregion
 
@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static bool TryParse(string s, Type type, CultureInfo culture, bool tryKnownTypes, out object value, out Exception error)
+            internal static bool TryParse(string? s, Type type, CultureInfo? culture, bool tryKnownTypes, bool safeMode, out object? value, out Exception? error)
             {
                 if (type == null)
                     Throw.ArgumentNullException(Argument.type);
@@ -104,10 +104,8 @@ namespace KGySoft.CoreLibraries
 
                 type = Nullable.GetUnderlyingType(type) ?? type;
                 if (type.IsByRef)
-                    type = type.GetElementType();
-
-                if (culture == null)
-                    culture = CultureInfo.InvariantCulture;
+                    type = type.GetElementType()!;
+                culture ??= CultureInfo.InvariantCulture;
 
                 try
                 {
@@ -137,7 +135,10 @@ namespace KGySoft.CoreLibraries
 #endif
                     ))
                     {
-                        value = Reflector.ResolveType(s);
+                        var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+                        if (!safeMode)
+                            options |= ResolveTypeOptions.TryToLoadAssemblies;
+                        value = Reflector.ResolveType(s, options);
                         return value != null;
                     }
 
@@ -174,7 +175,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            internal static bool TryParse<T>(string s, CultureInfo culture, out T value, out Exception error)
+            internal static bool TryParse<T>(string? s, CultureInfo? culture, out T? value, out Exception? error)
             {
                 Throw.ThrowIfNullIsInvalid<T>(s, Argument.s);
                 error = null;
@@ -182,13 +183,11 @@ namespace KGySoft.CoreLibraries
                 // if s is null here, then T can accept null
                 if (s == null)
                 {
-                    value = default;
+                    value = default!;
                     return true;
                 }
 
-                if (culture == null)
-                    culture = CultureInfo.InvariantCulture;
-
+                culture ??= CultureInfo.InvariantCulture;
                 Type type = typeof(T);
 
                 // The fast path: the JITted version will contain one or zero branches of the checked types
@@ -202,13 +201,13 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // The slow path: for value types boxing will occur
-                if (!TryParse(s, type, culture, false, out object result, out error) || !type.CanAcceptValue(result))
+                if (!TryParse(s, type, culture, false, false, out object? result, out error) || !type.CanAcceptValue(result))
                 {
                     value = default;
                     return false;
                 }
 
-                value = (T)result;
+                value = (T)result!;
                 return true;
             }
 
@@ -260,8 +259,8 @@ namespace KGySoft.CoreLibraries
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
-                Justification = "Intended, in Release JIT compliler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
-            private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, out T value)
+                Justification = "Intended, in Release JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+            private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, [MaybeNullWhen(false)]out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
                 // Important:
@@ -471,7 +470,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseBoolean(string s, CultureInfo culture, out object value)
+            private static bool TryParseBoolean(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 var segment = new StringSegmentInternal(s);
                 segment.Trim();
@@ -498,7 +497,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseByte(string s, CultureInfo culture, out object value)
+            private static bool TryParseByte(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Byte.TryParse(s, NumberStyles.Integer, culture, out byte result))
                 {
@@ -510,7 +509,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseSByte(string s, CultureInfo culture, out object value)
+            private static bool TryParseSByte(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (SByte.TryParse(s, NumberStyles.Integer, culture, out sbyte result))
                 {
@@ -522,7 +521,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseInt16(string s, CultureInfo culture, out object value)
+            private static bool TryParseInt16(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Int16.TryParse(s, NumberStyles.Integer, culture, out short result))
                 {
@@ -534,7 +533,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseUInt16(string s, CultureInfo culture, out object value)
+            private static bool TryParseUInt16(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (UInt16.TryParse(s, NumberStyles.Integer, culture, out ushort result))
                 {
@@ -546,7 +545,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseInt32(string s, CultureInfo culture, out object value)
+            private static bool TryParseInt32(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Int32.TryParse(s, NumberStyles.Integer, culture, out int result))
                 {
@@ -558,7 +557,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseUInt32(string s, CultureInfo culture, out object value)
+            private static bool TryParseUInt32(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (UInt32.TryParse(s, NumberStyles.Integer, culture, out uint result))
                 {
@@ -570,7 +569,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseInt64(string s, CultureInfo culture, out object value)
+            private static bool TryParseInt64(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
                 {
@@ -582,7 +581,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseUInt64(string s, CultureInfo culture, out object value)
+            private static bool TryParseUInt64(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
                 {
@@ -594,7 +593,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseIntPtr(string s, CultureInfo culture, out object value)
+            private static bool TryParseIntPtr(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
                 {
@@ -606,7 +605,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseUIntPtr(string s, CultureInfo culture, out object value)
+            private static bool TryParseUIntPtr(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
                 {
@@ -618,7 +617,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseChar(string s, CultureInfo culture, out object value)
+            private static bool TryParseChar(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (Char.TryParse(s, out char result))
                 {
@@ -630,7 +629,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseSingle(string s, CultureInfo culture, out object value)
+            private static bool TryParseSingle(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (!Single.TryParse(s, floatStyle, culture, out float result))
                 {
@@ -644,7 +643,7 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryParseDouble(string s, CultureInfo culture, out object value)
+            private static bool TryParseDouble(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (!Double.TryParse(s, floatStyle, culture, out double result))
                 {
@@ -658,7 +657,7 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryParseDecimal(string s, CultureInfo culture, out object value)
+            private static bool TryParseDecimal(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (!Decimal.TryParse(s, floatStyle, culture, out decimal result))
                 {
@@ -670,7 +669,7 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryParseTimeSpan(string s, CultureInfo culture, out object value)
+            private static bool TryParseTimeSpan(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
 #if NET35
                 if (!TimeSpan.TryParse(s, out TimeSpan result))
@@ -686,7 +685,7 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryParseDateTime(string s, CultureInfo culture, out object value)
+            private static bool TryParseDateTime(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 s = s.TrimEnd();
                 if (s.Length > 0)
@@ -703,7 +702,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseDateTimeOffset(string s, CultureInfo culture, out object value)
+            private static bool TryParseDateTimeOffset(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 s = s.TrimEnd();
                 if (s.Length > 0)

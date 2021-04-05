@@ -37,11 +37,9 @@ namespace KGySoft.Diagnostics
         private readonly string operation;
         private long calls;
 
-#pragma warning disable CA2235 // Mark all non-serializable fields - false alarm, object and TimeSpan are serializable
         private readonly object syncRoot = new object();
         private TimeSpan firstCall;
         private TimeSpan totalElapsed;
-#pragma warning restore CA2235 // Mark all non-serializable fields
 
         #endregion
 
@@ -67,7 +65,7 @@ namespace KGySoft.Diagnostics
 
         #region Methods
 
-        public override string ToString() => calls == 0 ? base.ToString() : Res.ProfilerMeasureItemToString(Category, Operation, new TimeSpan(TotalTime.Ticks / NumberOfCalls), FirstCall, TotalTime, NumberOfCalls);
+        public override string ToString() => calls == 0 ? base.ToString()! : Res.ProfilerMeasureItemToString(Category, Operation, new TimeSpan(TotalTime.Ticks / NumberOfCalls), FirstCall, TotalTime, NumberOfCalls);
 
         internal void AddMeasurement(TimeSpan timeSpan)
         {

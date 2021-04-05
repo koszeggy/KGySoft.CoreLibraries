@@ -54,7 +54,7 @@ namespace KGySoft.Serialization.Xml
     {
         #region Member struct
 
-        private protected struct Member
+        private protected readonly struct Member
         {
             #region Fields
 
@@ -66,7 +66,7 @@ namespace KGySoft.Serialization.Xml
 
             #region Private Fields
 
-            private readonly Dictionary<string, int> memberNamesCounts;
+            private readonly StringKeyedDictionary<int> memberNamesCounts;
 
             #endregion
 
@@ -74,15 +74,15 @@ namespace KGySoft.Serialization.Xml
 
             #region Properties
 
-            internal PropertyInfo Property => MemberInfo as PropertyInfo;
-            internal FieldInfo Field => MemberInfo as FieldInfo;
-            internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && Reflector.IEnumerableType.IsAssignableFrom(Property?.PropertyType ?? Field.FieldType);
+            internal PropertyInfo? Property => MemberInfo as PropertyInfo;
+            internal FieldInfo? Field => MemberInfo as FieldInfo;
+            internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && Reflector.IEnumerableType.IsAssignableFrom(Property?.PropertyType ?? Field!.FieldType);
 
             #endregion
 
             #region Constructors
 
-            internal Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
+            internal Member(MemberInfo memberInfo, StringKeyedDictionary<int> memberNamesCounts)
             {
                 MemberInfo = memberInfo;
                 this.memberNamesCounts = memberNamesCounts;
@@ -120,13 +120,13 @@ namespace KGySoft.Serialization.Xml
 
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = ThreadSafeCacheFactory.Create<Type, bool>(IsTypeTrusted, LockFreeCacheOptions.Profile128);
 
         #endregion
 
         #region Instance Fields
 
-        private HashSet<object> serObjects;
+        private HashSet<object>? serObjects;
 
         #endregion
 
@@ -150,7 +150,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Properties
 
-        private HashSet<object> SerObjects => serObjects ?? (serObjects = new HashSet<object>(ReferenceEqualityComparer.Comparer));
+        private HashSet<object> SerObjects => serObjects ??= new HashSet<object>(ReferenceEqualityComparer.Comparer);
 
         #endregion
 
@@ -221,7 +221,7 @@ namespace KGySoft.Serialization.Xml
             // U+0009 = <control> HORIZONTAL TAB
             // U+000a = <control> LINE FEED
             // U+000b = <control> VERTICAL TAB
-            // U+000c = <contorl> FORM FEED
+            // U+000c = <control> FORM FEED
             // U+000d = <control> CARRIAGE RETURN
             // U+0085 = <control> NEXT LINE
             // U+00a0 = NO-BREAK SPACE
@@ -290,27 +290,26 @@ namespace KGySoft.Serialization.Xml
                             || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(p.Get(obj))))
 #if NET35
                     .Cast<MemberInfo>()
-                    // ReSharper disable RedundantCast
 #endif
                 ;
 
             // getting non read-only instance fields
             IEnumerable<MemberInfo> fields = ExcludeFields
-                    ? (IEnumerable<MemberInfo>)Reflector.EmptyArray<MemberInfo>()
+                    ? Reflector.EmptyArray<MemberInfo>()
                     : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                         .Where(f => !f.IsInitOnly
                             // read-only fields are serialized only if forced
                             || ForceReadonlyMembersAndCollections
                             // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
-                            || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
+                            || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type? elementType, out var _)
+                            || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
 #if NET35
-                    // ReSharper restore RedundantCast
                     .Cast<MemberInfo>()
 #endif
                 ;
 
             var result = new List<Member>();
-            var memberNameCounts = new Dictionary<string, int>();
+            var memberNameCounts = new StringKeyedDictionary<int>();
             foreach (MemberInfo mi in fields.Concat(properties))
             {
                 if (!memberNameCounts.TryGetValue(mi.Name, out int count))
@@ -323,7 +322,7 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
-        private protected bool SkipMember(object obj, MemberInfo member, out object value, ref DesignerSerializationVisibility visibility)
+        private protected bool SkipMember(object obj, MemberInfo member, out object? value, ref DesignerSerializationVisibility visibility)
         {
             value = null;
 
@@ -337,14 +336,14 @@ namespace KGySoft.Serialization.Xml
             // Skip 2.) ShouldSerialize<MemberName> method returns false
             if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
             {
-                MethodInfo shouldSerializeMethod = member.DeclaringType?.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == Reflector.BoolType && !(bool)Reflector.InvokeMethod(obj, shouldSerializeMethod))
+                MethodInfo? shouldSerializeMethod = member.DeclaringType?.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == Reflector.BoolType && !(bool)Reflector.InvokeMethod(obj, shouldSerializeMethod)!)
                     return true;
             }
 
             // Skip 3.) DefaultValue equals to property value
             bool hasDefaultValue = false;
-            object defaultValue = null;
+            object? defaultValue = null;
             if ((Options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
             {
                 attrs = Attribute.GetCustomAttributes(member, typeof(DefaultValueAttribute), true);
@@ -353,9 +352,9 @@ namespace KGySoft.Serialization.Xml
                     defaultValue = ((DefaultValueAttribute)attrs[0]).Value;
             }
 
-            PropertyInfo property = member as PropertyInfo;
-            FieldInfo field = property == null ? (FieldInfo)member : null;
-            Type memberType = property != null ? property.PropertyType : field.FieldType;
+            PropertyInfo? property = member as PropertyInfo;
+            FieldInfo? field = property == null ? (FieldInfo)member : null;
+            Type memberType = property != null ? property.PropertyType : field!.FieldType;
             if (!hasDefaultValue && (Options & XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback) != XmlSerializationOptions.None)
             {
                 hasDefaultValue = true;
@@ -364,7 +363,7 @@ namespace KGySoft.Serialization.Xml
 
             value = property != null
                 ? property.Get(obj)
-                : field.Get(obj);
+                : field!.Get(obj);
             return hasDefaultValue && Equals(value, defaultValue);
         }
 
@@ -372,21 +371,21 @@ namespace KGySoft.Serialization.Xml
         /// Registers object to detect circular reference.
         /// Must be called from inside of try-finally to remove lock in finally if necessary.
         /// </summary>
-        private protected void RegisterSerializedObject(object obj)
+        private protected void RegisterSerializedObject(object? obj)
         {
             if (obj == null || obj.GetType().IsValueType)
                 return;
 
             if (SerObjects.Contains(obj))
                 Throw.ReflectionException(Res.XmlSerializationCircularReference(obj));
-            serObjects.Add(obj);
+            serObjects!.Add(obj);
         }
 
-        private protected void UnregisterSerializedObject(object obj)
+        private protected void UnregisterSerializedObject(object? obj)
         {
             if (obj == null || obj.GetType().IsValueType)
                 return;
-            serObjects.Remove(obj);
+            serObjects!.Remove(obj);
         }
 
         private protected string GetTypeString(Type type)
@@ -395,7 +394,7 @@ namespace KGySoft.Serialization.Xml
 
             static AssemblyName GetAssemblyName(Type t)
             {
-                string legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
+                string? legacyName = AssemblyResolver.GetForwardedAssemblyName(t, false);
                 return legacyName != null ? new AssemblyName(legacyName) : t.Assembly.GetName();
             }
 
@@ -408,33 +407,33 @@ namespace KGySoft.Serialization.Xml
                 : type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
         }
 
-        private protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
+        private protected string? GetStringValue(object? value, out bool spacePreserve, out bool escaped)
         {
             spacePreserve = false;
             escaped = false;
-
-            if (value is bool)
-                return XmlConvert.ToString((bool)value);
-            if (value is double)
-                return ((double)value).ToRoundtripString();
-            if (value is float)
-                return ((float)value).ToRoundtripString();
-            if (value is decimal)
-                return ((decimal)value).ToRoundtripString();
-            if (value is DateTime)
-                return XmlConvert.ToString((DateTime)value, XmlDateTimeSerializationMode.RoundtripKind);
-            if (value is DateTimeOffset)
-                return XmlConvert.ToString((DateTimeOffset)value);
-            Type type = value as Type;
-            if (type != null)
+            if (value == null)
+                return null;
+            if (value is bool boolValue)
+                return XmlConvert.ToString(boolValue);
+            if (value is double doubleValue)
+                return doubleValue.ToRoundtripString();
+            if (value is float floatValue)
+                return floatValue.ToRoundtripString();
+            if (value is decimal decimalValue)
+                return decimalValue.ToRoundtripString();
+            if (value is DateTime dateTime)
+                return XmlConvert.ToString(dateTime, XmlDateTimeSerializationMode.RoundtripKind);
+            if (value is DateTimeOffset dateTimeOffset)
+                return XmlConvert.ToString(dateTimeOffset);
+            if (value is Type type)
                 return GetTypeString(type);
 
-            string result = value.ToString();
-            if (result.Length == 0)
+            string? result = value.ToString();
+            if (String.IsNullOrEmpty(result))
                 return result;
 
             bool escapeNewline = (Options & XmlSerializationOptions.EscapeNewlineCharacters) != XmlSerializationOptions.None;
-            StringBuilder escapedResult = null;
+            StringBuilder? escapedResult = null;
             spacePreserve = IsWhiteSpace(result[0], escapeNewline);
 
             // checking result for escaping
@@ -442,9 +441,7 @@ namespace KGySoft.Serialization.Xml
             {
                 if (EscapeNeeded(result, i, escapeNewline, out bool isValidSurrogate))
                 {
-                    if (escapedResult == null)
-                        escapedResult = new StringBuilder(result.Substring(0, i).Replace(@"\", @"\\"));
-
+                    escapedResult ??= new StringBuilder(result.Substring(0, i).Replace(@"\", @"\\"));
                     escapedResult.Append(@"\" + ((ushort)result[i]).ToString("X4", CultureInfo.InvariantCulture));
                 }
                 else

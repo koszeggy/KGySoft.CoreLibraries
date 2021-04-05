@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.CoreLibraries.UnitTests.Resources;
 #if NETCOREAPP
 using System.IO;
 #elif !NETFRAMEWORK
@@ -55,10 +56,14 @@ namespace KGySoft.CoreLibraries
             // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
             // or just calling the method to debug directly
             Console.WriteLine(FrameworkVersion);
+
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");
             ITestResult result = runner.Run(null, TestFilter.Empty);
+            Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
+                : result.SkipCount > 0 ? ConsoleColor.Yellow
+                : ConsoleColor.Green;
             Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Skipped: {result.SkipCount}");
             Console.WriteLine($"Message: {result.Message}");
             ProcessChildren(result.Children);

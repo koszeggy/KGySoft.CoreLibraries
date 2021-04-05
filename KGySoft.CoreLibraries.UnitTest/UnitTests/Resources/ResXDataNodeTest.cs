@@ -16,12 +16,32 @@
 
 #region Usings
 
+using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
+using KGySoft.Reflection;
 using KGySoft.Resources;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
+
+#endregion
+
+#region Suppressions
+
+#if NET
+#if NET5_0 || NET6_0
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
+#pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
+#pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#else
+#error Check whether IFormatter is still available in this .NET version
+#endif
+#endif
 
 #endregion
 
@@ -104,6 +124,69 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(node.ValueData);
             node.GetValue(cleanupRawData: true);
             Assert.IsNull(node.ValueData);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SafeModeWithTypeConverterTest(bool customResolver)
+        {
+            var nodeInfo = new DataNodeInfo()
+            {
+                Name = "dangerous",
+                TypeName = "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+            };
+
+            var nodeRaw = new ResXDataNode(nodeInfo, null);
+            var resolver = customResolver ? new TestTypeResolver() : null;
+
+            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SafeModeWithFileRefTest(bool customResolver)
+        {
+            var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
+            var nodeRaw = new ResXDataNode("dangerous", fileRef);
+            var resolver = customResolver ? new TestTypeResolver() : null;
+
+            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
+        }
+
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void SafeModeWithFormatterTest(bool compatibleFormat, bool customResolver)
+        {
+#if NET35
+            if (compatibleFormat)
+                Assert.Inconclusive("In .NET 3.5 cannot create the hacked payload in compatible format because SerializationBinder.BindToName method is not supported");
+#endif
+            const string asmName = "DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+            const string typeName = "MyNamespace.DangerousType";
+            var proxyType = typeof(object);
+            var proxyInstance = Reflector.CreateInstance(proxyType);
+            var nodeWithObject = new ResXDataNode("dangerous", proxyInstance);
+            var info = nodeWithObject.GetDataNodeInfo(null, compatibleFormat);
+
+            // hacking the content as if it was from another assembly
+            IFormatter formatter = compatibleFormat ? new BinaryFormatter() : new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            formatter.Binder = new CustomSerializationBinder
+            {
+                AssemblyNameResolver = t => t == proxyType ? asmName : null,
+                TypeNameResolver = t => t == proxyType ? typeName : null,
+            };
+            using var stream = new MemoryStream();
+            formatter.Serialize(stream, proxyInstance);
+            info.ValueData = Convert.ToBase64String(stream.ToArray());
+
+            var resolver = customResolver ? new TestTypeResolver() : null;
+            var nodeRaw = new ResXDataNode(info, null);
+
+            Throws<SerializationException>(() => nodeRaw.GetValue(resolver));
+            Throws<SerializationException>(() => nodeRaw.GetValueSafe(resolver));
         }
 
         #endregion

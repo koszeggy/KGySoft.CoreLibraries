@@ -23,26 +23,22 @@ using NUnit.Framework;
 
 #endregion
 
-namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
+namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
 {
     [TestFixture]
     public class ObservableBindingListTest
     {
         #region Methods
 
-        [Test]
-        public void Test()
-        {
-            // TODO:
-            // Ctor
-            // - T INotifyPropertyChanged, default ctor: self hook
-            // - T INotifyPropertyChanged, IBindingList ctor: delegating item change
-            // Below everything also with WinForms app (by embedded ObservableCollection) and WPF app (by embedded BindingList and simple list - see whether both events are captured or just one category)
-            // - Explicit Clear/Set/Add/Remove
-            // - Underlying BindingList Clear/Set/Add/Remove/AllowNew(reset miatt)/AllowRemove/AllowEdit
-            // - Underlying ObservableCollection Clear/Set/Add/Remove
-            // - Item property change
-        }
+        // TODO: (these are now tested in a desktop app: https://github.com/koszeggy/KGySoft.ComponentModelDemo)
+        // Ctor
+        // - T INotifyPropertyChanged, default ctor: self hook
+        // - T INotifyPropertyChanged, IBindingList ctor: delegating item change
+        // Below everything also with WinForms app (by embedded ObservableCollection) and WPF app (by embedded BindingList and simple list - see whether both events are captured or just one category)
+        // - Explicit Clear/Set/Add/Remove
+        // - Underlying BindingList Clear/Set/Add/Remove/AllowNew(due to reset)/AllowRemove/AllowEdit
+        // - Underlying ObservableCollection Clear/Set/Add/Remove
+        // - Item property change
 
         [Test]
         public void RaiseItemChangedEventsDefault()

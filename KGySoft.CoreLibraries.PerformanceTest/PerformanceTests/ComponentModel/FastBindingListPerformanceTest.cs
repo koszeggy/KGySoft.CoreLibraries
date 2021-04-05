@@ -27,7 +27,7 @@ using NUnit.Framework;
 
 #endregion
 
-namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
+namespace KGySoft.CoreLibraries.PerformanceTests.ComponentModel
 {
     [TestFixture]
     public class FastBindingListPerformanceTest
@@ -54,10 +54,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
         [Test]
         public void AddNew()
         {
-            var range = Enumerable.Range(0, 10000).Select(i => new TestItem { IntProp = i });
+            const int count = 10_000;
+            var range = Enumerable.Range(0, count).Select(i => new TestItem { IntProp = i });
             // ReSharper disable PossibleMultipleEnumeration - intended to prevent sharing elements
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
             var collTest = new FastBindingList<TestItem>(new List<TestItem>(range.ToList()));
+            var sortableTest = new SortableBindingList<TestItem>(new List<TestItem>(range.ToList()));
 
             new PerformanceTest
                 {
@@ -67,13 +69,18 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
                 .AddCase(() =>
                 {
                     collReference.AddNew();
-                    collReference.RemoveAt(collReference.Count - 1);
+                    collReference.CancelNew(count);
                 }, "BindingList.AddNew")
                 .AddCase(() =>
                 {
                     collTest.AddNew();
-                    collTest.RemoveAt(collTest.Count - 1);
+                    collTest.CancelNew(count);
                 }, "FastBindingList.AddNew")
+                .AddCase(() =>
+                {
+                    sortableTest.AddNew();
+                    sortableTest.CancelNew(count);
+                }, "SortableBindingList.AddNew")
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -81,19 +88,21 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
         [Test]
         public void ItemChanged()
         {
-            // item property change involves a search for the index of the changed item
-            var range = Enumerable.Range(0, 10000).Select(i => new TestItem { IntProp = i });
+            const int count = 10_000;
+            var range = Enumerable.Range(0, count).Select(i => new TestItem { IntProp = i });
 
             // ReSharper disable PossibleMultipleEnumeration - intended to prevent sharing elements
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
             var collTest = new FastBindingList<TestItem>(new List<TestItem>(range.ToList()));
+            var sortableTest = new SortableBindingList<TestItem>(new List<TestItem>(range.ToList()));
             new RandomizedPerformanceTest
                 {
                     Iterations = 1000,
                     //Repeat = 5
                 }
-                .AddCase(rnd => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
-                .AddCase(rnd => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
+                .AddCase(rnd => collReference[rnd.Next(count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
+                .AddCase(rnd => collTest[rnd.Next(count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
+                .AddCase(rnd => sortableTest[rnd.Next(count)].IntProp = rnd.Next(), "SortableBindingList.ItemChanged")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

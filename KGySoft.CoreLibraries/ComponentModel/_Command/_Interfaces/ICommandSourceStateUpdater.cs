@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The new value of the state to be applied.</param>
         /// <returns><see langword="true"/>&#160;if the state was applied successfully; <see langword="false"/>&#160;if other possibly chained updaters or the
         /// default updater can try to apply the new state.</returns>
-        bool TryUpdateState(object commandSource, string stateName, object value);
+        bool TryUpdateState(object commandSource, string stateName, object? value);
 
         #endregion
     }

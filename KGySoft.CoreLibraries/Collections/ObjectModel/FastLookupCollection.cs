@@ -20,14 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
-#region NET35 || NET40 || NET45 || NETSTANDARD2_0
-using KGySoft.Reflection; 
-#endregion
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
+using KGySoft.Reflection;
+#endif
 
 #endregion
 
@@ -41,6 +39,8 @@ namespace KGySoft.Collections.ObjectModel
     /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection but
     /// when inconsistency is detected, the cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
     /// where n is the count of the elements in the collection.</para>
+    /// <note type="warning">Do not store elements in a <see cref="FastLookupCollection{T}"/> that may change their hash code while they are added to the collection.
+    /// Finding such elements may fail even if <see cref="CheckConsistency"/> is <see langword="true"/>.</note>
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="VirtualCollection{T}" />
@@ -51,7 +51,20 @@ namespace KGySoft.Collections.ObjectModel
     {
         #region Fields
 
-        [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+        #region Static Fields
+
+        private protected static readonly IEqualityComparer<T> Comparer = ComparerHelper<T>.EqualityComparer;
+
+        #endregion
+
+        #region Instance Fields
+
+        /// <summary>
+        /// A lazy-initialized item-index cache. A negated index means that the item occurs multiple times so on remove the cache has to be invalidated.
+        /// </summary>
+        [NonSerialized] private AllowNullDictionary<T, int>? itemToIndex;
+
+        #endregion
 
         #endregion
 
@@ -62,9 +75,11 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>Default value: <see langword="false"/>, if the <see cref="FastLookupCollection{T}"/> was initialized by the default constructor; otherwise, as it was specified.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection directly but
+        /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection but
         /// when inconsistency is detected, the cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
         /// where n is the count of the elements in the collection.</para>
+        /// <note type="warning">Do not store elements in a <see cref="FastLookupCollection{T}"/> that may change their hash code while they are added to the collection.
+        /// Finding such elements may fail even if <see cref="CheckConsistency"/> is <see langword="true"/>.</note>
         /// </remarks>
         public bool CheckConsistency { get; set; }
 
@@ -75,9 +90,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>
         /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class  with a <see cref="CircularList{T}"/> internally.
         /// </summary>
-        public FastLookupCollection()
-        {
-        }
+        public FastLookupCollection() : base(new CircularList<T>()) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FastLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
@@ -87,12 +100,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <see langword="false"/>&#160;to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/>&#160;if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
-        [SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors", Justification = "False alarm, OnMapRebuilt is not called when the constructor calls BuildIndexMap")]
-        public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list)
-        {
-            BuildIndexMap(false);
-            CheckConsistency = checkConsistency;
-        }
+        public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list) => CheckConsistency = checkConsistency;
 
         #endregion
 
@@ -100,107 +108,8 @@ namespace KGySoft.Collections.ObjectModel
 
         #region Static Methods
 
-        #region Private Protected Methods
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private protected static HashSet<T> CreateAdjustSet(int length)
-        {
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0
-            HashSet<T> result = new HashSet<T>();
-            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
-                result.Initialize(length);
-#else
-            HashSet<T> result = new HashSet<T>(length);
-#endif
-
-            return result;
-        }
-
-        private protected static bool AreEqual(T x, T y)
-            => EqualityComparer<T>.Default.Equals(x, y);
-
-        private protected static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item)
-            => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
-
-        private protected static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
-            => map.TryGetValue(item, out var indices) && indices.Contains(index);
-
-        /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
-        private protected static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
-        {
-            if (!map.TryGetValue(item, out CircularList<int> indices))
-            {
-                indices = new CircularList<int>(1);
-                map[item] = indices;
-            }
-
-            if (indices.Count == 0 || index > indices[indices.Count - 1])
-            {
-                indices.AddLast(index);
-                return true;
-            }
-
-            var pos = indices.BinarySearch(index);
-            if (pos >= 0)
-                return false;
-            indices.Insert(~pos, index);
-            return true;
-        }
-
-        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        private protected static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
-        {
-            if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
-                return false;
-            if (indices.Count == 0)
-                map.Remove(item);
-            return true;
-        }
-
-        private protected static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
-        {
-            if (adjustedValues.Contains(item))
-                return true;
-            adjustedValues.Add(item);
-            if (!map.TryGetValue(item, out var indices))
-                return false;
-            AdjustIndex(indices, startIndex, diff);
-            return true;
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        private static bool RemoveIndex(CircularList<int> indices, int index)
-        {
-            if (indices.Count == 0)
-                return false;
-            if (indices[0] == index)
-            {
-                indices.RemoveFirst();
-                return true;
-            }
-
-            int pos = indices.BinarySearch(index);
-            if (pos < 0)
-                return false;
-            indices.RemoveAt(pos);
-            return true;
-        }
-
-        private static void AdjustIndex(CircularList<int> indices, int startIndex, int diff)
-        {
-            int length = indices.Count;
-            for (int i = 0; i < length; i++)
-            {
-                if (indices[i] >= startIndex)
-                    indices[i] += diff;
-            }
-        }
-
-        #endregion
+        private protected static int GetActualIndex(int index) => index >= 0 ? index : ~index;
+        private protected static bool IsDuplicate(int index) => index < 0;
 
         #endregion
 
@@ -209,10 +118,9 @@ namespace KGySoft.Collections.ObjectModel
         #region Public Methods
 
         /// <summary>
-        /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>&#160;
-        /// and the internally wrapped list has been changed explicitly.
+        /// Invalidates the internally stored index mapping. Call if the wrapped list that has been passed to the constructor has been changed explicitly.
         /// </summary>
-        public virtual void InnerListChanged() => BuildIndexMap();
+        public virtual void InnerListChanged() => InvalidateMapping(true);
 
         #endregion
 
@@ -226,68 +134,49 @@ namespace KGySoft.Collections.ObjectModel
         /// The zero-based index of the found occurrence of <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>, if found; otherwise, <c>-1</c>.
         /// </returns>
         /// <remarks>
-        /// <para>In <see cref="FastLookupCollection{T}"/> this method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
-        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
+        /// <para>In <see cref="FastLookupCollection{T}"/> this method has an O(n) cost for the first time or then the internal mapping has to be rebuilt (because,
+        /// for example, <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is detected); otherwise, it has an O(1) cost.
+        /// Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
         /// </remarks>
-        protected override int GetItemIndex(T item)
-        {
-            int result = GetFirstIndex(itemToIndex, item);
-            if (!CheckConsistency)
-                return result;
-
-            if (result < 0 || result < Count && AreEqual(item, base.GetItem(result)))
-                return result;
-
-            // the underlying collection is inconsistent
-            BuildIndexMap();
-            return GetFirstIndex(itemToIndex, item);
-        }
-
-        /// <summary>
-        /// Gets the element at the specified <paramref name="index" />.
-        /// </summary>
-        /// <param name="index">The zero-based index of the element to get.</param>
-        /// <returns>The element at the specified <paramref name="index"/>.</returns>
-        /// <remarks>
-        /// <para>This method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
-        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
-        /// </remarks>
-        protected override T GetItem(int index)
-        {
-            T result = base.GetItem(index);
-            if (CheckConsistency && !ContainsIndex(itemToIndex, result, index))
-                BuildIndexMap();
-
-            return result;
-        }
+        protected override int GetItemIndex(T item) => DoGetItemIndex(item, true);
 
         /// <summary>
         /// Replaces the <paramref name="item" /> at the specified <paramref name="index" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to replace.</param>
         /// <param name="item">The new value for the element at the specified index.</param>
-        /// <remarks>
-        /// <para>This method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
-        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
-        /// </remarks>
         protected override void SetItem(int index, T item)
         {
-            T original = base.GetItem(index);
-            if (CheckConsistency && !ContainsIndex(itemToIndex, original, index))
+            if (itemToIndex != null)
             {
-                BuildIndexMap();
-                original = base.GetItem(index);
-            }
+                T original = base.GetItem(index);
+                if (ReferenceEquals(original, item))
+                    return;
 
-            if (ReferenceEquals(original, item))
-                return;
+                // invalidating if mapping to original is not unique or not consistent
+                if (!itemToIndex.TryGetValue(original, out int origIndex)
+                    || IsDuplicate(origIndex)
+                    || origIndex != index)
+                {
+                    // rebuild notification on inconsistency: original was not found or unique index was incorrect
+                    InvalidateMapping(!IsDuplicate(origIndex));
+                }
+                else
+                {
+                    // removing original item from mapping
+                    itemToIndex.Remove(original);
 
-            // here we can't ignore inconsistency because we need to update the maintained indices
-            if (!RemoveIndex(itemToIndex, original, index) || !AddIndex(itemToIndex, item, index))
-            {
-                BuildIndexMap();
-                RemoveIndex(itemToIndex, original, index);
-                AddIndex(itemToIndex, item, index);
+                    // adding new item to mapping
+                    if (itemToIndex.TryGetValue(item, out int existingIndex))
+                    {
+                        if (!ConsistencyCheck(existingIndex, item))
+                            InvalidateMapping(true);
+                        else if (!IsDuplicate(existingIndex))
+                            itemToIndex[item] = ~existingIndex;
+                    }
+                    else
+                        itemToIndex[item] = index;
+                }
             }
 
             base.SetItem(index, item);
@@ -298,59 +187,78 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
         /// <param name="item">The object to insert.</param>
-        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
         protected override void InsertItem(int index, T item)
         {
             base.InsertItem(index, item);
-            int length = Count;
+            if (itemToIndex == null)
+                return;
 
-            // here we can't ignore consistency because we need to update the maintained indices
-            if (index + 1 < length)
+            // adding to the last position
+            if (index == Count - 1)
             {
-                HashSet<T> adjustedValues = CreateAdjustSet(length);
-                for (int i = index + 1; i < length; i++)
+                if (itemToIndex.TryGetValue(item, out int existingIndex))
                 {
-                    if (!AdjustIndex(itemToIndex, base.GetItem(i), index, 1, adjustedValues))
-                    {
-                        BuildIndexMap();
-                        return;
-                    }
+                    if (!ConsistencyCheck(existingIndex, item))
+                        InvalidateMapping(true);
+                    else if (!IsDuplicate(existingIndex))
+                        itemToIndex[item] = ~existingIndex;
                 }
+                else
+                    itemToIndex[item] = index;
             }
-
-            if (!AddIndex(itemToIndex, item, index))
-                BuildIndexMap();
+            // insertion: dropping index map because an O(n) traversal would be needed
+            else
+                InvalidateMapping(false);
         }
 
         /// <summary>
         /// Removes the element at the specified <paramref name="index" /> from the <see cref="FastLookupCollection{T}" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        protected override void RemoveItem(int index)
+        protected override void RemoveItemAt(int index)
         {
-            T original = base.GetItem(index);
-            base.RemoveItem(index);
-
-            // here we can't ignore inconsistency because we need to update the maintained indices
-            if (!RemoveIndex(itemToIndex, original, index))
+            if (itemToIndex == null)
             {
-                BuildIndexMap();
+                base.RemoveItemAt(index);
                 return;
             }
 
-            int length = Count;
-            if (index < length)
+            // we remove item first, and then do the adjustments because the possible rebuilding notification must be sent with the new list
+            T item = base.GetItem(index);
+            base.RemoveItemAt(index);
+
+            // removing from the last position
+            if (index == Count)
             {
-                HashSet<T> adjustedValues = CreateAdjustSet(length);
-                for (int i = index; i < length; i++)
+                // invalidating if mapping to the item was not unique or not consistent
+                if (!itemToIndex.TryGetValue(item, out int existingIndex)
+                    || IsDuplicate(existingIndex)
+                    || existingIndex != index)
                 {
-                    if (!AdjustIndex(itemToIndex, base.GetItem(i), index, -1, adjustedValues))
-                    {
-                        BuildIndexMap();
-                        return;
-                    }
+                    // rebuild notification on inconsistency: original was not found or unique index was incorrect
+                    InvalidateMapping(IsDuplicate(existingIndex));
                 }
+                else
+                    itemToIndex.Remove(item);
             }
+            // removing non-last: dropping index map because an O(n) traversal would be needed
+            else
+                InvalidateMapping(false);
+        }
+
+        /// <summary>
+        /// Removes the first occurrence of <paramref name="item"/> from the <see cref="FastLookupCollection{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="FastLookupCollection{T}"/>.</param>
+        /// <returns><see langword="true"/>, if an occurrence of <paramref name="item" /> was removed; otherwise, <see langword="false"/>.</returns>
+        protected override bool RemoveItem(T item)
+        {
+            // if item to index map is not built we do not allow building it because it likely will be invalidated on remove anyway
+            int index = DoGetItemIndex(item, false);
+            if (index < 0)
+                return false;
+            RemoveItemAt(index);
+            return true;
         }
 
         /// <summary>
@@ -359,7 +267,7 @@ namespace KGySoft.Collections.ObjectModel
         protected override void ClearItems()
         {
             base.ClearItems();
-            itemToIndex.Clear();
+            InvalidateMapping(false);
         }
 
         /// <summary>
@@ -367,28 +275,67 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         protected virtual void OnMapRebuilt()
         {
+            // NOTE: this method actually no longer means an actual index rebuild. It might also be called after detecting an inconsistency,
+            // but without rebuilding the index map (which is nullable now). It is still called OnMapRebuilt to remain compatible.
+            // From outside it is actually transparent whether there is an up-to-date internal map.
         }
 
         #endregion
 
         #region Private Methods
 
-        [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap(false);
-
-        private void BuildIndexMap(bool rebuild = true)
+        private void BuildIndexMap(bool notifyRebuilt)
         {
-            if (itemToIndex.Count > 0)
-                itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
-            int length = Count;
-            for (int i = 0; i < length; i++)
+            int count = Count;
+            if (itemToIndex == null || itemToIndex.Count > 0)
+                itemToIndex = new AllowNullDictionary<T, int>();
+            for (int i = 0; i < count; i++)
             {
                 T item = base.GetItem(i);
-                AddIndex(itemToIndex, item, i);
+                if (!itemToIndex.TryGetValue(item, out int index))
+                    itemToIndex[item] = i;
+                else if (!IsDuplicate(index))
+                    itemToIndex[item] = ~index;
             }
 
-            if (rebuild)
+            if (notifyRebuilt)
                 OnMapRebuilt();
+        }
+
+        private int DoGetItemIndex(T item, bool allowBuildIndexMap)
+        {
+            int index;
+            if (itemToIndex != null)
+            {
+                if (!itemToIndex.TryGetValue(item, out index))
+                    return -1;
+
+                if (ConsistencyCheck(index, item))
+                    return GetActualIndex(index);
+            }
+
+            if (!allowBuildIndexMap)
+                return base.GetItemIndex(item);
+            BuildIndexMap(itemToIndex != null);
+            return itemToIndex!.TryGetValue(item, out index) ? GetActualIndex(index) : -1;
+        }
+
+        private void InvalidateMapping(bool notifyRebuilt)
+        {
+            itemToIndex = null;
+
+            // NOTE: There is no rebuild here because it is now lazily postponed for next GetItemIndex call but this is how we remain compatible
+            if (notifyRebuilt)
+                OnMapRebuilt();
+        }
+
+        private bool ConsistencyCheck(int index, T item)
+        {
+            if (!CheckConsistency)
+                return true;
+            if (IsDuplicate(index))
+                index = ~index;
+            return (uint)index < (uint)Count && Comparer.Equals(item, base.GetItem(index));
         }
 
         #endregion

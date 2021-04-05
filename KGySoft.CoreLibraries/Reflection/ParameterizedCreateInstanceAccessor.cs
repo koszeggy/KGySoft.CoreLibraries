@@ -37,7 +37,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Represents a constructor.
         /// </summary>
-        private delegate object Ctor(object[] arguments);
+        private delegate object Ctor(object?[]? arguments);
 
         #endregion
 
@@ -55,7 +55,7 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object CreateInstance(params object[] parameters)
+        public override object CreateInstance(params object?[]? parameters)
             => ((Ctor)Initializer)(parameters);
 
         #endregion
@@ -87,9 +87,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
-                    parameterType = parameterType.GetElementType();
-
-                // ReSharper disable once AssignNullToNotNullAttribute
+                    parameterType = parameterType.GetElementType()!;
 #endif
                 ctorParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
             }

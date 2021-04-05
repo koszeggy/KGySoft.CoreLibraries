@@ -18,7 +18,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security;
 
 using KGySoft.Security.Cryptography;
@@ -165,8 +164,7 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public override unsafe void NextBytes(byte[] buffer)
         {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm: it CAN be null
-            if (buffer == null)
+            if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
 
             fixed (byte* pBuf = buffer)
@@ -220,6 +218,9 @@ namespace KGySoft.CoreLibraries
         /// <para>The <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method has the same functionality
         /// but it is faster to call this one directly.</para>
         /// </remarks>
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0 || NET5_0)
+        override
+#endif
         public long NextInt64() => (long)SampleUInt64();
 
         /// <summary>

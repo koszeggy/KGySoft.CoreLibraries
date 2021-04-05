@@ -27,6 +27,7 @@ using System.Security;
 using System.Text;
 using System.Xml.Linq;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -116,7 +117,7 @@ namespace KGySoft.Diagnostics
 
         #region Fields
 
-        private static readonly Dictionary<string, MeasureItem> items;
+        private static readonly StringKeyedDictionary<MeasureItem> items;
         private static string profilerDir;
 
         #endregion
@@ -152,17 +153,17 @@ namespace KGySoft.Diagnostics
         /// dumped when the current <see cref="AppDomain"/> is unloaded. This happens typically when the application is closed.</para>
         /// </remarks>
         /// <seealso cref="AutoSaveResults"/>
+        [AllowNull]
         public static string ProfilerDirectory
         {
             get => profilerDir;
-            set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value;
+            set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value!;
         }
 
         #endregion
 
         #region Constructors
 
-        [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline", Justification = "Cannot initialize fully inline due to event subscriptions.")]
         static Profiler()
         {
             Enabled = true;
@@ -174,7 +175,7 @@ namespace KGySoft.Diagnostics
             else
                 AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
 
-            items = new Dictionary<string, MeasureItem>();
+            items = new StringKeyedDictionary<MeasureItem>();
             profilerDir = GetDefaultDir();
         }
 
@@ -231,9 +232,9 @@ namespace KGySoft.Diagnostics
         /// <remarks>Unless <see cref="Reset"/> is called, there is no need to retrieve the measurement result of the same
         /// <paramref name="category"/> and <see paramref="operation"/> again and again because the returned <see cref="IMeasureItem"/>
         /// instance reflects the changes of the measurement operation.</remarks>
-        public static IMeasureItem GetMeasurementResult(string category, string operation)
+        public static IMeasureItem? GetMeasurementResult(string? category, string operation)
         {
-            if (operation == null)
+            if (operation == null!)
                 Throw.ArgumentNullException(Argument.operation);
 
             if (String.IsNullOrEmpty(category))
@@ -242,7 +243,7 @@ namespace KGySoft.Diagnostics
             string key = category + ":" + operation;
             lock (items)
             {
-                if (items.TryGetValue(key, out MeasureItem item))
+                if (items.TryGetValue(key, out MeasureItem? item))
                     return item;
             }
 
@@ -260,24 +261,24 @@ namespace KGySoft.Diagnostics
         /// <remarks>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="Profiler"/> class for details and an example.</note>
         /// </remarks>
-        public static IDisposable Measure(string category, string operation)
+        public static IDisposable? Measure(string? category, string operation)
         {
             if (!Enabled)
                 return null;
 
-            if (operation == null)
+            if (operation == null!)
                 Throw.ArgumentNullException(Argument.operation);
 
             if (String.IsNullOrEmpty(category))
                 category = Res.ProfilerUncategorized;
 
             string key = category + ":" + operation;
-            MeasureItem item;
+            MeasureItem? item;
             lock (items)
             {
                 if (!items.TryGetValue(key, out item))
                 {
-                    item = new MeasureItem(category, operation);
+                    item = new MeasureItem(category!, operation);
                     items.Add(key, item);
                 }
             }
@@ -304,7 +305,7 @@ namespace KGySoft.Diagnostics
         {
             try
             {
-                return Path.Combine(Files.GetExecutingPath() ?? String.Empty, defaultDir);
+                return Path.Combine(Files.GetExecutingPath(), defaultDir);
             }
             catch (SecurityException)
             {
@@ -316,7 +317,6 @@ namespace KGySoft.Diagnostics
             }
         }
 
-        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object)", Justification = "False alarm, culture is specified")]
         private static void DumpResults()
         {
             var result = new XElement("ProfilerResult");
@@ -327,12 +327,11 @@ namespace KGySoft.Diagnostics
                 foreach (MeasureItem item in items.Values)
                 {
                     XElement xItem = new XElement("item", new XAttribute(nameof(item.Category), item.Category),
-                            new XAttribute(nameof(item.Operation), item.Operation),
-                            new XAttribute(nameof(item.NumberOfCalls), item.NumberOfCalls),
-                            new XAttribute(nameof(item.FirstCall), item.FirstCall.ToString()),
-                            new XAttribute(nameof(item.TotalTime), item.TotalTime.ToString()),
-                            new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalTime.Ticks / item.NumberOfCalls).ToString())
-                        );
+                        new XAttribute(nameof(item.Operation), item.Operation),
+                        new XAttribute(nameof(item.NumberOfCalls), item.NumberOfCalls),
+                        new XAttribute(nameof(item.FirstCall), item.FirstCall.ToString()),
+                        new XAttribute(nameof(item.TotalTime), item.TotalTime.ToString()),
+                        new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalTime.Ticks / item.NumberOfCalls).ToString()));
 
                     result.Add(xItem);
                 }
@@ -347,7 +346,7 @@ namespace KGySoft.Diagnostics
                 if (!Directory.Exists(profilerDir))
                     Directory.CreateDirectory(profilerDir);
 
-                result.Save(Path.Combine(profilerDir, Files.GetNextFileName($"{DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss.fffffff", CultureInfo.InvariantCulture)}_{fileName}.xml")));
+                result.Save(Path.Combine(profilerDir, Files.GetNextFileName($"{DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss.fffffff", CultureInfo.InvariantCulture)}_{fileName}.xml")!));
             }
             catch (IOException)
             {
@@ -364,9 +363,8 @@ namespace KGySoft.Diagnostics
 
         #region Event handlers
 
-        static void CurrentDomain_DomainUnload(object sender, EventArgs e) => DumpResults();
-
-        static void CurrentDomain_ProcessExit(object sender, EventArgs e) => DumpResults();
+        static void CurrentDomain_DomainUnload(object? sender, EventArgs e) => DumpResults();
+        static void CurrentDomain_ProcessExit(object? sender, EventArgs e) => DumpResults();
 
         #endregion
 

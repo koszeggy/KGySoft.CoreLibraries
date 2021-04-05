@@ -107,7 +107,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, string separator)
         {
-            if (separator == null)
+            if (separator == null!)
                 Throw.ArgumentNullException(Argument.separator);
             if (separator.Length == 0)
             {
@@ -133,7 +133,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, params char[] separators)
         {
-            if (separators == null)
+            if (separators == null!)
                 Throw.ArgumentNullException(Argument.separators);
             if (separators.Length <= 1)
             {
@@ -160,17 +160,17 @@ namespace KGySoft.CoreLibraries
         /// <returns>A <see cref="StringSegment"/> that contains the first segment of the original value of the <paramref name="rest"/> parameter delimited by any of the specified <paramref name="separators"/>,
         /// or the complete original value of <paramref name="rest"/> if it contained no more separators.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static StringSegment ReadToSeparator(ref this StringSegment rest, params string[] separators)
+        public static StringSegment ReadToSeparator(ref this StringSegment rest, params string?[] separators)
         {
-            if (separators == null)
+            if (separators == null!)
                 Throw.ArgumentNullException(Argument.separators);
             if (separators.Length <= 1)
             {
                 if (separators.Length == 1)
                 {
-                    string separator = separators[0];
+                    string? separator = separators[0];
                     if (!String.IsNullOrEmpty(separator))
-                        return StringSegment.GetNextSegment(ref rest, separator);
+                        return StringSegment.GetNextSegment(ref rest, separator!);
                 }
 
                 StringSegment result = rest;
@@ -195,7 +195,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static StringSegment ReadToSeparator(ref this StringSegment rest, params StringSegment[] separators)
         {
-            if (separators == null)
+            if (separators == null!)
                 Throw.ArgumentNullException(Argument.separators);
             if (separators.Length <= 1)
             {
@@ -261,7 +261,7 @@ namespace KGySoft.CoreLibraries
             StringSegment result = StringSegment.GetNextSegment(ref rest, newLineSeparators);
 
             // if we found a '\r' we check whether it is followed by a '\n'
-            if (rest.Length == 0 || rest.UnderlyingString[rest.Offset - 1] != '\r' || rest.GetCharInternal(0) != '\n')
+            if (rest.Length == 0 || rest.UnderlyingString![rest.Offset - 1] != '\r' || rest.GetCharInternal(0) != '\n')
                 return result;
             rest = rest.SubstringInternal(1);
             return result;

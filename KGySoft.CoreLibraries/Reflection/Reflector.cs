@@ -30,9 +30,16 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Security;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
+
+#endregion
+
+#region Suppressions
+
+#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw class but FxCop ignores [DoesNotReturn]
 
 #endregion
 
@@ -44,27 +51,11 @@ namespace KGySoft.Reflection
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
-#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by ThrowHelper but FxCop does not recognize ContractAnnotationAttribute
-
-        #region Nested Classes
-
-        private static class EmptyArrayHelper<T>
-        {
-            internal static readonly T[] Instance =
-#if NET35 || NET40 || NET45
-                new T[0];
-#else
-                Array.Empty<T>();
-#endif
-        }
-
-        #endregion
-
         #region Fields
 
         #region Internal Fields
 
-        internal static readonly object[] EmptyObjects = EmptyArrayHelper<object>.Instance;
+        internal static readonly object[] EmptyObjects = Reflector<object>.EmptyArray;
 
         internal static readonly Type VoidType = typeof(void);
 
@@ -125,7 +116,7 @@ namespace KGySoft.Reflection
 
         #region Private Fields
 
-        private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
+        private static IThreadSafeCacheAccessor<Type, string?>? defaultMemberCache;
         private static bool? canCreateUninitializedObject;
 
         #endregion
@@ -134,8 +125,15 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache
-            => defaultMemberCache ??= new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor();
+        private static IThreadSafeCacheAccessor<Type, string?> DefaultMemberCache
+        {
+            get
+            {
+                if (defaultMemberCache == null)
+                    Interlocked.CompareExchange(ref defaultMemberCache, ThreadSafeCacheFactory.Create<Type, string?>(GetDefaultMember, LockFreeCacheOptions.Profile128), null);
+                return defaultMemberCache;
+            }
+        }
 
         #endregion
 
@@ -160,13 +158,13 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexParameters)
+        public static void SetProperty(object? instance, PropertyInfo property, object? value, ReflectionWays way, params object?[]? indexParameters)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             if (!property.CanWrite)
                 Throw.InvalidOperationException(Res.ReflectionPropertyHasNoSetter(property.DeclaringType, property.Name));
-            bool isStatic = property.GetSetMethod(true).IsStatic;
+            bool isStatic = property.GetSetMethod(true)!.IsStatic;
             if (instance == null && !isStatic)
                 Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
@@ -208,7 +206,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static void SetProperty(object instance, PropertyInfo property, object value, params object[] indexParameters)
+        public static void SetProperty(object? instance, PropertyInfo property, object? value, params object?[]? indexParameters)
             => SetProperty(instance, property, value, ReflectionWays.Auto, indexParameters);
 
         #endregion
@@ -236,17 +234,14 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
+        public static void SetProperty(object instance, string propertyName, object? value, ReflectionWays way, params object?[]? indexParameters)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
-                indexParameters = EmptyObjects;
 
-            Type type = instance.GetType();
-            DoTrySetProperty(propertyName, type, instance, value, way, indexParameters, true);
+            DoTrySetProperty(propertyName, instance.GetType(), instance, value, way, indexParameters ?? EmptyObjects, true);
         }
 
         /// <summary>
@@ -269,7 +264,7 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+        public static void SetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => SetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -288,11 +283,11 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static void SetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static void SetProperty(Type type, string propertyName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, true);
@@ -319,17 +314,14 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
+        public static bool TrySetProperty(object instance, string propertyName, object? value, ReflectionWays way, params object?[]? indexParameters)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
-                indexParameters = EmptyObjects;
 
-            Type type = instance.GetType();
-            return DoTrySetProperty(propertyName, type, instance, value, way, indexParameters, false);
+            return DoTrySetProperty(propertyName, instance.GetType(), instance, value, way, indexParameters ?? EmptyObjects, false);
         }
 
         /// <summary>
@@ -352,7 +344,7 @@ namespace KGySoft.Reflection
         /// then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+        public static bool TrySetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => TrySetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -371,23 +363,23 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static bool TrySetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TrySetProperty(Type type, string propertyName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             return DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, false);
         }
 
-        private static bool DoTrySetProperty(string propertyName, Type type, object instance, object value, ReflectionWays way, object[] indexParameters, bool throwError)
+        private static bool DoTrySetProperty(string propertyName, Type type, object? instance, object? value, ReflectionWays way, object?[] indexParameters, bool throwError)
         {
             // type descriptor
-            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
-                return DoTrySetPropertyByTypeDescriptor(propertyName, type, instance, value, throwError);
+            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && indexParameters.Length == 0))
+                return DoTrySetPropertyByTypeDescriptor(propertyName, type, instance!, value, throwError);
 
-            Exception lastException = null;
+            Exception? lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
@@ -398,9 +390,9 @@ namespace KGySoft.Reflection
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
                 foreach (PropertyInfo property in properties)
                 {
-                    ParameterInfo[] indexParams = checkParams ? property.GetIndexParameters() : null;
+                    ParameterInfo[]? indexParams = checkParams ? property.GetIndexParameters() : null;
 
-                    if (checkParams && !CheckParameters(indexParams, indexParameters))
+                    if (checkParams && !CheckParameters(indexParams!, indexParameters))
                         continue;
 
                     if (!throwError && !property.PropertyType.CanAcceptValue(value))
@@ -436,9 +428,9 @@ namespace KGySoft.Reflection
             return false;
         }
 
-        private static bool DoTrySetPropertyByTypeDescriptor(string propertyName, Type type, object instance, object value, bool throwError)
+        private static bool DoTrySetPropertyByTypeDescriptor(string propertyName, Type type, object instance, object? value, bool throwError)
         {
-            if (instance == null)
+            if (instance == null!)
                 Throw.NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
             PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
             if (property != null)
@@ -474,11 +466,11 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
+        public static void SetIndexedMember(object instance, object? value, ReflectionWays way, params object?[] indexParameters)
         {
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
+            if (indexParameters == null!)
                 Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
                 Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
@@ -503,7 +495,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetIndexedMember(object instance, object value, params object[] indexParameters)
+        public static void SetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -524,11 +516,11 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
+        public static bool TrySetIndexedMember(object instance, object? value, ReflectionWays way, params object?[] indexParameters)
         {
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
+            if (indexParameters == null!)
                 Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
                 Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
@@ -555,10 +547,10 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetIndexedMember(object instance, object value, params object[] indexParameters)
+        public static bool TrySetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
-        private static bool DoTrySetIndexedMember(object instance, object value, ReflectionWays way, object[] indexParameters, bool throwError)
+        private static bool DoTrySetIndexedMember(object instance, object? value, ReflectionWays way, object?[] indexParameters, bool throwError)
         {
             // Arrays
             if (instance is Array array)
@@ -570,32 +562,32 @@ namespace KGySoft.Reflection
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionIndexParamsLengthMismatch(array.Rank));
                 }
 
-                int[] indices = ToArrayIndices(indexParameters, out Exception error);
+                int[]? indices = ToArrayIndices(indexParameters, out Exception? error);
                 if (indices == null)
-                    return throwError ? throw error : false;
+                    return throwError ? throw error! : false;
 
                 array.SetValue(value, indices);
                 return true;
             }
 
             // Real indexers
-            Exception lastException = null;
+            Exception? lastException = null;
             Type type = instance.GetType();
-            for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
+            for (Type? checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                string defaultMemberName = DefaultMemberCache[checkedType];
+                string? defaultMemberName = DefaultMemberCache[checkedType];
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
-                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName!, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
                 foreach (PropertyInfo indexer in indexers)
                 {
-                    ParameterInfo[] indexParams = checkParams ? indexer.GetIndexParameters() : null;
+                    ParameterInfo[]? indexParams = checkParams ? indexer.GetIndexParameters() : null;
 
-                    if (checkParams && !CheckParameters(indexParams, indexParameters))
+                    if (checkParams && !CheckParameters(indexParams!, indexParameters))
                         continue;
 
                     if (!throwError && !indexer.PropertyType.CanAcceptValue(value))
@@ -651,13 +643,13 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note>To get the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static object GetProperty(object instance, PropertyInfo property, ReflectionWays way, params object[] indexParameters)
+        public static object? GetProperty(object? instance, PropertyInfo property, ReflectionWays way, params object?[]? indexParameters)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             if (!property.CanRead)
                 Throw.InvalidOperationException(Res.ReflectionPropertyHasNoGetter(property.DeclaringType, property.Name));
-            if (instance == null && !property.GetGetMethod(true).IsStatic)
+            if (instance == null && !property.GetGetMethod(true)!.IsStatic)
                 Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 
             switch (way)
@@ -687,7 +679,7 @@ namespace KGySoft.Reflection
         /// <para>For getting the property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// <note>To get the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static object GetProperty(object instance, PropertyInfo property, params object[] indexParameters)
+        public static object? GetProperty(object? instance, PropertyInfo property, params object?[]? indexParameters)
             => GetProperty(instance, property, ReflectionWays.Auto, indexParameters);
 
         #endregion
@@ -712,17 +704,14 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
         /// </remarks>
-        public static object GetProperty(object instance, string propertyName, ReflectionWays way, params object[] indexParameters)
+        public static object? GetProperty(object instance, string propertyName, ReflectionWays way, params object?[]? indexParameters)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
-                indexParameters = EmptyObjects;
 
-            Type type = instance.GetType();
-            return DoTryGetProperty(propertyName, type, instance, way, indexParameters, true, out object result) ? result : null;
+            return DoTryGetProperty(propertyName, instance.GetType(), instance, way, indexParameters ?? EmptyObjects, true, out object? result) ? result : null;
         }
 
         /// <summary>
@@ -742,7 +731,7 @@ namespace KGySoft.Reflection
         /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
         /// </remarks>
-        public static object GetProperty(object instance, string propertyName, params object[] indexParameters)
+        public static object? GetProperty(object instance, string propertyName, params object?[]? indexParameters)
             => GetProperty(instance, propertyName, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -761,14 +750,14 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object GetProperty(Type type, string propertyName, ReflectionWays way = ReflectionWays.Auto)
+        public static object? GetProperty(Type type, string propertyName, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            return DoTryGetProperty(propertyName, type, null, way, EmptyObjects, true, out object result) ? result : null;
+            return DoTryGetProperty(propertyName, type, null, way, EmptyObjects, true, out object? result) ? result : null;
         }
 
         /// <summary>
@@ -789,17 +778,14 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
         /// </remarks>
-        public static bool TryGetProperty(object instance, string propertyName, ReflectionWays way, out object value, params object[] indexParameters)
+        public static bool TryGetProperty(object instance, string propertyName, ReflectionWays way, out object? value, params object?[]? indexParameters)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
-                indexParameters = EmptyObjects;
 
-            Type type = instance.GetType();
-            return DoTryGetProperty(propertyName, type, instance, way, indexParameters, false, out value);
+            return DoTryGetProperty(propertyName, instance.GetType(), instance, way, indexParameters ?? EmptyObjects, false, out value);
         }
 
         /// <summary>
@@ -819,7 +805,7 @@ namespace KGySoft.Reflection
         /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
         /// </remarks>
-        public static bool TryGetProperty(object instance, string propertyName, out object value, params object[] indexParameters)
+        public static bool TryGetProperty(object instance, string propertyName, out object? value, params object?[]? indexParameters)
             => TryGetProperty(instance, propertyName, ReflectionWays.Auto, out value, indexParameters);
 
         /// <summary>
@@ -838,22 +824,22 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static bool TryGetProperty(Type type, string propertyName, out object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TryGetProperty(Type type, string propertyName, out object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetProperty(propertyName, type, null, way, EmptyObjects, false, out value);
         }
 
-        private static bool DoTryGetProperty(string propertyName, Type type, object instance, ReflectionWays way, object[] indexParameters, bool throwError, out object value)
+        private static bool DoTryGetProperty(string propertyName, Type type, object? instance, ReflectionWays way, object?[] indexParameters, bool throwError, out object? value)
         {
             value = null;
 
             // type descriptor
-            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
+            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && indexParameters.Length == 0))
             {
                 if (instance == null)
                     Throw.NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
@@ -869,7 +855,7 @@ namespace KGySoft.Reflection
                 return false;
             }
 
-            Exception lastException = null;
+            Exception? lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
@@ -880,9 +866,9 @@ namespace KGySoft.Reflection
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
                 foreach (PropertyInfo property in properties)
                 {
-                    ParameterInfo[] indexParams = checkParams ? property.GetIndexParameters() : null;
+                    ParameterInfo[]? indexParams = checkParams ? property.GetIndexParameters() : null;
 
-                    if (checkParams && !CheckParameters(indexParams, indexParameters))
+                    if (checkParams && !CheckParameters(indexParams!, indexParameters))
                         continue;
 
                     try
@@ -932,18 +918,18 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object GetIndexedMember(object instance, ReflectionWays way, params object[] indexParameters)
+        public static object? GetIndexedMember(object instance, ReflectionWays way, params object?[] indexParameters)
         {
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
+            if (indexParameters == null!)
                 Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
                 Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
             if (way == ReflectionWays.TypeDescriptor)
                 Throw.NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
 
-            return DoTryGetIndexedMember(instance, way, indexParameters, true, out object result) ? result : null;
+            return DoTryGetIndexedMember(instance, way, indexParameters, true, out object? result) ? result : null;
         }
 
         /// <summary>
@@ -958,7 +944,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object GetIndexedMember(object instance, params object[] indexParameters)
+        public static object? GetIndexedMember(object instance, params object?[] indexParameters)
             => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
@@ -976,11 +962,11 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static bool TryGetIndexedMember(object instance, ReflectionWays way, out object value, params object[] indexParameters)
+        public static bool TryGetIndexedMember(object instance, ReflectionWays way, out object? value, params object?[] indexParameters)
         {
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
-            if (indexParameters == null)
+            if (indexParameters == null!)
                 Throw.ArgumentNullException(Argument.indexParameters);
             if (indexParameters.Length == 0)
                 Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
@@ -1004,10 +990,10 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static bool TryGetIndexedMember(object instance, out object value, params object[] indexParameters)
+        public static bool TryGetIndexedMember(object instance, out object? value, params object?[] indexParameters)
             => TryGetIndexedMember(instance, ReflectionWays.Auto, out value, indexParameters);
 
-        private static bool DoTryGetIndexedMember(object instance, ReflectionWays way, object[] indexParameters, bool throwError, out object value)
+        private static bool DoTryGetIndexedMember(object instance, ReflectionWays way, object?[] indexParameters, bool throwError, out object? value)
         {
             value = null;
 
@@ -1021,32 +1007,32 @@ namespace KGySoft.Reflection
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionIndexParamsLengthMismatch(array.Rank));
                 }
 
-                int[] indices = ToArrayIndices(indexParameters, out Exception error);
+                int[]? indices = ToArrayIndices(indexParameters, out Exception? error);
                 if (indices == null)
-                    return throwError ? throw error : false;
+                    return throwError ? throw error! : false;
 
                 value = array.GetValue(indices);
                 return true;
             }
 
             // Real indexers
-            Exception lastException = null;
+            Exception? lastException = null;
             Type type = instance.GetType();
-            for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
+            for (Type? checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                string defaultMemberName = DefaultMemberCache[checkedType];
+                string? defaultMemberName = DefaultMemberCache[checkedType];
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
-                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName!, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
                 foreach (PropertyInfo indexer in indexers)
                 {
-                    ParameterInfo[] indexParams = checkParams ? indexer.GetIndexParameters() : null;
+                    ParameterInfo[]? indexParams = checkParams ? indexer.GetIndexParameters() : null;
 
-                    if (checkParams && !CheckParameters(indexParams, indexParameters))
+                    if (checkParams && !CheckParameters(indexParams!, indexParameters))
                         continue;
 
                     try
@@ -1103,9 +1089,9 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, MethodInfo method, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(object? instance, MethodInfo method, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
         {
-            if (method == null)
+            if (method == null!)
                 Throw.ArgumentNullException(Argument.method);
             if (instance == null && !method.IsStatic)
                 Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
@@ -1164,7 +1150,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, MethodInfo method, Type[] genericParameters, params object[] parameters)
+        public static object? InvokeMethod(object? instance, MethodInfo method, Type[]? genericParameters, params object?[]? parameters)
             => InvokeMethod(instance, method, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -1182,7 +1168,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, MethodInfo method, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(object? instance, MethodInfo method, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(instance, method, null, way, parameters);
 
         /// <summary>
@@ -1199,7 +1185,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, MethodInfo method, params object[] parameters)
+        public static object? InvokeMethod(object? instance, MethodInfo method, params object?[]? parameters)
             => InvokeMethod(instance, method, null, ReflectionWays.Auto, parameters);
 
         #endregion
@@ -1227,14 +1213,14 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(object instance, string methodName, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
         {
-            if (methodName == null)
+            if (methodName == null!)
                 Throw.ArgumentNullException(Argument.methodName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
-            return DoTryInvokeMethod(methodName, instance.GetType(), instance, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
+            return DoTryInvokeMethod(methodName, instance.GetType(), instance, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object? result) ? result : null;
         }
 
         /// <summary>
@@ -1257,7 +1243,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, string methodName, Type[] genericParameters, params object[] parameters)
+        public static object? InvokeMethod(object instance, string methodName, Type[]? genericParameters, params object?[]? parameters)
             => InvokeMethod(instance, methodName, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -1280,7 +1266,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, string methodName, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(object instance, string methodName, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(instance, methodName, null, way, parameters);
 
         /// <summary>
@@ -1302,7 +1288,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, string methodName, params object[] parameters)
+        public static object? InvokeMethod(object instance, string methodName, params object?[]? parameters)
             => InvokeMethod(instance, methodName, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -1325,14 +1311,14 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(Type type, string methodName, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
         {
-            if (methodName == null)
+            if (methodName == null!)
                 Throw.ArgumentNullException(Argument.methodName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            return DoTryInvokeMethod(methodName, type, null, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
+            return DoTryInvokeMethod(methodName, type, null, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out object? result) ? result : null;
         }
 
         /// <summary>
@@ -1354,7 +1340,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, Type[] genericParameters, params object[] parameters)
+        public static object? InvokeMethod(Type type, string methodName, Type[]? genericParameters, params object?[]? parameters)
             => InvokeMethod(type, methodName, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -1376,7 +1362,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, ReflectionWays way, params object[] parameters)
+        public static object? InvokeMethod(Type type, string methodName, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(type, methodName, null, way, parameters);
 
         /// <summary>
@@ -1397,7 +1383,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, params object[] parameters)
+        public static object? InvokeMethod(Type type, string methodName, params object?[]? parameters)
             => InvokeMethod(type, methodName, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -1421,11 +1407,11 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TryInvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(object instance, string methodName, Type[]? genericParameters, ReflectionWays way, out object? result, params object?[]? parameters)
         {
-            if (methodName == null)
+            if (methodName == null!)
                 Throw.ArgumentNullException(Argument.methodName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
             return DoTryInvokeMethod(methodName, instance.GetType(), instance, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, false, out result);
@@ -1451,7 +1437,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TryInvokeMethod(object instance, string methodName, Type[] genericParameters, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(object instance, string methodName, Type[]? genericParameters, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, genericParameters, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
@@ -1474,7 +1460,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TryInvokeMethod(object instance, string methodName, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(object instance, string methodName, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, null, way, out result, parameters);
 
         /// <summary>
@@ -1496,7 +1482,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TryInvokeMethod(object instance, string methodName, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(object instance, string methodName, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, null, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
@@ -1519,18 +1505,14 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryInvokeMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(Type type, string methodName, Type[]? genericParameters, ReflectionWays way, out object? result, params object?[]? parameters)
         {
-            if (methodName == null)
+            if (methodName == null!)
                 Throw.ArgumentNullException(Argument.methodName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            if (parameters == null)
-                parameters = EmptyObjects;
-            if (genericParameters == null)
-                genericParameters = Type.EmptyTypes;
 
-            return DoTryInvokeMethod(methodName, type, null, parameters, genericParameters, way, false, out result);
+            return DoTryInvokeMethod(methodName, type, null, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, false, out result);
         }
 
         /// <summary>
@@ -1552,7 +1534,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryInvokeMethod(Type type, string methodName, Type[] genericParameters, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(Type type, string methodName, Type[]? genericParameters, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, genericParameters, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
@@ -1574,7 +1556,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryInvokeMethod(Type type, string methodName, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(Type type, string methodName, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, null, way, out result, parameters);
 
         /// <summary>
@@ -1595,15 +1577,15 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method has ref/out parameters,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryInvokeMethod(Type type, string methodName, out object result, params object[] parameters)
+        public static bool TryInvokeMethod(Type type, string methodName, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, null, ReflectionWays.Auto, out result, parameters);
 
-        private static bool DoTryInvokeMethod(string methodName, Type type, object instance, object[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
+        private static bool DoTryInvokeMethod(string methodName, Type type, object? instance, object?[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, out object? result)
         {
             result = null;
 
-            Exception lastException = null;
-            for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
+            Exception? lastException = null;
+            for (Type? checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
@@ -1613,8 +1595,8 @@ namespace KGySoft.Reflection
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - methods are queried
                 foreach (MethodInfo method in methods)
                 {
-                    ParameterInfo[] methodParams = checkParams ? method.GetParameters() : null;
-                    if (checkParams && methodParams.Length != parameters.Length)
+                    ParameterInfo[]? methodParams = checkParams ? method.GetParameters() : null;
+                    if (checkParams && methodParams!.Length != parameters.Length)
                         continue;
 
                     // if the method is generic we need the generic arguments and a constructed method with real types
@@ -1642,7 +1624,7 @@ namespace KGySoft.Reflection
                         }
                     }
 
-                    if (checkParams && !CheckParameters(methodParams, parameters))
+                    if (checkParams && !CheckParameters(methodParams!, parameters))
                         continue;
 
                     try
@@ -1696,9 +1678,9 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note>To invoke the constructor explicitly by dynamically created delegates use the <see cref="CreateInstanceAccessor"/> class.</note>
         /// </remarks>
-        public static object CreateInstance(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(ConstructorInfo ctor, ReflectionWays way, params object?[]? parameters)
         {
-            if (ctor == null)
+            if (ctor == null!)
                 Throw.ArgumentNullException(Argument.ctor);
 
             switch (way)
@@ -1734,7 +1716,7 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note>To invoke the constructor explicitly by dynamically created delegates use the <see cref="CreateInstanceAccessor"/> class.</note>
         /// </remarks>
-        public static object CreateInstance(ConstructorInfo ctor, params object[] parameters)
+        public static object CreateInstance(ConstructorInfo ctor, params object?[]? parameters)
             => CreateInstance(ctor, ReflectionWays.Auto, parameters);
 
         #endregion
@@ -1755,13 +1737,14 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
         /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
-        public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way = ReflectionWays.Auto)
+        public static object CreateInstance(Type type, Type[]? genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
+            TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object? result);
+            return result!;
         }
-
+        
         /// <summary>
         /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
@@ -1791,9 +1774,9 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
         /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
+        public static bool TryCreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, out object? result)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
             return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, false, out result);
         }
@@ -1810,7 +1793,7 @@ namespace KGySoft.Reflection
         /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
         /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, Type[] genericParameters, out object result)
+        public static bool TryCreateInstance(Type type, Type[]? genericParameters, out object? result)
             => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result);
 
         /// <summary>
@@ -1825,7 +1808,7 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
         /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, ReflectionWays way, out object result)
+        public static bool TryCreateInstance(Type type, ReflectionWays way, out object? result)
             => TryCreateInstance(type, null, way, out result);
 
         /// <summary>
@@ -1839,10 +1822,10 @@ namespace KGySoft.Reflection
         /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
         /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, out object result)
+        public static bool TryCreateInstance(Type type, out object? result)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result);
 
-        private static bool TryCreateInstanceByType(Type type, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
+        private static bool TryCreateInstanceByType(Type type, Type[] genericParameters, ReflectionWays way, bool throwError, [MaybeNullWhen(false)]out object result)
         {
             result = null;
 
@@ -1883,7 +1866,7 @@ namespace KGySoft.Reflection
                     try
                     {
                         result = Activator.CreateInstance(type, true);
-                        return true;
+                        return result != null;
                     }
                     catch (TargetInvocationException e)
                     {
@@ -1904,7 +1887,7 @@ namespace KGySoft.Reflection
         }
 
         [SecurityCritical]
-        internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowAlternativeWay, out object result)
+        internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowAlternativeWay, [MaybeNullWhen(false)]out object result)
         {
             result = null;
 
@@ -1914,7 +1897,7 @@ namespace KGySoft.Reflection
                 try
                 {
                     result = Activator.CreateInstance(type);
-                    return true;
+                    return result != null;
                 }
                 catch (Exception e) when (!e.IsCritical())
                 {
@@ -1923,7 +1906,7 @@ namespace KGySoft.Reflection
             }
 
             // 2.) By default constructor if preferred
-            ConstructorInfo defaultCtor = null;
+            ConstructorInfo? defaultCtor = null;
             if (preferCtor && (defaultCtor = type.GetDefaultConstructor()) != null)
             {
                 try
@@ -1969,7 +1952,7 @@ namespace KGySoft.Reflection
         }
 
         [SecurityCritical]
-        internal static bool TryCreateUninitializedObject(Type type, out object result)
+        internal static bool TryCreateUninitializedObject(Type type, [MaybeNullWhen(false)]out object result)
         {
             result = null;
             if (canCreateUninitializedObject == false)
@@ -2015,15 +1998,18 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
+            object? result;
 
             // In case of value types no parameterless constructor would be found - redirecting
-            return type.IsValueType && (parameters?.Length ?? 0) == 0
-                ? (TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null)
-                : (TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result) ? result : null);
+            if (type.IsValueType && (parameters?.Length ?? 0) == 0)
+                TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result);
+            else
+                TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result);
+            return result!;
         }
 
         /// <summary>
@@ -2040,7 +2026,7 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object CreateInstance(Type type, Type[] genericParameters, params object[] parameters)
+        public static object CreateInstance(Type type, Type[]? genericParameters, params object?[]? parameters)
             => CreateInstance(type, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -2057,7 +2043,7 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(Type type, ReflectionWays way, params object?[]? parameters)
             => CreateInstance(type, null, way, parameters);
 
         /// <summary>
@@ -2073,7 +2059,7 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static object CreateInstance(Type type, params object[] parameters)
+        public static object CreateInstance(Type type, params object?[]? parameters)
             => CreateInstance(type, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
@@ -2091,9 +2077,9 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryCreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             // In case of value types no parameterless constructor would be found - redirecting
@@ -2116,7 +2102,7 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, Type[] genericParameters, out object result, params object[] parameters)
+        public static bool TryCreateInstance(Type type, Type[]? genericParameters, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
             => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
@@ -2133,7 +2119,7 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, ReflectionWays way, out object result, params object[] parameters)
+        public static bool TryCreateInstance(Type type, ReflectionWays way, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
             => TryCreateInstance(type, null, way, out result, parameters);
 
         /// <summary>
@@ -2149,10 +2135,10 @@ namespace KGySoft.Reflection
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
         /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TryCreateInstance(Type type, out object result, params object[] parameters)
+        public static bool TryCreateInstance(Type type, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
 
-        private static bool TryCreateInstanceByCtor(Type type, object[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
+        private static bool TryCreateInstanceByCtor(Type type, object?[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, [MaybeNullWhen(false)]out object result)
         {
             result = null;
 
@@ -2176,13 +2162,13 @@ namespace KGySoft.Reflection
                 }
             }
 
-            Exception lastException = null;
+            Exception? lastException = null;
             ConstructorInfo[] ctors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             bool checkParams = ctors.Length > 1; // for performance reasons we skip checking parameters if there is only one constructor
             foreach (ConstructorInfo ctor in ctors)
             {
-                ParameterInfo[] ctorParams = checkParams ? ctor.GetParameters() : null;
-                if (checkParams && !CheckParameters(ctorParams, parameters))
+                ParameterInfo[]? ctorParams = checkParams ? ctor.GetParameters() : null;
+                if (checkParams && !CheckParameters(ctorParams!, parameters))
                     continue;
 
                 try
@@ -2242,9 +2228,9 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
-        public static void SetField(object instance, FieldInfo field, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static void SetField(object? instance, FieldInfo field, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (field == null)
+            if (field == null!)
                 Throw.ArgumentNullException(Argument.field);
             bool isStatic = field.IsStatic;
             if (instance == null && !isStatic)
@@ -2295,11 +2281,11 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static void SetField(object instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
@@ -2324,11 +2310,11 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the field is read-only,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static void SetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static void SetField(Type type, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             DoTrySetField(fieldName, type, null, value, way, true);
@@ -2352,11 +2338,11 @@ namespace KGySoft.Reflection
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static bool TrySetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TrySetField(object instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
@@ -2380,17 +2366,17 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the field is read-only,
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
-        public static bool TrySetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TrySetField(Type type, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             return DoTrySetField(fieldName, type, null, value, way, false);
         }
 
-        private static bool DoTrySetField(string fieldName, Type type, object instance, object value, ReflectionWays way, bool throwError)
+        private static bool DoTrySetField(string fieldName, Type type, object? instance, object? value, ReflectionWays way, bool throwError)
         {
             if (way == ReflectionWays.TypeDescriptor)
                 Throw.NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
@@ -2442,9 +2428,9 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note>To get the property explicitly by dynamically created delegates use the <see cref="FieldAccessor"/> class.</note>
         /// </remarks>
-        public static object GetField(object instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
+        public static object? GetField(object? instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (field == null)
+            if (field == null!)
                 Throw.ArgumentNullException(Argument.field);
             if (instance == null && !field.IsStatic)
                 Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
@@ -2480,15 +2466,15 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
-        public static object GetField(object instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
+        public static object? GetField(object instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
-            return DoTryGetField(fieldName, type, instance, way, out object result, true) ? result : null;
+            return DoTryGetField(fieldName, type, instance, way, out object? result, true) ? result : null;
         }
 
         /// <summary>
@@ -2507,14 +2493,14 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
-        public static object GetField(Type type, string fieldName, ReflectionWays way = ReflectionWays.Auto)
+        public static object? GetField(Type type, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            return DoTryGetField(fieldName, type, null, way, out object result, true) ? result : null;
+            return DoTryGetField(fieldName, type, null, way, out object? result, true) ? result : null;
         }
 
         /// <summary>
@@ -2532,11 +2518,11 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
-        public static bool TryGetField(object instance, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TryGetField(object instance, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (instance == null)
+            if (instance == null!)
                 Throw.ArgumentNullException(Argument.instance);
 
             Type type = instance.GetType();
@@ -2558,17 +2544,17 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
-        public static bool TryGetField(Type type, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
+        public static bool TryGetField(Type type, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
         {
-            if (fieldName == null)
+            if (fieldName == null!)
                 Throw.ArgumentNullException(Argument.fieldName);
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             return DoTryGetField(fieldName, type, null, way, out value, false);
         }
 
-        private static bool DoTryGetField(string fieldName, Type type, object instance, ReflectionWays way, out object value, bool throwError)
+        private static bool DoTryGetField(string fieldName, Type type, object? instance, ReflectionWays way, out object? value, bool throwError)
         {
             if (way == ReflectionWays.TypeDescriptor)
                 Throw.NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
@@ -2611,7 +2597,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Checks whether the awaited parameter list can receive an actual parameter list
         /// </summary>
-        private static bool CheckParameters(ParameterInfo[] awaitedParams, object[] actualParams)
+        private static bool CheckParameters(ParameterInfo[] awaitedParams, object?[] actualParams)
         {
             if (awaitedParams.Length != actualParams.Length)
                 return false;
@@ -2625,13 +2611,13 @@ namespace KGySoft.Reflection
             return true;
         }
 
-        private static int[] ToArrayIndices(object[] indexParameters, out Exception error)
+        private static int[]? ToArrayIndices(object?[] indexParameters, out Exception? error)
         {
             error = null;
             var indices = new int[indexParameters.Length];
             for (int i = 0; i < indexParameters.Length; i++)
             {
-                var param = indexParameters[i];
+                object? param = indexParameters[i];
                 if (param is int intParam)
                 {
                     indices[i] = intParam;
@@ -2675,7 +2661,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
         [Obsolete("This overload is obsolete. Use the overloads with ResolveAssemblyOptions instead.")]
-        public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
+        public static Assembly? ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
             => ResolveAssembly(assemblyName,
                 (tryToLoad ? ResolveAssemblyOptions.TryToLoadAssembly : ResolveAssemblyOptions.None)
                 | (matchBySimpleName ? ResolveAssemblyOptions.AllowPartialMatch : ResolveAssemblyOptions.None));
@@ -2698,7 +2684,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
         /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
         /// <seealso cref="ResolveAssemblyOptions"/>
-        public static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
+        public static Assembly? ResolveAssembly(string assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
             => AssemblyResolver.ResolveAssembly(assemblyName, options);
 
         /// <summary>
@@ -2715,7 +2701,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
         /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
         /// <seealso cref="ResolveAssemblyOptions"/>
-        public static Assembly ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
+        public static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
             => AssemblyResolver.ResolveAssembly(assemblyName, options);
 
         /// <summary>
@@ -2749,7 +2735,7 @@ namespace KGySoft.Reflection
         /// it can happen that the assembly of a different version will be loaded and the method returns <see langword="null"/>.</note>
         /// </remarks>
         [Obsolete("This overload is obsolete. Use the overloads with ResolveTypeOptions instead.")]
-        public static Type ResolveType(string typeName, bool tryLoadAssemblies, bool allowPartialAssemblyMatch = true)
+        public static Type? ResolveType(string typeName, bool tryLoadAssemblies, bool allowPartialAssemblyMatch = true)
             => ResolveType(typeName,
                 (tryLoadAssemblies ? ResolveTypeOptions.TryToLoadAssemblies : ResolveTypeOptions.None)
                 | (allowPartialAssemblyMatch ? ResolveTypeOptions.AllowPartialAssemblyMatch : ResolveTypeOptions.None));
@@ -2798,7 +2784,7 @@ namespace KGySoft.Reflection
         /// </example>
         /// <seealso cref="ResolveTypeOptions"/>
         /// <seealso cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</seealso>
-        public static Type ResolveType(string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+        public static Type? ResolveType(string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, null, options);
 
         /// <summary>
@@ -2821,7 +2807,7 @@ namespace KGySoft.Reflection
         /// </remarks>
         /// <seealso cref="ResolveTypeOptions"/>
         /// <seealso cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</seealso>
-        public static Type ResolveType(string typeName, Func<AssemblyName, string, Type> typeResolver, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+        public static Type? ResolveType(string typeName, Func<AssemblyName?, string, Type?>? typeResolver, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, typeResolver, options);
 
         /// <summary>
@@ -2845,7 +2831,7 @@ namespace KGySoft.Reflection
         /// </remarks>
         /// <seealso cref="ResolveTypeOptions"/>
         /// <seealso cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</seealso>
-        public static Type ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+        public static Type? ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(assembly, typeName, options);
 
 #if NET35 || NET40 || NET45
@@ -2856,22 +2842,11 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="T">The element type of the returned array.</typeparam>
         /// <returns>An empty array of <typeparamref name="T"/>.</returns>
-        public static T[] EmptyArray<T>() => EmptyArrayHelper<T>.Instance;
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static T[] EmptyArray<T>() => Reflector<T>.EmptyArray;
 #if NET35 || NET40
 #pragma warning restore CS1574
 #endif
-
-        internal static int SizeOf<T>()
-        {
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            var type = typeof(T);
-            if (type.IsPrimitive)
-                return Buffer.ByteLength(new T[1]);
-            return type.SizeOf();
-#else
-            return Unsafe.SizeOf<T>();
-#endif
-        }
 
         #endregion
 
@@ -2913,7 +2888,7 @@ namespace KGySoft.Reflection
         /// <seealso cref="MemberOf"/>
         public static MemberInfo MemberOf<T>(Expression<Func<T>> expression)
         {
-            if (expression == null)
+            if (expression == null!)
                 Throw.ArgumentNullException(Argument.expression);
 
             Expression body = expression.Body;
@@ -2923,7 +2898,7 @@ namespace KGySoft.Reflection
             if (body is MethodCallExpression methodCall)
                 return methodCall.Method;
 
-            if (body is NewExpression ctor)
+            if (body is NewExpression ctor && ctor.Constructor != null)
                 return ctor.Constructor;
 
             return Throw.ArgumentException<MemberInfo>(Argument.expression, Res.ReflectionNotAMember(expression.GetType()));
@@ -2958,7 +2933,7 @@ namespace KGySoft.Reflection
         /// <seealso cref="MemberOf{T}"/>
         public static MethodInfo MemberOf(Expression<Action> expression)
         {
-            if (expression == null)
+            if (expression == null!)
                 Throw.ArgumentNullException(Argument.expression);
 
             Expression body = expression.Body;
@@ -2975,9 +2950,9 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
         public static bool IsExplicitInterfaceImplementation(MethodInfo method)
         {
-            if (method == null)
+            if (method == null!)
                 Throw.ArgumentNullException(Argument.method);
-            Type declaringType = method.DeclaringType;
+            Type? declaringType = method.DeclaringType;
             if (declaringType == null)
                 return false;
 
@@ -2991,7 +2966,7 @@ namespace KGySoft.Reflection
                         continue;
 
                     // Now method is an interface implementation for sure.
-                    // Explicit, if name does not match. Note: can also be null if type is abstract and implementation is in a derived class.
+                    // ReSharper disable once ConstantConditionalAccessQualifier - false alarm, can also be null if type is abstract and implementation is in a derived class.
                     return map.InterfaceMethods[i]?.Name != methodName;
                 }
             }
@@ -3006,14 +2981,14 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
         public static bool IsExplicitInterfaceImplementation(PropertyInfo property)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
-            return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true));
+            return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!);
         }
 
-        private static string GetDefaultMember(Type type)
+        private static string? GetDefaultMember(Type type)
         {
-            CustomAttributeData data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));
+            CustomAttributeData? data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));
             CustomAttributeTypedArgument? argument = data?.ConstructorArguments[0];
             return argument?.Value as string;
         }

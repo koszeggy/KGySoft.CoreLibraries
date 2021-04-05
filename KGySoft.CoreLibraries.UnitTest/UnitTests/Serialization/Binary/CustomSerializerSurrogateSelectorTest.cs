@@ -318,6 +318,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region BinarySerializable class
+
+        private class NonSerializableClass
+        {
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         #endregion
 
@@ -326,7 +339,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         private const bool dumpSerContent = false;
 
         #endregion
-
 
         #region Fields
 
@@ -512,13 +524,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void IgnoreISerializableTest()
         {
-            using var obj = new DataTable("tableName", "namespaceName");
+            var obj = new Exception("message");
             var surrogate = new CustomSerializerSurrogateSelector();
             var formatter = new BinarySerializationFormatter { SurrogateSelector = surrogate };
 
             DoTest(formatter, surrogate, obj, true, true, true);
             surrogate.IgnoreISerializable = true;
-            formatter.Options = BinarySerializationOptions.IgnoreSerializationMethods; // TextInfo.OnDeserialization in .NET Core
             surrogate.IgnoreNonSerializedAttribute = true;
             DoTest(formatter, surrogate, obj, true, true, true);
         }
@@ -604,6 +615,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             Assert.AreEqual(objOld.m_IntField, objNew.IntField);
             Assert.AreEqual(objOld.m_StringField, objNew.StringField);
+        }
+
+        [Test]
+        public void SafeModeTest()
+        {
+            var bf = new BinaryFormatter();
+            var bsf = new BinarySerializationFormatter();
+            using var surrogate = new CustomSerializerSurrogateSelector();
+            var obj = new NonSerializableClass { IntProp = 42 };
+
+            // in non-safe mode everything works
+            DoTest(bf, surrogate, obj, true, true, true);
+            DoTest(bsf, surrogate, obj, true, true, true);
+
+            surrogate.SafeMode = true; // so the surrogate denies support
+            bsf.Options |= BinarySerializationOptions.SafeMode; // so even the formatter denies support
+
+            // in safe mode SerializationException should be thrown
+            Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true));
+            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true));
         }
 
         #endregion

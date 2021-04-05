@@ -17,13 +17,16 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+#if NET35
+using System.Diagnostics.CodeAnalysis; 
+#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -40,7 +43,7 @@ namespace KGySoft.Reflection
         #region Constants
 
 #if !NETFRAMEWORK
-        private const string mscorlibName = "mscorlib"; 
+        private const string mscorlibName = "mscorlib";
 #endif
 
         #endregion
@@ -56,16 +59,16 @@ namespace KGySoft.Reflection
 
         #region Private Fields
 
-        private static Assembly mscorlibAssembly;
-        private static LockingDictionary<string, Assembly> assemblyCache;
+        private static Assembly? mscorlibAssembly;
+        private static IThreadSafeCacheAccessor<(string, int), Assembly?>? assemblyCache; // Key: Assembly name + options (as int due to faster GetHashCode)
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string, bool)> forwardedNamesCache; 
+        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache; // Value: Forwarded assembly name + is core identity flag
 #endif
 
         private static readonly string[] coreLibNames =
         {
-            CoreLibrariesAssembly.FullName.Split(new[] { ',' }, 2)[0], // could be by GetName but that requires FileIOPermission
+            CoreLibrariesAssembly.FullName!.Split(new[] { ',' }, 2)[0], // could be by GetName but that requires FileIOPermission
 #if !NETFRAMEWORK
             mscorlibName
 #endif
@@ -89,12 +92,26 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private static LockingDictionary<string, Assembly> AssemblyCache
-            => assemblyCache ??= new Cache<string, Assembly>().AsThreadSafe();
+        private static IThreadSafeCacheAccessor<(string, int), Assembly?> AssemblyCache
+        {
+            get
+            {
+                if (assemblyCache == null)
+                    Interlocked.CompareExchange(ref assemblyCache, ThreadSafeCacheFactory.Create<(string, int), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
+                return assemblyCache;
+            }
+        }
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
-            => forwardedNamesCache ??= new Cache<Type, (string, bool)>(DoGetForwardedAssemblyName).GetThreadSafeAccessor();
+        private static IThreadSafeCacheAccessor<Type, (string? ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
+        {
+            get
+            {
+                if (forwardedNamesCache == null)
+                    Interlocked.CompareExchange(ref forwardedNamesCache, ThreadSafeCacheFactory.Create<Type, (string?, bool)>(DoGetForwardedAssemblyName, LockFreeCacheOptions.Profile128), null);
+                return forwardedNamesCache;
+            }
+        }
 #endif
 
         #endregion
@@ -105,40 +122,28 @@ namespace KGySoft.Reflection
 
         #region Internal Methods
 
-        internal static Assembly ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
+        internal static Assembly? ResolveAssembly(string assemblyName, ResolveAssemblyOptions options)
         {
-            if (assemblyName == null)
+            if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
             if (assemblyName.Length == 0)
                 Throw.ArgumentException(Argument.assemblyName, Res.ArgumentEmpty);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
 
-            AssemblyName asmName;
-            try
-            {
-                asmName = new AssemblyName(assemblyName);
-            }
-            catch (Exception e) when (!e.IsCritical())
-            {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(assemblyName), e);
-                return null;
-            }
-
-            return GetOrResolve(asmName, options);
+            return AssemblyCache[(assemblyName, (int)options)];
         }
 
-        internal static Assembly ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        internal static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
-            if (assemblyName == null)
+            if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
             if (!options.AllFlagsDefined())
                 Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
-            return GetOrResolve(assemblyName, options);
+            return AssemblyCache[(assemblyName.FullName, (int)options)];
         }
 
-        internal static bool IdentityMatches(AssemblyName refName, AssemblyName toCheck, bool allowPartialMatch)
+        internal static bool IdentityMatches(AssemblyName refName, AssemblyName? toCheck, bool allowPartialMatch)
         {
             if (toCheck == null)
                 return false;
@@ -152,21 +157,21 @@ namespace KGySoft.Reflection
                 return true;
 
             // Checking version, culture and public key token
-            Version version = refName.Version;
+            Version? version = refName.Version;
             if (version != null && toCheck.Version != version)
                 return false;
 
-            CultureInfo culture = refName.CultureInfo;
-            if (culture != null && toCheck.CultureInfo.Name != culture.Name)
+            CultureInfo? culture = refName.CultureInfo;
+            if (culture != null && toCheck.CultureInfo?.Name != culture.Name)
                 return false;
 
-            byte[] publicKeyTokenRef, publicKeyTokenCheck;
+            byte[]? publicKeyTokenRef, publicKeyTokenCheck;
             return (publicKeyTokenRef = refName.GetPublicKeyToken()) == null
                 || (publicKeyTokenCheck = toCheck.GetPublicKeyToken()) == null
                 || publicKeyTokenRef.SequenceEqual(publicKeyTokenCheck);
         }
 
-        internal static bool IsCoreLibAssemblyName(string assemblyName) => IsCoreLibAssemblyName(new StringSegmentInternal(assemblyName));
+        internal static bool IsCoreLibAssemblyName(string? assemblyName) => assemblyName != null && IsCoreLibAssemblyName(new StringSegmentInternal(assemblyName));
 
         internal static bool IsCoreLibAssemblyName(StringSegmentInternal assemblyName)
         {
@@ -185,8 +190,10 @@ namespace KGySoft.Reflection
             return false;
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Same signature for every target platform.")]
-        internal static string GetForwardedAssemblyName(Type type, in bool omitIfCoreLibrary)
+#if NET35
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Same signature for every target platform.")] 
+#endif
+        internal static string? GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
         {
 #if NET35
             return null;
@@ -200,35 +207,44 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private static Assembly GetOrResolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        private static Assembly? TryResolveAssembly((string AssemblyName, int Options) key, out bool storeValue)
         {
-            string key = ((int)(options & ~ResolveAssemblyOptions.ThrowError)).ToString(CultureInfo.InvariantCulture) + assemblyName.FullName;
-            if (AssemblyCache.TryGetValue(key, out Assembly result))
-                return result;
-
+            // Note: even if the original source was an AssemblyName we resolve it from string because AssemblyName has no proper GetHashCode/Equals
+            // It is not a problem as this is the item loader method of the cache so it will not be recreated most of the time.
+            AssemblyName asmName;
             try
             {
-                result = Resolve(assemblyName, options);
+                asmName = new AssemblyName(key.AssemblyName);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                if ((key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
+                    Throw.ArgumentException(Argument.assemblyName, Res.ReflectionInvalidAssemblyName(key.AssemblyName), e);
+                storeValue = false;
+                return null;
+            }
+
+            Assembly? result;
+            try
+            {
+                result = Resolve(asmName, (ResolveAssemblyOptions)key.Options);
             }
             catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
             {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
+                if ((key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
+                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName), e);
+                storeValue = false;
                 return null;
             }
 
-            if (result == null)
-            {
-                if ((options & ResolveAssemblyOptions.ThrowError) != ResolveAssemblyOptions.None)
-                    Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(assemblyName.FullName));
-                return null;
-            }
+            if (result == null && (key.Options & (int)ResolveAssemblyOptions.ThrowError) != 0)
+                Throw.ReflectionException(Res.ReflectionCannotResolveAssembly(key.AssemblyName));
 
-            assemblyCache[key] = result;
+            storeValue = result != null;
             return result;
         }
 
-        private static Assembly Resolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        private static Assembly? Resolve(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
             // 1.) Iterating through loaded assemblies, checking names
             bool allowPartialMatch = (options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None;
@@ -248,7 +264,7 @@ namespace KGySoft.Reflection
                 return null;
 
             // 2.) Trying to load the assembly
-            Assembly result = LoadAssembly(assemblyName, options);
+            Assembly? result = LoadAssembly(assemblyName, options);
             return result?.FullName == fullName || IdentityMatches(assemblyName, result?.GetName(), allowPartialMatch) ? result : null;
         }
 
@@ -256,11 +272,9 @@ namespace KGySoft.Reflection
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
         [SecuritySafeCritical]
-        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
-            Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
-        private static Assembly LoadAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
+        private static Assembly? LoadAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
         {
-            static Assembly TryLoad(AssemblyName asmName, out Exception error)
+            static Assembly? TryLoad(AssemblyName asmName, out Exception? error)
             {
                 error = null;
 
@@ -279,14 +293,14 @@ namespace KGySoft.Reflection
             // 1. In case of a system assembly, returning it from the GAC (if version does not matter)
             if ((options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
             {
-                string gacPath = Fusion.GetGacPath(assemblyName.Name);
+                string? gacPath = Fusion.GetGacPath(assemblyName.Name);
                 if (gacPath != null)
                     return Assembly.LoadFrom(gacPath);
             }
 #endif
 
             // 2. Trying to load the assembly with full name
-            Assembly result = TryLoad(assemblyName, out Exception e);
+            Assembly? result = TryLoad(assemblyName, out Exception? e);
             if (result != null)
                 return result;
 
@@ -303,7 +317,7 @@ namespace KGySoft.Reflection
             // 4. Trying by simple name only (might not work on every platform)
             if (assemblyName.FullName != assemblyName.Name)
             {
-                var strippedName = new AssemblyName(assemblyName.Name);
+                var strippedName = new AssemblyName(assemblyName.Name!);
                 result = TryLoad(strippedName, out var _);
                 if (result != null)
                     return result;
@@ -315,7 +329,7 @@ namespace KGySoft.Reflection
         }
 
 #if !NET35
-        private static (string, bool) DoGetForwardedAssemblyName(Type type)
+        private static (string?, bool) DoGetForwardedAssemblyName(Type type)
         {
             if (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
                 return (attr.AssemblyFullName, IsCoreLibAssemblyName(attr.AssemblyFullName));

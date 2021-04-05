@@ -30,17 +30,17 @@ namespace KGySoft.Resources
     {
         #region Properties
 
-        ICollection<KeyValuePair<string, ResXDataNode>> Resources { get; }
-        ICollection<KeyValuePair<string, ResXDataNode>> Metadata { get; }
-        ICollection<KeyValuePair<string, string>> Aliases { get; }
+        ICollection<KeyValuePair<string, ResXDataNode>>? Resources { get; }
+        ICollection<KeyValuePair<string, ResXDataNode>>? Metadata { get; }
+        ICollection<KeyValuePair<string, string>>? Aliases { get; }
 
         bool SafeMode { get; }
         bool AutoFreeXmlData { get; }
         bool CloneValues { get; }
 
-        ITypeResolutionService TypeResolver { get; }
+        ITypeResolutionService? TypeResolver { get; }
 
-        string BasePath { get; }
+        string? BasePath { get; }
 
         int Version { get; }
 

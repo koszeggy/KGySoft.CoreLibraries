@@ -20,15 +20,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-#if NET35 || NET40
-using System.Globalization;
-#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Security;
 using System.Text;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
@@ -47,7 +45,7 @@ namespace KGySoft.CoreLibraries
 
             #region Delegates
 
-            private delegate object GenerateKnownType(ref GeneratorContext context);
+            private delegate object? GenerateKnownType(ref GeneratorContext context);
 
             #endregion
 
@@ -58,7 +56,7 @@ namespace KGySoft.CoreLibraries
             /// <summary>
             /// Cache key for a generic type with its suggested arguments, with Equals/GetHashCode by array elements.
             /// </summary>
-            private struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
+            private readonly struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
             {
                 #region Fields
 
@@ -69,13 +67,7 @@ namespace KGySoft.CoreLibraries
                 #region Properties
 
                 internal Type GenericType => types[0];
-                internal
-#if NET35 || NET40
-                    ArraySegment<Type> 
-#else
-                    IList<Type>
-#endif
-                        SuggestedArguments => new ArraySegment<Type>(types, 1, types.Length - 1);
+                internal ArraySection<Type> SuggestedArguments => types.AsSection(1, types.Length - 1);
 
                 #endregion
 
@@ -92,14 +84,10 @@ namespace KGySoft.CoreLibraries
 
                 #region Methods
 
-                public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
+                public override bool Equals(object? obj) => obj is DefaultGenericTypeKey key && Equals(key);
                 public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
                 public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
-#if NET35 || NET40
-                public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Count.ToString(CultureInfo.InvariantCulture)}]";
-#else
                 public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Join(", ")}]";
-#endif
 
                 #endregion
             }
@@ -114,7 +102,6 @@ namespace KGySoft.CoreLibraries
 
                 #region Internal Fields
 
-                private readonly Type requestedType;
                 internal readonly Random Random;
                 internal readonly GenerateObjectSettings Settings;
 
@@ -122,10 +109,11 @@ namespace KGySoft.CoreLibraries
 
                 #region Private Fields
 
+                private readonly Type requestedType;
                 private readonly List<string> membersChain;
                 private readonly List<Type> generatedTypes;
 
-                private Type root;
+                private Type? root;
                 private int recursionLevel;
 
                 #endregion
@@ -134,7 +122,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Properties
 
-                public string ParentMemberName => membersChain.Count == 0 ? null : membersChain.Last();
+                public string? ParentMemberName => membersChain.Count == 0 ? null : membersChain.Last();
 
                 #endregion
 
@@ -157,15 +145,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Public Methods
 
-                [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object,System.Object)",
-                    Justification = "False alarm, types and a string are passed")]
-                public override string ToString()
-                {
-                    if (root == null)
-                        return requestedType?.ToString() ?? base.ToString();
-
-                    return $"{requestedType} [{root}->{String.Join("->", membersChain.ToArray())}]";
-                }
+                public override string ToString() => root == null ? requestedType.ToString() : $"{requestedType} [{root}->{String.Join("->", membersChain.ToArray())}]";
 
                 #endregion
 
@@ -218,10 +198,10 @@ namespace KGySoft.CoreLibraries
 
             #region Fields
 
-            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric).GetThreadSafeAccessor();
-            private static readonly IThreadSafeCacheAccessor<Type, Delegate> delegatesCache = new Cache<Type, Delegate>(CreateDelegate).GetThreadSafeAccessor();
+            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = ThreadSafeCacheFactory.Create<Assembly, Type[]>(LoadAssemblyTypes, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = ThreadSafeCacheFactory.Create<Type, Type[]>(SearchForImplementors, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> defaultConstructedGenerics = ThreadSafeCacheFactory.Create<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128);
+            private static readonly IThreadSafeCacheAccessor<Type, Delegate?> delegatesCache = ThreadSafeCacheFactory.Create<Type, Delegate?>(CreateDelegate, LockFreeCacheOptions.Profile128);
 
 #if !NETSTANDARD2_0
             /// <summary>
@@ -231,7 +211,7 @@ namespace KGySoft.CoreLibraries
             private static readonly Random randomForDelegates = new FastRandom();
 
             private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates); 
-            private static readonly MethodInfo nextObjectGenMethod = (typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));
+            private static readonly MethodInfo nextObjectGenMethod = typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) })!;
 #endif
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
@@ -251,7 +231,7 @@ namespace KGySoft.CoreLibraries
                     { Reflector.IntPtrType, GenerateIntPtr },
                     { Reflector.UIntPtrType, GenerateUIntPtr },
 
-                    // floating points
+                    // floating point types
                     { Reflector.FloatType, GenerateSingle },
                     { Reflector.DoubleType, GenerateDouble },
                     { Reflector.DecimalType, GenerateDecimal },
@@ -277,17 +257,17 @@ namespace KGySoft.CoreLibraries
             private static readonly Type memberInfoType = typeof(MemberInfo);
             private static readonly Type fieldInfoType = typeof(FieldInfo);
             private static readonly Type rtFieldInfoType = Reflector.MemberOf(() => String.Empty).GetType();
-            private static readonly Type mdFieldInfoType = Reflector.IntType.GetField(nameof(Int32.MaxValue)).GetType(); // MemberOf does not work for constants
-            private static readonly Type runtimeFieldInfoType = rtFieldInfoType.BaseType;
+            private static readonly Type mdFieldInfoType = Reflector.IntType.GetField(nameof(Int32.MaxValue))!.GetType(); // MemberOf does not work for constants
+            private static readonly Type runtimeFieldInfoType = rtFieldInfoType.BaseType!;
             private static readonly Type propertyInfoType = typeof(PropertyInfo);
-            private static readonly Type runtimePropertyInfoType = Reflector.MemberOf(() => ((string)null).Length).GetType();
+            private static readonly Type runtimePropertyInfoType = Reflector.MemberOf(() => ((string)null!).Length).GetType();
             private static readonly Type methodBaseType = typeof(MethodBase);
             private static readonly Type methodInfoType = typeof(MethodInfo);
-            private static readonly Type runtimeMethodInfoType = Reflector.MemberOf(() => ((object)null).ToString()).GetType();
+            private static readonly Type runtimeMethodInfoType = Reflector.MemberOf(() => ((object)null!).ToString()).GetType();
             private static readonly Type ctorInfoType = typeof(ConstructorInfo);
             private static readonly Type runtimeCtorInfoType = Reflector.MemberOf(() => new object()).GetType();
             private static readonly Type eventInfoType = typeof(EventInfo);
-            private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress)).GetType();
+            private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress))!.GetType();
 
             #endregion
 
@@ -296,10 +276,10 @@ namespace KGySoft.CoreLibraries
             #region Internal Methods
 
             [SecurityCritical]
-            internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
+            internal static object? GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
                 var context = new GeneratorContext(type, random, settings);
-                return TryGenerateObject(type, ref context, out object result) ? result : null;
+                return TryGenerateObject(type, ref context, out object? result) ? result : null;
             }
 
             #endregion
@@ -314,7 +294,7 @@ namespace KGySoft.CoreLibraries
                 }
                 catch (ReflectionTypeLoadException e)
                 {
-                    return e.Types.Where(t => t != null).ToArray();
+                    return e.Types.Where(t => t != null).ToArray()!;
                 }
             }
 
@@ -359,7 +339,7 @@ namespace KGySoft.CoreLibraries
 
                         // Generic type for non-generic interface or for non-interface (eg. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
-                        Type constructedType = defaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
+                        Type? constructedType = defaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
                         if (constructedType != null && type.IsAssignableFrom(constructedType))
                             result.Add(constructedType);
                     }
@@ -368,10 +348,10 @@ namespace KGySoft.CoreLibraries
                 return result.ToArray();
             }
 
-            private static Type TryCreateDefaultGeneric(DefaultGenericTypeKey key)
+            private static Type? TryCreateDefaultGeneric(DefaultGenericTypeKey key)
             {
                 Type genericTypeDef = key.GenericType;
-                var suggestedArguments = key.SuggestedArguments; // var is ArraySegment<Type> in .NET 3.4/4.0 and IList<Type> above
+                ArraySection<Type> suggestedArguments = key.SuggestedArguments;
                 Type[] genericParams = genericTypeDef.GetGenericArguments();
                 Type[] argumentsToCreate = new Type[genericParams.Length];
                 Type[][] constraints = new Type[genericParams.Length][];
@@ -381,15 +361,7 @@ namespace KGySoft.CoreLibraries
                     GenericParameterAttributes attr = argDef.GenericParameterAttributes;
                     bool valueTypeConstraint = (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
                     constraints[i] = argDef.GetGenericParameterConstraints();
-
-                    Type arg = suggestedArguments.Count == argumentsToCreate.Length
-#if (NET35 || NET40)
-                        // ReSharper disable once PossibleNullReferenceException
-                        ? suggestedArguments.Array[suggestedArguments.Offset + i]
-#else
-                        ? suggestedArguments[i]
-#endif
-                        : null;
+                    Type? arg = suggestedArguments.Length == argumentsToCreate.Length ? suggestedArguments[i] : null;
 
                     // If we could not get the argument from provided type or it is not compatible with first constraint we put either first constraint or int/object
                     if (arg == null || constraints[i].Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
@@ -412,7 +384,7 @@ namespace KGySoft.CoreLibraries
                 // This is another cycle because now every arguments are substituted.
                 for (int i = 0; i < argumentsToCreate.Length; i++)
                 {
-                    Type arg = argumentsToCreate[i];
+                    Type? arg = argumentsToCreate[i];
 
                     // does not contain generic parameter
                     if (!arg.ContainsGenericParameters)
@@ -445,7 +417,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static Type SubstituteGenericParameter(Type arg, Type[] definitionArguments, Type[] constructedArguments)
+            private static Type? SubstituteGenericParameter(Type arg, Type[] definitionArguments, Type[] constructedArguments)
             {
                 // generic parameter: replacing
                 if (arg.IsGenericParameter)
@@ -462,12 +434,12 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // contains generic parameters: recursion
-                var args = arg.GetGenericArguments();
+                Type[] args = arg.GetGenericArguments();
                 var replacedArgs = new Type[args.Length];
                 for (int i = 0; i < args.Length; i++)
                 {
-                    var childArg = args[i];
-                    Type replacement = childArg.ContainsGenericParameters ? SubstituteGenericParameter(childArg, definitionArguments, constructedArguments) : childArg;
+                    Type childArg = args[i];
+                    Type? replacement = childArg.ContainsGenericParameters ? SubstituteGenericParameter(childArg, definitionArguments, constructedArguments) : childArg;
                     if (replacement == null)
                         return null;
                     replacedArgs[i] = replacement;
@@ -484,17 +456,14 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static Delegate CreateDelegate(Type type)
+            private static Delegate? CreateDelegate(Type type)
             {
 #if NETSTANDARD2_0
                 return null;
 #else
-                MethodInfo mi = type.GetMethod(nameof(Action.Invoke));
-                // ReSharper disable once PossibleNullReferenceException
+                MethodInfo mi = type.GetMethod(nameof(Action.Invoke))!;
                 Type returnType = mi.ReturnType;
-                var parameters = mi.GetParameters();
-
-                // ReSharper disable once PossibleNullReferenceException
+                ParameterInfo[] parameters = mi.GetParameters();
                 var dm = new DynamicMethod($"dm_{type.Name}", returnType, mi.GetParameters().Select(p => p.ParameterType).ToArray(), true);
                 ILGenerator il = dm.GetILGenerator();
 
@@ -504,14 +473,13 @@ namespace KGySoft.CoreLibraries
                     if (!parameters[i].IsOut)
                         continue;
 
-                    Type parameterType = parameters[i].ParameterType.GetElementType();
+                    Type parameterType = parameters[i].ParameterType.GetElementType()!;
 
                     il.Emit(OpCodes.Ldarg, i);
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
                     il.Emit(OpCodes.Call, nextObjectGenMethod.GetGenericMethod(parameterType));
 
-                    // ReSharper disable once PossibleNullReferenceException
                     if (parameterType.IsValueType)
                         il.Emit(OpCodes.Stobj, parameterType);
                     else
@@ -566,7 +534,7 @@ namespace KGySoft.CoreLibraries
             {
                 Range<int> range = context.Settings.StringsLength;
                 StringCreation strategy;
-                string memberName = context.ParentMemberName;
+                string? memberName = context.ParentMemberName;
                 if (memberName != null && context.Settings.StringCreation == null)
                 {
                     if (memberName.ContainsAny(StringComparison.OrdinalIgnoreCase, "name", "address", "street", "city", "country", "county", "author", "title"))
@@ -606,7 +574,7 @@ namespace KGySoft.CoreLibraries
             private static object GenerateDateTime(ref GeneratorContext context)
             {
                 bool? pastOnly = context.Settings.PastDateTimes;
-                string memberName = context.ParentMemberName;
+                string? memberName = context.ParentMemberName;
                 if (pastOnly == null && memberName != null)
                 {
                     if (memberName.Contains("birth", StringComparison.OrdinalIgnoreCase))
@@ -652,13 +620,13 @@ namespace KGySoft.CoreLibraries
             private static Assembly PickRandomAssembly(ref GeneratorContext context)
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                return assemblies.GetRandomElement(context.Random);
+                return assemblies.GetRandomElement(context.Random)!;
             }
 
             private static Type PickRandomType(ref GeneratorContext context)
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                Assembly asm = assemblies.GetRandomElement(context.Random);
+                Assembly asm = assemblies.GetRandomElement(context.Random)!;
                 Type[] types = assemblyTypesCache[asm];
 
                 if (types.Length == 0)
@@ -671,10 +639,10 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
-                return types.GetRandomElement(context.Random);
+                return types.GetRandomElement(context.Random)!;
             }
 
-            private static MemberInfo PickRandomMemberInfo(Type type, ref GeneratorContext context)
+            private static MemberInfo? PickRandomMemberInfo(Type type, ref GeneratorContext context)
             {
                 // type
                 if (type.In(Reflector.Type, Reflector.RuntimeType
@@ -714,8 +682,8 @@ namespace KGySoft.CoreLibraries
                     return null;
 
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                Assembly asm = assemblies.GetRandomElement(context.Random);
-                MemberInfo result = TryPickMemberInfo(assemblyTypesCache[asm].GetRandomElement(context.Random, true), memberTypes, ref context, constants);
+                Assembly asm = assemblies.GetRandomElement(context.Random)!;
+                MemberInfo? result = TryPickMemberInfo(assemblyTypesCache[asm].GetRandomElement(context.Random, true), memberTypes, ref context, constants);
 
                 if (result != null)
                     return result;
@@ -735,7 +703,7 @@ namespace KGySoft.CoreLibraries
                 return null;
             }
 
-            private static MemberInfo TryPickMemberInfo(Type type, MemberTypes memberTypes, ref GeneratorContext context, bool? constants)
+            private static MemberInfo? TryPickMemberInfo(Type? type, MemberTypes memberTypes, ref GeneratorContext context, bool? constants)
             {
                 if (type == null)
                     return null;
@@ -763,7 +731,7 @@ namespace KGySoft.CoreLibraries
                     if (constants == null)
                         return member;
 
-                    if (!(member is FieldInfo field))
+                    if (member is not FieldInfo field)
                         continue;
 
                     if (constants == true && field.IsLiteral || constants == false && !field.IsLiteral)
@@ -776,16 +744,16 @@ namespace KGySoft.CoreLibraries
             private static object PickRandomEnum(Type type, ref GeneratorContext context)
             {
                 Array values = Enum.GetValues(type);
-                return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length));
+                return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length))!;
             }
 
             [SecurityCritical]
-            private static bool TryGenerateObject(Type type, ref GeneratorContext context, out object result, bool checkingDerivedType = false)
+            private static bool TryGenerateObject(Type type, ref GeneratorContext context, out object? result, bool checkingDerivedType = false)
             {
                 result = null;
 
                 // null (if this call is for an implementation of a parent type, then it was already checked previously)
-                if (!checkingDerivedType && context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
+                if (!checkingDerivedType && context.Settings.ChanceOfNull > 0f && type.CanAcceptValue(null) && context.Random.NextDouble() < context.Settings.ChanceOfNull)
                     return true;
 
                 if (!checkingDerivedType)
@@ -803,7 +771,7 @@ namespace KGySoft.CoreLibraries
                         type = context.Settings.SubstitutionForObjectType;
 
                     // 1.) known type
-                    if (knownTypes.TryGetValue(type, out GenerateKnownType knownGenerator))
+                    if (knownTypes.TryGetValue(type, out GenerateKnownType? knownGenerator))
                     {
                         result = knownGenerator.Invoke(ref context);
                         return true;
@@ -860,8 +828,8 @@ namespace KGySoft.CoreLibraries
             private static object GenerateKeyValuePair(Type type, ref GeneratorContext context)
             {
                 Type[] args = type.GetGenericArguments();
-                object key, value;
-                object result = Activator.CreateInstance(type);
+                object? key, value;
+                object result = Activator.CreateInstance(type)!;
 
                 // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
                 context.PushMember(nameof(KeyValuePair<_, _>.Key));
@@ -891,7 +859,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            private static bool TryGenerateCollection(Type type, ref GeneratorContext context, out object result)
+            private static bool TryGenerateCollection(Type type, ref GeneratorContext context, out object? result)
             {
                 // array
                 if (type.IsArray)
@@ -901,25 +869,25 @@ namespace KGySoft.CoreLibraries
                 }
 
                 result = null;
-                if (!type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary)
+                if (!type.IsSupportedCollectionForReflection(out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, out Type? elementType, out bool isDictionary)
                     && (!context.Settings.AllowCreateObjectWithoutConstructor || !type.IsCollection()))
                 {
                     return false;
                 }
 
                 // supported collection
-                IEnumerable collection = null;
+                IEnumerable? collection = null;
 
                 // preferring default constructor and populating
                 // CreateInstance is faster than obtaining object factory by the constructor
                 if (defaultCtor != null || type.IsValueType)
                     collection = (IEnumerable)CreateInstanceAccessor.GetAccessor(type).CreateInstance();
-                else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor && Reflector.TryCreateUninitializedObject(type, out object uninitialized))
+                else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor && Reflector.TryCreateUninitializedObject(type, out object? uninitialized))
                     collection = (IEnumerable)uninitialized;
 
                 if (collection != null && type.IsReadWriteCollection(collection))
                 {
-                    PopulateCollection(collection, elementType, isDictionary, ref context);
+                    PopulateCollection(collection, elementType!, isDictionary, ref context);
                     result = collection;
                     return true;
                 }
@@ -927,7 +895,7 @@ namespace KGySoft.CoreLibraries
                 // As a fallback using collectionCtor if possible
                 if (collectionCtor != null)
                 {
-                    result = GenerateCollectionByCtor(collectionCtor, elementType, isDictionary, ref context);
+                    result = GenerateCollectionByCtor(collectionCtor, elementType!, isDictionary, ref context);
                     return true;
                 }
 
@@ -935,7 +903,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            private static bool TryGenerateCustomObject(Type type, ref GeneratorContext context, out object result)
+            private static bool TryGenerateCustomObject(Type type, ref GeneratorContext context, out object? result)
             {
                 result = null;
                 bool resolveType = false;
@@ -948,8 +916,8 @@ namespace KGySoft.CoreLibraries
                 else if (!type.IsSealed && context.Settings.AllowDerivedTypesForNonSealedClasses)
                     resolveType = true;
 
-                IList<Type> typeCandidates = null;
-                Type typeToCreate = type;
+                IList<Type>? typeCandidates = null;
+                Type? typeToCreate = type;
                 if (resolveType)
                 {
                     typeCandidates = typeImplementorsCache[type];
@@ -971,7 +939,7 @@ namespace KGySoft.CoreLibraries
                 // The try above could be in this foreach below but we try to avoid the shuffling if possible
                 if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowDerivedTypesForNonSealedClasses))
                 {
-                    foreach (Type candidateType in typeCandidates.Except(new[] { typeToCreate }).Shuffle(context.Random))
+                    foreach (Type candidateType in typeCandidates!.Except(new[] { typeToCreate }).Shuffle(context.Random))
                     {
                         if (candidateType == type && TryCreateConcreteObject(candidateType, ref context, out result)
                             || candidateType != type && TryGenerateObject(candidateType, ref context, out result, true))
@@ -985,7 +953,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            private static bool TryCreateConcreteObject(Type type, ref GeneratorContext context, out object result)
+            private static bool TryCreateConcreteObject(Type type, ref GeneratorContext context, [MaybeNullWhen(false)]out object result)
             {
                 bool isRoot = context.TrySetRoot(type);
                 try
@@ -1011,7 +979,7 @@ namespace KGySoft.CoreLibraries
                 Type type = obj.GetType();
                 switch (context.Settings.ObjectInitialization)
                 {
-                    case ObjectInitialization.PublicFieldsAndPropeties:
+                    case ObjectInitialization.PublicFieldsAndProperties:
                         fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
                         goto case ObjectInitialization.PublicProperties;
                     case ObjectInitialization.PublicProperties:
@@ -1019,7 +987,7 @@ namespace KGySoft.CoreLibraries
                         break;
                     case ObjectInitialization.Fields:
                         var result = new List<FieldInfo>();
-                        for (Type t = type; t != null; t = t.BaseType)
+                        for (Type? t = type; t != null; t = t.BaseType)
                             result.AddRange(type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
                         fields = result;
                         break;
@@ -1036,14 +1004,14 @@ namespace KGySoft.CoreLibraries
                         // no sense to use Reflector.TrySetProperty because it also throws exception if the property setter itself throws an exception
                         if (property.CanWrite)
                         {
-                            if (!TryGenerateObject(property.PropertyType, ref context, out object value))
+                            if (!TryGenerateObject(property.PropertyType, ref context, out object? value))
                                 continue;
                             property.Set(obj, value);
                             continue;
                         }
 
                         // collection of read-only property
-                        IEnumerable collection = (IEnumerable)property.Get(obj);
+                        var collection = (IEnumerable?)property.Get(obj);
                         if (collection == null)
                             continue;
 
@@ -1054,7 +1022,7 @@ namespace KGySoft.CoreLibraries
                         }
 
                         Type collectionType = collection.GetType();
-                        if (!(collectionType.IsReadWriteCollection(collection) && collectionType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out bool isDictionary)))
+                        if (!(collectionType.IsReadWriteCollection(collection) && collectionType.IsSupportedCollectionForReflection(out var _, out var _, out Type? elementType, out bool isDictionary)))
                             continue;
                         PopulateCollection(collection, elementType, isDictionary, ref context);
                     }
@@ -1073,7 +1041,7 @@ namespace KGySoft.CoreLibraries
                     context.PushMember(field.Name);
                     try
                     {
-                        if (!TryGenerateObject(field.FieldType, ref context, out object value))
+                        if (!TryGenerateObject(field.FieldType, ref context, out object? value))
                             continue;
                         field.Set(obj, value);
                     }
@@ -1094,7 +1062,7 @@ namespace KGySoft.CoreLibraries
                 if (arrayType == Reflector.ByteArrayType)
                     return NextBytes(context.Random, NextInt32(context.Random, context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true));
 
-                Type elementType = arrayType.GetElementType();
+                Type elementType = arrayType.GetElementType()!;
                 var lengths = new int[arrayType.GetArrayRank()];
                 for (int i = 0; i < lengths.Length; i++)
                     lengths[i] = NextInt32(context.Random, context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true);
@@ -1108,13 +1076,13 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             private static void PopulateArray(Array array, ref GeneratorContext context)
             {
-                Type elementType = array.GetType().GetElementType();
+                Type elementType = array.GetType().GetElementType()!;
                 if (array.Rank == 1)
                 {
                     int length = array.Length;
                     for (int i = 0; i < length; i++)
                     {
-                        if (!TryGenerateObject(elementType, ref context, out object value))
+                        if (!TryGenerateObject(elementType, ref context, out object? value))
                             continue;
                         array.SetValue(value, i);
                     }
@@ -1124,7 +1092,7 @@ namespace KGySoft.CoreLibraries
                 var indexer = new ArrayIndexer(array);
                 while (indexer.MoveNext())
                 {
-                    if (!TryGenerateObject(elementType, ref context, out object value))
+                    if (!TryGenerateObject(elementType, ref context, out object? value))
                         continue;
                     array.SetValue(value, indexer.Current);
                 }
@@ -1140,7 +1108,7 @@ namespace KGySoft.CoreLibraries
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        if (!TryGenerateObject(elementType, ref context, out object value))
+                        if (!TryGenerateObject(elementType, ref context, out object? value))
                             continue;
                         collection.TryAdd(value, false);
                     }
@@ -1149,12 +1117,12 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
-                IDictionary dictionary = collection as IDictionary;
-                PropertyInfo genericIndexer = dictionary != null ? null : (PropertyInfo)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers()[0];
+                IDictionary? dictionary = collection as IDictionary;
+                PropertyInfo? genericIndexer = dictionary != null ? null : (PropertyInfo)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers()[0];
 
                 for (int i = 0; i < count; i++)
                 {
-                    object key, value;
+                    object? key, value;
                     context.PushMember(nameof(DictionaryEntry.Key));
                     try
                     {
@@ -1183,7 +1151,7 @@ namespace KGySoft.CoreLibraries
                         continue;
                     }
 
-                    genericIndexer.Set(collection, value, key);
+                    genericIndexer!.Set(collection, value, key);
                 }
             }
 

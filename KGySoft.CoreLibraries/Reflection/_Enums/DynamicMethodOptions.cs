@@ -20,12 +20,16 @@ using System;
 
 #endregion
 
-namespace KGySoft.Reflection
-{
+#region Suppressions
+
 #if NETSTANDARD2_0
 #pragma warning disable CS1574 // the documentation contains members that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.Reflection
+{
     /// <summary>
     /// Options for the <see cref="MemberAccessor.CreateMethodInvokerAsDynamicMethod">MemberAccessor.CreateMethodInvokerAsDynamicMethod</see> method.
     /// </summary>

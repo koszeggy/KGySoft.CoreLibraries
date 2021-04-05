@@ -20,11 +20,9 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -34,13 +32,28 @@ using System.Xml;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 using KGySoft.Serialization.Binary;
 
 #endregion
 
+#region Suppressions
+
+#if NET
+#if NET5_0 || NET6_0
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses IFormatter implementations for compatibility reasons
+#pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
+#pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#else
+#error Check whether IFormatter is still available in this .NET version
+#endif
+#endif
+
+#endregion
+
 namespace KGySoft.Resources
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 {
-#pragma warning disable 618
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
     /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> class.
@@ -62,7 +75,7 @@ namespace KGySoft.Resources
     /// <note>If you call any of the <c>SetObject</c> methods of the list above by any <see cref="object"/>, then a <see cref="ResXDataNode"/> instance will be implicitly created.
     /// A <see cref="ResXDataNode"/> instance should be explicitly created only if you want to set the <see cref="Comment"/> property.</note>
     /// </para>
-    /// <para>To retrieve an existing <see cref="ResXDataNode"/> object, you can select one of the following options:
+    /// <para>To retrieve a <see cref="ResXDataNode"/> object from a resource you have the following options:
     /// <list type="bullet">
     /// <item>Enumerate the <see cref="ResXDataNode"/> objects in an XML (.resx file) by instantiating a <see cref="ResXResourceReader"/> object,
     /// setting the <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> property to <see langword="true"/>, and calling the
@@ -84,6 +97,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Collections;
     /// using System.IO;
+    /// 
     /// using KGySoft.Resources;
     /// 
     /// public class Example
@@ -107,7 +121,7 @@ namespace KGySoft.Resources
     /// 
     ///   <data name='color' type='System.Drawing.Color, CustomAlias'>
     ///     <value>Red</value>
-    ///     <comment>When this entry is deserialized, System.Drawing assembly will be loaded.</comment>
+    ///     <comment>When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.</comment>
     ///   </data>
     /// 
     ///   <data name='bytes' type='System.Byte[]'>
@@ -146,12 +160,21 @@ namespace KGySoft.Resources
     ///             Console.WriteLine($"  Raw value:   {node.ValueData}");
     ///             try
     ///             {
-    ///                 var value = node.GetValue();
+    ///                 var value = node.GetValueSafe();
     ///                 Console.WriteLine($"  Real value:  {value} ({value.GetType()})");
     ///             }
     ///             catch (Exception e)
     ///             {
-    ///                 Console.WriteLine($"Deserialization of the node thrown an exception: {e.Message}");
+    ///                 Console.WriteLine($"  Safe deserialization of the node thrown an exception: {e.Message}");
+    ///                 try
+    ///                 {
+    ///                     var value = node.GetValue();
+    ///                     Console.WriteLine($"  Real value (unsafe):  {value} ({value.GetType()})");
+    ///                 }
+    ///                 catch (Exception)
+    ///                 {
+    ///                     Console.WriteLine($"  Unsafe deserialization of the node thrown an exception: {e.Message}");
+    ///                 }
     ///             }
     ///             Console.WriteLine();
     ///         }
@@ -159,55 +182,58 @@ namespace KGySoft.Resources
     /// }]]>
     /// 
     /// // The example displays the following output:
-    /// // ____Resources in .resx:____
+    /// //  ____Resources in .resx:____
     /// // Name: string
-    /// //   Type:        
-    /// //   Alias value: 
-    /// //   MIME type:   
+    /// //   Type:
+    /// //   Alias value:
+    /// //   MIME type:
     /// //   Comment:     Default data type is string.
     /// //   Raw value:   Test string
     /// //   Real value:  Test string (System.String)
     /// // 
     /// // Name: int
     /// //   Type:        System.Int32
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //   Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   42
     /// //   Real value:  42 (System.Int32)
     /// // 
     /// // Name: color
     /// //   Type:        System.Drawing.Color, CustomAlias
     /// //   Alias value: System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
-    /// //   MIME type:   
-    /// //   Comment:     When this entry is deserialized, System.Drawing assembly will be loaded.
+    /// //   MIME type:
+    /// //   Comment:     When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.
     /// //   Raw value:   Red
-    /// //   Real value:  Color[Red] (System.Drawing.Color)
+    /// //   Safe deserialization of the node thrown an exception: Type "System.Drawing.Color, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" in the data at line 18, position 4 cannot be resolved.
+    /// // You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.
+    /// //   Real value (unsafe):  Color[Red] (System.Drawing.Color)
     /// // 
     /// // Name: bytes
-    /// //   Type:        System.Byte[]
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //  Type:        System.Byte[]
+    /// //  Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   VGVzdCBieXRlcw==
     /// //   Real value:  System.Byte[] (System.Byte[])
     /// // 
     /// // Name: dangerous
-    /// //   Type:        
-    /// //   Alias value: 
+    /// //   Type:
+    /// //   Alias value:
     /// //   MIME type:   application/x-microsoft.net.object.binary.base64
     /// //   Comment:     BinaryFormatter will throw an exception for this invalid content.
     /// //   Raw value:   YmluYXJ5
-    /// // Deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// //   Safe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// //   Unsafe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
     /// // 
     /// // ____Metadata in .resx:____
     /// // Name: meta string
-    /// //   Type:        
-    /// //   Alias value: 
-    /// //   MIME type:   
-    /// //   Comment:     
+    /// //   Type:
+    /// //   Alias value:
+    /// //   MIME type:
+    /// //   Comment:
     /// //   Raw value:   Meta String
-    /// //   Real value:  Meta String (System.String)</code>
+    /// //   Real value:  Meta String (System.String) </code>
     /// </example>
     /// <h1 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h1>
     /// <para>
@@ -217,7 +243,7 @@ namespace KGySoft.Resources
     /// </para>
     /// <para>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
     /// really preserves the original information stored in the .resx file. No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly
-    /// requested by calling the <see cref="GetValue">GetValue</see> method.</para>
+    /// requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.</para>
     /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
     /// the result will be able to be parsed by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
@@ -240,7 +266,7 @@ namespace KGySoft.Resources
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
     /// <item>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.getvalue.aspx" target="_blank">System.Resources.ResXDataNode.GetValue</a> method often throws <see cref="XmlException"/> if the node contains invalid data. In contrast,
-    /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
+    /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/>, <see cref="SerializationException"/> or <see cref="NotSupportedException"/> instead, depending on the actual issue.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
@@ -251,8 +277,9 @@ namespace KGySoft.Resources
     /// <item><term>Raw content</term><description>You can use the <see cref="ValueData"/> property to read the original raw <see cref="string"/> content stored in the .resx file for this element.</description></item>
     /// <item><term>Advanced string representation</term><description>The <see cref="ToString">ToString</see> method displays the string representation (either of the deserialized object if already cached, or the raw content) so can be used easily in a format argument and provides more debugging information.</description></item>
     /// <item><term>Security</term>
-    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> method.
-    /// If a .resx file is read from an untrusted source, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
+    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.
+    /// If you use the <see cref="GetValueSafe">GetValueSafe</see> method, then it is guaranteed that no new assembly is loaded during the deserialization, even if the resource was serialized by <see cref="BinaryFormatter"/>.
+    /// Additionally, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
     /// about the type before obtaining the object. You can even check the raw string content by the <see cref="ValueData"/> property.
     /// </description></item>
     /// <item><term>Performance</term>
@@ -276,7 +303,6 @@ namespace KGySoft.Resources
     /// <seealso cref="ResXResourceManager"/>
     /// <seealso cref="HybridResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
-#pragma warning restore 618
     [Serializable]
     public sealed class ResXDataNode : ISerializable, ICloneable
     {
@@ -290,21 +316,29 @@ namespace KGySoft.Resources
         {
             #region Fields
 
-            private readonly ITypeResolutionService typeResolver; // deserialization
+            private readonly ITypeResolutionService? typeResolver; // deserialization
+            private readonly bool safeMode; // deserialization
 
-            private readonly Func<Type, string> typeNameConverter; // serialization
+            private readonly Func<Type, string?>? typeNameConverter; // serialization
             private readonly bool compatibleFormat; // serialization
 
             #endregion
 
             #region Constructors
 
-            internal ResXSerializationBinder(ITypeResolutionService typeResolver)
+            /// <summary>
+            /// This is the constructor for deserialization
+            /// </summary>
+            internal ResXSerializationBinder(ITypeResolutionService typeResolver, bool safeMode)
             {
                 this.typeResolver = typeResolver;
+                this.safeMode = safeMode;
             }
 
-            internal ResXSerializationBinder(Func<Type, string> typeNameConverter, bool compatibleFormat)
+            /// <summary>
+            /// This is the constructor for serialization
+            /// </summary>
+            internal ResXSerializationBinder(Func<Type, string?> typeNameConverter, bool compatibleFormat)
             {
                 this.typeNameConverter = typeNameConverter;
                 this.compatibleFormat = compatibleFormat;
@@ -317,58 +351,69 @@ namespace KGySoft.Resources
 #if !NET35
             override
 #endif
-            public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+            public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
             {
                 // Actually the same as in the WinForms implementation but fixed for generics.
-                typeName = null;
-                if (typeNameConverter != null)
-                {
-                    string assemblyQualifiedTypeName = ResXCommon.GetAssemblyQualifiedName(serializedType, typeNameConverter, compatibleFormat);
-                    if (!String.IsNullOrEmpty(assemblyQualifiedTypeName))
-                    {
-                        int genericEnd = assemblyQualifiedTypeName.LastIndexOf(']');
-                        int asmNamePos = assemblyQualifiedTypeName.IndexOf(',', genericEnd + 1);
-                        if (asmNamePos > 0 && asmNamePos < assemblyQualifiedTypeName.Length - 1)
-                        {
-                            assemblyName = assemblyQualifiedTypeName.Substring(asmNamePos + 1).TrimStart();
-                            string newTypeName = assemblyQualifiedTypeName.Substring(0, asmNamePos);
-                            if (newTypeName != serializedType.FullName)
-                                typeName = newTypeName;
-                            return;
-                        }
-                    }
-                }
-
                 assemblyName = null;
                 typeName = null;
+
+                if (typeNameConverter == null)
+                    return;
+
+                // ReSharper disable once VariableCanBeNotNullable - can be null if serializedType is null, which is not expected just tolerated so it is not marked as nullable
+                string? assemblyQualifiedTypeName = ResXCommon.GetAssemblyQualifiedName(serializedType, typeNameConverter, compatibleFormat);
+                if (String.IsNullOrEmpty(assemblyQualifiedTypeName))
+                    return;
+
+                int genericEnd = assemblyQualifiedTypeName!.LastIndexOf(']');
+                int asmNamePos = assemblyQualifiedTypeName.IndexOf(',', genericEnd + 1);
+                if (asmNamePos > 0 && asmNamePos < assemblyQualifiedTypeName.Length - 1)
+                {
+                    assemblyName = assemblyQualifiedTypeName.Substring(asmNamePos + 1).TrimStart();
+                    string newTypeName = assemblyQualifiedTypeName.Substring(0, asmNamePos);
+                    if (newTypeName != serializedType.FullName)
+                        typeName = newTypeName;
+                }
             }
 
-            public override Type BindToType(string assemblyName, string typeName)
+            public override Type? BindToType(string assemblyName, string typeName)
             {
-                if (typeResolver == null)
-                    return null;
+                Debug.Assert(typeResolver != null, "typeResolver must be assigned on deserialization");
+                string aqnOrFullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + ", " + assemblyName;
 
-                string aqn = typeName + ", " + assemblyName;
-
-                Type t = typeResolver.GetType(aqn);
-                if (t != null)
-                    return t;
+                Type? result = typeResolver!.GetType(aqnOrFullName);
+                if (result != null)
+                    return result;
 
                 // The original WinForms version fails for generic types. We do the same in a working way: we strip either the version
                 // or full assembly part from the type
-                string strippedName = TypeResolver.StripName(aqn, true);
-                if (strippedName != aqn)
-                    t = typeResolver.GetType(strippedName);
+                string strippedName = TypeResolver.StripName(aqnOrFullName, true);
+                if (strippedName != aqnOrFullName)
+                    result = typeResolver.GetType(strippedName);
 
-                if (t != null)
-                    return t;
+                if (result != null)
+                    return result;
 
-                strippedName = TypeResolver.StripName(aqn, false);
-                if (strippedName != aqn)
-                    t = typeResolver.GetType(strippedName);
+                strippedName = TypeResolver.StripName(aqnOrFullName, false);
+                if (strippedName != aqnOrFullName)
+                    result = typeResolver.GetType(strippedName);
 
-                // If it is still null, then the binder couldn't handle it, letting the default loader take over.
-                return t;
+                // If it is still null, then the binder couldn't handle it. If safe mode is disabled, then letting the formatter take over.
+                if (result != null || !safeMode)
+                    return result;
+
+                // In safe mode we try to resolve the type without loading any assembly.
+                // We do not allow returning a null result because if this binder is used by a BinaryFormatter it may try to load a potentially dangerous assembly.
+                result = TypeResolver.ResolveType(aqnOrFullName, null, ResolveTypeOptions.AllowPartialAssemblyMatch);
+                if (result == null)
+                {
+                    string message = String.IsNullOrEmpty(assemblyName)
+                        ? Res.BinarySerializationCannotResolveType(typeName)
+                        : Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName);
+                    Throw.SerializationException(message);
+                }
+
+                return result;
             }
 
             #endregion
@@ -380,28 +425,28 @@ namespace KGySoft.Resources
 
         #region Static Fields
 
-        private static readonly char[] specialChars = new char[] { ' ', '\r', '\n' };
+        private static readonly char[] specialChars = { ' ', '\r', '\n' };
 
-        private static string compatibleFileRefTypeName;
+        private static string? compatibleFileRefTypeName;
 
         #endregion
 
         #region Instance Fields
 
-        private string name;
-        private string comment;
-        private string fileRefBasePath;
+        private string? name;
+        private string? comment;
+        private string? fileRefBasePath;
 
         // In a valid ResXDataNode at least one of these must have a value:
-        private object cachedValue;
-        private DataNodeInfo nodeInfo;
-        private ResXFileRef fileRef;
+        private object? cachedValue;
+        private DataNodeInfo? nodeInfo;
+        private ResXFileRef? fileRef;
 
         /// <summary>
         /// The cached assembly qualified name of the value. For FileRef it is initialized as FileRef and once the value
         /// is retrieved it returns the real type of the value.
         /// </summary>
-        private string assemblyQualifiedName;
+        private string? assemblyQualifiedName;
 
         /// <summary>
         /// Gets whether the <see cref="assemblyQualifiedName"/> is from a real type. It is false if the <see cref="assemblyQualifiedName"/>
@@ -412,7 +457,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// May contain a cached serialized value of <see cref="cachedValue"/> for cloning a bit faster. If null, can be restored.
         /// </summary>
-        private byte[] rawValue;
+        private byte[]? rawValue;
 
         #endregion
 
@@ -433,7 +478,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets or sets an arbitrary comment regarding this resource.
         /// </summary>
-        public string Comment
+        public string? Comment
         {
             get => comment ?? nodeInfo?.Comment ?? String.Empty;
             set => comment = value;
@@ -442,19 +487,19 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets the name of this resource.
         /// </summary>
-        public string Name => name ?? nodeInfo?.Name;
+        public string Name => name ?? nodeInfo?.Name!;
 
         /// <summary>
         /// Gets the file reference for this resource, or <see langword="null"/>, if this resource does not have a file reference.
         /// </summary>
-        public ResXFileRef FileRef => fileRef;
+        public ResXFileRef? FileRef => fileRef;
 
         /// <summary>
         /// Gets the assembly name defined in the source .resx file if <see cref="TypeName"/> contains an assembly alias name,
         /// or <see langword="null"/>, if <see cref="TypeName"/> contains the assembly qualified name.
         /// If the resource does not contain the .resx information (that is, if the <see cref="ResXDataNode"/> was created from an object or the raw .resx data was removed on a <see cref="GetValue">GetValue</see> call), then this property returns <see langword="null"/>.
         /// </summary>
-        public string AssemblyAliasValue => nodeInfo?.AssemblyAliasValue;
+        public string? AssemblyAliasValue => nodeInfo?.AssemblyAliasValue;
 
         /// <summary>
         /// Gets the type information as <see cref="string"/> as it is stored in the source .resx file. It can be either an assembly qualified name,
@@ -462,30 +507,30 @@ namespace KGySoft.Resources
         /// contains an assembly alias name. The property returns <see langword="null"/>, if the <c>type</c> attribute is not defined in the .resx file.
         /// If the resource does not contain the .resx information (that is, if the <see cref="ResXDataNode"/> was created from an object or the raw .resx data was removed on a <see cref="GetValue">GetValue</see> call), then this property returns <see langword="null"/>.
         /// </summary>
-        public string TypeName => nodeInfo?.TypeName;
+        public string? TypeName => nodeInfo?.TypeName;
 
         /// <summary>
         /// Gets the MIME type as it is stored in the .resx file for this resource, or <see langword="null"/>, if the <c>mimetype</c> attribute was not defined in the .resx file.
         /// If the resource does not contain the .resx information (that is, if the <see cref="ResXDataNode"/> was created from an object or the raw .resx data was removed on a <see cref="GetValue">GetValue</see> call), then this property returns <see langword="null"/>.
         /// </summary>
-        public string MimeType => nodeInfo?.MimeType;
+        public string? MimeType => nodeInfo?.MimeType;
 
         /// <summary>
         /// Gets the raw value data as <see cref="string"/> as it was stored in the source .resx file.
         /// If the resource does not contain the .resx information (that is, if the <see cref="ResXDataNode"/> was created from an object or the raw .resx data was removed on a <see cref="GetValue">GetValue</see> call), then this property returns <see langword="null"/>.
         /// </summary>
-        public string ValueData => nodeInfo?.ValueData;
+        public string? ValueData => nodeInfo?.ValueData;
 
         #endregion
 
         #region Internal Properties
 
-        internal object ValueInternal => cachedValue;
+        internal object? ValueInternal => cachedValue;
 
         /// <summary>
         /// Gets the assembly qualified name of the node, or null, if type cannot be determined until deserialized.
         /// </summary>
-        internal string AssemblyQualifiedName
+        internal string? AssemblyQualifiedName
         {
             get
             {
@@ -506,7 +551,7 @@ namespace KGySoft.Resources
                         assemblyQualifiedName = GetTypeName(nodeInfo);
                     else
                     {
-                        string fullName = GetTypeName(nodeInfo);
+                        string? fullName = GetTypeName(nodeInfo);
                         if (fullName == null)
                             return null;
                         int genericEnd = fullName.LastIndexOf(']');
@@ -521,7 +566,7 @@ namespace KGySoft.Resources
                 else // if (fileRef != null)
                 {
                     aqnValid = false;
-                    assemblyQualifiedName = fileRef.TypeName;
+                    assemblyQualifiedName = fileRef!.TypeName;
                 }
 
                 return assemblyQualifiedName;
@@ -559,9 +604,9 @@ namespace KGySoft.Resources
         /// <note>The compatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
         /// </para>
         /// </remarks>
-        public ResXDataNode(string name, object value)
+        public ResXDataNode(string name, object? value)
         {
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
             if (name.Length == 0)
                 Throw.ArgumentException(Argument.name, Res.ArgumentEmpty);
@@ -591,7 +636,7 @@ namespace KGySoft.Resources
             }
 
 #if !NETCOREAPP2_0
-            string typeName = value.GetType().AssemblyQualifiedName;
+            string? typeName = value.GetType().AssemblyQualifiedName;
             if (typeName != null)
             {
                 // 4.) System ResXDataNode
@@ -624,13 +669,13 @@ namespace KGySoft.Resources
         /// <exception cref="System.ArgumentNullException"><paramref name="name"/> or <paramref name="fileRef"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="name"/> is a string of zero length.</exception>
         /// <exception cref="System.ArgumentException">name</exception>
-        public ResXDataNode(string name, ResXFileRef fileRef, string basePath = null)
+        public ResXDataNode(string name, ResXFileRef fileRef, string? basePath = null)
         {
-            if (name == null)
+            if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
             if (name.Length == 0)
                 Throw.ArgumentException(Argument.name, Res.ArgumentEmpty);
-            if (fileRef == null)
+            if (fileRef == null!)
                 Throw.ArgumentNullException(Argument.fileRef);
 
             this.fileRef = fileRef;
@@ -645,7 +690,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called by <see cref="ResXResourceReader"/>.
         /// </summary>
-        internal ResXDataNode(DataNodeInfo nodeInfo, string fileRefBasePath)
+        internal ResXDataNode(DataNodeInfo nodeInfo, string? fileRefBasePath)
         {
             // No need to set name and comment fields here. They will be set if nodeInfo is cleared.
             this.nodeInfo = nodeInfo;
@@ -656,13 +701,11 @@ namespace KGySoft.Resources
 
         #region Private Constructors
 
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
-            Justification = "False alarm, serialization constructor has an exact signature.")]
         private ResXDataNode(SerializationInfo info, StreamingContext context)
         {
             nodeInfo = new DataNodeInfo
             {
-                Name = info.GetString(ResXCommon.NameStr),
+                Name = info.GetString(ResXCommon.NameStr)!,
                 Comment = info.GetString(ResXCommon.CommentStr),
                 TypeName = info.GetString(ResXCommon.TypeStr),
                 MimeType = info.GetString(ResXCommon.MimeTypeStr),
@@ -696,7 +739,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets the type name stored in the node or string, which is the default type.
         /// </summary>
-        private static string GetTypeName(DataNodeInfo nodeInfo)
+        private static string? GetTypeName(DataNodeInfo nodeInfo)
         {
             if (nodeInfo.TypeName != null)
                 return nodeInfo.TypeName;
@@ -711,7 +754,7 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private static bool IsFileRef(string assemblyQualifiedName)
+        private static bool IsFileRef(string? assemblyQualifiedName)
         {
             if (assemblyQualifiedName == null)
                 return false;
@@ -721,8 +764,11 @@ namespace KGySoft.Resources
                    || assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal);
         }
 
-        private static bool IsNullRef(string assemblyQualifiedName)
+        private static bool IsNullRef(string? assemblyQualifiedName)
         {
+            if (assemblyQualifiedName == null)
+                return false;
+
             // the common scenario as it is saved by system .resx
             return assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameWinForms, StringComparison.Ordinal)
                    || assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal);
@@ -747,10 +793,11 @@ namespace KGySoft.Resources
                         break;
                 }
             }
+
             return Convert.FromBase64String(sb.ToString());
         }
 
-        private static Type ResolveType(string assemblyQualifiedName, ITypeResolutionService typeResolver)
+        private static Type? ResolveType(string assemblyQualifiedName, ITypeResolutionService? typeResolver, bool safeMode)
         {
             // Mapping WinForms refs to KGySoft ones.
             if (IsFileRef(assemblyQualifiedName))
@@ -759,12 +806,17 @@ namespace KGySoft.Resources
             if (IsNullRef(assemblyQualifiedName))
                 return typeof(ResXNullRef);
 
-            Type result = null;
+            Type? result = null;
             if (typeResolver != null)
                 result = typeResolver.GetType(assemblyQualifiedName, false);
 
             if (result == null)
-                result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch);
+            {
+                var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+                if (!safeMode)
+                    options |= ResolveTypeOptions.TryToLoadAssemblies;
+                result = TypeResolver.ResolveType(assemblyQualifiedName, null, options);
+            }
 
             if (result == null)
                 return null;
@@ -773,26 +825,24 @@ namespace KGySoft.Resources
             if (IsFileRef(result.AssemblyQualifiedName))
                 return typeof(ResXFileRef);
 
-            if (IsNullRef(result.AssemblyQualifiedName))
+            if (IsNullRef(result.AssemblyQualifiedName!))
                 return typeof(ResXNullRef);
 
             return result;
         }
 
-        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, out object result)
+        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, [MaybeNullWhen(false)]out object result)
         {
-            string text = dataNodeInfo.ValueData;
-            var serializedData = FromBase64WrappedString(text);
+            string text = dataNodeInfo.ValueData ?? String.Empty;
+            byte[] serializedData = FromBase64WrappedString(text);
 
-            if (serializedData != null && serializedData.Length > 0)
+            if (serializedData.Length > 0)
             {
-                IFormatter formatter = ResXCommon.GetSoapFormatter();
+                IFormatter? formatter = ResXCommon.GetSoapFormatter();
                 if (formatter != null)
                 {
                     using (var ms = new MemoryStream(serializedData))
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, this is not a BinaryFormatter but a SoapFormatter instance
                         result = formatter.Deserialize(ms);
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                     return true;
@@ -830,9 +880,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Retrieves the object that is stored by this node.
         /// </summary>
-        /// <returns>
-        /// The object that corresponds to the stored value.
-        /// </returns>
+        /// <returns>The object that corresponds to the stored value.</returns>
         /// <param name="typeResolver">A custom type resolution service to use for resolving type names.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
@@ -841,57 +889,45 @@ namespace KGySoft.Resources
         /// <param name="cleanupRawData"><see langword="true"/>&#160;to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
+        /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
         /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
         /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
         /// <remarks>
+        /// <note type="security">When using this method make sure that the .resx data to be deserialized is from a trusted source.
+        /// This method might load assemblies during type resolve. To disallow loading assemblies use the <see cref="GetValueSafe">GetValueSafe</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
         /// <para>If the resource is a file reference, <see cref="GetValue">GetValue</see> tries to open the file and deserialize its content.</para>
-        /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the string content stored in the .resx file.</para>
+        /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the raw .resx string content.</para>
         /// </remarks>
-        public object GetValue(ITypeResolutionService typeResolver = null, string basePath = null, bool cleanupRawData = false)
-        {
-            object result;
-            if (cachedValue != null)
-                result = cachedValue;
-            else if (fileRef != null)
-            {
-                // fileRef.TypeName is always an AQN, so there is no need to play with the alias name.
-                Type objectType = ResolveType(fileRef.TypeName, typeResolver);
-                if (objectType != null)
-                    cachedValue = result = fileRef.GetValue(objectType, basePath ?? fileRefBasePath);
-                else
-                {
-                    Throw.TypeLoadException(nodeInfo == null
-                        ? Res.ResourcesTypeLoadException(fileRef.TypeName)
-                        : Res.ResourcesTypeLoadExceptionAt(fileRef.TypeName, nodeInfo.Line, nodeInfo.Column));
-                    return default;
-                }
-            }
-            else
-            {
-                // it's embedded, we deserialize it
-                cachedValue = result = NodeInfoToObject(nodeInfo, typeResolver);
-            }
+        public object? GetValue(ITypeResolutionService? typeResolver = null, string? basePath = null, bool cleanupRawData = false)
+            => DoGetValue(typeResolver, basePath, cleanupRawData, false);
 
-            if (cleanupRawData && nodeInfo != null)
-            {
-                if (name == null)
-                    name = nodeInfo.Name;
-                if (comment == null)
-                    comment = nodeInfo.Comment;
-
-                nodeInfo = null;
-            }
-
-            // if AQN is already set, but not from the resulting type, resetting it with the real type of the value
-            if (!aqnValid && assemblyQualifiedName != null)
-            {
-                assemblyQualifiedName = result.GetType().AssemblyQualifiedName;
-                aqnValid = true;
-            }
-
-            return result == ResXNullRef.Value ? null : result;
-        }
+        /// <summary>
+        /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
+        /// </summary>
+        /// <returns>The object that corresponds to the stored value.</returns>
+        /// <param name="typeResolver">A custom type resolution service to use for resolving type names.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
+        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="cleanupRawData"><see langword="true"/>&#160;to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
+        /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
+        /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
+        /// <remarks>
+        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization, unless it is resolved by the specified <paramref name="typeResolver"/>.
+        /// To allow loading assemblies use the <see cref="GetValue">GetValue</see> method instead.</note>
+        /// <para>If the stored value currently exists in memory, it is returned directly.</para>
+        /// <para>If the resource is a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to open the file and deserialize its content.
+        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
+        /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
+        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
+        /// </remarks>
+        public object? GetValueSafe(ITypeResolutionService? typeResolver = null, string? basePath = null, bool cleanupRawData = false)
+            => DoGetValue(typeResolver, basePath, cleanupRawData, true);
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -901,13 +937,13 @@ namespace KGySoft.Resources
         {
             if (fileRef != null)
                 return fileRef.ToString();
-            object valueCopy = cachedValue;
+            object? valueCopy = cachedValue;
             if (valueCopy != null)
-                return valueCopy.ToString();
-            DataNodeInfo nodeInfoCopy = nodeInfo;
+                return valueCopy.ToString() ?? String.Empty;
+            DataNodeInfo? nodeInfoCopy = nodeInfo;
             if (nodeInfoCopy != null)
                 return nodeInfoCopy.ValueData ?? String.Empty;
-            return base.ToString();
+            return base.ToString()!;
         }
 
         /// <summary>
@@ -926,13 +962,13 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="true"/>.
         /// </summary>
-        internal object GetSafeValueInternal(bool isString, bool cloneValue)
+        internal object? GetSafeValueInternal(bool isString, bool cloneValue)
         {
             if (!isString)
                 return cloneValue ? new ResXDataNode(this) : this;
 
             // returning a string for any type below
-            object result = cachedValue;
+            object? result = cachedValue;
             if (result is string)
                 return result;
 
@@ -951,7 +987,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="false"/>.
         /// </summary>
-        internal object GetUnsafeValueInternal(ITypeResolutionService typeResolver, bool isString, bool cloneValue, bool cleanup, string basePath)
+        internal object? GetUnsafeValueInternal(ITypeResolutionService? typeResolver, bool isString, bool cloneValue, bool cleanup, string? basePath)
         {
             if (cachedValue is string)
                 return cachedValue;
@@ -974,14 +1010,12 @@ namespace KGySoft.Resources
 
             // Omitting assembly because of the version. If we know before the serialization that result is not a string,
             // we can already throw an exception. But type is checked once again at the end, after deserialization.
-            string stringName = Reflector.StringType.FullName;
-            string aqn = AssemblyQualifiedName;
-
-            // ReSharper disable once AssignNullToNotNullAttribute - string has a full name
+            string stringName = Reflector.StringType.FullName!;
+            string? aqn = AssemblyQualifiedName;
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
-            object result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
+            object? result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
             if (result == null || result is string)
                 return result;
 
@@ -991,19 +1025,20 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or (re)generates the nodeInfo. Parameters are not null only if called from a <see cref="ResXResourceWriter"/>.
+        /// <paramref name="safeMode"/> is relevant only when <paramref name="compatibleFormat"/> is changed to true and there is no cached value yet.
         /// </summary>
-        internal DataNodeInfo GetDataNodeInfo(Func<Type, string> typeNameConverter, bool? compatibleFormat)
+        internal DataNodeInfo GetDataNodeInfo(Func<Type, string?>? typeNameConverter, bool? compatibleFormat, bool safeMode = true)
         {
-            bool toInit = nodeInfo == null;
-            bool toReInit = toInit || compatibleFormat.HasValue && nodeInfo.CompatibleFormat != compatibleFormat.Value;
+            // Regenerating existing node info only if switching to compatible format because the other way is supported,
+            // and nodeInfo.CompatibleFormat is true for most types anyway.
+            bool toGenerate = nodeInfo == null || compatibleFormat == true && !nodeInfo.CompatibleFormat;
 
             if (nodeInfo == null)
-                nodeInfo = new DataNodeInfo { Name = name };
-            else if (nodeInfo.ValueData == null && !toReInit)
+                nodeInfo = new DataNodeInfo { Name = name! };
+            else if (nodeInfo.ValueData == null && nodeInfo.TypeName == null)
             {
                 // handling that <value> element can be missing in .resx:
                 // configuring a regular null; otherwise, an empty string would be written next time
-                nodeInfo.ValueData = String.Empty;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(ResXNullRef), typeNameConverter, compatibleFormat.GetValueOrDefault());
                 nodeInfo.AssemblyAliasValue = null;
                 nodeInfo.CompatibleFormat = compatibleFormat.GetValueOrDefault();
@@ -1013,7 +1048,7 @@ namespace KGySoft.Resources
             nodeInfo.Comment = Comment;
 
             // Though FileRef is a public property, it is immutable so there is no need to always refresh NodeInfo from fileRef
-            if (!toReInit)
+            if (!toGenerate)
                 return nodeInfo;
 
             // if we don't have a DataNodeInfo it could be either a direct object OR a FileRef
@@ -1025,7 +1060,7 @@ namespace KGySoft.Resources
                 nodeInfo.CompatibleFormat = compatibleFormat.GetValueOrDefault();
                 if (compatibleFormat.GetValueOrDefault())
                 {
-                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
+                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName!.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
                     {
                         nodeInfo.TypeName = CompatibleFileRefTypeName;
                         nodeInfo.AssemblyAliasValue = null;
@@ -1033,7 +1068,7 @@ namespace KGySoft.Resources
                         assemblyQualifiedName = null;
                     }
                 }
-                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal))
+                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName!.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal))
                 {
                     nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(ResXFileRef), typeNameConverter, compatibleFormat.GetValueOrDefault());
                     nodeInfo.AssemblyAliasValue = null;
@@ -1041,15 +1076,11 @@ namespace KGySoft.Resources
                     assemblyQualifiedName = null;
                 }
             }
-            else if (toInit || nodeInfo.ValueData == null || compatibleFormat.GetValueOrDefault() && !nodeInfo.CompatibleFormat)
+            // first initialization or switching to compatible format
+            else
             {
-                // first initialization, invalid null (invalid .resx), or switching to compatible format
-                if (cachedValue == null)
-                {
-                    Debug.Assert(!toInit, "Value should not be null when DataNodeInfo is generated from scratch.");
-                    cachedValue = NodeInfoToObject(nodeInfo, null);
-                }
-
+                // Cached value can be null here when we are switching to compatible format and there was no deserialization yet.
+                cachedValue ??= NodeInfoToObject(nodeInfo, null, safeMode);
                 InitNodeInfo(typeNameConverter, compatibleFormat.GetValueOrDefault());
             }
 
@@ -1065,10 +1096,10 @@ namespace KGySoft.Resources
         {
             cachedValue = Accessors.ResXDataNode_GetValue(other);
             comment = Accessors.ResXDataNode_GetComment(other);
-            object fileRefWinForms = Accessors.ResXDataNode_GetFileRef(other);
+            object? fileRefWinForms = Accessors.ResXDataNode_GetFileRef(other);
             if (fileRefWinForms != null)
                 fileRef = ResXFileRef.InitFromWinForms(fileRefWinForms);
-            object nodeInfoWinForms = Accessors.ResXDataNode_GetNodeInfo(other);
+            object? nodeInfoWinForms = Accessors.ResXDataNode_GetNodeInfo(other);
             if (nodeInfoWinForms != null)
                 nodeInfo = DataNodeInfo.InitFromWinForms(nodeInfoWinForms);
 
@@ -1090,19 +1121,19 @@ namespace KGySoft.Resources
                 nodeInfo = other.nodeInfo.Clone();
         }
 
-        private void InitFileRef(string basePath)
+        private void InitFileRef(string? basePath)
         {
             if (!IsFileRef(AssemblyQualifiedName))
                 return;
 
-            if (ResXFileRef.TryParse(nodeInfo.ValueData, out fileRef))
+            if (ResXFileRef.TryParse(nodeInfo!.ValueData, out fileRef))
                 fileRefBasePath = basePath;
         }
 
         /// <summary>
         /// (Re)generates the nodeInfo from a value.
         /// </summary>
-        private void InitNodeInfo(Func<Type, string> typeNameConverter, bool compatibleFormat)
+        private void InitNodeInfo(Func<Type, string?>? typeNameConverter, bool compatibleFormat)
         {
             Debug.Assert(cachedValue != null, "value is null in FillDataNodeInfoFromObject");
 
@@ -1114,10 +1145,10 @@ namespace KGySoft.Resources
             }
 
             // 2.) byte[] (should not be checked by as cast because due to the CLR behavior that would allow sbyte[] as well)
-            if (cachedValue.GetType() == Reflector.ByteArrayType)
+            if (cachedValue!.GetType() == Reflector.ByteArrayType)
             {
                 byte[] bytes = (byte[])cachedValue;
-                nodeInfo.ValueData = ResXCommon.ToBase64(bytes);
+                nodeInfo!.ValueData = ResXCommon.ToBase64(bytes);
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(Reflector.ByteArrayType, typeNameConverter, compatibleFormat);
                 nodeInfo.AssemblyAliasValue = null;
                 nodeInfo.CompatibleFormat = true;
@@ -1127,7 +1158,7 @@ namespace KGySoft.Resources
             // 3.) CultureInfo - because CultureInfoConverter sets the CurrentUICulture in a finally block
             if (cachedValue is CultureInfo ci)
             {
-                nodeInfo.ValueData = ci.Name;
+                nodeInfo!.ValueData = ci.Name;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(CultureInfo), typeNameConverter, compatibleFormat);
                 nodeInfo.AssemblyAliasValue = null;
                 nodeInfo.CompatibleFormat = true;
@@ -1137,7 +1168,7 @@ namespace KGySoft.Resources
             // 4.) null
             if (cachedValue == ResXNullRef.Value)
             {
-                nodeInfo.ValueData = String.Empty;
+                nodeInfo!.ValueData = null;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(ResXNullRef), typeNameConverter, compatibleFormat);
                 nodeInfo.AssemblyAliasValue = null;
                 nodeInfo.CompatibleFormat = compatibleFormat;
@@ -1153,7 +1184,7 @@ namespace KGySoft.Resources
             {
                 if (toString && fromString)
                 {
-                    nodeInfo.ValueData = tc.ConvertToInvariantString(cachedValue);
+                    nodeInfo!.ValueData = tc.ConvertToInvariantString(cachedValue);
                     nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, compatibleFormat);
                     nodeInfo.AssemblyAliasValue = null;
                     nodeInfo.CompatibleFormat = true;
@@ -1173,8 +1204,8 @@ namespace KGySoft.Resources
             bool fromByteArray = tc.CanConvertFrom(Reflector.ByteArrayType);
             if (toByteArray && fromByteArray)
             {
-                byte[] data = (byte[])tc.ConvertTo(cachedValue, Reflector.ByteArrayType);
-                nodeInfo.ValueData = ResXCommon.ToBase64(data);
+                byte[] data = (byte[])tc.ConvertTo(cachedValue, Reflector.ByteArrayType)!;
+                nodeInfo!.ValueData = ResXCommon.ToBase64(data);
                 nodeInfo.MimeType = ResXCommon.ByteArraySerializedObjectMimeType;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, compatibleFormat);
                 nodeInfo.AssemblyAliasValue = null;
@@ -1183,7 +1214,7 @@ namespace KGySoft.Resources
             }
 
             // 7.) to byte[] by system BinaryFormatter
-            nodeInfo.TypeName = null;
+            nodeInfo!.TypeName = null;
             nodeInfo.AssemblyAliasValue = null;
             if (compatibleFormat)
             {
@@ -1193,11 +1224,11 @@ namespace KGySoft.Resources
 
                 using (var ms = new MemoryStream())
                 {
-                    // ReSharper disable once PossibleNullReferenceException - type is array
-                    bool wrap = !type.IsSerializable || type.IsArray && type.GetArrayRank() == 1 && !type.GetElementType().IsPrimitive && !type.GetInterfaces().Any(i => i.IsGenericType);
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: only when forcing compatibility
-                    binaryFormatter.Serialize(ms, wrap ? new AnyObjectSerializerWrapper(cachedValue, true) : cachedValue);
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
+                    // When serializing, we allow unsafe handling. On deserialization safe mode can be specified.
+                    // Known regression: AnyObjectSerializerWrapper used to be support non-zero based, non-primitive arrays in compatible mode
+                    if (!type.IsSerializable)
+                        binaryFormatter.SurrogateSelector = new CustomSerializerSurrogateSelector();
+                    binaryFormatter.Serialize(ms, cachedValue);
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
                 }
 
@@ -1215,13 +1246,13 @@ namespace KGySoft.Resources
             nodeInfo.CompatibleFormat = false;
         }
 
-        private void InitNodeInfoNative(Func<Type, string> typeNameConverter)
+        private void InitNodeInfoNative(Func<Type, string?>? typeNameConverter)
         {
-            nodeInfo.AssemblyAliasValue = null;
+            nodeInfo!.AssemblyAliasValue = null;
             nodeInfo.CompatibleFormat = true;
             nodeInfo.TypeName = cachedValue is string
                 ? null
-                : ResXCommon.GetAssemblyQualifiedName(cachedValue.GetType(), typeNameConverter, false);
+                : ResXCommon.GetAssemblyQualifiedName(cachedValue!.GetType(), typeNameConverter, false);
 
             switch (cachedValue)
             {
@@ -1246,12 +1277,12 @@ namespace KGySoft.Resources
 
                 // char/byte/sbyte/short/ushort/int/uint/long/ulong/bool/DBNull
                 case IConvertible _:
-                {
-                    nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
-                    if (cachedValue is DBNull)
-                        nodeInfo.CompatibleFormat = false;
-                    return;
-                }
+                    {
+                        nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
+                        if (cachedValue is DBNull)
+                            nodeInfo.CompatibleFormat = false;
+                        return;
+                    }
             }
 
             // the types below are supported natively only in non-compatibility mode
@@ -1268,42 +1299,92 @@ namespace KGySoft.Resources
             nodeInfo.ValueData = cachedValue.ToString();
         }
 
+        private object? DoGetValue(ITypeResolutionService? typeResolver, string? basePath, bool cleanupRawData, bool safeMode)
+        {
+            object? result;
+            if (cachedValue != null)
+                result = cachedValue;
+            else if (fileRef != null)
+            {
+                // fileRef.TypeName is always an AQN, so there is no need to play with the alias name.
+                Type? objectType = ResolveType(fileRef.TypeName, typeResolver, safeMode);
+                if (objectType != null)
+                    cachedValue = result = fileRef.GetValue(objectType, basePath ?? fileRefBasePath);
+                else
+                {
+                    Throw.TypeLoadException(nodeInfo == null
+                        ? safeMode
+                            ? Res.ResourcesTypeLoadExceptionSafe(fileRef.TypeName)
+                            : Res.ResourcesTypeLoadException(fileRef.TypeName)
+                        : safeMode
+                            ? Res.ResourcesTypeLoadExceptionSafeAt(fileRef.TypeName, nodeInfo.Line, nodeInfo.Column)
+                            : Res.ResourcesTypeLoadExceptionAt(fileRef.TypeName, nodeInfo.Line, nodeInfo.Column));
+                    return default;
+                }
+            }
+            else
+            {
+                // it's embedded, we deserialize it
+                Debug.Assert(nodeInfo != null);
+                cachedValue = result = NodeInfoToObject(nodeInfo!, typeResolver, safeMode);
+            }
+
+            if (cleanupRawData && nodeInfo != null)
+            {
+                name ??= nodeInfo.Name;
+                comment ??= nodeInfo.Comment;
+                nodeInfo = null;
+            }
+
+            // if AQN is already set, but not from the resulting type, resetting it with the real type of the value
+            if (!aqnValid && assemblyQualifiedName != null)
+            {
+                assemblyQualifiedName = result!.GetType().AssemblyQualifiedName;
+                aqnValid = true;
+            }
+
+            return result == ResXNullRef.Value ? null : result;
+        }
+
         private bool CanConvertNatively(bool compatibleFormat)
         {
-            Type type = cachedValue.GetType();
+            Type type = cachedValue!.GetType();
             return type.CanBeParsedNatively() && (!compatibleFormat
                 || !type.In(Reflector.DBNullType, Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType));
         }
 
-        private object NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)
+        private object? NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
         {
-            // handling that <value> can be missing in .resx.
-            if (dataNodeInfo.ValueData == null)
+            // Handling that <value> can be missing in .resx.
+            // If TypeName is not null, then a TypeConverter may handle null
+            string? valueData = dataNodeInfo.ValueData;
+            if (valueData == null && dataNodeInfo.TypeName == null)
                 return ResXNullRef.Value;
 
             // from MIME type
             if (!String.IsNullOrEmpty(dataNodeInfo.MimeType))
-                return NodeInfoToObjectByMime(dataNodeInfo, typeResolver);
+                return NodeInfoToObjectByMime(dataNodeInfo, typeResolver, safeMode);
 
-            string typeName = AssemblyQualifiedName;
-            Debug.Assert(typeName != null, "If there is no MIME type, typeName is expected to be string");
+            string typeName = AssemblyQualifiedName!;
+            Debug.Assert(typeName != null!, "If there is no MIME type, typeName is expected to be string");
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm due to the Assert
-            // ReSharper disable once HeuristicUnreachableCode - false alarm due to the Assert
+            // string: Even <value/> means an empty string. Null reference is encoded by ResXNullRef.
             if (typeName == null)
-                return dataNodeInfo.ValueData;
+                return valueData ?? String.Empty;
 
-            Type type = ResolveType(typeName, typeResolver);
+            Type? type = ResolveType(typeName, typeResolver, safeMode);
             if (type == null)
             {
-                string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
+                string newMessage = safeMode
+                    ? Res.ResourcesTypeLoadExceptionSafeAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column)
+                    : Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
                 XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                 Throw.TypeLoadException(newMessage, xml);
             }
 
             // 1.) Native type - type converter is slower and will not convert negative zeros, for example.
             if (type.CanBeParsedNatively())
-                return dataNodeInfo.ValueData.Parse(type);
+                return valueData.Parse(type, safeMode) ?? ResXNullRef.Value;
 
             // 2.) null
             if (type == typeof(ResXNullRef))
@@ -1311,15 +1392,15 @@ namespace KGySoft.Resources
 
             // 3.) byte[]
             if (type == Reflector.ByteArrayType)
-                return FromBase64WrappedString(dataNodeInfo.ValueData);
+                return valueData == null ? ResXNullRef.Value : FromBase64WrappedString(valueData);
 
 #if !NETFRAMEWORK
             // 4.) CultureInfo - There is no CultureInfoConverter in .NET Core but we handle it in InitNodeInfo
             if (type == typeof(CultureInfo))
-                return new CultureInfo(nodeInfo.ValueData);
+                return valueData == null ? ResXNullRef.Value : new CultureInfo(valueData);
 #endif
 
-            // 5.) By TypeConverter from string
+            // 5.) By TypeConverter from string. It may support also converting from null.
             TypeConverter tc = TypeDescriptor.GetConverter(type);
             if (!tc.CanConvertFrom(Reflector.StringType))
             {
@@ -1330,7 +1411,7 @@ namespace KGySoft.Resources
 
             try
             {
-                return tc.ConvertFromInvariantString(dataNodeInfo.ValueData);
+                return tc.ConvertFromInvariantString(valueData) ?? ResXNullRef.Value;
             }
             catch (NotSupportedException e)
             {
@@ -1339,34 +1420,41 @@ namespace KGySoft.Resources
                 Throw.NotSupportedException(message, xml);
                 return default;
             }
+            catch (Exception e) when (valueData == null && (e is ArgumentNullException || e is NullReferenceException))
+            {
+                // Handling that System serializer emits <value/> both for null and empty strings.
+                return tc.ConvertFromInvariantString(String.Empty) ?? ResXNullRef.Value;
+            }
         }
 
-        [SuppressMessage("IDE", "IDE0017:Object initialization can be simplified",
-            Justification = "Setting Binder is long enough to initialize it as a separate statement.")]
-        private object NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)
+        private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
         {
-            string mimeType = dataNodeInfo.MimeType;
+            string mimeType = dataNodeInfo.MimeType!;
+            string text = dataNodeInfo.ValueData ?? String.Empty;
 
             // 1.) BinaryFormatter
             if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
             {
-                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
-
+                byte[] serializedData = FromBase64WrappedString(text);
+                using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
+#if !NETFRAMEWORK
+                // Supporting MemoryStream even where it is not serializable anymore
+                if (safeMode)
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
+#endif
                 var binaryFormatter = new BinaryFormatter
                 {
-                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    SurrogateSelector = surrogate,
                     Binder = typeResolver != null
-                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                        : new WeakAssemblySerializationBinder()
+                        ? new ResXSerializationBinder(typeResolver, safeMode)
+                        : new WeakAssemblySerializationBinder { SafeMode = safeMode }
                 };
 
-                object result = null;
-                if (serializedData != null && serializedData.Length > 0)
+                object? result = null;
+                if (serializedData.Length > 0)
                 {
                     using (var ms = new MemoryStream(serializedData))
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - justification: for compatibility reasons
                         result = binaryFormatter.Deserialize(ms);
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
                     if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                 }
@@ -1377,14 +1465,16 @@ namespace KGySoft.Resources
             // 2.) By TypeConverter from byte[]
             if (mimeType == ResXCommon.ByteArraySerializedObjectMimeType)
             {
-                string typeName = AssemblyQualifiedName;
+                string? typeName = AssemblyQualifiedName;
                 if (String.IsNullOrEmpty(typeName))
                     throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
 
-                Type type = ResolveType(typeName, typeResolver);
+                Type? type = ResolveType(typeName!, typeResolver, safeMode);
                 if (type == null)
                 {
-                    string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
+                    string newMessage = safeMode
+                        ? Res.ResourcesTypeLoadExceptionSafeAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column)
+                        : Res.ResourcesTypeLoadExceptionAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column);
                     XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                     Throw.TypeLoadException(newMessage, xml);
                 }
@@ -1392,14 +1482,12 @@ namespace KGySoft.Resources
                 TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
                 if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
                 {
-                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                     Throw.NotSupportedException(message, xml);
                 }
 
-                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
-                if (serializedData == null)
-                    return null;
+                byte[] serializedData = FromBase64WrappedString(text);
 
                 try
                 {
@@ -1407,7 +1495,7 @@ namespace KGySoft.Resources
                 }
                 catch (NotSupportedException e)
                 {
-                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                     Throw.NotSupportedException(message, xml);
                 }
@@ -1416,22 +1504,26 @@ namespace KGySoft.Resources
             // 3.) BinarySerializationFormatter
             if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
             {
-                string text = dataNodeInfo.ValueData;
                 byte[] serializedData = FromBase64WrappedString(text);
-
-                var serializer = new BinarySerializationFormatter
+                using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
+#if !NETFRAMEWORK
+                // Supporting MemoryStream even where it is not serializable anymore
+                if (safeMode)
+                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
+#endif
+                var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {
-                    SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true },
+                    SurrogateSelector = surrogate,
                     Binder = typeResolver != null
-                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                        : new WeakAssemblySerializationBinder()
+                        ? new ResXSerializationBinder(typeResolver, safeMode)
+                        : new WeakAssemblySerializationBinder { SafeMode = safeMode }
                 };
 
-                object result = null;
-                if (serializedData != null && serializedData.Length > 0)
+                object? result = null;
+                if (serializedData.Length > 0)
                 {
                     result = serializer.Deserialize(serializedData);
-                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
+                    if (result != ResXNullRef.Value && IsNullRef(result!.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                 }
 
@@ -1439,17 +1531,17 @@ namespace KGySoft.Resources
             }
 
             // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.
-            if (mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object value))
+            if (!safeMode && mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object? value))
                 return value;
 
             Throw.NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
             return null;
         }
 
-        private object CloneValue(ITypeResolutionService typeResolver, string basePath)
+        private object? CloneValue(ITypeResolutionService? typeResolver, string? basePath)
         {
             Debug.Assert(!(cachedValue is string || cachedValue is ResXNullRef), "String or null value should never be cloned.");
-            
+
             // we have no value yet: deserializing from FileRef or .resx data
             if (cachedValue == null)
                 return GetValue(typeResolver, basePath); // not cleaning up if cloning
@@ -1461,9 +1553,7 @@ namespace KGySoft.Resources
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
 
             // we have a cached value but it hasn't been cloned yet: creating a raw data of it
-            if (rawValue == null)
-                rawValue = formatter.Serialize(cachedValue);
-
+            rawValue ??= formatter.Serialize(cachedValue);
             return cachedValue = formatter.Deserialize(rawValue);
         }
 
@@ -1472,10 +1562,9 @@ namespace KGySoft.Resources
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
             DataNodeInfo dataNodeInfo = GetDataNodeInfo(null, null);
             info.AddValue(ResXCommon.NameStr, dataNodeInfo.Name);

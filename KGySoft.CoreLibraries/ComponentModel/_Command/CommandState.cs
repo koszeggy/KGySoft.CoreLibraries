@@ -23,10 +23,7 @@ using System.ComponentModel;
 #if !NET35
 using System.Dynamic;
 #endif
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
-using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -48,7 +45,7 @@ namespace KGySoft.ComponentModel
         DynamicObject,
         ITypedList, // so a binding will not treat the type as a list of Key and Value properties (because the CommandState implements IDictionary<string, object>)
 #if !NET40
-        IReadOnlyDictionary<string, object>,
+        IReadOnlyDictionary<string, object?>,
 #endif
 #endif
         ICommandState,
@@ -61,6 +58,8 @@ namespace KGySoft.ComponentModel
             #region Properties
 
             public override bool IsReadOnly => false;
+            public override Type ComponentType => typeof(CommandState);
+            public override Type PropertyType { get; }
 
             #endregion
 
@@ -68,17 +67,14 @@ namespace KGySoft.ComponentModel
 
             internal CommandStatePropertyDescriptor(string name, Type type) : base(name, null) => PropertyType = type;
 
-            public override Type ComponentType => typeof(CommandState);
-            public override Type PropertyType { get; }
-
             #endregion
 
             #region Methods
 
             public override bool CanResetValue(object component) => Name == nameof(Enabled);
-            public override object GetValue(object component) => ((CommandState)component)[Name];
+            public override object? GetValue(object component) => ((CommandState)component)[Name];
             public override void ResetValue(object component) => ((CommandState)component).Enabled = true;
-            public override void SetValue(object component, object value) => ((CommandState)component)[Name] = value;
+            public override void SetValue(object component, object? value) => ((CommandState)component)[Name] = value;
             public override bool ShouldSerializeValue(object component) => Name != nameof(Enabled) || !((CommandState)component).Enabled;
 
             #endregion
@@ -88,7 +84,7 @@ namespace KGySoft.ComponentModel
 
         #region Fields
 
-        private readonly LockingDictionary<string, object> stateProperties = new Dictionary<string, object> { [nameof(Enabled)] = true }.AsThreadSafe();
+        private readonly ThreadSafeDictionary<string, object?> stateProperties = new ThreadSafeDictionary<string, object?>(StringSegmentComparer.Ordinal) { [nameof(Enabled)] = true };
 
         #endregion
 
@@ -97,7 +93,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Occurs when a state entry value changes.
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         #endregion
 
@@ -119,7 +115,7 @@ namespace KGySoft.ComponentModel
         /// <value><see langword="true"/>&#160;if the command enabled and can be executed; otherwise, <see langword="false" />.</value>
         public bool Enabled
         {
-            get => (bool)this[nameof(Enabled)];
+            get => (bool)this[nameof(Enabled)]!;
             set => this[nameof(Enabled)] = value;
         }
 
@@ -134,12 +130,12 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Properties
 
-        bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
-        ICollection<string> IDictionary<string, object>.Keys => stateProperties.Keys.ToArray();
-        ICollection<object> IDictionary<string, object>.Values => stateProperties.Values.ToArray();
+        bool ICollection<KeyValuePair<string, object?>>.IsReadOnly => false;
+        ICollection<string> IDictionary<string, object?>.Keys => stateProperties.Keys;
+        ICollection<object?> IDictionary<string, object?>.Values => stateProperties.Values;
 #if !(NET35 || NET40)
-        IEnumerable<string> IReadOnlyDictionary<string, object>.Keys => stateProperties.Keys.ToArray();
-        IEnumerable<object> IReadOnlyDictionary<string, object>.Values => stateProperties.Values.ToArray();
+        IEnumerable<string> IReadOnlyDictionary<string, object?>.Keys => stateProperties.Keys;
+        IEnumerable<object?> IReadOnlyDictionary<string, object?>.Values => stateProperties.Values;
 #endif
 
         #endregion
@@ -152,7 +148,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets the state value with the specified <paramref name="key"/>.
         /// </summary>
         /// <param name="key">The key of the state value to get or set.</param>
-        public object this[string key]
+        public object? this[string key]
         {
             get => stateProperties[key];
             set
@@ -160,17 +156,13 @@ namespace KGySoft.ComponentModel
                 if (key == nameof(Enabled) && !(value is bool))
                     Throw.ArgumentException(Argument.value, Res.ComponentModelEnabledMustBeBool);
 
-                bool differs;
-                stateProperties.Lock();
-                try
+                bool differs = true;
+                stateProperties.AddOrUpdate(key, value, (_, oldValue) =>
                 {
-                    differs = !stateProperties.TryGetValue(key, out object oldValue) || !Equals(oldValue, value);
-                    stateProperties[key] = value;
-                }
-                finally
-                {
-                    stateProperties.Unlock();
-                }
+                    if (Equals(oldValue, value))
+                        differs = false;
+                    return value;
+                });
 
                 if (differs)
                     OnPropertyChanged(key);
@@ -189,12 +181,12 @@ namespace KGySoft.ComponentModel
         /// <param name="initialConfiguration">The initial configuration to use for initializing this <see cref="CommandState"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="ArgumentException"><paramref name="initialConfiguration"/> contains a non-<see cref="bool">bool</see>&#160;<c>Enabled</c> entry.</exception>
-        public CommandState(IDictionary<string, object> initialConfiguration = null)
+        public CommandState(IDictionary<string, object?>? initialConfiguration = null)
         {
             if (initialConfiguration == null)
                 return;
 
-            foreach (var state in initialConfiguration)
+            foreach (KeyValuePair<string, object?> state in initialConfiguration)
             {
                 if (state.Key == nameof(Enabled) && !(state.Value is bool))
                     Throw.ArgumentException(Argument.initialConfiguration, Res.ComponentModelEnabledMustBeBool);
@@ -215,7 +207,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => new Dictionary<string, object>(stateProperties).GetEnumerator();
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => stateProperties.GetEnumerator();
 
         /// <summary>
         /// Determines whether the <see cref="CommandState" /> contains an element with the specified <paramref name="key"/>.
@@ -230,21 +222,9 @@ namespace KGySoft.ComponentModel
         /// <param name="key">The object to use as the key of the element to add.</param>
         /// <param name="value">The object to use as the value of the element to add.</param>
         /// <exception cref="ArgumentException">An item with the same key has already been added</exception>
-        public void Add(string key, object value)
+        public void Add(string key, object? value)
         {
-            stateProperties.Lock();
-            try
-            {
-                if (stateProperties.ContainsKey(key))
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
-
-                stateProperties.Add(key, value);
-            }
-            finally
-            {
-                stateProperties.Unlock();
-            }
-
+            stateProperties.Add(key, value);
             OnPropertyChanged(key);
         }
 
@@ -255,7 +235,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>&#160;if the <see cref="CommandState"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false" />.
         /// </returns>
-        public bool TryGetValue(string key, out object value) => stateProperties.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out object? value) => stateProperties.TryGetValue(key, out value);
 
 #if !NET35
 
@@ -266,11 +246,9 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The value of the state to set.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, binder CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, binder CAN be null so the Throw is reachable")]
-        public override bool TrySetMember(SetMemberBinder binder, object value)
+        public override bool TrySetMember(SetMemberBinder binder, object? value)
         {
-            if (binder == null)
+            if (binder == null!)
                 Throw.ArgumentNullException(Argument.binder);
             this[binder.Name] = value;
             return true;
@@ -283,11 +261,9 @@ namespace KGySoft.ComponentModel
         /// <param name="result">The value associated with the specified <see cref="GetMemberBinder.Name"/>.</param>
         /// <returns>This method always return <see langword="true"/>.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, binder CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, binder CAN be null so the Throw is reachable")]
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
-            if (binder == null)
+            if (binder == null!)
                 Throw.ArgumentNullException(Argument.binder);
             result = this[binder.Name];
             return true;
@@ -303,7 +279,7 @@ namespace KGySoft.ComponentModel
         private PropertyDescriptorCollection GetProperties()
         {
             var result = new PropertyDescriptorCollection(null);
-            foreach (KeyValuePair<string, object> property in stateProperties)
+            foreach (KeyValuePair<string, object?> property in stateProperties)
                 result.Add(new CommandStatePropertyDescriptor(property.Key, property.Value?.GetType() ?? Reflector.ObjectType));
             return result;
         }
@@ -313,40 +289,44 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => Add(item.Key, item.Value);
-        bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => stateProperties.Contains(item);
-        void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => stateProperties.CopyTo(array, arrayIndex);
+        void ICollection<KeyValuePair<string, object?>>.Add(KeyValuePair<string, object?> item) => Add(item.Key, item.Value);
 
-        void ICollection<KeyValuePair<string, object>>.Clear()
+        bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item)
+            => ((ICollection<KeyValuePair<string, object?>>)stateProperties).Contains(item);
+        
+        void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
+            => ((ICollection<KeyValuePair<string, object?>>)stateProperties).CopyTo(array, arrayIndex);
+
+        void ICollection<KeyValuePair<string, object?>>.Clear()
         {
             // not calling PropertyChanged because a removed property has no effect on update
             stateProperties.Clear();
             Enabled = true; // this may call PropertyChanged though
         }
 
-        bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
+        bool ICollection<KeyValuePair<string, object?>>.Remove(KeyValuePair<string, object?> item)
         {
             if (item.Key == nameof(Enabled))
                 return false;
-            return stateProperties.Remove(item);
+            return ((ICollection<KeyValuePair<string, object?>>)stateProperties).Remove(item);
         }
 
-        bool IDictionary<string, object>.Remove(string key)
+        bool IDictionary<string, object?>.Remove(string key)
         {
             if (key == nameof(Enabled))
                 return false;
 
             // not calling PropertyChanged because a removed property has no effect on update
-            return stateProperties.Remove(key);
+            return stateProperties.TryRemove(key);
         }
 
         AttributeCollection ICustomTypeDescriptor.GetAttributes() => new AttributeCollection(null);
         string ICustomTypeDescriptor.GetClassName() => nameof(CommandState);
-        string ICustomTypeDescriptor.GetComponentName() => ToString();
-        TypeConverter ICustomTypeDescriptor.GetConverter() => null;
-        EventDescriptor ICustomTypeDescriptor.GetDefaultEvent() => null;
-        PropertyDescriptor ICustomTypeDescriptor.GetDefaultProperty() => null;
-        object ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null;
+        string ICustomTypeDescriptor.GetComponentName() => ToString()!;
+        TypeConverter? ICustomTypeDescriptor.GetConverter() => null;
+        EventDescriptor? ICustomTypeDescriptor.GetDefaultEvent() => null;
+        PropertyDescriptor? ICustomTypeDescriptor.GetDefaultProperty() => null;
+        object? ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null;
         EventDescriptorCollection ICustomTypeDescriptor.GetEvents() => new EventDescriptorCollection(null);
         EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[] attributes) => new EventDescriptorCollection(null);
         PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties() => GetProperties();
@@ -354,7 +334,7 @@ namespace KGySoft.ComponentModel
         object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor pd) => this;
 
 #if !NET35
-        string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => ToString();
+        string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => ToString()!;
         PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors) => GetProperties();
 #endif
 

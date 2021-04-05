@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -42,9 +41,16 @@ using KGySoft.Serialization.Xml;
 
 #endregion
 
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0)
+#pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
+#endif
+
+#endregion
 
 /* How to add a new type
  * =====
@@ -105,6 +111,24 @@ namespace KGySoft.Serialization.Binary
     /// field values (including private ones), which can change from version to version. Therefore, binary serialization is recommended only for in-process purposes,
     /// such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
+    /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
+    /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
+    /// deserializing loading assemblies during the deserialization as well as instantiating non-serializable types. When using <see cref="BinarySerializationOptions.SafeMode"/>
+    /// you must preload every assembly manually that are referred by the serialization stream.</para>
+    /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
+    /// can be exploited for several attacks (causing unresponsiveness, <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not
+    /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against such attacks.
+    /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against some of the known security issues
+    /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
+    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), or set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
+    /// instance that uses strict mapping. For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
+    /// <para>Please also note that if the <see cref="Binder"/> property is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
+    /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
+    /// type resolving, such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+    /// <para>Similarly, if the <see cref="SurrogateSelector"/> property is set, then they provide a custom serialization even for types that are not serializable. The surrogate selectors in this library,
+    /// such as the <see cref="CustomSerializerSurrogateSelector"/> and <see cref="NameInvariantSurrogateSelector"/> types have their own <c>SafeMode</c> property.
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent deserializing non-serializable types.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
@@ -134,7 +158,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
     /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), and also there are some others, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
-    /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types are not recommended anymore. If you still must serialize or deserialize such types
+    /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
     /// <h1 class="heading">Natively supported simple types</h1>
     /// <para>Following types are natively supported. When these types are serialized, no recursive traversal of the fields occurs:
@@ -572,7 +596,7 @@ namespace KGySoft.Serialization.Binary
         #region Nested Classes
 
         /// <summary>
-        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has a tons of abstract methods.
+        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has tons of abstract methods.
         /// </summary>
         private sealed class TypeByString : MemberInfo
         {
@@ -580,14 +604,14 @@ namespace KGySoft.Serialization.Binary
 
             public override MemberTypes MemberType => MemberTypes.TypeInfo;
             public override string Name { get; }
-            public override Type DeclaringType => null;
-            public override Type ReflectedType => null;
+            public override Type? DeclaringType => null;
+            public override Type? ReflectedType => null;
 
             #endregion
 
             #region Constructors
 
-            public TypeByString(string assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
+            public TypeByString(string? assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
 
             #endregion
 
@@ -597,7 +621,7 @@ namespace KGySoft.Serialization.Binary
             public override bool IsDefined(Type attributeType, bool inherit) => false;
             public override object[] GetCustomAttributes(Type attributeType, bool inherit) => Reflector.EmptyObjects;
             public override string ToString() => Name;
-            public override bool Equals(object obj) => obj is TypeByString other && Name == other.Name;
+            public override bool Equals(object? obj) => obj is TypeByString other && Name == other.Name;
             public override int GetHashCode() => Name.GetHashCode();
 
             #endregion
@@ -795,7 +819,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer
-#if !NETCOREAPP
+#if NETFRAMEWORK || NETSTANDARD
                         | CollectionInfo.NonNullDefaultComparer
 #endif
                     ,
@@ -851,8 +875,8 @@ namespace KGySoft.Serialization.Binary
             { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } }
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
-            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
+            = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
 
         // including string and the abstract enum and array types
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
@@ -970,15 +994,20 @@ namespace KGySoft.Serialization.Binary
         /// then the binder is called for the non-primitive natively supported types.</para>
         /// <para>This formatter does not call the binder types that have element types, for constructed generic types and generic parameter types.
         /// Instead, the binder is called only for the element types, the generic type definition and the generic arguments separately.</para>
-        /// <note>In .NET 3.5 setting this property has no effect during serialization unless the binder implements
+        /// <note>In .NET Framework 3.5 setting this property has no effect during serialization unless the binder implements
         /// the <see cref="ISerializationBinder"/> interface.</note>
         /// <note type="tip">If you serialize forwarded types that have no defined forwarding by the <see cref="TypeForwardedToAttribute"/> and <see cref="TypeForwardedFromAttribute"/>
         /// attributes, then to ensure emitting compatible assembly identities on different .NET platforms use the <see cref="ForwardedTypesSerializationBinder"/>,
         /// define the missing mappings by the <see cref="ForwardedTypesSerializationBinder.AddType">AddType</see> method and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
         /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
         /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
+        /// <note type="security"><para>If you use binders for deserialization, then setting the <see cref="BinarySerializationOptions.SafeMode"/> flag in the <see cref="Options"/>
+        /// cannot prevent loading assemblies by the binder itself. The binders in this library that can perform automatic type resolving,
+        /// such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
+        /// Make sure to set them to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+        /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
         /// </remarks>
-        public SerializationBinder Binder { get; set; }
+        public SerializationBinder? Binder { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="StreamingContext"/> used for serialization and deserialization.
@@ -988,7 +1017,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Gets or sets an <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization.
         /// </summary>
-        public ISurrogateSelector SurrogateSelector { get; set; }
+        public ISurrogateSelector? SurrogateSelector { get; set; }
 
         #endregion
 
@@ -1157,8 +1186,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
         [SecuritySafeCritical]
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryWriter constructor will not leave the stream open.")]
-        public byte[] Serialize(object data)
+        public byte[] Serialize(object? data)
         {
             MemoryStream result;
             using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
@@ -1177,8 +1205,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryReader constructor will not leave the stream open.")]
-        public object Deserialize(byte[] rawData, int offset = 0)
+        public object? Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
                 return DeserializeByReader(br);
@@ -1190,18 +1217,14 @@ namespace KGySoft.Serialization.Binary
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
         [SecuritySafeCritical]
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
-        public void SerializeToStream(Stream stream, object data) => SerializeByWriter(new BinaryWriter(stream), data);
+        public void SerializeToStream(Stream stream, object? data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
-        public object DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
+        public object? DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -1213,9 +1236,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         [SecuritySafeCritical]
-        public void SerializeByWriter(BinaryWriter writer, object data)
+        public void SerializeByWriter(BinaryWriter writer, object? data)
         {
-            if (writer == null)
+            if (writer == null!)
                 Throw.ArgumentNullException(Argument.writer);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
             manager.WriteRoot(writer, data);
@@ -1231,9 +1254,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
         [SecuritySafeCritical]
-        public object DeserializeByReader(BinaryReader reader)
+        public object? DeserializeByReader(BinaryReader reader)
         {
-            if (reader == null)
+            if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
             var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector);
             return manager.Deserialize(reader);
@@ -1243,9 +1266,8 @@ namespace KGySoft.Serialization.Binary
 
         #region Explicitly Implemented Interface Methods
 
-        object IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
-
-        void IFormatter.Serialize(Stream serializationStream, object graph) => SerializeToStream(serializationStream, graph);
+        object? IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
+        void IFormatter.Serialize(Stream serializationStream, object? graph) => SerializeToStream(serializationStream, graph);
 
         #endregion
 

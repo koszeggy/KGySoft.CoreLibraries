@@ -18,34 +18,41 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Serialization.Binary
-{
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.Serialization.Binary
+{
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
     /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <remarks>
+    /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
+    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types by the fallback logic.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
     /// <para>To resolve types that are not forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
-    /// given identity use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
+    /// given identity you can use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
     /// <see cref="AddTypes">AddTypes</see> methods.</para>
     /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, then mapping works also on serialization.
     /// For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/> attribute will be written if it is defined.
@@ -113,6 +120,7 @@ namespace KGySoft.Serialization.Binary
     /// </example>
     /// <seealso cref="WeakAssemblySerializationBinder"/>
     /// <seealso cref="CustomSerializationBinder"/>
+    /// <seealso cref="BinarySerializationFormatter"/>
     public sealed class ForwardedTypesSerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Fields
@@ -123,7 +131,7 @@ namespace KGySoft.Serialization.Binary
         /// Value.Value: AssemblyName.FullName, or empty string, if any assemblies are allowed.
         ///              Not AssemblyNames because they have no overridden Equals.
         /// </summary>
-        private readonly Dictionary<string, Dictionary<Type, HashSet<string>>> mapping = new Dictionary<string, Dictionary<Type, HashSet<string>>>();
+        private readonly StringKeyedDictionary<Dictionary<Type, HashSet<string>>> mapping = new StringKeyedDictionary<Dictionary<Type, HashSet<string>>>();
 
         #endregion
 
@@ -134,7 +142,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
-        /// <note>In .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
+        /// <note>In Framework .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
         /// value of this property. <see cref="BinarySerializationFormatter"/> is able to use the <see cref="ForwardedTypesSerializationBinder"/>
         /// as an <see cref="ISerializationBinder"/> implementation and consider the value of this property even in .NET 3.5.</note>
         /// <para>If the value of this property is <see langword="true"/>, then on serialization a legacy identity is tried to be written for the serialized type.
@@ -143,6 +151,21 @@ namespace KGySoft.Serialization.Binary
         /// if it is specified for the type.</para>
         /// </remarks>
         public bool WriteLegacyIdentity { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether loading assemblies is prohibited on deserialization, when there is no rule specified for a type
+        /// and the default resolve logic is used.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, and there is no rule specified for a type, then it ensures that no assembly loading will occur when using the default type resolving logic.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
+        /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
+        /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
 
         #endregion
 
@@ -167,9 +190,9 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public void AddType(Type type, params AssemblyName[] assemblyIdentities)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            string fullName = type.FullName;
+            string? fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
@@ -177,28 +200,28 @@ namespace KGySoft.Serialization.Binary
             Debug.Assert(type == type.GetRootType(), "Root type expected");
 
             // getting/creating the map by type of the same full names
-            if (!mapping.TryGetValue(fullName, out Dictionary<Type, HashSet<string>> mapByType))
+            if (!mapping.TryGetValue(fullName, out Dictionary<Type, HashSet<string>>? mapByType))
             {
                 mapByType = new Dictionary<Type, HashSet<string>>();
                 mapping[fullName] = mapByType;
             }
 
             // getting/creating the identities set
-            if (!mapByType.TryGetValue(type, out var identites))
+            if (!mapByType.TryGetValue(type, out var identities))
             {
-                identites = new HashSet<string>();
-                mapByType[type] = identites;
+                identities = new HashSet<string>();
+                mapByType[type] = identities;
             }
 
             // no assembly identities or contains null: any assembly will be accepted
             if (assemblyIdentities.IsNullOrEmpty())
             {
-                identites.Add(String.Empty);
+                identities.Add(String.Empty);
                 return;
             }
 
             foreach (AssemblyName assemblyName in assemblyIdentities)
-                identites.Add(assemblyName.FullName);
+                identities.Add(assemblyName.FullName);
         }
 
         /// <summary>
@@ -214,11 +237,11 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public void AddTypes(params Type[] types)
         {
-            if (types == null)
+            if (types == null!)
                 Throw.ArgumentNullException(Argument.types);
             if (types.Length == 0)
                 Throw.ArgumentException(Argument.types, Res.CollectionEmpty);
-            if (types.Contains(null))
+            if (types.Contains(null!))
                 Throw.ArgumentException(Argument.types, Res.ArgumentContainsNull);
             foreach (Type type in types)
                 AddType(type);
@@ -236,13 +259,13 @@ namespace KGySoft.Serialization.Binary
         /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/>&#160;when this method returns, then contains the full name of the <paramref name="serializedType"/>,
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
-        /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
+        /// <note>In .NET Framework 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
         /// serializer handles the <see cref="ISerializationBinder"/> interface or calls it directly.</note>
         /// </remarks>
 #if !NET35
         override
 #endif
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
         {
             #region Local Methods
 
@@ -251,10 +274,10 @@ namespace KGySoft.Serialization.Binary
                 Type key = t.GetRootType();
 
                 // we have a non-empty specified assembly name 
-                if (mapping.GetValueOrDefault(key.FullName)?.GetValueOrDefault(key).FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
+                if (mapping.GetValueOrDefault(key.FullName!)?.GetValueOrDefault(key)?.FirstOrDefault(n => !String.IsNullOrEmpty(n)) is string asmName)
                     return new AssemblyName(asmName);
 
-                string legacyName = AssemblyResolver.GetForwardedAssemblyName(key, false);
+                string? legacyName = AssemblyResolver.GetForwardedAssemblyName(key, false);
                 if (legacyName != null)
                     return new AssemblyName(legacyName);
 
@@ -264,7 +287,7 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
-            if (serializedType == null)
+            if (serializedType == null!)
                 Throw.ArgumentNullException(Argument.serializedType);
 #if NET35
             assemblyName = null;
@@ -294,19 +317,19 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
-        public override Type BindToType(string assemblyName, string typeName)
+        public override Type? BindToType(string assemblyName, string typeName)
         {
             #region Local Methods
 
-            Type ResolveType(AssemblyName assemblyName, string typeName)
+            Type? ResolveType(AssemblyName? asmName, string typName)
             {
                 // there is no rule for such type name
-                if (!mapping.TryGetValue(typeName, out var byTypeMap))
+                if (!mapping.TryGetValue(typName, out var byTypeMap))
                     return null;
 
                 foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
                 {
-                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), assemblyName, false)))
+                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), asmName, false)))
                         return map.Key;
                 }
 
@@ -317,7 +340,22 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + "," + assemblyName;
-            return Reflector.ResolveType(fullName, ResolveType);
+            var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
+            if (!SafeMode)
+                options |= ResolveTypeOptions.TryToLoadAssemblies;
+            Type? result = Reflector.ResolveType(fullName, ResolveType);
+
+            if (result == null)
+            {
+                string message = String.IsNullOrEmpty(assemblyName)
+                    ? Res.BinarySerializationCannotResolveType(typeName)
+                    : SafeMode
+                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+                Throw.SerializationException(message);
+            }
+
+            return result;
         }
 
         #endregion
@@ -325,7 +363,7 @@ namespace KGySoft.Serialization.Binary
         #region Private Methods
 
         #endregion
-       
+
         #endregion
     }
 }

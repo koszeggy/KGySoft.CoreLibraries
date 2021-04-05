@@ -23,9 +23,9 @@ namespace KGySoft.Resources
     {
         #region Methods
 
-        object GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
+        object? GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
-        object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
+        object? GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
         #endregion
     }

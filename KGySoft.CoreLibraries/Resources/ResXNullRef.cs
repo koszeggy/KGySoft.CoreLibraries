@@ -31,7 +31,7 @@ namespace KGySoft.Resources
         #region Fields
 
         [NonSerialized]
-        private static ResXNullRef value;
+        private static ResXNullRef? value;
 
         #endregion
 

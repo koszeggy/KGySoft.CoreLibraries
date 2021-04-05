@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 #if NETFRAMEWORK
@@ -54,7 +55,7 @@ namespace KGySoft.CoreLibraries
         /// <para>This overload uses <see cref="object.Equals(object,object)">Object.Equals</see> method to compare the items.
         /// <note>For better performance use the generic <see cref="In{T}(T,T[])"/> or <see cref="In{T}(T,Func{T}[])"/> methods whenever possible.</note></para>
         /// </remarks>
-        public static bool In(this object item, params object[] set)
+        public static bool In(this object? item, params object?[]? set)
         {
             int length;
             if (set == null || (length = set.Length) == 0)
@@ -103,7 +104,7 @@ namespace KGySoft.CoreLibraries
         ///     }
         /// }]]></code>
         /// </example>
-        public static bool In<T>(this T item, params T[] set)
+        public static bool In<T>(this T item, params T[]? set)
         {
             int length;
             if (set == null || (length = set.Length) == 0)
@@ -135,12 +136,12 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool In<T>(this T item, ReadOnlySpan<T> set)
         {
-            int length;
-            if (set == null || (length = set.Length) == 0)
+            if (set.Length == 0)
                 return false;
-
             var comparer = ComparerHelper<T>.EqualityComparer;
-            for (int i = 0; i < length; i++)
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
+            for (int i = 0; i < set.Length; i++)
             {
                 if (comparer.Equals(item, set[i]))
                     return true;
@@ -163,7 +164,7 @@ namespace KGySoft.CoreLibraries
         /// The elements of <paramref name="set"/> are evaluated only when they are actually compared so if a result is found the rest of the elements will not be evaluated.
         /// <note>If elements of <paramref name="set"/> are constants or simple expressions consider to use the <see cref="In{T}(T,T[])"/> overload to eliminate the overhead of delegate invokes.</note></para>
         /// </remarks>
-        public static bool In<T>(this T item, params Func<T>[] set)
+        public static bool In<T>(this T item, params Func<T>[]? set)
         {
             int length;
             if (set == null || (length = set.Length) == 0)
@@ -173,7 +174,7 @@ namespace KGySoft.CoreLibraries
             for (int i = 0; i < length; i++)
             {
                 Func<T> func = set[i];
-                if (func == null)
+                if (func == null!)
                     Throw.ArgumentException(Argument.set, Res.ArgumentContainsNull);
                 if (comparer.Equals(item, func.Invoke()))
                     return true;
@@ -190,7 +191,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
         /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool In<T>(this T item, IEnumerable<T> set)
+        public static bool In<T>(this T item, IEnumerable<T>? set)
         {
             if (set == null)
                 return false;
@@ -230,9 +231,9 @@ namespace KGySoft.CoreLibraries
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
         [SecuritySafeCritical]
-        public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
+        [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
-            ISurrogateSelector surrogate = null;
+            ISurrogateSelector? surrogate = null;
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
 #if NETFRAMEWORK
             if (RemotingServices.IsTransparentProxy(obj))
@@ -254,7 +255,7 @@ namespace KGySoft.CoreLibraries
                 if (surrogate is RemotingSurrogateSelector)
                     formatter.SurrogateSelector = null;
 #endif
-                return (T)formatter.DeserializeFromStream(stream);
+                return (T)formatter.DeserializeFromStream(stream)!;
             }
         }
 
@@ -363,11 +364,11 @@ namespace KGySoft.CoreLibraries
         /// // HashSet`1 => ArrayList: 1, 2, 3 => 1, 2, 3
         /// // Hashtable => Dictionary`2: [1, One], [Black, x] => [DarkBlue, One], [Black, x]]]></code>
         /// </example>
-        public static TTarget Convert<TTarget>(this object obj, CultureInfo culture = null)
+        public static TTarget Convert<TTarget>(this object? obj, CultureInfo? culture = null)
         {
-            if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object result, out Exception error) || (!(result is TTarget) && !typeof(TTarget).CanAcceptValue(result)))
+            if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object? result, out Exception? error) || (!(result is TTarget) && !typeof(TTarget).CanAcceptValue(result)))
                 Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), error);
-            return (TTarget)result;
+            return (TTarget)result!;
         }
 
         /// <summary>
@@ -387,9 +388,9 @@ namespace KGySoft.CoreLibraries
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
-        public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
+        public static object? Convert(this object? obj, Type targetType, CultureInfo? culture = null)
         {
-            if (!ObjectConverter.TryConvert(obj, targetType, culture, out object result, out Exception error) || !targetType.CanAcceptValue(result))
+            if (!ObjectConverter.TryConvert(obj, targetType, culture, out object? result, out Exception? error) || !targetType.CanAcceptValue(result))
                 Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(targetType), error);
             return result;
         }
@@ -408,11 +409,11 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTarget>(this object obj, CultureInfo culture, out TTarget value)
+        public static bool TryConvert<TTarget>(this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
         {
-            if (TryConvert(obj, typeof(TTarget), culture, out object result) && (result is TTarget || typeof(TTarget).CanAcceptValue(result)))
+            if (TryConvert(obj, typeof(TTarget), culture, out object? result) && (result is TTarget || typeof(TTarget).CanAcceptValue(result)))
             {
-                value = (TTarget)result;
+                value = (TTarget)result!;
                 return true;
             }
 
@@ -433,7 +434,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTarget>(this object obj, out TTarget value) => TryConvert(obj, null, out value);
+        public static bool TryConvert<TTarget>(this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
@@ -447,7 +448,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert(this object obj, Type targetType, out object value) => TryConvert(obj, targetType, null, out value);
+        public static bool TryConvert(this object? obj, Type targetType, out object? value) => TryConvert(obj, targetType, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
@@ -462,7 +463,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
+        public static bool TryConvert(this object? obj, Type targetType, CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
         #endregion
     }

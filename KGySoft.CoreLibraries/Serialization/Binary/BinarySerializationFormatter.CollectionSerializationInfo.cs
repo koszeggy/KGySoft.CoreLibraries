@@ -19,7 +19,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+#if !NET35
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
 using System.Reflection;
 using System.Security;
@@ -53,11 +55,11 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Can contain more elements only for generic collections. Will be instantiated only on deserialization.
-            /// Locking accessor because the serialization info is stored in a static shared dictionary.
+            /// Thread safe accessor because the serialization info is stored in a static shared dictionary.
             /// </summary>
-            private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor> ctorCache;
+            private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor>? ctorCache;
 
-            private IThreadSafeCacheAccessor<Type, MethodAccessor> addMethodCache;
+            private IThreadSafeCacheAccessor<Type, MethodAccessor>? addMethodCache;
 
             #endregion
 
@@ -72,14 +74,18 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Specifies the constructor arguments to be used. Order matters!
             /// </summary>
-            internal CollectionCtorArguments[] CtorArguments { private get; set; }
+            internal CollectionCtorArguments[]? CtorArguments { private get; set; }
 
             /// <summary>
             /// Should be specified only when target collection is not <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation,
             /// or when defining it results faster access than resolving the generic Add method for each access. Can refer to a generic method definition.
             /// </summary>
-            internal string SpecificAddMethod { get; set; }
+            internal string? SpecificAddMethod { get; set; }
 
+#if !NET35
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+            [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
+#endif
             internal bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;
             internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
             internal bool IsNonGenericCollection => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
@@ -157,11 +163,11 @@ namespace KGySoft.Serialization.Binary
                 // 5.) Comparer
                 if (HasAnyComparer)
                 {
-                    object comparer = collection.GetComparer();
+                    object? comparer = collection.GetComparer();
                     bool isDefaultComparer = comparer == null || IsDefaultComparer(collection, comparer);
                     bw.Write(isDefaultComparer);
                     if (!isDefaultComparer)
-                        manager.WriteNonRoot(bw, comparer);
+                        manager.WriteNonRoot(bw, comparer!);
                 }
             }
 
@@ -178,7 +184,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     // Note: If addToCache is true, then the key-value may contain itself via references.
                     // That's why we create the instance first and then set Key and Value (just like at object graphs).
-                    result = Activator.CreateInstance(descriptor.GetTypeToCreate());
+                    result = Activator.CreateInstance(descriptor.GetTypeToCreate())!;
                     if (addToCache)
                         manager.AddObjectToCache(result);
 
@@ -208,9 +214,9 @@ namespace KGySoft.Serialization.Binary
                     manager.AddObjectToCache(null, out id);
 
                 // 5.) Comparer
-                object comparer = HasAnyComparer
-                    ? br.ReadBoolean()
-                        ? IsNonNullDefaultComparer ? GetDefaultComparer(descriptor.Type) : null
+                object? comparer = HasAnyComparer
+                    ? br.ReadBoolean() // is default?
+                        ? IsNonNullDefaultComparer ? GetDefaultComparer(descriptor.Type!) : null
                         : manager.ReadWithType(br)
                     : null;
 
@@ -228,23 +234,23 @@ namespace KGySoft.Serialization.Binary
                     string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary/collection values.
 
                     MethodInfo method = IsGeneric
-                        ? type.GetMethod(methodName, type.GetGenericArguments()) // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)
-                        : type.GetMethod(methodName); // For non-generics arguments are not always objects (StringDictionary)
+                        ? type.GetMethod(methodName, type.GetGenericArguments())! // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)
+                        : type.GetMethod(methodName)!; // For non-generics arguments are not always objects (StringDictionary)
                     return MethodAccessor.GetAccessor(method);
                 }
 
                 if (addMethodCache == null)
-                    Interlocked.CompareExchange(ref addMethodCache, new Cache<Type, MethodAccessor>(GetAddMethodAccessor).GetThreadSafeAccessor(), null);
-                return addMethodCache[descriptor.Type];
+                    Interlocked.CompareExchange(ref addMethodCache, ThreadSafeCacheFactory.Create<Type, MethodAccessor>(GetAddMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                return addMethodCache[descriptor.Type!];
             }
 
             #endregion
 
             #region Private Methods
 
-            private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object comparer)
+            private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object? comparer)
             {
-                object defaultComparer = GetDefaultComparer(collection.GetType());
+                object? defaultComparer = GetDefaultComparer(collection.GetType());
                 if (Equals(defaultComparer, comparer))
                     return true;
 
@@ -254,7 +260,7 @@ namespace KGySoft.Serialization.Binary
                 return false;
             }
 
-            private object GetDefaultComparer(Type type)
+            private object? GetDefaultComparer(Type type)
             {
                 if (!IsGeneric)
                     return HasEqualityComparer ? null : Comparer.Default;
@@ -267,13 +273,13 @@ namespace KGySoft.Serialization.Binary
                     : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
             }
 
-            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, object comparer)
+            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, object? comparer)
             {
                 CreateInstanceAccessor ctor = GetInitializer(descriptor);
                 if (CtorArguments == null)
                     return ctor.CreateInstance();
 
-                object[] parameters = new object[CtorArguments.Length];
+                object?[] parameters = new object?[CtorArguments.Length];
                 for (int i = 0; i < CtorArguments.Length; i++)
                 {
                     switch (CtorArguments[i])
@@ -326,15 +332,15 @@ namespace KGySoft.Serialization.Binary
                         }
                     }
 
-                    ConstructorInfo ctor = type.GetConstructor(args);
+                    ConstructorInfo? ctor = type.GetConstructor(args);
                     if (ctor == null)
                         Throw.InvalidOperationException(Res.ReflectionCtorNotFound(type));
                     return CreateInstanceAccessor.GetAccessor(ctor);
                 }
 
                 if (ctorCache == null)
-                    Interlocked.CompareExchange(ref ctorCache, new Cache<Type, CreateInstanceAccessor>(GetCtorAccessor).GetThreadSafeAccessor(), null);
-                return ctorCache[descriptor.Type];
+                    Interlocked.CompareExchange(ref ctorCache, ThreadSafeCacheFactory.Create<Type, CreateInstanceAccessor>(GetCtorAccessor, LockFreeCacheOptions.Profile128), null);
+                return ctorCache[descriptor.Type!];
             }
 
             #endregion

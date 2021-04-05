@@ -147,14 +147,6 @@ The [`AddRange`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Co
 
 Depending on the actual implementation inserting/removing/setting elements in an `IEnumerable` type might be possible. See the `Try...` methods of the [`EnumerableExtensions`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_EnumerableExtensions.htm) class. All of these methods have a **Remarks** section in the documentation that precisely describes the conditions when the corresponding method can be used successfully.
 
-- #### [`AsThreadSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_CollectionExtensions_AsThreadSafe__1.htm) extension methods:
-
-Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries, in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members (such as the `Count` property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements. So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.
-
-Therefore, an `AsThreadSafe` method is available for the `ICollection<T>`, `IList<T>` and `IDictionary<TKey, TValue>` types, which simply wrap the collection into a [`LockingCollection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingCollection_1.htm), [`LockingList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingCollection_1.htm) or [`LockingDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_LockingDictionary_2.htm) instance, respectively.
-
-> _Note:_ Using a locking collection does not solve all concurrent issues magically. See the **Remarks** section in the descriptions of these classes for more details.
-
 - #### [`Object.Convert<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_ObjectExtensions_Convert.htm) extension method:
 
 > _Tip:_ Try also [online](https://dotnetfiddle.net/rzg8If).
@@ -257,6 +249,12 @@ var threadSafeCache = personCache.GetThreadSafeAccessor(protectItemLoader: false
 person = threadSafeCache[id];
 ```
 
+> _Tip:_ To obtain a thread-safe cache accessor it is recommended to use the [`ThreadSafeCacheFactory`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeCacheFactory.htm) class, where you can configure the characteristics of the cache to create. You can create completely lock-free caches, or caches with strict capacity management, expiring values, etc. See the ***Remarks*** section of the [`ThreadSafeCacheFactory.Create`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Collections_ThreadSafeCacheFactory_Create__2_1.htm) method for details.
+
+- #### [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm):
+
+Similar to `ConcurrentDictionary` but has a bit different characteristic and can be used even in .NET Framework 3.5 where `ConcurrentDictionary` is not available. It can be a good alternative when a fixed number of keys have to be stored or when the `Count` property has to be frequently accessed, which is particularly slow at `ConcurrentDictionary`. See the ***Remarks*** section of the [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm) class for details, including speed comparison of different members.
+
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 
 Acts as a regular `IDictionary<string, TValue` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`][StringSegment] or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`][StringSegment] and `ReadOnlySpan<char>` instances.
@@ -351,7 +349,11 @@ bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out resu
 
 - #### Binary Serialization
 
-[`BinarySerializationFormatter`][bsf] is functionally compatible with `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. Basically it has the same nature as `BinaryFormatter`: apart from some natively supported types it is based on field serialization by default and is sensitive to assembly version. While this can be desired in some cases such as saving/restoring bitwise state or [deep cloning](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_ObjectExtensions_DeepClone__1.htm), for serializing public members of data contracts and components it is suggested to use the text based `XmlSerializer` instead.
+> _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise [deep clones](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_ObjectExtensions_DeepClone__1.htm). If you still need to deserialize possibly harmful content make sure to use the [`BinarySerializationOptions.SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
+
+[`BinarySerializationFormatter`][bsf] serves the same purpose as `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. It supports many core types natively,  including many collections. It means that serialization of those types does not involve storing assembly and type names at all, which ensures very compact sizes as well as their safe deserialization on every possible platform. Apart from the natively supported types it works similarly to `BinaryFormatter`: uses recursive serialization of fields and supports the full binary serialization infrastructure including `ISerializable`, `IDeserializationCallback`, `IObjectReference`, serialization method attributes, binder and surrogates support.
+
+Even if used in a secure environment or on a cryptographically secured channel, binary serializer is not quite recommended for communicating between remote entities, because by default it relies on private implementation (ie. field names), except for natively supported and custom serialized types. Therefore it may be sensitive for version changes and refactoring. It is recommended to use message types that can be completely restored by public fields and properties so you can use a text-based serializer, eg. an [`XML serializer`](#xml-serialization).
 
 Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
@@ -375,15 +377,19 @@ obj = (MyClass)BinarySerializer.DeserializeFromStream(stream); // from Stream
 obj = (MyClass)BinarySerializer.DeserializeByReader(reader); // by BinaryReader
 ```
 
-Sensitivity of binary serializers to assembly version can be considered either a useful security protection or an annoying thing. The [`BinarySerializationFormatter`][bsf] supports many types and collections natively (see the link), which has two benefits: these types are serialized without any assembly information and the result is very compact as well. Additionally, you can use the `BinarySerializationOptions.OmitAssemblyQualifiedNames` flag to omit assembly information on serialization.
+The [`BinarySerializationFormatter`][bsf] supports many types and collections natively (see the link), which has two benefits: these types are serialized without any assembly information and the result is very compact as well. Additionally, you can use the `BinarySerializationOptions.OmitAssemblyQualifiedNames` flag to omit assembly information on serialization, which reduces the size of the output even more, and more importantly, it makes impossible to load assemblies during the deserialization even if the `BinarySerializationOptions.SafeMode` is not used during the deserialization.
 
-In fact, KGy SOFT Core Library contains also a [`WeakAssemblySerializationBinder`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder.htm) class, which can be used with any `IFormatter` serializers (even with `BinaryFormatter`) to allow deserialization from different assemblies:
+In fact, KGy SOFT Core Library contains also a [`WeakAssemblySerializationBinder`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder.htm) class, which can be used with any `IFormatter` serializers (even with `BinaryFormatter`). It can be useful when:
+
+* Version of the assembly has changed and you want to allow partial name match (hence the name 'weak')
+* You want to disallow loading assemblies during serialization if they are not already loaded (see its [`SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/P_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder_SafeMode.htm) property)
+* You want to completely omit the assembly names from the deserialization stream. In this case the binder has to be set both on serialization and deserialization (see the [OmitAssemblyNameOnSerialize](https://docs.kgysoft.net/corelibraries/?topic=html/P_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder_OmitAssemblyNameOnSerialize.htm) property). You actually do not need it when serializing by [`BinarySerializationFormatter`][bsf] because you can use the `OmitAssemblyQualifiedNames` option.
 
 ```cs
-IFormatter formatter = new BinarySerializationFormatter();
-formatter.Binder = new WeakAssemblySerializationBinder(); // works also for BinaryFormatter!
+IFormatter formatter = new BinaryFormatter(); // but you had better use the BinarySerializationFormatter
+formatter.Binder = new WeakAssemblySerializationBinder { SafeMode = true }; // works with any IFormatter!
 
-result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssembly);
+result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssemblyVersion);
 ```
 
 > _Solving compatibility issues between different platforms:_ In .NET Core there are many types that used to be serializable in .NET Framework but the `[Serializable]` attribute is not applied to them in .NET Core/Standard. Though the binary serialization of such types is not recommended anymore, their support could be required for compatibility reasons. In this case the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) can be a solution, which can be used both with `BinaryFormatter` and [`BinarySerializationFormatter`][bsf]. See the **Remarks** section of the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) class for various use cases and their solutions.
@@ -392,7 +398,7 @@ result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssembly);
 
 - #### XML Serialization
 
-> _Note:_ KGy SOFT's [`XmlSerializer`][xml] does not attempt to replace the system `XmlSerializer`. The latter can be used (more or less) to produce a customized XML, whereas the KGy SOFT version focuses to be able to serialize any object (without any customization though). There are many cases where the system version cannot be used. For more details see the **Remarks** section in the description of the [`XmlSerializer`][xml] class.
+> _Security Note:_ KGy SOFT's [`XmlSerializer`][xml] is a polymorphic serializer. If the serialized content comes from an untrusted source make sure you use its [`DeserializeSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeSafe.htm)/[`DeserializeContentSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeContentSafe.htm) methods that disallow loading assemblies during the deserialization even if types are specified with their assembly qualified names. Of course, this can only protect you if your library (along with the other loaded assemblies) can't be exploited for security attacks. The [`XmlSerializer`][xml] can only create objects by using their default constructor and is able to set the public fields and properties. It can also create collections by special initializer constructors and can populate them by the standard interface implementations. See the security notes at the **Remarks** section of the [`XmlSerializer`][xml] class for more details.
 
 Unlike binary serialization, which is meant to save the bitwise content of an object, the [`XmlSerializer`][xml] can save and restore the public properties and fields. Meaning, it cannot guarantee that the original state of an object can be fully restored unless it is completely exposed by public members. The [`XmlSerializer`][xml] can be a good choice for saving configurations or components whose state can be edited in a property grid, for example.
 
@@ -436,8 +442,7 @@ clone = (Person)XmlSerializer.Deserialize(new StringReader(sb.ToString()));
 Console.WriteLine(sb);
 ```
 
-If a type has a non-default constructor it still can be deserialized after manually
-creating an empty instance:
+If a root object has a non-default constructor, its content still can be serialized and deserialized by the `SerializeContent`/`DeserializeContent[Safe]` methods:
 
 ```cs
 public class MyComponent
@@ -456,7 +461,7 @@ public class MyComponent
 }
 ```
 
-When serializing such a type we need to emit a root element explicitly and on deserialization we need to create an empty `MyComponent` instance manually:
+When serializing such an instance we need to emit a root element explicitly and on deserialization we need to create an empty `MyComponent` instance manually:
 
 ```cs
 var instance = new MyComponent(Guid.NewGuid()) { Person = person };
@@ -474,7 +479,7 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
-The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in all circumstances) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
+The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used on all platforms) and they got a bunch of improvements at the same time. Most importantly, they all have a `SafeMode` property, which guarantees that no assembly loading and deserialization occurs unless it is explicitly requested. But even if `SafeMode` is false, an item is not deserialized until it is explicitly obtained. Or, the [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) class is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
 On top of those, KGy SOFT Core Libraries introduce a sort of new types that can be used the same way as a standard `ResourceManager` class:
 - [`ResXResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceManager.htm) works the same way as the regular `ResourceManager` but works on .resx files instead of compiled resources and supports adding and saving new resources, .resx metadata and assembly aliases.

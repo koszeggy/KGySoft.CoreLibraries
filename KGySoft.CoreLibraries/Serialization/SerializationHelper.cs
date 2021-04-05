@@ -17,13 +17,18 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+#if NETFRAMEWORK
+using System.CodeDom.Compiler;
+#if !NET35
+using System.Collections;
+#endif
+#endif
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
 using KGySoft.Collections;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -34,10 +39,23 @@ namespace KGySoft.Serialization
     {
         #region Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, FieldInfo[]> serializableFieldsCache = new Cache<Type, FieldInfo[]>(t =>
+        private static readonly IThreadSafeCacheAccessor<Type, FieldInfo[]> serializableFieldsCache = ThreadSafeCacheFactory.Create<Type, FieldInfo[]>(t =>
             t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => !f.IsNotSerialized)
-                .OrderBy(f => f.MetadataToken).ToArray(), 1024).GetThreadSafeAccessor();
+                .OrderBy(f => f.MetadataToken).ToArray(), LockFreeCacheOptions.Profile1K);
+
+#if NETFRAMEWORK
+
+        private static readonly Type[] unsafeTypes =
+        {
+            typeof(TempFileCollection),
+#if !NET35
+            StructuralComparisons.StructuralComparer.GetType(),
+            StructuralComparisons.StructuralEqualityComparer.GetType(),
+#endif
+        };
+
+#endif
 
         #endregion
 
@@ -45,12 +63,12 @@ namespace KGySoft.Serialization
 
         internal static FieldInfo[] GetSerializableFields(Type t) => serializableFieldsCache[t];
 
-        internal static Dictionary<string, FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
+        internal static StringKeyedDictionary<FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
         {
-            var result = new Dictionary<string, (FieldInfo Field, int Count)>();
+            var result = new StringKeyedDictionary<(FieldInfo Field, int Count)>();
 
             // ReSharper disable once PossibleNullReferenceException
-            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 // ReSharper disable once PossibleNullReferenceException
                 FieldInfo[] fields = considerNonSerialized
@@ -67,7 +85,7 @@ namespace KGySoft.Serialization
                     }
 
                     // conflicting name 1st try: prefixing by type name
-                    string prefixedName = field.DeclaringType.Name + '+' + field.Name;
+                    string prefixedName = field.DeclaringType!.Name + '+' + field.Name;
                     if (!result.ContainsKey(prefixedName))
                     {
                         result[prefixedName] = (field, 1);
@@ -82,7 +100,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            return result.ToDictionary(e => e.Key, e => e.Value.Field);
+            return result.ToStringKeyedDictionary(e => e.Key, e => e.Value.Field);
         }
 
         /// <summary>
@@ -90,14 +108,26 @@ namespace KGySoft.Serialization
         /// </summary>
         internal static void CopyFields(object source, object target)
         {
-            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFields)}.");
-            Debug.Assert(!target.GetType().IsArray, $"Arrays are not expected in {nameof(CopyFields)}.");
+            Debug.Assert(target != null! && source != null! && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFields)}.");
+            Debug.Assert(!target!.GetType().IsArray, $"Arrays are not expected in {nameof(CopyFields)}.");
 
-            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            for (Type? t = target.GetType(); t != null; t = t.BaseType)
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                     field.Set(target, field.Get(source));
             }
+        }
+
+        internal static bool IsSafeType(Type type)
+        {
+#if NETFRAMEWORK
+            // These types are serializable in the .NET Framework but still we must not support them
+            // in SafeMode because they can be used for known attacks
+            if (type.In(unsafeTypes))
+                return false;
+#endif
+
+            return type.IsSerializable;
         }
 
         #endregion

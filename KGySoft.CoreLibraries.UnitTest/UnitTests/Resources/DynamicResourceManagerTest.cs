@@ -26,6 +26,7 @@ using System.Resources;
 using System.Security;
 using System.Security.Policy;
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 
@@ -511,7 +512,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AutoAppend = AutoAppendOptions.None
             };
             string key = "unknown";
-            Dictionary<string, ResourceSet> resourceSets;
+            StringKeyedDictionary<ResourceSet> resourceSets;
             string proxyName = "ProxyResourceSet";
 
             if (huRunic != null)
@@ -522,7 +523,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
                 Assert.AreSame(manager.GetResourceSet(huRunicHU, true, true), manager.GetResourceSet(huRunic, true, true)); // now huRunicHU is proxy, huRunic is already loaded
 
-                resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+                resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
                 Assert.AreEqual(5, resourceSets.Count);
                 Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
@@ -587,7 +588,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.GetExpandoResourceSet(huHU, ResourceSetRetrieval.CreateIfNotExists);
             Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
 
-            resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
             Assert.AreEqual(3, resourceSets.Count);
             Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
@@ -774,13 +775,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string testRes = manager.GetString(resName);
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
-#if NET35
-            // TODO .NET 3.5: get/set pointer fields by FieldAccessor
-            Assert.Inconclusive("Serializing pointers is not supported");
-#endif
+#if !NET35 // After deserializing a standard ResourceManager on runtime 2.0 an ObjectDisposedException occurs for GetString
             refManager = refManager.DeepClone();
+            Assert.AreEqual(testResRef, refManager.GetString(resName)); 
+#endif
             manager = manager.DeepClone();
-            Assert.AreEqual(testResRef, refManager.GetString(resName));
             Assert.AreEqual(testRes, manager.GetString(resName));
 
             // introducing a change: serialization preserves the change

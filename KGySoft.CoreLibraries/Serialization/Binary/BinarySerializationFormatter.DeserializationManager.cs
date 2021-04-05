@@ -16,6 +16,8 @@
 
 #region Usings
 
+using KGySoft.Collections;
+
 #region Used Namespaces
 
 using System;
@@ -25,7 +27,6 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -291,13 +292,13 @@ namespace KGySoft.Serialization.Binary
                 #region Fields
 
                 private readonly IDictionary target;
-                private readonly object key;
+                private readonly object? key;
 
                 #endregion
 
                 #region Constructors
 
-                internal DictionaryValueUsage(IDictionary target, object key)
+                internal DictionaryValueUsage(IDictionary target, object? key)
                 {
                     // null key means it will be the same as the replaced value
                     this.target = target;
@@ -340,7 +341,7 @@ namespace KGySoft.Serialization.Binary
 
                 internal override void SetValue(object key)
                 {
-                    object value = target[index];
+                    object? value = target[index];
                     target.RemoveAt(index);
                     target.Insert(index, key, value);
                 }
@@ -384,23 +385,22 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
-            private List<string> cachedNames;
-            private List<(Assembly, string)> cachedAssemblies;
-            private List<DataTypeDescriptor> cachedTypes;
-            private Dictionary<string, Assembly> assemblyByNameCache;
-            private Dictionary<string, Type> typeByNameCache;
-            private Dictionary<int, object> idCache;
-            private Dictionary<object, UsageReferences> objectsBeingDeserialized;
-            private List<IDeserializationCallback> deserializationRegObjects;
+            private List<string>? cachedNames;
+            private List<(Assembly, string?)>? cachedAssemblies;
+            private List<DataTypeDescriptor>? cachedTypes;
+            private StringKeyedDictionary<Assembly>? assemblyByNameCache;
+            private Dictionary<int, object?>? idCache;
+            private Dictionary<object, UsageReferences>? objectsBeingDeserialized;
+            private List<IDeserializationCallback>? deserializationRegObjects;
 
             #endregion
 
             #region Properties
 
-            private Dictionary<int, object> IdCache => idCache ??= new Dictionary<int, object> { { 0, null } };
+            private Dictionary<int, object?> IdCache => idCache ??= new Dictionary<int, object?> { { 0, null } };
 
-            private List<(Assembly Assembly, string StoredName)> CachedAssemblies
-                => cachedAssemblies ??= new List<(Assembly, string)>(KnownAssemblies.Select(a => (a, (string)null)));
+            private List<(Assembly Assembly, string? StoredName)> CachedAssemblies
+                => cachedAssemblies ??= new List<(Assembly, string?)>(KnownAssemblies.Select(a => (a, (string?)null)));
 
             private List<DataTypeDescriptor> CachedTypes
                 => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
@@ -417,13 +417,14 @@ namespace KGySoft.Serialization.Binary
 
             #region Constructors
 
-            internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
+            internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector)
                 : base(context,
                     // Considering only deserialization flags. Other info must be read from the stream.
                     options & (BinarySerializationOptions.IgnoreSerializationMethods 
                         | BinarySerializationOptions.IgnoreObjectChanges 
                         | BinarySerializationOptions.IgnoreISerializable 
-                        | BinarySerializationOptions.IgnoreIObjectReference),
+                        | BinarySerializationOptions.IgnoreIObjectReference
+                        | BinarySerializationOptions.SafeMode),
                     binder, surrogateSelector)
             {
             }
@@ -436,7 +437,7 @@ namespace KGySoft.Serialization.Binary
 
             private static object ReadEnum(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                Type enumType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
+                Type enumType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
                 if (!enumType.IsEnum)
                     Throw.SerializationException(Res.BinarySerializationNotAnEnum(enumType));
                 DataTypes dataType = descriptor.ElementDataType;
@@ -474,11 +475,9 @@ namespace KGySoft.Serialization.Binary
                 int minor = br.ReadInt32();
                 int build = br.ReadInt32();
                 int revision = br.ReadInt32();
-                if (revision == -1)
-                    return new Version(major, minor);
-                if (build == -1)
-                    return new Version(major, minor, build);
-                return new Version(major, minor, build, revision);
+                return revision == -1 ? new Version(major, minor)
+                    : build == -1 ? new Version(major, minor, build)
+                    : new Version(major, minor, build, revision);
             }
 
             private static Uri ReadUri(BinaryReader br)
@@ -524,13 +523,13 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
-            private static void ApplyPendingUsages(UsageReferences usages, object origObject, object finalObject)
+            private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
             {
                 if (!usages.CanBeReplaced && origObject != finalObject)
                 {
                     if (origObject is IObjectReference)
                         Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
-                    Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject.GetType()));
+                    Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject!.GetType()));
                 }
 
                 if (usages.Count == 0)
@@ -544,8 +543,8 @@ namespace KGySoft.Serialization.Binary
                     usage.SetValue(finalObject);
             }
 
-            private static object GetPlaceholderValue(object value, [NoEnumeration]IEnumerable collection)
-                => value is IObjectReference ? collection.GetType().GetCollectionElementType().GetDefaultValue() : value;
+            private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
+                => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
             #endregion
 
@@ -554,24 +553,24 @@ namespace KGySoft.Serialization.Binary
             #region Internal Methods
 
             [SecurityCritical]
-            internal object Deserialize(BinaryReader br)
+            internal object? Deserialize(BinaryReader br)
             {
-                object result = ReadRoot(br);
+                object? result = ReadRoot(br);
                 DeserializationCallback();
                 return result;
             }
 
             [SecurityCritical]
-            internal object ReadWithType(BinaryReader br, DataTypeDescriptor knownElementType = null)
+            internal object? ReadWithType(BinaryReader br, DataTypeDescriptor? knownElementType = null)
             {
                 // 1.) getting whether the current instance is in cache
                 if (knownElementType == null || !IsValueType(knownElementType))
                 {
-                    if (TryGetCachedObject(br, out object cachedResult))
+                    if (TryGetCachedObject(br, out object? cachedResult))
                         return cachedResult;
                 }
 
-                DataTypeDescriptor descriptor = knownElementType != null && IsSealed(knownElementType) ? knownElementType : null;
+                DataTypeDescriptor? descriptor = knownElementType != null && IsSealed(knownElementType) ? knownElementType : null;
 
                 if (descriptor == null)
                 {
@@ -614,7 +613,7 @@ namespace KGySoft.Serialization.Binary
             internal DataTypeDescriptor ReadType(BinaryReader br, bool allowOpenTypes)
             {
                 DataTypeDescriptor result;
-                Type type;
+                Type? type;
 
                 // type index
                 int index = Read7BitInt(br);
@@ -634,7 +633,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
                     result = CachedTypes[index];
-                    type = result.Type;
+                    type = result.Type!;
                     if (type.IsGenericTypeDefinition)
                         result = HandleGenericTypeDef(br, result, allowOpenTypes);
                     else if (type == genericMethodDefinitionPlaceholderType)
@@ -648,17 +647,17 @@ namespace KGySoft.Serialization.Binary
                 // new assembly: assembly and type names are both stored as strings
                 if (index == NewAssemblyIndex)
                 {
-                    // assembly qualified name (GetType uses binder if set)
+                    // assembly qualified name
                     string storedAssemblyName = br.ReadString();
                     string storedTypeName = br.ReadString();
                     result = ReadNewTypeWithAssembly(storedAssemblyName, storedTypeName);
-                    type = result.Type;
+                    type = result.Type!;
                     if (type.IsGenericTypeDefinition)
                         result = HandleGenericTypeDef(br, result, allowOpenTypes);
                     return result;
                 }
 
-                (Assembly Assembly, string StoredName) assembly = default;
+                (Assembly Assembly, string? StoredName) assembly = default;
 
                 // type with known or omitted assembly: only type name is stored as string
                 if (index != OmitAssemblyIndex)
@@ -668,11 +667,21 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 string typeName = br.ReadString();
-                type = ReadBoundType(assembly.StoredName, typeName)
-                    ?? (assembly.StoredName == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly.Assembly, typeName));
+                type = ReadBoundType(assembly.StoredName, typeName);
+                if (type == null)
+                {
+                    type = assembly.StoredName == null
+                        ? Reflector.ResolveType(typeName, ResolveTypeOptions.None)
+                        : Reflector.ResolveType(assembly.Assembly!, typeName, ResolveTypeOptions.None);
+                }
 
                 if (type == null)
-                    Throw.SerializationException(Res.BinarySerializationCannotResolveType(typeName));
+                {
+                    string message = assembly.StoredName == null
+                        ? Res.BinarySerializationCannotResolveType(typeName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
+                    Throw.SerializationException(message);
+                }
 
                 result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
                 CachedTypes.Add(result);
@@ -684,7 +693,7 @@ namespace KGySoft.Serialization.Binary
 
             internal DataTypeDescriptor HandleGenericTypeDef(BinaryReader br, DataTypeDescriptor descriptor, bool allowOpenTypes, bool addToCache = true)
             {
-                Type typeDef = descriptor.Type;
+                Type typeDef = descriptor.Type!;
                 Type[] args = typeDef.GetGenericArguments();
                 int len = args.Length;
                 DataTypeDescriptor result;
@@ -717,14 +726,14 @@ namespace KGySoft.Serialization.Binary
                 if (typeDef == compressibleType)
                 {
                     var argDescriptor = ReadType(br, allowOpenTypes);
-                    args[0] = argDescriptor.Type;
+                    args[0] = argDescriptor.Type!;
                     result = new DataTypeDescriptor(typeDef.GetGenericType(args), argDescriptor.StoredType);
                 }
                 else
                 {
                     // reading arguments
                     for (int i = 0; i < len; i++)
-                        args[i] = ReadType(br, allowOpenTypes).Type;
+                        args[i] = ReadType(br, allowOpenTypes).Type!;
 
                     result = new DataTypeDescriptor(typeDef.GetGenericType(args));
                 }
@@ -737,20 +746,20 @@ namespace KGySoft.Serialization.Binary
 
             internal void AddObjectToCache(object obj)
             {
-                Dictionary<int, object> cache = IdCache;
-                cache.Add(idCache.Count, obj);
+                Dictionary<int, object?> cache = IdCache;
+                cache.Add(cache.Count, obj);
             }
 
-            internal void AddObjectToCache(object obj, out int id)
+            internal void AddObjectToCache(object? obj, out int id)
             {
-                Dictionary<int, object> cache = IdCache;
-                id = idCache.Count;
+                Dictionary<int, object?> cache = IdCache;
+                id = cache.Count;
                 cache.Add(id, obj);
             }
 
-            internal void ReplaceObjectInCache(int id, object obj)
+            internal void ReplaceObjectInCache(int id, object? obj)
             {
-                Dictionary<int, object> cache = IdCache;
+                Dictionary<int, object?> cache = IdCache;
                 cache[id] = obj;
             }
 
@@ -759,7 +768,7 @@ namespace KGySoft.Serialization.Binary
             #region Private Methods
 
             [SecurityCritical]
-            private object ReadRoot(BinaryReader br)
+            private object? ReadRoot(BinaryReader br)
             {
                 DataTypes dataType = ReadDataType(br);
 
@@ -805,7 +814,7 @@ namespace KGySoft.Serialization.Binary
                 return CreateCollection(br, addToCache, descriptor);
             }
 
-            private Type ReadBoundType(string assemblyName, string typeName)
+            private Type? ReadBoundType(string? assemblyName, string typeName)
             {
                 if (Binder is ISerializationBinder binder)
                     return binder.BindToType(assemblyName ?? String.Empty, typeName);
@@ -814,9 +823,9 @@ namespace KGySoft.Serialization.Binary
 
             private DataTypeDescriptor HandleGenericMethodParameter(BinaryReader br)
             {
-                Type declaringType = ReadType(br, true).Type;
+                Type declaringType = ReadType(br, true).Type!;
                 string signature = br.ReadString();
-                MethodInfo method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                MethodInfo? method = declaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
                     .FirstOrDefault(mi => mi.ToString() == signature);
                 if (method == null)
                     Throw.SerializationException(Res.BinarySerializationGenericMethodNotFound(signature, declaringType));
@@ -824,7 +833,7 @@ namespace KGySoft.Serialization.Binary
                 Type[] args = method.GetGenericArguments();
                 if (argIndex < 0 || argIndex >= args.Length)
                     Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
-                DataTypeDescriptor result = new DataTypeDescriptor(args[argIndex]);
+                var result = new DataTypeDescriptor(args[argIndex]);
 
                 CachedTypes.Add(result);
                 return result;
@@ -837,7 +846,7 @@ namespace KGySoft.Serialization.Binary
             private object CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // creating the array
-                int rank = descriptor.Type.GetArrayRank();
+                int rank = descriptor.Type!.GetArrayRank();
                 int[] lengths = new int[rank];
                 int[] lowerBounds = new int[rank];
                 for (int i = 0; i < rank; i++)
@@ -847,7 +856,7 @@ namespace KGySoft.Serialization.Binary
                     lengths[i] = Read7BitInt(br);
                 }
 
-                Type elementType = descriptor.ElementDescriptor.Type;
+                Type elementType = descriptor.ElementDescriptor!.Type!;
                 Array result = Array.CreateInstance(elementType, lengths, lowerBounds);
                 if (addToCache)
                     AddObjectToCache(result);
@@ -866,7 +875,7 @@ namespace KGySoft.Serialization.Binary
                     int offset = lowerBounds[0];
                     for (int i = 0; i < result.Length; i++)
                     {
-                        object value = ReadElement(br, descriptor.ElementDescriptor);
+                        object? value = ReadElement(br, descriptor.ElementDescriptor);
                         SetArrayElement(result, value, i + offset);
                     }
 
@@ -877,7 +886,7 @@ namespace KGySoft.Serialization.Binary
                 var arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
                 while (arrayIndexer.MoveNext())
                 {
-                    object value = ReadElement(br, descriptor.ElementDescriptor);
+                    object? value = ReadElement(br, descriptor.ElementDescriptor);
                     SetArrayElement(result, value, arrayIndexer.Current);
                 }
 
@@ -891,31 +900,31 @@ namespace KGySoft.Serialization.Binary
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
-                    Throw.InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
+                    Throw.InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type!));
 
                 // getting whether the current instance is in cache
                 if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
-                    if (TryGetCachedObject(br, out object cachedResult))
-                        return cachedResult;
+                    if (TryGetCachedObject(br, out object? cachedResult))
+                        return cachedResult!;
                 }
 
-                var dataType = descriptor.CollectionDataType;
+                DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, out int count);
                 if (serInfo.IsSingleElement)
                 {
-                    object key = ReadElement(br, descriptor.ElementDescriptor);
-                    object value = ReadElement(br, descriptor.ValueDescriptor);
+                    object? key = ReadElement(br, descriptor.ElementDescriptor!);
+                    object? value = ReadElement(br, descriptor.ValueDescriptor!);
                     SetKeyValue(result, key, value);
                 }
                 else if (result is IEnumerable collection)
                 {
-                    MethodAccessor addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
+                    MethodAccessor? addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
                     for (int i = 0; i < count; i++)
                     {
-                        object element = ReadElement(br, descriptor.ElementDescriptor);
-                        object value = descriptor.IsDictionary ? ReadElement(br, descriptor.ValueDescriptor) : null;
+                        object? element = ReadElement(br, descriptor.ElementDescriptor!);
+                        object? value = descriptor.IsDictionary ? ReadElement(br, descriptor.ValueDescriptor!) : null;
 
                         if (descriptor.IsDictionary)
                         {
@@ -973,7 +982,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
+            private object? ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
             {
                 // single element
                 if (!elementDescriptor.IsCollection)
@@ -994,9 +1003,9 @@ namespace KGySoft.Serialization.Binary
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
-            private object ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
+            private object? ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
-                bool TryGetFromCache(out object cachedValue)
+                bool TryGetFromCache(out object? cachedValue)
                 {
                     if (dataTypeDescriptor.ParentDescriptor == null)
                     {
@@ -1021,13 +1030,12 @@ namespace KGySoft.Serialization.Binary
 
                 if (dataTypeDescriptor.ParentDescriptor != null && IsImpureTypeButEnum(dataType))
                     EnsureAttributes(br, dataTypeDescriptor);
-                if (addToCache == null)
-                    addToCache = !IsValueType(dataTypeDescriptor);
 
-                object createdResult = null;
+                addToCache ??= !IsValueType(dataTypeDescriptor);
+                object? createdResult = null;
                 try
                 {
-                    object cachedResult;
+                    object? cachedResult;
                     switch (dataType & ~DataTypes.Store7BitEncoded & ~DataTypes.Nullable)
                     {
                         case DataTypes.Bool:
@@ -1126,14 +1134,14 @@ namespace KGySoft.Serialization.Binary
                 // checking instance id
                 if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
-                    if (TryGetCachedObject(br, out object cachedResult))
-                        return cachedResult;
+                    if (TryGetCachedObject(br, out object? cachedResult))
+                        return cachedResult!;
                 }
 
                 // actual type if needed
                 Type type = descriptor.ParentDescriptor != null && !IsSealed(descriptor)
-                    ? ReadType(br, false).Type
-                    : descriptor.Type;
+                    ? ReadType(br, false).Type!
+                    : descriptor.Type!;
 
                 // deserialize (object will be cached immediately after creation so circular references will be found in time)
                 type = Nullable.GetUnderlyingType(type) ?? type;
@@ -1141,7 +1149,7 @@ namespace KGySoft.Serialization.Binary
                     Throw.SerializationException(Res.BinarySerializationNotBinarySerializable(type));
                 byte[] serData = br.ReadBytes(Read7BitInt(br));
 
-                if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object? result))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
 
                 if (addToCache)
@@ -1161,7 +1169,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private object? ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // When element types may differ, reading element with data type
                 if (descriptor.ParentDescriptor != null && !IsSealed(descriptor))
@@ -1170,11 +1178,11 @@ namespace KGySoft.Serialization.Binary
                 // checking instance id
                 if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
                 {
-                    if (TryGetCachedObject(br, out object cachedResult))
+                    if (TryGetCachedObject(br, out object? cachedResult))
                         return cachedResult;
                 }
 
-                Type type = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
+                Type type = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
 
                 // IsDefault flag
                 bool isCustomObjectGraph = IsCustomSerialized(br, descriptor);
@@ -1182,16 +1190,15 @@ namespace KGySoft.Serialization.Binary
                 // Types of custom serialized objects are always explicitly stored
                 bool isSealedElement = descriptor.ParentDescriptor != null && IsSealed(descriptor);
                 if (isCustomObjectGraph && isSealedElement)
-                    type = ReadType(br, false).Type;
+                    type = ReadType(br, false).Type!;
 
                 // Creating initial instance, registration
-                if (!Reflector.TryCreateEmptyObject(type, false, true, out object obj))
-                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
-                bool useSurrogate = TryGetSurrogate(type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector);
+                bool useSurrogate = TryGetSurrogate(type, out ISerializationSurrogate? surrogate, out ISurrogateSelector? selector);
+                object obj = CreateEmptyObject(useSurrogate, type);
                 bool isISerializable = !IgnoreISerializable && obj is ISerializable;
-                IObjectReference objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
+                IObjectReference? objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
                 int id = 0;
-                UsageReferences usages = null;
+                UsageReferences? usages = null;
                 bool trackUsages = useSurrogate || objRef != null;
 
                 // if the object can be possibly changed, then we prepare tracking its usage
@@ -1204,7 +1211,8 @@ namespace KGySoft.Serialization.Binary
                 OnDeserializing(obj);
 
                 // The actual deserialization
-                object result = obj;
+                // ReSharper disable once VariableCanBeNotNullable - false alarm, IObjectReference.GetRealObject actually can return null
+                object? result = obj;
                 if (isISerializable || useSurrogate)
                 {
                     result = isCustomObjectGraph
@@ -1223,7 +1231,7 @@ namespace KGySoft.Serialization.Binary
                 // some post administration if the object was registered for tracking usages
                 if (trackUsages)
                 {
-                    ApplyPendingUsages(usages, obj, result);
+                    ApplyPendingUsages(usages!, obj, result);
 
                     if (result != obj && addToCache)
                         ReplaceObjectInCache(id, result);
@@ -1241,16 +1249,14 @@ namespace KGySoft.Serialization.Binary
                 Type type = obj.GetType();
 
                 // iterating through self and base types
-                for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+                for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
                 {
                     // checking name of base type
                     if (t != type)
                     {
                         string name = ReadName(br);
-
-                        // ReSharper disable once PossibleNullReferenceException - obj is object in all cases
                         while (t.Name != name && t != Reflector.ObjectType)
-                            t = t.BaseType;
+                            t = t.BaseType!;
 
                         if (name.Length == 0 && t == Reflector.ObjectType)
                             return;
@@ -1264,9 +1270,9 @@ namespace KGySoft.Serialization.Binary
                     for (int i = 0; i < count; i++)
                     {
                         string name = ReadName(br);
-                        object value = ReadWithType(br);
+                        object? value = ReadWithType(br);
 
-                        FieldInfo field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                        FieldInfo? field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                         if (field == null)
                         {
                             if (!IgnoreObjectChanges)
@@ -1306,7 +1312,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object ReadCustomObjectGraph(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
+            private object ReadCustomObjectGraph(BinaryReader br, object obj, ISerializationSurrogate? surrogate, ISurrogateSelector? selector)
             {
                 Type type = obj.GetType();
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
@@ -1316,8 +1322,8 @@ namespace KGySoft.Serialization.Binary
                 for (int i = 0; i < count; i++)
                 {
                     string name = ReadName(br);
-                    object value = ReadWithType(br);
-                    Type elementType = ReadType(br, false).Type;
+                    object? value = ReadWithType(br);
+                    Type elementType = ReadType(br, false).Type!;
                     si.AddValue(name, value, elementType);
                 }
 
@@ -1334,14 +1340,14 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, ISerializationSurrogate surrogate, ISurrogateSelector selector)
+            private object ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, ISerializationSurrogate? surrogate, ISurrogateSelector? selector)
             {
                 Type type = obj.GetType();
 
                 // reading original fields into si
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
-                var existingNames = new Dictionary<string, int>();
-                string currentTypeName = null;
+                var existingNames = new StringKeyedDictionary<int>();
+                string? currentTypeName = null;
                 do
                 {
                     // reading fields of current level
@@ -1371,7 +1377,7 @@ namespace KGySoft.Serialization.Binary
                             }
                         }
 
-                        object value = ReadWithType(br);
+                        object? value = ReadWithType(br);
                         si.AddValue(name, value);
                     }
 
@@ -1397,17 +1403,17 @@ namespace KGySoft.Serialization.Binary
             {
                 // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
                 // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
-                Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
+                StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
 
                 // Reading the custom content and trying to identify them as fields
                 int count = Read7BitInt(br);
                 for (int i = 0; i < count; i++)
                 {
                     string name = ReadName(br);
-                    object value = ReadWithType(br);
+                    object? value = ReadWithType(br);
                     ReadType(br, false); // the element type, which is ignored now
 
-                    if (fields.TryGetValue(name, out FieldInfo field))
+                    if (fields.TryGetValue(name, out FieldInfo? field))
                     {
                         if (field.IsNotSerialized)
                             continue;
@@ -1423,7 +1429,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private object ReadValueType(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                Type structType = Nullable.GetUnderlyingType(descriptor.Type) ?? descriptor.Type;
+                Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
                 if (!structType.IsValueType)
                     Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
@@ -1433,9 +1439,19 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            [SecurityCritical]
+            private object CreateEmptyObject(bool useSurrogate, Type type)
+            {
+                if (!useSurrogate && SafeMode && !SerializationHelper.IsSafeType(type))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                return obj;
+            }
+
             private void OnDeserializing(object obj) => ExecuteMethodsOfAttribute(obj, onDeserializingAttribute);
 
-            private void OnDeserialized(object obj)
+            private void OnDeserialized(object? obj)
             {
                 if (obj == null || IgnoreSerializationMethods)
                     return;
@@ -1443,13 +1459,12 @@ namespace KGySoft.Serialization.Binary
                 RegisterDeserializedObject(obj as IDeserializationCallback);
             }
 
-            private void RegisterDeserializedObject(IDeserializationCallback obj)
+            private void RegisterDeserializedObject(IDeserializationCallback? obj)
             {
                 if (obj == null)
                     return;
 
-                if (deserializationRegObjects == null)
-                    deserializationRegObjects = new List<IDeserializationCallback>();
+                deserializationRegObjects ??= new List<IDeserializationCallback>();
                 deserializationRegObjects.Add(obj);
             }
 
@@ -1463,9 +1478,9 @@ namespace KGySoft.Serialization.Binary
                 deserializationRegObjects = null;
             }
 
-            private bool TryGetCachedObject(BinaryReader br, out object result)
+            private bool TryGetCachedObject(BinaryReader br, out object? result)
             {
-                Dictionary<int, object> cache = IdCache;
+                Dictionary<int, object?> cache = IdCache;
                 int id = Read7BitInt(br);
                 if (cache.TryGetValue(id, out result))
                     return true;
@@ -1475,9 +1490,9 @@ namespace KGySoft.Serialization.Binary
                 return false;
             }
 
-            private void SetField(FieldInfo field, object obj, object value)
+            private void SetField(FieldInfo field, object obj, object? value)
             {
-                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {
                     field.Set(obj, value);
@@ -1487,9 +1502,9 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new FieldUsage(obj, field));
             }
 
-            private void SetArrayElement(Array array, object value, params int[] indices)
+            private void SetArrayElement(Array array, object? value, params int[] indices)
             {
-                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {
                     if (indices.Length == 1)
@@ -1502,9 +1517,9 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new ArrayUsage(array, indices));
             }
 
-            private void AddListElement(IList list, object value)
+            private void AddListElement(IList list, object? value)
             {
-                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {
                     list.Add(value);
@@ -1517,9 +1532,9 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new ListUsage(list, index));
             }
 
-            private void AddCollectionElement([NoEnumeration]IEnumerable collection, MethodAccessor addMethod, object value)
+            private void AddCollectionElement([NoEnumeration]IEnumerable collection, MethodAccessor addMethod, object? value)
             {
-                UsageReferences trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {
                     addMethod.Invoke(collection, value);
@@ -1556,14 +1571,14 @@ namespace KGySoft.Serialization.Binary
                 addMethod.Invoke(collection, value);
             }
 
-            private void AddDictionaryElement(IDictionary dict, object key, object value)
+            private void AddDictionaryElement(IDictionary dict, object? key, object? value)
             {
-                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
-                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)
                 {
-                    // ReSharper disable once AssignNullToNotNullAttribute - though it is really a problem at most dictionaries we let the exception come if the key is really null
-                    dict.Add(key, value);
+                    // though a null key is really a problem at most dictionaries we let the exception come if the key is really null
+                    dict.Add(key!, value);
                     return;
                 }
 
@@ -1572,12 +1587,10 @@ namespace KGySoft.Serialization.Binary
                 {
                     int index = dict.Count;
 
-                    // we exploit that the supported ordered dictionary is non generic
-                    object placeholderKey = keyUsages == null ? key : new object();
-                    object placeholderValue = valueUsages == null ? value : null;
-
-                    // ReSharper disable once AssignNullToNotNullAttribute - placeholderKey is not null here
-                    dict.Add(placeholderKey, placeholderValue);
+                    // we exploit that the supported ordered dictionary is not generic
+                    object placeholderKey = keyUsages == null ? key! : new object();
+                    object? placeholderValue = valueUsages == null ? value : null;
+                    dict.Add(placeholderKey!, placeholderValue);
 
                     keyUsages?.Add(new OrderedDictionaryKeyUsage(orderedDictionary, index));
                     valueUsages?.Add(new OrderedDictionaryValueUsage(orderedDictionary, index));
@@ -1599,26 +1612,26 @@ namespace KGySoft.Serialization.Binary
                     keyUsages.CanBeReplaced = false;
                     valueUsages.CanBeReplaced = false;
                     Type type = dict.GetType();
-                    var elementTypes = type.GetCollectionElementType().GetGenericArguments();
-                    var keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
-                        ? key
+                    Type[] elementTypes = type.GetCollectionElementType()!.GetGenericArguments();
+                    object keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
+                        ? key!
                         : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
-                    var valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
-                        ? value
+                    object valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
+                        ? value!
                         : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
                     dict.Add(keyToAdd, valueToAdd);
                     return;
                 }
 
                 // Adding the possible usages. Both key and value can be replaced at the same time for ordered dictionaries only.
-                keyUsages?.Add(new DictionaryKeyUsage(dict, value));
+                keyUsages?.Add(new DictionaryKeyUsage(dict, value!));
                 valueUsages?.Add(new DictionaryValueUsage(dict, key));
             }
 
-            private void AddDictionaryElement(object dictionary, MethodAccessor addMethod, object key, object value)
+            private void AddDictionaryElement(object dictionary, MethodAccessor addMethod, object? key, object? value)
             {
-                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
-                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (keyUsages != null || valueUsages != null)
                 {
                     AddDictionaryElement((IDictionary)dictionary, key, value);
@@ -1628,10 +1641,10 @@ namespace KGySoft.Serialization.Binary
                 addMethod.Invoke(dictionary, key, value);
             }
 
-            private void SetKeyValue(object obj, object key, object value)
+            private void SetKeyValue(object obj, object? key, object? value)
             {
-                UsageReferences keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
-                UsageReferences valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)
                 {
                     Accessors.SetKeyValue(obj, key, value);
@@ -1666,7 +1679,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     if (entry.Value == null)
                         continue;
-                    if (objectsBeingDeserialized.TryGetValue(entry.Value, out UsageReferences usages))
+                    if (objectsBeingDeserialized.TryGetValue(entry.Value, out UsageReferences? usages))
                     {
                         if (entry.Value is IObjectReference)
                             Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
@@ -1677,15 +1690,16 @@ namespace KGySoft.Serialization.Binary
 
             private DataTypeDescriptor ReadNewTypeWithAssembly(string assemblyName, string typeName)
             {
-                string key = assemblyName + ":" + typeName;
-                Type type = ReadBoundType(assemblyName, typeName);
+                Type? type = ReadBoundType(assemblyName, typeName);
                 if (type != null)
                     CachedAssemblies.Add((type.Assembly, assemblyName));
                 else
                 {
-
+                    // Assembly resolve depends on SafeMode
                     Assembly assembly = GetAssembly(assemblyName);
-                    type = Reflector.ResolveType(assembly, typeName);
+
+                    // ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
+                    type = Reflector.ResolveType(assembly, typeName, ResolveTypeOptions.None);
                     if (type == null)
                         Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
                     CachedAssemblies.Add((assembly, assemblyName));
@@ -1693,15 +1707,7 @@ namespace KGySoft.Serialization.Binary
 
                 var result = new DataTypeDescriptor(type, new TypeByString(assemblyName, typeName));
                 CachedTypes.Add(result);
-                AddTypeToCache(key, type);
                 return result;
-            }
-
-            private void AddTypeToCache(string key, Type result)
-            {
-                if (typeByNameCache == null)
-                    typeByNameCache = new Dictionary<string, Type>();
-                typeByNameCache.Add(key, result);
             }
 
             /// <summary>
@@ -1709,15 +1715,18 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             private Assembly GetAssembly(string name)
             {
-                if (assemblyByNameCache != null && assemblyByNameCache.TryGetValue(name, out Assembly result))
+                if (assemblyByNameCache != null && assemblyByNameCache.TryGetValue(name, out Assembly? result))
                     return result;
 
                 // 1.) Iterating through loaded assemblies
                 result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
 
-                // 2.) Trying to load assembly
+                // 2.) Trying to load assembly. Not using AssemblyResolver because Assembly.Load allows version mismatch for some System assemblies.
                 if (result == null)
                 {
+                    if (SafeMode)
+                        Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
+
                     try
                     {
                         result = Assembly.Load(new AssemblyName(name));
@@ -1737,8 +1746,7 @@ namespace KGySoft.Serialization.Binary
 
                 if (result == null)
                     Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name));
-                if (assemblyByNameCache == null)
-                    assemblyByNameCache = new Dictionary<string, Assembly>(1);
+                assemblyByNameCache ??= new StringKeyedDictionary<Assembly>(1);
                 assemblyByNameCache.Add(name, result);
                 return result;
             }
@@ -1751,7 +1759,7 @@ namespace KGySoft.Serialization.Binary
 
             private TypeAttributes EnsureAttributes(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo)descriptor.StoredType ?? descriptor.Type;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
                 if (TypeAttributesCache.TryGetValue(type, out TypeAttributes result))
                     return result;
                 result = (TypeAttributes)br.ReadByte();

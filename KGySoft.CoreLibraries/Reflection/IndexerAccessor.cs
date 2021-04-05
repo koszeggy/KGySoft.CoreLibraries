@@ -19,7 +19,9 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -33,12 +35,12 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Represents a non-generic setter that can be used for any indexers.
         /// </summary>
-        private delegate void IndexerSetter(object instance, object value, object[] indexArguments);
+        private delegate void IndexerSetter(object? instance, object? value, object?[] indexArguments);
 
         /// <summary>
         /// Represents a non-generic getter that can be used for any indexers.
         /// </summary>
-        private delegate object IndexerGetter(object instance, object[] indexArguments);
+        private delegate object? IndexerGetter(object? instance, object?[] indexArguments);
 
         #endregion
 
@@ -55,13 +57,19 @@ namespace KGySoft.Reflection
 
         #region Public Methods
 
+#pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member - in base indexerParameters can be null because it is ignored for simple properties
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override void Set(object instance, object value, params object[] indexerParameters)
+        public override void Set(object? instance, object? value, params object?[] indexerParameters)
+            // TODO: indexerParameters actually must not be null here but any check or fallback array initialization would just make the invoke slower.
+            // A try-catch and a post check could help to transform the possible exception to a reasonable one without slowing down the happy path
             => ((IndexerSetter)Setter)(instance, value, indexerParameters);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object Get(object instance, params object[] indexerParameters)
+        public override object? Get(object? instance, params object?[] indexerParameters)
+            // TODO: indexerParameters actually must not be null here but any check or fallback array initialization would just make the invoke slower.
+            // A try-catch and a post check could help to transform the possible exception to a reasonable one without slowing down the happy path
             => ((IndexerGetter)Getter)(instance, indexerParameters);
+#pragma warning restore CS8765
 
         #endregion
 
@@ -71,8 +79,8 @@ namespace KGySoft.Reflection
         {
             var property = (PropertyInfo)MemberInfo;
 
-            MethodInfo getterMethod = property.GetGetMethod(true);
-            Type declaringType = getterMethod.DeclaringType;
+            MethodInfo getterMethod = property.GetGetMethod(true)!;
+            Type? declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)
@@ -109,8 +117,8 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateSetter()
         {
             var property = (PropertyInfo)MemberInfo;
-            MethodInfo setterMethod = property.GetSetMethod(true);
-            Type declaringType = setterMethod.DeclaringType;
+            MethodInfo setterMethod = property.GetSetMethod(true)!;
+            Type? declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (property.PropertyType.IsPointer)

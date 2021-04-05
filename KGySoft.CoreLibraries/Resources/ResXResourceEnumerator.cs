@@ -16,7 +16,6 @@
 
 #region Usings
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,7 +85,7 @@ namespace KGySoft.Resources
             }
         }
 
-        public object Value => Entry.Value;
+        public object? Value => Entry.Value;
 
         public object Current => Entry;
 
@@ -112,21 +111,13 @@ namespace KGySoft.Resources
             this.mode = mode;
             this.version = version;
             state = States.BeforeFirst;
-            switch (mode)
+            wrappedEnumerator = mode switch
             {
-                case ResXEnumeratorModes.Resources:
-                    if (owner.Resources != null)
-                        wrappedEnumerator = owner.Resources.GetEnumerator();
-                    break;
-                case ResXEnumeratorModes.Metadata:
-                    if (owner.Metadata != null)
-                        wrappedEnumerator = owner.Metadata.GetEnumerator();
-                    break;
-                case ResXEnumeratorModes.Aliases:
-                    if (owner.Aliases != null)
-                        wrappedEnumerator = owner.Aliases.Select(SelectAlias).GetEnumerator();
-                    break;
-            }
+                ResXEnumeratorModes.Resources => owner.Resources?.GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                ResXEnumeratorModes.Metadata => owner.Metadata?.GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                ResXEnumeratorModes.Aliases => owner.Aliases?.Select(SelectAlias).GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                _ => Throw.InternalError<IEnumerator<KeyValuePair<string, ResXDataNode>>>($"Unexpected mode: {mode}")
+            };
         }
 
         #endregion

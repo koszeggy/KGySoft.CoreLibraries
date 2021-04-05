@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -38,7 +39,7 @@ namespace KGySoft.CoreLibraries
             #region Fields
 
             internal static readonly bool IsPrimitive = typeof(T).IsPrimitive;
-            internal static readonly int ElementSizeExponent = IsPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
+            internal static readonly int ElementSizeExponent = IsPrimitive ? (int)Math.Log(Reflector<T>.SizeOf, 2) : 0;
 
             #endregion
         }
@@ -77,7 +78,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the array.</typeparam>
         /// <param name="array">The array to create the <see cref="ArraySection{T}"/> from.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance for the specified <paramref name="array"/>.</returns>
-        public static ArraySection<T> AsSection<T>(this T[] array) => array == null ? ArraySection<T>.Null : new ArraySection<T>(array);
+        public static ArraySection<T> AsSection<T>(this T[]? array) => array == null ? ArraySection<T>.Null : new ArraySection<T>(array);
 
         /// <summary>
         /// Gets an <see cref="Array2D{T}"/> wrapper for the specified <paramref name="array"/>.

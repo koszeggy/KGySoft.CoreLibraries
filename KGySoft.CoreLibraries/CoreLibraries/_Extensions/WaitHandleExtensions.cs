@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if !(NET35 || NET40)
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: WaitHandleExtensions.cs
@@ -14,14 +15,10 @@
 
 #endregion
 
-#if !(NET35 || NET40)
-
 #region Usings
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
-using KGySoft.Annotations;
 
 #endregion
 
@@ -49,23 +46,27 @@ namespace KGySoft.CoreLibraries
         // NOTE: This solution was inspired by this one: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/interop-with-other-asynchronous-patterns-and-types?redirectedfrom=MSDN#tasks-and-wait-handles
         public static async Task<bool> WaitOneAsync(this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
         {
-            if (handle == null)
+            if (handle == null!)
                 Throw.ArgumentNullException(Argument.handle);
             if (cancellationToken.IsCancellationRequested)
                 return false;
-            RegisteredWaitHandle registeredHandle = null;
+            RegisteredWaitHandle? registeredHandle = null;
             var tokenRegistration = default(CancellationTokenRegistration);
             try
             {
                 var completionSource = new TaskCompletionSource<bool>();
-                registeredHandle = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) => ((TaskCompletionSource<bool>)state).TrySetResult(!timedOut), completionSource, timeout, true);
-                tokenRegistration = cancellationToken.Register(state => ((TaskCompletionSource<bool>)state).TrySetResult(false), completionSource);
+                registeredHandle = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) => ((TaskCompletionSource<bool>)state!).TrySetResult(!timedOut), completionSource, timeout, true);
+                tokenRegistration = cancellationToken.Register(state => ((TaskCompletionSource<bool>)state!).TrySetResult(false), completionSource);
                 return await completionSource.Task.ConfigureAwait(false);
             }
             finally
             {
                 registeredHandle?.Unregister(null);
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
                 tokenRegistration.Dispose();
+#else
+                await tokenRegistration.DisposeAsync().ConfigureAwait(false);
+#endif
             }
         }
 

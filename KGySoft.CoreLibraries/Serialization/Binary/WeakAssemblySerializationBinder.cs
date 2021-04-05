@@ -31,9 +31,30 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can ignore version and token information
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
-    /// <br/>See the also the <strong>Remarks</strong> section of the <see cref="ForwardedTypesSerializationBinder"/> for details and some examples.
+    /// It also can make any <see cref="IFormatter"/> safe in terms of prohibiting loading assemblies during the deserialization if the <see cref="SafeMode"/>
+    /// property is <see langword="true"/>.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <remarks>
+    /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
+    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
+    /// <note>This binder does not use exact type mapping just tries to resolve type information automatically.
+    /// To customize type mapping or use a custom resolve logic you can use the <see cref="ForwardedTypesSerializationBinder"/>
+    /// or <see cref="CustomSerializationBinder"/> classes, respectively.</note>
+    /// <para>The <see cref="WeakAssemblySerializationBinder"/> class allows resolving type information by weak assembly identity,
+    /// or by completely ignoring assembly information (if <see cref="IgnoreAssemblyNameOnResolve"/> property is <see langword="true"/>.)</para>
+    /// <para>It also makes possible to prevent loading assembles during deserialization if the <see cref="SafeMode"/> property is <see langword="true"/>.
+    /// <note type="tip">You can make even a <see cref="BinaryFormatter"/> safe by assigning a <see cref="WeakAssemblySerializationBinder"/>
+    /// with <see cref="SafeMode"/> = <see langword="true"/>&#160;to its <see cref="IFormatter.Binder"/> property so it cannot resolve any type
+    /// whose assembly is not already loaded.
+    /// </note></para>
+    /// <para>If <see cref="WeakAssemblySerializationBinder"/> is used on serialization, then it can omit assembly information from the serialization stream
+    /// if the <see cref="OmitAssemblyNameOnSerialize"/> property is <see langword="true"/>.</para>
+    /// </remarks>
     /// <seealso cref="ForwardedTypesSerializationBinder"/>
+    /// <seealso cref="CustomSerializationBinder"/>
+    /// <seealso cref="BinarySerializationFormatter"/>
     public sealed class WeakAssemblySerializationBinder : SerializationBinder, ISerializationBinder
     {
         #region Constants
@@ -52,7 +73,7 @@ namespace KGySoft.Serialization.Binary
         /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>In .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
+        /// <note>In .NET Framework 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
         /// value of this property. <see cref="BinarySerializationFormatter"/> is able to use the <see cref="WeakAssemblySerializationBinder"/>
         /// as an <see cref="ISerializationBinder"/> implementation and consider the value of this property even in .NET 3.5.</note>
         /// <note>The value of this property is used only on serialization; however, it affects deserialization as well:
@@ -78,6 +99,20 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         public bool IgnoreAssemblyNameOnResolve { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets whether loading assemblies is prohibited on deserialization.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then no assembly loading will occur on deserialization.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
+        /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
+        /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
+
         #endregion
 
         #region Methods
@@ -95,15 +130,15 @@ namespace KGySoft.Serialization.Binary
         /// <param name="typeName">If <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, then returns the full name of the type without assembly information;
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
-        /// <note>In .NET 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
+        /// <note>In .NET Framework 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer
         /// serializer handles the <see cref="ISerializationBinder"/> interface or calls it directly.</note>
         /// </remarks>
 #if !NET35
         override
 #endif
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
         {
-            if (serializedType == null)
+            if (serializedType == null!)
                 Throw.ArgumentNullException(Argument.serializedType);
 
 #if NET35
@@ -136,14 +171,23 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
         public override Type BindToType(string assemblyName, string typeName)
         {
-            Assembly assembly = GetAssembly(assemblyName);
-            var options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch;
-            if (IgnoreAssemblyNameOnResolve)
-                options |= ResolveTypeOptions.AllowIgnoreAssemblyName;
-            Type result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
+            Assembly? assembly = GetAssembly(assemblyName);
+            var options = IgnoreAssemblyNameOnResolve
+                ? ResolveTypeOptions.AllowIgnoreAssemblyName
+                : ResolveTypeOptions.AllowPartialAssemblyMatch;
+            if (!SafeMode)
+                options |= ResolveTypeOptions.TryToLoadAssemblies;
+            Type? result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
             if (result == null)
-                Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
+            {
+                string message = String.IsNullOrEmpty(assemblyName)
+                    ? Res.BinarySerializationCannotResolveType(typeName)
+                    : SafeMode
+                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+                Throw.SerializationException(message);
+            }
 
             return result;
         }
@@ -155,19 +199,30 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Resolves an assembly by string
         /// </summary>
-        private Assembly GetAssembly(string name)
+        private Assembly? GetAssembly(string name)
         {
             if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
                 return null;
 
-            var options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch;
-            if (!IgnoreAssemblyNameOnResolve)
-                options |= ResolveAssemblyOptions.ThrowError;
-            return AssemblyResolver.ResolveAssembly(name, options);
+            var options = ResolveAssemblyOptions.AllowPartialMatch;
+            if (!SafeMode)
+                options |= ResolveAssemblyOptions.TryToLoadAssembly;
+            Assembly? result = AssemblyResolver.ResolveAssembly(name, options);
+
+            // Note: the ThrowError flag would throw a ReflectionException with the same message but BindToType should throw SerializationException
+            if (result == null)
+            {
+                string message = SafeMode
+                    ? Res.BinarySerializationCannotResolveAssemblySafe(name)
+                    : Res.ReflectionCannotResolveAssembly(name);
+                Throw.SerializationException(message);
+            }
+
+            return result;
         }
 
         #endregion
-       
+
         #endregion
     }
 }

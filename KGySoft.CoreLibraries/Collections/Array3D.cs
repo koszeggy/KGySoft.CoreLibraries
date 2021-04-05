@@ -28,12 +28,19 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
-namespace KGySoft.Collections
-{
+#region Suppressions
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+// ReSharper disable UnusedMember.Local - Array3DDebugView.Items
+#endif
 
+#endregion
+
+namespace KGySoft.Collections
+{
     /// <summary>
     /// Represents a cubic array, whose indexer access is faster than a regular 3D array.
     /// It supports accessing its planes as <see cref="Array2D{T}"/> instances, or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
@@ -68,9 +75,7 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "We need the 3D array debug items")]
-            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
-            public T[,,] Items => array.To3DArray();
+            public T[,,]? Items => array.To3DArray();
 
             #endregion
 
@@ -162,7 +167,6 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The element at the specified indices.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1023:Indexers should not be multidimensional", Justification = "The type represents a multidimensional array")]
         public T this[int z, int y, int x]
         {
             // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
@@ -195,7 +199,6 @@ namespace KGySoft.Collections
         /// <param name="z">The depth index of the plane to obtain.</param>
         /// <returns>An <see cref="Array2D{T}"/> instance that represents a plane of this <see cref="Array3D{T}"/> instance.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Index is a typical indexer argument")]
         public Array2D<T> this[Index z]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -209,7 +212,6 @@ namespace KGySoft.Collections
         /// <param name="range">The range of planes to get.</param>
         /// <returns>The subrange of planes of the current <see cref="Array3D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         public Array3D<T> this[Range range]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -235,8 +237,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="ArraySection{T}"/> instance that represents the original array.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-                Justification = "See the Buffer property")]
         public static implicit operator ArraySection<T>(Array3D<T> array) => array.buffer;
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
@@ -247,8 +247,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="Array3D{T}"/>.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-                Justification = "False alarm, see AsSpan")]
         public static implicit operator Span<T>(Array3D<T> array) => array.AsSpan;
 #endif
 
@@ -348,7 +346,6 @@ namespace KGySoft.Collections
         /// <param name="startPlaneIndex">The offset that points to the first plane of the returned <see cref="Array3D{T}"/>.</param>
         /// <param name="planeCount">The desired number of planes of the returned <see cref="Array3D{T}"/>.</param>
         /// <returns>The subrange of planes of the current <see cref="Array3D{T}"/> instance indicated by the specified <paramref name="startPlaneIndex"/> and <paramref name="planeCount"/>.</returns>
-        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
         public Array3D<T> Slice(int startPlaneIndex, int planeCount) => new Array3D<T>(buffer.Slice(startPlaneIndex * planeSize, planeCount * planeSize), planeCount, height, width);
 
         /// <summary>
@@ -404,7 +401,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is Array3D<T> other && Equals(other);
+        public override bool Equals(object? obj) => obj is Array3D<T> other && Equals(other);
 
         /// <summary>
         /// Returns a hash code for this <see cref="Array3D{T}"/> instance.
@@ -412,6 +409,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode",
             Justification = "Field 'buffer' is practically read-only but it is not marked as so to prevent creating defensive copies")]
         public override int GetHashCode()
@@ -430,15 +428,14 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[] ToArray() => buffer.ToArray();
+        public T[]? ToArray() => buffer.ToArray();
 
         /// <summary>
         /// Copies the elements of this <see cref="Array3D{T}"/> to a new three dimensional array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        [SuppressMessage("Performance", "CA1814:Prefer jagged arrays over multidimensional", Justification = "See ToJaggedArray")]
-        public T[,,] To3DArray()
+        public T[,,]? To3DArray()
         {
             if (buffer.IsNull)
                 return null;
@@ -465,7 +462,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[][][] ToJaggedArray()
+        public T[][][]? ToJaggedArray()
         {
             if (buffer.IsNull)
                 return null;

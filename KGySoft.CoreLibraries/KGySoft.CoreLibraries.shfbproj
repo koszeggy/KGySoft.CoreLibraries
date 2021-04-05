@@ -40,7 +40,7 @@
     <ApiFilter>
     </ApiFilter>
     <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
-    <FrameworkVersion>Cross-platform (.NET Core/.NET Standard)</FrameworkVersion>
+    <FrameworkVersion>.NET Core/.NET Standard/.NET 5.0+</FrameworkVersion>
     <KeepLogFile>False</KeepLogFile>
     <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
     <CppCommentsFixup>False</CppCommentsFixup>
@@ -81,7 +81,7 @@
     </PlugInConfigurations>
     <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>5.5.0</HelpFileVersion>
+    <HelpFileVersion>5.6.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
@@ -173,12 +173,6 @@
       <ImageId>logo</ImageId>
       <AlternateText>logo</AlternateText>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-      <HintPath>C:\Program Files\dotnet\packs\NETStandard.Library.Ref\2.1.0\ref\netstandard2.1\netstandard.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <!-- Import the SHFB build targets -->
   <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />

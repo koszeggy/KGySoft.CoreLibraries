@@ -22,9 +22,13 @@ using System.Collections.Generic;
 
 #endregion
 
+#region Suppressions
+
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
@@ -45,7 +49,6 @@ namespace KGySoft.CoreLibraries
 
         #region Public methods
 
-#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
@@ -57,7 +60,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string separator = DefaultFormatSeparator)
+        public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string? separator = DefaultFormatSeparator)
             where TEnum : struct, Enum
         {
             return Enum<TEnum>.ToString(value, format, separator);
@@ -70,7 +73,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
-        public static string ToString<TEnum>(this TEnum value, string separator)
+        public static string ToString<TEnum>(this TEnum value, string? separator)
             where TEnum : struct, Enum
         {
             return Enum<TEnum>.ToString(value, EnumFormattingOptions.Auto, separator);
@@ -82,7 +85,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The enum value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
-        public static string GetName<TEnum>(this TEnum value)
+        public static string? GetName<TEnum>(this TEnum value)
             where TEnum : struct, Enum
         {
             return Enum<TEnum>.GetName(value);
@@ -177,8 +180,6 @@ namespace KGySoft.CoreLibraries
             return Enum<TEnum>.GetFlagsCount(value);
         }
 
-#pragma warning restore CS3024 // Constraint type is not CLS-compliant
-
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <see langword="enum"/> type of <paramref name="flags"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the <see langword="enum"/> type of <paramref name="flags"/>.
@@ -187,9 +188,11 @@ namespace KGySoft.CoreLibraries
         /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         /// <remarks><note>For better performance use the generic <see cref="AllFlagsDefined{TEnum}">AllFlagsDefined</see> overload whenever it is possible.</note></remarks>
-        public static bool AllFlagsDefined(this Enum flags)
+        public static bool AllFlagsDefined(this Enum? flags)
         {
-            string enumText = flags?.ToString("F") ?? "0";
+            if (flags == null)
+                return false;
+            string enumText = flags.ToString("F");
             return !(char.IsDigit(enumText[0]) || enumText[0] == '-');
         }
 
@@ -198,11 +201,10 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><c>true</c>, if only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
-        public static bool IsSingleFlag(this Enum value)
+        public static bool IsSingleFlag(this Enum? value)
         {
             if (value == null)
                 return false;
-
             ulong rawValue = ToUInt64(value);
             return rawValue != 0UL && (rawValue & (rawValue - 1)) == 0UL;
         }

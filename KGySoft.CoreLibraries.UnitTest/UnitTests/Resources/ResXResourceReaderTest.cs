@@ -19,10 +19,14 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+#if !NETFRAMEWORK
 using System.Runtime.Serialization;
+#endif
+#if NETFRAMEWORK
+using System.Reflection; 
+#endif
 using System.Xml;
-using KGySoft.Reflection;
+
 using KGySoft.Resources;
 
 using NUnit.Framework;

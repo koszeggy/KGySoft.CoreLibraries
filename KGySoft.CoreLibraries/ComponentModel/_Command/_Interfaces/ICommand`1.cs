@@ -31,7 +31,7 @@ namespace KGySoft.ComponentModel
     {
         #region Methods
 
-        void Execute(ICommandSource<TEventArgs> source, ICommandState state, object target, object parameter);
+        void Execute(ICommandSource<TEventArgs> source, ICommandState state, object? target, object? parameter);
 
         #endregion
     }

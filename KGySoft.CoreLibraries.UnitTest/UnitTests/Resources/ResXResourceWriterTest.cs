@@ -16,6 +16,9 @@
 
 #region Usings
 
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
+
 using KGySoft.Drawing;
 
 #region Used Namespaces
@@ -58,8 +61,6 @@ using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 #endregion
 
 #endregion
-
-#pragma warning disable 618
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
@@ -155,7 +156,183 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
+
+        private static void ReadWriteReadResX(string path, bool generateAliases, bool compatibilityMode)
+        {
+            // read from file
+            List<DictionaryEntry> reference, check;
+            string basePath = Path.GetDirectoryName(path);
+            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, SafeMode = true })
+            {
+                // reference contains now string-ResXDataNode elements
+                reference = reader.Cast<DictionaryEntry>().ToList();
+            }
+
+            // write to string: from ResXDataNodes without generated values
+            StringBuilder sb = new StringBuilder();
+            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
+            {
+                reference.ForEach(e => writer.AddResource(e.Key.ToString(), e.Value));
+            }
+
+            // re-read from string
+            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
+            {
+                reader.BasePath = basePath;
+                // check contains now string-object elements
+                check = reader.Cast<DictionaryEntry>().ToList();
+            }
+
+            // compare 1: check is from ResXDataNodes objects with original DataNodeInfos and without generated values
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+
+            // -----------------
+
+            // write to string: from objects (fileref resources will be embedded now)
+            sb = new StringBuilder();
+            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
+            {
+                // cleaning up nodes during the compare so DataNodeInfos will be nullified in reference
+                reference.ForEach(de => writer.AddResource(de.Key.ToString(), ((ResXDataNode)de.Value).GetValue(cleanupRawData: true)));
+            }
+
+            // re-read from string
+            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
+            {
+                // no base path is needed because there are no filerefs
+                // check contains now string-object elements
+                check = reader.Cast<DictionaryEntry>().ToList();
+            }
+
+            // compare 2: check is from objects so DataNodeInfos are generated, every object is embedded
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+
+            // -----------------
+
+            // write to string: from ResXDataNodes with nullified DataNodeInfos
+            sb = new StringBuilder();
+            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
+            {
+                // DataNodeInfos will be now re-generated in ResXDataNodes
+                reference.ForEach(de => writer.AddResource(de.Key.ToString(), de.Value));
+            }
+
+            // re-read from string
+            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
+            {
+                reader.BasePath = basePath;
+                // check contains now string-object elements
+                check = reader.Cast<DictionaryEntry>().ToList();
+            }
+
+            // compare 3: check is from ResXDataNodes objects with re-generated DataNodeInfos from values
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+        }
+
+#if NETFRAMEWORK
+        private static void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
+        {
+            using (new TestExecutionContext.IsolatedContext())
+            {
+                Console.WriteLine($"------------------System ResXResourceWriter (Items Count: {referenceObjects.Length})--------------------");
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    using (SystemResXResourceWriter writer =
+#if NET35
+                        new SystemResXResourceWriter(new StringWriter(sb))
+
+#else
+                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
+#endif
+
+                        )
+                    {
+                        int i = 0;
+                        foreach (object item in referenceObjects)
+                        {
+                            writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
+                        }
+                    }
+
+                    Console.WriteLine(sb.ToString());
+                    List<object> deserializedObjects = new List<object>();
+                    using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
+                    {
+                        foreach (DictionaryEntry item in reader)
+                        {
+                            deserializedObjects.Add(item.Value);
+                        }
+                    }
+
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"System serialization failed: {e}");
+                }
+            }  
+        }
+#endif
+
+        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
+        {
+            Console.WriteLine($"------------------KGySoft ResXResourceWriter (Items Count: {referenceObjects.Length}; Compatibility mode: {compatibilityMode})--------------------");
+            StringBuilder sb = new StringBuilder();
+            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb), typeNameConverter) { CompatibleFormat = compatibilityMode })
+            {
+                int i = 0;
+                foreach (object item in referenceObjects)
+                {
+                    writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
+                }
+            }
+
+            Console.WriteLine(sb.ToString());
+            List<object> deserializedObjects = new List<object>();
+            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
+            {
+                reader.SafeMode = safeMode;
+                foreach (DictionaryEntry item in reader)
+                {
+                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe() : item.Value);
+                }
+            }
+
+            AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+
+#if NETFRAMEWORK
+            if (compatibilityMode)
+            {
+                deserializedObjects.Clear();
+                using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
+                {
+                    try
+                    {
+                        foreach (DictionaryEntry item in reader)
+                        {
+                            deserializedObjects.Add(item.Value);
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"System serialization failed: {e}");
+                        Console.WriteLine("Skipping equality check");
+                        return;
+                    }
+                }
+
+                if (checkCompatibleEquality)
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+            } 
+#endif
+        }
+
+        #endregion
+
+        #region Instance Methods
 
         [Test]
         public void ReadWriteRead()
@@ -195,12 +372,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     (float)1,
                     (double)1,
                     (decimal)1,
-                    DBNull.Value,
                     new IntPtr(1),
                     new UIntPtr(1),
-#if !NETCOREAPP2_0 // in .NET Core throws PlatformNotSupportedException
-                    1.GetType(), // supported natively in non-compatible format
-#endif
                     new TimeSpan(1, 2, 3, 4, 5),
                 };
 
@@ -229,7 +402,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
                     BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
 
+#pragma warning disable 618
                     BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
+#pragma warning restore 618
                     (BinarySerializationOptions)(-1), // KGySoft.Libraries enum, non-existing value
 
                 };
@@ -406,14 +581,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     typeof(int[,]), // multi-dim array
                     typeof(int[][,]), // mixed jagged array
                     Array.CreateInstance(typeof(int), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
-                    typeof(List<>).GetGenericArguments()[0] // this can be only binary serialized  
+                    typeof(List<>).GetGenericArguments()[0] // generic type parameter
                 };
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects);
 #endif
-
-            KGySerializeObjects(referenceObjects); 
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -435,13 +609,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     new Uri(@"x:\teszt"),
                     new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
                     Color.Blue,
+                    StringSegment.Empty,
+#if !NETFRAMEWORK // System serializer dumps <value/> both for null and empty, and reads empty string for both
+                    StringSegment.Null,  
+#endif
 
                     // special handling to escape built-in
                     CultureInfo.InvariantCulture,
                     CultureInfo.GetCultureInfo("en"),
                     CultureInfo.GetCultureInfo("en-US"),
 
-                // partly working built-in
+                    // partly working built-in
 #if NETFRAMEWORK
                     Cursors.Arrow, // a default cursor: by string
 #endif
@@ -454,7 +632,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
 #endif
 #endif
-
                     // pure custom
                     new Version(1, 2, 3, 4),
 #if !NET
@@ -464,12 +641,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#else
+            // To be able to resolve Uri in safe mode
+            Reflector.ResolveAssembly("System");
 #endif
+
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
         }
 
         [Test]
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETCOREAPP3_0)
+        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")] 
+#endif
         public void SerializeByteArrays()
         {
             IList[] referenceObjects =
@@ -516,17 +700,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
 
-            // system serializer fails here: cannot cast string[*] to object[]
+            // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
             referenceObjects = new[]
             {
                 Array.CreateInstance(typeof(string), new int[] { 3 }, new int[] { -1 }) // array with -1..1 index interval
             };
 
-            KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);
         }
 
         [Test]
+#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETCOREAPP3_0)
+        [SuppressMessage("Performance", "CA1825:Avoid zero-length array allocations", Justification = "Serialization test, deserialized instance will be a new instance anyway")] 
+#endif
         public void SerializeSimpleArrays()
         {
             IList[] referenceObjects =
@@ -579,6 +765,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
+
+#if !NETFRAMEWORK
+            // To be able to resolve HashSet in safe mode
+            Reflector.ResolveAssembly("System.Core");
+#endif
             KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing
             KGySerializeObjects(referenceObjects, false);
         }
@@ -586,15 +777,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeNonSerializableType()
         {
-            // - winforms.FileRef/ResXDataNode - valszeg külön teszt, mert az egyenlőség nem fog stimmelni
             object[] referenceObjects =
                 {
                     new NonSerializableClass(),
                 };
 
-            // SystemSerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, false);
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects));
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false));
+
+            KGySerializeObjects(referenceObjects, safeMode: false);
+            KGySerializeObjects(referenceObjects, false, safeMode: false);
         }
 
         [Test]
@@ -604,11 +796,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
+#pragma warning disable 618
                 // binary wrapper
                 new AnyObjectSerializerWrapper("test", false),
-                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false),
-                new AnyObjectSerializerWrapper(new MemoryStream(new byte[] { 1, 2, 3 }), false, true),
-
+#pragma warning restore 618
 #if NETFRAMEWORK
                 // legacy formats: KGy version converts these to self formats
                 new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName),
@@ -638,208 +829,52 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        public void SerializeMemoryStream()
+        {
+            // Starting with .NET Core it is not serializable anymore but still has to be supported even in safe mode
+            // to maintain compatibility (as even the VS designer embeds MemoryStream into .resx in some cases)
+            object[] referenceObjects =
+            {
+                new MemoryStream(new byte[] { 1, 2, 3 }),
+            };
+
+#if NETFRAMEWORK
+            SystemSerializeObjects(referenceObjects);
+#endif
+            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, false);
+        }
+
+        [Test]
         public void TestResXSerializationBinder()
         {
             // The ResXSerializationBinder is used during (de)serialization if there is a typeResolver/typeNameConverter for a BinaryFormatted type
-            object[] referenceObjects =
-                {
-                    DBNull.Value, // type name must not be set -> UnitySerializationHolder is used
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // '932 | Japanese (Shift-JIS)' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
-                    Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
-#endif
-                    CultureInfo.CurrentCulture, // special handling for culture info
-                    new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
-                    {
-                        new int[][,] { new int[,] { { 11, 12 }, { 21, 22 } } }
-                    }
-                };
-
             // ReSharper disable once ConvertToLocalFunction - it will be a delegate in the end when passed to the methods
 #pragma warning disable IDE0039 // Use local function
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
 #pragma warning restore IDE0039 // Use local function
             ITypeResolutionService typeResolver = new TestTypeResolver();
 
+            object[] referenceObjects =
+            {
+#if !NETCOREAPP2_0 // throws PlatformNotSupportedException on .NET Core 2.0
+		        DBNull.Value, // type name must not be set -> UnitySerializationHolder is used  
+#endif
+#if NETFRAMEWORK
+                //Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
+#endif
+                CultureInfo.CurrentCulture, // special handling for culture info
+                new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
+                {
+                    new int[][,] { new int[,] { { 11, 12 }, { 21, 22 } } }
+                }
+            };
+
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
             KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);
             KGySerializeObjects(referenceObjects, false, true, typeNameConverter, typeResolver);
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private void ReadWriteReadResX(string path, bool generateAliases, bool compatibilityMode)
-        {
-            // read from file
-            List<DictionaryEntry> reference, check;
-            string basePath = Path.GetDirectoryName(path);
-            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, SafeMode = true })
-            {
-                // reference contains now string-ResXDataNode elements
-                reference = reader.Cast<DictionaryEntry>().ToList();
-            }
-
-            // write to string: from ResXDataNodes without generated values
-            StringBuilder sb = new StringBuilder();
-            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
-            {
-                reference.ForEach(e => writer.AddResource(e.Key.ToString(), e.Value));
-            }
-
-            // re-read from string
-            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
-            {
-                reader.BasePath = basePath;
-                // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
-            }
-
-            // compare 1: check is from ResXDataNodes objects with original DataNodeInfos and without generated values
-            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
-
-            // -----------------
-
-            // write to string: from objects (fileref resources will be embedded now)
-            sb = new StringBuilder();
-            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
-            {
-                // cleaning up nodes during the compare so DataNodeInfos will be nullified in reference
-                reference.ForEach(de => writer.AddResource(de.Key.ToString(), ((ResXDataNode)de.Value).GetValue(cleanupRawData: true)));
-            }
-
-            // re-read from string
-            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
-            {
-                // no base path is needed because there are no filerefs
-                // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
-            }
-
-            // compare 2: check is from objects so DataNodeInfos are generated, every object is embedded
-            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
-
-            // -----------------
-
-            // write to string: from ResXDataNodes with nullified DataNodeInfos
-            sb = new StringBuilder();
-            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
-            {
-                // DataNodeInfos will be now re-generated in ResXDataNodes
-                reference.ForEach(de => writer.AddResource(de.Key.ToString(), de.Value));
-            }
-
-            // re-read from string
-            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString()))
-            {
-                reader.BasePath = basePath;
-                // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
-            }
-
-            // compare 3: check is from ResXDataNodes objects with re-generated DataNodeInfos from values
-            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
-        }
-
-#if NETFRAMEWORK
-        private void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
-        {
-            using (new TestExecutionContext.IsolatedContext())
-            {
-                Console.WriteLine($"------------------System ResXResourceWriter (Items Count: {referenceObjects.Length})--------------------");
-                try
-                {
-                    StringBuilder sb = new StringBuilder();
-                    using (SystemResXResourceWriter writer =
-#if NET35
-                        new SystemResXResourceWriter(new StringWriter(sb))
-
-#else
-                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
-#endif
-
-                        )
-                    {
-                        int i = 0;
-                        foreach (object item in referenceObjects)
-                        {
-                            writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
-                        }
-                    }
-
-                    Console.WriteLine(sb.ToString());
-                    List<object> deserializedObjects = new List<object>();
-                    using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
-                    {
-                        foreach (DictionaryEntry item in reader)
-                        {
-                            deserializedObjects.Add(item.Value);
-                        }
-                    }
-
-                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"System serialization failed: {e}");
-                }
-            }  
-        }
-#endif
-
-        private void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
-        {
-            Console.WriteLine($"------------------KGySoft ResXResourceWriter (Items Count: {referenceObjects.Length}; Compatibility mode: {compatibilityMode})--------------------");
-            StringBuilder sb = new StringBuilder();
-            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb), typeNameConverter) { CompatibleFormat = compatibilityMode })
-            {
-                int i = 0;
-                foreach (object item in referenceObjects)
-                {
-                    writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
-                }
-            }
-
-            Console.WriteLine(sb.ToString());
-            List<object> deserializedObjects = new List<object>();
-            using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
-            {
-                foreach (DictionaryEntry item in reader)
-                {
-                    deserializedObjects.Add(item.Value);
-                }
-            }
-
-            AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-
-#if NETFRAMEWORK
-            if (compatibilityMode)
-            {
-                deserializedObjects.Clear();
-                using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
-                {
-                    try
-                    {
-                        foreach (DictionaryEntry item in reader)
-                        {
-                            deserializedObjects.Add(item.Value);
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"System serialization failed: {e}");
-                        Console.WriteLine("Skipping equality check");
-                        return;
-                    }
-                }
-
-                if (checkCompatibleEquality)
-                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-            } 
-#endif
         }
 
         #endregion

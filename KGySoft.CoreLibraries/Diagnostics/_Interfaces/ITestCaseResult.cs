@@ -38,12 +38,12 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets the result of the test case, or <see langword="null"/>, if not applicable.
         /// </summary>
-        object Result { get; }
+        object? Result { get; }
 
         /// <summary>
         /// Gets the <see cref="Exception"/> of the test case if it failed; otherwise, gets <see langword="null"/>.
         /// </summary>
-        Exception Error { get; }
+        Exception? Error { get; }
 
 #if NET35 || NET40
         /// <summary>
@@ -52,7 +52,7 @@ namespace KGySoft.Diagnostics
         /// unless <see cref="Error"/> returns a non-<see langword="null"/> value.
         /// Order of the items is the original execution order.
         /// </summary>
-        IList<ITestCaseRepetition> Repetitions { get; }
+        IList<ITestCaseRepetition>? Repetitions { get; }
 #else
         /// <summary>
         /// Gets the results of repetitions of this test case.
@@ -60,7 +60,7 @@ namespace KGySoft.Diagnostics
         /// unless <see cref="Error"/> returns a non-<see langword="null"/> value.
         /// Order of the items is the original execution order.
         /// </summary>
-        IReadOnlyList<ITestCaseRepetition> Repetitions { get; }
+        IReadOnlyList<ITestCaseRepetition>? Repetitions { get; }
 #endif
 
         #endregion

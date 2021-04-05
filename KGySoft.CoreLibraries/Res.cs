@@ -117,7 +117,6 @@ namespace KGySoft
         /// <summary>Offset and length were out of bounds for the array.</summary>
         internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
 
-        // ReSharper disable InconsistentNaming
         /// <summary>Enumeration has either not started or has already finished.</summary>
         internal static string IEnumeratorEnumerationNotStartedOrFinished => Get("IEnumerator_EnumerationNotStartedOrFinished");
 
@@ -144,7 +143,6 @@ namespace KGySoft
 
         /// <summary>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</summary>
         internal static string IListInvalidOffsLen => Get("IList_InvalidOffsLen");
-        // ReSharper restore InconsistentNaming
 
         #endregion
 
@@ -466,6 +464,9 @@ namespace KGySoft
         /// <summary>Unexpected end of XML content.</summary>
         internal static string XmlSerializationUnexpectedEnd => Get("XmlSerialization_UnexpectedEnd");
 
+        /// <summary>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</summary>
+        internal static string XmlSerializationBinarySerializerSafe => Get("XmlSerialization_BinarySerializerSafe");
+
         #endregion
 
         #endregion
@@ -475,6 +476,13 @@ namespace KGySoft
         #region Internal Methods
 
         #region General
+
+        /// <summary>
+        /// Just an empty method to be able to trigger the static constructor without running any code other than field initializations.
+        /// </summary>
+        internal static void Initialize()
+        {
+        }
 
         /// <summary>Specified argument must be greater than {0}.</summary>
         internal static string ArgumentMustBeGreaterThan<T>(T limit) => Get("General_ArgumentMustBeGreaterThanFormat", limit);
@@ -491,6 +499,33 @@ namespace KGySoft
         /// <summary>Specified argument must be between {0} and {1}.</summary>
         internal static string ArgumentMustBeBetween<T>(T low, T high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
+        /// <summary>Property '{0}' must not be null.</summary>
+        internal static string PropertyNull(string propertyName) => Get("General_PropertyNullFormat", propertyName);
+
+        /// <summary>Property '{0}' must be greater than {1}.</summary>
+        internal static string PropertyMustBeGreaterThan<T>(string propertyName, T limit) => Get("General_PropertyMustBeGreaterThanFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be greater than or equal to {1}.</summary>
+        internal static string PropertyMustBeGreaterThanOrEqualTo<T>(string propertyName, T limit) => Get("General_PropertyMustBeGreaterThanOrEqualToFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be less than {1}.</summary>
+        internal static string PropertyMustBeLessThan<T>(string propertyName, T limit) => Get("General_PropertyMustBeLessThanFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be less than or equal to {1}.</summary>
+        internal static string PropertyMustBeLessThanOrEqualTo<T>(string propertyName, T limit) => Get("General_PropertyMustBeLessThanOrEqualToFormat", propertyName, limit);
+
+        /// <summary>Property '{0}' must be between {1} and {2}.</summary>
+        internal static string PropertyMustBeBetween<T>(string propertyName, T low, T high) => Get("General_PropertyMustBeBetweenFormat", propertyName, low, high);
+
+        /// <summary>Property '{0}' must be greater than property '{1}'.</summary>
+        internal static string PropertyMustBeGreaterThanProperty(string propertyGreater, string propertyLess) => Get("General_PropertyMustBeGreaterThanPropertyFormat", propertyGreater, propertyLess);
+
+        /// <summary>Property '{0}' must be greater than or equal to property '{1}'.</summary>
+        internal static string PropertyMustBeGreaterThanOrEqualToProperty(string propertyGreater, string propertyLess) => Get("General_PropertyMustBeGreaterThanOrEqualToPropertyFormat", propertyGreater, propertyLess);
+
+        /// <summary>Property '{0}': {1}</summary>
+        internal static string PropertyMessage(string propertyName, string message) => Get("General_PropertyMessageFormat", propertyName, message);
+
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
 
@@ -498,10 +533,10 @@ namespace KGySoft
         internal static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must be one of the defined values.</summary>
-        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
+        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Enum instance of '{0}' type must consist of the defined flags.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -509,13 +544,11 @@ namespace KGySoft
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
 
-        // ReSharper disable InconsistentNaming
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string ICollectionNonGenericValueTypeInvalid(object value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
+        internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type);
-        // ReSharper restore InconsistentNaming
 
         #endregion
 
@@ -529,7 +562,8 @@ namespace KGySoft
 
         #region BinarySerialization
 
-        /// <summary>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</summary>
+        /// <summary>Serialization of type {0} is not supported with following serialization options: {1}.
+        /// You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</summary>
         internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type, options.ToString<BinarySerializationOptions>());
 
         /// <summary>An IEnumerable type expected but {0} found during deserialization.</summary>
@@ -568,11 +602,19 @@ namespace KGySoft
         /// <summary>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</summary>
         internal static string BinarySerializationReadOnlyCollectionNotSupported(string dataType) => Get("BinarySerialization_ReadOnlyCollectionNotSupportedFormat", dataType);
 
+        /// <summary>Cannot resolve assembly in safe mode: "{0}".
+        /// You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</summary>
+        internal static string BinarySerializationCannotResolveAssemblySafe(string name) => Get("BinarySerialization_CannotResolveAssemblySafeFormat", name);
+
         /// <summary>Could not resolve type name "{0}".</summary>
         internal static string BinarySerializationCannotResolveType(string dataType) => Get("BinarySerialization_CannotResolveTypeFormat", dataType);
 
         /// <summary>Could not resolve type "{0}" in assembly "{1}".</summary>
         internal static string BinarySerializationCannotResolveTypeInAssembly(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblyFormat", typeName, asmName);
+
+        /// <summary>Could not resolve type "{0}" in assembly "{1}".
+        /// You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</summary>
+        internal static string BinarySerializationCannotResolveTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblySafeFormat", typeName, asmName);
 
         /// <summary>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</summary>
         internal static string BinarySerializationUnexpectedSerializationInfoElement(string elementName) => Get("BinarySerialization_UnexpectedSerializationInfoElementFormat", elementName);
@@ -584,10 +626,13 @@ namespace KGySoft
         internal static string BinarySerializationMissingFieldSurrogate(Type baseType, Type type) => Get("BinarySerialization_MissingFieldSurrogateFormat", baseType, type);
 
         /// <summary>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</summary>
-        internal static string BinarySerializationUnexpectedFieldType(Type type, object value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type, value, declaringType, fieldName);
+        internal static string BinarySerializationUnexpectedFieldType(Type type, object? value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type, value, declaringType, fieldName);
 
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
+
+        /// <summary>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</summary>
+        internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type);
 
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
         internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type);
@@ -647,7 +692,7 @@ namespace KGySoft
         /// <summary>There is no event '{0}' in type '{1}'.</summary>
         internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
 
-        /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>
+        /// <summary>Event '{0}' does not have regular event handler delegate type or accessors.</summary>
         internal static string ComponentModelInvalidEvent(string eventName) => Get("ComponentModel_InvalidEventFormat", eventName);
 
         /// <summary>Cannot get property '{0}'.</summary>
@@ -764,16 +809,16 @@ namespace KGySoft
         #region Reflection
 
         /// <summary>The constant field cannot be set: {0}.{1}</summary>
-        internal static string ReflectionCannotSetConstantField(Type type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
+        internal static string ReflectionCannotSetConstantField(Type? type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
 
         /// <summary>Member type {0} is not supported.</summary>
         internal static string ReflectionNotSupportedMemberType(MemberTypes memberType) => Get("Reflection_NotSupportedMemberTypeFormat", memberType);
 
         /// <summary>Property has no getter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoGetter(Type type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoGetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
 
         /// <summary>Property has no setter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoSetter(Type type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoSetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
 
         /// <summary>Value "{0}" cannot be resolved as a System.Type.</summary>
         internal static string ReflectionNotAType(string value) => Get("Reflection_NotATypeFormat", value);
@@ -861,10 +906,10 @@ namespace KGySoft
         internal static string ResourcesNeutralResourceFileNotFoundResX(string fileName) => Get("Resources_NeutralResourceFileNotFoundResXFormat", fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</summary>
-        internal static string ResourcesNeutralResourceNotFoundCompiled(string baseNameField, string fileName) => Get("Resources_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
+        internal static string ResourcesNeutralResourceNotFoundCompiled(string baseNameField, string? fileName) => Get("Resources_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</summary>
-        internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
+        internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string? assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
 
         /// <summary>Cannot find a name for the resource at line {0}, position {1}.</summary>
         internal static string ResourcesNoResXName(int line, int pos) => Get("Resources_NoResXNameFormat", line, pos);
@@ -887,8 +932,16 @@ namespace KGySoft
         /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</summary>
         internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
 
+        /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        internal static string ResourcesTypeLoadExceptionSafeAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionSafeAtFormat", typeName, line, pos);
+
         /// <summary>Type "{0}" cannot be resolved.</summary>
         internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
+
+        /// <summary>Type "{0}" cannot be resolved using safe mode.
+        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        internal static string ResourcesTypeLoadExceptionSafe(string typeName) => Get("Resources_TypeLoadExceptionSafeFormat", typeName);
 
         /// <summary>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</summary>
         internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);
@@ -947,8 +1000,12 @@ namespace KGySoft
         /// <summary>Root named "object" expected but "{0}" found.</summary>
         internal static string XmlSerializationRootObjectExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
 
-        /// <summary>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</summary>
+        /// <summary>Could not resolve type: "{0}".</summary>
         internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
+
+        /// <summary>Could not resolve type in safe mode: "{0}".
+        /// In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</summary>
+        internal static string XmlSerializationCannotResolveTypeSafe(string typeName) => Get("XmlSerialization_CannotResolveTypeSafeFormat", typeName);
 
         /// <summary>Deserializing type "{0}" is not supported.</summary>
         internal static string XmlSerializationDeserializingTypeNotSupported(Type type) => Get("XmlSerialization_DeserializingTypeNotSupportedFormat", type);
@@ -1045,7 +1102,7 @@ namespace KGySoft
 
         private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(CultureInfo.InvariantCulture, unavailableResource, id);
 
-        private static string Get([NotNull]string id, params object[] args)
+        private static string Get([NotNull]string id, params object?[]? args)
         {
             string format = Get(id);
             return args == null ? format : SafeFormat(format, args);
@@ -1059,7 +1116,7 @@ namespace KGySoft
 
         private static string FormatBool(bool value) => value ? Yes : No;
 
-        private static string SafeFormat(string format, object[] args)
+        private static string SafeFormat(string format, object?[] args)
         {
             try
             {

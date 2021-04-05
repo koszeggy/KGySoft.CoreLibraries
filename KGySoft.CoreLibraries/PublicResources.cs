@@ -107,7 +107,6 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Offset and length were out of bounds for the array.</c></returns>
         internal static string ArrayInvalidOffsLen => Res.ArrayInvalidOffsLen;
 
-        // ReSharper disable InconsistentNaming
         /// <summary>Looks up a localized string similar to <c>Enumeration has either not started or has already finished.</c></summary>
         /// <returns>A localized string similar to <c>Enumeration has either not started or has already finished.</c></returns>
         public static string IEnumeratorEnumerationNotStartedOrFinished => Res.IEnumeratorEnumerationNotStartedOrFinished;
@@ -143,7 +142,6 @@ namespace KGySoft
         /// <summary>Looks up a localized string similar to <c>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</c></summary>
         /// <returns>A localized string similar to <c>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</c></returns>
         public static string IListInvalidOffsLen => Res.IListInvalidOffsLen;
-        // ReSharper restore InconsistentNaming
 
         #endregion
 
@@ -180,7 +178,65 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Specified argument must be between {0} and {1}.</c></returns>
         public static string ArgumentMustBeBetween<T>(T low, T high) => Res.ArgumentMustBeBetween(low, high);
 
-#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must not be null.</c></summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must not be null.</c></returns>
+        public static string PropertyNull(string propertyName) => Res.PropertyNull(propertyName);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be greater than {1}.</c></summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="limit">The value of the limit.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be greater than {1}.</c></returns>
+        public static string PropertyMustBeGreaterThan<T>(string propertyName, T limit) => Res.PropertyMustBeGreaterThan(propertyName, limit);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be greater than or equal to {1}.</c></summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="limit">The value of the limit.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be greater than or equal to {1}.</c></returns>
+        public static string PropertyMustBeGreaterThanOrEqualTo<T>(string propertyName, T limit) => Res.PropertyMustBeGreaterThanOrEqualTo(propertyName, limit);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be less than {1}.</c></summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="limit">The value of the limit.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be less than {1}.</c></returns>
+        public static string PropertyMustBeLessThan<T>(string propertyName, T limit) => Res.PropertyMustBeLessThan(propertyName, limit);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be less than or equal to {1}.</c></summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="limit">The value of the limit.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be less than or equal to {1}.</c></returns>
+        public static string PropertyMustBeLessThanOrEqualTo<T>(string propertyName, T limit) => Res.PropertyMustBeLessThanOrEqualTo(propertyName, limit);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be between {1} and {2}.</c></summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="low">The low limit.</param>
+        /// <param name="high">The high limit.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be between {1} and {2}.</c></returns>
+        public static string PropertyMustBeBetween<T>(string propertyName, T low, T high) => Res.PropertyMustBeBetween(propertyName, low, high);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be greater than property '{1}'.</c></summary>
+        /// <param name="propertyGreater">The name of the property to be expected to have the greater value.</param>
+        /// <param name="propertyLess">The name of the property to be expected to have the less value.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be greater than property '{1}'.</c></returns>
+        public static string PropertyMustBeGreaterThanProperty(string propertyGreater, string propertyLess) => Res.PropertyMustBeGreaterThanProperty(propertyGreater, propertyLess);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}' must be greater than or equal to property '{1}'.</c></summary>
+        /// <param name="propertyGreater">The name of the property to be expected to have the greater value.</param>
+        /// <param name="propertyLess">The name of the property to be expected to have the less value.</param>
+        /// <returns>A localized string similar to <c>Property '{0}' must be greater than or equal to property '{1}'.</c></returns>
+        public static string PropertyMustBeGreaterThanOrEqualToProperty(string propertyGreater, string propertyLess) => Res.PropertyMustBeGreaterThanOrEqualToProperty(propertyGreater, propertyLess);
+
+        /// <summary>Looks up a localized string similar to <c>Property '{0}': {1}</c></summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="message">The message to display.</param>
+        /// <returns>A localized string similar to <c>Property '{0}': {1}</c></returns>
+        public static string PropertyMessage(string propertyName, string message) => Res.PropertyMessage(propertyName, message);
+
         /// <summary>Looks up a localized string similar to <c>Enum instance of '{0}' type must be one of the following values: {1}.</c></summary>
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
@@ -197,14 +253,13 @@ namespace KGySoft
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must be one of the defined values.</c></returns>
-        public static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Res.EnumOutOfRange(value);
+        public static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Res.EnumOutOfRange(value);
 
         /// <summary>Looks up a localized string similar to <c>Enum instance of '{0}' type must consist of the defined flags.</c></summary>
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must consist of the defined flags.</c></returns>
-        public static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Res.FlagsEnumOutOfRange(value);
-#pragma warning restore CS3024 // Constraint type is not CLS-compliant
+        public static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Res.FlagsEnumOutOfRange(value);
 
         /// <summary>Looks up a localized string similar to <c>Specified argument is expected to be an instance of type {0}.</c></summary>
         /// <param name="type">The expected type.</param>
@@ -216,7 +271,6 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Value "{0}" contains illegal path characters.</c></returns>
         public static string ValueContainsIllegalPathCharacters(string path) => Res.ValueContainsIllegalPathCharacters(path);
 
-        // ReSharper disable InconsistentNaming
         /// <summary>Looks up a localized string similar to <c>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</c></summary>
         /// <param name="value">The provided value.</param>
         /// <param name="type">The expected type.</param>
@@ -228,7 +282,6 @@ namespace KGySoft
         /// <param name="type">The expected type.</param>
         /// <returns>A localized string similar to <c>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</c></returns>
         public static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Res.IDictionaryNonGenericKeyTypeInvalid(key, type);
-        // ReSharper restore InconsistentNaming
 
         #endregion
     }

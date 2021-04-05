@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -29,6 +28,7 @@ using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
@@ -36,7 +36,6 @@ using KGySoft.Serialization.Binary;
 
 namespace KGySoft.Resources
 {
-#pragma warning disable 618
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
     /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
@@ -256,8 +255,9 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// uses them to load the assemblies in advance occasionally by calling the obsolete <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadPartial</see> method. However, this <see cref="ResXResourceReader"/>
-    /// implementation can handle finding and loading assemblies automatically. If an assembly needs to be loaded from a partial name, the <see cref="Reflector.ResolveAssembly(string,ResolveAssemblyOptions)">Reflector.ResolveAssembly</see> method is called, which does not use
-    /// obsolete techniques. If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
+    /// implementation uses the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method, which does not use obsolete techniques (and if <see cref="SafeMode"/> is <see langword="true"/>,
+    /// then no type resolving, assembly loading and deserialization occurs at all, until explicit request).
+    /// If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
     /// <item>This <see cref="ResXResourceReader"/> is a sealed class.</item>
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown
     /// on calling <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.</item>
@@ -291,8 +291,9 @@ namespace KGySoft.Resources
     /// This <see cref="ResXResourceReader"/> implementation has separated <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see>
     /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
     /// <item><term>Security</term>
-    /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method
-    /// on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
+    /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested
+    /// by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
     /// <item><term>Base path</term>
     /// <description>The <see cref="BasePath"/> property, which is used for resolving file references can be set during the enumeration, too.</description></item>
     /// <item><term>New MIME type</term>
@@ -311,8 +312,6 @@ namespace KGySoft.Resources
     /// <seealso cref="ResXResourceManager"/>
     /// <seealso cref="HybridResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
-#pragma warning restore 618
-    [SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "Intended. DictionaryEnumerators are returned (just like in System.Resources.ResXResourceReader) and the type of the value depends on SafeMode.")]
     public sealed class ResXResourceReader : IResourceReader, IResXResourceContainer
     {
         #region Nested types
@@ -349,14 +348,14 @@ namespace KGySoft.Resources
             private readonly ResXEnumeratorModes mode;
 
             private EnumeratorStates state;
-            private string key;
-            private ResXDataNode value;
+            private string? key;
+            private ResXDataNode? value;
 
             /// <summary>
             /// Represents buffered items, which should be returned before reading the next items from the underlying XML.
             /// Reset and ReadToEnd may produce buffered items.
             /// </summary>
-            private IEnumerator<KeyValuePair<string, ResXDataNode>> bufferedEnumerator;
+            private IEnumerator<KeyValuePair<string, ResXDataNode>>? bufferedEnumerator;
 
             #endregion
 
@@ -370,11 +369,11 @@ namespace KGySoft.Resources
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                     if (mode == ResXEnumeratorModes.Aliases)
-                        return new DictionaryEntry(key, value.ValueInternal);
+                        return new DictionaryEntry(key!, value!.ValueInternal);
 
                     return owner.safeMode
-                        ? new DictionaryEntry(key, value)
-                        : new DictionaryEntry(key, value.GetValue(owner.typeResolver, owner.basePath));
+                        ? new DictionaryEntry(key!, value)
+                        : new DictionaryEntry(key!, value!.GetValue(owner.typeResolver, owner.basePath));
                 }
             }
 
@@ -385,11 +384,11 @@ namespace KGySoft.Resources
                     if (state != EnumeratorStates.Enumerating)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
-                    return key;
+                    return key!;
                 }
             }
 
-            public object Value => Entry.Value;
+            public object? Value => Entry.Value;
 
             public object Current => Entry;
 
@@ -450,21 +449,13 @@ namespace KGySoft.Resources
                 {
                     bufferedEnumerator = null;
                     state = EnumeratorStates.BeforeFirst;
-                    switch (mode)
+                    bufferedEnumerator = mode switch
                     {
-                        case ResXEnumeratorModes.Resources:
-                            if (owner.resources != null)
-                                bufferedEnumerator = owner.resources.GetEnumerator();
-                            break;
-                        case ResXEnumeratorModes.Metadata:
-                            if (owner.metadata != null)
-                                bufferedEnumerator = owner.metadata.GetEnumerator();
-                            break;
-                        case ResXEnumeratorModes.Aliases:
-                            if (owner.aliases != null)
-                                bufferedEnumerator = owner.aliases.Select(ResXResourceEnumerator.SelectAlias).GetEnumerator();
-                            break;
-                    }
+                        ResXEnumeratorModes.Resources => owner.resources?.GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                        ResXEnumeratorModes.Metadata => owner.metadata?.GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                        ResXEnumeratorModes.Aliases => owner.aliases?.Select(ResXResourceEnumerator.SelectAlias).GetEnumerator() ?? Throw.ObjectDisposedException<IEnumerator<KeyValuePair<string, ResXDataNode>>>(),
+                        _ => Throw.InternalError<IEnumerator<KeyValuePair<string, ResXDataNode>>>($"Unexpected mode: {mode}")
+                    };
                 }
             }
 
@@ -517,32 +508,41 @@ namespace KGySoft.Resources
         {
             #region Constructors
 
-            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
+#if NET35
+            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")] 
+#endif
             internal ResXReader(Stream stream)
                 : base(stream, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
                 XmlResolver = null;
-#if !NET35
-                DtdProcessing = DtdProcessing.Prohibit; 
+#if NET35
+                ProhibitDtd = true;
+#else
+                DtdProcessing = DtdProcessing.Prohibit;
 #endif
             }
 
-            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, stream is passed to the overloaded constructor.")]
-            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
+#if NET35 || NET40 || NET45
+            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the called overloaded constructor.")] 
+#endif
             internal ResXReader(string fileName)
                 : this(File.OpenRead(fileName))
             {
             }
 
+#if NET35
             [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
+#endif
             internal ResXReader(TextReader reader)
                 : base(reader, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
                 XmlResolver = null;
-#if !NET35
-                DtdProcessing = DtdProcessing.Prohibit; 
+#if NET35
+                ProhibitDtd = true;
+#else
+                DtdProcessing = DtdProcessing.Prohibit;
 #endif
             }
 
@@ -583,29 +583,29 @@ namespace KGySoft.Resources
         #region Fields
 
         private readonly object syncRoot = new object();
-        private readonly ITypeResolutionService typeResolver;
+        private readonly ITypeResolutionService? typeResolver;
 
         /// <summary>
         /// The internally created reader. Will be closed automatically when stream ends or on Dispose
         /// </summary>
-        private XmlReader reader;
+        private XmlReader? reader;
 
-        private string basePath;
+        private string? basePath;
         private States state = States.Created;
 
         /// <summary>
         /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
         /// </summary>
-        private Dictionary<string, string> activeAliases;
+        private StringKeyedDictionary<string>? activeAliases;
 
-        private ICollection<KeyValuePair<string, string>> aliases;
-        private ICollection<KeyValuePair<string, ResXDataNode>> resources;
-        private ICollection<KeyValuePair<string, ResXDataNode>> metadata;
+        private ICollection<KeyValuePair<string, string>>? aliases;
+        private ICollection<KeyValuePair<string, ResXDataNode>>? resources;
+        private ICollection<KeyValuePair<string, ResXDataNode>>? metadata;
 
         /// <summary>
         /// Stored in a field so first enumeration can be handled in a special way if duplicates are allowed.
         /// </summary>
-        private LazyEnumerator enumerator;
+        private LazyEnumerator? enumerator;
 
         private bool safeMode;
         private bool checkHeader;
@@ -631,7 +631,7 @@ namespace KGySoft.Resources
         /// <see cref="ResXResourceReader"/> implementation this property can be set even after calling the <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see>
         /// or <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.
         /// </remarks>
-        public string BasePath
+        public string? BasePath
         {
             get => basePath;
             set
@@ -650,6 +650,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
         /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
@@ -668,6 +669,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
@@ -761,10 +763,10 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Properties
 
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources => resources;
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata => metadata;
-        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases => aliases;
-        ITypeResolutionService IResXResourceContainer.TypeResolver => typeResolver;
+        ICollection<KeyValuePair<string, ResXDataNode>>? IResXResourceContainer.Resources => resources;
+        ICollection<KeyValuePair<string, ResXDataNode>>? IResXResourceContainer.Metadata => metadata;
+        ICollection<KeyValuePair<string, string>>? IResXResourceContainer.Aliases => aliases;
+        ITypeResolutionService? IResXResourceContainer.TypeResolver => typeResolver;
         bool IResXResourceContainer.AutoFreeXmlData => false;
         int IResXResourceContainer.Version => 0;
         bool IResXResourceContainer.CloneValues => false;
@@ -786,11 +788,13 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <note type="tip">To create a <see cref="ResXResourceReader"/> from a string use the <see cref="FromFileContents">FromFileContents</see> method.</note>
         /// </remarks>
+#if NETFRAMEWORK
         [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
-            Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
-        public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
+            Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")] 
+#endif
+        public ResXResourceReader(string fileName, ITypeResolutionService? typeResolver = null)
         {
-            if (fileName == null)
+            if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
 
             reader = new ResXReader(fileName);
@@ -803,11 +807,13 @@ namespace KGySoft.Resources
         /// <param name="reader">A text stream reader that contains resources.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+#if NETFRAMEWORK
         [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
             Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
-        public ResXResourceReader(TextReader reader, ITypeResolutionService typeResolver = null)
+#endif
+        public ResXResourceReader(TextReader reader, ITypeResolutionService? typeResolver = null)
         {
-            if (reader == null)
+            if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
 
             this.reader = new ResXReader(reader);
@@ -820,11 +826,13 @@ namespace KGySoft.Resources
         /// <param name="stream">An input stream that contains resources.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+#if NETFRAMEWORK
         [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
             Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
-        public ResXResourceReader(Stream stream, ITypeResolutionService typeResolver = null)
+#endif
+        public ResXResourceReader(Stream stream, ITypeResolutionService? typeResolver = null)
         {
-            if (stream == null)
+            if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
 
             reader = new ResXReader(stream);
@@ -836,12 +844,9 @@ namespace KGySoft.Resources
         #region Destructor
 
         /// <summary>
-        /// This member overrides the <see cref="M:System.Object.Finalize"/> method.
+        /// This member overrides the <see cref="Object.Finalize"/> method.
         /// </summary>
-        ~ResXResourceReader()
-        {
-            Dispose(false);
-        }
+        ~ResXResourceReader() => Dispose(false);
 
         #endregion
 
@@ -860,8 +865,7 @@ namespace KGySoft.Resources
         /// <param name="fileContents">A string containing XML resource-formatted information.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "StringReader will be disposed by Dispose.")]
-        public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService typeResolver = null) => new ResXResourceReader(new StringReader(fileContents), typeResolver);
+        public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService? typeResolver = null) => new ResXResourceReader(new StringReader(fileContents), typeResolver);
 
         #endregion
 
@@ -869,7 +873,7 @@ namespace KGySoft.Resources
 
         private static void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
         {
-            if (collection is Dictionary<string, ResXDataNode> dict)
+            if (collection is StringKeyedDictionary<ResXDataNode> dict)
                 dict[key] = value;
             else
                 collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
@@ -887,11 +891,10 @@ namespace KGySoft.Resources
         /// Releases all resources used by the <see cref="ResXResourceReader"/>.
         /// </summary>
         /// <remarks>
-        /// If the <see cref="ResXResourceReader"/> is initialized in a <c>using</c> statement, it is not needed to call this method explicitly.
+        /// If the <see cref="ResXResourceReader"/> is initialized in a <see langword="using"/>&#160;statement, it is not needed to call this method explicitly.
         /// </remarks>
         public void Close() => ((IDisposable)this).Dispose();
 
-#pragma warning disable 618
         /// <summary>
         /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the resources
         /// in the source XML resource file or stream.
@@ -913,7 +916,6 @@ namespace KGySoft.Resources
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
-#pragma warning restore 618
         public IDictionaryEnumerator GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         /// <summary>
@@ -961,7 +963,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Special initialization for ResXResourceSet. No lock is needed because called from ctor. Reads raw xml content only.
         /// </summary>
-        internal void ReadAllInternal(Dictionary<string, ResXDataNode> linkedResources, Dictionary<string, ResXDataNode> linkedMetadata, Dictionary<string, string> linkedAliases)
+        internal void ReadAllInternal(StringKeyedDictionary<ResXDataNode> linkedResources, StringKeyedDictionary<ResXDataNode> linkedMetadata, StringKeyedDictionary<string> linkedAliases)
         {
             Debug.Assert(state == States.Created);
             resources = linkedResources;
@@ -974,7 +976,6 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "reader", Justification = "False alarm, reader is disposed.")]
         private void Dispose(bool disposing)
         {
             if (state == States.Disposed)
@@ -1010,16 +1011,16 @@ namespace KGySoft.Resources
                             resources = new List<KeyValuePair<string, ResXDataNode>>();
                             metadata = new List<KeyValuePair<string, ResXDataNode>>();
                             aliases = new List<KeyValuePair<string, string>>();
-                            activeAliases = new Dictionary<string, string>();
+                            activeAliases = new StringKeyedDictionary<string>();
                             state = States.Reading;
                             enumerator = new LazyEnumerator(this, mode);
                             return enumerator;
                         }
 
                         // no duplication (non-lazy mode): allocating dictionaries and caching for the first time, too.
-                        resources = new Dictionary<string, ResXDataNode>();
-                        metadata = new Dictionary<string, ResXDataNode>();
-                        aliases = activeAliases = new Dictionary<string, string>();
+                        resources = new StringKeyedDictionary<ResXDataNode>();
+                        metadata = new StringKeyedDictionary<ResXDataNode>();
+                        aliases = activeAliases = new StringKeyedDictionary<string>();
                         ReadAll();
                         state = States.Read;
                         return new ResXResourceEnumerator(this, mode);
@@ -1027,7 +1028,7 @@ namespace KGySoft.Resources
                     // getting an enumerator while the first lazy enumeration has not finished: buffering the items
                     // for the first enumeration and returning a cached enumerator
                     case States.Reading:
-                        enumerator.ReadToEnd();
+                        enumerator!.ReadToEnd();
                         state = States.Read;
                         enumerator = null;
                         return new ResXResourceEnumerator(this, mode);
@@ -1043,24 +1044,15 @@ namespace KGySoft.Resources
             }
         }
 
-        private int GetLineNumber()
-        {
-            IXmlLineInfo xmlLineInfo = reader as IXmlLineInfo;
-            return xmlLineInfo?.LineNumber ?? 0;
-        }
-
-        private int GetLinePosition()
-        {
-            IXmlLineInfo xmlLineInfo = reader as IXmlLineInfo;
-            return xmlLineInfo?.LinePosition ?? 0;
-        }
+        private int GetLineNumber() => (reader as IXmlLineInfo)?.LineNumber ?? 0;
+        private int GetLinePosition() => (reader as IXmlLineInfo)?.LinePosition ?? 0;
 
         /// <summary>
         /// Parses the resource header node. Header can be completely missing; however, it is checked when required and exists.
         /// </summary>
         private void ParseResHeaderNode()
         {
-            object name = reader[ResXCommon.NameStr];
+            object? name = reader![ResXCommon.NameStr];
             if (name == null)
                 return;
 
@@ -1085,17 +1077,17 @@ namespace KGySoft.Resources
                     ? reader.ReadElementString()
                     : reader.Value.Trim();
 
-                if (typeName != null && typeName.IndexOf(',') != -1)
+                if (typeName.IndexOf(',') != -1)
                     typeName = typeName.Split(new char[] { ',' })[0].Trim();
 
                 if (name == ResXCommon.ReaderStr)
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
+                    if (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName)
                         Throw.NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
                 else
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
+                    if (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName)
                         Throw.NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
             }
@@ -1104,8 +1096,15 @@ namespace KGySoft.Resources
 
         private void ParseAssemblyNode(out string key, out string value)
         {
-            key = reader[ResXCommon.AliasStr];
-            value = reader[ResXCommon.NameStr];
+            key = reader![ResXCommon.AliasStr]!;
+            if (key == null)
+            {
+                int line = GetLineNumber();
+                int col = GetLinePosition();
+                throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.AliasStr, line, col), line, col);
+            }
+
+            value = reader[ResXCommon.NameStr]!;
             if (value == null)
             {
                 int line = GetLineNumber();
@@ -1114,14 +1113,14 @@ namespace KGySoft.Resources
             }
         }
 
-        private string GetAliasValueFromTypeName(string typeName)
+        private string? GetAliasValueFromTypeName(string? typeName)
         {
             // value is string
             if (String.IsNullOrEmpty(typeName))
                 return null;
 
             // full name only
-            int posComma = typeName.IndexOf(',');
+            int posComma = typeName!.IndexOf(',');
             if (posComma < 0)
                 return null;
 
@@ -1133,7 +1132,7 @@ namespace KGySoft.Resources
                 return null;
 
             // alias value found
-            if (activeAliases.TryGetValue(alias, out string asmName))
+            if (activeAliases!.TryGetValue(alias, out string? asmName))
                 return asmName;
 
             // type name is with assembly name
@@ -1144,7 +1143,7 @@ namespace KGySoft.Resources
         /// Reads next element (depending on mode) from the XML. Skipped elements (on mode mismatch) are stored into the appropriate caches.
         /// Callers must be in a lock.
         /// </summary>
-        private bool ReadNext(ResXEnumeratorModes mode, out string key, out ResXDataNode value)
+        private bool ReadNext(ResXEnumeratorModes mode, [MaybeNullWhen(false)]out string key, [MaybeNullWhen(false)]out ResXDataNode value)
         {
             key = null;
             value = null;
@@ -1176,9 +1175,9 @@ namespace KGySoft.Resources
         private IEnumerable<KeyValuePair<string, ResXDataNode>> ReadToEnd(ResXEnumeratorModes mode)
         {
             ICollection<KeyValuePair<string, ResXDataNode>> result = allowDuplicatedKeys
-                ? (ICollection<KeyValuePair<string, ResXDataNode>>)new List<KeyValuePair<string, ResXDataNode>>()
-                : new Dictionary<string, ResXDataNode>();
-            while (ReadNext(mode, out string key, out ResXDataNode value))
+                ? new List<KeyValuePair<string, ResXDataNode>>()
+                : new StringKeyedDictionary<ResXDataNode>();
+            while (ReadNext(mode, out string? key, out ResXDataNode? value))
                 AddNode(result, key, value);
 
             return result;
@@ -1198,7 +1197,7 @@ namespace KGySoft.Resources
         /// Advances in the XML file based on the specified mode or the whole file if mode is null.
         /// Calls must be in a lock or from a ctor.
         /// </summary>
-        private bool Advance(ResXEnumeratorModes? mode, out string key, out ResXDataNode value)
+        private bool Advance(ResXEnumeratorModes? mode, [MaybeNullWhen(false)]out string key, [MaybeNullWhen(false)]out ResXDataNode value)
         {
             if (reader == null)
             {
@@ -1217,14 +1216,14 @@ namespace KGySoft.Resources
                 if (name == ResXCommon.DataStr)
                 {
                     ParseDataNode(out key, out value);
-                    AddNode(resources, key, value);
+                    AddNode(resources!, key, value);
                     if (mode == ResXEnumeratorModes.Resources)
                         return true;
                 }
                 else if (name == ResXCommon.MetadataStr)
                 {
                     ParseDataNode(out key, out value);
-                    AddNode(metadata, key, value);
+                    AddNode(metadata!, key, value);
                     if (mode == ResXEnumeratorModes.Metadata)
                         return true;
                 }
@@ -1253,24 +1252,24 @@ namespace KGySoft.Resources
 
         private void AddAlias(string key, string assemblyName)
         {
-            if (aliases is Dictionary<string, string> dict)
+            if (aliases is StringKeyedDictionary<string> dict)
             {
                 dict[key] = assemblyName;
                 Debug.Assert(ReferenceEquals(aliases, activeAliases), "activeAliases should be the same as aliases");
                 return;
             }
 
-            activeAliases[key] = assemblyName;
-            aliases.Add(new KeyValuePair<string, string>(key, assemblyName));
+            activeAliases![key] = assemblyName;
+            aliases!.Add(new KeyValuePair<string, string>(key, assemblyName));
         }
 
         /// <summary>
         /// Parses a data or metadata node.
-        /// Calls must be in a lock or from a ctor.
+        /// Must be called in a lock or from a ctor.
         /// </summary>
         private void ParseDataNode(out string key, out ResXDataNode value)
         {
-            key = reader[ResXCommon.NameStr];
+            key = reader![ResXCommon.NameStr]!;
             int line = GetLineNumber();
             int col = GetLinePosition();
             if (key == null)
@@ -1303,15 +1302,16 @@ namespace KGySoft.Resources
                     // could be a <value> or a <comment>
                     if (reader.NodeType == XmlNodeType.Element)
                     {
+                        // Compatibility: <value/> will be an empty string for strings and null for other types
                         if (name == ResXCommon.ValueStr)
-                            nodeInfo.ValueData = reader.ReadString();
+                            nodeInfo.ValueData = reader.IsEmptyElement && nodeInfo.TypeName != null ? null : reader.ReadString();
                         else if (name == ResXCommon.CommentStr)
                             nodeInfo.Comment = reader.ReadString();
                         else
                         {
                             line = GetLineNumber();
                             col = GetLinePosition();
-                            throw ResXCommon.CreateXmlException(Res.ResourcesUnexpectedElementAt(name.ToString(), line, col), line, col);
+                            throw ResXCommon.CreateXmlException(Res.ResourcesUnexpectedElementAt(name.ToString()!, line, col), line, col);
                         }
                     }
                     else if (reader.NodeType == XmlNodeType.Text)
@@ -1330,7 +1330,6 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
-        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "There is the public Close method. Same as System.Resources.ResXResourceReader.")]
         void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);

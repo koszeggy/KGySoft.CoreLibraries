@@ -17,10 +17,8 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -30,6 +28,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
@@ -214,8 +213,8 @@ namespace KGySoft.Resources
         {
             #region Fields
 
-            private Stream stream;
-            private TextWriter textWriter;
+            private Stream? stream;
+            private TextWriter? textWriter;
             private bool isInsideAttribute;
 
             #endregion
@@ -228,7 +227,6 @@ namespace KGySoft.Resources
 
             #region Constructors
 
-            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Stream will be disposed in Dispose.")]
             internal ResXWriter(string fileName)
                 : this(new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
@@ -252,7 +250,11 @@ namespace KGySoft.Resources
 
             #region Public Methods
 
-            public override void WriteStartAttribute(string prefix, string localName, string ns)
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP
+            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
+            [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, prefix and ns can be null")]
+#endif
+            public override void WriteStartAttribute(string? prefix, string localName, string? ns)
             {
                 isInsideAttribute = true;
                 base.WriteStartAttribute(prefix, localName, ns);
@@ -264,9 +266,9 @@ namespace KGySoft.Resources
                 base.WriteEndAttribute();
             }
 
-            public override void WriteString(string text)
+            public override void WriteString(string? text)
             {
-                if (String.IsNullOrEmpty(text))
+                if (text == null)
                     return;
 
                 if (isInsideAttribute)
@@ -274,7 +276,7 @@ namespace KGySoft.Resources
                     base.WriteString(text);
                     return;
                 }
-
+                
                 string newLine = Environment.NewLine;
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < text.Length; i++)
@@ -358,7 +360,6 @@ namespace KGySoft.Resources
 
         #region Static Fields
 
-        [SuppressMessage("Microsoft.Performance", "CA1802:UseLiteralsWhereAppropriate", Justification = "False alarm, contains interpolation. BTW, such a huge constant is just better not to be inlined.")]
         private static readonly string resourceHeader = $@"
     <!-- 
     Microsoft ResX Schema 
@@ -415,7 +416,6 @@ namespace KGySoft.Resources
             : and then encoded with base64 encoding.
     -->";
 
-        [SuppressMessage("Microsoft.Performance", "CA1802:UseLiteralsWhereAppropriate", Justification = "Such a huge string is just more nice not to be inlined")]
         private static readonly string resourceSchema = @"
     <xsd:schema id=""root"" xmlns="""" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:msdata=""urn:schemas-microsoft-com:xml-msdata"">
         <xsd:import namespace=""http://www.w3.org/XML/1998/namespace""/>
@@ -469,25 +469,26 @@ namespace KGySoft.Resources
 
         #region Instance Fields
 
-        private readonly Func<Type, string> typeNameConverter; // not a public property to be consistent with ResXDataNode class.
+        private readonly Func<Type, string?>? typeNameConverter; // not a public property to be consistent with ResXDataNode class.
 
         /// <summary>
         /// Stores the alias mapping that should be used when writing assemblies.
         /// </summary>
-        private Dictionary<string, string> aliases;
+        private StringKeyedDictionary<string>? aliases;
 
         /// <summary>
         /// Stores the already written and active alias mapping.
         /// </summary>
-        private Dictionary<string, string> activeAliases;
+        private StringKeyedDictionary<string>? activeAliases;
 
         private bool autoGenerateAlias = true;
-        private ResXWriter writer;
-        private string basePath;
+        private ResXWriter? writer;
+        private string? basePath;
         private bool hasBeenSaved;
         private bool initialized;
         private bool compatibleFormat = true;
         private bool omitHeader = true;
+        private bool safeMode;
 
         #endregion
 
@@ -552,12 +553,13 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets the base path for the relative file path specified in a <see cref="ResXFileRef"/> object.
+        /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         /// <returns>
         /// A path that, if prepended to the relative file path specified in a <see cref="ResXFileRef"/> object, yields an absolute path to an XML resource file.
         /// </returns>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the creation of the .resx file content has already been started.</exception>
-        public string BasePath
+        public string? BasePath
         {
             get => basePath;
             set
@@ -570,8 +572,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether an alias should be auto-generated for referenced assemblies.
-        /// <br/>
-        /// Default value: <see langword="true"/>.
+        /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="AutoGenerateAlias"/> is <see langword="false"/>, then the assembly names will be referenced by fully qualified names
@@ -589,6 +590,28 @@ namespace KGySoft.Resources
                 if (writer == null)
                     Throw.ObjectDisposedException();
                 autoGenerateAlias = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether it is prohibited to load assemblies when writing <see cref="ResXDataNode"/> instances whose raw .resx content
+        /// needs to be regenerated and whose value has not been deserialized yet. This can occur only if <see cref="CompatibleFormat"/> is <see langword="true"/>,
+        /// and when the <see cref="ResXDataNode"/> instances to write have been read from another .resx source.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This property affects only <see cref="AddResource(ResXDataNode)"/> and <see cref="AddMetadata(ResXDataNode)"/> methods when <see cref="CompatibleFormat"/>
+        /// is <see langword="true"/>, and the <see cref="ResXDataNode"/> to write contains no deserialized value but only raw .resx data that is not compatible with
+        /// the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.</para>
+        /// </remarks>
+        public bool SafeMode
+        {
+            get => safeMode;
+            set
+            {
+                if (writer == null)
+                    Throw.ObjectDisposedException();
+                safeMode = value;
             }
         }
 
@@ -627,9 +650,9 @@ namespace KGySoft.Resources
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> is <see langowrd="null"/>.</exception>
-        public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
+        public ResXResourceWriter(string fileName, Func<Type, string?>? typeNameConverter = null)
         {
-            if (fileName == null)
+            if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
 
             writer = new ResXWriter(fileName);
@@ -645,8 +668,11 @@ namespace KGySoft.Resources
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is <see langowrd="null"/>.</exception>
-        public ResXResourceWriter(Stream stream, Func<Type, string> typeNameConverter = null)
+        public ResXResourceWriter(Stream stream, Func<Type, string?>? typeNameConverter = null)
         {
+            if (stream == null!)
+                Throw.ArgumentNullException(Argument.stream);
+
             writer = new ResXWriter(stream);
             this.typeNameConverter = typeNameConverter;
         }
@@ -660,8 +686,11 @@ namespace KGySoft.Resources
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="textWriter"/> is <see langowrd="null"/>.</exception>
-        public ResXResourceWriter(TextWriter textWriter, Func<Type, string> typeNameConverter = null)
+        public ResXResourceWriter(TextWriter textWriter, Func<Type, string?>? typeNameConverter = null)
         {
+            if (textWriter == null!)
+                Throw.ArgumentNullException(Argument.textWriter);
+
             writer = new ResXWriter(textWriter);
             this.typeNameConverter = typeNameConverter;
         }
@@ -706,7 +735,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
         {
-            if (assemblyName == null)
+            if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
 
             AddAlias(aliasName, assemblyName.FullName, forceWriteImmediately);
@@ -723,13 +752,12 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)
         {
-            if (aliasName == null)
+            if (aliasName == null!)
                 Throw.ArgumentNullException(Argument.aliasName);
-            if (assemblyName == null)
+            if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
 
-            if (aliases == null)
-                aliases = new Dictionary<string, string>();
+            aliases ??= new StringKeyedDictionary<string>();
             aliases[assemblyName] = aliasName;
 
             if (forceWriteImmediately)
@@ -741,21 +769,21 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">A byte array containing the value of the property to add.</param>
-        public void AddMetadata(string name, byte[] value) => AddDataRow(ResXCommon.MetadataStr, name, value);
+        public void AddMetadata(string name, byte[]? value) => AddDataRow(ResXCommon.MetadataStr, name, value);
 
         /// <summary>
         /// Adds a metadata node whose value is specified as a string to the list of resources to write.
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">A string that is the value of the property to add.</param>
-        public void AddMetadata(string name, string value) => AddDataRow(ResXCommon.MetadataStr, name, value);
+        public void AddMetadata(string name, string? value) => AddDataRow(ResXCommon.MetadataStr, name, value);
 
         /// <summary>
         /// Adds a metadata node whose value is specified as an object to the list of resources to write.
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">An object that is the value of the property to add.</param>
-        public void AddMetadata(string name, object value)
+        public void AddMetadata(string name, object? value)
         {
             if (value is ResXDataNode node)
             {
@@ -773,7 +801,7 @@ namespace KGySoft.Resources
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a metadata name/value pair.</param>
         public void AddMetadata(ResXDataNode node)
         {
-            if (node == null)
+            if (node == null!)
                 Throw.ArgumentNullException(Argument.node);
             AddDataRow(ResXCommon.MetadataStr, node.Name, node);
         }
@@ -783,14 +811,14 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource. </param>
         /// <param name="value">The value of the resource to add as an 8-bit unsigned integer array.</param>
-        public void AddResource(string name, byte[] value) => AddDataRow(ResXCommon.DataStr, name, value);
+        public void AddResource(string name, byte[]? value) => AddDataRow(ResXCommon.DataStr, name, value);
 
         /// <summary>
         /// Adds a named resource specified as an object to the list of resources to write.
         /// </summary>
         /// <param name="name">The name of the resource.</param>
         /// <param name="value">The value of the resource.</param>
-        public void AddResource(string name, object value)
+        public void AddResource(string name, object? value)
         {
             if (value is ResXDataNode node)
             {
@@ -807,7 +835,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource.</param>
         /// <param name="value">The value of the resource.</param>
-        public void AddResource(string name, string value) => AddDataRow(ResXCommon.DataStr, name, value);
+        public void AddResource(string name, string? value) => AddDataRow(ResXCommon.DataStr, name, value);
 
         /// <summary>
         /// Adds a named resource specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
@@ -815,7 +843,7 @@ namespace KGySoft.Resources
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a resource name/value pair.</param>
         public void AddResource(ResXDataNode node)
         {
-            if (node == null)
+            if (node == null!)
                 Throw.ArgumentNullException(Argument.node);
             AddDataRow(ResXCommon.DataStr, node.Name, node);
         }
@@ -861,11 +889,12 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "XmlReader will close StringReader because created by CloseInput = true.")]
         private void InitializeWriter()
         {
+            Debug.Assert(writer != null);
+
             // otherwise, UTF-16 would have been dumped
-            if (writer.FromTextWriter)
+            if (writer!.FromTextWriter)
                 writer.WriteRaw("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
             else
                 writer.WriteStartDocument();
@@ -914,19 +943,25 @@ namespace KGySoft.Resources
 
         private void AddDataRow(string elementName, string name, ResXDataNode node)
         {
-            DataNodeInfo info = node.GetDataNodeInfo(typeNameConverter, compatibleFormat);
-            string value = info.ValueData;
-            ResXFileRef fileRef;
+            DataNodeInfo info = node.GetDataNodeInfo(typeNameConverter, compatibleFormat, safeMode);
+            string? value = info.ValueData;
+            ResXFileRef? fileRef;
             if (basePath != null && (fileRef = node.FileRef) != null && Path.IsPathRooted(fileRef.FileName))
                 value = ResXFileRef.ToString(Files.GetRelativePath(fileRef.FileName, basePath), fileRef.TypeName, fileRef.EncodingName);
 
             AddDataRow(elementName, name, value, GetTypeNameWithAlias(info), info.MimeType, info.Comment);
         }
 
-        private void AddDataRow(string elementName, string name, byte[] value)
-            => AddDataRow(elementName, name, ResXCommon.ToBase64(value), GetTypeNameWithAlias(Reflector.ByteArrayType), null, null);
+        private void AddDataRow(string elementName, string name, byte[]? value)
+        {
+            // if it's null, set it here as a ResXNullRef
+            if (value == null)
+                AddDataRow(elementName, name, null, GetTypeNameWithAlias(typeof(ResXNullRef)), null, null);
+            else
+                AddDataRow(elementName, name, ResXCommon.ToBase64(value), GetTypeNameWithAlias(Reflector.ByteArrayType), null, null);
+        }
 
-        private void AddDataRow(string elementName, string name, object value)
+        private void AddDataRow(string elementName, string name, object? value)
         {
             // 1.) String
             if (value is string valueData)
@@ -947,62 +982,61 @@ namespace KGySoft.Resources
             AddDataRow(elementName, name, node);
         }
 
-        private void AddDataRow(string elementName, string name, string value)
+        private void AddDataRow(string elementName, string name, string? value)
         {
+            // if it's a null string, set it here as a ResXNullRef
             if (value == null)
-            {
-                // if it's a null string, set it here as a ResXNullRef
                 AddDataRow(elementName, name, null, GetTypeNameWithAlias(typeof(ResXNullRef)), null, null);
-            }
             else
                 AddDataRow(elementName, name, value, null, null, null);
         }
 
-        private void AddDataRow(string elementName, string name, string value, string typeWithAlias, string mimeType, string comment)
+        private void AddDataRow(string elementName, string name, string? value, string? typeWithAlias, string? mimeType, string? comment)
         {
             if (hasBeenSaved)
                 Throw.InvalidOperationException(Res.ResourcesWriterSaved);
 
-            Writer.WriteStartElement(elementName);
-            writer.WriteAttributeString(ResXCommon.NameStr, name);
+            XmlWriter w = Writer;
+            w.WriteStartElement(elementName);
+            w.WriteAttributeString(ResXCommon.NameStr, name);
 
             if (typeWithAlias != null)
-                writer.WriteAttributeString(ResXCommon.TypeStr, typeWithAlias);
+                w.WriteAttributeString(ResXCommon.TypeStr, typeWithAlias);
 
             if (mimeType != null)
-                writer.WriteAttributeString(ResXCommon.MimeTypeStr, mimeType);
+                w.WriteAttributeString(ResXCommon.MimeTypeStr, mimeType);
 
             if (value != null && mimeType == null && (typeWithAlias == null || !typeWithAlias.StartsWith("System.Byte[]", StringComparison.Ordinal)) && PreserveSpaces(value))
-                writer.WriteAttributeString(ResXCommon.XmlStr, ResXCommon.SpaceStr, null, ResXCommon.PreserveStr);
+                w.WriteAttributeString(ResXCommon.XmlStr, ResXCommon.SpaceStr, null, ResXCommon.PreserveStr);
 
-            writer.WriteStartElement(ResXCommon.ValueStr);
-            if (!string.IsNullOrEmpty(value))
-                writer.WriteString(value);
+            // for empty strings writing <value/> for compatibility reasons; otherwise, null and empty string representation is differentiated
+            w.WriteStartElement(ResXCommon.ValueStr);
+            if (value != null && (value.Length > 0 || typeWithAlias != null))
+                w.WriteString(value);
 
-            writer.WriteEndElement();
-            if (!string.IsNullOrEmpty(comment))
+            w.WriteEndElement();
+            if (!String.IsNullOrEmpty(comment))
             {
-                writer.WriteStartElement(ResXCommon.CommentStr);
-                writer.WriteString(comment);
-                writer.WriteEndElement();
+                w.WriteStartElement(ResXCommon.CommentStr);
+                w.WriteString(comment);
+                w.WriteEndElement();
             }
 
-            writer.WriteEndElement();
+            w.WriteEndElement();
         }
 
         private void AddAssemblyRow(string alias, string assembly)
         {
-            Writer.WriteStartElement(ResXCommon.AssemblyStr);
-            writer.WriteAttributeString(ResXCommon.AliasStr, alias);
-            writer.WriteAttributeString(ResXCommon.NameStr, assembly);
-            writer.WriteEndElement();
-            if (activeAliases == null)
-                activeAliases = new Dictionary<string, string>();
-
+            XmlWriter w = Writer;
+            w.WriteStartElement(ResXCommon.AssemblyStr);
+            w.WriteAttributeString(ResXCommon.AliasStr, alias);
+            w.WriteAttributeString(ResXCommon.NameStr, assembly);
+            w.WriteEndElement();
+            activeAliases ??= new StringKeyedDictionary<string>();
             activeAliases[assembly] = alias;
         }
 
-        private string GetTypeNameWithAlias(DataNodeInfo info)
+        private string? GetTypeNameWithAlias(DataNodeInfo info)
             => info.TypeName == null ? null : GetTypeNameWithAlias(info.TypeName, info.AssemblyAliasValue);
 
         private string GetTypeNameWithAlias(Type type)
@@ -1014,13 +1048,13 @@ namespace KGySoft.Resources
         /// <param name="origTypeName">Input type name with assembly or alias name.</param>
         /// <param name="asmName">If not null, origTypeName contains an alias name, and this is the assembly name.</param>
         /// <returns>The type name with a (possibly generated) alias or with the full name.</returns>
-        private string GetTypeNameWithAlias(string origTypeName, string asmName)
+        private string GetTypeNameWithAlias(string origTypeName, string? asmName)
         {
             int genericEnd = origTypeName.LastIndexOf(']');
             int asmNamePos = origTypeName.IndexOf(',', genericEnd + 1);
             string typeName = asmNamePos >= 0 ? origTypeName.Substring(0, asmNamePos).Trim() : origTypeName;
-            string asmOrAliasName = asmNamePos >= 0 ? origTypeName.Substring(asmNamePos + 1).Trim() : null;
-            string alias;
+            string? asmOrAliasName = asmNamePos >= 0 ? origTypeName.Substring(asmNamePos + 1).Trim() : null;
+            string? alias;
 
             if (asmOrAliasName == null)
             {
@@ -1051,7 +1085,7 @@ namespace KGySoft.Resources
                 }
 
                 // 4. Otherwise, generating a proper name. If it is not the active name, making it active
-                string generatedAlias = new AssemblyName(asmName).Name;
+                string generatedAlias = new AssemblyName(asmName).Name!;
                 if (activeAliases == null || !activeAliases.TryGetValue(asmName, out alias) || alias != generatedAlias)
                     AddAssemblyRow(generatedAlias, asmName);
                 return typeName + ", " + generatedAlias;
@@ -1076,7 +1110,7 @@ namespace KGySoft.Resources
                 return origTypeName;
 
             // 4. generate alias, making it active, write assembly, return the generated alias with type name
-            alias = new AssemblyName(asmName).Name;
+            alias = new AssemblyName(asmName).Name!;
             AddAssemblyRow(alias, asmName);
             return typeName + ", " + alias;
         }

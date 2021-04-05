@@ -86,7 +86,7 @@ namespace KGySoft.ComponentModel
 
         #region Instance Fields
 
-        private UndoableHelper undoable;
+        private UndoableHelper? undoable;
 
         #endregion
 
@@ -183,10 +183,10 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
-            if (e == null)
+            if (e == null!)
                 Throw.ArgumentNullException(Argument.e);
 
-            if (PropertiesInternal.ContainsKey(e.PropertyName))
+            if (Properties.ContainsKey(e.PropertyName!))
                 Undoable.HandlePropertyChanged(e);
 
             base.OnPropertyChanged(e);

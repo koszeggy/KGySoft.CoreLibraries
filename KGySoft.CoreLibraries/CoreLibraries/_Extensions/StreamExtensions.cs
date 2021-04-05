@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 #endregion
@@ -41,9 +40,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="bufferSize">Size of the buffer used for copying.</param>
         public static void CopyTo(this Stream source, Stream destination, int bufferSize)
         {
-            if (source == null)
+            if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
-            if (destination == null)
+            if (destination == null!)
                 Throw.ArgumentNullException(Argument.destination);
             if (bufferSize <= 0)
                 Throw.ArgumentOutOfRangeException(Argument.bufferSize);
@@ -83,10 +82,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">Source stream</param>
         /// <returns>A byte <see cref="Array"/> with the stream content.</returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, every new MemoryStream is in using")]
         public static byte[] ToArray(this Stream s)
         {
-            if (s == null)
+            if (s == null!)
                 Throw.ArgumentNullException(Argument.s);
             if (!s.CanRead)
                 Throw.ArgumentException(Argument.s, Res.StreamExtensionsStreamCannotRead);

@@ -51,33 +51,9 @@ namespace KGySoft.CoreLibraries.UnitTests
 
         #region Methods
 
-        #region Public Methods
-        
-        [OneTimeSetUp]
-        public void Initialize() => LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
+        #region Static Methods
 
-        [Test]
-        public void TestUnknownResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
-
-        [Test]
-        public void TestInvalidResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
-
-        [Test]
-        public void TestResources()
-        {
-            var obtainedMembers = new HashSet<string>();
-
-            // note: these should be 3 different tests but if coverage is tested in ClassCleanup method, then the assert is suppressed
-            CheckProperties(obtainedMembers);
-            CheckMethods(obtainedMembers);
-            CheckCoverage(obtainedMembers);
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private void CheckProperties(HashSet<string> obtainedMembers)
+        private static void CheckProperties(HashSet<string> obtainedMembers)
         {
             PropertyInfo[] properties = typeof(Res).GetProperties(BindingFlags.Static | BindingFlags.NonPublic);
             foreach (PropertyInfo property in properties)
@@ -89,13 +65,16 @@ namespace KGySoft.CoreLibraries.UnitTests
             }
         }
 
-        private void CheckMethods(HashSet<string> obtainedMembers)
+        private static void CheckMethods(HashSet<string> obtainedMembers)
         {
             IEnumerable<MethodInfo> methods = typeof(Res).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.IsAssembly);
             var generateSettings = new GenerateObjectSettings { AllowCreateObjectWithoutConstructor = true }; // for PropertyDescriptors
             foreach (MethodInfo mi in methods)
             {
                 var method = mi.IsGenericMethodDefinition ? mi.MakeGenericMethod(random.NextObject(typeof(Enum)).GetType()) : mi;
+                if (method.ReturnType == typeof(void))
+                    continue;
+
                 object[] parameters = method.GetParameters().Select(p => random.NextObject(p.ParameterType, generateSettings)).ToArray();
                 string value = method.Invoke(null, parameters).ToString();
                 Assert.IsFalse(value.StartsWith(unavailableResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{method.Name} refers to an undefined resource.");
@@ -120,7 +99,7 @@ namespace KGySoft.CoreLibraries.UnitTests
             }
         }
 
-        private void CheckCoverage(HashSet<string> obtainedMembers)
+        private static void CheckCoverage(HashSet<string> obtainedMembers)
         {
             var rm = (ResourceManager)Reflector.GetField(typeof(Res), "resourceManager");
             ResourceSet rs = rm.GetResourceSet(CultureInfo.InvariantCulture, true, false);
@@ -148,6 +127,30 @@ namespace KGySoft.CoreLibraries.UnitTests
             }
 
             Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{uncovered.Join(Environment.NewLine)}");
+        }
+
+        #endregion
+
+        #region Instance Methods
+
+        [OneTimeSetUp]
+        public void Initialize() => LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
+
+        [Test]
+        public void TestUnknownResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
+
+        [Test]
+        public void TestInvalidResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", Reflector.EmptyObjects).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
+
+        [Test]
+        public void TestResources()
+        {
+            var obtainedMembers = new HashSet<string>();
+
+            // note: these should be 3 different tests but if coverage is tested in ClassCleanup method, then the assert is suppressed
+            CheckProperties(obtainedMembers);
+            CheckMethods(obtainedMembers);
+            CheckCoverage(obtainedMembers);
         }
 
         #endregion

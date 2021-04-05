@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -34,11 +33,39 @@ namespace KGySoft.Serialization.Xml
 {
     internal abstract class XmlDeserializerBase
     {
+        #region Properties
+
+        #region Private Protected Properties
+        
+        private protected bool SafeMode { get; }
+
+        #endregion
+
+        #region Private Properties
+
+        private ResolveTypeOptions ResolveTypeOptions => ResolveTypeOptions.AllowPartialAssemblyMatch
+            | (SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.TryToLoadAssemblies);
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        private protected XmlDeserializerBase(bool safeMode)
+        {
+            SafeMode = safeMode;
+        }
+
+        #endregion
+
         #region Methods
 
+        #region Static Methods
+        
         #region Private Protected Methods
 
-        private protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
+        private protected static void ParseArrayDimensions(string? attrLength, string? attrDim, out int[] lengths, out int[] lowerBounds)
         {
             if (attrLength == null && attrDim == null)
                 Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
@@ -52,7 +79,7 @@ namespace KGySoft.Serialization.Xml
                 return;
             }
 
-            string[] dims = attrDim.Split(',');
+            string[] dims = attrDim!.Split(',');
             lengths = new int[dims.Length];
             lowerBounds = new int[dims.Length];
             for (int i = 0; i < dims.Length; i++)
@@ -102,37 +129,36 @@ namespace KGySoft.Serialization.Xml
             return true;
         }
 
-        private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object> members)
+        private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object?> members)
         {
             initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
             object result = CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
 
             // restoring fields and properties of the final collection
-            foreach (KeyValuePair<MemberInfo, object> member in members)
+            foreach (KeyValuePair<MemberInfo, object?> member in members)
             {
-                var property = member.Key as PropertyInfo;
-                var field = property != null ? null : member.Key as FieldInfo;
-                
+                PropertyInfo? property = member.Key as PropertyInfo;
+                FieldInfo? field = property != null ? null : (FieldInfo)member.Key;
 
                 // read-only property
                 if (property?.CanWrite == false)
                 {
-                    object existingValue = property.Get(result);
+                    object? existingValue = property.Get(result);
                     if (property.PropertyType.IsValueType)
                     {
                         if (Equals(existingValue, member.Value))
                             continue;
-                        Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, collectionCtor.DeclaringType));
+                        Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, collectionCtor.DeclaringType!));
                     }
 
                     if (existingValue == null && member.Value == null)
                         continue;
                     if (member.Value == null)
-                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, collectionCtor.DeclaringType));
+                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, collectionCtor.DeclaringType!));
                     if (existingValue == null)
-                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, collectionCtor.DeclaringType));
+                        Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, collectionCtor.DeclaringType!));
                     if (existingValue.GetType() != member.Value.GetType())
-                        Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
+                        Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(collectionCtor.DeclaringType!, property.Name, member.Value.GetType(), existingValue.GetType()));
 
                     CopyContent(member.Value, existingValue);
                     continue;
@@ -146,79 +172,13 @@ namespace KGySoft.Serialization.Xml
                 }
 
                 // field
-                field.Set(result, member.Value);
+                field!.Set(result, member.Value);
             }
 
             return result;
         }
 
-        private protected static void ResolveMember(Type type, string memberOrItemName, string strDeclaringType, string strItemType, out PropertyInfo property, out FieldInfo field, out Type itemType)
-        {
-            property = null;
-            field = null;
-
-            // declaring type of member is defined to avoid ambiguity
-            if (strDeclaringType != null)
-            {
-                Type declaringType = Reflector.ResolveType(strDeclaringType);
-                if (declaringType == null)
-                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(strDeclaringType));
-                property = declaringType.GetProperty(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                if (property == null)
-                    field = declaringType.GetField(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            }
-            // no declaringType so "item" in a collection means an item, in any other case we have a member
-            else if (!(Reflector.IEnumerableType.IsAssignableFrom(type)) || memberOrItemName != XmlSerializer.ElementItem)
-            {
-                property = type.GetProperty(memberOrItemName);
-                if (property == null)
-                    field = type.GetField(memberOrItemName);
-            }
-
-            itemType = null;
-            if (strItemType != null)
-            {
-                itemType = Reflector.ResolveType(strItemType);
-                if (itemType == null)
-                    Throw.ReflectionException(Res.XmlSerializationCannotResolveType(strItemType));
-            }
-
-            if (itemType == null)
-                itemType = property?.PropertyType ?? field?.FieldType;
-        }
-
-        private protected static bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string> readStringValue, out object result)
-        {
-            TypeConverter converter = null;
-
-            // Explicitly defined type converter if can convert from string
-            Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
-            if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
-                && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
-            {
-                ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                object[] ctorParams = { memberType };
-                if (ctor == null)
-                {
-                    ctor = convType.GetDefaultConstructor();
-                    ctorParams = Reflector.EmptyObjects;
-                }
-
-                if (ctor != null)
-                    converter = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(ctorParams) as TypeConverter;
-            }
-
-            if (converter?.CanConvertFrom(Reflector.StringType) != true)
-            {
-                result = null;
-                return false;
-            }
-
-            result = converter.ConvertFromInvariantString(readStringValue.Invoke());
-            return true;
-        }
-
-        private protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue, Dictionary<MemberInfo, object> members)
+        private protected static void HandleDeserializedMember(object obj, MemberInfo member, object? deserializedValue, object? existingValue, Dictionary<MemberInfo, object?>? members)
         {
             // 1/a.) Cache for later (obj is an initializer collection)
             if (members != null)
@@ -266,7 +226,7 @@ namespace KGySoft.Serialization.Xml
             property.Set(obj, deserializedValue);
         }
 
-        private protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
+        private protected static void AssertCollectionItem(Type objRealType, Type? collectionElementType, string name)
         {
             if (collectionElementType == null)
             {
@@ -281,8 +241,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected static string Unescape(string s)
         {
-            StringBuilder result = new StringBuilder(s);
-
+            var result = new StringBuilder(s);
             for (int i = 0; i < result.Length; i++)
             {
                 if (result[i] == '\\')
@@ -322,7 +281,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private static void CopyContent(object source, object target)
         {
-            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
+            Debug.Assert(target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
 
             // 1.) Array
             if (target is Array targetArray && source is Array sourceArray)
@@ -352,6 +311,76 @@ namespace KGySoft.Serialization.Xml
 
             // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
             SerializationHelper.CopyFields(source, target);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Instance Methods
+
+        private protected Type ResolveType(string typeName)
+            => Reflector.ResolveType(typeName, ResolveTypeOptions) ?? (SafeMode
+                ? Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName))
+                : Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName)));
+
+        private protected void ResolveMember(Type type, string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field, out Type? itemType)
+        {
+            property = null;
+            field = null;
+
+            // declaring type of member is defined to avoid ambiguity
+            if (strDeclaringType != null)
+            {
+                Type declaringType = ResolveType(strDeclaringType);
+                property = declaringType.GetProperty(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (property == null)
+                    field = declaringType.GetField(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            }
+            // no declaringType so "item" in a collection means an item, in any other case we have a member
+            else if (!(Reflector.IEnumerableType.IsAssignableFrom(type)) || memberOrItemName != XmlSerializer.ElementItem)
+            {
+                property = type.GetProperty(memberOrItemName);
+                if (property == null)
+                    field = type.GetField(memberOrItemName);
+            }
+
+            itemType = null;
+            if (strItemType != null)
+                itemType = ResolveType(strItemType);
+
+            itemType ??= property?.PropertyType ?? field?.FieldType;
+        }
+
+        private protected bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string?> readStringValue, out object? result)
+        {
+            TypeConverter? converter = null;
+
+            // Explicitly defined type converter if can convert from string
+            Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+            if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
+                && Reflector.ResolveType(convAttr.ConverterTypeName, ResolveTypeOptions) is Type convType)
+            {
+                ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
+                object[] ctorParams = { memberType };
+                if (ctor == null)
+                {
+                    ctor = convType.GetDefaultConstructor();
+                    ctorParams = Reflector.EmptyObjects;
+                }
+
+                if (ctor != null)
+                    converter = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(ctorParams) as TypeConverter;
+            }
+
+            if (converter?.CanConvertFrom(Reflector.StringType) != true)
+            {
+                result = null;
+                return false;
+            }
+
+            result = converter.ConvertFromInvariantString(readStringValue.Invoke());
+            return true;
         }
 
         #endregion

@@ -54,10 +54,7 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        /// <summary>
-        /// This locks also the loader method but this is OK because a new accessor creation is fast.
-        /// </summary>
-        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192).GetThreadSafeAccessor(true);
+        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = ThreadSafeCacheFactory.Create<MemberInfo, MemberAccessor>(CreateAccessor, LockFreeCacheOptions.Profile8K);
 
         #endregion
 
@@ -90,13 +87,13 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="member">The <see cref="MemberInfo"/> for which the accessor is created.</param>
         /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
-        private protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
+        private protected MemberAccessor(MemberInfo member, Type[]? parameterTypes)
         {
-            if (member == null)
+            if (member == null!)
                 Throw.ArgumentNullException(Argument.member);
             MemberInfo = member;
             ParameterTypes = parameterTypes ?? Type.EmptyTypes;
-            Type pointerType = ParameterTypes.FirstOrDefault(p => p.IsPointer);
+            Type? pointerType = ParameterTypes.FirstOrDefault(p => p.IsPointer);
             if (pointerType != null)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerType));
         }
@@ -121,12 +118,12 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        private protected static bool IsSecurityConflict(VerificationException ve, string accessorPrefix = null)
+        private protected static bool IsSecurityConflict(VerificationException ve, string? accessorPrefix = null)
         {
             try
             {
                 var stackTrace = new StackTrace(ve);
-                string methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0).GetMethod().Name : null;
+                string? methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0)?.GetMethod()?.Name : null;
                 if (methodName == null)
                     return false;
                 return accessorPrefix == null ? methodName.ContainsAny(methodInvokerPrefix, ctorInvokerPrefix) : methodName.StartsWith(accessorPrefix, StringComparison.Ordinal);
@@ -151,13 +148,11 @@ namespace KGySoft.Reflection
         private static MemberAccessor CreateAccessor(MemberInfo member)
         {
             // method
-            MethodInfo method = member as MethodInfo;
-            if (method != null)
+            if (member is MethodInfo method)
                 return MethodAccessor.CreateAccessor(method);
 
             // property
-            PropertyInfo property = member as PropertyInfo;
-            if (property != null)
+            if (member is PropertyInfo property)
                 return PropertyAccessor.CreateAccessor(property);
 
             // constructor (parameterless/parameterized)
@@ -165,8 +160,7 @@ namespace KGySoft.Reflection
                 return CreateInstanceAccessor.CreateAccessor(member);
 
             // field
-            FieldInfo field = member as FieldInfo;
-            if (field != null)
+            if (member is FieldInfo field)
                 return FieldAccessor.CreateAccessor(field);
 
             return Throw.NotSupportedException<MemberAccessor>(Res.ReflectionNotSupportedMemberType(member.MemberType));
@@ -185,19 +179,19 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="obj">The object to compare with the current <see cref="MemberAccessor"/>.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to the current <see cref="MemberAccessor"/>; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is MemberAccessor other && Equals(other.MemberInfo, MemberInfo);
+        public override bool Equals(object? obj) => obj is MemberAccessor other && Equals(other.MemberInfo, MemberInfo);
 
         /// <summary>
         /// Gets a hash code for the current <see cref="MemberAccessor"/> instance.
         /// </summary>
         /// <returns>A hash code for the current <see cref="MemberAccessor"/>.</returns>
-        public override int GetHashCode() => MemberInfo != null ? MemberInfo.GetHashCode() : 0;
+        public override int GetHashCode() => MemberInfo.GetHashCode();
 
         /// <summary>
         /// Returns a <see cref="string"/> that represents the current <see cref="MemberAccessor"/>.
         /// </summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
-        public override string ToString() => MemberInfo != null ? MemberInfo.MemberType + ": " + MemberInfo : base.ToString();
+        public override string ToString() => MemberInfo.MemberType + ": " + MemberInfo;
 
         #endregion
 
@@ -225,15 +219,14 @@ namespace KGySoft.Reflection
         {
             #region Local Methods
 
-            (string name, List<Type> parameters) GetNameAndParams(MethodBase methodOrCtor, DynamicMethodOptions o)
+            (string Name, List<Type> Parameters) GetNameAndParams(MethodBase methodOrCtor, DynamicMethodOptions o)
             {
                 List<Type> parameters = new List<Type>();
                 string name;
                 bool forceMethod = (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
                 if (methodOrCtor is ConstructorInfo && !forceMethod)
                 {
-                    // ReSharper disable once PossibleNullReferenceException - already checked by caller
-                    name = ctorInvokerPrefix + methodOrCtor.DeclaringType.Name;
+                    name = ctorInvokerPrefix + methodOrCtor.DeclaringType!.Name;
                     parameters.Add(typeof(object[])); // ctor parameters
                 }
                 else
@@ -259,18 +252,18 @@ namespace KGySoft.Reflection
                 return (name, parameters);
             }
 
-            void GenerateLocalsForRefParams(MethodBase methodorCtor, ILGenerator il, DynamicMethodOptions o)
+            void GenerateLocalsForRefParams(MethodBase methodOrCtor, ILGenerator il, DynamicMethodOptions o)
             {
                 if ((o & DynamicMethodOptions.HandleByRefParameters) == DynamicMethodOptions.None)
                     return;
 
-                ParameterInfo[] parameters = methodorCtor.GetParameters();
+                ParameterInfo[] parameters = methodOrCtor.GetParameters();
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
                     if (!ParameterTypes[i].IsByRef)
                         continue;
 
-                    Type paramType = ParameterTypes[i].GetElementType();
+                    Type paramType = ParameterTypes[i].GetElementType()!;
 
                     // ReSharper disable once AssignNullToNotNullAttribute - not null because of the if above
                     il.DeclareLocal(paramType);
@@ -278,7 +271,7 @@ namespace KGySoft.Reflection
                     // initializing locals of ref (non-out) parameters
                     if (!parameters[i].IsOut)
                     {
-                        il.Emit(methodorCtor is MethodInfo || (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                        il.Emit(methodOrCtor is MethodInfo || (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
                         il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                         il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
                         il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
@@ -320,7 +313,7 @@ namespace KGySoft.Reflection
                     {
                         if (!ParameterTypes[i].IsByRef)
                             continue;
-                        Type paramType = ParameterTypes[i].GetElementType();
+                        Type paramType = ParameterTypes[i].GetElementType()!;
                         il.Emit(methodOrCtor is MethodInfo || (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
                         il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                         il.Emit(OpCodes.Ldloc, localsIndex++); // loading local variable
@@ -335,13 +328,13 @@ namespace KGySoft.Reflection
 
             #endregion
 
-            if (methodBase == null)
+            if (methodBase == null!)
                 Throw.ArgumentNullException(Argument.methodBase);
-            Type declaringType = methodBase.DeclaringType;
+            Type? declaringType = methodBase.DeclaringType;
             if (declaringType == null)
                 Throw.ArgumentException(Argument.methodBase, Res.ReflectionDeclaringTypeExpected);
-            MethodInfo method = methodBase as MethodInfo;
-            ConstructorInfo ctor = methodBase as ConstructorInfo;
+            MethodInfo? method = methodBase as MethodInfo;
+            ConstructorInfo? ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)
                 Throw.ArgumentException(Argument.methodBase, Res.ReflectionInvalidMethodBase);
 
@@ -362,7 +355,7 @@ namespace KGySoft.Reflection
             GenerateLocalsForRefParams(methodBase, ilGenerator, options);
 
             // return value is the last local variable
-            LocalBuilder returnValue = returnType == Reflector.VoidType ? null : ilGenerator.DeclareLocal(returnType);
+            LocalBuilder? returnValue = returnType == Reflector.VoidType ? null : ilGenerator.DeclareLocal(returnType);
 
             // if instance method:
             if ((method != null && !method.IsStatic) || treatCtorAsMethod)
@@ -391,7 +384,7 @@ namespace KGySoft.Reflection
             // property value is the last parameter in a setter method
             if ((options & DynamicMethodOptions.TreatAsPropertySetter) != DynamicMethodOptions.None)
             {
-                PropertyInfo pi = MemberInfo as PropertyInfo;
+                PropertyInfo? pi = MemberInfo as PropertyInfo;
                 if (pi == null)
                     Throw.InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
                 ilGenerator.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
@@ -409,7 +402,7 @@ namespace KGySoft.Reflection
             }
             else
                 // calling the method
-                ilGenerator.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
+                ilGenerator.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method!);
 
             // If instance parameter was a ref parameter, then local variable should be boxed back:
             //il.Emit(OpCodes.Ldarg_0); // loading instance parameter

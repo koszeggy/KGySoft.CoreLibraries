@@ -35,7 +35,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private Action<ICommandState, TTarget, TParam> callback;
+        private Action<ICommandState, TTarget, TParam>? callback;
 
         #endregion
 
@@ -48,7 +48,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public TargetedCommand(Action<ICommandState, TTarget, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
         }
@@ -60,7 +60,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public TargetedCommand(Action<TTarget, TParam> callback)
         {
-            if (callback == null)
+            if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = (_, t, param) => callback.Invoke(t, param);
         }
@@ -81,12 +81,12 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target, object parameter)
+        void ICommand.Execute(ICommandSource source, ICommandState state, object? target, object? parameter)
         {
-            Action<ICommandState, TTarget, TParam> copy = callback;
+            Action<ICommandState, TTarget, TParam>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException();
-            copy.Invoke(state, (TTarget)target, (TParam)parameter);
+            copy.Invoke(state, (TTarget)target!, (TParam)parameter!);
         }
 
         #endregion

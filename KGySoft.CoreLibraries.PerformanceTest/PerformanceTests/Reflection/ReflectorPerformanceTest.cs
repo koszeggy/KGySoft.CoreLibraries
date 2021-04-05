@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -108,10 +109,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
             public static int StaticMethod(int p1, int p2) => p1 + p2;
 
+
             #endregion
 
             #region Instance Methods
 
+            [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Must be a property for the test")]
             public int InstanceMethod(int p1, int p2) => p1 + p2;
 
             #endregion
@@ -131,6 +134,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
         {
             #region Constructors
 
+            [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Needed for reflection test")]
             public TestStruct(int p1, int p2)
             {
             }

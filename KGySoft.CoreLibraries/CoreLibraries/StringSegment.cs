@@ -28,12 +28,16 @@ using KGySoft.ComponentModel;
 
 #endregion
 
-namespace KGySoft.CoreLibraries
-{
+#region Suppressions
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.CoreLibraries
+{
     /// <summary>
     /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.
@@ -306,7 +310,7 @@ namespace KGySoft.CoreLibraries
 
         #region Instance Fields
 
-        private readonly string str;
+        private readonly string? str;
         private readonly int offset;
         private readonly int length;
 
@@ -328,7 +332,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the underlying string of this <see cref="StringSegment"/>.
         /// </summary>
-        public string UnderlyingString => str;
+        public string? UnderlyingString => str;
 
         /// <summary>
         /// Gets the offset, which denotes the start position of this <see cref="StringSegment"/> within the <see cref="UnderlyingString"/>.
@@ -405,7 +409,6 @@ namespace KGySoft.CoreLibraries
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
         [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
-        [SuppressMessage("Style", "IDE0057:Use range operator", Justification = "False alarm, causes recursion")]
         public StringSegment this[Range range]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -432,7 +435,7 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
                 Justification = "The named alternative exists in StringExtensions.AsSegment")]
-        public static implicit operator StringSegment(string s) => s == null ? Null : new StringSegment(s);
+        public static implicit operator StringSegment(string? s) => s == null ? Null : new StringSegment(s);
 
         /// <summary>
         /// Performs an explicit conversion from <see cref="StringSegment"/> to <see cref="string">string</see>.
@@ -441,7 +444,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="string">string</see> instance that represents the specified <see cref="StringSegment"/>.
         /// </returns>
-        public static explicit operator string(StringSegment stringSegment) => stringSegment.ToString();
+        public static explicit operator string?(StringSegment stringSegment) => stringSegment.ToString();
 
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
         /// <summary>
@@ -463,7 +466,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal StringSegment(string s, int offset, int length)
         {
-            Debug.Assert(s != null);
+            Debug.Assert(s != null!);
             str = s;
             this.offset = offset;
             this.length = length;
@@ -472,10 +475,10 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal StringSegment(string s)
         {
-            Debug.Assert(s != null);
+            Debug.Assert(s != null!);
             str = s;
             offset = 0;
-            length = s.Length;
+            length = s!.Length;
         }
 
         #endregion
@@ -543,7 +546,7 @@ namespace KGySoft.CoreLibraries
         /// <note>As opposed to the usual <a href="https://docs.microsoft.com/en-us/dotnet/api/system.object.tostring#notes-to-inheritors" target="_blank">ToString guidelines</a>
         /// this method can return <see cref="String.Empty">String.Empty</see> or even <see langword="null"/>.</note>
         /// </returns>
-        public override string ToString()
+        public override string? ToString()
             => str == null ? null
                 : length == str.Length ? str
                 : str.Substring(offset, length);
@@ -562,7 +565,7 @@ namespace KGySoft.CoreLibraries
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal char GetCharInternal(int index) => str[offset + index];
+        internal char GetCharInternal(int index) => str![offset + index];
 
         internal int GetHashCodeOrdinalIgnoreCase()
         {
@@ -578,7 +581,6 @@ namespace KGySoft.CoreLibraries
         #region Explicitly Implemented Interface Methods
 
         IEnumerator<char> IEnumerable<char>.GetEnumerator() => GetEnumerator();
-
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         #endregion

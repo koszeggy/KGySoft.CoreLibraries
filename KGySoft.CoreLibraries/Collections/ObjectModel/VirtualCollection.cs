@@ -24,7 +24,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -34,12 +33,14 @@ namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
     /// Similar to <see cref="Collection{T}"/> but provides virtual members not just for writing an setting but also for getting elements
-    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties such as <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
+    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties
+    /// such as <see cref="Count"/>, <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <seealso cref="IList{T}" />
     /// <seealso cref="Collection{T}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
     public class VirtualCollection<T> : IList<T>, IList
 #if !(NET35 || NET40)
@@ -49,7 +50,7 @@ namespace KGySoft.Collections.ObjectModel
         #region Fields
 
         private readonly IList<T> items;
-        [NonSerialized] private object syncRoot;
+        [NonSerialized] private object? syncRoot;
 
         #endregion
 
@@ -61,8 +62,9 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Gets the number of elements actually contained in the <see cref="VirtualCollection{T}"/>.
+        /// <br/>The base implementation returns the <see cref="ICollection{T}.Count"/> property of the underlying collection.
         /// </summary>
-        public int Count => items.Count;
+        public virtual int Count => items.Count;
 
         /// <summary>
         /// Gets whether the <see cref="VirtualCollection{T}" /> is read-only. Affects the behavior of <see cref="Add">Add</see>, <see cref="Insert">Insert</see>,
@@ -134,7 +136,7 @@ namespace KGySoft.Collections.ObjectModel
             [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, ArgumentOutOfRangeException is expected")]
             get
             {
-                if (index < 0 || index >= Count)
+                if ((uint)index >= (uint)Count)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 return GetItem(index);
             }
@@ -142,7 +144,7 @@ namespace KGySoft.Collections.ObjectModel
             {
                 if (!CanSetItem)
                     Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-                if (index < 0 || index >= Count)
+                if ((uint)index >= (uint)Count)
                     Throw.ArgumentOutOfRangeException(Argument.index);
                 SetItem(index, value);
             }
@@ -152,7 +154,7 @@ namespace KGySoft.Collections.ObjectModel
 
         #region Explicitly Implemented Interface Indexers
 
-        object IList.this[int index]
+        object? IList.this[int index]
         {
             get => this[index];
             set
@@ -160,7 +162,7 @@ namespace KGySoft.Collections.ObjectModel
                 Throw.ThrowIfNullIsInvalid<T>(value);
                 try
                 {
-                    this[index] = (T)value;
+                    this[index] = (T)value!;
                 }
                 catch (InvalidCastException)
                 {
@@ -189,7 +191,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
         public VirtualCollection(IList<T> list)
         {
-            if (list == null)
+            if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
             items = list;
         }
@@ -226,7 +228,7 @@ namespace KGySoft.Collections.ObjectModel
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            if (index < 0 || index > Count)
+            if ((uint)index > (uint)Count)
                 Throw.ArgumentOutOfRangeException(Argument.index);
 
             InsertItem(index, item);
@@ -234,7 +236,7 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Removes one occurrence of a specific object from the <see cref="VirtualCollection{T}"/>.
-        /// <br/>Calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItem">RemoveItem</see> methods.
+        /// <br/>Calls the overridable <see cref="RemoveItem">RemoveItem</see> method.
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
         /// <returns><see langword="true"/>, if an occurrence of <paramref name="item"/> was removed; otherwise, <see langword="false"/>.</returns>
@@ -243,18 +245,12 @@ namespace KGySoft.Collections.ObjectModel
         {
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-            int index = GetItemIndex(item);
-            if (index < 0)
-                return false;
-
-            RemoveItem(index);
-            return true;
+            return RemoveItem(item);
         }
-
+        
         /// <summary>
         /// Removes the element at the specified index of the <see cref="VirtualCollection{T}"/>.
-        /// <br/>Calls the overridable <see cref="RemoveItem">RemoveItem</see> method.
+        /// <br/>Calls the overridable <see cref="RemoveItemAt">RemoveItem</see> method.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
         /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
@@ -264,10 +260,10 @@ namespace KGySoft.Collections.ObjectModel
             if (IsReadOnly)
                 Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            if (index < 0 || index >= Count)
+            if ((uint)index >= (uint)Count)
                 Throw.ArgumentOutOfRangeException(Argument.index);
 
-            RemoveItem(index);
+            RemoveItemAt(index);
         }
 
         /// <summary>
@@ -305,7 +301,8 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <returns>An <see cref="IEnumerator{T}" /> for the <see cref="VirtualCollection{T}"/>.</returns>
         /// <remarks>
-        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method; otherwise, it depends on the wrapped collection.</note>
+        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then the returned enumerator supports
+        /// the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method; otherwise, it depends on the enumerator of the wrapped collection.</note>
         /// </remarks>
         public virtual IEnumerator<T> GetEnumerator() => items.GetEnumerator();
 
@@ -318,14 +315,12 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
         /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         public void CopyTo(T[] array, int arrayIndex)
         {
             int length = Count;
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
-            if (arrayIndex < 0 || arrayIndex > array.Length)
+            if ((uint)arrayIndex > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
             if (array.Length - arrayIndex < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
@@ -354,7 +349,7 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
-        protected bool ContainsItem(T item) => GetItemIndex(item) >= 0;
+        protected virtual bool ContainsItem(T item) => GetItemIndex(item) >= 0;
 
         /// <summary>
         /// Gets the element at the specified <paramref name="index"/>.
@@ -385,7 +380,23 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>The base implementation calls the <see cref="IList{T}.RemoveAt">RemoveAt</see> method of the underlying collection.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        protected virtual void RemoveItem(int index) => items.RemoveAt(index);
+        protected virtual void RemoveItemAt(int index) => items.RemoveAt(index);
+
+        /// <summary>
+        /// Removes one occurrence of a specific object from the <see cref="VirtualCollection{T}"/>.
+        /// <br/>The base implementation calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItemAt">RemoveItem</see> methods.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
+        /// <returns><see langword="true"/>, if an occurrence of <paramref name="item"/> was removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
+        protected virtual bool RemoveItem(T item)
+        {
+            int index = GetItemIndex(item);
+            if (index < 0)
+                return false;
+            RemoveItemAt(index);
+            return true;
+        }
 
         /// <summary>
         /// Removes all elements from the <see cref="VirtualCollection{T}"/>.
@@ -399,11 +410,9 @@ namespace KGySoft.Collections.ObjectModel
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalse", Justification = "False alarm, array CAN be null so it must be checked")]
-        [SuppressMessage("ReSharper", "HeuristicUnreachableCode", Justification = "False alarm, array CAN be null so the Throw is reachable")]
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null)
+            if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             if (array is T[] typedArray)
@@ -413,14 +422,14 @@ namespace KGySoft.Collections.ObjectModel
             }
 
             int length = Count;
-            if (index < 0 || index > array.Length)
+            if ((uint)index > (uint)array.Length)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (array.Length - index < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             if (array.Rank != 1)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
 
-            if (array is object[] objectArray)
+            if (array is object?[] objectArray)
             {
                 for (int i = 0; i < length; i++)
                 {
@@ -434,18 +443,18 @@ namespace KGySoft.Collections.ObjectModel
             Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
         }
 
-        bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
+        bool IList.Contains(object? value) => typeof(T).CanAcceptValue(value) && Contains((T)value!);
 
-        int IList.IndexOf(object value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : -1;
+        int IList.IndexOf(object? value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value!) : -1;
 
-        int IList.Add(object value)
+        int IList.Add(object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
 
             T item;
             try
             {
-                item = (T)value;
+                item = (T)value!;
                 Add(item);
             }
             catch (InvalidCastException)
@@ -454,15 +463,15 @@ namespace KGySoft.Collections.ObjectModel
                 item = default;
             }
 
-            return GetItemIndex(item);
+            return GetItemIndex(item!);
         }
 
-        void IList.Insert(int index, object value)
+        void IList.Insert(int index, object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
             try
             {
-                Insert(index, (T)value);
+                Insert(index, (T)value!);
             }
             catch (InvalidCastException)
             {
@@ -470,12 +479,12 @@ namespace KGySoft.Collections.ObjectModel
             }
         }
 
-        void IList.Remove(object value)
+        void IList.Remove(object? value)
         {
             Throw.ThrowIfNullIsInvalid<T>(value);
             try
             {
-                Remove((T)value);
+                Remove((T)value!);
             }
             catch (InvalidCastException)
             {

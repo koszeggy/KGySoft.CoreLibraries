@@ -20,9 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using KGySoft.Annotations;
 
 #endregion
 
@@ -37,7 +35,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private ReadOnlyCollection<ValidationResult> errors, warnings, infos;
+        private ReadOnlyCollection<ValidationResult>? errors, warnings, infos;
 
         #endregion
 
@@ -103,7 +101,6 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">Name of the property to get the validation results.</param>
         /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        [SuppressMessage("Microsoft.Design", "CA1023:IndexersShouldNotBeMultidimensional", Justification = "Intentionally nonstandard indexer, but 2nd parameter is optional.")]
 #if NET35 || NET40
         public IList<ValidationResult>
 #else
@@ -181,7 +178,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="item"/> cannot be <see langword="null"/>.</exception>
         protected override void InsertItem(int index, ValidationResult item)
         {
-            if (item == null)
+            if (item == null!)
                 Throw.ArgumentNullException(Argument.item);
             base.InsertItem(index, item);
             InvalidateCaches();
@@ -195,7 +192,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="item"/> cannot be <see langword="null"/>.</exception>
         protected override void SetItem(int index, ValidationResult item)
         {
-            if (item == null)
+            if (item == null!)
                 Throw.ArgumentNullException(Argument.item);
             base.SetItem(index, item);
             InvalidateCaches();

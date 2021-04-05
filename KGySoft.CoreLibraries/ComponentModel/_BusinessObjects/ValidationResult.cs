@@ -16,7 +16,6 @@
 
 #region Usings
 
-using System;
 using System.Diagnostics;
 
 using KGySoft.CoreLibraries;
@@ -61,9 +60,9 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <see cref="ValidationSeverity.Error"/>.</param>
         public ValidationResult(string propertyName, string message, ValidationSeverity severity = ValidationSeverity.Error)
         {
-            if (propertyName == null)
+            if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            if (message == null)
+            if (message == null!)
                 Throw.ArgumentNullException(Argument.message);
             PropertyName = propertyName;
             Message = message;
@@ -82,14 +81,14 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// A <see cref="string" /> that represents this instance.
         /// </returns>
-        public override string ToString() => Message ?? base.ToString();
+        public override string ToString() => Message;
 
         /// <summary>
         /// Determines whether the specified <see cref="object" />, is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj is ValidationResult other &&
             PropertyName == other.PropertyName &&
             Message == other.Message &&

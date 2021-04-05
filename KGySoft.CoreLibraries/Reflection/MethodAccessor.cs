@@ -64,7 +64,7 @@ namespace KGySoft.Reflection
     ///         MethodInfo method = instance.GetType().GetMethod(nameof(TestClass.TestMethod));
     ///         MethodAccessor accessor = MethodAccessor.GetAccessor(method);
     /// 
-    ///         new PerformanceTest { Iterations = 1000000 }
+    ///         new PerformanceTest { Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestMethod(1), "Direct call")
     ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "MethodInfo.Invoke")
     ///             .AddCase(() => accessor.Invoke(instance, 1), "MethodAccessor.Invoke")
@@ -79,7 +79,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct call: average time: 2.87 ms
@@ -90,7 +90,7 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate invoker;
+        private Delegate? invoker;
 
         #endregion
 
@@ -114,6 +114,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor is to be created.</param>
         protected MethodAccessor(MethodBase method) :
+            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
             base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -179,7 +180,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
         /// and to preserve changes the of the mutated value type instances.</note>
         /// </remarks>
-        public abstract object Invoke(object instance, params object[] parameters);
+        public abstract object? Invoke(object? instance, params object?[]? parameters);
 
         #endregion
 

@@ -150,6 +150,33 @@
   <data name="General_MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
+  <data name="General_PropertyNullFormat" xml:space="preserve">
+    <value>Property '{0}' must not be null.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanOrEqualToFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than or equal to {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeLessThanFormat" xml:space="preserve">
+    <value>Property '{0}' must be less than {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeLessThanOrEqualToFormat" xml:space="preserve">
+    <value>Property '{0}' must be less than or equal to {1}.</value>
+  </data>
+  <data name="General_PropertyMustBeBetweenFormat" xml:space="preserve">
+    <value>Property '{0}' must be between {1} and {2}.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanPropertyFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than property '{1}'.</value>
+  </data>
+  <data name="General_PropertyMustBeGreaterThanOrEqualToPropertyFormat" xml:space="preserve">
+    <value>Property '{0}' must be greater than or equal to property '{1}'.</value>
+  </data>
+  <data name="General_PropertyMessageFormat" xml:space="preserve">
+    <value>Property '{0}': {1}</value>
+  </data>
   <data name="General_Yes" xml:space="preserve">
     <value>Yes</value>
   </data>
@@ -557,7 +584,8 @@ Hit rate: {8:P2}</value>
     <value>Generic method with signature "{0}" was not found in type "{1}".</value>
   </data>
   <data name="BinarySerialization_NotSupportedFormat" xml:space="preserve">
-    <value>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</value>
+    <value>Serialization of type {0} is not supported with following serialization options: {1}.
+You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</value>
   </data>
   <data name="BinarySerialization_SurrogateChangedObjectFormat" xml:space="preserve">
     <value>The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: {0}</value>
@@ -592,11 +620,19 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_SetStructPropertyNetStandard20Format" xml:space="preserve">
     <value>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>
+  <data name="BinarySerialization_CannotResolveAssemblySafeFormat" xml:space="preserve">
+    <value>Cannot resolve assembly in safe mode: "{0}".
+You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</value>
+  </data>
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type name "{0}".</value>
   </data>
   <data name="BinarySerialization_CannotResolveTypeInAssemblyFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
+  </data>
+  <data name="BinarySerialization_CannotResolveTypeInAssemblySafeFormat" xml:space="preserve">
+    <value>Could not resolve type "{0}" in assembly "{1}".
+You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
   </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</value>
@@ -630,6 +666,9 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
+  </data>
+  <data name="BinarySerialization_CannotCreateObjectSafeFormat" xml:space="preserve">
+    <value>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</value>
   </data>
   <data name="BinarySerialization_NotBinarySerializableFormat" xml:space="preserve">
     <value>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</value>
@@ -677,7 +716,11 @@ Hit rate: {8:P2}</value>
     <value>Could not determine type of element in collection "{0}".</value>
   </data>
   <data name="XmlSerialization_CannotResolveTypeFormat" xml:space="preserve">
-    <value>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</value>
+    <value>Could not resolve type: "{0}".</value>
+  </data>
+  <data name="XmlSerialization_CannotResolveTypeSafeFormat" xml:space="preserve">
+    <value>Could not resolve type in safe mode: "{0}".
+In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</value>
   </data>
   <data name="XmlSerialization_SerializingTypeNotSupportedFormat" xml:space="preserve">
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
@@ -772,6 +815,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="XmlSerialization_UnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
   </data>
+  <data name="XmlSerialization_BinarySerializerSafe" xml:space="preserve">
+    <value>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</value>
+  </data>
   <data name="Profiler_Uncategorized" xml:space="preserve">
     <value>&lt;Uncategorized&gt;</value>
   </data>
@@ -808,8 +854,16 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_TypeLoadExceptionAtFormat" xml:space="preserve">
     <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</value>
   </data>
+  <data name="Resources_TypeLoadExceptionSafeAtFormat" xml:space="preserve">
+    <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
+  </data>
   <data name="Resources_TypeLoadExceptionFormat" xml:space="preserve">
     <value>Type "{0}" cannot be resolved.</value>
+  </data>
+  <data name="Resources_TypeLoadExceptionSafeFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be resolved using safe mode.
+You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="General_ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>
@@ -941,7 +995,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>There is no event '{0}' in component '{1}'.</value>
   </data>
   <data name="ComponentModel_InvalidEventFormat" xml:space="preserve">
-    <value>Event '{0}' does not have regular event handler delegate type.</value>
+    <value>Event '{0}' does not have regular event handler delegate type or accessors.</value>
   </data>
   <data name="ComponentModel_InvalidCommandSource" xml:space="preserve">
     <value>Source must be an object instance for instance events and a Type for static events.</value>

@@ -23,6 +23,8 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
+
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 
@@ -43,12 +45,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Fields
 
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
-        private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
-        private static CultureInfo en = CultureInfo.GetCultureInfo("en");
-        private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-        private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
-        private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+        private static readonly CultureInfo inv = CultureInfo.InvariantCulture;
+        private static readonly CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
+        private static readonly CultureInfo en = CultureInfo.GetCultureInfo("en");
+        private static readonly CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
+        private static readonly CultureInfo hu = CultureInfo.GetCultureInfo("hu");
+        private static readonly CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
         #endregion
 
@@ -429,7 +431,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreSame(rsInv, manager.GetResourceSet(huHU, loadIfExists: false, tryParents: true));
 
             // now the hu branch is up-to-date but en-GB has unloaded parents because en actually exists but not loaded
-            var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            var resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
             int sets = resourceSets.Count;
 
             // "loading" hu does not change anything, since it is up-to date
@@ -454,7 +456,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsInv = manager.GetResourceSet(inv, loadIfExists: true, tryParents: false);
             Assert.AreSame(rsInv, manager.GetResourceSet(en, loadIfExists: false, tryParents: true));
             Assert.AreSame(rsInv, manager.GetResourceSet(hu, loadIfExists: true, tryParents: true));
-            resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            resourceSets = (StringKeyedDictionary<ResourceSet>)Reflector.GetField(manager, "resourceSets");
             sets = resourceSets.Count;
 
             // accessing en-GB will replace en proxy and returns that for en-GB
@@ -695,13 +697,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string testRes = manager.GetString(resName);
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
-#if NET35
-            // TODO .NET 3.5: get/set pointer fields by FieldAccessor
-            Assert.Inconclusive("Serializing pointers is not supported");
-#endif
+#if !NET35 // After deserializing a standard ResourceManager on runtime 2.0 an ObjectDisposedException occurs for GetString
             refManager = refManager.DeepClone();
+            Assert.AreEqual(testResRef, refManager.GetString(resName)); 
+#endif
             manager = manager.DeepClone();
-            Assert.AreEqual(testResRef, refManager.GetString(resName));
             Assert.AreEqual(testRes, manager.GetString(resName));
 
             // introducing a change: serialization preserves the change
@@ -736,7 +736,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Private Methods
 
-        private void Clean(HybridResourceManager manager, CultureInfo culture)
+        private static void Clean(HybridResourceManager manager, CultureInfo culture)
             => File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
 
         #endregion

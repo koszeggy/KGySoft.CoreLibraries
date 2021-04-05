@@ -60,7 +60,7 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
-        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value)
+        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object? value)
             => Reflector.TrySetProperty(commandSource, stateName, value);
 
         [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Does nothing and the class is sealed.")]

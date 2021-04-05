@@ -45,7 +45,7 @@ namespace KGySoft.Reflection.WinApi
         /// <param name="assemblyName">The name of the assembly for which data will be retrieved.</param>
         /// <param name="assemblyInfo">An <see cref="ASSEMBLY_INFO"/> structure that contains data about the assembly.</param>
         [PreserveSig]
-        int QueryAssemblyInfo(int flags, [MarshalAs(UnmanagedType.LPWStr)] string assemblyName, ref ASSEMBLY_INFO assemblyInfo);
+        int QueryAssemblyInfo(int flags, [MarshalAs(UnmanagedType.LPWStr)]string assemblyName, ref ASSEMBLY_INFO assemblyInfo);
 
         #endregion
     }

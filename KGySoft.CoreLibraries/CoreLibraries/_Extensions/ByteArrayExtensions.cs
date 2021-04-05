@@ -50,15 +50,15 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
         [SecuritySafeCritical]
-        public static unsafe string ToHexValuesString(this byte[] bytes, string separator = null)
+        public static unsafe string ToHexValuesString(this byte[] bytes, string? separator = null)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
             bool useSeparator = !String.IsNullOrEmpty(separator);
             if (useSeparator)
             {
                 // ReSharper disable once ForCanBeConvertedToForeach - it used to be an Any call but has been refactored due to performance
-                for (int i = 0; i < separator.Length; i++)
+                for (int i = 0; i < separator!.Length; i++)
                 {
                     char c = separator[i];
                     if (c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f')
@@ -70,7 +70,7 @@ namespace KGySoft.CoreLibraries
             if (bytesLength == 0)
                 return String.Empty;
 
-            int len = (bytesLength << 1) + (useSeparator ? (bytesLength - 1) * separator.Length : 0);
+            int len = (bytesLength << 1) + (useSeparator ? (bytesLength - 1) * separator!.Length : 0);
             string result = new String('\0', len);
             fixed (char* pResult = result)
             {
@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries
                 for (int i = 0; i < bytes.Length; i++)
                 {
                     if (useSeparator && sb.Length != 0)
-                        sb.Append(separator);
+                        sb.Append(separator!);
                     sb.AppendHex(bytes[i]);
                 }
             }
@@ -105,7 +105,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
         public static string ToHexValuesString(
             this byte[] bytes,
-            string separator,
+            string? separator,
             int lineLength,
             int indentSize = 0,
             char indentChar = ' ',
@@ -126,7 +126,7 @@ namespace KGySoft.CoreLibraries
                 return Split(raw, lineLength, indentSize, indentChar, indentSingleLine);
             }
 
-            return Wrap(raw, separator, lineLength, indentSize, indentChar, indentSingleLine);
+            return Wrap(raw, separator!, lineLength, indentSize, indentChar, indentSingleLine);
         }
 
         #endregion
@@ -145,9 +145,9 @@ namespace KGySoft.CoreLibraries
         [SecuritySafeCritical]
         public static unsafe string ToDecimalValuesString(this byte[] bytes, string separator = ", ")
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
-            if (separator == null)
+            if (separator == null!)
                 Throw.ArgumentNullException(Argument.separator);
 
             if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
@@ -225,7 +225,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         public static string ToBase64String(this byte[] bytes, int lineLength = 0, int indentSize = 0, char indentChar = ' ', bool indentSingleLine = false)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
 
             string raw = Convert.ToBase64String(bytes);
@@ -242,10 +242,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">The bytes to compress.</param>
         /// <returns>Compressed data. It is not guaranteed that compressed data is shorter than original one.</returns>
-        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "DeflateStream is created with leaveOpen = true")]
         public static byte[] Compress(this byte[] bytes)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
 
             using (MemoryStream encStream = new MemoryStream())
@@ -265,10 +264,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">The bytes to decompress.</param>
         /// <returns>Decompressed data. It is not guaranteed that compressed data is shorter than original one.</returns>
-        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "DeflateStream is created with leaveOpen = true")]
         public static byte[] Decompress(this byte[] bytes)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
 
             using (MemoryStream result = new MemoryStream(), encStream = new MemoryStream(bytes))
@@ -296,16 +294,15 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Key to be used for encryption.</param>
         /// <param name="iv">Initialization vector to be used for encryption.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
-        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "MemoryStream can be disposed multiple times safely (CryptoStream constructor with leaveOpen available from .NET 4.7.2)")]
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
-            if (algorithm == null)
+            if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
-            if (iv == null)
+            if (iv == null!)
                 Throw.ArgumentNullException(Argument.iv);
 
             algorithm.Key = key;
@@ -333,11 +330,11 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")] 
 #endif
-        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
+        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string? salt)
         {
-            if (password == null)
+            if (password == null!)
                 Throw.ArgumentNullException(Argument.password);
-            if (algorithm == null)
+            if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
 
             CheckSalt(ref salt);
@@ -361,7 +358,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of encryption.</param>
         /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
-        public static byte[] Encrypt(this byte[] bytes, string password, string salt)
+        public static byte[] Encrypt(this byte[] bytes, string password, string? salt)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
                 return Encrypt(bytes, alg, password, salt);
@@ -379,7 +376,7 @@ namespace KGySoft.CoreLibraries
         [CLSCompliant(false)]
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, out byte[] key, out byte[] iv)
         {
-            if (algorithm == null)
+            if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
 
             algorithm.GenerateKey();
@@ -411,16 +408,15 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Key of decryption.</param>
         /// <param name="iv">The initialization vector to be used for decryption.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "By this constructor CryptoStream does not leave the inner stream open")]
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
-            if (bytes == null)
+            if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
-            if (algorithm == null)
+            if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
-            if (key == null)
+            if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
-            if (iv == null)
+            if (iv == null!)
                 Throw.ArgumentNullException(Argument.iv);
             
             algorithm.Key = key;
@@ -465,11 +461,11 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
-        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
+        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string? salt)
         {
-            if (algorithm == null)
+            if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
-            if (password == null)
+            if (password == null!)
                 Throw.ArgumentNullException(Argument.password);
 
             CheckSalt(ref salt);
@@ -493,7 +489,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of decryption.</param>
         /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
-        public static byte[] Decrypt(this byte[] bytes, string password, string salt)
+        public static byte[] Decrypt(this byte[] bytes, string password, string? salt)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
                 return Decrypt(bytes, alg, password, salt);
@@ -505,7 +501,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private methods
 
-        private static void CheckSalt(ref string salt)
+        private static void CheckSalt([NotNull]ref string? salt)
         {
             if (String.IsNullOrEmpty(salt))
             {
@@ -513,7 +509,7 @@ namespace KGySoft.CoreLibraries
                 return;
             }
 
-            if (salt.Length < 8)
+            if (salt!.Length < 8)
                 salt = salt.Repeat((int)Math.Ceiling(8d / salt.Length));
         }
 
@@ -561,8 +557,6 @@ namespace KGySoft.CoreLibraries
                 return text.PadLeft(text.Length + indentSize, indentChar);
             }
 
-            if (lineLength < 0)
-                lineLength = 0;
             if (indentSize < 0)
                 indentSize = 0;
 

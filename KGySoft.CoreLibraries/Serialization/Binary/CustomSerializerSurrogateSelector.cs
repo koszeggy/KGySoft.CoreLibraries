@@ -17,9 +17,7 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -28,6 +26,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Xml;
@@ -43,6 +42,10 @@ namespace KGySoft.Serialization.Binary
     /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <remarks>
+    /// <note type="security"><para>Do no use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
+    /// from an untrusted source. If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
+    /// which prevents supporting non-serializable types, or set the <see cref="IsTypeSupported"/> property to explicitly tell what types are supported.</para>
+    /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>By using the <see cref="CustomSerializerSurrogateSelector"/> you can serialize and deserialize any types.
     /// <note>The <see cref="BinarySerializationFormatter"/> is also able to serialize non-serializable types by itself
     /// by using the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option. But the
@@ -130,7 +133,7 @@ namespace KGySoft.Serialization.Binary
     /// return (MyChangedClass)formatter.Deserialize(streamContainingOldData);]]></code>
     /// <note type="tip">If the name of the type changed too, you can use the <see cref="CustomSerializationBinder"/> class.</note></description></item>
     /// </list></para>
-    /// <note type="tip">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
+    /// <note type="caution">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
     /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// </remarks>
@@ -140,14 +143,14 @@ namespace KGySoft.Serialization.Binary
     {
         #region Fields
 
-        private ISurrogateSelector next;
+        private ISurrogateSelector? next;
         private bool disposed;
-        private EventHandler<SerializingEventArgs> serializingEventHandler;
-        private EventHandler<ObjectDataObtainedEventArgs> objectDataObtainedEventHandler;
-        private EventHandler<DeserializingEventArgs> deserializingEventHandler;
-        private EventHandler<ObjectDataRestoredEventArgs> objectDataRestoredEventHandler;
-        private EventHandler<GettingFieldEventArgs> gettingFieldEventHandler;
-        private EventHandler<SettingFieldEventArgs> settingFieldEventHandler;
+        private EventHandler<SerializingEventArgs>? serializingEventHandler;
+        private EventHandler<ObjectDataObtainedEventArgs>? objectDataObtainedEventHandler;
+        private EventHandler<DeserializingEventArgs>? deserializingEventHandler;
+        private EventHandler<ObjectDataRestoredEventArgs>? objectDataRestoredEventHandler;
+        private EventHandler<GettingFieldEventArgs>? gettingFieldEventHandler;
+        private EventHandler<SettingFieldEventArgs>? settingFieldEventHandler;
 
         #endregion
 
@@ -158,20 +161,20 @@ namespace KGySoft.Serialization.Binary
         /// <br/>If you populate the <see cref="SerializingEventArgs.SerializationInfo"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
         /// property to <see langword="true"/>&#160;to omit the default serialization logic.
         /// </summary>
-        public event EventHandler<SerializingEventArgs> Serializing
+        public event EventHandler<SerializingEventArgs>? Serializing
         {
-            add => serializingEventHandler += value;
-            remove => serializingEventHandler -= value;
+            add => value.AddSafe(ref serializingEventHandler);
+            remove => value.RemoveSafe(ref serializingEventHandler);
         }
 
         /// <summary>
         /// Occurs when the <see cref="SerializationInfo"/> of the object to be serialized has been obtained.
         /// You still can adjust its content before the actual serialization.
         /// </summary>
-        public event EventHandler<ObjectDataObtainedEventArgs> ObjectDataObtained
+        public event EventHandler<ObjectDataObtainedEventArgs>? ObjectDataObtained
         {
-            add => objectDataObtainedEventHandler += value;
-            remove => objectDataObtainedEventHandler -= value;
+            add => value.AddSafe(ref objectDataObtainedEventHandler);
+            remove => value.RemoveSafe(ref objectDataObtainedEventHandler);
         }
 
         /// <summary>
@@ -179,19 +182,19 @@ namespace KGySoft.Serialization.Binary
         /// <br/>If you initialize the <see cref="SerializingEventArgs.Object"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
         /// property to <see langword="true"/>&#160;to omit the default deserialization logic.
         /// </summary>
-        public event EventHandler<DeserializingEventArgs> Deserializing
+        public event EventHandler<DeserializingEventArgs>? Deserializing
         {
-            add => deserializingEventHandler += value;
-            remove => deserializingEventHandler -= value;
+            add => value.AddSafe(ref deserializingEventHandler);
+            remove => value.RemoveSafe(ref deserializingEventHandler);
         }
 
         /// <summary>
         /// Occurs when the <see cref="SerializationInfo"/> of the object to be deserialized has been processed.
         /// </summary>
-        public event EventHandler<ObjectDataRestoredEventArgs> ObjectDataRestored
+        public event EventHandler<ObjectDataRestoredEventArgs>? ObjectDataRestored
         {
-            add => objectDataRestoredEventHandler += value;
-            remove => objectDataRestoredEventHandler -= value;
+            add => value.AddSafe(ref objectDataRestoredEventHandler);
+            remove => value.RemoveSafe(ref objectDataRestoredEventHandler);
         }
 
         /// <summary>
@@ -202,10 +205,10 @@ namespace KGySoft.Serialization.Binary
         /// The <see cref="HandledEventArgs.Handled"/> property might be initialized to <see langword="true"/>&#160;for fields that are marked
         /// by the <see cref="NonSerializedAttribute"/>.
         /// </summary>
-        public event EventHandler<GettingFieldEventArgs> GettingField
+        public event EventHandler<GettingFieldEventArgs>? GettingField
         {
-            add => gettingFieldEventHandler += value;
-            remove => gettingFieldEventHandler -= value;
+            add => value.AddSafe(ref gettingFieldEventHandler);
+            remove => value.RemoveSafe(ref gettingFieldEventHandler);
         }
 
         /// <summary>
@@ -213,10 +216,10 @@ namespace KGySoft.Serialization.Binary
         /// You can adjust the associated <see cref="SettingFieldEventArgs.Field"/> and its desired <see cref="SettingFieldEventArgs.Value"/> to be set
         /// or you can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to prevent setting any field by the default logic.
         /// </summary>
-        public event EventHandler<SettingFieldEventArgs> SettingField
+        public event EventHandler<SettingFieldEventArgs>? SettingField
         {
-            add => settingFieldEventHandler += value;
-            remove => settingFieldEventHandler -= value;
+            add => value.AddSafe(ref settingFieldEventHandler);
+            remove => value.RemoveSafe(ref settingFieldEventHandler);
         }
 
         #endregion
@@ -252,6 +255,26 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         public bool IgnoreNonExistingFields { get; set; }
 
+        /// <summary>
+        /// Gets or sets a delegate that can tell whether this <see cref="CustomSerializerSurrogateSelector"/> instance can be used
+        /// to serialize and deserialize a type. If this property is <see langword="null"/>, and <see cref="SafeMode"/> is <see langword="true"/>,
+        /// then only serializable types are supported. Primitive types, <see cref="string"/>, arrays, pointers any by-ref types are not supported,
+        /// regardless of the <see cref="SafeMode">SafeMode</see> property.
+        /// <br/>Default value: <see langword="null"/>.
+        /// </summary>
+        public Func<Type, bool>? IsTypeSupported { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether it is prohibited to serialize and deserialize types that are not marked by <see cref="SerializableAttribute"/>
+        /// if the <see cref="IsTypeSupported"/> property is not set.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// </remarks>
+        /// <seealso cref="BinarySerializationFormatter"/>
+        public bool SafeMode { get; set; }
+
         #endregion
 
         #region Methods
@@ -279,7 +302,6 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">The next surrogate selector to examine.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
         /// <summary>
@@ -289,8 +311,7 @@ namespace KGySoft.Serialization.Binary
         /// The next surrogate selector in the chain or null.
         /// </returns>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        public ISurrogateSelector GetNextSelector() => next;
+        public ISurrogateSelector? GetNextSelector() => next;
 
         /// <summary>
         /// Finds the surrogate that represents the specified object's type, starting with the specified surrogate selector for the specified serialization context.
@@ -303,23 +324,15 @@ namespace KGySoft.Serialization.Binary
         /// <param name="selector">When this method returns, contains a <see cref="ISurrogateSelector"/> that holds a reference to the surrogate selector where the appropriate surrogate was found.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
+        public ISerializationSurrogate? GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
                 Throw.ArgumentNullException(Argument.type);
 
-            if (!type.IsPrimitive && type != Reflector.StringType && !type.HasElementType)
-            {
-                selector = this;
-                return this;
-            }
-
-            if (next != null)
-                return next.GetSurrogate(type, context, out selector);
-
-            selector = null;
-            return null;
+            selector = this;
+            return !type.IsPrimitive && type != Reflector.StringType && !type.HasElementType && (IsTypeSupported?.Invoke(type) ?? (!SafeMode || SerializationHelper.IsSafeType(type)))
+                ? this
+                : next?.GetSurrogate(type, context, out selector);
         }
 
         /// <summary>
@@ -337,6 +350,7 @@ namespace KGySoft.Serialization.Binary
             objectDataRestoredEventHandler = null;
             gettingFieldEventHandler = null;
             settingFieldEventHandler = null;
+            IsTypeSupported = null;
         }
 
         #endregion
@@ -346,10 +360,9 @@ namespace KGySoft.Serialization.Binary
         private void GetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             Type type = obj.GetType();
-            var existingNames = new Dictionary<string, int>();
-            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
+            var existingNames = new StringKeyedDictionary<int>();
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
-                // ReSharper disable once PossibleNullReferenceException
                 FieldInfo[] fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 foreach (FieldInfo field in fields)
                 {
@@ -362,14 +375,12 @@ namespace KGySoft.Serialization.Binary
                     };
 
                     int usedCount = existingNames.GetValueOrDefault(e.Name);
-
                     if (usedCount == 0)
                         existingNames[e.Name] = 1;
                     else
                     {
                         // conflicting name 1st try: prefixing by type name
-                        // ReSharper disable once PossibleNullReferenceException - obtained by type so DeclaringType cannot be null
-                        string prefixedName = field.DeclaringType.Name + "+" + field.Name;
+                        string prefixedName = field.DeclaringType!.Name + "+" + field.Name;
 
                         if (existingNames.GetValueOrDefault(prefixedName) == 0)
                         {
@@ -396,9 +407,9 @@ namespace KGySoft.Serialization.Binary
         {
             #region Local Methods
 
-            static FieldInfo TryGetField(Type instanceType, string name)
+            static FieldInfo? TryGetField(Type instanceType, string name)
             {
-                FieldInfo result;
+                FieldInfo? result;
 
                 // If there is a '+' in name we assume it is a type name prefix (this is how BinaryFormatter indicates non-public base fields)
                 int pos = name.LastIndexOf('+');
@@ -406,7 +417,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     string typeNameHint = name.Substring(0, pos);
                     string fieldName = name.Substring(pos + 1);
-                    Type t = instanceType;
+                    Type? t = instanceType;
                     while (t != null && t.Name != typeNameHint)
                         t = t.BaseType;
                     if (t != null)
@@ -418,9 +429,8 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // otherwise, we try to match the name by case-insensitive substrings in both ways
-                for (Type t = instanceType; t != Reflector.ObjectType; t = t.BaseType)
+                for (Type t = instanceType; t != Reflector.ObjectType; t = t.BaseType!)
                 {
-                    // ReSharper disable once PossibleNullReferenceException - t cannot be null
                     result = t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
                         .FirstOrDefault(f => f.Name.Contains(name, StringComparison.OrdinalIgnoreCase) || name.Contains(f.Name, StringComparison.OrdinalIgnoreCase));
                     if (result != null)
@@ -438,13 +448,13 @@ namespace KGySoft.Serialization.Binary
             Type type = obj.GetType();
 
             // Initially, mapping the fields with the same names as it is produced by GetDefaultObjectData
-            Dictionary<string, FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(type, false);
+            StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(type, false);
             foreach (SerializationEntry entry in info)
             {
                 var e = new SettingFieldEventArgs(obj, context, info, entry)
                 {
                     Value = entry.Value,
-                    Field = fields.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name))
+                    Field = fields!.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name)!)
                 };
 
                 OnSettingField(e);
@@ -470,12 +480,11 @@ namespace KGySoft.Serialization.Binary
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             var e = new SerializingEventArgs(obj, context, info) { IgnoreISerializable = IgnoreISerializable };
@@ -492,12 +501,11 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
         {
-            if (obj == null)
+            if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
 
             var e = new DeserializingEventArgs(obj, context, info) { IgnoreISerializable = IgnoreISerializable };

@@ -17,7 +17,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
@@ -29,6 +28,13 @@ using System.Security;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Xml;
 
+#endregion
+
+#region Suppressions
+
+#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0)
+#pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
+#endif
 
 #endregion
 
@@ -37,28 +43,39 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// Provides a wrapper class for serializing any kind of object, including the ones
     /// that are not marked by the <see cref="SerializableAttribute"/>, or which are not supported by <see cref="BinaryFormatter"/>.
-    /// Can be useful when an object cannot be serialized by <see cref="BinarySerializationFormatter"/> so a <see cref="BinaryFormatter"/> must be used.
+    /// Can be useful when a <see cref="BinarySerializationFormatter"/> payload cannot be used, so a <see cref="BinaryFormatter"/>-compatible stream must be produced.
     /// When this object is deserialized, the clone of the wrapped original object is returned.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
-    /// <remarks><para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
+    /// <remarks>
+    /// <note type="security">
+    /// <para>This type has been made obsolete because just from the stream to deserialize it cannot be determined whether the consumer formatter
+    /// is used in a safe context. Therefore <see cref="AnyObjectSerializerWrapper"/> deserialization uses safe mode,
+    /// which denies deserializing non-serializable types. It renders this type practically useless, but it was
+    /// meant for <see cref="BinaryFormatter"/> anyway, which is also being obsoleted in upcoming .NET versions. To serialize
+    /// non-serializable types you still can use <see cref="BinarySerializationFormatter"/>, which now supports <see cref="BinarySerializationOptions.SafeMode"/>,
+    /// which should be enabled when deserializing anything from an untrusted source.</para>
+    /// <para>When deserializing a stream that has an <see cref="AnyObjectSerializerWrapper"/> reference, it is ensured that no assemblies
+    /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
+    /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
+    /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
+    /// <para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>
     /// <para>In .NET Framework this class supports serialization of remote objects, too.</para>
-    /// <note type="warning">
-    /// <para>This class cannot guarantee that an object serialized in a framework can be deserialized in another one.
+    /// <note type="warning"><para>This class cannot guarantee that an object serialized in one platform can be deserialized in another one.
     /// For such cases some text-based serialization might be better (see also the <see cref="XmlSerializer"/>).</para>
-    /// <para>In .NET Core the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
+    /// <para>In .NET Core and above the <see cref="ISerializable"/> implementation of some types throw a <see cref="PlatformNotSupportedException"/>.
     /// For such cases setting the <c>forceSerializationByFields</c> in the constructor can be a solution.</para>
-    /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para>
-    /// </note>
+    /// <para>For a more flexible customization use the <see cref="CustomSerializerSurrogateSelector"/> class instead.</para></note>
     /// </remarks>
     [Serializable]
+    [Obsolete("This type cannot be used anymore to make any type serializable by BinaryFormatter due to security reasons. " +
+        "Use BinarySerializationFormatter instead, whose entire deserialization can work in safe mode if needed.")]
     public sealed class AnyObjectSerializerWrapper : ISerializable, IObjectReference
     {
         #region Fields
 
-        [NonSerialized]
-        private readonly object obj;
+        [NonSerialized]private readonly object? obj;
         private readonly bool isWeak;
         private readonly bool byFields;
 
@@ -80,7 +97,7 @@ namespace KGySoft.Serialization.Binary
         /// field-based serialization. Can be useful for types that implement <see cref="ISerializable"/> but the implementation throws a <see cref="PlatformNotSupportedException"/>
         /// (on .NET Core, for example). It still does not guarantee that the object will be deserializable on another platform. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
+        public AnyObjectSerializerWrapper(object? obj, bool useWeakAssemblyBinding, bool forceSerializationByFields = false)
         {
             this.obj = obj;
             isWeak = useWeakAssemblyBinding;
@@ -91,16 +108,14 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Constructors
 
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
-            Justification = "False alarm, serialization constructor has an exact signature.")]
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
-            byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType);
-            BinarySerializationFormatter serializer = new BinarySerializationFormatter();
+            byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType)!;
+            var serializer = new BinarySerializationFormatter(BinarySerializationOptions.SafeMode);
             if (info.GetBoolean(nameof(isWeak)))
-                serializer.Binder = new WeakAssemblySerializationBinder();
+                serializer.Binder = new WeakAssemblySerializationBinder { SafeMode = true };
             if (info.GetValueOrDefault<bool>(nameof(byFields)))
-                serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true };
+                serializer.SurrogateSelector = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, SafeMode = true };
             obj = serializer.Deserialize(rawData);
         }
 
@@ -111,13 +126,12 @@ namespace KGySoft.Serialization.Binary
         #region Methods
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (info == null)
+            if (info == null!)
                 Throw.ArgumentNullException(Argument.info);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
-            ISurrogateSelector surrogate = null;
+            ISurrogateSelector? surrogate = null;
 #if NETFRAMEWORK
             // ReSharper disable once LocalVariableHidesMember - intended, in non-Framework platforms the field is used.
             bool byFields = this.byFields;
@@ -141,8 +155,7 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
-        object IObjectReference.GetRealObject(StreamingContext context) => obj;
+        object? IObjectReference.GetRealObject(StreamingContext context) => obj;
 
         #endregion
     }

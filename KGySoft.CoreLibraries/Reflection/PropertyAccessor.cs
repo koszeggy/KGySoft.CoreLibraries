@@ -62,14 +62,14 @@ namespace KGySoft.Reflection
     ///         PropertyInfo property = instance.GetType().GetProperty(nameof(TestClass.TestProperty));
     ///         PropertyAccessor accessor = PropertyAccessor.GetAccessor(property);
     /// 
-    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1000000 }
+    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty = 1, "Direct set")
     ///             .AddCase(() => property.SetValue(instance, 1), "PropertyInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "PropertyAccessor.Set")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     /// 
-    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1000000 }
+    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty, "Direct get")
     ///             .AddCase(() => (int)property.GetValue(instance), "PropertyInfo.GetValue")
     ///             .AddCase(() => (int)accessor.Get(instance), "PropertyAccessor.Get")
@@ -84,7 +84,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct set: average time: 2.93 ms
@@ -96,7 +96,7 @@ namespace KGySoft.Reflection
     /// // Warming up: Yes
     /// // Test cases: 3
     /// // Calling GC.Collect: Yes
-    /// // Forced CPU Affinity: 2
+    /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
     /// // 1. Direct get: average time: 2.58 ms
@@ -107,8 +107,8 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate getter;
-        private Delegate setter;
+        private Delegate? getter;
+        private Delegate? setter;
 
         #endregion
 
@@ -138,10 +138,11 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (CanRead)
-                    return getter ??= CreateGetter();
-                Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return default;
+                if (getter != null)
+                    return getter;
+                if (!CanRead)
+                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return getter = CreateGetter();
             }
         }
 
@@ -153,10 +154,11 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (CanWrite)
-                    return setter ??= CreateSetter();
-                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return default;
+                if (setter != null)
+                    return setter;
+                if (!CanWrite)
+                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+                return setter = CreateSetter();
             }
         }
 
@@ -171,6 +173,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor is to be created.</param>
         private protected PropertyAccessor(PropertyInfo property) :
+            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
             base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -191,7 +194,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static PropertyAccessor GetAccessor(PropertyInfo property)
         {
-            if (property == null)
+            if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             return (PropertyAccessor)GetCreateAccessor(property);
         }
@@ -236,7 +239,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
-        public abstract void Set(object instance, object value, params object[] indexerParameters);
+        public abstract void Set(object? instance, object? value, params object?[]? indexerParameters);
 
         /// <summary>
         /// Gets the value of the property.
@@ -256,7 +259,7 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
         /// </remarks>
-        public abstract object Get(object instance, params object[] indexerParameters);
+        public abstract object? Get(object? instance, params object?[]? indexerParameters);
 
         #endregion
 

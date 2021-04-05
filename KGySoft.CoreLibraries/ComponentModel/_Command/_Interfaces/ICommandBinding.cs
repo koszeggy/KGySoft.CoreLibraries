@@ -46,12 +46,12 @@ namespace KGySoft.ComponentModel
         /// Occurs when the associated <see cref="ICommand"/> is about to be executed.
         /// Command states, including the <see cref="ICommandState.Enabled"/> state still can be adjusted here.
         /// </summary>
-        event EventHandler<ExecuteCommandEventArgs> Executing;
+        event EventHandler<ExecuteCommandEventArgs>? Executing;
 
         /// <summary>
         /// Occurs when the associated <see cref="ICommand"/> has been executed.
         /// </summary>
-        event EventHandler<ExecuteCommandEventArgs> Executed;
+        event EventHandler<ExecuteCommandEventArgs>? Executed;
 
         #endregion
 
@@ -141,7 +141,7 @@ namespace KGySoft.ComponentModel
         /// <note>Calling the <see cref="WithParameter">WithParameter</see> method multiple times on the same <see cref="ICommandBinding"/> instance
         /// just overwrites the lastly set callback function. To use more parameter values the function should return a compound type such as an array or tuple.</note>
         /// </remarks>
-        ICommandBinding WithParameter(Func<object> getParameterValue);
+        ICommandBinding WithParameter(Func<object?>? getParameterValue);
 
         /// <summary>
         /// Removes the specified <paramref name="source"/> from this <see cref="ICommandBinding"/> instance. The used events of the removed source will be released.
@@ -170,9 +170,10 @@ namespace KGySoft.ComponentModel
         /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">Name of the event. It is not checked whether this is en existing event.</param>
         /// <param name="eventArgs">The <see cref="EventArgs"/> instance containing the event data.</param>
-        /// <param name="parameter">The parameter value to be passed to the invoked command. A possible previous call is ignored when calling this method. This parameter is optional.
+        /// <param name="parameter">The parameter value to be passed to the invoked command. A possible previous <see cref="WithParameter">WithParameter</see> call
+        /// is ignored when calling this method. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        void InvokeCommand(object source, string eventName, EventArgs eventArgs, object parameter = null);
+        void InvokeCommand(object source, string eventName, EventArgs eventArgs, object? parameter = null);
 
         #endregion
     }

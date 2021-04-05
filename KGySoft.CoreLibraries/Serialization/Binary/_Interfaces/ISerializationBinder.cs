@@ -29,7 +29,7 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <para>Provides the same functionality as the <see cref="SerializationBinder"/> class but makes the
-    /// <see cref="BindToName">BindToName</see> method available also in .NET 3.5.</para>
+    /// <see cref="BindToName">BindToName</see> method available also in .NET Framework 3.5.</para>
     /// <para>If a binder class is used in <see cref="BinarySerializationFormatter"/> and the class is derived from <see cref="SerializationBinder"/> and implements
     /// this interface, then the <see cref="BinarySerializationFormatter"/> class is able to bind a <see cref="Type"/> in both directions even in .NET 3.5</para>
     /// </remarks>
@@ -45,7 +45,7 @@ namespace KGySoft.Serialization.Binary
         /// Can return <see langword="null"/>&#160;to provide a default name.</param>
         /// <param name="typeName">The <see cref="string">string</see>, which will represent the <see cref="Type"/> name in the serialized data.
         /// Can return <see langword="null"/>&#160;to provide a default name.</param>
-        void BindToName(Type serializedType, out string assemblyName, out string typeName);
+        void BindToName(Type serializedType, out string? assemblyName, out string? typeName);
 
         /// <summary>
         /// Gets a <see cref="Type"/> associated by the provided <paramref name="assemblyName"/> and <paramref name="typeName"/>.
@@ -53,7 +53,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <returns>The <see cref="Type"/> to be created by the formatter or <see langword="null"/>&#160;to use the default binding logic.</returns>
-        Type BindToType(string assemblyName, string typeName);
+        Type? BindToType(string assemblyName, string typeName);
 
         #endregion
     }

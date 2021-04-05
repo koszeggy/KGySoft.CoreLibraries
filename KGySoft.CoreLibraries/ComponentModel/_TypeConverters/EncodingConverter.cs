@@ -19,9 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+
+using KGySoft.Collections;
 using KGySoft.Reflection;
 
 #endregion
@@ -35,8 +38,8 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private static Dictionary<string, Encoding> encodingByName;
-        private static Encoding[] encodings;
+        private static StringKeyedDictionary<Encoding>? encodingByName;
+        private static Encoding[]? encodings;
 
         #endregion
 
@@ -59,14 +62,14 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private static Dictionary<string, Encoding> EncodingByName
+        private static StringKeyedDictionary<Encoding> EncodingByName
         {
             get
             {
                 if (encodingByName != null)
                     return encodingByName;
 
-                encodingByName = new Dictionary<string, Encoding>();
+                encodingByName = new StringKeyedDictionary<Encoding>();
                 foreach (Encoding e in Encodings)
                     encodingByName.Add($"{e.CodePage.ToString(CultureInfo.InvariantCulture)} | {e.EncodingName}", e);
 
@@ -85,7 +88,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) 
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType) 
             => destinationType == Reflector.StringType || destinationType == Reflector.IntType || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -97,9 +100,9 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (!(value is Encoding encoding))
+            if (value is not Encoding encoding)
                 return base.ConvertTo(context, culture, value, destinationType);
 
             if (destinationType == Reflector.IntType)
@@ -118,7 +121,7 @@ namespace KGySoft.ComponentModel
         /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) 
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) 
             => sourceType == Reflector.StringType || sourceType == Reflector.IntType || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
@@ -129,7 +132,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="object" /> to convert.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns>An <see cref="Encoding" /> instance that represents the converted value.</returns>
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             if (value is int codePage)
                 return Encoding.GetEncoding(codePage);
@@ -137,7 +140,7 @@ namespace KGySoft.ComponentModel
             if (value is string name)
             {
                 // 1: by full string value representation
-                if (EncodingByName.TryGetValue(name, out Encoding encoding))
+                if (EncodingByName.TryGetValue(name, out Encoding? encoding))
                     return encoding;
 
                 // 2: by code
@@ -151,7 +154,8 @@ namespace KGySoft.ComponentModel
                 // 4: by web name (may throw ArgumentException)
                 return Encoding.GetEncoding(name);
             }
-            return base.ConvertFrom(context, culture, value);
+
+            return base.ConvertFrom(context!, culture!, value);
         }
 
         /// <summary>

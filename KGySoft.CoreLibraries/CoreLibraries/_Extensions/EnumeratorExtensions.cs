@@ -35,9 +35,9 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static IList<object> RestToList(this IEnumerator enumerator)
+        internal static IList<object?> RestToList(this IEnumerator enumerator)
         {
-            var result = new List<object>();
+            var result = new List<object?>();
             while (enumerator.MoveNext())
                 result.Add(enumerator.Current);
             return result;
