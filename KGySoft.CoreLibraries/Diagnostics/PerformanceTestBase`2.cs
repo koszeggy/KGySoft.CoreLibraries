@@ -548,7 +548,7 @@ namespace KGySoft.Diagnostics
 
             try
             {
-                long timeout = TimeSpan.FromMilliseconds(TestTime).Ticks;
+                long timeout = TimeHelper.ToStopwatchTicks(TestTime);
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
                 do
@@ -638,7 +638,7 @@ namespace KGySoft.Diagnostics
             var stopwatch = new Stopwatch();
             TResult result;
             int iterations = 0;
-            long timeout = TimeSpan.FromMilliseconds(TestTime).Ticks;
+            long timeout = TimeHelper.ToStopwatchTicks(TestTime);
             stopwatch.Start();
             try
             {

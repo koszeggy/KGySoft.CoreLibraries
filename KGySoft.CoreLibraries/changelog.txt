@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v5.6.1:
+~~~~~~~~~
+
+- KGySoft.Diagnostics namespace:
+================================
+- PerformanceTestBase<TDelegate, TResult> class:
+  - Fixing time-based tests interval on some systems.
+
+
+~~~~~~~~~
 ! v5.6.0:
 ~~~~~~~~~
 
