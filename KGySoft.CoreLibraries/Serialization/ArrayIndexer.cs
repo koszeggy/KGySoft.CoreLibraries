@@ -35,22 +35,13 @@ namespace KGySoft.Serialization
         private readonly int[] lowerBounds;
         private readonly int[] currentZeroBased;
 
-        private int current;
+        private int pos;
 
         #endregion
 
         #region Properties
 
-        internal int[] Current
-        {
-            get
-            {
-                int[] result = new int[currentZeroBased.Length];
-                for (int i = 0; i < result.Length; i++)
-                    result[i] = currentZeroBased[i] + lowerBounds[i];
-                return result;
-            }
-        }
+        internal int[] Current { get; }
 
         #endregion
 
@@ -73,8 +64,8 @@ namespace KGySoft.Serialization
 
             lastIndexLength = lengths[rank - 1];
             currentZeroBased = new int[rank];
-            current = -1;
-
+            Current = new int[rank];
+            pos = -1;
         }
 
         internal ArrayIndexer(int[] lengths, int[]? lowerBounds = null)
@@ -86,7 +77,8 @@ namespace KGySoft.Serialization
             this.lengths = lengths;
             this.lowerBounds = lowerBounds ?? new int[lengths.Length];
             currentZeroBased = new int[lengths.Length];
-            current = -1;
+            Current = new int[lengths.Length];
+            pos = -1;
         }
 
         #endregion
@@ -95,10 +87,12 @@ namespace KGySoft.Serialization
 
         internal bool MoveNext()
         {
-            current++;
-            if (current != 0)
+            if (++pos == totalLength)
+                return false;
+
+            if (pos > 0)
             {
-                int currLastIndex = current % lastIndexLength;
+                int currLastIndex = pos % lastIndexLength;
                 currentZeroBased[currentZeroBased.Length - 1] = currLastIndex;
                 if (currLastIndex == 0)
                 {
@@ -111,7 +105,10 @@ namespace KGySoft.Serialization
                     }
                 }
             }
-            return current < totalLength;
+
+            for (int i = 0; i < Current.Length; i++)
+                Current[i] = currentZeroBased[i] + lowerBounds[i];
+            return true;
         }
 
         #endregion

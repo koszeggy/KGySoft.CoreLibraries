@@ -28,8 +28,9 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
-using System.Security; 
+using System.Security;
 
+using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -218,6 +219,8 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
         /// <remarks>
+        /// <note><strong>Obsolete Note:</strong> This overload uses the <see cref="BinarySerializationFormatter"/> internally, which is not always applicable.
+        /// It is recommended to use the <see cref="DeepClone{T}(T,Func{object, object?}?)"/> overload instead.</note>
         /// <para>This method makes possible to clone objects even if their type is not marked by the <see cref="SerializableAttribute"/>; however,
         /// in such case it is not guaranteed that the result is functionally equivalent to the input object.</para>
         /// <note type="warning">In .NET Core there are some types that implement the <see cref="ISerializable"/> interface, though they are not serializable.
@@ -230,6 +233,9 @@ namespace KGySoft.CoreLibraries
         /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
+#if !NETFRAMEWORK
+        [Obsolete("This DeepClone overload is obsolete. Use the DeepClone<T>(T,Func<object,object?>?) overload instead.")]
+#endif
         [SecuritySafeCritical]
         [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
@@ -258,6 +264,24 @@ namespace KGySoft.CoreLibraries
                 return (T)formatter.DeserializeFromStream(stream)!;
             }
         }
+
+        /// <summary>
+        /// Clones an object by deep cloning.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <typeparam name="T">Type of the object</typeparam>
+        /// <param name="obj">The object to clone.</param>
+        /// <param name="customClone">An optional delegate that can be used to customize the cloning of individual instances.
+        /// If specified, then it is always called with a non-<see langword="null"/>&#160;instance.
+        /// If it returns <see langword="null"/>, then the input object will be cloned by using the default logic.</param>
+        /// <returns>The clone of the object.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="customClone"/> is <see langword="null"/>, then this method returns a functionally equivalent clone of the original object.</para>
+        /// <para><see cref="string"/>, <see cref="Delegate"/> and runtime <see cref="Type"/> instances are not cloned but their original reference is returned in the result.
+        /// This can be overridden by handling these types in <paramref name="customClone"/>.</para>
+        /// </remarks>
+        [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, Func<object, object?>? customClone)
+            => (T)ObjectCloner.Clone(obj, customClone)!;
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.

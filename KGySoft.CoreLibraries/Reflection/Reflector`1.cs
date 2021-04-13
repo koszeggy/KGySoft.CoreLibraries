@@ -74,21 +74,7 @@ namespace KGySoft.Reflection
         {
             #region Fields
 
-            internal static readonly bool Value = HasReference(typeof(T));
-
-            #endregion
-
-            #region Methods
-
-            private static bool HasReference(Type type)
-            {
-                if (!type.IsValueType)
-                    return true;
-                if (type.IsPrimitive || type.IsPointer || type.IsEnum)
-                    return false;
-                FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                return fields.Any(f => HasReference(f.FieldType));
-            }
+            internal static readonly bool Value = typeof(T).IsManaged();
 
             #endregion
         }

@@ -350,6 +350,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(2, tDict.ToArray().Length);
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [Test]
         public void SerializationTest()
         {

@@ -61,7 +61,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Fields
 
-        private static readonly unsafe object[] deepCloneTestSource =
+        private static readonly unsafe object[] deepCloneBySerializerTestSource =
         {
             // natively supported types
             null,
@@ -69,7 +69,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             typeof(int),
             new List<int> { 1 },
 
-            // custom serializable types
+            // custom serializable type
             new Exception("message"),
 
             // non serializable
@@ -86,6 +86,41 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 VoidPointer = (void*)new IntPtr(1),
                 IntPointer = (int*)new IntPtr(1),
                 PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, // - not supported
+                PointerOfPointer = (void**)new IntPtr(1)
+            },
+        };
+
+        private static readonly unsafe object[] deepCloneByObjectClonerTestSource =
+        {
+            // not cloned types
+            null,
+            1,
+            "string",
+            ConsoleColor.Blue,
+            typeof(int),
+            new Func<int, string>(i => i.ToString()),
+            new BitVector32(13),
+
+            // contains array
+            new List<int> { 1 },
+            new object[] { 1, "alpha", ConsoleColor.Blue, null },
+            new object[,] { { 1, "alpha" }, { ConsoleColor.Blue, null } },
+
+            // complex types
+            new Exception("message"),
+            CultureInfo.GetCultureInfo("en-US"),
+            new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+            new MemoryStream(new byte[] { 1, 2, 3 }),
+
+            // contains delegate
+            new Cache<int, string>(i => i.ToString()),
+
+            // pointer fields
+            new UnsafeStruct
+            {
+                VoidPointer = (void*)new IntPtr(1),
+                IntPointer = (int*)new IntPtr(1),
+                PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, // - clone by ObjectCloner works but equality check fails because enumeration is not supported
                 PointerOfPointer = (void**)new IntPtr(1)
             },
         };
@@ -150,24 +185,51 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new List<char> { 'a', 'b', 'c' }, "abc");
         }
 
-        [TestCaseSource(nameof(deepCloneTestSource))]
-        public void DeepCloneTest(object obj)
+#if !NETFRAMEWORK
+        [Obsolete] 
+#endif
+        [TestCaseSource(nameof(deepCloneBySerializerTestSource))]
+        public void DeepCloneBySerializerTest(object obj)
         {
             AssertDeepEquals(obj, obj.DeepClone());
             AssertDeepEquals(obj, obj.DeepClone(true));
         }
 
-#if !NET6_0
-        [Test]
-        public void DeepCloneDelegateTest()
+        [TestCaseSource(nameof(deepCloneByObjectClonerTestSource))]
+        public void DeepCloneByObjectClonerTest(object obj)
         {
-            Func<int, string> del = i => i.ToString(CultureInfo.InvariantCulture);
-            var clone = del.DeepClone(true);
+            AssertDeepEquals(obj, obj.DeepClone(null));
+        }
 
-            Assert.AreNotEqual(del, clone);
-            Assert.AreEqual(del.Invoke(1), clone.Invoke(1));
-        } 
-#endif
+        [Test]
+        public void DeepCloneByObjectClonerCircularReferenceTest()
+        {
+            var obj = new object[1];
+            obj[0] = obj;
+
+            object[] clone = obj.DeepClone(null);
+            AssertDeepEquals(obj, clone);
+            Assert.AreSame(clone, clone[0]);
+        }
+
+        [Test]
+        public void CustomCloneTest()
+        {
+            static object CustomClone(object o) => o switch
+            {
+                int i => i + 1,
+                string s => s + "_clone",
+                _ => null
+            };
+
+            object[] obj = { 1, "alpha", null, new object() };
+            var clone = obj.DeepClone(CustomClone);
+
+            Assert.AreEqual(2,  clone[0]);
+            Assert.AreEqual("alpha_clone",  clone[1]);
+            Assert.IsNull(clone[2]);
+            Assert.IsTrue(clone[3].GetType() == typeof(object));
+        }
 
         #endregion
     }

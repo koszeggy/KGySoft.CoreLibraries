@@ -1176,7 +1176,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 #endregion
 
-
                 #region Constructors
 
                 private SelfReferencerIndirectCustomDeserializer(SerializationInfo info, StreamingContext context)

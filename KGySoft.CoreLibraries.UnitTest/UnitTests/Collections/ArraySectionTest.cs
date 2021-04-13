@@ -85,6 +85,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 #endif
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [Test]
         public void SerializationTest()
         {

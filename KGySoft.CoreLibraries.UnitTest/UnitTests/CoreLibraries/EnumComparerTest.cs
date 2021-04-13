@@ -115,8 +115,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
 
+#pragma warning disable 618 // The obsolete DeepClone is intended because we want to use serialization here
             var clone = c1.DeepClone();
             Assert.AreSame(c1, clone);
+#pragma warning restore 618
         }
 
 #if NETFRAMEWORK

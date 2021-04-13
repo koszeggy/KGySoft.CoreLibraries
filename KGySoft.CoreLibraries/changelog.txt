@@ -6,8 +6,18 @@
 ===============================================================================
 
 ~~~~~~~~~
-- v5.6.1:
+* v5.6.1:
 ~~~~~~~~~
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* ObjectExtensions class:
+  + New DeepClone<T>(T, Func<object, object?>?) method: The original DeepClone overload was less and less
+    reliable on the newer platforms as it uses binary serialization. This new overload performs a more direct
+    cloning and also allows customization or transformation by specifying a delegate.
+  * The existing DeepClone<T>(T, bool) method has been made obsolete in non-Framework targets in favor of the
+    new overload. But even in .NET Framework this overload is recommended only for remote objects to create a
+    local copy.
 
 - KGySoft.Diagnostics namespace:
 ================================

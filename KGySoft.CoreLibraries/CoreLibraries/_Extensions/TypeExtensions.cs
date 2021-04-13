@@ -67,11 +67,11 @@ namespace KGySoft.CoreLibraries
         private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conversions;
 
         private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
+        private static IThreadSafeCacheAccessor<Type, bool>? hasReferenceCache;
         private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type? T2), Type>? genericTypeCache;
         private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type? T2), MethodInfo>? genericMethodsCache;
         private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
         private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
-
 
         #endregion
 
@@ -183,7 +183,7 @@ namespace KGySoft.CoreLibraries
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            return Reflector.DelegateType.IsAssignableFrom(type);
+            return type == Reflector.DelegateType || type.IsSubclassOf(Reflector.DelegateType);
         }
 
         /// <summary>
@@ -546,6 +546,13 @@ namespace KGySoft.CoreLibraries
             return sizeOfCache[type];
         }
 
+        internal static bool IsManaged(this Type type)
+        {
+            if (hasReferenceCache == null)
+                Interlocked.CompareExchange(ref hasReferenceCache, ThreadSafeCacheFactory.Create<Type, bool>(HasReference, LockFreeCacheOptions.Profile128), null);
+            return hasReferenceCache[type];
+        }
+
         internal static List<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
             var result = new List<Delegate>();
@@ -808,6 +815,16 @@ namespace KGySoft.CoreLibraries
             var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
             return (int)method.Invoke();
 #endif
+        }
+
+        private static bool HasReference(Type type)
+        {
+            if (type.IsPrimitive || type.IsPointer || type.IsEnum)
+                return false;
+            if (!type.IsValueType)
+                return true;
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            return fields.Any(f => HasReference(f.FieldType));
         }
 
         private static Type CreateGenericType((Type GenTypeDef, Type T1, Type? T2) key)

@@ -114,14 +114,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region HashSet<T>
-
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0 // from .NET 4.72 capacity ctor is available
-        private static IDictionary<Type, ActionMethodAccessor?>? methodsHashSet_Initialize;
-#endif
-
-        #endregion
-
         #region MemoryStream
 
         private static FunctionMethodAccessor? methodMemoryStream_InternalGetBuffer;
@@ -129,6 +121,12 @@ namespace KGySoft.Reflection
 #if !NETFRAMEWORK
         private static bool? hasMemoryStream_InternalGetBuffer;
 #endif
+
+        #endregion
+
+        #region Object
+
+        private static FunctionMethodAccessor? methodObject_MemberwiseClone;
 
         #endregion
 
@@ -357,26 +355,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region HashSet<T>
-
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0 // for other frameworks we expect that ctor with capacity is available. If not, the usages will provide the compile error
-        private static MethodAccessor? HashSet_Initialize<T>()
-        {
-            if (methodsHashSet_Initialize == null)
-                Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor?>().AsThreadSafe(), null);
-            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor? accessor))
-            {
-                MethodInfo? mi = typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic);
-                accessor = mi == null ? null : new ActionMethodAccessor(mi);
-                methodsHashSet_Initialize[typeof(T)] = accessor;
-            }
-
-            return accessor;
-        }
-#endif
-
-        #endregion
-
         #region MemoryStream
 
 #if NETFRAMEWORK
@@ -398,6 +376,12 @@ namespace KGySoft.Reflection
             }
         }
 #endif
+
+        #endregion
+
+        #region Object
+
+        private static FunctionMethodAccessor Object_MemberwiseClone => methodObject_MemberwiseClone ??= new FunctionMethodAccessor(typeof(object).GetMethod(nameof(MemberwiseClone), BindingFlags.Instance | BindingFlags.NonPublic)!);
 
         #endregion
 
@@ -556,14 +540,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region HashSet<T>
-
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0
-        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity) => HashSet_Initialize<T>()?.Invoke(hashSet, capacity);
-#endif
-
-        #endregion
-
         #region Point
 
 #if !NETCOREAPP2_0
@@ -577,6 +553,12 @@ namespace KGySoft.Reflection
 
         // ReSharper disable once ConstantConditionalAccessQualifier - there are some targets where it can be null
         internal static byte[]? InternalGetBuffer(this MemoryStream ms) => (byte[]?)MemoryStream_InternalGetBuffer?.Invoke(ms);
+
+        #endregion
+
+        #region Object
+
+        internal static object MemberwiseClone(this object obj) => Object_MemberwiseClone.Invoke(obj)!;
 
         #endregion
 

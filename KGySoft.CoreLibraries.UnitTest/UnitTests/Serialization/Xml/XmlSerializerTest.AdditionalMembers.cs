@@ -224,9 +224,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                         using (XmlReader itemReader = XmlReader.Create(new StringReader(sbItem.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
                         {
                             var itemType = item.GetType();
-                            deserXElement = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
+                            deserXElement = itemType.IsArray ? item.MemberwiseClone() : Reflector.CreateInstance(itemType);
                             KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
-                            deserReader = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
+                            deserReader = itemType.IsArray ? item.MemberwiseClone() : Reflector.CreateInstance(itemType);
                             itemReader.Read(); // to node "itemContent"
                             KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
                             itemReader.ReadEndElement();
