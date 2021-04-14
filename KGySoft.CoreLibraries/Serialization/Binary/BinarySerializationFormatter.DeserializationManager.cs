@@ -59,6 +59,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         private sealed class DeserializationManager : SerializationManagerBase
         {
+            #region Nested Types
+            
             #region Nested classes
 
             #region UsageReferences class
@@ -383,6 +385,190 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
+            #region ArrayBuilder struct
+
+            private struct ArrayBuilder
+            {
+                #region Constants
+                
+                private const int allocationThreshold = 1 << 13;
+
+                #endregion
+
+                #region Fields
+
+                #region Internal Fields
+                
+                internal readonly int TotalLength;
+                internal Array? Array;
+                internal Dictionary<object, UsageReferences>? ObjectsBeingDeserialized;
+
+                #endregion
+
+                #region Private Fields
+                
+                private readonly BinaryReader reader;
+                private readonly DataTypeDescriptor descriptor;
+                private readonly int[] lengths;
+                private readonly int[] lowerBounds;
+
+                private ArrayIndexer? arrayIndexer;
+                private IList? builder;
+                private int current;
+
+                #endregion
+
+                #endregion
+
+                #region Properties
+                
+                internal object ArrayProxy => (Array ?? builder)!;
+
+                #endregion
+
+                #region Constructors
+                
+                internal ArrayBuilder(BinaryReader br, DataTypeDescriptor descriptor, bool safeMode) : this()
+                {
+                    reader = br;
+                    this.descriptor = descriptor;
+                    current = -1;
+
+                    // it is always safe to allocate by rank because it cannot be > 32 when obtained by a type
+                    int rank = descriptor.Type!.GetArrayRank();
+                    lengths = new int[rank];
+                    lowerBounds = new int[rank];
+                    TotalLength = 1;
+                    for (int i = 0; i < rank; i++)
+                    {
+                        if (descriptor.Rank != 0)
+                            lowerBounds[i] = Read7BitInt(br);
+                        int len = Read7BitInt(br);
+                        lengths[i] = len;
+                        TotalLength = safeMode
+                            ? checked(TotalLength * len)
+                            : unchecked(TotalLength * len);
+                    }
+
+                    // trying to allocate the result array at once if possible
+                    Type elementType = descriptor.ElementDescriptor!.Type!;
+
+                    int elementSize;
+                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
+                    {
+                        Array = Array.CreateInstance(elementType, lengths, lowerBounds);
+                        if (rank > 1)
+                            arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                        return;
+                    }
+
+                    // otherwise, allocating just a List with limited initial capacity
+                    int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
+                    if (elementType.IsPrimitive)
+                    {
+                        // for primitive types we can use a strictly typed list
+                        ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
+                        builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                        return;
+                    }
+
+                    // for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
+                    builder = new List<object>(capacity);
+                }
+
+                #endregion
+
+                #region Methods
+
+                #region Internal Methods
+                
+                internal bool TryReadPrimitive()
+                {
+                    if (Array == null || !descriptor.ElementDescriptor!.Type!.IsPrimitive)
+                        return false;
+                    int length = Buffer.ByteLength(Array);
+                    Buffer.BlockCopy(reader.ReadBytes(length), 0, Array, 0, length);
+                    return true;
+                }
+
+                internal Array ToArray()
+                {
+                    if (Array != null)
+                        return Array;
+
+                    Debug.Assert(builder!.Count == TotalLength);
+                    Array = Array.CreateInstance(descriptor.ElementDescriptor!.Type!, lengths, lowerBounds);
+
+                    // 1D array
+                    if (lengths.Length == 1)
+                    {
+                        int offset = lowerBounds[0];
+                        for (int i = 0; i < TotalLength; i++)
+                            SetArrayElement(builder![i], i + offset);
+
+                        builder = null;
+                        return Array;
+                    }
+
+                    // multidimensional array
+                    arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                    for (int i = 0; i < TotalLength && arrayIndexer.MoveNext(); i++)
+                        SetArrayElement(builder![i], arrayIndexer.Current);
+
+                    builder = null;
+                    return Array;
+                }
+
+                internal void Add(object? value)
+                {
+                    // adding to the final array
+                    if (Array != null)
+                    {
+                        // 1D array
+                        if (arrayIndexer == null)
+                        {
+                            SetArrayElement(value, ++current + lowerBounds[0]);
+                            return;
+                        }
+
+                        // Multidimensional array
+                        arrayIndexer.MoveNext();
+                        SetArrayElement(value, arrayIndexer.Current);
+                        return;
+                    }
+
+                    // appending the builder
+                    builder!.Add(value);
+                }
+
+                #endregion
+
+                #region Private Methods
+                
+                private void SetArrayElement(object? value, params int[] indices)
+                {
+                    UsageReferences? trackedUsages = value == null ? null : ObjectsBeingDeserialized?.GetValueOrDefault(value);
+                    if (trackedUsages == null)
+                    {
+                        if (indices.Length == 1)
+                            Array!.SetValue(value, indices[0]);
+                        else
+                            Array!.SetValue(value, indices);
+                        return;
+                    }
+
+                    trackedUsages.Add(new ArrayUsage(Array!, indices));
+                }
+
+                #endregion
+
+                #endregion
+            }
+
+            #endregion
+
+            #endregion
+
             #region Fields
 
             private List<string>? cachedNames;
@@ -555,9 +741,16 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             internal object? Deserialize(BinaryReader br)
             {
-                object? result = ReadRoot(br);
-                DeserializationCallback();
-                return result;
+                try
+                {
+                    object? result = ReadRoot(br);
+                    DeserializationCallback();
+                    return result;
+                }
+                catch (Exception e) when (!e.IsCriticalOr(e is SerializationException))
+                {
+                    return Throw.SerializationException<object>(Res.BinarySerializationInvalidStreamData, e);
+                }
             }
 
             [SecurityCritical]
@@ -843,51 +1036,48 @@ namespace KGySoft.Serialization.Binary
             /// Creates and populates array
             /// </summary>
             [SecurityCritical]
-            private object CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private Array CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                // creating the array
-                int rank = descriptor.Type!.GetArrayRank();
-                int[] lengths = new int[rank];
-                int[] lowerBounds = new int[rank];
-                for (int i = 0; i < rank; i++)
-                {
-                    if (descriptor.Rank != 0)
-                        lowerBounds[i] = Read7BitInt(br);
-                    lengths[i] = Read7BitInt(br);
-                }
+                // using a builder to prevent possible OutOfMemoryException attacks in SafeMode
+                var builder = new ArrayBuilder(br, descriptor, SafeMode);
+                object arrayProxy = builder.ArrayProxy;
 
-                Type elementType = descriptor.ElementDescriptor!.Type!;
-                Array result = Array.CreateInstance(elementType, lengths, lowerBounds);
+                // if the builder uses a proxy, then the references of the array must be tracked because it will be replaced in the end
+                bool trackUsages = arrayProxy is not Array;
+                UsageReferences? usages = null;
+                if (trackUsages)
+                    ObjectsBeingDeserialized.Add(arrayProxy, usages = new UsageReferences());
+                builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
+
+                int id = 0;
                 if (addToCache)
-                    AddObjectToCache(result);
+                    AddObjectToCache(arrayProxy, out id);
 
-                // primitive array
-                if (elementType.IsPrimitive)
+                // primitive array and the builder allocated the final capacity
+                if (builder.TryReadPrimitive())
                 {
-                    int length = Buffer.ByteLength(result);
-                    Buffer.BlockCopy(br.ReadBytes(length), 0, result, 0, length);
-                    return result;
+                    Debug.Assert(!trackUsages && arrayProxy == builder.Array);
+                    return builder.ToArray();
                 }
 
-                // 1D array
-                if (lengths.Length == 1)
+                // non-primitive array or cannot read at once in safe mode
+                for (int i = 0; i < builder.TotalLength; i++)
                 {
-                    int offset = lowerBounds[0];
-                    for (int i = 0; i < result.Length; i++)
-                    {
-                        object? value = ReadElement(br, descriptor.ElementDescriptor);
-                        SetArrayElement(result, value, i + offset);
-                    }
-
-                    return result;
+                    object? value = ReadElement(br, descriptor.ElementDescriptor!);
+                    builder.Add(value);
                 }
 
-                // multidimensional array
-                var arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
-                while (arrayIndexer.MoveNext())
+                Array result = builder.ToArray();
+
+                // some post administration if the array was built by a proxy
+                if (trackUsages)
                 {
-                    object? value = ReadElement(br, descriptor.ElementDescriptor);
-                    SetArrayElement(result, value, arrayIndexer.Current);
+                    ApplyPendingUsages(usages!, arrayProxy, result);
+
+                    if (result != arrayProxy && addToCache)
+                        ReplaceObjectInCache(id, result);
+
+                    ObjectsBeingDeserialized.Remove(arrayProxy);
                 }
 
                 return result;
@@ -911,7 +1101,7 @@ namespace KGySoft.Serialization.Binary
 
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
-                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, out int count);
+                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count);
                 if (serInfo.IsSingleElement)
                 {
                     object? key = ReadElement(br, descriptor.ElementDescriptor!);
@@ -1500,21 +1690,6 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 trackedUsages.Add(new FieldUsage(obj, field));
-            }
-
-            private void SetArrayElement(Array array, object? value, params int[] indices)
-            {
-                UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
-                if (trackedUsages == null)
-                {
-                    if (indices.Length == 1)
-                        array.SetValue(value, indices[0]);
-                    else
-                        array.SetValue(value, indices);
-                    return;
-                }
-
-                trackedUsages.Add(new ArrayUsage(array, indices));
             }
 
             private void AddListElement(IList list, object? value)

@@ -22,7 +22,12 @@
 - KGySoft.Diagnostics namespace:
 ================================
 - PerformanceTestBase<TDelegate, TResult> class:
-  - Fixing time-based tests interval on some systems.
+  - Fixing time-based tests interval on some platforms.
+
+* KGySoft.Serialization.Binary namespace:
+=========================================
+* BinarySerializationFormatter class:
+  * SafeMode now protects against various OutOfMemoryException attacks as well
 
 
 ~~~~~~~~~

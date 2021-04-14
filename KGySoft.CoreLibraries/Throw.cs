@@ -111,7 +111,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void FileNotFoundException(string message, string fileName) => throw new FileNotFoundException(message, fileName);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message) => throw CreateSerializationException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T SerializationException<T>(string message) => throw CreateSerializationException(message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T SerializationException<T>(string message, Exception? inner = null) => throw CreateSerializationException(message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message, Exception inner) => throw CreateSerializationException(message, inner);
 
         [DoesNotReturn]internal static void PlatformNotSupportedException(string message) => throw CreatePlatformNotSupportedException(message);

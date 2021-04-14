@@ -28,8 +28,8 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 #if NETFRAMEWORK
+using System.Reflection;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
@@ -2008,6 +2008,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreISerializable, safeCompare: true);
         }
 #endif
+
+        [Test]
+        public void SafeModeArrayOutOfMemoryAttackTest()
+        {
+            byte[] array = { 1, 2, 3, 4, 5, 6, 7 };
+            var bsf = new BinarySerializationFormatter();
+            var serData = new List<byte>(SerializeObject(array, bsf));
+
+            // 7 bit encoded length is at offset 3. Inserting 4 FF values will be decoded as MaxInt
+            // 00000000 ushort: 388 (0184 [UInt8 | Extended | Array]) - WriteDataType < <WriteRootCollection>b__0 < ForEach < WriteRootCollection < WriteRoot
+            // 00000002 byte: 0 (00) - WriteTypeNamesAndRanks < WriteRootCollection < WriteRoot
+            // 00000003 byte: 3 (03) - Write7BitInt < WriteCollection < WriteRootCollection < WriteRoot
+            // 00000004 7 bytes: 1, 2, 3, 4, 5, 6, 7 (01,02,03,04,05,06,07) - WriteCollection < WriteRootCollection < WriteRoot
+            for (int i = 0; i < 4; i++)
+                serData.Insert(3, 255);
+            byte[] manipulatedData = serData.ToArray();
+
+            // without safe mode a huge array is about to be allocated
+            Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+
+            // in SafeMode the array is allocated in chunks and the stream simply ends unexpectedly
+            bsf.Options = BinarySerializationOptions.SafeMode;
+            Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
+        }
+
+        [Test]
+        public void SafeModeCollectionCapacityOutOfMemoryAttackTest()
+        {
+            var list = new List<byte> { 1, 2, 3 };
+            var bsf = new BinarySerializationFormatter();
+            var serData = new List<byte>(SerializeObject(list, bsf));
+
+            // 7 bit encoded capacity is at offset 3. 07 + 4xFF will be decoded as MaxInt
+            // 00000000 ushort: 644(0284[UInt8 | Extended | List]) - WriteDataType < < WriteRootCollection > b__0 < ForEach < WriteRootCollection < WriteRoot
+            // 00000002 byte: 3(07) - Write7BitInt < WriteSpecificProperties < WriteCollection < WriteRootCollection < WriteRoot
+            // 00000003 byte: 4(08) - Write7BitInt < WriteSpecificProperties < WriteCollection < WriteRootCollection < WriteRoot
+            // 00000004 byte: 1(01) - WritePureObject < WriteElement < WriteCollectionElements < WriteCollection < WriteRootCollection < WriteRoot
+            // 00000005 byte: 2(02) - WritePureObject < WriteElement < WriteCollectionElements < WriteCollection < WriteRootCollection < WriteRoot
+            // 00000006 byte: 3(03) - WritePureObject < WriteElement < WriteCollectionElements < WriteCollection < WriteRootCollection < WriteRoot
+            serData[3] = 7;
+            for (int i = 0; i < 4; i++)
+                serData.Insert(3, 255);
+            byte[] manipulatedData = serData.ToArray();
+
+            // without safe mode the list is allocated with MaxInt capacity
+            Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+
+            // in SafeMode the too large capacity is ignored and the list simply can be deserialized
+            bsf.Options = BinarySerializationOptions.SafeMode;
+            var deserialized = (List<byte>)DeserializeObject(manipulatedData, bsf);
+            AssertItemsEqual(list, deserialized);
+        }
 
         #endregion
     }
