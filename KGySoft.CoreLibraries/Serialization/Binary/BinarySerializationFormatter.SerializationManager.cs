@@ -758,7 +758,11 @@ namespace KGySoft.Serialization.Binary
             {
                 Type type = data.GetType();
                 CircularList<DataTypes> collectionType = EncodeDataType(type, dataType);
-                collectionType.ForEach(dt => WriteDataType(bw, dt));
+
+                // ReSharper disable once ForCanBeConvertedToForeach - performance
+                for (var i = 0; i < collectionType.Count; i++)
+                    WriteDataType(bw, collectionType[i]);
+
                 var enumerator = new DataTypesEnumerator(collectionType);
                 WriteTypeNamesAndRanks(bw, type, enumerator, false);
 
@@ -1565,7 +1569,9 @@ namespace KGySoft.Serialization.Binary
                 // Arrays or non-generic/closed generic collections
                 if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
                 {
-                    encodedDataTypes.ForEach(dt => WriteDataType(bw, dt));
+                    // ReSharper disable once ForCanBeConvertedToForeach - performance
+                    for (int i = 0; i < encodedDataTypes.Count; i++)
+                        WriteDataType(bw, encodedDataTypes[i]);
                     WriteTypeNamesAndRanks(bw, type, new DataTypesEnumerator(encodedDataTypes), allowOpenTypes);
                     return true;
                 }
