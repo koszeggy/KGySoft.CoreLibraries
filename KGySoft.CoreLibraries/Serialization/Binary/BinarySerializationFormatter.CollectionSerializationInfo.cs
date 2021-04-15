@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Threading;
@@ -202,13 +203,9 @@ namespace KGySoft.Serialization.Binary
                 count = Read7BitInt(br);
 
                 // 2.) Capacity
-                int capacity = count;
-                if (HasCapacity)
-                {
-                    capacity = Read7BitInt(br);
-                    if (safeMode)
-                        capacity = Math.Min(count, (capacityThreshold >> (IsDictionary ? 1 : 0)) / descriptor.ElementDescriptor!.Type!.SizeOf());
-                }
+                int capacity = HasCapacity ? Read7BitInt(br) : count;
+                if (safeMode && (HasCapacity || CtorArguments?.Contains(CollectionCtorArguments.Capacity) == true))
+                    capacity = Math.Min(count, (capacityThreshold >> (IsDictionary ? 1 : 0)) / descriptor.ElementDescriptor!.Type!.SizeOf());
 
                 // 3.) Case sensitivity
                 bool caseInsensitive = false;
