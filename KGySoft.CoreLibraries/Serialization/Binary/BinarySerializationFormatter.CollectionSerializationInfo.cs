@@ -343,7 +343,7 @@ namespace KGySoft.Serialization.Binary
 
                     ConstructorInfo? ctor = type.GetConstructor(args);
                     if (ctor == null)
-                        Throw.InvalidOperationException(Res.ReflectionCtorNotFound(type));
+                        Throw.SerializationException(Res.ReflectionCtorNotFound(type));
                     return CreateInstanceAccessor.GetAccessor(ctor);
                 }
 

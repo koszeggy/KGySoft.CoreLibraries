@@ -747,7 +747,7 @@ namespace KGySoft.Serialization.Binary
                     DeserializationCallback();
                     return result;
                 }
-                catch (Exception e) when (!e.IsCriticalOr(e is SerializationException))
+                catch (Exception e) when (!e.IsCriticalOr(e is SerializationException || e is NotSupportedException))
                 {
                     return Throw.SerializationException<object>(Res.BinarySerializationInvalidStreamData, e);
                 }
@@ -1090,7 +1090,7 @@ namespace KGySoft.Serialization.Binary
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
-                    Throw.InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type!));
+                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type!));
 
                 // getting whether the current instance is in cache
                 if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
@@ -1271,10 +1271,6 @@ namespace KGySoft.Serialization.Binary
                             return createdResult = new IntPtr(is7BitEncoded ? Read7BitLong(br) : br.ReadInt64());
                         case DataTypes.UIntPtr:
                             return createdResult = new UIntPtr(is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
-                        case DataTypes.Void: // though it does not really make sense as an instance, even BinaryFormatter supports it
-                            if (!Reflector.TryCreateUninitializedObject(Reflector.VoidType, out createdResult))
-                                Throw.NotSupportedException(Res.BinarySerializationCannotCreateUninitializedObject(Reflector.VoidType));
-                            return createdResult;
                         case DataTypes.Object:
                             // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
                             if (dataTypeDescriptor.ParentDescriptor == null)
@@ -1307,7 +1303,7 @@ namespace KGySoft.Serialization.Binary
                         default:
                             if (IsEnum(dataType))
                                 return createdResult = ReadEnum(br, dataTypeDescriptor);
-                            Throw.InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(DataTypeToString(dataType)));
+                            Throw.SerializationException(Res.BinarySerializationCannotDeserializeObject(DataTypeToString(dataType)));
                             return default;
                     }
                 }
