@@ -537,15 +537,8 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
         {
-            if (array == null && elementType == null)
-                Throw.ArgumentNullException(Argument.elementType);
-
             ParseArrayDimensions(reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], out int[] lengths, out int[] lowerBounds);
-
-            // checking existing array or creating a new array
-            if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
-                array = Array.CreateInstance(elementType!, lengths, lowerBounds);
-            elementType ??= array.GetType().GetElementType()!;
+            var builder = new ArrayBuilder(array, elementType, lengths, lowerBounds, canRecreateArray, SafeMode);
 
             string? attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? crc = null;
@@ -556,17 +549,12 @@ namespace KGySoft.Serialization.Xml
                 crc = result;
             }
 
-            int deserializedItemsCount = 0;
-            ArrayIndexer? arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
             do
             {
                 ReadToNodeType(reader, XmlNodeType.Element, XmlNodeType.Text, XmlNodeType.EndElement);
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Text:
-                        if (deserializedItemsCount > 0)
-                            Throw.ArgumentException(Res.XmlSerializationMixedArrayFormats);
-
                         // primitive array (can be restored by BlockCopy)
                         byte[] data = Convert.FromBase64String(reader.Value);
                         if (crc.HasValue)
@@ -575,10 +563,7 @@ namespace KGySoft.Serialization.Xml
                                 Throw.ArgumentException(Res.XmlSerializationCrcError);
                         }
 
-                        deserializedItemsCount = data.Length / elementType.SizeOf();
-                        if (array.Length != deserializedItemsCount)
-                            Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
-                        Buffer.BlockCopy(data, 0, array, 0, data.Length);
+                        builder.AddRaw(data);
                         break;
 
                     case XmlNodeType.Element:
@@ -590,19 +575,11 @@ namespace KGySoft.Serialization.Xml
                             if (attrType != null)
                                 itemType = ResolveType(attrType);
                             if (itemType == null)
-                                itemType = elementType;
+                                itemType = builder.ElementType;
 
                             if (TryDeserializeObject(itemType, reader, null, out var value))
                             {
-                                if (arrayIndexer == null)
-                                    array.SetValue(value, deserializedItemsCount + lowerBounds[0]);
-                                else
-                                {
-                                    arrayIndexer.MoveNext();
-                                    array.SetValue(value, arrayIndexer.Current);
-                                }
-
-                                deserializedItemsCount += 1;
+                                builder.Add(value);
                                 continue;
                             }
 
@@ -613,11 +590,7 @@ namespace KGySoft.Serialization.Xml
                         break;
 
                     case XmlNodeType.EndElement:
-                        // in end element of parent: checking items count
-                        if (deserializedItemsCount != array.Length)
-                            Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, deserializedItemsCount));
-
-                        return array;
+                        return builder.ToArray();
                 }
             }
             while (true);
