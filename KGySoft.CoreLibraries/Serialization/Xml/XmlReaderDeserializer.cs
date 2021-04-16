@@ -265,6 +265,12 @@ namespace KGySoft.Serialization.Xml
                         // 1.) real member
                         if (member != null)
                         {
+                            if (SkipMember(member))
+                            {
+                                ReadStringValue(reader);
+                                continue;
+                            }
+
                             object? existingValue = members != null ? null : property != null
                                 ? property.Get(obj)
                                 : field!.Get(obj);
@@ -537,9 +543,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
         {
-            ParseArrayDimensions(reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], out int[] lengths, out int[] lowerBounds);
-            var builder = new ArrayBuilder(array, elementType, lengths, lowerBounds, canRecreateArray, SafeMode);
-
+            var builder = new ArrayBuilder(array, elementType, reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], canRecreateArray, SafeMode);
             string? attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? crc = null;
             if (attrCrc != null)

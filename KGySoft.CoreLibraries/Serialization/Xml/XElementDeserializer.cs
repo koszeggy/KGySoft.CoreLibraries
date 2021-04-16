@@ -230,6 +230,8 @@ namespace KGySoft.Serialization.Xml
                 // 1.) real member
                 if (member != null)
                 {
+                    if (SkipMember(member))
+                        continue;
                     object? existingValue = members != null ? null
                         : property != null ? property.Get(obj)
                         : field!.Get(obj);
@@ -461,8 +463,9 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
-            ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength!)?.Value, element.Attribute(XmlSerializer.AttributeDim!)?.Value, out int[] lengths, out int[] lowerBounds);
-            var builder = new ArrayBuilder(array, elementType, lengths, lowerBounds, canRecreateArray, SafeMode);
+            string? attrLength = element.Attribute(XmlSerializer.AttributeLength!)?.Value;
+            string? attrDim = element.Attribute(XmlSerializer.AttributeDim!)?.Value;
+            var builder = new ArrayBuilder(array, elementType, attrLength, attrDim, canRecreateArray, SafeMode);
 
             // has no elements: primitive array (can be restored by BlockCopy)
             if (builder.ElementType.IsPrimitive && !element.HasElements)

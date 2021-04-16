@@ -21,9 +21,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -101,23 +103,17 @@ namespace KGySoft.Serialization.Xml
 
             #region Constructors
 
-            internal ArrayBuilder(Array? array, Type? elementType, int[] lengths, int[] lowerBounds, bool canRecreateArray, bool safeMode) : this()
+            internal ArrayBuilder(Array? array, Type? elementType, string? attrLength, string? attrDim, bool canRecreateArray, bool safeMode) : this()
             {
                 if (array == null && elementType == null)
                     Throw.ArgumentNullException(Argument.elementType);
+                ParseArrayDimensions(attrLength, attrDim, out TotalLength, out lengths, out lowerBounds);
 
                 if (array != null && CheckArray(array, lengths, lowerBounds, !canRecreateArray))
                     this.array = array;
                 ElementType = elementType ?? array!.GetType().GetElementType()!;
 
                 current = -1;
-                this.lengths = lengths;
-                this.lowerBounds = lowerBounds;
-
-                TotalLength = lengths[0];
-                for (int i = 1; i < lengths.Length; i++)
-                    TotalLength = checked(TotalLength * lengths[i]);
-
                 if (this.array != null)
                 {
                     if (lengths.Length > 1)
@@ -217,6 +213,16 @@ namespace KGySoft.Serialization.Xml
 
         #endregion
 
+        #region Fields
+
+        private static readonly StringKeyedDictionary<HashSet<Type>> unsafeMembers = new StringKeyedDictionary<HashSet<Type>>(2)
+        {
+            ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
+            [nameof(Cache<_,_>.EnsureCapacity)] = new HashSet<Type> { typeof(Cache<,>) }
+        };
+
+        #endregion
+
         #region Properties
 
         #region Private Protected Properties
@@ -248,49 +254,6 @@ namespace KGySoft.Serialization.Xml
         #region Static Methods
         
         #region Private Protected Methods
-
-        private protected static void ParseArrayDimensions(string? attrLength, string? attrDim, out int[] lengths, out int[] lowerBounds)
-        {
-            if (attrLength == null && attrDim == null)
-                Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
-
-            if (attrLength != null)
-            {
-                lengths = new int[1];
-                lowerBounds = new int[1];
-                if (!Int32.TryParse(attrLength, NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[0]) || lengths[0] < 0)
-                    Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(attrLength));
-                return;
-            }
-
-            string[] dims = attrDim!.Split(',');
-            lengths = new int[dims.Length];
-            lowerBounds = new int[dims.Length];
-            for (int i = 0; i < dims.Length; i++)
-            {
-                int boundSep = dims[i].IndexOf("..", StringComparison.Ordinal);
-                if (boundSep == -1)
-                {
-                    lowerBounds[i] = 0;
-                    if (!Int32.TryParse(dims[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i]) || lengths[i] < 0)
-                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(dims[i]));
-                }
-                else
-                {
-                    if (!Int32.TryParse(dims[i].Substring(0, boundSep), NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
-                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
-                    if (!Int32.TryParse(dims[i].Substring(boundSep + 2), NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i])
-                        || lengths[i] < lowerBounds[i]
-                        || (long)lengths[i] - lowerBounds[i] >= Int32.MaxValue)
-                    {
-                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
-                    }
-
-                    // turning upper bound to length
-                    lengths[i] -= lowerBounds[i] - 1;
-                }
-            }
-        }
 
         private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object?> members)
         {
@@ -439,6 +402,61 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
+        private static void ParseArrayDimensions(string? attrLength, string? attrDim, out int totalLength, out int[] lengths, out int[] lowerBounds)
+        {
+            if (attrLength == null && attrDim == null)
+                Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
+
+            if (attrLength != null)
+            {
+                lengths = new int[1];
+                lowerBounds = new int[1];
+                if (!Int32.TryParse(attrLength, NumberStyles.Integer, CultureInfo.InvariantCulture, out totalLength) || totalLength < 0)
+                    Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(attrLength));
+                lengths[0] = totalLength;
+                return;
+            }
+
+            string[] dims = attrDim!.Split(',');
+            lengths = new int[dims.Length];
+            lowerBounds = new int[dims.Length];
+            for (int i = 0; i < dims.Length; i++)
+            {
+                int boundSep = dims[i].IndexOf("..", StringComparison.Ordinal);
+                if (boundSep == -1)
+                {
+                    lowerBounds[i] = 0;
+                    if (!Int32.TryParse(dims[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i]) || lengths[i] < 0)
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(dims[i]));
+                }
+                else
+                {
+                    if (!Int32.TryParse(dims[i].Substring(0, boundSep), NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
+                    if (!Int32.TryParse(dims[i].Substring(boundSep + 2), NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i])
+                        || lengths[i] < lowerBounds[i]
+                        || (long)lengths[i] - lowerBounds[i] >= Int32.MaxValue)
+                    {
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
+                    }
+
+                    // turning upper bound to length
+                    lengths[i] -= lowerBounds[i] - 1;
+                }
+            }
+
+            totalLength = lengths[0];
+            try
+            {
+                for (int i = 1; i < lengths.Length; i++)
+                    totalLength = checked(totalLength * lengths[i]);
+            }
+            catch (OverflowException e)
+            {
+                Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(attrDim), e);
+            }
+        }
+
         private static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
         {
             if (lengths.Length != array.Rank)
@@ -575,6 +593,18 @@ namespace KGySoft.Serialization.Xml
 
             result = converter.ConvertFromInvariantString(readStringValue.Invoke());
             return true;
+        }
+
+        private protected bool SkipMember(MemberInfo member)
+        {
+            if (!SafeMode || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out HashSet<Type>? types))
+                return false;
+
+            // Skipping known unsafe members in SafeMode, which do not make functional difference anyway
+            Type declaringType = member.DeclaringType!;
+            if (declaringType.IsGenericType)
+                declaringType = declaringType.GetGenericTypeDefinition();
+            return types.Contains(declaringType);
         }
 
         #endregion

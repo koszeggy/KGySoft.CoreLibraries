@@ -29,6 +29,11 @@
 * BinarySerializationFormatter class:
   * SafeMode now protects against various OutOfMemoryException attacks as well
 
+* KGySoft.Serialization.Xml namespace:
+======================================
+* XmlSerializer class:
+  * DeserializeSafe and DeserializeContentSafe methods: protect against some OutOfMemoryException attacks as well.
+
 
 ~~~~~~~~~
 ! v5.6.0:

@@ -1273,31 +1273,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
         [TestCase(XmlSerializationOptions.None)]
         [TestCase(XmlSerializationOptions.CompactSerializationOfPrimitiveArrays)]
-        public void SafeModeArrayOutOfMemoryAttackTest(XmlSerializationOptions options)
-        {
-            var obj = new[] { 1, 2, 3 };
-            XElement xml = XmlSerializer.Serialize(obj, options);
-
-            // <object type="System.Int32[]" length="2147483647">...</object>
-            xml.Attribute("length").Value = Int32.MaxValue.ToString(CultureInfo.InvariantCulture);
-            Console.WriteLine(xml);
-
-            // 1.) by XElement
-            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
-            Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml));
-
-            // 2.) by reader
-            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
-            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader));
-        }
-
-        [TestCase(XmlSerializationOptions.None)]
-        [TestCase(XmlSerializationOptions.CompactSerializationOfPrimitiveArrays)]
         public void SafeModeLargeArrayTest(XmlSerializationOptions options)
         {
-            var obj = Enumerable.Range(0, 1025).Select(i => (long)i).ToArray();
+            // Array size is above 8K so in SafeMode it is built rather than allocated at once
+            long[] obj = Enumerable.Range(0, 1025).Select(i => (long)i).ToArray();
             XElement xml = XmlSerializer.Serialize(obj, options);
             Console.WriteLine(xml);
 
@@ -1309,6 +1288,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 arr = (long[])XmlSerializer.DeserializeSafe(reader);
             AssertItemsEqual(obj, arr);
+        }
+
+        [TestCase(XmlSerializationOptions.None)]
+        [TestCase(XmlSerializationOptions.CompactSerializationOfPrimitiveArrays)]
+        public void SafeModeArrayOutOfMemoryAttackTest(XmlSerializationOptions options)
+        {
+            var obj = new[] { 1, 2, 3 };
+            XElement xml = XmlSerializer.Serialize(obj, options);
+
+            // Injecting invalid length: in SafeMode this is detected without attempting to allocate the array
+            // <object type="System.Int32[]" length="2147483647">...</object>
+            xml.Attribute("length").Value = Int32.MaxValue.ToString(CultureInfo.InvariantCulture);
+            Console.WriteLine(xml);
+
+            // 1.) by XElement
+            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+        }
+
+        [Test]
+        public void SafeModeCollectionOutOfMemoryAttackTest()
+        {
+            var obj = new List<int> { 1, 2, 3 };
+            XElement xml = XmlSerializer.Serialize(obj, XmlSerializationOptions.None);
+
+            // Injecting invalid capacity: In SafeMode this is simply ignored so the deserialization will succeed
+            // <object type="System.Collections.Generic.List`1[System.Int32]">
+            //   <Capacity>2147483647</Capacity>
+            //   <item>1</item>
+            //   <item>2</item>
+            //   <item>3</item>
+            // </object>
+            xml.Element("Capacity").Value = Int32.MaxValue.ToString(CultureInfo.InvariantCulture);
+            Console.WriteLine(xml);
+
+            // 1.) by XElement
+            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            var list = (List<int>)XmlSerializer.DeserializeSafe(xml);
+            AssertItemsEqual(obj, list);
+
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                list = (List<int>)XmlSerializer.DeserializeSafe(reader);
+            AssertItemsEqual(obj, list);
         }
 
         #endregion
