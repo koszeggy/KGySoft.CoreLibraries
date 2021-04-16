@@ -41,7 +41,7 @@ namespace KGySoft.Serialization.Xml
     /// <summary>
     /// <see cref="XmlSerializer"/> makes possible serializing and deserializing object instances into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
@@ -53,12 +53,12 @@ namespace KGySoft.Serialization.Xml
     /// <para>In safe mode you must preload every assembly that are referred in the XML content. Additionally, in safe mode an <see cref="InvalidOperationException"/> is thrown for content
     /// that is serialized by <see cref="BinarySerializationFormatter"/> (see the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option).</para></note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
-    /// <note>Unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
+    /// <note>Unlike the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
     /// are supported (except <see cref="XmlRootAttribute"/> for the root element of <see cref="IXmlSerializable"/> implementations). Instead, this class is
     /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
     /// </para>
-    /// <para>Several <a href="https://msdn.microsoft.com/en-us/library/System.ComponentModel.aspx" target="_blank">System.ComponentModel</a> techniques are supported,
+    /// <para>Several <a href="https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel" target="_blank">System.ComponentModel</a> techniques are supported,
     /// which also makes possible to use the <see cref="XmlSerializer"/> for types that can be edited in a property grid, such as components, configurations or any types in a custom designer.
     /// The supported component model attributes and techniques:
     /// <list type="bullet">
@@ -95,7 +95,7 @@ namespace KGySoft.Serialization.Xml
     /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
     /// <list type="bullet">
     /// <item><term>Strings</term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
     /// invalid UTF-16 code points are also cannot be serialized. This <see cref="XmlSerializer"/> implementation handles them correctly.</description></item>

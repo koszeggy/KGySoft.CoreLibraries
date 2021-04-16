@@ -307,7 +307,7 @@ namespace KGySoft.Resources
     /// }]]></code></description></item></list></para>
     /// <para>Considering <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> is indirectly called on auto save, you cannot set its parameters directly.
     /// However, by setting the <see cref="CompatibleFormat"/> property, you can tell whether the result .resx files should be able to be read by a
-    /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+    /// <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
     /// and the Visual Studio Resource Editor. If it is <see langword="false"/>&#160;the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
     /// but the result can be read only by the <see cref="ResXResourceReader" /> class.</para>
     /// <para>Normally, if you save the changes by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, you can handle the possible exceptions locally.
@@ -725,7 +725,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>The changes can be always saved by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, where compatible format
         /// can be explicitly requested. This property affects the result of auto saving controlled by the <see cref="AutoSave"/> property.</para>
-        /// <para>If <see cref="CompatibleFormat"/> is <see langword="true"/>&#160;the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+        /// <para>If <see cref="CompatibleFormat"/> is <see langword="true"/>&#160;the result .resx files can be read by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
         /// instance and the Visual Studio Resource Editor. If it is <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader"/> class.</para>
         /// </remarks>

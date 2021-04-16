@@ -992,7 +992,7 @@ namespace KGySoft.Resources
         /// <param name="culture">The culture of the resource set to save.</param>
         /// <param name="force"><see langword="true"/>&#160;to save the resource set even if it has not been modified; <see langword="false"/>&#160;to save it only if it has been modified. This parameter is optional.
         /// <br />Default value: <see langword="false"/>.</param>
-        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
         /// <br />Default value: <see langword="false"/>.</param>
@@ -1016,7 +1016,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="force"><see langword="true"/>&#160;to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/>&#160;to save only the modified resource sets. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>

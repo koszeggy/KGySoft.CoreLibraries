@@ -37,15 +37,15 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
-    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a> class.
     /// </summary>
     /// <remarks>
-    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
+    /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section for the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
-    /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
+    /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
     /// (<see cref="GetString(string)">GetString</see> and <see cref="GetObject(string)">GetObject</see> methods for resources, <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see>
     /// for metadata, and <see cref="GetAliasValue">GetAliasValue</see> for aliases).</para>
@@ -340,15 +340,15 @@ namespace KGySoft.Resources
     /// // more than two padding characters, or an illegal character among the padding characters.</code>
     /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceSet<a name="comparison">&#160;</a></h1>
-    /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
-    /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,
-    /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
+    /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>.
+    /// <note>When reading a .resx file written by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class,
+    /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
     /// and <strong>System.Resources.ResXNullRef</strong> types.</note>
     /// </para>
-    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <para><strong>Incompatibility</strong> with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a>:
     /// <list type="bullet">
     /// <item>There are no constructors with single <see cref="string"/> and <see cref="Stream"/> arguments; though if using pure C# (without reflection) this is a compatible change as the second parameter of the constructors is optional.</item>
-    /// <item>The constructors of <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> throw an <see cref="ArgumentException"/> on any
+    /// <item>The constructors of <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a> throw an <see cref="ArgumentException"/> on any
     /// kind of error, including when an object cannot be deserialized. This <see cref="ResXResourceSet"/> implementation does not deserialize anything on construction just parses the raw XML content. If there is a syntax error in the .resx
     /// content an <see cref="XmlException"/> will be thrown from the constructors. If an entry cannot be deserialized, the <see cref="GetObject(string)">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
     /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> and <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods will throw
@@ -356,7 +356,7 @@ namespace KGySoft.Resources
     /// <item>This <see cref="ResXResourceSet"/> is a sealed class.</item>
     /// </list>
     /// </para>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a>:
     /// <list type="bullet">
     /// <item><term>Supporting file references</term>
     /// <description>If the .resx file contains file references with relative paths, then a base path can be defined in the constructors so the file references can be resolved successfully. See also the <see cref="ResXFileRef"/> class.</description></item>
@@ -878,8 +878,8 @@ namespace KGySoft.Resources
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
         /// If <c>forceEmbeddedResources</c> is <see langword="true"/>&#160;on saving, the file references will be converted to embedded ones.</para>
-        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
-        /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
+        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
+        /// and <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
         public void SetObject(string name, object? value) => SetValueInternal(name, value, resources, ref resourcesIgnoreCase);
@@ -899,8 +899,8 @@ namespace KGySoft.Resources
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
         /// If <c>forceEmbeddedResources</c> is <see langword="true"/>&#160;on saving, the file references will be converted to embedded ones.</para>
-        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
-        /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
+        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
+        /// and <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
         public void SetMetaObject(string name, object? value) => SetValueInternal(name, value, metadata, ref metadataIgnoreCase);
@@ -983,7 +983,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
-        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
         /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
@@ -1004,7 +1004,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified <paramref name="stream"/>.</summary>
         /// <param name="stream">The stream to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
         /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
@@ -1025,7 +1025,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> by the specified <paramref name="textWriter"/>.</summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
         /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>

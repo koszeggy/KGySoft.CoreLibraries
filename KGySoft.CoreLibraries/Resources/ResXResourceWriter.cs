@@ -39,16 +39,16 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
-    /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class.
     /// </summary>
     /// <remarks>
-    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
+    /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section for the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <see langword="true"/>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
-    /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
+    /// but by the original <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
     /// <example>
     /// The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.
     /// <code lang="C#"><![CDATA[
@@ -111,8 +111,8 @@ namespace KGySoft.Resources
     /// </example>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceWriter<a name="comparison">&#160;</a></h1>
     /// <note>When writing a .resx file in <see cref="CompatibleFormat"/>, the <c>System.Windows.Forms.dll</c> is not loaded when referencing
-    /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
-    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
+    /// <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
+    /// <para><strong>Incompatibility</strong> with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>:
     /// <list type="bullet">
     /// <item>The System version has several public string fields, which are not intended to be accessed by a consumer code. Therefore the following fields are missing (they are not public) in this version:
     /// <list type="bullet">
@@ -128,16 +128,16 @@ namespace KGySoft.Resources
     /// compatible one.</item>
     /// <item>This <see cref="ResXResourceWriter"/> is a sealed class.</item>
     /// <item>After disposing the <see cref="ResXResourceWriter"/> instance or calling the <see cref="Close">Close</see> method, calling the <see cref="Generate">Generate</see> method will throw an <see cref="ObjectDisposedException"/>.</item>
-    /// <item>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.AddAlias.aspx" target="_blank">System.Resources.ResXResourceWriter.AddAlias</a> method just
+    /// <item>The <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter.addalias" target="_blank">System.Resources.ResXResourceWriter.AddAlias</a> method just
     /// populates an inner alias list causing that the alias will be recognized on further processing but will never be dumped into the output stream. In this <see cref="ResXResourceWriter"/> implementation
     /// the <see cref="AddAlias(string,AssemblyName,bool)">AddAlias</see> method is somewhat different: not just registers the alias as a known one but also dumps that into the output stream.
     /// It can be specified though, whether the dump should be deferred until the alias is actually referenced for the first time.</item>
     /// </list>
     /// </para>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>:
     /// <list type="bullet">
     /// <item><term>Compatibility</term>
-    /// <description>If <see cref="CompatibleFormat"/> is <see langword="true"/>, the resulting .resx file can be read by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.</description></item>
+    /// <description>If <see cref="CompatibleFormat"/> is <see langword="true"/>, the resulting .resx file can be read by <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>.</description></item>
     /// <item><term>Compactness</term>
     /// <description>The more compact output is achieved in multiple ways:
     /// <list type="bullet">
@@ -165,34 +165,34 @@ namespace KGySoft.Resources
     /// </term><term>When the System version rewrites such an invalid <see langword="null"/>&#160;node, it turns into empty string.</term></item>
     /// <item><term><see cref="Array"/> of <see cref="sbyte"/></term>
     /// <term>Serializing <see cref="sbyte">sbyte[]</see> type works properly.</term>
-    /// <term>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> changes the <see cref="sbyte">sbyte[]</see> types to <see cref="byte">byte[]</see>.</term></item>
+    /// <term>The <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> changes the <see cref="sbyte">sbyte[]</see> types to <see cref="byte">byte[]</see>.</term></item>
     /// <item><term><see cref="char"/></term>
     /// <term>Support of unpaired surrogate characters.</term>
-    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize unpaired surrogates, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
+    /// <term><a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize unpaired surrogates, though
+    /// <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="string"/> and any type serialized by a <see cref="TypeConverter"/>.</term>
     /// <term>Strings containing unpaired surrogates and invalid Unicode characters can be written without any error.</term>
-    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize such strings, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
+    /// <term><a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize such strings, though
+    /// <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="DateTime"/> and <see cref="DateTimeOffset"/></term>
     /// <term>Serialized in a different way so even the milliseconds part is preserved.</term>
-    /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
+    /// <term>The fixed form can be deserialized by <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>, too;
     /// however, the <see cref="DateTime.Kind">DateTime.Kind</see> will be always <see cref="DateTimeKind.Local"/>.</term></item>
     /// <item><term><see cref="float"/>, <see cref="double"/> and <see cref="decimal"/></term>
     /// <term>-0 (negative zero) value is handled correctly.</term>
-    /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
+    /// <term>The fixed form can be deserialized by <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>, too;
     /// however, in case of <see cref="float"/> and <see cref="double"/> -0 will always turn to +0.</term></item>
     /// <item><term><see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> instances containing a runtime type.</term>
     /// <term>These types are supported natively (without a <c>mimetype</c> attribute). Only if <see cref="CompatibleFormat"/> is <see langword="false"/>.</term>
-    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> can serialize these type only by <see cref="BinaryFormatter"/>.
+    /// <term><a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> can serialize these type only by <see cref="BinaryFormatter"/>.
     /// Though in .NET Core and .NET Standard <see cref="Type"/> is not serializable even by <see cref="BinaryFormatter"/>.</term></item>
     /// <item><term>Generic types</term>
     /// <term>Generic types with a <see cref="TypeConverter"/> are handled correctly.</term>
-    /// <term>Parsing generic type names may fail with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.
+    /// <term>Parsing generic type names may fail with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>.
     /// The problem does not occur on binary serialization because in that case the type name is not dumped into the .resx file but is encoded in the binary stream.</term></item>
     /// <item><term>Any non-serializable type</term>
     /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <see langword="true"/>.</term>
-    /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/>&#160;during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/>&#160;during serialization, deserialization works even with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
     /// as long as <c>KGySoft.CoreLibraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
     /// </list></item>
     /// </list>
@@ -602,7 +602,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>This property affects only <see cref="AddResource(ResXDataNode)"/> and <see cref="AddMetadata(ResXDataNode)"/> methods when <see cref="CompatibleFormat"/>
         /// is <see langword="true"/>, and the <see cref="ResXDataNode"/> to write contains no deserialized value but only raw .resx data that is not compatible with
-        /// the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.</para>
+        /// the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.</para>
         /// </remarks>
         public bool SafeMode
         {
