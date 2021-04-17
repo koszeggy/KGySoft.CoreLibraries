@@ -65,6 +65,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted); 
 #endif
                 new EnumComparerTest().TestEnumComparer();
+
+                // this accesses an ulong? but unlike in LockFreeCache it interestingly does not cause a problem
+                Console.WriteLine(Enum<StringSplitOptions>.GetFlagsMask());
             }
         }
 #endif
@@ -114,11 +117,17 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e3.Equals(v3[0], v3[1]), c3.Equals(v3[0], v3[1]));
             Assert.AreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
+        }
 
-#pragma warning disable 618 // The obsolete DeepClone is intended because we want to use serialization here
-            var clone = c1.DeepClone();
-            Assert.AreSame(c1, clone);
-#pragma warning restore 618
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
+        [Test]
+        public void SerializeTest()
+        {
+            var comparer = EnumComparer<TestLongEnum>.Comparer;
+            var clone = comparer.DeepClone();
+            Assert.AreSame(comparer, clone);
         }
 
 #if NETFRAMEWORK

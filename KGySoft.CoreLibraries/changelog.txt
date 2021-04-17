@@ -9,6 +9,11 @@
 * v5.6.1:
 ~~~~~~~~~
 
+- KGySoft.Collections namespace:
+================================
+- ThreadSafeCacheFactory class: When using lock free caches, fixing possible VerificationException
+  from partially trusted domains (eg. in .NET Fiddle). Affects .NET Framework only.
+
 * KGySoft.CoreLibraries namespace:
 ==================================
 * ObjectExtensions class:
