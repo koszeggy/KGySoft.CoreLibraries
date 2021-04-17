@@ -1738,6 +1738,10 @@ namespace KGySoft.CoreLibraries
                     return String.Join(separator, strArray);
                 case IList<string?> strList:
                     // we can preallocate result
+#if NETFRAMEWORK && !NET35
+                    if (!AppDomain.CurrentDomain.IsFullyTrusted)
+                        goto default;
+#endif
                     return FastJoin(strList, separator);
                 default:
                     // fallback with StringBuilder
