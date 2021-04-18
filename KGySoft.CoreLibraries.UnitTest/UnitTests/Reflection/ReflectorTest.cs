@@ -20,6 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Security;
+using System.Security.Permissions;
+
+using KGySoft.Collections;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
@@ -203,11 +206,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
         #endregion
 
+        #region Sandbox class
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void DoTest()
+            {
+#if !NET35
+                Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted);
+#endif
+                var test = new ReflectorTest();
+                test.ClassStaticFieldAccess();
+                test.StructInstancePropertyAccess();
+
+                // this invokes the dynamic method creation
+                Console.WriteLine(Reflector<KeyValuePair<int, string>>.SizeOf);
+            }
+        }
+#endif
+
+        #endregion
+
         #endregion
 
         #region Nested structs
-
-        #region TestStruct struct
 
         private struct TestStruct
         {
@@ -370,8 +393,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #endregion
         }
-
-        #endregion
 
         #endregion
 
@@ -1601,6 +1622,35 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(typeof(List<int>).GetMethod(nameof(List<int>.Add)), methodAdd);
 #pragma warning restore CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null
         }
+
+        #endregion
+
+        #region Partially trusted domain test
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void ReflectionFromPartiallyTrustedDomain()
+        {
+            var domain = CreateSandboxDomain(
+#if NET35
+                new EnvironmentPermission(PermissionState.Unrestricted),
+#endif
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
+                new SecurityPermission(SecurityPermissionFlag.ControlEvidence));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.DoTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

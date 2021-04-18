@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="cancellationToken">A token for cancellation. This parameter is optional.
         /// <br/>Default value: <see cref="CancellationToken.None">CancellationToken.None</see></param>
         /// <returns><see langword="true"/>, if the specified <paramref name="handle"/> receives a signal before timing out or canceling; otherwise, <see langword="false"/>.</returns>
-        // NOTE: This solution was inspired by this one: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/interop-with-other-asynchronous-patterns-and-types?redirectedfrom=MSDN#tasks-and-wait-handles
+        // NOTE: This solution was inspired by this one: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/interop-with-other-asynchronous-patterns-and-types
         public static async Task<bool> WaitOneAsync(this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
         {
             if (handle == null!)

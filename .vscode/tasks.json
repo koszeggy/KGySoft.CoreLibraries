@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "build",
-            "command": "dotnet",
+            "command": "/usr/bin/dotnet",
             "type": "process",
             "args": [
                 "build",
@@ -15,7 +15,7 @@
         },
         {
             "label": "publish",
-            "command": "dotnet",
+            "command": "/usr/bin/dotnet",
             "type": "process",
             "args": [
                 "publish",
@@ -27,7 +27,7 @@
         },
         {
             "label": "watch",
-            "command": "dotnet",
+            "command": "/usr/bin/dotnet",
             "type": "process",
             "args": [
                 "watch",

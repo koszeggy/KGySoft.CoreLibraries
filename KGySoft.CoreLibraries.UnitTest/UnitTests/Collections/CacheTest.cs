@@ -251,6 +251,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsFalse(cache.ContainsKey("beta"));
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [Test]
         public void SerializationTest()
         {

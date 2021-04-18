@@ -602,6 +602,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     byte[] serData = SerializeObject(obj, bf);
                     object deserializedObject = DeserializeObject(serData, bf);
+#if NETFRAMEWORK && !NET35
+                    if (!AppDomain.CurrentDomain.IsFullyTrusted)
+                        return;
+#endif
                     if (safeCompare)
                         AssertDeepEquals(serData, SerializeObject(deserializedObject, bf));
                     else
@@ -626,6 +630,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     byte[] serData = SerializeObjects(referenceObjects, bf);
                     object[] deserializedObjects = DeserializeObjects(serData, bf);
+#if NETFRAMEWORK && !NET35
+                    if (!AppDomain.CurrentDomain.IsFullyTrusted)
+                        return;
+#endif
                     if (safeCompare)
                         AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bf));
                     else

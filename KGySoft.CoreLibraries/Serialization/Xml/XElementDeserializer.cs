@@ -230,6 +230,8 @@ namespace KGySoft.Serialization.Xml
                 // 1.) real member
                 if (member != null)
                 {
+                    if (SkipMember(member))
+                        continue;
                     object? existingValue = members != null ? null
                         : property != null ? property.Get(obj)
                         : field!.Get(obj);
@@ -461,18 +463,12 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
-            if (array == null && elementType == null)
-                Throw.ArgumentNullException(Argument.elementType);
-
-            ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength!)?.Value, element.Attribute(XmlSerializer.AttributeDim!)?.Value, out int[] lengths, out int[] lowerBounds);
-
-            // checking existing array or creating a new array
-            if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
-                array = Array.CreateInstance(elementType!, lengths, lowerBounds);
-            elementType ??= array.GetType().GetElementType()!;
+            string? attrLength = element.Attribute(XmlSerializer.AttributeLength!)?.Value;
+            string? attrDim = element.Attribute(XmlSerializer.AttributeDim!)?.Value;
+            var builder = new ArrayBuilder(array, elementType, attrLength, attrDim, canRecreateArray, SafeMode);
 
             // has no elements: primitive array (can be restored by BlockCopy)
-            if (elementType.IsPrimitive && !element.HasElements)
+            if (builder.ElementType.IsPrimitive && !element.HasElements)
             {
                 string value = element.Value;
                 byte[] data = Convert.FromBase64String(value);
@@ -485,48 +481,30 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                int count = data.Length / elementType.SizeOf();
-                if (array.Length != count)
-                    Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, count));
-                Buffer.BlockCopy(data, 0, array, 0, data.Length);
-                return array;
+                builder.AddRaw(data);
+                return builder.ToArray();
             }
 
             // complex array: recursive deserialization needed
-            Queue<XElement> items = new Queue<XElement>(element.Elements(XmlSerializer.ElementItem));
-            if (items.Count != array.Length)
-                Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(array.Length, items.Count));
-
-            ArrayIndexer? arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
-            int deserializedItemsCount = 0;
-            while (items.Count > 0)
+            foreach (XElement item in element.Elements(XmlSerializer.ElementItem))
             {
-                XElement item = items.Dequeue();
                 Type? itemType = null;
                 XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType!);
                 if (attrType != null)
                     itemType = ResolveType(attrType.Value);
                 if (itemType == null)
-                    itemType = elementType;
+                    itemType = builder.ElementType;
 
                 if (TryDeserializeObject(itemType, item, null, out var value))
                 {
-                    if (arrayIndexer == null)
-                        array.SetValue(value, deserializedItemsCount + lowerBounds[0]);
-                    else
-                    {
-                        arrayIndexer.MoveNext();
-                        array.SetValue(value, arrayIndexer.Current);
-                    }
-
-                    deserializedItemsCount += 1;
+                    builder.Add(value);
                     continue;
                 }
 
                 Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
             }
 
-            return array;
+            return builder.ToArray();
         }
 
         #endregion

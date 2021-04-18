@@ -6,6 +6,41 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.6.1:
+~~~~~~~~~
+
+- KGySoft.Collections namespace:
+================================
+- ThreadSafeCacheFactory class: When using lock free caches, fixing possible VerificationException
+  from partially trusted domains (eg. in .NET Fiddle). Affects .NET Framework only.
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* ObjectExtensions class:
+  + New DeepClone<T>(T, Func<object, object?>?) method: The original DeepClone overload was less and less
+    reliable on the newer platforms as it uses binary serialization. This new overload performs a more direct
+    cloning and also allows customization or transformation by specifying a delegate.
+  * The existing DeepClone<T>(T, bool) method has been made obsolete in non-Framework targets in favor of the
+    new overload. But even in .NET Framework this overload is recommended only for remote objects to create a
+    local copy.
+
+- KGySoft.Diagnostics namespace:
+================================
+- PerformanceTestBase<TDelegate, TResult> class:
+  - Fixing time-based tests interval on some platforms.
+
+* KGySoft.Serialization.Binary namespace:
+=========================================
+* BinarySerializationFormatter class:
+  * SafeMode now protects against various OutOfMemoryException attacks as well.
+
+* KGySoft.Serialization.Xml namespace:
+======================================
+* XmlSerializer class:
+  * DeserializeSafe and DeserializeContentSafe methods protect against some OutOfMemoryException attacks as well.
+
+
+~~~~~~~~~
 ! v5.6.0:
 ~~~~~~~~~
 

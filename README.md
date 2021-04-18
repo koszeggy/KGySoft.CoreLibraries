@@ -232,7 +232,7 @@ A `Dictionary`-like type with a specified capacity. If the cache is full and new
 
 If an item loader is passed to the constructor, then it is enough only to read the cache via the indexer and the corresponding item will be transparently loaded when necessary.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/wTqCoa).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/YGDY9c).
 
 ```cs
 // instantiating the cache by a loader method and a capacity of 1000 possible items
@@ -349,7 +349,7 @@ bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out resu
 
 - #### Binary Serialization
 
-> _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise [deep clones](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_CoreLibraries_ObjectExtensions_DeepClone__1.htm). If you still need to deserialize possibly harmful content make sure to use the [`BinarySerializationOptions.SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
+> _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise deep clones. If you still need to deserialize possibly harmful content make sure to use the [`SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
 
 [`BinarySerializationFormatter`][bsf] serves the same purpose as `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. It supports many core types natively,  including many collections. It means that serialization of those types does not involve storing assembly and type names at all, which ensures very compact sizes as well as their safe deserialization on every possible platform. Apart from the natively supported types it works similarly to `BinaryFormatter`: uses recursive serialization of fields and supports the full binary serialization infrastructure including `ISerializable`, `IDeserializationCallback`, `IObjectReference`, serialization method attributes, binder and surrogates support.
 
@@ -804,7 +804,7 @@ KGy SOFT CoreLibraries offers two ways for performance measurement, which can be
 
 You can use the `Profiler` class to inject measurement sections as `using` blocks into your code base:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/4nTM98).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/BuuisW).
 ```cs
 const string category = "Example";
 
@@ -878,7 +878,7 @@ Cases are sorted by time (quickest first)
 
 If you need to use parameterized tests you can simply derive the `PerformanceTestBase<TDelegate, TResult>` class. Override the `OnBeforeCase` method to reset the parameter for each test cases. For example, this is how you can use a prepared `Random` instance in a performance test:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/GSeBq6).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/KNiZa7).
 
 ```cs
 public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>

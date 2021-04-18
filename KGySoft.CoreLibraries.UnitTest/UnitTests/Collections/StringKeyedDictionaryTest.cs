@@ -114,6 +114,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(dict.Count, values.Count);
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [TestCase(StringComparison.Ordinal)]
         [TestCase(StringComparison.OrdinalIgnoreCase)]
         [TestCase(StringComparison.InvariantCulture)]

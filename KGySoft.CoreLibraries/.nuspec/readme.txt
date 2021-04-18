@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 5.6.0
+Thank you for installing KGy SOFT Core Libraries 5.6.1
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 

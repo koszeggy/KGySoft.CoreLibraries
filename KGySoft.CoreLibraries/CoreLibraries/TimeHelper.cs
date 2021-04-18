@@ -17,9 +17,7 @@
 #region Usings
 
 using System;
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
 using System.Diagnostics; 
-#endif
 
 #endregion
 
@@ -31,7 +29,15 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     internal static class TimeHelper
     {
+        #region Fields
+
+        private static readonly long stopwatchTicksPerMillisecond = Stopwatch.Frequency / 1000;
+
+        #endregion
+
         #region Methods
+
+        internal static long ToStopwatchTicks(int milliseconds) => milliseconds * stopwatchTicksPerMillisecond;
 
         internal static long GetTimeStamp() =>
 #if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
@@ -44,21 +50,21 @@ namespace KGySoft.CoreLibraries
 
         internal static long GetInterval(int milliseconds) =>
 #if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            milliseconds * TimeSpan.TicksPerMillisecond;
+            ToStopwatchTicks(milliseconds);
 #else
             milliseconds;
 #endif
 
         internal static long GetInterval(TimeSpan timeSpan) =>
 #if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            timeSpan.Ticks;
+            timeSpan.Ticks * stopwatchTicksPerMillisecond / TimeSpan.TicksPerMillisecond;
 #else
             timeSpan.Ticks / TimeSpan.TicksPerMillisecond;
 #endif
 
         internal static TimeSpan GetTimeSpan(long interval) =>
 #if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            new TimeSpan(interval);
+            new TimeSpan(interval * TimeSpan.TicksPerMillisecond / stopwatchTicksPerMillisecond);
 #else
             new TimeSpan(interval * TimeSpan.TicksPerMillisecond);
 #endif

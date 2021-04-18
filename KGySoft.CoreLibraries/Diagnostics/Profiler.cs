@@ -47,7 +47,7 @@ namespace KGySoft.Diagnostics
     /// </remarks>
     /// <example>
     /// The following example demonstrates how to place measurement sections into the code:
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/4nTM98" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/BuuisW" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Threading;

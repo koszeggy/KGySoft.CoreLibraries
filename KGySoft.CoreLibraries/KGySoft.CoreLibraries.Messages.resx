@@ -750,8 +750,11 @@ To force the recursive serialization of the collection enable both RecursiveSeri
   <data name="XmlSerialization_ItemExpectedFormat" xml:space="preserve">
     <value>Collection item expected but "{0}" found.</value>
   </data>
-  <data name="XmlSerialization_LengthInvalidTypeFormat" xml:space="preserve">
-    <value>Length attribute should be an integer but "{0}" found.</value>
+  <data name="XmlSerialization_InvalidArrayLengthFormat" xml:space="preserve">
+    <value>Invalid array length: {0}</value>
+  </data>
+  <data name="XmlSerialization_InvalidArrayBoundsFormat" xml:space="preserve">
+    <value>Invalid array bounds: {0}</value>
   </data>
   <data name="XmlSerialization_ArrayNoLength" xml:space="preserve">
     <value>Array length or dimensions are not specified.</value>

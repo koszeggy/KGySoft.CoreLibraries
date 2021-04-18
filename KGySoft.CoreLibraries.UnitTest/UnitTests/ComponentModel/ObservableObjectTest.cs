@@ -109,6 +109,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.Throws<ObjectDisposedException>(() => changed = obj.PublicProperty);
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [Test]
         public void SerializationTest()
         {

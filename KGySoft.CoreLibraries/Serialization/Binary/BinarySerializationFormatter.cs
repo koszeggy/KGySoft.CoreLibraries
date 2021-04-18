@@ -113,14 +113,18 @@ namespace KGySoft.Serialization.Binary
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
     /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
-    /// deserializing loading assemblies during the deserialization as well as instantiating non-serializable types. When using <see cref="BinarySerializationOptions.SafeMode"/>
-    /// you must preload every assembly manually that are referred by the serialization stream.</para>
+    /// loading assemblies during the deserialization as well as instantiating non-serializable types, and guards against some attack that may cause <see cref="OutOfMemoryException"/>.
+    /// When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly manually that are referred by the serialization stream.</para>
     /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
     /// can be exploited for several attacks (causing unresponsiveness, <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not
     /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against such attacks.
-    /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against some of the known security issues
+    /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against the known security issues
     /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
-    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), or set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
+    /// <para>Please also note that <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent deserializing invalid content if a serializable type does not implement <see cref="ISerializable"/>
+    /// and does it not validate the incoming <see cref="SerializationInfo"/> in its serialization constructor. All serializable types that can have an invalid state regarding the field values
+    /// should implement <see cref="ISerializable"/> and should throw a <see cref="SerializationException"/> from their serialization constructor if validation fails.
+    /// Other exceptions thrown by the constructor will be wrapped into a <see cref="SerializationException"/>.</para>
+    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
     /// instance that uses strict mapping. For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
     /// <para>Please also note that if the <see cref="Binder"/> property is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
     /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
@@ -284,6 +288,7 @@ namespace KGySoft.Serialization.Binary
     /// using System.Reflection;
     /// using System.Runtime.Serialization;
     /// using System.Runtime.Serialization.Formatters.Binary;
+    /// 
     /// using KGySoft.CoreLibraries;
     /// using KGySoft.Serialization.Binary;
     ///
@@ -329,17 +334,17 @@ namespace KGySoft.Serialization.Binary
     ///             return convertible.ToString(CultureInfo.InvariantCulture);
     ///
     ///         if (o is IEnumerable enumerable)
-    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(Dump))}]";
+    ///             return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
     ///
-    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}"))}}}";
+    ///         return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
     ///     }
     /// }
     ///
     /// // This code example produces a similar output to this one:
-    /// // Generated object:   [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
-    /// // Deserialized object [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
-    /// // Length by BinarySerializationFormatter: 43
-    /// // Length by BinaryFormatter: 2171]]></code>
+    /// // Generated object:   [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Deserialized object [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Length by BinarySerializationFormatter: 50
+    /// // Length by BinaryFormatter: 2217]]></code>
     /// </example>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]

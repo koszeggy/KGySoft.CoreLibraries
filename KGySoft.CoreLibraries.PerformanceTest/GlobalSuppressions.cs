@@ -9,3 +9,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0090:Use 'new(...)'", Justification = "Decided individually")]
 [assembly: SuppressMessage("Performance", "CA1806:Do not ignore method results", Justification = "In performance tests result is often ignored")]
 [assembly: SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "Decided individually")]
+[assembly: SuppressMessage("Design", "CA1069:Enums values should not be duplicated", Justification = "Tests")]

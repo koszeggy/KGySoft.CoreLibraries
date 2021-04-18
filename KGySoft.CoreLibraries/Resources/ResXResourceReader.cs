@@ -38,10 +38,10 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
-    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// </summary>
     /// <remarks>
-    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceReader</a> section for the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
@@ -184,7 +184,7 @@ namespace KGySoft.Resources
     /// complete content can be retrieved. When <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and
     /// <see cref="GetAliasEnumerator">GetAliasEnumerator</see> return a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
     /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined values will be returned of a redefined name. This behavior is
-    /// similar to the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, which does not allow duplicates.
+    /// similar to the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class, which does not allow duplicates.
     /// </para>
     /// <example>
     /// The following example demonstrates the difference of lazy (allowing duplicates) and greedy (disabling duplicates) reading.
@@ -246,14 +246,14 @@ namespace KGySoft.Resources
     /// // Value: This is a duplicate for key 'item'.</code>
     /// </example>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h1>
-    /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
-    /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,
-    /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
+    /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>.
+    /// <note>When reading a .resx file written by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class,
+    /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
     /// and <strong>System.Resources.ResXNullRef</strong> types.</note>
     /// </para>
-    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:
+    /// <para><strong>Incompatibility</strong> with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>:
     /// <list type="bullet">
-    /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
     /// uses them to load the assemblies in advance occasionally by calling the obsolete <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadPartial</see> method. However, this <see cref="ResXResourceReader"/>
     /// implementation uses the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method, which does not use obsolete techniques (and if <see cref="SafeMode"/> is <see langword="true"/>,
     /// then no type resolving, assembly loading and deserialization occurs at all, until explicit request).
@@ -262,17 +262,17 @@ namespace KGySoft.Resources
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown
     /// on calling <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.</item>
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method every source stream will be closed (if any).</item>
-    /// <item>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, this implementation returns every resources and metadata of the
+    /// <item>Unlike <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>, this implementation returns every resources and metadata of the
     /// same name by default. This behavior can be adjusted by <see cref="AllowDuplicatedKeys"/> property.</item>
-    /// <item><a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> often throws <see cref="ArgumentException"/> on getting the enumerator
+    /// <item><a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> often throws <see cref="ArgumentException"/> on getting the enumerator
     /// or on retrieving the value of a <see cref="ResXDataNode"/> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
     /// <item>Though the <see cref="UseResXDataNodes"/> property is still supported, it is obsolete in favor of <see cref="SafeMode"/> property.</item>
-    /// <item>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
+    /// <item>In <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
     /// the resource and metadata entries are mixed in the returned enumerator, while when it is <see langword="false"/>, then only the resources are returned. In this implementation the <see cref="GetEnumerator">GetEnumerator</see> always
     /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> and <see cref="SafeMode"/> properties.</item>
     /// </list>
     /// </para>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>:
     /// <list type="bullet">
     /// <item><term>Lazy processing</term>
     /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
@@ -286,8 +286,8 @@ namespace KGySoft.Resources
     /// <item><term>Using <see cref="ResXDataNode"/> instances</term>
     /// <description>The <see cref="SafeMode"/> (<see cref="UseResXDataNodes"/>) property can be toggled also after getting an enumerator or even during the enumeration.</description></item>
     /// <item><term>Clear purpose of the enumerators</term>
-    /// <description>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.getenumerator.aspx" target="_blank">System.Resources.ResXResourceReader.GetEnumerator</a> either returns resources only or returns both resources and metadata mixed together
-    /// depending on the value of the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.useresxdatanodes.aspx" target="_blank">System.Resources.ResXResourceReader.UseResXDataNodes</a> property.
+    /// <description>The <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader.getenumerator" target="_blank">System.Resources.ResXResourceReader.GetEnumerator</a> either returns resources only or returns both resources and metadata mixed together
+    /// depending on the value of the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader.useresxdatanodes" target="_blank">System.Resources.ResXResourceReader.UseResXDataNodes</a> property.
     /// This <see cref="ResXResourceReader"/> implementation has separated <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see>
     /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
     /// <item><term>Security</term>
@@ -627,7 +627,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
         /// <remarks>
-        /// Unlike in case of <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, in this
+        /// Unlike in case of <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class, in this
         /// <see cref="ResXResourceReader"/> implementation this property can be set even after calling the <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see>
         /// or <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.
         /// </remarks>
@@ -653,7 +653,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
+        /// <note>This property is maintained due to compatibility reasons with the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
         /// Use <see cref="SafeMode"/> property instead.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
@@ -733,7 +733,7 @@ namespace KGySoft.Resources
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
         /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
         /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
-        /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+        /// <note>To be compatible with the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
         /// class set the value of this property to <see langword="false"/>.</note>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
@@ -901,7 +901,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the resources from the current XML resource file or stream.</returns>
         /// <remarks>
-        /// <para>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
+        /// <para>In <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
         /// the resource and metadata entries are mixed in the returned enumerator, while when it is <see langword="false"/>, then only the resources are returned. In this <see cref="ResXResourceReader"/> implementation the <see cref="GetEnumerator">GetEnumerator</see> method always
         /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> or <see cref="SafeMode"/> properties.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>

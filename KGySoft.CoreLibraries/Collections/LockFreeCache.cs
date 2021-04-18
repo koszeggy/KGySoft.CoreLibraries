@@ -43,7 +43,7 @@ namespace KGySoft.Collections
         private readonly Func<TKey, TValue> itemLoader;
         private readonly IEqualityComparer<TKey>? comparer;
         private readonly int thresholdCapacity;
-        private readonly long? mergeInterval;
+        private readonly long mergeInterval; // NOTE: it could be long? but that causes VerificationException in .NET Framework when used from a partially trusted domain with SecurityRuleSet.Level2
         private readonly bool bitwiseAndHash;
 
         private volatile bool isMerging;
@@ -114,7 +114,7 @@ namespace KGySoft.Collections
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
             nextCapacity = options.InitialCapacity;
             thresholdCapacity = options.ThresholdCapacity;
-            mergeInterval = options.MergeInterval.HasValue ? TimeHelper.GetInterval(options.MergeInterval.Value) : null;
+            mergeInterval = options.MergeInterval.HasValue ? TimeHelper.GetInterval(options.MergeInterval.Value) : -1L;
             readOnlyStorage = ReadOnlyDictionary.Empty;
         }
 
@@ -131,8 +131,8 @@ namespace KGySoft.Collections
                 if (result != null)
                     return result;
 
-                if (Interlocked.CompareExchange(ref growingStorage, new GrowOnlyDictionary(Math.Max(4, nextCapacity), comparer, bitwiseAndHash), null) == null && mergeInterval.HasValue)
-                    Volatile.Write(ref nextMerge, TimeHelper.GetTimeStamp() + mergeInterval.Value);
+                if (Interlocked.CompareExchange(ref growingStorage, new GrowOnlyDictionary(Math.Max(4, nextCapacity), comparer, bitwiseAndHash), null) == null && mergeInterval >= 0L)
+                    Volatile.Write(ref nextMerge, TimeHelper.GetTimeStamp() + mergeInterval);
             }
         }
 
@@ -147,7 +147,7 @@ namespace KGySoft.Collections
             int l2Count = l2Cache.Count;
             int max = thresholdCapacity;
             bool byCapacity = l2Count >= threshold;
-            bool byInterval = !byCapacity && mergeInterval.HasValue && l1Count < max && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
+            bool byInterval = !byCapacity && mergeInterval >= 0L && l1Count < max && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
             if (!(byCapacity || byInterval))
                 return;
 

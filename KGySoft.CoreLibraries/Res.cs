@@ -1064,8 +1064,11 @@ namespace KGySoft
         /// <summary>Serialized content of type "{0}" not found.</summary>
         internal static string XmlSerializationNoContent(Type type) => Get("XmlSerialization_NoContentFormat", type);
 
-        /// <summary>Length attribute should be an integer but "{0}" found.</summary>
-        internal static string XmlSerializationLengthInvalidType(string content) => Get("XmlSerialization_LengthInvalidTypeFormat", content);
+        /// <summary>Invalid array length: {0}</summary>
+        internal static string XmlSerializationInvalidArrayLength(string value) => Get("XmlSerialization_InvalidArrayLengthFormat", value);
+
+        /// <summary>Invalid array bounds: {0}</summary>
+        internal static string XmlSerializationInvalidArrayBounds(string value) => Get("XmlSerialization_InvalidArrayBoundsFormat", value);
 
         /// <summary>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</summary>
         internal static string XmlSerializationArraySizeMismatch(Type type, int length) => Get("XmlSerialization_ArraySizeMismatchFormat", type, length);

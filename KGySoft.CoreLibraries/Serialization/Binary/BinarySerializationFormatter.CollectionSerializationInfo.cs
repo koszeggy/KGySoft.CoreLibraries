@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Threading;
@@ -43,6 +44,12 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         private sealed class CollectionSerializationInfo
         {
+            #region Constants
+
+            private const int capacityThreshold = 1 << 13;
+
+            #endregion
+
             #region Fields
 
             #region Static Fields
@@ -175,7 +182,7 @@ namespace KGySoft.Serialization.Binary
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
             [SecurityCritical]
-            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
+            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count)
             {
                 object result;
 
@@ -197,6 +204,8 @@ namespace KGySoft.Serialization.Binary
 
                 // 2.) Capacity
                 int capacity = HasCapacity ? Read7BitInt(br) : count;
+                if (safeMode && (HasCapacity || CtorArguments?.Contains(CollectionCtorArguments.Capacity) == true))
+                    capacity = Math.Min(count, (capacityThreshold >> (IsDictionary ? 1 : 0)) / descriptor.ElementDescriptor!.Type!.SizeOf());
 
                 // 3.) Case sensitivity
                 bool caseInsensitive = false;
@@ -334,7 +343,7 @@ namespace KGySoft.Serialization.Binary
 
                     ConstructorInfo? ctor = type.GetConstructor(args);
                     if (ctor == null)
-                        Throw.InvalidOperationException(Res.ReflectionCtorNotFound(type));
+                        Throw.SerializationException(Res.ReflectionCtorNotFound(type));
                     return CreateInstanceAccessor.GetAccessor(ctor);
                 }
 

@@ -280,7 +280,7 @@ namespace KGySoft.CoreLibraries
 
         private static bool CheckDeepEquals(object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
-            if (reference == null && check == null)
+            if (ReferenceEquals(reference, check))
                 return true;
 
             Type typeRef = reference?.GetType();

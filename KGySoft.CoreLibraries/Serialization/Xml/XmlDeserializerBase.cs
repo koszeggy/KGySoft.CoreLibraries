@@ -21,9 +21,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -33,10 +35,198 @@ namespace KGySoft.Serialization.Xml
 {
     internal abstract class XmlDeserializerBase
     {
+        #region Nested Types
+
+        protected struct ArrayBuilder
+        {
+            #region Constants
+
+            private const int allocationThreshold = 1 << 13;
+
+            #endregion
+
+            #region Fields
+
+            #region Internal Fields
+
+            internal readonly Type ElementType;
+            internal readonly int TotalLength;
+
+            #endregion
+
+            #region Private Fields
+
+            private readonly int[] lengths;
+            private readonly int[] lowerBounds;
+
+            private Array? array;
+            private ArrayIndexer? arrayIndexer;
+            private IList? builder;
+            private int current;
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
+            private Type ArrayType => lengths.Length > 1 ? ElementType.MakeArrayType(lengths.Length)
+                : lowerBounds[0] == 0 ? ElementType.MakeArrayType()
+                : ElementType.MakeArrayType(1);
+
+            private IList Builder
+            {
+                get
+                {
+                    if (builder == null)
+                    {
+                        // allocating a List with limited initial capacity
+                        int capacity = Math.Min(TotalLength, allocationThreshold / ElementType.SizeOf());
+                        if (ElementType.IsValueType)
+                        {
+                            // for value types we use a strictly typed list for less boxing (though the elements will be added boxed)
+                            ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(ElementType).GetConstructor(new[] { Reflector.IntType })!;
+                            builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                        }
+                        else
+                        {
+                            // for reference elements simply using an object list
+                            builder = new List<object>(capacity);
+                        }
+                    }
+
+                    return builder;
+                }
+            }
+
+            #endregion
+
+            #region Constructors
+
+            internal ArrayBuilder(Array? array, Type? elementType, string? attrLength, string? attrDim, bool canRecreateArray, bool safeMode) : this()
+            {
+                if (array == null && elementType == null)
+                    Throw.ArgumentNullException(Argument.elementType);
+                ParseArrayDimensions(attrLength, attrDim, out TotalLength, out lengths, out lowerBounds);
+
+                if (array != null && CheckArray(array, lengths, lowerBounds, !canRecreateArray))
+                    this.array = array;
+                ElementType = elementType ?? array!.GetType().GetElementType()!;
+
+                current = -1;
+                if (this.array != null)
+                {
+                    if (lengths.Length > 1)
+                        arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                    return;
+                }
+
+                if (safeMode && ElementType.SizeOf() * (long)TotalLength > allocationThreshold)
+                    return;
+
+                // it is safe to allocate the array here
+                this.array = Array.CreateInstance(ElementType, lengths, lowerBounds);
+                if (lengths.Length > 1)
+                    arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+            }
+
+            #endregion
+
+            #region Methods
+
+            internal void AddRaw(byte[] data)
+            {
+                if (current >= 0)
+                    Throw.ArgumentException(Res.XmlSerializationMixedArrayFormats);
+
+                int count = data.Length / ElementType.SizeOf();
+                if (TotalLength != count)
+                    Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(TotalLength, count));
+
+                array ??= Array.CreateInstance(ElementType, lengths, lowerBounds);
+                Buffer.BlockCopy(data, 0, array, 0, data.Length);
+                current = TotalLength - 1;
+            }
+
+            internal void Add(object? value)
+            {
+                if (++current == TotalLength)
+                    Throw.ArgumentException(Res.XmlSerializationArraySizeMismatch(ArrayType, TotalLength));
+
+                // adding to the final array
+                if (array != null)
+                {
+                    // 1D array
+                    if (arrayIndexer == null)
+                    {
+                        array.SetValue(value, current + lowerBounds[0]);
+                        return;
+                    }
+
+                    // Multidimensional array
+                    arrayIndexer.MoveNext();
+                    array.SetValue(value, arrayIndexer.Current);
+                    return;
+                }
+
+                // appending the builder
+                Builder.Add(value);
+            }
+
+            internal Array ToArray()
+            {
+                if (array != null)
+                {
+                    if (current != TotalLength - 1)
+                        Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(TotalLength, current + 1));
+
+                    return array;
+                }
+
+                if (Builder.Count != TotalLength)
+                    Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(TotalLength, builder!.Count));
+
+                array = Array.CreateInstance(ElementType, lengths, lowerBounds);
+
+                // 1D array
+                if (lengths.Length == 1)
+                {
+                    int offset = lowerBounds[0];
+                    for (int i = 0; i < TotalLength; i++)
+                        array.SetValue(builder![i], i + offset);
+
+                    builder = null;
+                    return array;
+                }
+
+                // multidimensional array
+                arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                for (int i = 0; i < TotalLength && arrayIndexer.MoveNext(); i++)
+                    array.SetValue(builder![i], arrayIndexer.Current);
+
+                builder = null;
+                return array;
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Fields
+
+        private static readonly StringKeyedDictionary<HashSet<Type>> unsafeMembers = new StringKeyedDictionary<HashSet<Type>>(2)
+        {
+            ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
+            [nameof(Cache<_,_>.EnsureCapacity)] = new HashSet<Type> { typeof(Cache<,>) }
+        };
+
+        #endregion
+
         #region Properties
 
         #region Private Protected Properties
-        
+
         private protected bool SafeMode { get; }
 
         #endregion
@@ -64,70 +254,6 @@ namespace KGySoft.Serialization.Xml
         #region Static Methods
         
         #region Private Protected Methods
-
-        private protected static void ParseArrayDimensions(string? attrLength, string? attrDim, out int[] lengths, out int[] lowerBounds)
-        {
-            if (attrLength == null && attrDim == null)
-                Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
-
-            if (attrLength != null)
-            {
-                lengths = new int[1];
-                lowerBounds = new int[1];
-                if (!Int32.TryParse(attrLength, out lengths[0]))
-                    Throw.ArgumentException(Res.XmlSerializationLengthInvalidType(attrLength));
-                return;
-            }
-
-            string[] dims = attrDim!.Split(',');
-            lengths = new int[dims.Length];
-            lowerBounds = new int[dims.Length];
-            for (int i = 0; i < dims.Length; i++)
-            {
-                int boundSep = dims[i].IndexOf("..", StringComparison.Ordinal);
-                if (boundSep == -1)
-                {
-                    lowerBounds[i] = 0;
-                    lengths[i] = Int32.Parse(dims[i], CultureInfo.InvariantCulture);
-                }
-                else
-                {
-                    lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep), CultureInfo.InvariantCulture);
-                    lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2), CultureInfo.InvariantCulture) - lowerBounds[i] + 1;
-                }
-            }
-        }
-
-        private protected static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
-        {
-            if (lengths.Length != array.Rank)
-            {
-                if (throwError)
-                    Throw.ArgumentException(Res.XmlSerializationArrayRankMismatch(array.GetType(), lengths.Length));
-                return false;
-            }
-
-            for (int i = 0; i < lengths.Length; i++)
-            {
-                if (lengths[i] != array.GetLength(i))
-                {
-                    if (!throwError)
-                        return false;
-                    if (lengths[0] == 1)
-                        Throw.ArgumentException(Res.XmlSerializationArraySizeMismatch(array.GetType(), lengths[0]));
-                    Throw.ArgumentException(Res.XmlSerializationArrayDimensionSizeMismatch(array.GetType(), i));
-                }
-
-                if (lowerBounds[i] != array.GetLowerBound(i))
-                {
-                    if (throwError)
-                        Throw.ArgumentException(Res.XmlSerializationArrayLowerBoundMismatch(array.GetType(), i));
-                    return false;
-                }
-            }
-
-            return true;
-        }
 
         private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object?> members)
         {
@@ -276,6 +402,92 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
+        private static void ParseArrayDimensions(string? attrLength, string? attrDim, out int totalLength, out int[] lengths, out int[] lowerBounds)
+        {
+            if (attrLength == null && attrDim == null)
+                Throw.ArgumentException(Res.XmlSerializationArrayNoLength);
+
+            if (attrLength != null)
+            {
+                lengths = new int[1];
+                lowerBounds = new int[1];
+                if (!Int32.TryParse(attrLength, NumberStyles.Integer, CultureInfo.InvariantCulture, out totalLength) || totalLength < 0)
+                    Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(attrLength));
+                lengths[0] = totalLength;
+                return;
+            }
+
+            string[] dims = attrDim!.Split(',');
+            lengths = new int[dims.Length];
+            lowerBounds = new int[dims.Length];
+            for (int i = 0; i < dims.Length; i++)
+            {
+                int boundSep = dims[i].IndexOf("..", StringComparison.Ordinal);
+                if (boundSep == -1)
+                {
+                    lowerBounds[i] = 0;
+                    if (!Int32.TryParse(dims[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i]) || lengths[i] < 0)
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayLength(dims[i]));
+                }
+                else
+                {
+                    if (!Int32.TryParse(dims[i].Substring(0, boundSep), NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
+                    if (!Int32.TryParse(dims[i].Substring(boundSep + 2), NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i])
+                        || lengths[i] < lowerBounds[i]
+                        || (long)lengths[i] - lowerBounds[i] >= Int32.MaxValue)
+                    {
+                        Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
+                    }
+
+                    // turning upper bound to length
+                    lengths[i] -= lowerBounds[i] - 1;
+                }
+            }
+
+            totalLength = lengths[0];
+            try
+            {
+                for (int i = 1; i < lengths.Length; i++)
+                    totalLength = checked(totalLength * lengths[i]);
+            }
+            catch (OverflowException e)
+            {
+                Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(attrDim), e);
+            }
+        }
+
+        private static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
+        {
+            if (lengths.Length != array.Rank)
+            {
+                if (throwError)
+                    Throw.ArgumentException(Res.XmlSerializationArrayRankMismatch(array.GetType(), lengths.Length));
+                return false;
+            }
+
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                if (lengths[i] != array.GetLength(i))
+                {
+                    if (!throwError)
+                        return false;
+                    if (lengths.Length == 1)
+                        Throw.ArgumentException(Res.XmlSerializationArraySizeMismatch(array.GetType(), lengths[0]));
+                    Throw.ArgumentException(Res.XmlSerializationArrayDimensionSizeMismatch(array.GetType(), i));
+                }
+
+                if (lowerBounds[i] != array.GetLowerBound(i))
+                {
+                    if (throwError)
+                        Throw.ArgumentException(Res.XmlSerializationArrayLowerBoundMismatch(array.GetType(), i));
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
         /// </summary>
@@ -381,6 +593,18 @@ namespace KGySoft.Serialization.Xml
 
             result = converter.ConvertFromInvariantString(readStringValue.Invoke());
             return true;
+        }
+
+        private protected bool SkipMember(MemberInfo member)
+        {
+            if (!SafeMode || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out HashSet<Type>? types))
+                return false;
+
+            // Skipping known unsafe members in SafeMode, which do not make functional difference anyway
+            Type declaringType = member.DeclaringType!;
+            if (declaringType.IsGenericType)
+                declaringType = declaringType.GetGenericTypeDefinition();
+            return types.Contains(declaringType);
         }
 
         #endregion

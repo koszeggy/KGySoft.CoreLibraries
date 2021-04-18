@@ -49,7 +49,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>Apart from primitive types, strings and arrays forces to serialize every type recursively. If <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set,
         /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
-        /// <note>Even if this flag is enabled, non-serializable types will not serialized automatically. Use the <see cref="RecursiveSerializationAsFallback"/> to
+        /// <note>Even if this flag is enabled, non-serializable types will not be serialized automatically. Use the <see cref="RecursiveSerializationAsFallback"/> to
         /// enable serialization of such types.</note></para>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
@@ -168,6 +168,8 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
         /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
+        /// <para>Additionally, it ensures that during the deserialization collections are allocated with limited capacity to prevent
+        /// possible attacks that can cause <see cref="OutOfMemoryException"/>. Deserializing an invalid stream still may cause to throw a <see cref="SerializationException"/>.</para>
         /// <para>It also disallows deserializing non-serializable types, unless the <see cref="BinarySerializationFormatter.SurrogateSelector"/> property is set that allows
         /// deserializing a type explicitly. Please note that deserializing non-serializable types is allowed without this flag by default (see also the <see cref="RecursiveSerializationAsFallback"/> flag).</para>
         /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core legacy assemblies

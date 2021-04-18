@@ -109,6 +109,11 @@ namespace KGySoft.ComponentModel
         private static readonly IThreadSafeCacheAccessor<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache =
             ThreadSafeCacheFactory.Create<Type, StringKeyedDictionary<Type>>(GetReflectedProperties, LockFreeCacheOptions.Profile128);
 
+        private static Func<object, object?> customClone =
+            o => o is string || o is Delegate ? o
+                : o is ICloneable cloneable ? cloneable.Clone()
+                : null;
+
         #endregion
 
         #region Instance Fields
@@ -350,20 +355,7 @@ namespace KGySoft.ComponentModel
         {
             ThreadSafeDictionary<string, object?> result = new ThreadSafeDictionary<string, object?>(Properties.Count);
             foreach (KeyValuePair<string, object?> property in Properties)
-            {
-                // Deep cloning classes only. We could use type.IsUnmanaged extension but it does not use a cache now
-                object? clonedValue;
-                if (property.Value == null)
-                    clonedValue = null;
-                else if (property.Value is string || property.Value.GetType().IsValueType || property.Value is Delegate)
-                    clonedValue = property.Value;
-                else if (property.Value is ICloneable cloneable)
-                    clonedValue = cloneable.Clone();
-                else
-                    clonedValue = property.Value.DeepClone();
-
-                result[property.Key] = clonedValue;
-            }
+                result[property.Key] = property.Value.DeepClone(customClone);
 
             return result;
         }

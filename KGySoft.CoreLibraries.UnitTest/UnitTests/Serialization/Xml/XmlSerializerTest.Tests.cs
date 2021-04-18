@@ -23,11 +23,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 
 using KGySoft.Collections;
@@ -1244,6 +1245,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SafeModeTypeResolveTest()
         {
             var xml = @"<object type=""MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""></object>";
+            Console.WriteLine(xml);
             Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(new StringReader(xml)));
         }
 
@@ -1252,16 +1254,92 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             var obj = new CustomGenericCollection<int> { 1, 2, 3 };
 
-            XElement serialized = XmlSerializer.Serialize(obj, XmlSerializationOptions.BinarySerializationAsFallback);
-            Console.WriteLine(serialized);
+            XElement xml = XmlSerializer.Serialize(obj, XmlSerializationOptions.BinarySerializationAsFallback);
+            Console.WriteLine(xml);
 
             // in safe mode, binary content throws an exception
-            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(serialized), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
+            // 1.) by XElement
+            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(xml), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
 
-            // bit it works in non-sage mode
-            var deserialized = XmlSerializer.Deserialize(serialized);
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(reader), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
+
+            // but it works in non-safe mode
+            var deserialized = XmlSerializer.Deserialize(xml);
 
             AssertDeepEquals(obj, deserialized);
+        }
+
+        [TestCase(XmlSerializationOptions.None)]
+        [TestCase(XmlSerializationOptions.CompactSerializationOfPrimitiveArrays)]
+        public void SafeModeLargeArrayTest(XmlSerializationOptions options)
+        {
+            // Array size is above 8K so in SafeMode it is built rather than allocated at once
+            long[] obj = Enumerable.Range(0, 1025).Select(i => (long)i).ToArray();
+            XElement xml = XmlSerializer.Serialize(obj, options);
+            Console.WriteLine(xml);
+
+            // 1.) by XElement
+            var arr = (long[])XmlSerializer.DeserializeSafe(xml);
+            AssertItemsEqual(obj, arr);
+
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                arr = (long[])XmlSerializer.DeserializeSafe(reader);
+            AssertItemsEqual(obj, arr);
+        }
+
+        [TestCase(XmlSerializationOptions.None)]
+        [TestCase(XmlSerializationOptions.CompactSerializationOfPrimitiveArrays)]
+        public void SafeModeArrayOutOfMemoryAttackTest(XmlSerializationOptions options)
+        {
+            var obj = new[] { 1, 2, 3 };
+            XElement xml = XmlSerializer.Serialize(obj, options);
+
+            // Injecting invalid length: in SafeMode this is detected without attempting to allocate the array
+            // <object type="System.Int32[]" length="2147483647">...</object>
+            xml.Attribute("length").Value = Int32.MaxValue.ToString(CultureInfo.InvariantCulture);
+            Console.WriteLine(xml);
+
+            // 1.) by XElement
+            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+        }
+
+        [Test]
+        public void SafeModeCollectionOutOfMemoryAttackTest()
+        {
+            var obj = new List<int> { 1, 2, 3 };
+            XElement xml = XmlSerializer.Serialize(obj, XmlSerializationOptions.None);
+
+            // Injecting invalid capacity: In SafeMode this is simply ignored so the deserialization will succeed
+            // <object type="System.Collections.Generic.List`1[System.Int32]">
+            //   <Capacity>2147483647</Capacity>
+            //   <item>1</item>
+            //   <item>2</item>
+            //   <item>3</item>
+            // </object>
+            xml.Element("Capacity").Value = Int32.MaxValue.ToString(CultureInfo.InvariantCulture);
+            Console.WriteLine(xml);
+
+            // 1.) by XElement
+            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            var list = (List<int>)XmlSerializer.DeserializeSafe(xml);
+            AssertItemsEqual(obj, list);
+
+            // 2.) by reader
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+                list = (List<int>)XmlSerializer.DeserializeSafe(reader);
+            AssertItemsEqual(obj, list);
         }
 
         #endregion
