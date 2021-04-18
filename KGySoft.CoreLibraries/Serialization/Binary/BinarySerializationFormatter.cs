@@ -288,6 +288,7 @@ namespace KGySoft.Serialization.Binary
     /// using System.Reflection;
     /// using System.Runtime.Serialization;
     /// using System.Runtime.Serialization.Formatters.Binary;
+    /// 
     /// using KGySoft.CoreLibraries;
     /// using KGySoft.Serialization.Binary;
     ///
@@ -333,17 +334,17 @@ namespace KGySoft.Serialization.Binary
     ///             return convertible.ToString(CultureInfo.InvariantCulture);
     ///
     ///         if (o is IEnumerable enumerable)
-    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(Dump))}]";
+    ///             return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
     ///
-    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}"))}}}";
+    ///         return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
     ///     }
     /// }
     ///
     /// // This code example produces a similar output to this one:
-    /// // Generated object:   [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
-    /// // Deserialized object [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
-    /// // Length by BinarySerializationFormatter: 43
-    /// // Length by BinaryFormatter: 2171]]></code>
+    /// // Generated object:   [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Deserialized object [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Length by BinarySerializationFormatter: 50
+    /// // Length by BinaryFormatter: 2217]]></code>
     /// </example>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]

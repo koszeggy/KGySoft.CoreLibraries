@@ -366,10 +366,10 @@ namespace KGySoft.CoreLibraries
         ///         if (obj is DictionaryEntry de)
         ///             return $"[{de.Key}, {de.Value}]";
         /// 
-        ///         if (!(obj is IEnumerable) || obj is string)
+        ///         if (obj is not IEnumerable || obj is string)
         ///             return obj.ToString();
         /// 
-        ///         return String.Join(", ", ((IEnumerable)obj).Cast<object>().Select(AsString));
+        ///         return ((IEnumerable)obj).Cast<object>().Select(AsString).Join(", ");
         ///     }
         /// }
         /// 

@@ -232,7 +232,7 @@ A `Dictionary`-like type with a specified capacity. If the cache is full and new
 
 If an item loader is passed to the constructor, then it is enough only to read the cache via the indexer and the corresponding item will be transparently loaded when necessary.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/wTqCoa).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/YGDY9c).
 
 ```cs
 // instantiating the cache by a loader method and a capacity of 1000 possible items
@@ -804,7 +804,7 @@ KGy SOFT CoreLibraries offers two ways for performance measurement, which can be
 
 You can use the `Profiler` class to inject measurement sections as `using` blocks into your code base:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/4nTM98).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/BuuisW).
 ```cs
 const string category = "Example";
 
@@ -878,7 +878,7 @@ Cases are sorted by time (quickest first)
 
 If you need to use parameterized tests you can simply derive the `PerformanceTestBase<TDelegate, TResult>` class. Override the `OnBeforeCase` method to reset the parameter for each test cases. For example, this is how you can use a prepared `Random` instance in a performance test:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/GSeBq6).
+> _Tip:_ Try also [online](https://dotnetfiddle.net/KNiZa7).
 
 ```cs
 public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>

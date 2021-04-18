@@ -93,7 +93,7 @@ namespace KGySoft.Collections
     /// </threadsafety>
     /// <example>
     /// The following example shows the suggested usage of <see cref="Cache{TKey,TValue}"/>.
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/wTqCoa" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/YGDY9c" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections.Generic;

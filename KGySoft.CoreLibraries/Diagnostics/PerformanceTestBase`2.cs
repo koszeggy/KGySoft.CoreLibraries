@@ -43,7 +43,7 @@ namespace KGySoft.Diagnostics
     /// <typeparam name="TDelegate">The delegate type of the test cases.</typeparam>
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/GSeBq6" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/KNiZa7" target="_blank">online</a>.</note>
     /// The following example demonstrates how to derive this class to create parameterized performance tests.
     /// <code lang="C#"><![CDATA[
     /// public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>
