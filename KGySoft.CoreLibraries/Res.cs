@@ -756,7 +756,7 @@ namespace KGySoft
         internal static string PerformanceTestCallingGcCollect(bool value) => Get("PerformanceTest_CallingGcCollectFormat", FormatBool(value));
 
         /// <summary>Forced CPU Affinity: {0}</summary>
-        internal static string PerformanceTestCpuAffinity(int? affinity) => Get("PerformanceTest_CpuAffinityFormat", affinity == null ? No : (object)affinity);
+        internal static string PerformanceTestCpuAffinity(int? affinity) => Get("PerformanceTest_CpuAffinityFormat", affinity == null ? No : affinity.ToString());
 
         /// <summary>Cases are sorted by {0}</summary>
         internal static string PerformanceTestSortOfCases(string sort) => Get("PerformanceTest_SortOfCasesFormat", sort);
@@ -858,18 +858,6 @@ namespace KGySoft
 
         /// <summary>Static field "{0}" not found on type "{1}".</summary>
         internal static string ReflectionStaticFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_StaticFieldDoesNotExistFormat", fieldName, type);
-
-        /// <summary>"{0}" is not a generic type, however, it is used so in the definition "{1}".</summary>
-        internal static string ReflectionResolveNotAGenericType(string elementTypeName, string typeName) => Get("Reflection_ResolveNotAGenericTypeFormat", elementTypeName, typeName);
-
-        /// <summary>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {1}.</summary>
-        internal static string ReflectionResolveTypeArgsLengthMismatch(string typeName, int length) => Get("Reflection_ResolveTypeArgsLengthMismatchFormat", typeName, length);
-
-        /// <summary>Cannot resolve type parameter "{0}" in generic type "{1}".</summary>
-        internal static string ReflectionCannotResolveTypeArg(string elementTypeName, string typeName) => Get("Reflection_CannotResolveTypeArgFormat", elementTypeName, typeName);
-
-        /// <summary>Syntax error in generic/array type: "{0}".</summary>
-        internal static string ReflectionTypeSyntaxError(string typeName) => Get("Reflection_TypeSyntaxErrorFormat", typeName);
 
         /// <summary>No MemberInfo can be returned from expression type "{0}".</summary>
         internal static string ReflectionNotAMember(Type type) => Get("Reflection_NotAMemberFormat", type);

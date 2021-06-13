@@ -544,18 +544,6 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_NotAMethod" xml:space="preserve">
     <value>Expression is not a method call.</value>
   </data>
-  <data name="Reflection_CannotResolveTypeArgFormat" xml:space="preserve">
-    <value>Cannot resolve type parameter "{0}" in generic type "{1}".</value>
-  </data>
-  <data name="Reflection_ResolveNotAGenericTypeFormat" xml:space="preserve">
-    <value>"{0}" is not a generic type, however, it is used so in the definition "{1}".</value>
-  </data>
-  <data name="Reflection_ResolveTypeArgsLengthMismatchFormat" xml:space="preserve">
-    <value>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {1}.</value>
-  </data>
-  <data name="Reflection_TypeSyntaxErrorFormat" xml:space="preserve">
-    <value>Syntax error in generic/array type: "{0}".</value>
-  </data>
   <data name="BinarySerialization_CannotDeserializeObjectFormat" xml:space="preserve">
     <value>Cannot deserialize as a standalone object: {0}</value>
   </data>
