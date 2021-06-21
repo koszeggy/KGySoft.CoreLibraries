@@ -423,7 +423,7 @@ namespace KGySoft
         /// <summary>Separator is null or empty.</summary>
         internal static string StringExtensionsSeparatorNullOrEmpty => Get("StringExtensions_SeparatorNullOrEmpty");
 
-        /// <summary>Source length must consist of even amount of hex digits.</summary>
+        /// <summary>Source must consist of even amount of hex digits.</summary>
         internal static string StringExtensionsSourceLengthNotEven => Get("StringExtensions_SourceLengthNotEven");
 
         #endregion

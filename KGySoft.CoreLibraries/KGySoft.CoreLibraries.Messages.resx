@@ -911,7 +911,7 @@ You may try to preload its assembly before deserialization or use the unsafe Get
     <value>The specified string '{0}' cannot be parsed as type {1}.</value>
   </data>
   <data name="StringExtensions_SourceLengthNotEven" xml:space="preserve">
-    <value>Source length must consist of even amount of hex digits.</value>
+    <value>Source must consist of even amount of hex digits.</value>
   </data>
   <data name="StringSegment_Null" xml:space="preserve">
     <value>The string segment represents a null string.</value>
