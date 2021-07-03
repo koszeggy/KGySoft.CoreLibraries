@@ -1,4 +1,4 @@
-[![KGy SOFT .net](https://docs.kgysoft.net/corelibraries/icons/logo.png)](https://kgysoft.net)
+[![KGy SOFT .net](https://user-images.githubusercontent.com/27336165/124292367-c93f3d00-db55-11eb-8003-6d943ee7d7fa.png)](https://kgysoft.net)
 
 # KGy SOFT Core Libraries
 
@@ -15,7 +15,7 @@ Multiple versions of .NET Framework, .NET Core and .NET Standard are supported.
 ## Table of Contents:
 1. [Download](#download)
    - [Download Binaries](#download-binaries)
-   - [Download Demo App](#download-demo-app)
+   - [Demo Applications](#demo-applications)
 2. [Project Site](#project-site)
 3. [Documentation](#documentation)
 4. [Release Notes](#release-notes)
@@ -44,13 +44,29 @@ However, the preferred way is to install the package in VisualStudio either by l
 
 Alternatively, you can download the binaries as a .zip file attached to the [releases](https://github.com/koszeggy/KGySoft.CoreLibraries/releases).
 
-### Download Demo App:
+### Demo Applications:
+
+#### KGySoft.ComponentModel Features Demo
 
 [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) is a desktop application, which focuses mainly on the features of the [KGySoft.ComponentModel](http://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespace of KGy SOFT Core Libraries (see also the [business objects](#business-objects) and [command binding](#command-binding) examples below). Furthermore, it also provides some useful code samples for using the KGy SOFT Core Libraries in WPF and Windows Forms applications.
 
-[![KGySoft.ComponentModelDemo](https://kgysoft.net/images/KGySoft.ComponentModelDemo.jpg)](https://github.com/koszeggy/KGySoft.ComponentModelDemo/releases)
+<p align="center">
+  <a href="https://github.com/koszeggy/KGySoft.ComponentModelDemo"><img alt="Demo application for KGySoft.ComponentModel features" src="https://user-images.githubusercontent.com/27336165/124353286-f0554780-dc05-11eb-8919-6e96ea53e910.png"/></a>
+  <br/><em>Demo application for KGySoft.ComponentModel features</em>
+</p>
 
-> _Tip:_ Some simple console application live examples are also available at [.NET Fiddle](https://dotnetfiddle.net/Authors/84474/koszeggy).
+#### Demonstration of KGySoft.Resources Features
+
+Though [KGy SOFT Imaging Tools](https://github.com/koszeggy/KGySoft.Drawing.Tools#kgy-soft-imaging-tools) is not quite a demo, it perfectly demonstrates how to use [dynamic resource management](#dynamic-resource-management) in a real application that can generate language resources for non-existing localizations, edit and save the changes in .resx files, and apply them on-the-fly without exiting the application.
+
+<p align="center">
+  <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools"><img alt="Editing resources in KGy SOFT Imaging Tools" src="https://user-images.githubusercontent.com/27336165/124143008-0a1e4f80-da8b-11eb-8f85-572507b66154.png"/></a>
+  <br/><em>Editing resources in KGy SOFT Imaging Tools</em>
+</p>
+
+#### Demo Console Applications
+
+Some simple console application live examples are also available at [.NET Fiddle](https://dotnetfiddle.net/Authors/84474/koszeggy).
 
 ## Project Site
 
@@ -479,6 +495,8 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
+> _Tip:_ For a real-life example see also the [KGy SOFT Imaging Tools](https://github.com/koszeggy/KGySoft.Drawing.Tools#localization) application that supports creating and applying new localizations on-the-fly, from within the application.
+
 The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used on all platforms) and they got a bunch of improvements at the same time. Most importantly, they all have a `SafeMode` property, which guarantees that no assembly loading and deserialization occurs unless it is explicitly requested. But even if `SafeMode` is false, an item is not deserialized until it is explicitly obtained. Or, the [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) class is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
 On top of those, KGy SOFT Core Libraries introduce a sort of new types that can be used the same way as a standard `ResourceManager` class:
@@ -515,7 +533,10 @@ See the [step-by step description](https://docs.kgysoft.net/corelibraries/html/T
 
 The [`KGySoft.ComponentModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespace contains several types that can be used as base type for model classes, view-model objects or other kind of business objects:
 
-![Base classes for business objects](https://docs.kgysoft.net/corelibraries/Help/Images/ComponentModel_BusinessObjects.png)
+<p align="center">
+  <img alt="Base classes for business objects" src="https://user-images.githubusercontent.com/27336165/124354011-23013f00-dc0a-11eb-9f53-d7aec8e6f15b.png"/>
+  <br/><em>Base classes for business objects</em>
+</p>
 
 - [`ObservableObjectBase`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ObservableObjectBase.htm): The simplest class, supports change notification via the `INotifyPropertyChanged` interface and can tell whether any of the properties have been modified. Provides protected members for maintaining properties.
 - [`PersistableObjectBase`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_PersistableObjectBase.htm): Extends the `ObservableObjectBase` class by implementing the [`IPersistableObject`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_IPersistableObject.htm) interface, which makes possible to access and manipulate the internal property storage.
@@ -834,7 +855,10 @@ The number of hits, execution times (first, total, average) are tracked and can 
 
 The result .xml can be imported easily into Microsoft Excel:
 
-![Profiler result](https://docs.kgysoft.net/corelibraries/Help/Images/ProfilerResults.png)
+<p align="center">
+  <img alt="Profiler results imported in Microsoft Excel" src="https://user-images.githubusercontent.com/27336165/124354307-af603180-dc0b-11eb-83a6-edd474eb4919.png"/>
+  <br/><em>Profiler results imported in Microsoft Excel</em>
+</p>
 
 - #### `PerformanceTest` classes:
 
@@ -908,4 +932,4 @@ KGy SOFT Core Libraries are under the [KGy SOFT License 1.0](https://github.com/
 
 See the complete KGy SOFT Core Libraries documentation with even more examples at [docs.kgysoft.net](https://docs.kgysoft.net/corelibraries).
 
-[![KGy SOFT .net](https://docs.kgysoft.net/corelibraries/icons/logo.png)](https://kgysoft.net)
+[![KGy SOFT .net](https://user-images.githubusercontent.com/27336165/124292367-c93f3d00-db55-11eb-8003-6d943ee7d7fa.png)](https://kgysoft.net)
