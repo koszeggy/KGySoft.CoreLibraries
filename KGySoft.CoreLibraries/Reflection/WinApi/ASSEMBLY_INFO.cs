@@ -4,13 +4,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ASSEMBLY_INFO.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
-//  directory of this distribution. If not, then this file is considered as
-//  an illegal copy.
+//  directory of this distribution.
 //
-//  Unauthorized copying of this file, via any medium is strictly prohibited.
+//  Please refer to the LICENSE file if you want to use this source code.
 ///////////////////////////////////////////////////////////////////////////////
 
 #endregion
@@ -36,7 +35,7 @@ namespace KGySoft.Reflection.WinApi
     /// </summary>
     internal struct ASSEMBLY_INFO
     {
-        #region Fields
+#region Fields
 
         /// <summary>
         /// The size, in bytes, of the structure. This field is reserved for future extensibility.
@@ -66,7 +65,7 @@ namespace KGySoft.Reflection.WinApi
         /// </summary>
         public int cchBuf;
 
-        #endregion
+#endregion
     }
 }
 #endif

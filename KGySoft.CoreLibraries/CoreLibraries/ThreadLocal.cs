@@ -4,13 +4,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ThreadLocal.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2020 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
-//  directory of this distribution. If not, then this file is considered as
-//  an illegal copy.
+//  directory of this distribution.
 //
-//  Unauthorized copying of this file, via any medium is strictly prohibited.
+//  Please refer to the LICENSE file if you want to use this source code.
 ///////////////////////////////////////////////////////////////////////////////
 
 #endregion
@@ -34,16 +33,16 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     internal class ThreadLocal<T> : IDisposable
     {
-        #region Nested types
+#region Nested types
 
-        #region LinkedSlot class
+#region LinkedSlot class
 
         /// <summary>
         /// A node in the doubly-linked list stored in the ThreadLocal instance.
         /// </summary>
         private sealed class LinkedSlot
         {
-            #region Fields
+#region Fields
 
             /// <summary>
             /// The next LinkedSlot for this ThreadLocal instance
@@ -65,36 +64,36 @@ namespace KGySoft.CoreLibraries
             /// </summary>
             [AllowNull]internal T Value = default!;
 
-            #endregion
+#endregion
 
-            #region Constructors
+#region Constructors
 
             internal LinkedSlot(LinkedSlotVolatile[]? slotArray)
             {
                 SlotArray = slotArray;
             }
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #region IdManager class
+#region IdManager class
 
         /// <summary>
         /// A manager class that assigns IDs to ThreadLocal instances
         /// </summary>
         private class IdManager
         {
-            #region Fields
+#region Fields
 
             private readonly List<bool> freeIds = new List<bool>();
 
             private int nextIdToTry;
 
-            #endregion
+#endregion
 
-            #region Methods
+#region Methods
 
             internal int GetId()
             {
@@ -130,12 +129,12 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #region FinalizationHelper class
+#region FinalizationHelper class
 
         /// <summary>
         /// A class that facilitates ThreadLocal cleanup after a thread exits.
@@ -151,16 +150,16 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private class FinalizationHelper
         {
-            #region Fields
+#region Fields
 
             internal LinkedSlotVolatile[] SlotArray;
             private readonly bool trackAllValues;
 
-            #endregion
+#endregion
 
-            #region Construction and Destruction
+#region Construction and Destruction
 
-            #region Constructors
+#region Constructors
 
             internal FinalizationHelper(LinkedSlotVolatile[] slotArray, bool trackAllValues)
             {
@@ -168,9 +167,9 @@ namespace KGySoft.CoreLibraries
                 this.trackAllValues = trackAllValues;
             }
 
-            #endregion
+#endregion
 
-            #region Destructor
+#region Destructor
 
             ~FinalizationHelper()
             {
@@ -203,14 +202,14 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            #endregion
+#endregion
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #region LinkedSlotVolatile struct
+#region LinkedSlotVolatile struct
 
         /// <summary>
         /// A wrapper struct used as LinkedSlotVolatile[] - an array of LinkedSlot instances, but with volatile semantics
@@ -218,20 +217,20 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private struct LinkedSlotVolatile
         {
-            #region Fields
+#region Fields
 
             internal volatile LinkedSlot? Value;
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Fields
+#region Fields
 
-        #region Static Fields
+#region Static Fields
 
         /// <summary>
         /// IdManager assigns and reuses slot IDs. Additionally, the object is also used as a global lock.
@@ -249,9 +248,9 @@ namespace KGySoft.CoreLibraries
 
         [ThreadStatic]private static FinalizationHelper? finalizationHelper;
 
-        #endregion
+#endregion
 
-        #region Instance Fields
+#region Instance Fields
 
         /// <summary>
         /// Specifies whether <see cref="Values"/> property is supported.
@@ -283,11 +282,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private LinkedSlot? linkedSlot = new LinkedSlot(null);
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         internal T? Value
         {
@@ -370,9 +369,9 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         internal ThreadLocal(Func<T> valueFactory, bool trackAllValues = false)
         {
@@ -392,11 +391,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
-        #region Static Methods
+#region Static Methods
 
         /// <summary>
         /// Resizes a table to a certain length (or larger).
@@ -429,11 +428,11 @@ namespace KGySoft.CoreLibraries
             table = newTable;
         }
 
-        #endregion
+#endregion
 
-        #region Instance Methods
+#region Instance Methods
 
-        #region Public Methods
+#region Public Methods
 
         public void Dispose()
         {
@@ -475,9 +474,9 @@ namespace KGySoft.CoreLibraries
 
         public override string? ToString() => Value?.ToString();
 
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
 
         private T? GetValueSlow()
         {
@@ -577,11 +576,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }
 #endif
