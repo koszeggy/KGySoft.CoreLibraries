@@ -39,8 +39,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Determines whether two specified <see cref="StringSegment"/> instances have different values.
         /// </summary>
-        /// <param name="a">The left argument of the equality check.</param>
-        /// <param name="b">The right argument of the equality check.</param>
+        /// <param name="a">The left argument of the inequality check.</param>
+        /// <param name="b">The right argument of the inequality check.</param>
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(StringSegment a, StringSegment b) => !a.Equals(b);
 

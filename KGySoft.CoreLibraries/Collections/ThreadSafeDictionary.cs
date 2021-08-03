@@ -553,7 +553,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Tries to gets the value associated with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// Tries to get the value associated with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
         /// <returns><see langword="true"/>&#160;if the key was found in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>; otherwise, <see langword="false"/>.</returns>
         /// <param name="key">The key of the value to get.</param>

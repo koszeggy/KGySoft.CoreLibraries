@@ -945,7 +945,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Removes the item from the see <see cref="CircularList{T}"/> at the specified <paramref name="index"/>.
+        /// Removes the item from the <see cref="CircularList{T}"/> at the specified <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.</exception>
