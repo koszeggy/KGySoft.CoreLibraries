@@ -278,7 +278,7 @@ namespace KGySoft
         /// <summary>time (quickest first)</summary>
         internal static string PerformanceTestSortByTime => Get("PerformanceTest_SortByTime");
 
-        /// <summary>fulfilled iterations (most first)</summary>
+        /// <summary>fulfilled iterations (the most first)</summary>
         internal static string PerformanceTestSortByIterations => Get("PerformanceTest_SortByIterations");
 
         /// <summary>--------------------------------------------------</summary>

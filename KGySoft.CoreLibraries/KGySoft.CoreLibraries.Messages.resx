@@ -208,7 +208,7 @@
     <value>time (quickest first)</value>
   </data>
   <data name="PerformanceTest_SortByIterations" xml:space="preserve">
-    <value>fulfilled iterations (most first)</value>
+    <value>fulfilled iterations (the most first)</value>
   </data>
   <data name="PerformanceTest_Separator" xml:space="preserve">
     <value>--------------------------------------------------</value>

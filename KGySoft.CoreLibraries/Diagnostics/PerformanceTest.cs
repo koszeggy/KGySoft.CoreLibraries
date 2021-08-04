@@ -51,7 +51,7 @@ namespace KGySoft.Diagnostics
     /// // Test cases: 2
     /// // Calling GC.Collect: Yes
     /// // Forced CPU Affinity: No
-    /// // Cases are sorted by fulfilled iterations (most first)
+    /// // Cases are sorted by fulfilled iterations (the most first)
     /// // --------------------------------------------------
     /// // 1. Enum<TEnum>.ToString: 26,104,501 iterations in 2,000.00 ms. Adjusted for 2,000 ms: 26,104,498.39
     /// // 2. Enum.ToString: 3,956,036 iterations in 2,000.01 ms. Adjusted for 2,000 ms: 3,956,026.31 (-22,148,472.08 / 15.15 %)]]></code>
@@ -88,7 +88,7 @@ namespace KGySoft.Diagnostics
     /// // Repeats: 2
     /// // Calling GC.Collect: Yes
     /// // Forced CPU Affinity: No
-    /// // Cases are sorted by fulfilled iterations (most first)
+    /// // Cases are sorted by fulfilled iterations (the most first)
     /// // --------------------------------------------------
     /// // 1. Enum<TEnum>.ToString: 57,500,126 iterations in 4,000.00 ms. Adjusted for 2,000 ms: 28,750,060.12
     /// //   #1  28,730,396 iterations in 2,000.00 ms. Adjusted: 28,730,393.13      <---- Worst
