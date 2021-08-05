@@ -471,13 +471,14 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="flags">A flags <see langword="enum"/>&#160;value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.
-        /// When <see langword="false"/>, returns also undefined flags in <paramref name="flags"/>.</param>
+        /// <param name="onlyDefinedValues"><see langword="true"/>&#160;to return only flags that are defined in <typeparamref name="TEnum"/>;
+        /// <see langword="false"/>&#160;to return also undefined flags. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
         /// <remarks>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public static IEnumerable<TEnum> GetFlags(TEnum flags, bool onlyDefinedValues)
+        public static IEnumerable<TEnum> GetFlags(TEnum flags, bool onlyDefinedValues = false)
         {
             ulong value = converter.ToUInt64(flags);
             if (value == 0UL)

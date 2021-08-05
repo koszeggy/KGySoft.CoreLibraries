@@ -6,6 +6,18 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v5.7.0:
+~~~~~~~~~
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* Enum<TEnum> class:
+  * GetFlags(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
+* EnumExtensions class:
+  * GetFlags<TEnum>(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
+
+
+~~~~~~~~~
 * v5.6.1:
 ~~~~~~~~~
 
