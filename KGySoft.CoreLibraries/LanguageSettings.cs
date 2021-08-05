@@ -102,8 +102,12 @@ namespace KGySoft
     ///   </data>
     /// </root>]]></code>
     /// <para>Search for the <c>[T]</c> values in the generated file to find the untranslated resources and feel free to change them. If you change the resource and execute the example again it will now show the translation you provided.</para>
-    /// <note type="tip">To see how to add a dynamic resource manager to your own class library
-    /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</note>
+    /// <note type="tip"><list type="bullet">
+    /// <item>To see how to add a dynamic resource manager to your own class library
+    /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</item>
+    /// <item>To see how to use dynamically created resources for any language in a live application with editing support see
+    /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</item>
+    /// </list></note>
     /// </example>
     public static class LanguageSettings
     {

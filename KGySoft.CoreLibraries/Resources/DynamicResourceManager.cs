@@ -504,6 +504,8 @@ namespace KGySoft.Resources
     ///   </data>
     /// </root>]]></code>
     /// By looking for the '<c>[T]</c>' prefixes you can easily find the untranslated elements.</item></list></para>
+    /// <note type="tip">To see how to use dynamically created resources for any language in a live application with editing support see
+    /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</note>
     /// </remarks>
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
