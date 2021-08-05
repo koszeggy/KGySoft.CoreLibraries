@@ -121,6 +121,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual("0", Enum<EmptyEnum>.ToString(default(EmptyEnum)));
             Assert.AreEqual("None", Enum<TestLongEnum>.ToString(default(TestLongEnum)));
             Assert.AreEqual("Alpha", Enum<TestLongEnum>.ToString(TestLongEnum.Alpha));
+            Assert.AreEqual("1", Enum<TestLongEnum>.ToString(TestLongEnum.Alpha, EnumFormattingOptions.Number));
             Assert.AreEqual("-2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)(1 << 31)));
             Assert.AreEqual("-2147483647", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1)));
             Assert.AreEqual("1, -2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1), EnumFormattingOptions.DistinctFlags));

@@ -16,7 +16,6 @@
 #region Usings
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -25,7 +24,6 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Formatting options for the <see cref="Enum{TEnum}.ToString(TEnum,EnumFormattingOptions,string)"><![CDATA[Enum<TEnum>.ToString(TEnum, EnumFormattingOptions, string)]]></see> method.
     /// </summary>
-    [SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames", Justification = "Would be a breaking change")]
     public enum EnumFormattingOptions
     {
         /// <summary>
@@ -59,5 +57,10 @@ namespace KGySoft.CoreLibraries
         /// result the <see cref="O:KGySoft.CoreLibraries.Enum`1.Parse"><![CDATA[Enum<TEnum>.Parse]]></see> and <see cref="O:KGySoft.CoreLibraries.Enum`1.TryParse"><![CDATA[Enum<TEnum>.TryParse]]></see> overloads can be used.
         /// </summary>
         CompoundFlagsAndNumber,
+
+        /// <summary>
+        /// The result is always a number, even if the value or flags has a named alternative.
+        /// </summary>
+        Number,
     }
 }

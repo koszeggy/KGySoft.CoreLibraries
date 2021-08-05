@@ -13,9 +13,10 @@
 ==================================
 * Enum<TEnum> class:
   * GetFlags(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
+  + ToString(TEnum,EnumFormattingOptions,string): Supporting EnumFormattingOptions.Number option
 * EnumExtensions class:
   * GetFlags<TEnum>(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
-
++ EnumFormattingOptions enum: New Number option.
 
 ~~~~~~~~~
 * v5.6.1:

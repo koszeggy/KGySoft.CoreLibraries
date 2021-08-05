@@ -404,11 +404,14 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
         public static string ToString(TEnum value, EnumFormattingOptions format, string? separator = EnumExtensions.DefaultFormatSeparator)
         {
-            if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
+            if ((uint)format > (uint)EnumFormattingOptions.Number)
                 Throw.EnumArgumentOutOfRange(Argument.format, value);
 
             if (format == EnumFormattingOptions.DistinctFlags)
                 return FormatDistinctFlags(value, separator);
+
+            if (format == EnumFormattingOptions.Number)
+                return ToNumericString(converter.ToUInt64(value));
 
             // returning as flags
             if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
