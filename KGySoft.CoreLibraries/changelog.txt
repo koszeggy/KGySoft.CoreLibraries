@@ -17,6 +17,8 @@
 * EnumExtensions class:
   * GetFlags<TEnum>(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
 + EnumFormattingOptions enum: New Number option.
+- Files class:
+  - GetExecutingPath method: in .NET Framework it could throw an exception from a partially trusted domain.
 
 ~~~~~~~~~
 * v5.6.1:

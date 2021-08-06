@@ -268,14 +268,29 @@ namespace KGySoft.CoreLibraries
         /// Gets the real full path of the directory, where the executing application resides.
         /// </summary>
         /// <returns>The full path of the directory where the executing application resides.</returns>
-        public static string GetExecutingPath() =>
+        public static string GetExecutingPath()
+        {
 #if NETFRAMEWORK
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            try
+            {
+                // We keep this code for compatibility reason. It may differ from AppDomain.BaseDirectory in special cases
+                // (eg. when an the code is executed from a sandbox domain using a subdirectory).
+                // Example: for debugger visualizers GetExecutingPath returns the location of the deployed visualizer (eg. Documents/VS version/Visualizers
+                // instead of the path of the Visual Studio installation).
+                return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            }
+            catch (Exception e) when (e is SecurityException or UnauthorizedAccessException)
+            {
+                // Using GetDirectoryName because BaseDirectory is always postfixed by directory separator.
+                // If base directory is a root path, then GetDirectoryName returns null
+                return Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? AppDomain.CurrentDomain.BaseDirectory;
+            }
 #else
-            // Using always GetDirectoryName because BaseDirectory is always postfixed by directory separator.
+            // Using GetDirectoryName because BaseDirectory is always postfixed by directory separator.
             // If base directory is a root path, then GetDirectoryName returns null
-            Path.GetDirectoryName(AppContext.BaseDirectory) ?? AppContext.BaseDirectory;
+            return Path.GetDirectoryName(AppContext.BaseDirectory) ?? AppContext.BaseDirectory;
 #endif
+        }
 
         #endregion
     }

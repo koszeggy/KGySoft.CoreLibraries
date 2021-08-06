@@ -30,7 +30,6 @@ using System.Runtime.CompilerServices;
 using KGySoft.Collections;
 #endif
 using System.Runtime.Serialization;
-using System.Security;
 using System.Text;
 using System.Threading;
 
@@ -462,7 +461,7 @@ namespace KGySoft.Resources
 
                 if (Path.IsPathRooted(value))
                 {
-                    string baseDir = GetExecutingPath();
+                    string baseDir = Files.GetExecutingPath();
                     string relPath = Files.GetRelativePath(value, baseDir);
                     if (!Path.IsPathRooted(relPath))
                     {
@@ -772,26 +771,6 @@ namespace KGySoft.Resources
             => rs == null ? null
                 : rs is ResXResourceSet resx ? resx
                 : ((ProxyResourceSet)rs).ResXResourceSet;
-
-        private static string GetExecutingPath()
-        {
-#if NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            return Files.GetExecutingPath();
-#else
-            try
-            {
-                return Files.GetExecutingPath();
-            }
-            catch (SecurityException)
-            {
-                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory!;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory!;
-            }
-#endif
-        }
 
         private static void ReleaseResourceSets(IDictionary resourceSets)
         {
@@ -1641,11 +1620,11 @@ namespace KGySoft.Resources
                 return resxDirFullPath;
 
             if (String.IsNullOrEmpty(resxResourcesDir))
-                resxDirFullPath = GetExecutingPath();
+                resxDirFullPath = Files.GetExecutingPath();
             else if (Path.IsPathRooted(resxResourcesDir))
                 resxDirFullPath = resxResourcesDir;
             else
-                resxDirFullPath = Path.Combine(GetExecutingPath(), resxResourcesDir);
+                resxDirFullPath = Path.Combine(Files.GetExecutingPath(), resxResourcesDir);
 
             return resxDirFullPath;
         }
