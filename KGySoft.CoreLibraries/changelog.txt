@@ -19,6 +19,7 @@
 + EnumFormattingOptions enum: New Number option.
 + DateTimeExtensions class:
   + New AsLocal method
+  + New ToUnixMilliseconds/ToUnixSeconds and FromUnixMilliseconds/FromUnixSeconds methods
 - Files class:
   - GetExecutingPath method: in .NET Framework it could throw an exception from a partially trusted domain.
 

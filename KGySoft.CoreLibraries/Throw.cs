@@ -59,6 +59,7 @@ namespace KGySoft
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(string paramName, string message) => throw CreateArgumentOutOfRangeException(paramName, message);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
 
@@ -120,10 +121,11 @@ namespace KGySoft
 
         #region Private Methods
 
-        private static Exception CreateArgumentNullException(Argument arg, string message) => new ArgumentNullException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateArgumentNullException(string arg, string message) => new ArgumentNullException(arg, message);
+        private static Exception CreateArgumentNullException(Argument arg, string message) => CreateArgumentNullException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateArgumentException(Argument? arg, string message, Exception? inner = null) => arg.HasValue ? new ArgumentException(message, Enum<Argument>.ToString(arg.Value), inner) : new ArgumentException(message, inner);
-        private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => new ArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
+        private static Exception CreateArgumentOutOfRangeException(string paramName, string message) => new ArgumentOutOfRangeException(paramName, message);
+        private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => CreateArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);
         private static Exception CreateKeyNotFoundException(string message) => new KeyNotFoundException(message);
         private static Exception CreateInvalidOperationException(string message, Exception? inner = null) => new InvalidOperationException(message, inner);
