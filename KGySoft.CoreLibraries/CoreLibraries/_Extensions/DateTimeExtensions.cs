@@ -29,24 +29,30 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         /// <summary>
-        /// Converts the specified <paramref name="dateTime"/> correctly to UTC time.
+        /// Converts the specified <paramref name="dateTime"/> to UTC time. Unlike <see cref="DateTime.ToUniversalTime">DateTime.ToUniversalTime</see>, this
+        /// method does not treat <see cref="DateTime"/> instances with <see cref="DateTimeKind.Unspecified"/>&#160;<see cref="DateTime.Kind"/> as local times.
         /// </summary>
         /// <param name="dateTime">The <see cref="DateTime"/> to convert.</param>
         /// <returns>A <see cref="DateTime"/> instance with <see cref="DateTimeKind.Utc"/>&#160;<see cref="DateTime.Kind"/>.</returns>
-        /// <remarks>Use this method instead of <see cref="DateTime.ToUniversalTime">DateTime.ToUniversalTime</see> to make sure <see cref="DateTime"/>
-        /// instances with <see cref="DateTimeKind.Unspecified"/>&#160;<see cref="DateTime.Kind"/> are not considered as local times before conversion.</remarks>
-        public static DateTime AsUtc(this DateTime dateTime)
+        public static DateTime AsUtc(this DateTime dateTime) => dateTime.Kind switch
         {
-            switch (dateTime.Kind)
-            {
-                case DateTimeKind.Local:
-                    return dateTime.ToUniversalTime();
-                case DateTimeKind.Unspecified:
-                    return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-                default:
-                    return dateTime;
-            }
-        }
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc),
+        };
+
+        /// <summary>
+        /// Converts the specified <paramref name="dateTime"/> to a local time. Unlike <see cref="DateTime.ToLocalTime">DateTime.ToLocalTime</see>, this
+        /// method does not treat <see cref="DateTime"/> instances with <see cref="DateTimeKind.Unspecified"/>&#160;<see cref="DateTime.Kind"/> as UTC times.
+        /// </summary>
+        /// <param name="dateTime">The <see cref="DateTime"/> to convert.</param>
+        /// <returns>A <see cref="DateTime"/> instance with <see cref="DateTimeKind.Local"/>&#160;<see cref="DateTime.Kind"/>.</returns>
+        public static DateTime AsLocal(this DateTime dateTime) => dateTime.Kind switch
+        {
+            DateTimeKind.Local => dateTime,
+            DateTimeKind.Utc => dateTime.ToLocalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Local),
+        };
 
         #endregion
     }
