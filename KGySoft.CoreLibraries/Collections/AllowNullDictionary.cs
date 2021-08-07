@@ -28,10 +28,10 @@ using KGySoft.Diagnostics;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
-#else
+#if NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint. - TKey CAN be null here
+#else
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #endif
 
 #endregion
@@ -60,6 +60,8 @@ namespace KGySoft.Collections
         private readonly Dictionary<TKey, TValue> dict;
 
         private bool hasNullKey;
+
+        // ReSharper disable once RedundantDefaultMemberInitializer - needed for constructor
         [AllowNull]private TValue nullValue = default!;
 
         #endregion

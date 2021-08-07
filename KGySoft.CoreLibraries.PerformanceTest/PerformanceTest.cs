@@ -21,9 +21,6 @@ using System;
 #if NETCOREAPP
 using System.IO; 
 #endif
-#if !(NETFRAMEWORK || NETCOREAPP)
-using System.Runtime.InteropServices; 
-#endif
 using NUnit.Framework;
 
 #endregion

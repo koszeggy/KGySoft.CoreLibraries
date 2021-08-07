@@ -45,7 +45,7 @@ using KGySoft.Serialization.Xml;
 #if NET35
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NET5_0_OR_GREATER
 #pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
 #endif
 

@@ -958,7 +958,7 @@ namespace KGySoft.CoreLibraries
         }
 
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
         /// </summary>
@@ -1121,7 +1121,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns an <see cref="Array"/> of random characters that has the specified <paramref name="length"/>.
         /// </summary>
@@ -1266,7 +1266,7 @@ namespace KGySoft.CoreLibraries
                 FillChars(random, new MutableString(s, buffer.Length), strategy);
         }
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of a <paramref name="buffer"/> with random characters using the specified <paramref name="allowedCharacters"/>.
         /// </summary>
@@ -1469,7 +1469,7 @@ namespace KGySoft.CoreLibraries
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             // Interestingly, in .NET Core 3.0 this is still slower than pure byte arrays.
             // Still, we hope that Span performance (or the cast to ReadOnlySpan?) will be faster later
             // and that sparing heap allocation is worth it.

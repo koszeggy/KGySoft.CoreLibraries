@@ -170,7 +170,7 @@ namespace KGySoft.CoreLibraries
                 FillBytes(pBuf, buffer.Length);
         }
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>
@@ -217,7 +217,7 @@ namespace KGySoft.CoreLibraries
         /// <para>The <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method has the same functionality
         /// but it is faster to call this one directly.</para>
         /// </remarks>
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0 || NET5_0)
+#if NET6_0_OR_GREATER
         override
 #endif
         public long NextInt64() => (long)SampleUInt64();

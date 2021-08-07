@@ -34,14 +34,14 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #pragma warning disable CS8604 // Possible null reference argument.
 #endif
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NET
 // ReSharper disable UnusedMember.Local - StringKeyedDictionaryDebugView.Items
 #endif
 
@@ -887,7 +887,7 @@ namespace KGySoft.Collections
             }
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.this[ReadOnlySpan{char}]"/>
         public TValue this[ReadOnlySpan<char> key]
         {
@@ -1142,7 +1142,7 @@ namespace KGySoft.Collections
             return false;
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.TryGetValue(ReadOnlySpan{char},out TValue)"/>
         public bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)]out TValue value)
         {
@@ -1184,7 +1184,7 @@ namespace KGySoft.Collections
                 ? GetValueOrDefault(key, default(TActualValue)!)
                 : TryGetValue(key, out TValue? value) && value is TActualValue actualValue ? actualValue : defaultValueFactory.Invoke();
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.GetValueOrDefault(ReadOnlySpan{char})"/>
         public TValue? GetValueOrDefault(ReadOnlySpan<char> key) => TryGetValue(key, out TValue? value) ? value : default;
 
@@ -1211,7 +1211,7 @@ namespace KGySoft.Collections
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(StringSegment)"/>
         public bool ContainsKey(StringSegment key) => GetItemIndex(key) >= 0;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <inheritdoc cref="IStringKeyedDictionary{TValue}.ContainsKey(ReadOnlySpan{char})"/>
         public bool ContainsKey(ReadOnlySpan<char> key) => GetItemIndex(key) >= 0;
 #endif
@@ -1402,7 +1402,7 @@ namespace KGySoft.Collections
             return -1;
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private int GetItemIndex(ReadOnlySpan<char> key)
         {
             if (buckets == null)

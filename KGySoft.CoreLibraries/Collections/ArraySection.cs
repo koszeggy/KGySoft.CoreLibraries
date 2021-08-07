@@ -23,7 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Security;
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
 
@@ -38,7 +38,7 @@ using KGySoft.Serialization.Binary;
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NET5_0_OR_GREATER
 // ReSharper disable UnusedMember.Local - ArraySectionDebugView.Items
 #endif
 
@@ -123,7 +123,7 @@ namespace KGySoft.Collections
 
         #region Private Fields
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector<T>.SizeOf);
 #endif
 
@@ -136,7 +136,7 @@ namespace KGySoft.Collections
         private readonly T[]? array;
         private readonly int offset;
         private readonly int length;
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         private readonly bool poolArray;
 #endif
 
@@ -166,7 +166,7 @@ namespace KGySoft.Collections
         /// </summary>
         public bool IsNullOrEmpty => length == 0;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
@@ -274,7 +274,7 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(T[]? array) => array == null ? Null : new ArraySection<T>(array);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
         /// </summary>
@@ -327,7 +327,7 @@ namespace KGySoft.Collections
             offset = 0;
             this.length = length;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             poolArray = length >= poolingThreshold;
             if (poolArray)
             {
@@ -371,7 +371,7 @@ namespace KGySoft.Collections
             this.array = array;
             this.offset = offset;
             this.length = length;
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             poolArray = false;
 #endif
         }
@@ -589,7 +589,7 @@ namespace KGySoft.Collections
         /// </summary>
         public void Release()
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             if (array != null && poolArray)
             {
                 if (Reflector<T>.IsManaged)

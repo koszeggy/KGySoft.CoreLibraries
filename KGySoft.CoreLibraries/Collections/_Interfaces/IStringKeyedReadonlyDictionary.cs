@@ -54,7 +54,7 @@ namespace KGySoft.Collections
         /// <exception cref="KeyNotFoundException"><paramref name="key"/> is not found.</exception>
         TValue this[StringSegment key] { get; }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the value associated with the specified <paramref name="key"/>.
         /// </summary>
@@ -81,7 +81,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
         bool ContainsKey(StringSegment key);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Determines whether this instance contains an element with the specified <paramref name="key"/>.
         /// </summary>
@@ -105,7 +105,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
         bool TryGetValue(StringSegment key, [MaybeNullWhen(false)]out TValue value);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Tries to get the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
@@ -177,7 +177,7 @@ namespace KGySoft.Collections
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
         TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
         /// </summary>

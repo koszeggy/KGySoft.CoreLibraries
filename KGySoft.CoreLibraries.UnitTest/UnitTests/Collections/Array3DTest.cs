@@ -77,7 +77,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(planeSize, array[0].Length);
             Assert.AreEqual(width, array[0][0].Length);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Index from = 1;
             Index to = ^1;
             Span<int> span = section.AsSpan;

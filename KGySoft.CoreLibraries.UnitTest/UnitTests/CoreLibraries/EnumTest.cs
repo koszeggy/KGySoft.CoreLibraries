@@ -16,7 +16,12 @@
 #region Usings
 
 using System;
+#if NET5_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis; 
+#endif
 using System.Linq;
+
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -30,6 +35,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         #region Enumerations
 
         [Flags]
+#if NET5_0_OR_GREATER
+        [SuppressMessage("Design", "CA1069:Enums values should not be duplicated", Justification = "Redeclaration is intended, it is part of the test")] 
+#endif
         private enum TestLongEnum : long
         {
             None,
@@ -92,12 +100,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma"));
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.IsTrue(Enum<TestLongEnum>.IsDefined("Gamma".AsSpan()));
 #endif
             Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega"));
             Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.IsFalse(Enum<TestLongEnum>.IsDefined("Omega".AsSpan()));
 #endif
 
@@ -153,12 +161,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0"));
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0".AsSpan()));
 #endif
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max"));
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse("Max".AsSpan()));
 #endif
             Assert.AreEqual(TestULongEnum.Max, Enum<TestULongEnum>.Parse(UInt64.MaxValue.ToString()));
@@ -175,14 +183,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("alpha", true));
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED", true));
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED".AsSegment(), true));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(TestLongEnum.Alpha, Enum<TestLongEnum>.Parse("ALPHAREDEFINED".AsSpan(), true));
 #endif
 
             TestLongEnum e = TestLongEnum.Gamma | TestLongEnum.Alphabet;
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Gamma, Alphabet".AsSpan()));
 #endif
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("7"));
@@ -195,7 +203,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("Alpha, Beta, Gamma, 16"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet"));
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet".AsSegment()));
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(e, Enum<TestLongEnum>.Parse("16, Gamma, Alphabet".AsSpan()));
 #endif
 
@@ -226,9 +234,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(32, Enum<TestIntEnum>.GetFlags(unchecked((TestIntEnum)(int)UInt32.MaxValue), false).Count());
 
             AssertItemsEqual(new[] { TestLongEnum.Alpha, TestLongEnum.Beta, TestLongEnum.Gamma, TestLongEnum.Delta, TestLongEnum.Min }.OrderBy(e => e), Enum<TestLongEnum>.GetFlags().OrderBy(e => e));
-            AssertItemsEqual(new TestULongEnum[0], Enum<TestULongEnum>.GetFlags());
+            AssertItemsEqual(Reflector.EmptyArray<TestULongEnum>(), Enum<TestULongEnum>.GetFlags());
             AssertItemsEqual(new[] { TestIntEnum.Simple, TestIntEnum.Normal, TestIntEnum.Risky }.OrderBy(e => e), Enum<TestIntEnum>.GetFlags().OrderBy(e => e));
-            AssertItemsEqual(new EmptyEnum[0], Enum<EmptyEnum>.GetFlags());
+            AssertItemsEqual(Reflector.EmptyArray<EmptyEnum>(), Enum<EmptyEnum>.GetFlags());
         }
 
         [Test]

@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
             if (ReferenceEquals(String, other.String) && Offset == other.Offset)
                 return true;
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             if (Length >= 20)
                 return String.Compare(String, Offset, other.String, other.Offset, Length, StringComparison.Ordinal) == 0;
 #endif
@@ -342,7 +342,7 @@ namespace KGySoft.CoreLibraries
             if (ReferenceEquals(String, other) && Offset == 0)
                 return true;
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             if (Length >= 20)
                 return String.Compare(String, Offset, other, 0, Length, StringComparison.Ordinal) == 0;
 #endif

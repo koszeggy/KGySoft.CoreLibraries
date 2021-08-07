@@ -1737,7 +1737,7 @@ namespace KGySoft.CoreLibraries
                     return String.Join(separator, strArray);
                 case IList<string?> strList:
                     // we can preallocate result
-#if NETFRAMEWORK && !NET35
+#if NET40_OR_GREATER
                     if (!AppDomain.CurrentDomain.IsFullyTrusted)
                         goto default;
 #endif
@@ -1767,7 +1767,7 @@ namespace KGySoft.CoreLibraries
 
             switch (source)
             {
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 case string?[] strArray:
                     // fast because uses FastAllocateString inside
                     return String.Join(separator, strArray);

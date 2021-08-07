@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
 using System.Collections;
@@ -32,7 +32,7 @@ using System.Runtime.CompilerServices;
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NET5_0_OR_GREATER
 // ReSharper disable UnusedMember.Local - Array3DDebugView.Items
 #endif
 
@@ -128,7 +128,7 @@ namespace KGySoft.Collections
         /// </summary>
         public ArraySection<T> Buffer => buffer;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
@@ -191,7 +191,7 @@ namespace KGySoft.Collections
             }
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets a plane of the <see cref="Array3D{T}"/> as an <see cref="Array2D{T}"/> instance.
         /// </summary>
@@ -238,7 +238,7 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(Array3D<T> array) => array.buffer;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="Array3D{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
         /// </summary>
@@ -415,7 +415,7 @@ namespace KGySoft.Collections
         {
             if (buffer.IsNull)
                 return 0;
-#if NET35 || NET40 || NET45
+#if NETFRAMEWORK && !NET472_OR_GREATER
             return (buffer, (width, height, depth)).GetHashCode();
 #else
             return (buffer, width, height, depth).GetHashCode();

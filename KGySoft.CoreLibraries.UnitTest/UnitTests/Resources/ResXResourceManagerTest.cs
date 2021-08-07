@@ -37,8 +37,6 @@ using NUnit.Framework;
 
 #endregion
 
-#pragma warning disable IDE0067 // Dispose objects before losing scope - managers in test methods
-
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
@@ -56,6 +54,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         #endregion
 
         #region Methods
+
+        #region Static Methods
+
+        private static void Clean(ResXResourceManager manager, CultureInfo culture)
+            => File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{manager.BaseName}.{culture.Name}.resx"));
+
+        #endregion
+
+        #region Instance Methods
 
         #region Public Methods
 
@@ -396,7 +403,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #else
             Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
 #endif
-            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat); 
+            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
 
 #endif
             // byte array by reference
@@ -410,7 +417,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<MemoryStream>(check);
 #if !NETCOREAPP3_0 // .NET Core 3.0 bug: Constructor on type 'System.IO.MemoryStream' not found.
             reference = refManager.GetObject("TestSound");
-            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray()); 
+            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 #endif
 
 #if !NETCOREAPP2_0
@@ -713,8 +720,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             return result;
         }
 
-        private void Clean(ResXResourceManager manager, CultureInfo culture)
-            => File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{manager.BaseName}.{culture.Name}.resx"));
+        #endregion
 
         #endregion
 

@@ -478,7 +478,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             IList[] referenceObjects =
                 {
-                    new byte[0], // empty array
+                    Reflector.EmptyArray<byte>(), // empty array
                     new byte[] { 1, 2, 3}, // single byte array
                     new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
                 };
@@ -569,7 +569,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #endif
             IList[] referenceObjects =
                 {
-                    new object[0],
+                    Reflector.EmptyObjects,
                     new object[] {new object(), null},
                     new bool[] {true, false},
                     new sbyte[] {1, 2},

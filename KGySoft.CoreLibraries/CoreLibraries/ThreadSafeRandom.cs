@@ -71,7 +71,7 @@ namespace KGySoft.CoreLibraries
             public override double NextDouble() => ThreadInstance.NextDouble();
             public override void NextBytes(byte[] buffer) => ThreadInstance.NextBytes(buffer);
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             /// <summary>
             /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
             /// </summary>
@@ -147,7 +147,7 @@ namespace KGySoft.CoreLibraries
                 random.NextBytes(buffer);
             }
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             /// <summary>
             /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
             /// </summary>
@@ -327,7 +327,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="buffer">An array of bytes to contain random numbers.</param>
         public override void NextBytes(byte[] buffer) => provider!.NextBytes(buffer);
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>

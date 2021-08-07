@@ -654,7 +654,7 @@ namespace KGySoft.CoreLibraries
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-#if NET35 || NET40 || NET45 || NET472
+#if NETFRAMEWORK
             return type.IsSzArray();
 #elif NETSTANDARD2_0
             return type.IsArray && type.Name.EndsWith("[]", StringComparison.Ordinal);

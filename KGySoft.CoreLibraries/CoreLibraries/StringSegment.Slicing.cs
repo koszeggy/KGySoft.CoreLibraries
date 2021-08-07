@@ -230,7 +230,7 @@ namespace KGySoft.CoreLibraries
             return new StringSegment(rest.str!, offset, pos);
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static StringSegment GetNextSegment(ref StringSegment rest, ReadOnlySpan<char> separator)
         {
@@ -426,7 +426,7 @@ namespace KGySoft.CoreLibraries
             return SubstringInternal(0, end + 1);
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
         /// </summary>
@@ -1066,7 +1066,7 @@ namespace KGySoft.CoreLibraries
         /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(params string?[]? separators) => Split(separators, default, default);
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Splits this <see cref="StringSegment"/> instance into a collection of <see cref="StringSegment"/> instances of no more than <paramref name="maxLength"/> segments, without allocating new strings.
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, ReadOnlySpan{char})"/> extension method.

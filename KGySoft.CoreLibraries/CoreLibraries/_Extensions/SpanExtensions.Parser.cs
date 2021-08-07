@@ -1,4 +1,4 @@
-﻿#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+﻿#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ namespace KGySoft.CoreLibraries
                     // ReSharper disable once PossibleNullReferenceException
                     if (type.IsEnum)
                     {
-#if NETSTANDARD2_1 || NETCOREAPP3_0 || NET5_0 || NET6_0
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
                         return Enum.TryParse(type, s.ToString(), out value);
 #else
                         // as of 06/2020 there is no such overload yet but we hope it for the future...

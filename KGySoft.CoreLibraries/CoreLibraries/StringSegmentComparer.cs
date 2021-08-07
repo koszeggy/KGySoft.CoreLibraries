@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
             public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinal(obj);
@@ -131,7 +131,7 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
             public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinalIgnoreCase(obj);
@@ -243,7 +243,7 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
             {
@@ -298,7 +298,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constants
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
         private const int lengthThreshold = 32;
 #endif
         #endregion
@@ -421,7 +421,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
             if (s.Length > lengthThreshold)
                 return s.GetHashCode();
 #endif
@@ -437,7 +437,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(string s, int offset, int length)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length));
 #endif
@@ -448,7 +448,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(ReadOnlySpan<char> s)
         {
@@ -469,7 +469,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
             if (s.Length > lengthThreshold)
                 return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
 #endif
@@ -486,7 +486,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s, int offset, int length)
         {
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
 #endif
@@ -497,7 +497,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(ReadOnlySpan<char> s)
         {
@@ -682,7 +682,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Span
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
         /// <summary>
         /// When overridden in a derived class, indicates whether two <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances are equal.

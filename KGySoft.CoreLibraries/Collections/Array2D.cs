@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Buffers; 
 #endif
 using System.Collections;
@@ -32,7 +32,7 @@ using System.Runtime.CompilerServices;
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0 || NETCOREAPP3_0
+#if !NET5_0_OR_GREATER
 // ReSharper disable UnusedMember.Local - Array2DDebugView.Items
 #endif
 
@@ -121,7 +121,7 @@ namespace KGySoft.Collections
         /// </summary>
         public ArraySection<T> Buffer => buffer;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
@@ -183,7 +183,7 @@ namespace KGySoft.Collections
             }
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets a row of the <see cref="Array2D{T}"/> as an <see cref="ArraySection{T}"/> instance.
         /// </summary>
@@ -230,7 +230,7 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(Array2D<T> array) => array.buffer;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="Array2D{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
         /// </summary>

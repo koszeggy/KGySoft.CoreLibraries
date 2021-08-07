@@ -354,7 +354,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         public bool IsNullOrWhiteSpace => length == 0 || TrimStart().length == 0;
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlySpan{T}"/> of characters.
         /// </summary>
@@ -400,14 +400,13 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the <see cref="StringSegment"/> from this instance that represents the substring of the specified <paramref name="range"/>.
         /// </summary>
         /// <param name="range">The range to get.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "Range is a typical indexer argument")]
         public StringSegment this[Range range]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -432,8 +431,6 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="StringSegment"/> instance that represents the original string.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-                Justification = "The named alternative exists in StringExtensions.AsSegment")]
         public static implicit operator StringSegment(string? s) => s == null ? Null : new StringSegment(s);
 
         /// <summary>
@@ -445,7 +442,7 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         public static explicit operator string?(StringSegment stringSegment) => stringSegment.ToString();
 
-#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="StringSegment"/> to <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>.
         /// </summary>
@@ -453,8 +450,6 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instance that represents the specified <see cref="StringSegment"/>.
         /// </returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "False alarm, see AsSpan")]
         public static implicit operator ReadOnlySpan<char>(StringSegment stringSegment) => stringSegment.AsSpan;
 #endif
 

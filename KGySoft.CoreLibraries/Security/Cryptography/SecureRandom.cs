@@ -88,15 +88,12 @@ namespace KGySoft.Security.Cryptography
             provider.GetBytes(buffer);
         }
 
-#if !(NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0)
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>
         /// <param name="buffer">A <see cref="Span{T}"/> of bytes to contain random numbers.</param>
-        public override void NextBytes(Span<byte> buffer)
-        {
-            provider.GetBytes(buffer);
-        }
+        public override void NextBytes(Span<byte> buffer) => provider.GetBytes(buffer);
 #endif
 
         /// <summary>

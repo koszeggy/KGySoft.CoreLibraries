@@ -1,4 +1,4 @@
-﻿#if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
+﻿#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////

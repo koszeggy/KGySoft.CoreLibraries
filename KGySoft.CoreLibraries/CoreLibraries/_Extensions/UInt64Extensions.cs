@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
@@ -36,7 +36,9 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetFlagsCount(this ulong value)
         {
-#if NET35 || NET40 || NET45 || NET472 || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
+#if NETCOREAPP3_0_OR_GREATER
+            return BitOperations.PopCount(value);
+#else
             // There are actually better general solutions than this but for enums we usually expect
             // only a few flags set. Up to 3-4 flags this solution is faster than the optimal Hamming weight solution.
             int result = 0;
@@ -47,8 +49,6 @@ namespace KGySoft.CoreLibraries
             }
 
             return result;
-#else
-            return BitOperations.PopCount(value);
 #endif
         }
 

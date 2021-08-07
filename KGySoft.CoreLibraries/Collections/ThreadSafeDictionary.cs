@@ -42,7 +42,7 @@ using KGySoft.Serialization.Binary;
 #if NET40 || NET45 || NET472 || NETSTANDARD
 #pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
 #endif
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #endif
 

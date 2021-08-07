@@ -35,8 +35,6 @@ namespace KGySoft.CoreLibraries
     /// <para>Unlike <see cref="StringSplitOptions"/>, this struct defines the <see cref="TrimEntries"/> option for all platform targets.</para>
     /// </remarks>
     [DebuggerDisplay("{" + nameof(DebugValue) + ",nq}")]
-    [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-        Justification = "Intended. Conversions as just for supporting better compatibility, while bitwise operators are for simulating enum flag operations.")]
     public readonly struct StringSegmentSplitOptions : IEquatable<StringSegmentSplitOptions>
     {
         #region Enumerations

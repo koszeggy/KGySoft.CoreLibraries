@@ -511,7 +511,7 @@ namespace KGySoft.CoreLibraries
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.TryAdd(item.Key, item.Value);
 #endif
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 case Dictionary<TKey, TValue> dict:
                     return dict.TryAdd(item.Key, item.Value);
 #endif
@@ -1133,7 +1133,7 @@ namespace KGySoft.CoreLibraries
                 case ConcurrentDictionary<TKey, TValue> cDict:
                     return cDict.TryRemove(key, out value);
 #endif
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 case Dictionary<TKey, TValue> dict:
                     return dict.Remove(key, out value);
 #endif

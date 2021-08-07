@@ -1113,9 +1113,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 object[] referenceObjects =
                 {
-#pragma warning disable IDE0067 // Dispose objects before losing scope
                     new MemoryStreamWithEquals(), // local
-#pragma warning restore IDE0067 // Dispose objects before losing scope
                     domain.CreateInstanceAndUnwrap(Assembly.GetExecutingAssembly().FullName, typeof(MemoryStreamWithEquals).FullName) // remote
                 };
 

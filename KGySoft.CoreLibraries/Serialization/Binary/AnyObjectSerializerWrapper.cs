@@ -31,7 +31,7 @@ using KGySoft.Serialization.Xml;
 
 #region Suppressions
 
-#if !(NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0)
+#if NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
 #endif
 

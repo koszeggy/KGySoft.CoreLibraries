@@ -33,7 +33,13 @@ using NUnit.Framework;
 
 #endregion
 
-#pragma warning disable IDE0067 // Dispose objects before losing scope - managers in test methods
+#region Suppressions
+
+#if !NETFRAMEWORK
+#pragma warning disable IDE0044 // The fields are assigned in .NET Framework versions  
+#endif
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
@@ -95,11 +101,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Instance Fields
 
-#pragma warning disable 649, IDE0044 // they are assigned in .NET Framework versions
-        private CultureInfo huRunic; // hu-Runic: neutral under hu
-        private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
-        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU    
-#pragma warning restore 649, IDE0044
+        private CultureInfo huRunic = default!; // hu-Runic: neutral under hu
+        private CultureInfo huRunicHU = default!; // hu-Runic-HU: specific under hu-Runic
+        private CultureInfo huRunicHULowland = default!; // hu-Runic-HU-lowland: specific under hu-Runic-HU    
 
         #endregion
 
@@ -113,9 +117,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
-#if !NET35
         [SecuritySafeCritical]
-#endif
         [OneTimeSetUp]
         public void CreateCustomCultures()
         {
