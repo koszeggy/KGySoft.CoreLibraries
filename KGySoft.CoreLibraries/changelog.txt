@@ -20,8 +20,17 @@
 + DateTimeExtensions class:
   + New AsLocal method
   + New ToUnixMilliseconds/ToUnixSeconds and FromUnixMilliseconds/FromUnixSeconds methods
++ StringSegmentComparer class:
+  + New OrdinalRandomized property
+  + New OrdinalIgnoreCaseRandomized property
 - Files class:
   - GetExecutingPath method: in .NET Framework it could throw an exception from a partially trusted domain.
+
++ KGySoft.Collections namespace:
+================================
++ StringKeyedDictionary class:
+  + New constructor with (int capacity, bool ignoreCase, bool useRandomizedHash) parameters
+  + New constructor with (bool ignoreCase, bool useRandomizedHash) parameters
 
 ~~~~~~~~~
 * v5.6.1:

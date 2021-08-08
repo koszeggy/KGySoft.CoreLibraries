@@ -51,7 +51,7 @@ using KGySoft.Serialization.Binary;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET 3.5),
+    /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET Framework 3.5),
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
     /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
@@ -109,7 +109,9 @@ namespace KGySoft.Collections
     /// <item><term><see cref="GetOrAdd(TKey,TValue)">GetOrAdd</see> (random existing keys)</term><term>1.11x slower</term><term>Fastest</term><term>Fastest</term></item>
     /// </list>
     /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
-    /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.</note></para>
+    /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
+    /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
+    /// platforms where default string hashing is not randomized (eg. .NET Framework 3.5).</note></para>
     /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>

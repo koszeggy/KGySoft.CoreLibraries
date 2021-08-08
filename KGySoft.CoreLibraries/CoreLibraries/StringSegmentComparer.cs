@@ -21,6 +21,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
+#if !NETCOREAPP3_0_OR_GREATER
+using KGySoft.Collections;
+#endif
+
 #endregion
 
 namespace KGySoft.CoreLibraries
@@ -44,7 +48,7 @@ namespace KGySoft.CoreLibraries
         #region StringSegmentOrdinalComparer class
 
         [Serializable]
-        private sealed class StringSegmentOrdinalComparer : StringSegmentComparer
+        private class StringSegmentOrdinalComparer : StringSegmentComparer
         {
             #region Methods
 
@@ -101,7 +105,7 @@ namespace KGySoft.CoreLibraries
         #region StringSegmentOrdinalIgnoreCaseComparer class
 
         [Serializable]
-        private sealed class StringSegmentOrdinalIgnoreCaseComparer : StringSegmentComparer
+        private class StringSegmentOrdinalIgnoreCaseComparer : StringSegmentComparer
         {
             #region Methods
 
@@ -230,9 +234,9 @@ namespace KGySoft.CoreLibraries
                     return 0;
 
 #if NET35 || NET40 || NET45
-                return stringComparer.GetHashCode(obj.ToString());
+                return stringComparer.GetHashCode(obj.ToString()!);
 #elif NET472 || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-                return compareInfo.GetHashCode(obj.ToString(), options);
+                return compareInfo.GetHashCode(obj.ToString()!, options);
 #else
                 return compareInfo.GetHashCode(obj.AsSpan, options);
 #endif
@@ -294,6 +298,212 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region StringSegmentOrdinalRandomizedComparer
+
+        [Serializable]
+        private sealed class StringSegmentOrdinalRandomizedComparer : StringSegmentOrdinalComparer
+        {
+            #region Fields
+
+#if !NETCOREAPP3_0_OR_GREATER
+            private readonly int seed;
+            private readonly int factor1;
+            private readonly int factor2;
+#endif
+
+            #endregion
+
+            #region Constructors
+
+#if !NETCOREAPP3_0_OR_GREATER
+            internal StringSegmentOrdinalRandomizedComparer()
+            {
+                Random rnd = ThreadSafeRandom.Instance;
+                seed = HashHelper.GetNextPrime(rnd.Next(11, 1 << 30));
+                factor1 = HashHelper.GetNextPrime(rnd.Next(11, 1 << 16));
+                factor2 = HashHelper.GetNextPrime(rnd.Next(1 << 16, 1 << 30));
+            }
+#endif
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null!)
+                    Throw.ArgumentNullException(Argument.obj);
+#if NETCOREAPP3_0_OR_GREATER
+                return obj.GetHashCode();
+#else
+                return GetHashCode(obj, 0, obj.Length);
+#endif
+            }
+
+            public override int GetHashCode(StringSegment obj)
+            {
+                if (obj.IsNull)
+                    return 0;
+#if NETCOREAPP3_0_OR_GREATER
+                return String.GetHashCode(obj.AsSpan);
+#else
+                return GetHashCode(obj.UnderlyingString!, obj.Offset, obj.Length);
+#endif
+            }
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) =>
+#if NETCOREAPP3_0_OR_GREATER
+                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length));
+#else
+                GetHashCode(obj.String, obj.Offset, obj.Length);
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override int GetHashCode(ReadOnlySpan<char> s)
+            {
+#if NETSTANDARD
+                // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
+                int result = seed;
+                for (int i = 0; i < s.Length; i++)
+                    result = result * ((i & 1) == 0 ? factor1 : factor2) + s[i];
+                return result;
+#else
+                return String.GetHashCode(s);
+#endif
+            }
+#endif
+
+            #endregion
+
+            #region Private Methods
+
+#if !NETCOREAPP3_0_OR_GREATER
+            private int GetHashCode(string s, int offset, int length)
+            {
+                // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
+                int result = seed;
+                for (int i = offset; i < length; i++)
+                    result = result * ((i & 1) == 0 ? factor1 : factor2) + s[i];
+                return result;
+            } 
+#endif
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StringSegmentOrdinalIgnoreCaseRandomizedComparer
+
+        [Serializable]
+        private sealed class StringSegmentOrdinalIgnoreCaseRandomizedComparer : StringSegmentOrdinalIgnoreCaseComparer
+        {
+            #region Fields
+
+#if !NETCOREAPP3_0_OR_GREATER
+            private readonly int seed;
+            private readonly int factor1;
+            private readonly int factor2;
+#endif
+
+            #endregion
+
+            #region Constructors
+
+#if !NETCOREAPP3_0_OR_GREATER
+            internal StringSegmentOrdinalIgnoreCaseRandomizedComparer()
+            {
+                Random rnd = ThreadSafeRandom.Instance;
+                seed = HashHelper.GetNextPrime(rnd.Next(11, 1 << 30));
+                factor1 = HashHelper.GetNextPrime(rnd.Next(11, 1 << 16));
+                factor2 = HashHelper.GetNextPrime(rnd.Next(1 << 16, 1 << 30));
+            }
+#endif
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null!)
+                    Throw.ArgumentNullException(Argument.obj);
+#if NETCOREAPP3_0_OR_GREATER
+                return obj.GetHashCode(StringComparison.OrdinalIgnoreCase);
+#else
+                return GetHashCode(obj, 0, obj.Length);
+#endif
+            }
+
+            public override int GetHashCode(StringSegment obj)
+            {
+                if (obj.IsNull)
+                    return 0;
+#if NETCOREAPP3_0_OR_GREATER
+                return String.GetHashCode(obj.AsSpan, StringComparison.OrdinalIgnoreCase);
+#else
+                return GetHashCode(obj.UnderlyingString!, obj.Offset, obj.Length);
+#endif
+            }
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) =>
+#if NETCOREAPP3_0_OR_GREATER
+                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length), StringComparison.OrdinalIgnoreCase);
+#else
+                GetHashCode(obj.String, obj.Offset, obj.Length);
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override int GetHashCode(ReadOnlySpan<char> s)
+            {
+#if NETSTANDARD
+                // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
+                int result = seed;
+                for (int i = 0; i < s.Length; i++)
+                    result = result * ((i & 1) == 0 ? factor1 : factor2) + Char.ToUpperInvariant(s[i]);
+                return result;
+#else
+                return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
+#endif
+            }
+#endif
+
+            #endregion
+
+            #region Private Methods
+
+#if !NETCOREAPP3_0_OR_GREATER
+            private int GetHashCode(string s, int offset, int length)
+            {
+                // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
+                int result = seed;
+                for (int i = offset; i < length; i++)
+                    result = result * ((i & 1) == 0 ? factor1 : factor2) + Char.ToUpperInvariant(s[i]);
+                return result;
+            } 
+#endif
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Constants
@@ -309,6 +519,8 @@ namespace KGySoft.CoreLibraries
         private static StringSegmentComparer? ordinalIgnoreCaseComparer;
         private static StringSegmentComparer? invariantComparer;
         private static StringSegmentComparer? invariantIgnoreCaseComparer;
+        private static StringSegmentComparer? ordinalRandomizedComparer;
+        private static StringSegmentComparer? ordinalIgnoreCaseRandomizedComparer;
 
         #endregion
 
@@ -319,6 +531,10 @@ namespace KGySoft.CoreLibraries
         /// <br/>The methods of the returned <see cref="StringSegmentComparer"/> instance can be called with <see cref="string">string</see>, <see cref="StringSegment"/>
         /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
+        /// <remarks>
+        /// <note>The comparer returned by this property does not generate randomized hash codes for strings no longer than 32 characters (and for longer strings it is platform-dependent).
+        /// Use the <see cref="OrdinalRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms.</note>
+        /// </remarks>
         public static StringSegmentComparer Ordinal => ordinalComparer ??= new StringSegmentOrdinalComparer();
 
         /// <summary>
@@ -326,6 +542,10 @@ namespace KGySoft.CoreLibraries
         /// <br/>The methods of the returned <see cref="StringSegmentComparer"/> instance can be called with <see cref="string">string</see>, <see cref="StringSegment"/>
         /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values, which will not allocate new strings on any platform.
         /// </summary>
+        /// <remarks>
+        /// <note>The comparer returned by this property does not generate randomized hash codes for strings no longer than 32 characters (and for longer strings it is platform-dependent).
+        /// Use the <see cref="OrdinalIgnoreCaseRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms.</note>
+        /// </remarks>
         public static StringSegmentComparer OrdinalIgnoreCase => ordinalIgnoreCaseComparer ??= new StringSegmentOrdinalIgnoreCaseComparer();
 
         /// <summary>
@@ -355,6 +575,18 @@ namespace KGySoft.CoreLibraries
         /// In .NET Core 3.0 and above none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.
         /// </summary>
         public static StringSegmentComparer CurrentCultureIgnoreCase => new StringSegmentCultureAwareComparer(CultureInfo.CurrentCulture, true);
+
+        /// <summary>
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison. The returned comparer is functionally equivalent
+        /// with <see cref="Ordinal"/> but it ensures that the hash code of a specific string is stable only within the same process and <see cref="AppDomain"/>.
+        /// </summary>
+        public static StringSegmentComparer OrdinalRandomized => ordinalRandomizedComparer ??= new StringSegmentOrdinalRandomizedComparer();
+
+        /// <summary>
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison. The returned comparer is functionally equivalent
+        /// with <see cref="OrdinalIgnoreCase"/> but it ensures that the hash code of a specific string is stable only within the same process and <see cref="AppDomain"/>.
+        /// </summary>
+        public static StringSegmentComparer OrdinalIgnoreCaseRandomized => ordinalIgnoreCaseRandomizedComparer ??= new StringSegmentOrdinalIgnoreCaseRandomizedComparer();
 
         #endregion
 
@@ -452,7 +684,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(ReadOnlySpan<char> s)
         {
-#if !NETSTANDARD2_1
+#if !NETSTANDARD
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s); 
 #endif

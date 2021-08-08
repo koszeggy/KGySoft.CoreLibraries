@@ -107,11 +107,7 @@ namespace KGySoft.Collections
             return result;
         }
 
-        #endregion
-
-        #region Private Methods
-
-        private static int GetNextPrime(int min)
+        internal static int GetNextPrime(int min)
         {
             for (int i = min | 1; i < maxPrime; i += 2)
             {
@@ -123,6 +119,10 @@ namespace KGySoft.Collections
             return maxPrime;
         }
 
+        #endregion
+
+        #region Private Methods
+
         /// <summary>
         /// Determines whether the specified n is prime using the Miller-Rabin test.
         /// See https://www.geeksforgeeks.org/primality-test-set-3-miller-rabin/
@@ -132,7 +132,7 @@ namespace KGySoft.Collections
             // handling cases for 1, 2, 3, 5, 7 and even numbers
             if (n < 2)
                 return false;
-            if (n == 2 || n == 3 || n == 5 || n == 7)
+            if (n is 2 or 3 or 5 or 7)
                 return true;
             if ((n & 1) == 0)
                 return false;

@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+
+using KGySoft.Annotations;
 using KGySoft.Collections;
 
 using NUnit.Framework;
@@ -44,21 +46,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
     [TestFixture]
     public class StringKeyedDictionaryTest
     {
+        #region Fields
+
+        private static readonly StringSegmentComparer[] comparers =
+        {
+            null,
+            StringSegmentComparer.Ordinal,
+            StringSegmentComparer.OrdinalIgnoreCase,
+            StringSegmentComparer.InvariantCulture,
+            StringSegmentComparer.InvariantCultureIgnoreCase,
+            StringSegmentComparer.CurrentCulture,
+            StringSegmentComparer.CurrentCultureIgnoreCase,
+            StringSegmentComparer.OrdinalRandomized,
+            StringSegmentComparer.OrdinalIgnoreCaseRandomized,
+        };
+
+        #endregion
+
         #region Methods
 
-        [TestCase(null)]
-        [TestCase(StringComparison.Ordinal)]
-        [TestCase(StringComparison.OrdinalIgnoreCase)]
-        [TestCase(StringComparison.InvariantCulture)]
-        [TestCase(StringComparison.InvariantCultureIgnoreCase)]
-        [TestCase(StringComparison.CurrentCulture)]
-        [TestCase(StringComparison.CurrentCultureIgnoreCase)]
-        public void UsageTest(StringComparison? comparison)
+        [TestCaseSource(nameof(comparers))]
+        public void UsageTest(StringSegmentComparer comparer)
         {
-            var dict = comparison == null ? new StringKeyedDictionary<int>() : new StringKeyedDictionary<int>(StringSegmentComparer.FromComparison(comparison.Value));
-            dict.Add("alpha", 1);
-            dict.Add("beta", 2);
-            dict.Add("gamma", 3);
+            var dict = new StringKeyedDictionary<int>(comparer) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } };
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
             Assert.AreEqual(1, dict["alpha".AsSegment()]);

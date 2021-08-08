@@ -63,10 +63,10 @@ namespace KGySoft.Collections
     /// (in .NET Core 3.0/.NET Standard 2.1 and above) instances.</para>
     /// <para>The <see cref="StringKeyedDictionary{TValue}"/> class uses a custom hashing, which usually makes it faster
     /// than a regular <see cref="Dictionary{TKey,TValue}"/> with <see cref="string">string</see> key.
-    /// <note type="security">When using with ordinal or ordinal ignore case comparison, the <see cref="StringKeyedDictionary{TValue}"/> class
-    /// does not use randomized hashing for keys no longer than 32 characters. Therefore, it is not recommended to expose it to a public
-    /// service, which may affect the keys to be stored. But since <see cref="StringKeyedDictionary{TValue}"/> is not thread-safe, it is not
-    /// recommended to use it in such a service anyway.</note></para>
+    /// <note type="security">Without specifying a comparer, the <see cref="StringKeyedDictionary{TValue}"/> class
+    /// does not use randomized hashing for keys no longer than 32 characters. If you want to want to expose a <see cref="StringKeyedDictionary{TValue}"/>
+    /// to a public service, then make sure you use it with a randomized hash comparer (eg. with <see cref="StringSegmentComparer.OrdinalRandomized"/>).
+    /// But since <see cref="StringKeyedDictionary{TValue}"/> is not thread-safe, it is not recommended to use it in such a service anyway.</note></para>
     /// <para>Depending on the context, the <see cref="StringKeyedDictionary{TValue}"/> can return either a value type or reference type enumerator.
     /// When used in a C# <see langword="foreach"/>&#160;statement directly, the public <see cref="Enumerator"/> type is used, which is a value type
     /// (this behavior is similar to the regular <see cref="Dictionary{TKey,TValue}"/> class). But when the enumerator is obtained via the <see cref="IEnumerable{T}"/> interface
@@ -960,12 +960,12 @@ namespace KGySoft.Collections
         public StringKeyedDictionary(StringSegmentComparer? comparer) : this(0, comparer)
         {
         }
-
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class
         /// using the specified <paramref name="capacity"/> and <paramref name="comparer"/>.
         /// </summary>
-        /// <param name="capacity">The initial capacity that the <see cref="StringSegmentComparer"/> can contain.</param>
+        /// <param name="capacity">The initial capacity that the <see cref="StringKeyedDictionary{TValue}"/> can contain.</param>
         /// <param name="comparer">A <see cref="StringSegmentComparer"/> instance to use when comparing keys.
         /// When <see langword="null"/>, ordinal comparison will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
@@ -976,6 +976,30 @@ namespace KGySoft.Collections
             this.comparer = comparer == StringSegmentComparer.Ordinal ? null : comparer;
             if (capacity > 0)
                 Initialize(capacity);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class
+        /// using the specified <paramref name="capacity"/> and an ordinal comparer that satisfies the specified parameters.
+        /// </summary>
+        /// <param name="capacity">The initial capacity that the <see cref="StringKeyedDictionary{TValue}"/> can contain.</param>
+        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
+        /// <param name="useRandomizedHash"><see langword="true"/>&#160;to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        public StringKeyedDictionary(int capacity, bool ignoreCase, bool useRandomizedHash = false) : this(capacity)
+            => comparer = ignoreCase
+                ? useRandomizedHash ? StringSegmentComparer.OrdinalIgnoreCaseRandomized : StringSegmentComparer.OrdinalIgnoreCase
+                : useRandomizedHash ? StringSegmentComparer.OrdinalRandomized : null;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class
+        /// that uses an ordinal comparer that satisfies the specified parameters.
+        /// </summary>
+        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
+        /// <param name="useRandomizedHash"><see langword="true"/>&#160;to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        public StringKeyedDictionary(bool ignoreCase, bool useRandomizedHash = false) : this(0, ignoreCase, useRandomizedHash)
+        {
         }
 
         /// <summary>
