@@ -69,13 +69,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Initializes a new instance of the <see cref="FastRandom"/> class using a random seed value.
         /// </summary>
-        [SecuritySafeCritical]
-        public unsafe FastRandom()
+        public FastRandom() : this(Guid.NewGuid())
         {
-            // A new Guid is ideal as a random seed as it is a real random value (though with a few fixed bits)
-            // and has the same size as our state
-            Guid seed = Guid.NewGuid();
-            state = *(UInt128*)&seed;
         }
 
         /// <summary>
@@ -88,6 +83,19 @@ namespace KGySoft.CoreLibraries
             A = (ulong)~seed * 13 << 32 | (uint)seed * 397,
             B = ((ulong)seed * 13 << 32 | (uint)~seed * 397) ^ 0xAAAA_AAAA_AAAA_AAAA
         };
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
+        /// </summary>
+        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <exception cref="ArgumentException"><paramref name="seed"/> is <see cref="Guid.Empty"/>.</exception>
+        [SecuritySafeCritical]
+        public unsafe FastRandom(Guid seed)
+        {
+            if (seed == Guid.Empty)
+                Throw.ArgumentException(Argument.seed, Res.ArgumentEmpty);
+            state = *(UInt128*)&seed;
+        }
 
         #endregion
 

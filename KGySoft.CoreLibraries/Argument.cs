@@ -122,6 +122,7 @@ namespace KGySoft
         resx,
         s,
         scale,
+        seed,
         separator,
         separators,
         serializedType,

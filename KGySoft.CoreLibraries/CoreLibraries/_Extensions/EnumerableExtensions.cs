@@ -1806,6 +1806,21 @@ namespace KGySoft.CoreLibraries
             => Shuffle(source, new FastRandom(seed));
 
         /// <summary>
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="FastRandom"/> instance.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
+        /// <param name="seed">A non-<see cref="Guid.Empty"/> seed to use for the shuffling.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
+        /// <remarks>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        /// <exception cref="ArgumentException"><paramref name="seed"/> is <see cref="Guid.Empty"/>.</exception>
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Guid seed)
+            => Shuffle(source, new FastRandom(seed));
+
+        /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a new <see cref="FastRandom"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
