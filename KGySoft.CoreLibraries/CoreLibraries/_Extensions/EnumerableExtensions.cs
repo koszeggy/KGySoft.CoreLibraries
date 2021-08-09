@@ -66,7 +66,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the enumeration.</typeparam>
         /// <param name="source">The source enumeration.</param>
         /// <param name="action">The action to perform on each element.</param>
-        /// <returns>Returns the original list making possible to link it into a LINQ chain.</returns>
+        /// <returns>Returns the original <paramref name="source"/> making possible to link it into a LINQ chain.</returns>
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null!)
@@ -1797,7 +1797,11 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="seed">The seed to use for the shuffling.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
+        /// <remarks>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
             => Shuffle(source, new FastRandom(seed));
 
@@ -1806,7 +1810,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
+        /// <remarks>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
             => Shuffle(source, new FastRandom());
 
@@ -1816,8 +1824,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
         {
             if (random == null!)
@@ -1825,7 +1837,19 @@ namespace KGySoft.CoreLibraries
             if (source == null!)
                 Throw.ArgumentNullException(Argument.source);
 
-            return source.OrderBy(_ => random.Next());
+            List<T> buffer = source.ToList();
+            int len = buffer.Count;
+            for (var i = 0; i < len; ++i)
+            {
+                // picking the next value to return
+                int nextIndex = random.Next(i, len);
+                yield return buffer[nextIndex];
+
+                // note that no swap is needed because buffer is not returned so we just
+                // put the item at i to nextIndex so it can be picked later
+                if (i != nextIndex)
+                    buffer[nextIndex] = buffer[i];
+            }
         }
 
         /// <summary>

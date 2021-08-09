@@ -138,6 +138,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             }
         }
 
+        [Test]
+        public void ShuffleTest()
+        {
+            int[] numbers = Enumerable.Range(1, 100).ToArray();
+            int[] shuffled = numbers.Shuffle().ToArray();
+            CollectionAssert.AreNotEqual(numbers, shuffled);
+            CollectionAssert.AreEquivalent(numbers, shuffled);
+            CollectionAssert.AreEqual(numbers, shuffled.OrderBy(i => i));
+        }
+
         #endregion
     }
 }
