@@ -1885,24 +1885,37 @@ namespace KGySoft.CoreLibraries
 
             if (source is IList<T> list)
             {
-                if (list.Count > 0)
-                    return list[random.Next(list.Count)];
+                int count = list.Count;
+                if (count > 0)
+                    return list[random.Next(count)];
             }
-
 #if !NET35 && !NET40
             else if (source is IReadOnlyList<T> readonlyList)
             {
-                if (readonlyList.Count > 0)
-                    return readonlyList[random.Next(readonlyList.Count)];
+                int count = readonlyList.Count;
+                if (count > 0)
+                    return readonlyList[random.Next(count)];
+            }
+#endif
+            else if (source is ICollection<T> collection)
+            {
+                int count = collection.Count;
+                if (count > 0)
+                    return collection.ElementAt(random.Next(count));
+            }
+#if !NET35 && !NET40
+            else if (source is IReadOnlyCollection<T> readonlyCollection)
+            {
+                int count = readonlyCollection.Count;
+                if (count > 0)
+                    return readonlyCollection.ElementAt(random.Next(count));
             }
 #endif
             else
             {
-                using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
-                {
-                    if (shuffledEnumerator.MoveNext())
-                        return shuffledEnumerator.Current;
-                }
+                using IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator();
+                if (shuffledEnumerator.MoveNext())
+                    return shuffledEnumerator.Current;
             }
 
             if (!defaultIfEmpty)
