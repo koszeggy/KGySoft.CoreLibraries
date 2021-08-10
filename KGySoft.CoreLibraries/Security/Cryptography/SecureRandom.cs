@@ -68,10 +68,14 @@ namespace KGySoft.Security.Cryptography
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
-        /// To generate cryptographically secure random numbers, an <see cref="RNGCryptoServiceProvider"/> will be used internally.
+        /// To generate cryptographically secure random numbers, a default <see cref="RandomNumberGenerator"/> will be used internally.
         /// </summary>
         public SecureRandom()
+#if NETFRAMEWORK
             : this(new RNGCryptoServiceProvider())
+#else
+            : this(RandomNumberGenerator.Create())
+#endif
         {
         }
 
