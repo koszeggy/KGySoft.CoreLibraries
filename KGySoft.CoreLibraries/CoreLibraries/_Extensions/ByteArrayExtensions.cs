@@ -351,7 +351,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Encrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// Encrypts a byte array by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="password">Password of encryption.</param>
@@ -359,8 +359,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Encrypt(this byte[] bytes, string password, string? salt)
         {
-            using (SymmetricAlgorithm alg = new RijndaelManaged())
-                return Encrypt(bytes, alg, password, salt);
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Encrypt(bytes, alg, password, salt);
         }
 
         /// <summary>
@@ -386,7 +390,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Encrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using a randomly generated key and initialization vector, which are
+        /// Encrypts a byte array by the <see cref="Aes"/> algorithm using a randomly generated key and initialization vector, which are
         /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
@@ -395,8 +399,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Encrypt(this byte[] bytes, out byte[] key, out byte[] iv)
         {
-            using (SymmetricAlgorithm alg = new RijndaelManaged())
-                return Encrypt(bytes, alg, out key, out iv);
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Encrypt(bytes, alg, out key, out iv);
         }
 
         /// <summary>
@@ -437,7 +445,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Decrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="key"/> and initialization vector.
+        /// Decrypts a byte array by the <see cref="Aes"/> algorithm using the provided <paramref name="key"/> and initialization vector.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="key">Key of decryption.</param>
@@ -445,8 +453,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Decrypt(this byte[] bytes, byte[] key, byte[] iv)
         {
-            using (SymmetricAlgorithm alg = new RijndaelManaged())
-                return Decrypt(bytes, alg, key, iv);
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Decrypt(bytes, alg, key, iv);
         }
 
         /// <summary>
@@ -482,7 +494,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Decrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// Decrypts a byte array by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="password">Password of decryption.</param>
@@ -490,8 +502,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Decrypt(this byte[] bytes, string password, string? salt)
         {
-            using (SymmetricAlgorithm alg = new RijndaelManaged())
-                return Decrypt(bytes, alg, password, salt);
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Decrypt(bytes, alg, password, salt);
         }
 
         #endregion
