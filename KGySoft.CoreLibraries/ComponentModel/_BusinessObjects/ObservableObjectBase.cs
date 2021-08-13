@@ -48,7 +48,7 @@ namespace KGySoft.ComponentModel
     /// <example>
     /// The following example shows a possible implementation of a derived class.
     /// <code lang="C#"><![CDATA[
-    /// public class MyModel : ObservableObjectBaseCD
+    /// public class MyModel : ObservableObjectBase
     /// {
     ///     // A simple integer property (with zero default value). Until the property is set no value is stored internally.
     ///     public int IntProperty { get => Get<int>(); set => Set(value); }
