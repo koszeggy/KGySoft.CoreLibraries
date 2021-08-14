@@ -9,6 +9,10 @@
 ! v5.7.0:
 ~~~~~~~~~
 
++ Assembly changes:
+===================
++ Targeting also .NET 6.0.
+
 ! KGySoft.CoreLibraries namespace:
 ==================================
 ! ByteArrayExtensions class:
@@ -16,11 +20,26 @@
     which has been obsoleted starting with .NET 6. This is a breaking change only if we want to use the Decrypt
     method for the result of Encrypt of a previous version (though as a workaround, we still can explicitly pass a
     RijndaelManaged instance to the Decrypt overloads).
+! FastRandom class:
+  ! The NextInt64() method used to return any long value. Unfortunately .NET 6.0 also introduced a method with the
+    very same name but with a different behavior. To consolidate the behavior starting with this version this method
+    returns values greater or equal to zero and less than Int64.MaxValue.
+    Use the new SampleInt64 method to generate any long value.
+  ! NextInt32 method: To harmonize behavior with NextInt64 it returns a non-negative value less than Int32.MaxValue,
+    just like Next(). Use the new SampleInt32 method to generate any int value.
+  ! NextUInt64 method: To harmonize behavior with the methods above it now always returns smaller values
+    than UInt64.MaxValue. Use (ulung)SampleInt64 method to generate any ulong value.
+  ! NextUInt32 method: To harmonize behavior with the methods above it now always returns smaller values
+    than UInt32.MaxValue. Use (uint)SampleInt32 method to generate any uint value.
+  + New constructor overload from Guid seed
+  + New NextInt64(long)/NextInt64(long, long) methods (even below .NET 6.0 where base does not have such methods).
+  + New NextSingle method (even below .NET 6.0 where base does not have such method).
+  + New SampleInt64 method. It has the same behavior as the NextInt64 used to have before this version.
+  + New SampleInt32 method. It has the same behavior as the NextInt32 used to have before this version.
 + DateTimeExtensions class:
   + New AsLocal method
   + New ToUnixMilliseconds/ToUnixSeconds and FromUnixMilliseconds/FromUnixSeconds methods
 + EnumFormattingOptions enum: New Number option.
-+ FastRandom class: New constructor overload from Guid seed
 + StringSegmentComparer class:
   + New OrdinalRandomized property
   + New OrdinalIgnoreCaseRandomized property

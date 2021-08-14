@@ -19,10 +19,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Security;
-using System.Security.Permissions;
 using System.Text;
 using System.Xml.Schema;
 using KGySoft.Collections;
@@ -150,20 +148,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         }
 
         [Test]
+        [SuppressMessage("ReSharper", "InvokeAsExtensionMethod", Justification = "That would call the virtual NextInt64 in .NET 6 and above")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
         public void NextInt64Test()
         {
             // full range
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt64(1, 0));
+            Throws<ArgumentOutOfRangeException>(() => RandomExtensions.NextInt64(rnd, 1, 0));
 
             // small range
-            var result = rnd.NextInt64(-5, 5);
+            var result = RandomExtensions.NextInt64(rnd, -5, 5);
             Assert.IsTrue(result >= -5 && result < 5);
 
             // no range
-            result = rnd.NextInt64(1, 1);
+            result = RandomExtensions.NextInt64(rnd, 1, 1);
             Assert.AreEqual(1L, result);
 
             // big range, worst possible generating limit
