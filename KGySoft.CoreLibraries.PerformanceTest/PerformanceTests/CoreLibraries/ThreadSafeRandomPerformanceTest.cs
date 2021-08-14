@@ -58,6 +58,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var rnd = new Random();
             var fast = new FastRandom();
             var lrnd = new LockingRandom();
+#if NET6_0_OR_GREATER
+            var shared = Random.Shared; 
+#endif
             using var trnd = ThreadSafeRandom.Instance;
             using var trndSeed = ThreadSafeRandom.Create(0);
             using var trndWrappedFast = ThreadSafeRandom.Create(() => new FastRandom());
@@ -65,6 +68,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
             new PerformanceTest<int> { TestName = "Non-parallel", Iterations = iterations/*, Repeat = 5*/ }
                 .AddCase(() => rnd.Next(), "Random")
+#if NET6_0_OR_GREATER
+                .AddCase(() => shared.Next(), "Random.Shared")
+#endif
                 .AddCase(() => fast.Next(), "FastRandom")
                 .AddCase(() => lrnd.Next(), "LockingRandom")
                 .AddCase(() => trnd.Next(), "ThreadSafeRandom.Instance")
@@ -85,8 +91,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             using var trndSeed = ThreadSafeRandom.Create(0);
             using var trndWrappedFast = ThreadSafeRandom.Create(() => new FastRandom());
             using var trndWrappedRandom = ThreadSafeRandom.Create(() => new Random());
+#if NET6_0_OR_GREATER
+            var shared = Random.Shared;
+#endif
 
             new PerformanceTest { TestName = "Parallel", CpuAffinity = null, Iterations = 1 }
+#if NET6_0_OR_GREATER
+                .AddCase(() => Parallel.For(0, iterations, i => shared.Next()), "Random.Shared") 
+#endif
                 .AddCase(() => Parallel.For(0, iterations, i => lrnd.Next()), "LockingRandom")
                 .AddCase(() => Parallel.For(0, iterations, i => trnd.Next()), "ThreadSafeRandom.Instance")
                 .AddCase(() => Parallel.For(0, iterations, i => trndSeed.Next()), "ThreadSafeRandom.Create(0)")

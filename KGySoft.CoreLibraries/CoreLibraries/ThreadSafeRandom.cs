@@ -68,7 +68,12 @@ namespace KGySoft.CoreLibraries
             public override int Next() => ThreadInstance.Next();
             public override int Next(int maxValue) => ThreadInstance.Next(maxValue);
             public override int Next(int minValue, int maxValue) => ThreadInstance.Next(minValue, maxValue);
+            public override long NextInt64() => ThreadInstance.NextInt64();
+            public override long NextInt64(long maxValue) => ThreadInstance.NextInt64(maxValue);
+            public override long NextInt64(long minValue, long maxValue) => ThreadInstance.NextInt64(minValue, maxValue);
             public override double NextDouble() => ThreadInstance.NextDouble();
+            public override float NextSingle() => ThreadInstance.NextSingle();
+
             public override void NextBytes(byte[] buffer) => ThreadInstance.NextBytes(buffer);
 
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -138,7 +143,17 @@ namespace KGySoft.CoreLibraries
             public override int Next() => threadInstance.Value?.Next() ?? Throw.ObjectDisposedException<int>();
             public override int Next(int maxValue) => threadInstance.Value?.Next(maxValue) ?? Throw.ObjectDisposedException<int>();
             public override int Next(int minValue, int maxValue) => threadInstance.Value?.Next(minValue, maxValue) ?? Throw.ObjectDisposedException<int>();
+            public override long NextInt64() => threadInstance.Value?
+#if NET6_0_OR_GREATER
+                .NextInt64()
+#else
+                .NextInt64(Int64.MaxValue) // because the NextInt64() extension allows also negative values and Int64.MaxValue
+#endif
+                ?? Throw.ObjectDisposedException<int>();
+            public override long NextInt64(long maxValue) => threadInstance.Value?.NextInt64(maxValue) ?? Throw.ObjectDisposedException<int>();
+            public override long NextInt64(long minValue, long maxValue) => threadInstance.Value?.NextInt64(minValue, maxValue) ?? Throw.ObjectDisposedException<int>();
             public override double NextDouble() => threadInstance.Value?.NextDouble() ?? Throw.ObjectDisposedException<int>();
+            public override float NextSingle() => threadInstance.Value?.NextSingle() ?? Throw.ObjectDisposedException<int>();
             public override void NextBytes(byte[] buffer)
             {
                 Random? random = threadInstance.Value;
@@ -287,31 +302,70 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         /// <summary>
-        /// Returns a non-negative random integer.
+        /// Returns a non-negative random 32-bit integer that is less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
         /// </summary>
-        /// <returns>
-        /// A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
-        /// </returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>. </returns>
         public override int Next() => provider!.Next();
 
         /// <summary>
-        /// Returns a non-negative random integer that is less than the specified maximum.
+        /// Returns a non-negative random 32-bit integer that is less than the specified maximum.
         /// </summary>
         /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
-        /// <returns>
-        /// A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.
-        /// </returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
         public override int Next(int maxValue) => provider!.Next(maxValue);
 
         /// <summary>
-        /// Returns a random integer that is within a specified range.
+        /// Returns a random 32-bit integer that is within a specified range.
         /// </summary>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
         /// <param name="maxValue">The exclusive upper bound of the random number returned. <paramref name="maxValue" /> must be greater than or equal to <paramref name="minValue" />.</param>
-        /// <returns>
-        /// A 32-bit signed integer greater than or equal to <paramref name="minValue" /> and less than <paramref name="maxValue" />; that is, the range of return values includes <paramref name="minValue" /> but not <paramref name="maxValue" />. If <paramref name="minValue" /> equals <paramref name="maxValue" />, <paramref name="minValue" /> is returned.
-        /// </returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
         public override int Next(int minValue, int maxValue) => provider!.Next(minValue, maxValue);
+
+        /// <summary>
+        /// Returns a non-negative random 64-bit integer that is less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
+        /// </summary>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
+        public
+#if NET6_0_OR_GREATER
+            override
+#else
+            virtual
+#endif
+            long NextInt64() => provider!.NextInt64();
+
+        /// <summary>
+        /// Returns a non-negative random 64-bit integer that is less than the specified maximum.
+        /// </summary>
+        /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        public
+#if NET6_0_OR_GREATER
+            override
+#else
+            virtual
+#endif
+            long NextInt64(long maxValue) => provider!.NextInt64(maxValue);
+
+        /// <summary>
+        /// Returns a random 64-bit integer that is within a specified range.
+        /// </summary>
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The exclusive upper bound of the random number returned. <paramref name="maxValue" /> must be greater than or equal to <paramref name="minValue" />.</param>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        public
+#if NET6_0_OR_GREATER
+            override
+#else
+            virtual
+#endif
+            long NextInt64(long minValue, long maxValue) => provider!.NextInt64(minValue, maxValue);
 
         /// <summary>
         /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
@@ -320,6 +374,20 @@ namespace KGySoft.CoreLibraries
         /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
         /// </returns>
         public override double NextDouble() => provider!.NextDouble();
+
+        /// <summary>
+        /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
+        /// </summary>
+        /// <returns>
+        /// A single-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
+        /// </returns>
+        public
+#if NET6_0_OR_GREATER
+            override
+#else
+            virtual
+#endif
+            float NextSingle() => provider!.NextSingle();
 
         /// <summary>
         /// Fills the elements of a specified array of bytes with random numbers.

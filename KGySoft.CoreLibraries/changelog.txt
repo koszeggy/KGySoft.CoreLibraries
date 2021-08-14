@@ -36,6 +36,9 @@
   + New NextSingle method (even below .NET 6.0 where base does not have such method).
   + New SampleInt64 method. It has the same behavior as the NextInt64 used to have before this version.
   + New SampleInt32 method. It has the same behavior as the NextInt32 used to have before this version.
++ ThreadSafeRandom class:
+  + New NextInt64 methods (even below .NET 6.0 where base does not have such methods).
+  + New NextSingle method (even below .NET 6.0 where base does not have such method).
 + DateTimeExtensions class:
   + New AsLocal method
   + New ToUnixMilliseconds/ToUnixSeconds and FromUnixMilliseconds/FromUnixSeconds methods
