@@ -18,8 +18,8 @@
 ! ByteArrayExtensions class:
   ! Encrypt/Decrypt methods without a specified SymmetricAlgorithm use the Aes class instead of RijndaelManaged,
     which has been obsoleted starting with .NET 6. This is a breaking change only if we want to use the Decrypt
-    method for the result of Encrypt of a previous version (though as a workaround, we still can explicitly pass a
-    RijndaelManaged instance to the Decrypt overloads).
+    method for the result of Encrypt of a previous version (though as a workaround, you still can explicitly pass
+    a RijndaelManaged instance to the Decrypt overloads).
 ! FastRandom class:
   ! The NextInt64() method used to return any long value. Unfortunately .NET 6.0 also introduced a method with the
     very same name but with a different behavior. To consolidate the behavior starting with this version this method
@@ -51,6 +51,7 @@
   + ToString(TEnum,EnumFormattingOptions,string): Supporting EnumFormattingOptions.Number option
 * EnumExtensions class:
   * GetFlags<TEnum>(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
+* SecureRandom class: improving performance
 - Files class:
   - GetExecutingPath method: in .NET Framework it could throw an exception from a partially trusted domain.
 

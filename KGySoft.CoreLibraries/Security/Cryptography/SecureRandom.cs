@@ -16,6 +16,8 @@
 #region Usings
 
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices; 
 #endif
@@ -42,7 +44,7 @@ namespace KGySoft.Security.Cryptography
     {
         #region Constants
 
-        private const double normalizationFactor = 1d / (UInt32.MaxValue + 1d);
+        private const double normalizationFactor = 1d / (1L << 53);
 
         #endregion
 
@@ -103,17 +105,22 @@ namespace KGySoft.Security.Cryptography
         /// <summary>
         /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
         /// </summary>
-        /// <returns>
-        /// A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.
-        /// </returns>
+        /// <returns>A double-precision floating point number that is greater than or equal to 0.0, and less than 1.0.</returns>
         public override double NextDouble() => SampleDouble();
 
+#if NET6_0_OR_GREATER
         /// <summary>
-        /// Returns a non-negative random integer.
+        /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
         /// </summary>
-        /// <returns>
-        /// A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
-        /// </returns>
+        /// <returns>A single-precision floating point number that is greater than or equal to 0.0, and less than 1.0.</returns>
+        public override float NextSingle() => (float)SampleDouble();
+#endif
+
+        /// <summary>
+        /// Returns a non-negative random 32-bit integer that is less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
+        /// </summary>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int Next()
         {
             int result;
@@ -129,35 +136,111 @@ namespace KGySoft.Security.Cryptography
         /// Returns a non-negative random integer that is less than the specified maximum.
         /// </summary>
         /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
-        /// <returns>
-        /// A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.
-        /// </returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int Next(int maxValue)
         {
+            if (maxValue > 1)
+                return (int)(SampleUInt32() % (uint)maxValue);
+
             if (maxValue < 0)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-            return (int)(SampleDouble() * maxValue);
+            return 0;
         }
 
         /// <summary>
-        /// Returns a random integer that is within a specified range.
+        /// Returns a random 32-bit integer that is within a specified range.
         /// </summary>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
         /// <param name="maxValue">The exclusive upper bound of the random number returned. <paramref name="maxValue" /> must be greater than or equal to <paramref name="minValue" />.</param>
-        /// <returns>
-        /// A 32-bit signed integer greater than or equal to <paramref name="minValue" /> and less than <paramref name="maxValue" />; that is, the range of return values includes <paramref name="minValue" /> but not <paramref name="maxValue" />. If <paramref name="minValue" /> equals <paramref name="maxValue" />, <paramref name="minValue" /> is returned.
-        /// </returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int Next(int minValue, int maxValue)
         {
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             uint range = (uint)(maxValue - minValue);
+            if (range <= 1u)
+                return minValue;
 
-            if (range <= Int32.MaxValue)
-                return (int)(SampleDouble() * range) + minValue;
-            return (int)((long)(SampleDouble() * range) + minValue);
+            return (int)(SampleUInt32() % range) + minValue;
         }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Returns a non-negative random 64-bit integer that is less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
+        /// </summary>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method, this one does not return negative values
+        /// and the result is always less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
+        /// You can use the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> method to return any <see cref="long"/> value.</para>
+        /// </remarks>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public override long NextInt64()
+        {
+            long result;
+            do
+            {
+                result = (long)SampleUInt64() & Int64.MaxValue;
+            } while (result == Int64.MaxValue);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a non-negative random 64-bit integer that is less than the specified maximum.
+        /// </summary>
+        /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public override long NextInt64(long maxValue)
+        {
+            // using the slower 64-bit modulo division only for big range
+            if (maxValue > UInt32.MaxValue)
+                return maxValue == Int64.MaxValue
+                    ? NextInt64()
+                    : (long)(SampleUInt64() % (ulong)maxValue);
+            if (maxValue > 1L)
+                return (uint)SampleUInt64() % (uint)maxValue;
+
+            if (maxValue < 0L)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0L));
+            return 0L;
+        }
+
+        /// <summary>
+        /// Returns a random 64-bit integer that is within a specified range.
+        /// </summary>
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The exclusive upper bound of the random number returned. <paramref name="maxValue" /> must be greater than or equal to <paramref name="minValue" />.</param>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public override long NextInt64(long minValue, long maxValue)
+        {
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            ulong range = (ulong)(maxValue - minValue);
+
+            // using the slower 64-bit modulo division only for big range
+            if (range > UInt32.MaxValue)
+                return (long)(SampleUInt64() % range) + minValue;
+            if (range > 1UL)
+                return ((uint)SampleUInt64() % (uint)range) + minValue;
+
+            return minValue;
+        }
+#endif
 
         /// <summary>
         /// Disposes the current <see cref="SecureRandom"/> instance.
@@ -197,15 +280,51 @@ namespace KGySoft.Security.Cryptography
         #region Private Methods
 
         [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe uint SampleUInt32()
         {
+#if NETCOREAPP3_0_OR_GREATER
+            Span<byte> bytes = stackalloc byte[4];
+            provider.GetBytes(bytes);
+            return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes)); 
+#elif NETSTANDARD2_1_OR_GREATER
+            Span<byte> bytes = stackalloc byte[4];
+            provider.GetBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(uint*)p;
+#else
             byte[] bytes = new byte[4];
             provider.GetBytes(bytes);
             fixed (byte* p = bytes)
                 return *(uint*)p;
+#endif
         }
 
-        private double SampleDouble() => SampleUInt32() * normalizationFactor;
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe ulong SampleUInt64()
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            Span<byte> bytes = stackalloc byte[8];
+            provider.GetBytes(bytes);
+            return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
+#elif NETSTANDARD2_1_OR_GREATER
+            Span<byte> bytes = stackalloc byte[8];
+            provider.GetBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(ulong*)p;
+#else
+            byte[] bytes = new byte[8];
+            provider.GetBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(ulong*)p;
+#endif
+        }
+
+        private double SampleDouble()
+            // double has 53 significant bits and 11 bit exponent so using a [0..2^53) sample
+            // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format) 
+            => (SampleUInt64() >> 11) * normalizationFactor;
 
         #endregion
 
