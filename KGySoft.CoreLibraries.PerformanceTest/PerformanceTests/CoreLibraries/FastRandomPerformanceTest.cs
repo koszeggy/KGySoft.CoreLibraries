@@ -16,7 +16,6 @@
 #region Usings
 
 using System;
-using System.Runtime.Intrinsics.X86;
 
 using NUnit.Framework;
 

@@ -23,6 +23,14 @@ using KGySoft.Security.Cryptography;
 
 #endregion
 
+#region Suppressions
+
+#if !NET6_0_OR_GREATER
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     // This class implements the 128-bit XorShift+ algorithm. See https://en.wikipedia.org/wiki/Xorshift#xorshift+
@@ -126,29 +134,26 @@ namespace KGySoft.CoreLibraries
         #region Int32
 
         /// <summary>
-        /// Returns a random <see cref="int"/> value that can have any value.
+        /// Returns a random <see cref="int"/> can have any value.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 32-bit signed integer that is greater than or equal to <see cref="Int32.MinValue">Int32.MinValue</see> and less or equal to <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
         /// <remarks>
         /// <para>Similarly to the <see cref="Next()">Next</see> and <see cref="NextInt32">NextInt32</see> methods this one returns an <see cref="int"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</para>
-        /// <para>The <see cref="RandomExtensions.NextInt32(Random)">RandomExtensions.NextInt32(Random)</see> extension method has the same functionality
+        /// <para>The <see cref="RandomExtensions.SampleInt32(Random)">RandomExtensions.SampleInt32(Random)</see> extension method has the same functionality
         /// but it is faster to call this one directly.</para>
         /// </remarks>
         public int SampleInt32() => (int)SampleUInt64(ref state);
 
         /// <summary>
-        /// Returns a non-negative random integer that is less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// Returns a non-negative random 32-bit integer that is less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
         /// </summary>
         /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
         /// <remarks>
-        /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="NextInt64()"/>
-        /// method appeared in .NET 6.0 so it returns the same range as the <see cref="Next()"/> method. Use the <see cref="SampleInt32">SampleInt32</see> method to obtain
-        /// any <see cref="int"/> value.</note>
-        /// <para>Unlike the <see cref="RandomExtensions.NextInt32(Random)">RandomExtensions.NextInt32(Random)</see> extension method, this one does not return negative values
-        /// and the result is always less than <see cref="Int32.MaxValue">Int32.MaxValue</see>. You can use the <see cref="SampleInt32">SampleInt32</see> method to
-        /// return any <see cref="int"/> value somewhat faster than by the <see cref="RandomExtensions.NextInt32(Random)">RandomExtensions.NextInt32(Random)</see> method.</para>
+        /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior
+        /// of the <see cref="Random.NextInt64()">Random.NextInt64</see> method introduced in .NET 6.0 so it returns the same range as the <see cref="Next()"/> method.
+        /// Use the <see cref="SampleInt32">SampleInt32</see> method to obtain any <see cref="int"/> value.</note>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int NextInt32()
@@ -169,7 +174,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>. </returns>
         /// <remarks>
-        /// <note>If this method is not overridden, it just calls the <see cref="NextInt32">NextInt32</see> method.
+        /// <note>This method just calls the <see cref="NextInt32">NextInt32</see> method.
         /// You can call directly the non-virtual <see cref="NextInt32">NextInt32</see> method for a slightly better performance.</note>
         /// </remarks>
         public override int Next() => NextInt32();
@@ -178,7 +183,9 @@ namespace KGySoft.CoreLibraries
         /// Returns a non-negative random 32-bit integer that is less than the specified maximum.
         /// </summary>
         /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
-        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int Next(int maxValue)
         {
@@ -216,13 +223,14 @@ namespace KGySoft.CoreLibraries
         #region Int64
 
         /// <summary>
-        /// Returns a random <see cref="long"/> value that can have any value.
+        /// Returns a random <see cref="long"/> can have any value.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 64-bit signed integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <remarks>
         /// <para>Similarly to the <see cref="NextInt64()">NextInt64</see> method this one returns an <see cref="long"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int64.MaxValue">Int64.MaxValue</see>.</para>
-        /// <para>The <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method has the same functionality
+        /// <para>The <see cref="RandomExtensions.SampleInt64(Random)">RandomExtensions.SampleInt64(Random)</see> extension method has the same functionality
         /// but it is faster to call this one directly.</para>
         /// </remarks>
         public long SampleInt64() => (long)SampleUInt64(ref state);
@@ -233,11 +241,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <remarks>
-        /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="Random.NextInt64()">Random.NextInt64</see>
-        /// method appeared in .NET 6.0 so it returns the same range. Use the <see cref="SampleInt64">SampleInt64</see> method to obtain any <see cref="long"/> value.</note>
-        /// <para>Unlike the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method, this one does not return negative values
-        /// and the result is always less than <see cref="Int64.MaxValue">Int64.MaxValue</see>. You can use the <see cref="SampleInt64">SampleInt64</see> method to
-        /// return any <see cref="long"/> value somewhat faster than by the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> method.</para>
+        /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior
+        /// of the <see cref="Random.NextInt64()">Random.NextInt64</see> method introduced in .NET 6.0 so it returns the same range.
+        /// Use the <see cref="SampleInt64">SampleInt64</see> method to obtain any <see cref="long"/> value.</note>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
 #if NET6_0_OR_GREATER
@@ -366,13 +372,13 @@ namespace KGySoft.CoreLibraries
         #region Unsigned
 
         /// <summary>
-        /// Returns a random <see cref="uint"/> value that is less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.
+        /// Returns a random 32-bit unsigned integer that is less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <remarks>
         /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="NextInt64()"/>
-        /// method appeared in .NET 6.0. Cast the result of the <see cref="SampleInt32">SampleInt32</see> method to obtain any <see cref="uint"/> value.</note>
+        /// method introduced in .NET 6.0. Cast the result of the <see cref="SampleInt32">SampleInt32</see> method to obtain any <see cref="uint"/> value.</note>
         /// <para>Unlike the <see cref="RandomExtensions.NextUInt32(Random)">RandomExtensions.NextUInt32(Random)</see> extension method, this one always returns
         /// values less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</para>
         /// </remarks>
@@ -390,13 +396,13 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns a random <see cref="ulong"/> value that is less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.
+        /// Returns a random 64-bit unsigned integer that is less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <remarks>
         /// <note type="caution">Starting with version 5.7.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="NextInt64()"/>
-        /// method appeared in .NET 6.0. Cast the result of the <see cref="SampleInt64">SampleInt64</see> method to obtain any <see cref="ulong"/> value.</note>
+        /// method introduced in .NET 6.0. Cast the result of the <see cref="SampleInt64">SampleInt64</see> method to obtain any <see cref="ulong"/> value.</note>
         /// <para>Unlike the <see cref="RandomExtensions.NextUInt64(Random)">RandomExtensions.NextUInt64(Random)</see> extension method, this one always returns
         /// values less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</para>
         /// </remarks>
@@ -457,7 +463,7 @@ namespace KGySoft.CoreLibraries
                 // 32 bit at once if possible
                 if (len >= 4)
                 {
-                    ((uint*)pByte)[0] = (uint)finalSample;
+                    *(uint*)pByte = (uint)finalSample;
                     len -= 4;
                     if (len != 0)
                     {

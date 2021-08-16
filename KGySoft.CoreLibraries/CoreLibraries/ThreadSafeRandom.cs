@@ -143,13 +143,7 @@ namespace KGySoft.CoreLibraries
             public override int Next() => threadInstance.Value?.Next() ?? Throw.ObjectDisposedException<int>();
             public override int Next(int maxValue) => threadInstance.Value?.Next(maxValue) ?? Throw.ObjectDisposedException<int>();
             public override int Next(int minValue, int maxValue) => threadInstance.Value?.Next(minValue, maxValue) ?? Throw.ObjectDisposedException<int>();
-            public override long NextInt64() => threadInstance.Value?
-#if NET6_0_OR_GREATER
-                .NextInt64()
-#else
-                .NextInt64(Int64.MaxValue) // because the NextInt64() extension allows also negative values and Int64.MaxValue
-#endif
-                ?? Throw.ObjectDisposedException<int>();
+            public override long NextInt64() => threadInstance.Value?.NextInt64() ?? Throw.ObjectDisposedException<int>();
             public override long NextInt64(long maxValue) => threadInstance.Value?.NextInt64(maxValue) ?? Throw.ObjectDisposedException<int>();
             public override long NextInt64(long minValue, long maxValue) => threadInstance.Value?.NextInt64(minValue, maxValue) ?? Throw.ObjectDisposedException<int>();
             public override double NextDouble() => threadInstance.Value?.NextDouble() ?? Throw.ObjectDisposedException<int>();
@@ -311,7 +305,9 @@ namespace KGySoft.CoreLibraries
         /// Returns a non-negative random 32-bit integer that is less than the specified maximum.
         /// </summary>
         /// <param name="maxValue">The exclusive upper bound of the random number to be generated. <paramref name="maxValue" /> must be greater than or equal to 0.</param>
-        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />; that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />. However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0, and less than <paramref name="maxValue" />;
+        /// that is, the range of return values ordinarily includes 0 but not <paramref name="maxValue" />.
+        /// However, if <paramref name="maxValue" /> equals 0, <paramref name="maxValue" /> is returned.</returns>
         public override int Next(int maxValue) => provider!.Next(maxValue);
 
         /// <summary>

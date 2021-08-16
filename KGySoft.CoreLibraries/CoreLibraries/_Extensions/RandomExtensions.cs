@@ -20,8 +20,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-#if NETSTANDARD2_1
-using System.Runtime.InteropServices; 
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.InteropServices;
 #endif
 using System.Security; 
 using System.Text;
@@ -129,6 +129,8 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
+        #region Public Methods
+
         #region Byte Array
 
         /// <summary>
@@ -175,17 +177,26 @@ namespace KGySoft.CoreLibraries
         #region Integers
 
         /// <summary>
-        /// Returns a random <see cref="sbyte"/> value.
+        /// Returns a random <see cref="sbyte"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>An 8-bit signed integer that is greater than or equal to <see cref="SByte.MinValue">SByte.MinValue</see> and less or equal to <see cref="SByte.MaxValue">SByte.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        public static sbyte NextSByte(this Random random)
-            => (sbyte)random.Next();
+        public static sbyte SampleSByte(this Random random) => (sbyte)random.Next();
 
         /// <summary>
-        /// Returns a random <see cref="sbyte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random 8-bit signed integer that is less than <see cref="SByte.MaxValue">SByte.MaxValue</see>.
+        /// To return any <see cref="sbyte"/> use the <see cref="SampleSByte">SampleSByte</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>An 8-bit signed integer that is greater than or equal to 0 and less than <see cref="SByte.MaxValue">SByte.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static sbyte NextSByte(this Random random) => (sbyte)random.Next(SByte.MaxValue);
+
+        /// <summary>
+        /// Returns a non-negative random 8-bit signed integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -200,7 +211,7 @@ namespace KGySoft.CoreLibraries
             => (sbyte)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="sbyte"/> value that is within a specified range.
+        /// Returns a random 8-bit signed integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -216,16 +227,24 @@ namespace KGySoft.CoreLibraries
             => (sbyte)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="byte"/> value.
+        /// Returns a random <see cref="byte"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>An 8-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="Byte.MaxValue">Byte.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        public static byte NextByte(this Random random)
-            => (byte)random.Next();
+        public static byte SampleByte(this Random random) => (byte)random.Next();
 
         /// <summary>
-        /// Returns a random <see cref="byte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a random 8-bit unsigned integer that is less than <see cref="Byte.MaxValue">Byte.MaxValue</see>.
+        /// To return any <see cref="byte"/> use the <see cref="SampleByte">SampleByte</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>An 8-bit unsigned integer that is greater than or equal to 0 and less than <see cref="Byte.MaxValue">Byte.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static byte NextByte(this Random random) => (byte)random.Next(Byte.MaxValue);
+
+        /// <summary>
+        /// Returns a random 8-bit unsigned integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -238,7 +257,7 @@ namespace KGySoft.CoreLibraries
             => (byte)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="byte"/> value that is within a specified range.
+        /// Returns a random 8-bit unsigned integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -253,18 +272,24 @@ namespace KGySoft.CoreLibraries
             => (byte)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="short"/> value.
+        /// Returns a random <see cref="short"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 16-bit signed integer that is greater than or equal to <see cref="Int16.MinValue">Int16.MinValue</see> and less or equal to <see cref="Int16.MaxValue">Int16.MaxValue</see>.</returns>
-        /// <remarks>Similarly to the <see cref="Random.Next()">Random.Next()</see> method this one returns an <see cref="int"/> value; however, the result can be negative and
-        /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        public static short NextInt16(this Random random)
-            => (short)random.Next();
+        public static short SampleInt16(this Random random) => (short)random.Next();
 
         /// <summary>
-        /// Returns a random <see cref="short"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random 16-bit signed integer that is less than <see cref="Int16.MaxValue">Int16.MaxValue</see>.
+        /// To return any <see cref="short"/> use the <see cref="SampleInt16">SampleInt16</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 16-bit signed integer that is greater than or equal to 0 and less than <see cref="Int16.MaxValue">Int16.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static short NextInt16(this Random random) => (short)random.Next(Int16.MaxValue);
+
+        /// <summary>
+        /// Returns a non-negative random 16-bit signed integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -278,7 +303,7 @@ namespace KGySoft.CoreLibraries
             => (short)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="short"/> value that is within a specified range.
+        /// Returns a random 16-bit signed integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -293,17 +318,26 @@ namespace KGySoft.CoreLibraries
             => (short)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="ushort"/> value.
+        /// Returns a random <see cref="ushort"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 16-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt16.MaxValue">UInt16.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        public static ushort NextUInt16(this Random random)
-            => (ushort)random.Next();
+        public static ushort SampleUInt16(this Random random) => (ushort)random.Next();
 
         /// <summary>
-        /// Returns a random <see cref="ushort"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a random 16-bit unsigned integer that is less than <see cref="UInt16.MaxValue">UInt16.MaxValue</see>.
+        /// To return any <see cref="ushort"/> use the <see cref="SampleUInt16">SampleUInt16</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 16-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt16.MaxValue">UInt16.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static ushort NextUInt16(this Random random) => (ushort)random.Next(UInt16.MaxValue);
+
+        /// <summary>
+        /// Returns a random 16-bit unsigned integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -317,7 +351,7 @@ namespace KGySoft.CoreLibraries
             => (ushort)random.NextInt32(maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="ushort"/> value that is within a specified range.
+        /// Returns a random 16-bit unsigned integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -333,24 +367,31 @@ namespace KGySoft.CoreLibraries
             => (ushort)random.NextInt32(minValue, maxValue, inclusiveUpperBound);
 
         /// <summary>
-        /// Returns a random <see cref="int"/> value.
+        /// Returns a random <see cref="int"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 32-bit signed integer that is greater than or equal to <see cref="Int32.MinValue">Int32.MinValue</see> and less or equal to <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
         /// <remarks>Similarly to the <see cref="Random.Next()">Random.Next()</see> method this one returns an <see cref="int"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        [SecuritySafeCritical]
-        public static unsafe int NextInt32(this Random random)
+        public static int SampleInt32(this Random random)
         {
-            var bytes = new byte[4];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(int*)p;
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return (int)GenerateSampleUInt32(random);
         }
 
         /// <summary>
-        /// Returns a random <see cref="int"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random 32-bit signed integer that is less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.
+        /// To return any <see cref="int"/> use the <see cref="SampleInt32">SampleInt32</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static int NextInt32(this Random random) => random.Next();
+
+        /// <summary>
+        /// Returns a non-negative random 32-bit signed integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -360,23 +401,21 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static int NextInt32(this Random random, int maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            
-            if (inclusiveUpperBound)
-            {
-                if (maxValue == Int32.MaxValue)
-                    return random.Next(-1, maxValue) + 1;
-                maxValue += 1;
-            }
+            if (maxValue < 0)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
 
-            return random.Next(maxValue);
+            return !inclusiveUpperBound ? random.Next(maxValue)
+                : maxValue == Int32.MaxValue ? random.Next(-1, maxValue) + 1
+                : random.Next(maxValue + 1);
         }
 
         /// <summary>
-        /// Returns a random <see cref="int"/> value that is within a specified range.
+        /// Returns a random 32-bit signed integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -387,6 +426,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static int NextInt32(this Random random, int minValue, int maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null!)
@@ -395,41 +435,45 @@ namespace KGySoft.CoreLibraries
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
-            uint range = (uint)(maxValue - minValue);
-            bool shift = false;
-            if (inclusiveUpperBound)
-            {
-                if (range == UInt32.MaxValue)
-                    return random.NextInt32();
-                range += 1;
-                shift = maxValue == Int32.MaxValue;
-            }
-
-            if (!shift)
-                return random.Next(minValue, (int)(minValue + range));
-
-            Debug.Assert(minValue > Int32.MinValue, "Unconditional NextInt32 should have been called");
-            return random.Next(minValue - 1, (int)(minValue - 1 + range)) + 1;
+            return !inclusiveUpperBound ? random.Next(minValue, maxValue)
+                : maxValue != Int32.MaxValue ? random.Next(minValue, maxValue + 1)
+                : minValue != Int32.MinValue ? random.Next(minValue - 1, maxValue) + 1
+                : (int)GenerateSampleUInt32(random);
         }
 
         /// <summary>
-        /// Returns a random <see cref="uint"/> value.
+        /// Returns a random <see cref="uint"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        [SecuritySafeCritical]
-        public static unsafe uint NextUInt32(this Random random)
+        public static uint SampleUInt32(this Random random)
         {
-            var bytes = new byte[4];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(uint*)p;
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return GenerateSampleUInt32(random);
         }
 
         /// <summary>
-        /// Returns a random <see cref="uint"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a random 32-bit unsigned integer that is less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.
+        /// To return any <see cref="uint"/> use the <see cref="SampleUInt32">SampleUInt32</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static uint NextUInt32(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            return (uint)(random.Next(Int32.MinValue, Int32.MaxValue) + Int32.MinValue);
+        }
+
+        /// <summary>
+        /// Returns a random 32-bit unsigned integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -440,10 +484,25 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static uint NextUInt32(this Random random, uint maxValue, bool inclusiveUpperBound = false)
-            => random.NextUInt32(0U, maxValue, inclusiveUpperBound);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == UInt32.MaxValue)
+                    return GenerateSampleUInt32(random);
+                maxValue += 1;
+            }
+
+            if (maxValue <= Int32.MaxValue)
+                return (uint)random.Next((int)maxValue);
+            int low = (int)(Int32.MaxValue - maxValue);
+            return (uint)(random.Next(low, Int32.MaxValue) - low);
+        }
 
         /// <summary>
-        /// Returns a random <see cref="uint"/> value that is within a specified range.
+        /// Returns a random 32-bit unsigned integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -463,36 +522,60 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             uint range = maxValue - minValue;
+
             if (inclusiveUpperBound)
             {
                 if (range == UInt32.MaxValue)
-                    return random.NextUInt32();
+                    return GenerateSampleUInt32(random);
                 range += 1;
             }
 
-            if (range < Int32.MaxValue)
+            if (range <= Int32.MaxValue)
                 return (uint)random.Next((int)range) + minValue;
-            long low = (long)Int32.MaxValue - range;
-            return (uint)(random.Next((int)low, Int32.MaxValue) - low + minValue);
+            int low = (int)(Int32.MaxValue - range);
+            return (uint)(random.Next(low, Int32.MaxValue) - low) + minValue;
         }
 
         /// <summary>
-        /// Returns a random <see cref="long"/> value.
+        /// Returns a random <see cref="long"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 64-bit signed integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        [SecuritySafeCritical]
-        public static unsafe long NextInt64(this Random random)
+        public static long SampleInt64(this Random random)
         {
-            var bytes = new byte[8];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(long*)p;
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return (long)GenerateSampleUInt64(random);
         }
 
         /// <summary>
-        /// Returns a random <see cref="long"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random 64-bit signed integer that is less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
+        /// To return any <see cref="long"/> use the <see cref="SampleInt64">SampleInt64</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static long NextInt64(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+#if NET6_0_OR_GREATER
+            return random.NextInt64();
+#else
+            long result;
+            do
+            {
+                result = (long)GenerateSampleUInt64(random) & Int64.MaxValue;
+            } while (result == Int64.MaxValue);
+
+            return result;
+#endif
+        }
+
+        /// <summary>
+        /// Returns a non-negative random 64-bit signed integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -503,7 +586,33 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static long NextInt64(this Random random, long maxValue, bool inclusiveUpperBound = false)
-            => random.NextInt64(0L, maxValue, inclusiveUpperBound);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue < 0L)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+
+#if NET6_0_OR_GREATER
+            return !inclusiveUpperBound ? random.NextInt64(maxValue)
+                : maxValue == Int64.MaxValue ? random.NextInt64(-1, maxValue) + 1
+                : random.NextInt64(maxValue + 1);
+#else
+            // fallback for 32-bit range
+            if (maxValue <= UInt32.MaxValue)
+                return random.NextUInt32((uint)maxValue, inclusiveUpperBound);
+
+            ulong sample = GenerateSampleUInt64(random);
+
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == Int64.MaxValue)
+                    return (long)sample & Int64.MaxValue;
+                maxValue += 1;
+            }
+
+            return (long)(GenerateSampleUInt64(random) % (ulong)maxValue);
+#endif
+        }
 
         /// <summary>
         /// Returns a random <see cref="long"/> value that is within a specified range.
@@ -524,46 +633,73 @@ namespace KGySoft.CoreLibraries
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
+#if NET6_0_OR_GREATER
+            return !inclusiveUpperBound ? random.NextInt64(minValue, maxValue)
+                : maxValue != Int64.MaxValue ? random.NextInt64(minValue, maxValue + 1)
+                : minValue != Int64.MinValue ? random.NextInt64(minValue - 1, maxValue) + 1
+                : (long)GenerateSampleUInt64(random);
+#else
             ulong range = (ulong)(maxValue - minValue);
+
+            // fallback for 32-bit range
             if (range <= UInt32.MaxValue)
-                return random.NextUInt32(0U, (uint)range, inclusiveUpperBound) + minValue;
+                return random.NextUInt32((uint)range, inclusiveUpperBound) + minValue;
+
+            ulong sample = GenerateSampleUInt64(random);
 
             if (inclusiveUpperBound)
             {
                 if (range == UInt64.MaxValue)
-                    return random.NextInt64();
+                    return (long)sample;
+                range += 1;
             }
-            else
-                range -= 1;
 
-            ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);
-            ulong sample;
-            do
-            {
-                sample = random.NextUInt64();
-            }
-            while (sample > limit);
-            return (long)((sample % range) + (ulong)minValue);
+            return (long)(sample % range) + minValue;
+#endif
         }
 
         /// <summary>
-        /// Returns a random <see cref="ulong"/> value.
+        /// Returns a random <see cref="ulong"/> that can have any value.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
-        [SecuritySafeCritical]
-        public static unsafe ulong NextUInt64(this Random random)
+        public static ulong SampleUInt64(this Random random)
         {
-            var bytes = new byte[8];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(ulong*)p;
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return GenerateSampleUInt64(random);
         }
 
         /// <summary>
-        /// Returns a random <see cref="ulong"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a random 64-bit unsigned integer that is less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.
+        /// To return any <see cref="ulong"/> use the <see cref="SampleUInt64">SampleUInt64</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static ulong NextUInt64(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+#if NET6_0_OR_GREATER
+            return (ulong)(random.NextInt64(Int64.MinValue, Int64.MaxValue) + Int64.MinValue);
+#else
+            ulong result;
+            do
+            {
+                result = GenerateSampleUInt64(random);
+            } while (result == UInt64.MaxValue);
+
+            return result;
+#endif
+        }
+
+        /// <summary>
+        /// Returns a random 64-bit unsigned integer that is within the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -574,10 +710,42 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public static ulong NextUInt64(this Random random, ulong maxValue, bool inclusiveUpperBound = false)
-            => random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+#if NET6_0_OR_GREATER
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == UInt64.MaxValue)
+                    return GenerateSampleUInt64(random);
+                maxValue += 1;
+            }
+
+            if (maxValue <= Int64.MaxValue)
+                return (ulong)random.NextInt64((long)maxValue);
+            long low = (long)(Int64.MaxValue - maxValue);
+            return (ulong)(random.NextInt64(low, Int64.MaxValue) - low);
+#else
+            // fallback for 32-bit range
+            if (maxValue <= UInt32.MaxValue)
+                return random.NextUInt32((uint)maxValue, inclusiveUpperBound);
+
+            ulong sample = GenerateSampleUInt64(random);
+
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == UInt64.MaxValue)
+                    return sample;
+                maxValue += 1;
+            }
+
+            return sample % maxValue;
+#endif
+        }
 
         /// <summary>
-        /// Returns a random <see cref="ulong"/> value that is within a specified range.
+        /// Returns a random 64-bit unsigned integer that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
@@ -597,25 +765,35 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = maxValue - minValue;
+
+#if NET6_0_OR_GREATER
+            if (inclusiveUpperBound)
+            {
+                if (range == UInt64.MaxValue)
+                    return GenerateSampleUInt64(random);
+                range += 1;
+            }
+
+            if (range <= Int64.MaxValue)
+                return (ulong)random.NextInt64((long)range) + minValue;
+            long low = (long)(Int64.MaxValue - range);
+            return (ulong)(random.NextInt64(low, Int64.MaxValue) - low) + minValue;
+#else
+            // fallback for 32-bit range
             if (range <= UInt32.MaxValue)
-                return random.NextUInt32(0U, (uint)range, inclusiveUpperBound) + minValue;
+                return random.NextUInt32((uint)range, inclusiveUpperBound) + minValue;
+
+            ulong sample = GenerateSampleUInt64(random);
 
             if (inclusiveUpperBound)
             {
                 if (range == UInt64.MaxValue)
-                    return random.NextUInt64();
+                    return sample;
+                range += 1;
             }
-            else
-                range -= 1;
 
-            ulong limit = UInt64.MaxValue - (UInt64.MaxValue % range);
-            ulong sample;
-            do
-            {
-                sample = random.NextUInt64();
-            }
-            while (sample > limit);
-            return (sample % range) + minValue;
+            return sample % range + minValue;
+#endif
         }
 
         #endregion
@@ -880,7 +1058,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static char NextChar(this Random random, char minValue = Char.MinValue, char maxValue = Char.MaxValue)
             => minValue == Char.MinValue && maxValue == Char.MaxValue
-                ? (char)random.NextUInt16()
+                ? (char)random.SampleUInt16()
                 : (char)random.NextUInt16(minValue, maxValue, true);
 
         /// <summary>
@@ -914,8 +1092,8 @@ namespace KGySoft.CoreLibraries
                 return String.Empty;
 
             string result = new String('\0', length);
-            fixed(char* s = result)
-            fixed(char* set = allowedCharacters)
+            fixed (char* s = result)
+            fixed (char* set = allowedCharacters)
                 FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
             return result;
         }
@@ -1528,7 +1706,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="RandomExtensions"/> class for some examples.</note>
         /// </remarks>
         [SecuritySafeCritical]
-        [return:MaybeNull]public static T NextObject<T>(this Random random, GenerateObjectSettings? settings = null)
+        [return: MaybeNull]
+        public static T NextObject<T>(this Random random, GenerateObjectSettings? settings = null)
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
@@ -1560,7 +1739,51 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #endregion
+
         #region Private Methods
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe uint GenerateSampleUInt32(Random random)
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            Span<byte> bytes = stackalloc byte[4];
+            random.NextBytes(bytes);
+            return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes));
+#elif NETSTANDARD2_1_OR_GREATER
+            Span<byte> bytes = stackalloc byte[4];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(uint*)p;
+#else
+            byte[] bytes = new byte[4];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(uint*)p;
+#endif
+        }
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe ulong GenerateSampleUInt64(Random random)
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            Span<byte> bytes = stackalloc byte[8];
+            random.NextBytes(bytes);
+            return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
+#elif NETSTANDARD2_1_OR_GREATER
+            Span<byte> bytes = stackalloc byte[8];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(ulong*)p;
+#else
+            byte[] bytes = new byte[8];
+            random.NextBytes(bytes);
+            fixed (byte* p = bytes)
+                return *(ulong*)p;
+#endif
+        }
 
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator", Justification = "In this method this is intended")]

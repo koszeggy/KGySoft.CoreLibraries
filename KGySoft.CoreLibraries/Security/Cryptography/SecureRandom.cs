@@ -17,9 +17,8 @@
 
 using System;
 using System.Runtime.CompilerServices;
+#if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.InteropServices;
-#if NETSTANDARD2_1
-using System.Runtime.InteropServices; 
 #endif
 using System.Security; 
 using System.Security.Cryptography;
@@ -176,11 +175,6 @@ namespace KGySoft.Security.Cryptography
         /// Returns a non-negative random 64-bit integer that is less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
         /// </summary>
         /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
-        /// <remarks>
-        /// <para>Unlike the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> extension method, this one does not return negative values
-        /// and the result is always less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
-        /// You can use the <see cref="RandomExtensions.NextInt64(Random)">RandomExtensions.NextInt64(Random)</see> method to return any <see cref="long"/> value.</para>
-        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public override long NextInt64()
         {

@@ -508,15 +508,15 @@ namespace KGySoft.CoreLibraries
             }
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();
-            private static object GenerateByte(ref GeneratorContext context) => context.Random.NextByte();
-            private static object GenerateSbyte(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.NextSByte() : context.Random.NextSByte(SByte.MaxValue, true);
+            private static object GenerateByte(ref GeneratorContext context) => context.Random.SampleByte();
+            private static object GenerateSbyte(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleSByte() : context.Random.NextSByte(SByte.MaxValue, true);
             private static object GenerateChar(ref GeneratorContext context) => context.Random.NextChar();
-            private static object GenerateInt16(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.NextInt16() : context.Random.NextInt16(Int16.MaxValue, true);
-            private static object GenerateUInt16(ref GeneratorContext context) => context.Random.NextUInt16();
-            private static object GenerateInt32(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.NextInt32() : context.Random.NextInt32(Int32.MaxValue, true);
-            private static object GenerateUInt32(ref GeneratorContext context) => context.Random.NextUInt32();
-            private static object GenerateInt64(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.NextInt64() : context.Random.NextInt64(Int64.MaxValue, true);
-            private static object GenerateUInt64(ref GeneratorContext context) => context.Random.NextUInt64();
+            private static object GenerateInt16(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt16() : context.Random.NextInt16(Int16.MaxValue, true);
+            private static object GenerateUInt16(ref GeneratorContext context) => context.Random.SampleUInt16();
+            private static object GenerateInt32(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt32() : context.Random.NextInt32(Int32.MaxValue, true);
+            private static object GenerateUInt32(ref GeneratorContext context) => context.Random.SampleUInt32();
+            private static object GenerateInt64(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt64() : context.Random.NextInt64(Int64.MaxValue, true);
+            private static object GenerateUInt64(ref GeneratorContext context) => context.Random.SampleUInt64();
             private static object GenerateIntPtr(ref GeneratorContext context) => (IntPtr)(IntPtr.Size == 4 ? (int)GenerateInt32(ref context) : (long)GenerateInt64(ref context));
             private static object GenerateUIntPtr(ref GeneratorContext context) => (UIntPtr)(UIntPtr.Size == 4 ? (uint)GenerateUInt32(ref context) : (ulong)GenerateUInt64(ref context));
 

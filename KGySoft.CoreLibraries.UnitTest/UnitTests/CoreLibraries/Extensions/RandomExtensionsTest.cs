@@ -19,8 +19,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+#if NETFRAMEWORK
+using System.Diagnostics;
+#endif
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+#if NETFRAMEWORK
+using System.Security;
+using System.Security.Permissions;
+#endif
 using System.Text;
 using System.Xml.Schema;
 using KGySoft.Collections;
@@ -132,24 +139,37 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt32(1, 0));
 
-            // small range
-            var result = rnd.NextUInt32(1, 2);
+            // no range
+            uint result = rnd.NextUInt32(1, 1);
+            Assert.AreEqual(1U, result);
+
+            // 1 range
+            result = rnd.NextUInt32(1, 2);
             Assert.AreEqual(1, result);
             result = rnd.NextUInt32(UInt32.MaxValue - 1, UInt32.MaxValue);
             Assert.AreEqual(UInt32.MaxValue - 1, result);
 
-            // big range
-            result = rnd.NextUInt32(10, (uint)Int32.MaxValue + 100);
-            Assert.IsTrue(result >= 10 && result < (uint)Int32.MaxValue + 100);
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.NextUInt32(100);
+                Assert.IsTrue(result < 100);
+                result = rnd.NextUInt32(10, 100);
+                Assert.IsTrue(result >= 10 && result < 100);
 
-            // no range
-            result = rnd.NextUInt32(1, 1);
-            Assert.AreEqual(1U, result);
+                // big range
+                result = rnd.NextUInt32((uint)Int32.MaxValue + 100);
+                Assert.IsTrue(result < (uint)Int32.MaxValue + 100);
+                result = rnd.NextUInt32(10, (uint)Int32.MaxValue + 100);
+                Assert.IsTrue(result >= 10 && result < (uint)Int32.MaxValue + 100);
+            }
         }
 
         [Test]
+#if !NET6_0_OR_GREATER
         [SuppressMessage("ReSharper", "InvokeAsExtensionMethod", Justification = "That would call the virtual NextInt64 in .NET 6 and above")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")] 
+#endif
         public void NextInt64Test()
         {
             // full range
@@ -158,17 +178,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // min > max
             Throws<ArgumentOutOfRangeException>(() => RandomExtensions.NextInt64(rnd, 1, 0));
 
-            // small range
-            var result = RandomExtensions.NextInt64(rnd, -5, 5);
-            Assert.IsTrue(result >= -5 && result < 5);
-
             // no range
+            long result = RandomExtensions.NextInt64(rnd, 0);
+            Assert.AreEqual(0L, result);
             result = RandomExtensions.NextInt64(rnd, 1, 1);
             Assert.AreEqual(1L, result);
 
-            // big range, worst possible generating limit
-            result = rnd.NextInt64(-1, Int64.MaxValue, true);
-            Assert.IsTrue(result >= -1L);
+            // 1 range
+            result = RandomExtensions.NextInt64(rnd, 1);
+            Assert.AreEqual(0L, result);
+            result = RandomExtensions.NextInt64(rnd, 1, 2);
+            Assert.AreEqual(1L, result);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = RandomExtensions.NextInt64(rnd, 10);
+                Assert.IsTrue(result >= 0 && result < 10);
+                result = RandomExtensions.NextInt64(rnd, -5, 5);
+                Assert.IsTrue(result >= -5 && result < 5);
+
+                // medium range (UInt32)
+                result = RandomExtensions.NextInt64(rnd, Int32.MaxValue + 5L);
+                Assert.IsTrue(result >= 0L && result < Int32.MaxValue + 5L);
+                result = RandomExtensions.NextInt64(rnd, -5, Int32.MaxValue);
+                Assert.IsTrue(result >= -5 && result < Int32.MaxValue);
+
+                // big range
+                result = rnd.NextInt64(UInt32.MaxValue + 5L, true);
+                Assert.IsTrue(result >= 0L && result <= UInt32.MaxValue + 5L);
+                result = rnd.NextInt64(-1, Int64.MaxValue, true);
+                Assert.IsTrue(result >= -1L);
+            }
         }
 
         [Test]
@@ -179,17 +220,38 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
 
-            // small range
-            var result = rnd.NextUInt64(0, 10);
-            Assert.IsTrue(result >= 0 && result < 10);
-
             // no range
+            ulong result = rnd.NextUInt64(0);
+            Assert.AreEqual(0UL, result);
             result = rnd.NextUInt64(1, 1);
-            Assert.AreEqual(1L, result);
+            Assert.AreEqual(1UL, result);
 
-            // big range, worst possible generating limit
-            result = rnd.NextUInt64(0UL, (UInt64.MaxValue >> 1) + 1, true);
-            Assert.IsTrue(result < (UInt64.MaxValue >> 1) + 1);
+            // 1 range
+            result = rnd.NextUInt64(1);
+            Assert.AreEqual(0UL, result);
+            result = rnd.NextUInt64(1, 2);
+            Assert.AreEqual(1UL, result);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.NextUInt64(0, 10);
+                Assert.IsTrue(result < 10UL);
+                result = rnd.NextUInt64(5, 15);
+                Assert.IsTrue(result >= 5UL && result < 15UL);
+
+                // medium range (UInt32)
+                result = rnd.NextUInt64(Int32.MaxValue + 5L);
+                Assert.IsTrue(result < Int32.MaxValue + 5L);
+                result = rnd.NextUInt64(5, Int32.MaxValue + 15UL);
+                Assert.IsTrue(result >= 5UL && result < Int32.MaxValue + 15UL);
+
+                // big range
+                result = rnd.NextUInt64(UInt32.MaxValue + 5UL, true);
+                Assert.IsTrue(result <= UInt32.MaxValue + 5UL);
+                result = rnd.NextUInt64(5, Int64.MaxValue + 15UL, true);
+                Assert.IsTrue(result >= 5UL && result <= Int64.MaxValue + 15UL);
+            }
         }
 
         [Test]
