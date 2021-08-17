@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries
         {
             #region GeneratorContext struct
 
-            private struct GeneratorContext
+            private ref struct GeneratorContext
             {
                 #region Fields
 

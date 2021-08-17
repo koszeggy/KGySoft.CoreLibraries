@@ -24,7 +24,7 @@ using System.Security;
 namespace KGySoft.CoreLibraries
 {
     [SecurityCritical]
-    internal struct MutableStringBuilder
+    internal ref struct MutableStringBuilder
     {
         #region Fields
 

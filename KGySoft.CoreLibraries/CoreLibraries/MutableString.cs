@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     [SecurityCritical]
     [DebuggerDisplay("{" + nameof(ToStringDebugger) + "()}")]
-    internal readonly unsafe struct MutableString
+    internal readonly unsafe ref struct MutableString
     {
         #region Fields
 
