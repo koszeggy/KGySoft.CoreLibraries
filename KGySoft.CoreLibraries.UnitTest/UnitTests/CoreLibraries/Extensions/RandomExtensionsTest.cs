@@ -265,7 +265,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     double result;
                     try
                     {
-                        result = random.NextDouble(min, max, scale);
+                        result = min.Equals(0d) ? random.NextDouble(max, scale) : random.NextDouble(min, max, scale);
                         Console.WriteLine(result.ToRoundtripString());
                     }
                     catch (Exception e)
@@ -326,7 +326,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     float result;
                     try
                     {
-                        result = random.NextSingle(min, max, scale);
+                        result = min.Equals(0f) ? random.NextSingle(max, scale) : random.NextSingle(min, max, scale);
                         Console.WriteLine(result.ToRoundtripString());
                     }
                     catch (Exception e)
@@ -358,7 +358,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     decimal result;
                     try
                     {
-                        result = rnd.NextDecimal(min, max, scale);
+                        result = min.Equals(0m) ? rnd.NextDecimal(max, scale) : rnd.NextDecimal(min, max, scale);
                         Console.WriteLine(result.ToRoundtripString());
                     }
                     catch (Exception e)

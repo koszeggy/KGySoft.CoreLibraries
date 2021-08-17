@@ -42,6 +42,7 @@
     and never return the possible maximum value of their type. Use the Sample* methods to return any value.
   + New SampleSByte, SampleByte, SampleInt16, SampleUInt16, SampleInt32, SampleUInt32, SampleInt64 and SampleUInt64
     methods to generate any integer value of their corresponding type.
+  * Improving performance
 + ThreadSafeRandom class:
   + New NextInt64 methods (even below .NET 6.0 where base does not have such methods).
   + New NextSingle method (even below .NET 6.0 where base does not have such method).

@@ -610,7 +610,7 @@ namespace KGySoft.CoreLibraries
                 maxValue += 1;
             }
 
-            return (long)(GenerateSampleUInt64(random) % (ulong)maxValue);
+            return (long)(sample % (ulong)maxValue);
 #endif
         }
 
@@ -811,11 +811,15 @@ namespace KGySoft.CoreLibraries
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
 
+#if NET6_0_OR_GREATER
+            return random.NextSingle();
+#else
             return (float)random.NextDouble();
+#endif
         }
 
         /// <summary>
-        /// Returns a random <see cref="float"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random <see cref="float"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -832,7 +836,23 @@ namespace KGySoft.CoreLibraries
         /// <br/>-or-.
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static float NextSingle(this Random random, float maxValue, FloatScale scale = FloatScale.Auto)
-            => random.NextSingle(0f, maxValue, scale);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= 0f)
+            {
+                if (maxValue < 0f)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0d));
+                return 0f;
+            }
+
+            if (Single.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+
+            return (float)DoGetNextDouble(random, Single.IsPositiveInfinity(maxValue) ? Single.MaxValue : maxValue, scale);
+        }
 
         /// <summary>
         /// Returns a random <see cref="float"/> value that is within a specified range.
@@ -856,15 +876,22 @@ namespace KGySoft.CoreLibraries
         {
             static float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
 
-            // both are the same infinity
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
             if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue) || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
                 Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (Single.IsNaN(minValue) || Single.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Single.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
-            return (float)random.NextDouble(AdjustValue(minValue), AdjustValue(maxValue), scale);
+            return (float)DoGetNextDouble(random, AdjustValue(minValue), AdjustValue(maxValue), scale);
         }
 
         /// <summary>
-        /// Returns a random <see cref="double"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random <see cref="double"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -881,7 +908,23 @@ namespace KGySoft.CoreLibraries
         /// <br/>-or-
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static double NextDouble(this Random random, double maxValue, FloatScale scale = FloatScale.Auto)
-            => random.NextDouble(0d, maxValue, scale);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= 0d)
+            {
+                if (maxValue < 0d)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0d));
+                return 0d;
+            }
+
+            if (Double.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+
+            return DoGetNextDouble(random, Double.IsPositiveInfinity(maxValue) ? Double.MaxValue : maxValue, scale);
+        }
 
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
@@ -903,6 +946,8 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static double NextDouble(this Random random, double minValue, double maxValue, FloatScale scale = FloatScale.Auto)
         {
+            static double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
+
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
             if (Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue) || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
@@ -911,10 +956,10 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Double.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
-            if (!Enum<FloatScale>.IsDefined(scale))
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
-            return DoGetNextDouble(random, minValue, maxValue, scale);
+            return DoGetNextDouble(random, AdjustValue(minValue), AdjustValue(maxValue), scale);
         }
 
         /// <summary>
@@ -933,14 +978,14 @@ namespace KGySoft.CoreLibraries
             {
                 // The hi argument of 0.9999999999999999999999999999m is 542101086.
                 // (MaxInt, MaxInt, 542101086) is actually bigger than 1 but in practice the loop almost never repeats.
-                result = new Decimal(random.NextInt32(), random.NextInt32(), random.Next(542101087), false, 28);
+                result = new Decimal((int)GenerateSampleUInt32(random), (int)GenerateSampleUInt32(random), random.Next(542101087), false, 28);
             } while (result >= 1m);
 
             return result;
         }
 
         /// <summary>
-        /// Returns a random <see cref="decimal"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// Returns a non-negative random <see cref="decimal"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -949,15 +994,47 @@ namespace KGySoft.CoreLibraries
         /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
-        /// </para>
+        /// such as when <paramref name="maxValue"/> is near <see cref="DecimalExtensions.Epsilon"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
         /// <br/>-or-
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static decimal NextDecimal(this Random random, decimal maxValue, FloatScale scale = FloatScale.Auto)
-            => NextDecimal(random, 0m, maxValue, scale);
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= 0m)
+            {
+                if (maxValue < 0m)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0d));
+                return 0m;
+            }
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16
+                || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
+            {
+                return random.NextDecimal() * maxValue;
+            }
+
+            // We don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results
+            decimal minExponent = -5m;
+            decimal maxExponent = maxValue.Log10();
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            decimal result = 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
 
         /// <summary>
         /// Returns a random <see cref="decimal"/> value that is within a specified range.
@@ -967,10 +1044,10 @@ namespace KGySoft.CoreLibraries
         /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
         /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
         /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
-        /// <returns>A single-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <returns>A decimal floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/>.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="DecimalExtensions.Epsilon"/>.</para>
         /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
@@ -985,7 +1062,7 @@ namespace KGySoft.CoreLibraries
             if (maxValue < minValue)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
-            if (!Enum<FloatScale>.IsDefined(scale))
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
             if (minValue == maxValue)
@@ -1009,9 +1086,9 @@ namespace KGySoft.CoreLibraries
             else
             {
                 // if both negative and positive results are expected we select the sign based on the size of the ranges
-                decimal sample = random.NextDecimal();
-                var rate = minAbs / maxAbs;
-                var absMinValue = Math.Abs(minValue);
+                decimal sample = (decimal)random.NextDouble(); // NextDecimal is almost always slower
+                decimal rate = minAbs / maxAbs;
+                decimal absMinValue = Math.Abs(minValue);
                 bool isNeg = absMinValue <= maxValue
                     ? rate / 2m > sample
                     : rate / 2m < sample;
@@ -1033,12 +1110,10 @@ namespace KGySoft.CoreLibraries
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
-            decimal result;
-            do
-            {
-                result = sign * 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
-            } while (result < minValue || result > maxValue);
-            return result;
+            decimal result = sign * 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
         #endregion
@@ -1135,7 +1210,6 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
@@ -1195,7 +1269,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.minLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (maxLength < minLength)
                 Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.MaxLengthLessThanMinLength);
-            if (!Enum<StringCreation>.IsDefined(strategy))
+            if ((uint)strategy > (uint)StringCreation.Sentence)
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
 
             int length = random.NextInt32(minLength, maxLength, true);
@@ -1350,7 +1424,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.random);
             if (length < 0)
                 Throw.ArgumentOutOfRangeException(Argument.length, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-            if (!Enum<StringCreation>.IsDefined(strategy))
+            if ((uint)strategy > (uint)StringCreation.Sentence)
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
 
             if (length == 0)
@@ -1434,7 +1508,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.random);
             if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
-            if (!Enum<StringCreation>.IsDefined(strategy))
+            if ((uint)strategy > (uint)StringCreation.Sentence)
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
 
             if (buffer.Length == 0)
@@ -1483,7 +1557,7 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            if (!Enum<StringCreation>.IsDefined(strategy))
+            if ((uint)strategy > (uint)StringCreation.Sentence)
                 Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
 
             if (buffer.Length == 0)
@@ -1785,14 +1859,36 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static double DoGetNextDouble(Random random, double maxValue, FloatScale scale)
+        {
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16
+                || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
+            {
+                return random.NextDouble() * maxValue;
+            }
+
+            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
+            double minExponent = -16d;
+            double maxExponent = Math.Log(maxValue, 2d);
+
+            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            double result = Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
+
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator", Justification = "In this method this is intended")]
         private static double DoGetNextDouble(Random random, double minValue, double maxValue, FloatScale scale)
         {
-            static double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
-
-            minValue = AdjustValue(minValue);
-            maxValue = AdjustValue(maxValue);
             if (minValue == maxValue)
                 return minValue;
 
@@ -1848,7 +1944,7 @@ namespace KGySoft.CoreLibraries
         private static double NextDoubleLinear(Random random, double minValue, double maxValue)
         {
             double sample = random.NextDouble();
-            var result = (maxValue * sample) + (minValue * (1d - sample));
+            double result = (maxValue * sample) + (minValue * (1d - sample));
 
             // protecting ourselves against inaccurate calculations; occurs only near MaxValue.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
