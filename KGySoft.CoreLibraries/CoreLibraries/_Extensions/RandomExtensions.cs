@@ -820,6 +820,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a non-negative random <see cref="float"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -828,8 +829,10 @@ namespace KGySoft.CoreLibraries
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
-        /// </para>
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
@@ -856,6 +859,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="float"/> value that is within a specified range.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The lower bound of the random number returned.</param>
@@ -865,8 +869,13 @@ namespace KGySoft.CoreLibraries
         /// <returns>A single-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="float"/> type.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the both sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
@@ -892,6 +901,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a non-negative random <see cref="double"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -900,8 +910,10 @@ namespace KGySoft.CoreLibraries
         /// <returns>A double-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
-        /// </para>
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
@@ -928,6 +940,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The lower bound of the random number returned.</param>
@@ -937,8 +950,13 @@ namespace KGySoft.CoreLibraries
         /// <returns>A double-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the both sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
@@ -986,6 +1004,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a non-negative random <see cref="decimal"/> value that is less or equal to the specified <paramref name="maxValue"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -993,8 +1012,11 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
         /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
-        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
         /// such as when <paramref name="maxValue"/> is near <see cref="DecimalExtensions.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
@@ -1038,6 +1060,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="decimal"/> value that is within a specified range.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The lower bound of the random number returned.</param>
@@ -1047,8 +1070,13 @@ namespace KGySoft.CoreLibraries
         /// <returns>A decimal floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="DecimalExtensions.Epsilon"/>.</para>
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="DecimalExtensions.Epsilon"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the both sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>

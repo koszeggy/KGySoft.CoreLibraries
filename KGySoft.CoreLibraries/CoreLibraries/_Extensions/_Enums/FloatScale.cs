@@ -32,6 +32,8 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Forces to use logarithmic scaling when generating random numbers.
+        /// Please that generating random numbers on the logarithmic scale can be significantly slower than
+        /// on the linear scale, especially when generating <see cref="decimal"/> values.
         /// </summary>
         ForceLogarithmic
     }
