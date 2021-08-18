@@ -1523,7 +1523,8 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>If <paramref name="collection"/> is neither an <see cref="IList{T}"/>, <see cref="IReadOnlyList{T}"/>, nor an <see cref="IList"/> implementation, then the <paramref name="collection"/> will be iterated.
         /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/>&#160;if the <paramref name="index"/> is invalid.</para>
-        /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see> method. The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see>
+        /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see> method.
+        /// The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of <typeparamref name="T"/>, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
         /// </remarks>
         public static bool TryGetElementAt<T>(this IEnumerable<T> collection, int index, [MaybeNullWhen(false)]out T item, bool checkBounds = true, bool throwError = true)
@@ -1600,7 +1601,8 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>If <paramref name="collection"/> is neither an <see cref="IList{T}"/> of objects, <see cref="IReadOnlyList{T}"/> of objects, nor an <see cref="IList"/> implementation, then the <paramref name="collection"/> will be iterated.
         /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/>&#160;if the <paramref name="index"/> is invalid.</para>
-        /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see> method. The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}">Enumerable.ElementAtOrDefault</see>
+        /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see> method.
+        /// The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of the element type, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
         /// </remarks>
         public static bool TryGetElementAt(this IEnumerable collection, int index, out object? item, bool checkBounds = true, bool throwError = true)
