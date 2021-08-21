@@ -13,6 +13,12 @@
 ===================
 + Targeting also .NET 6.0.
 
++ KGySoft namespace:
+====================
++ LanguageSettings class:
+  + New EnsureResourcesGenerated, EnsureInvariantResourcesMerged, SavePendingResources and ReleaseAllResources
+    methods to provide more control over the centralized DynamicResourceManager instances.
+
 ! KGySoft.CoreLibraries namespace:
 ==================================
 ! ByteArrayExtensions class:
@@ -72,6 +78,12 @@
     * Improving performance
     + New overload with Guid seed
   * GetRandomElement methods: Improving performance if source is not a list
+
++ KGySoft.Resources namespace:
+==============================
++ DynamicResourceManager class:
+  + New EnsureResourcesGenerated and EnsureInvariantResourcesMerged methods to be able to (re)generate merged
+    resource sets for a specified culture respecting the currently set merging options.
 
 
 ~~~~~~~~~

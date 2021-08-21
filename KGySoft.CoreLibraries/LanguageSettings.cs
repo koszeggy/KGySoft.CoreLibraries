@@ -103,6 +103,11 @@ namespace KGySoft
     /// </root>]]></code>
     /// <para>Search for the <c>[T]</c> values in the generated file to find the untranslated resources and feel free to change them. If you change the resource and execute the example again it will now show the translation you provided.</para>
     /// <note type="tip"><list type="bullet">
+    /// <item>If the <see cref="AutoAppendOptions.AppendOnLoad"/> flag is enabled in <see cref="DynamicResourceManagersAutoAppend"/> property, then not only the explicitly obtained resources but all resource entries will
+    /// appeared in the localized resource set.</item>
+    /// <item>You can use the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method to generate the possibly non-existing resource sets without explicitly accessing a resource first.</item>
+    /// <item>You can use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to forcibly merge all invariant resource entries even if a localized resource set already exists.
+    /// This can be useful to add the possibly missing entries to the localization, if some new entries have been introduced in a new version, for example.</item>
     /// <item>To see how to add a dynamic resource manager to your own class library
     /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</item>
     /// <item>To see how to use dynamically created resources for any language in a live application with editing support see
@@ -204,6 +209,7 @@ namespace KGySoft
 
         #region Internal Events
 
+        internal static event EventHandler<EventArgs<LanguageSettingsSignal>>? DynamicResourceManagersCommonSignal;
         internal static event EventHandler? DynamicResourceManagersSourceChanged;
 
         internal static event EventHandler? DynamicResourceManagersAutoSaveChanged;
@@ -308,9 +314,8 @@ namespace KGySoft
 #endif
 
         /// <summary>
-        /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the
-        /// current application domain should take the resources when their
-        /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the current application
+        /// domain should take the resources when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="ResourceManagerSources.CompiledOnly"/>
         /// </summary>
         /// <remarks>Considering that the default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
@@ -421,6 +426,82 @@ namespace KGySoft
         #endregion
 
         #region Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings load or generate the resource sets
+        /// for the current <see cref="DisplayLanguage"/>. This method affects all <see cref="DynamicResourceManager"/> instances in
+        /// the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <note>This method is similar to <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> but it skips
+        /// merging of resources for already existing resource sets (either in memory or in a loadable file).
+        /// Use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to force a new merge even for possibly existing resource sets.</note>
+        /// <para>This method makes all centralized <see cref="DynamicResourceManager"/> instances in the current <see cref="AppDomain"/>
+        /// (a <see cref="DynamicResourceManager"/> instance uses centralized settings when its <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>)
+        /// load or generate the resource set for the current <see cref="DisplayLanguage"/> in memory. This makes possible that for the next auto save event
+        /// (see also the <see cref="DynamicResourceManagersAutoSave"/> property) all such <see cref="DynamicResourceManager"/> instances will have
+        /// a saved resource set for the current <see cref="DisplayLanguage"/>.</para>
+        /// <para>You can call also the <see cref="SavePendingResources">SavePendingResources</see> method to save the generated resource sets immediately.</para>
+        /// <para>When generating resources, the value of the <see cref="DynamicResourceManagersAutoAppend"/> is be respected.</para>
+        /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// or when there are no append options enabled in the <see cref="DynamicResourceManagersAutoAppend"/> property.</note>
+        /// </remarks>
+        public static void EnsureResourcesGenerated()
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.EnsureResourcesGenerated));
+
+        /// <summary>
+        /// Ensures that all invariant resource entries in all <see cref="DynamicResourceManager"/> instances with centralized settings are
+        /// merged for the current <see cref="DisplayLanguage"/>. This method affects all <see cref="DynamicResourceManager"/> instances in
+        /// the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <note>This method is similar to <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> but it forces a new merge even
+        /// for existing resource sets. It can be useful if we want to ensure that possibly newly introduced resources (due to a new version release, for example)
+        /// are also merged into the optionally already existing resource set files.</note>
+        /// <para>If there are no existing resources for the current <see cref="DisplayLanguage"/> yet, then this method is functionally equivalent with
+        /// the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, though it can be significantly slower than that.</para>
+        /// <para>You can call also the <see cref="SavePendingResources">SavePendingResources</see> method to save the generated or updated resource sets immediately.</para>
+        /// <para>Merging is performed using the rules specified by the <see cref="DynamicResourceManagersAutoAppend"/> property.</para>
+        /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// or when there are no append options enabled in the <see cref="DynamicResourceManagersAutoAppend"/> property.</note>
+        /// </remarks>
+        public static void EnsureInvariantResourcesMerged()
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.EnsureInvariantResourcesMerged));
+
+        /// <summary>
+        /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings save all pending changes. This method affects
+        /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to save possibly changed or generated resources
+        /// independently from the value of the <see cref="DynamicResourceManagersAutoSave"/> property.</para>
+        /// <para>If this method is called right after the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, then we can ensure that
+        /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
+        /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
+        /// </remarks>
+        public static void SavePendingResources()
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.SavePendingResources));
+
+        /// <summary>
+        /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings release all loaded resource sets without saving. This method affects
+        /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to drop all currently loaded resource sets.</para>
+        /// <para>It can be useful if we saved new .resx files and we want to ensure that all centralized <see cref="DynamicResourceManager"/> instances
+        /// reload or regenerate the resource sets when they attempt to access a resource for the next time.</para>
+        /// <note>When calling this method all possible unsaved resource changes will be lost.</note>
+        /// </remarks>
+        public static void ReleaseAllResources()
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.ReleaseAllResourceSets));
+
+        #endregion
 
         #region Private Methods
 

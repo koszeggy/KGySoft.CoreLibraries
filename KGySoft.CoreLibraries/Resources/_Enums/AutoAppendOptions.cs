@@ -142,7 +142,7 @@ namespace KGySoft.Resources
         AppendSpecificCultures = (1 << 6) | AppendFirstSpecificCulture | AppendLastSpecificCulture,
 
         /// <summary>
-        /// <para>If a resource set loaded, <see cref="AppendNeutralCultures"/> and <see cref="AppendSpecificCultures"/> rules are
+        /// <para>If a resource set is being loaded, <see cref="AppendNeutralCultures"/> and <see cref="AppendSpecificCultures"/> rules are
         /// automatically applied for all resources.</para>
         /// <para>This flag is enabled by default.</para>
         /// </summary>

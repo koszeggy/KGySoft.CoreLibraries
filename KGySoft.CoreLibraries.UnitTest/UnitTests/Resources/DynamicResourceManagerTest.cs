@@ -814,6 +814,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Dispose(); // this will not throw anything
         }
 
+        [Test]
+        public void EnsureResourcesGeneratedTest()
+        {
+            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            {
+                AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture,
+                Source = ResourceManagerSources.CompiledAndResX
+            };
+
+            // works even if AppendOnLoad was not enabled
+            Assert.IsNull(manager.GetResourceSet(hu, true, false));
+            manager.EnsureResourcesGenerated(huHU);
+
+            // the merged resource set appears in the neutral culture due to AppendFirstNeutralCulture
+            Assert.IsNotNull(manager.GetResourceSet(hu, false, false));
+            Assert.IsNull(manager.GetResourceSet(huHU, true, false));
+
+            // adding a new resource to the invariant set
+            string key = "new resource";
+            manager.SetObject(key, "new invariant resource", inv);
+
+            // without merging the entries explicitly this does not appear in the already created merged resource set
+            manager.EnsureResourcesGenerated(huHU);
+            IExpandoResourceSet set = manager.GetExpandoResourceSet(hu);
+            Assert.IsFalse(set!.ContainsResource(key));
+
+            // but it is merged when explicitly retrieved
+            string value = manager.GetString(key, huHU);
+            Assert.IsTrue(value!.StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+        }
+
+        [Test]
+        public void EnsureInvariantEntriesMergedTest()
+        {
+            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            {
+                AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture,
+                Source = ResourceManagerSources.CompiledAndResX
+            };
+
+            // simulating already existing translation for neutral resource
+            manager.EnsureResourcesGenerated(huHU);
+            Assert.IsNotNull(manager.GetResourceSet(hu, false, false));
+
+            // adding a new resource to the invariant set
+            string key = "new resource";
+            manager.SetObject(key, "new invariant resource", inv);
+
+            // this merges entries even for already existing resource sets
+            manager.EnsureInvariantResourcesMerged(huHU);
+
+            // unlike when just using EnsureResourcesGenerated, now new key is also merged without explicitly getting it from manager
+            IExpandoResourceSet set = manager.GetExpandoResourceSet(hu);
+            Assert.IsTrue(set!.ContainsResource(key));
+            string value = set.GetString(key);
+            Assert.IsTrue(value!.StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+        }
+
         #endregion
 
         #region Private Methods

@@ -590,7 +590,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, CloneValues);
+        public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, CloneValues, SafeMode);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified <paramref name="culture"/>.
@@ -612,7 +612,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, CloneValues);
+        public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, CloneValues, SafeMode);
 
         /// <summary>
         /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/>.
@@ -667,8 +667,9 @@ namespace KGySoft.Resources
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public new virtual MemoryStream? GetStream(string name, CultureInfo? culture)
         {
-            object? value = GetObjectInternal(name, culture, false, false);
-            return ResXCommon.ToMemoryStream(name, value, SafeMode);
+            bool safeMode = SafeMode;
+            object? value = GetObjectInternal(name, culture, false, false, safeMode);
+            return ResXCommon.ToMemoryStream(name, value, safeMode);
         }
 
         /// <summary>
@@ -690,7 +691,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object? GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
+        public override object? GetObject(string name) => GetObjectInternal(name, null, false, CloneValues, SafeMode);
 
         /// <summary>
         /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
@@ -714,7 +715,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object? GetObject(string name, CultureInfo? culture) => GetObjectInternal(name, culture, false, CloneValues);
+        public override object? GetObject(string name, CultureInfo? culture) => GetObjectInternal(name, culture, false, CloneValues, SafeMode);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture.
@@ -1089,7 +1090,7 @@ namespace KGySoft.Resources
             lock (SyncRoot)
             {
                 // nullifying the local resourceSets cache does not mean we clear the resources.
-                // they will be obtained and property merged again on next Get...
+                // they will be obtained and properly merged again on next Get...
                 source = value;
                 resourceSets = null;
                 lastUsedResourceSet = default;
@@ -1123,7 +1124,7 @@ namespace KGySoft.Resources
                 return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet? rs) && rs is IExpandoResourceSet;
         }
 
-        private protected ResourceSet? TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, bool cloneValue, out object? value)
+        private protected ResourceSet? TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, bool cloneValue, bool safeMode, out object? value)
         {
             ResourceSet? cachedRs = GetFirstResourceSet(culture);
             if (cachedRs == null)
@@ -1132,7 +1133,7 @@ namespace KGySoft.Resources
                 return null;
             }
 
-            value = GetResourceFromAny(cachedRs, name, isString, cloneValue);
+            value = GetResourceFromAny(cachedRs, name, isString, cloneValue, safeMode);
             return cachedRs;
         }
 
@@ -1145,10 +1146,9 @@ namespace KGySoft.Resources
                 lastUsedResourceSet = new KeyValuePair<string, ResourceSet?>(culture.Name, rs);
         }
 
-        private protected object? GetResourceFromAny(ResourceSet rs, string name, bool isString, bool cloneValue)
+        private protected object? GetResourceFromAny(ResourceSet rs, string name, bool isString, bool cloneValue, bool safeMode)
         {
             ResourceSet realRs = Unwrap(rs);
-            bool safeMode = SafeMode;
             object? result = realRs is IExpandoResourceSetInternal expandoRs
                 ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode, cloneValue)
                 : realRs.GetObject(name, IgnoreCase);
@@ -1384,9 +1384,10 @@ namespace KGySoft.Resources
             #endregion
 
             Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists, "Behavior can be CreateIfNotExists only if expando is requested.");
-
             if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
+            if (forceExpandoResult && source == ResourceManagerSources.CompiledOnly)
+                return null;
 
             var context = new InternalGetResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ForceExpandoResult = forceExpandoResult };
             if (TryGetCachedResourceSet(ref context))
@@ -1442,13 +1443,13 @@ namespace KGySoft.Resources
             }
         }
 
-        private protected virtual object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
+        private protected virtual object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue, bool safeMode)
         {
             if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
             culture ??= CultureInfo.CurrentUICulture;
-            ResourceSet? seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, cloneValue, out object? value));
+            ResourceSet? seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, cloneValue, safeMode, out object? value));
 
             // There is a result, or a stored null is returned from invariant
             if (value != null
@@ -1476,7 +1477,7 @@ namespace KGySoft.Resources
                     continue;
 
                 toCache ??= rs;
-                value = GetResourceFromAny(unwrapped, name, isString, cloneValue);
+                value = GetResourceFromAny(unwrapped, name, isString, cloneValue, safeMode);
                 if (value != null)
                 {
                     lock (SyncRoot)

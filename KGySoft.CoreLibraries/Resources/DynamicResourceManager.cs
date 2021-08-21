@@ -504,8 +504,13 @@ namespace KGySoft.Resources
     ///   </data>
     /// </root>]]></code>
     /// By looking for the '<c>[T]</c>' prefixes you can easily find the untranslated elements.</item></list></para>
-    /// <note type="tip">To see how to use dynamically created resources for any language in a live application with editing support see
-    /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</note>
+    /// <note type="tip"><list type="bullet">
+    /// <item>You can use the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method to create possible non-existing resources for a language.</item>
+    /// <item>You can use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to forcibly merge all resource entries in the invariant
+    /// resource set for a language. This can be useful if new resources have been introduced since a previous version the newly introduced entries also have to be added to the localized resource sets.</item>
+    /// <item>To see how to use dynamically created resources for any language in a live application with editing support see
+    /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</item>
+    /// </list></note>
     /// </remarks>
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
@@ -522,6 +527,7 @@ namespace KGySoft.Resources
             internal CultureInfo Culture;
             internal bool IsString;
             internal bool CloneValue;
+            internal bool SafeMode;
             internal AutoAppendOptions Options;
 
             internal object? Result;
@@ -772,19 +778,24 @@ namespace KGySoft.Resources
 
         private static void ToDictionary(ResourceSet source, StringKeyedDictionary<object?> target)
         {
-            // when merging resource sets, always cloning the values because they meant to be different (and when loading from file later they will be)
             IDictionaryEnumerator enumerator = source.GetEnumerator();
-            while (enumerator.MoveNext())
+            if (source is IExpandoResourceSetInternal expandoResourceSet)
             {
-                // ReSharper disable once PossibleNullReferenceException
-                string key = enumerator.Key.ToString()!;
-                target[key] = source is IExpandoResourceSetInternal expandoRs
-                    ? expandoRs.GetResource(key, false, false, true, true)
-                    : enumerator.Value;
+                // when merging resource sets, always cloning the values because they meant to be different (and when loading from file later they will be)
+                while (enumerator.MoveNext())
+                {
+                    string key = (string)enumerator.Key;
+                    target[key] = expandoResourceSet.GetResource(key, false, false, true, true);
+                }
+
+                return;
             }
+
+            // fallback for non-expando source
+            while (enumerator.MoveNext())
+                target[(string)enumerator.Key] = enumerator.Value;
         }
 
-        [SuppressMessage("Style", "IDE0019:Use pattern matching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
         [SuppressMessage("ReSharper", "UsePatternMatching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
         private static object? AsString(object? value)
@@ -1037,8 +1048,9 @@ namespace KGySoft.Resources
             if (culture == null!)
                 Throw.ArgumentNullException(Argument.culture);
 
-            if (loadIfExists && tryParents && IsAppendPossible(culture))
-                EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists);
+            AutoAppendOptions options;
+            if (loadIfExists && tryParents && IsAppendPossible(culture, options = AutoAppend))
+                EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists, options);
             else
                 ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
 
@@ -1078,12 +1090,74 @@ namespace KGySoft.Resources
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
                 Throw.EnumArgumentOutOfRange(Argument.behavior, behavior);
 
-            if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture))
-                EnsureLoadedWithMerge(culture, behavior);
+            AutoAppendOptions options;
+            if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture, options = AutoAppend))
+                EnsureLoadedWithMerge(culture, behavior, options);
             else
                 ReviseCanAcceptProxy(culture, behavior, tryParents);
 
             return base.GetExpandoResourceSet(culture, behavior, tryParents);
+        }
+
+        /// <summary>
+        /// Ensures that the resource sets are generated for the specified <paramref name="culture"/> respecting the merging rules
+        /// specified by the <see cref="AutoAppend"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="culture">The culture to generate the resource sets for.</param>
+        /// <remarks>
+        /// <note>This method is similar to <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> but it skips
+        /// merging of resources for already existing resource sets (either in memory or in a loadable file).
+        /// Use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to force a new merge even for possibly existing resource sets.</note>
+        /// <para>This method generates the possibly missing resource sets in memory.
+        /// Call also the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method to save the generated resource sets immediately.</para>
+        /// <para>When generating resources, the value of the <see cref="AutoAppend"/> is be respected.</para>
+        /// <note>This method has no effect if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// or when there are no append options enabled in the <see cref="AutoAppend"/> property.</note>
+        /// </remarks>
+        public void EnsureResourcesGenerated(CultureInfo culture)
+        {
+            if (culture == null!)
+                Throw.ArgumentNullException(Argument.culture);
+            var options = AutoAppend | AutoAppendOptions.AppendOnLoad;
+            if (IsAppendPossible(culture, options))
+                EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists, options);
+        }
+
+        /// <summary>
+        /// Ensures that all invariant resource entries are merged for the specified <paramref name="culture"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="culture">The culture to merge the resource sets for.</param>
+        /// <remarks>
+        /// <note>This method is similar to <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> but it forces a new merge even
+        /// for existing resource sets. It can be useful if we want to ensure that possibly newly introduced resources (due to a new version release, for example)
+        /// are also merged into the optionally already existing resource set files.</note>
+        /// <para>If there are no existing resources for the specified <paramref name="culture"/> yet, then this method is functionally equivalent with
+        /// the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, though it can be significantly slower than that.</para>
+        /// <para>You can call also the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method
+        /// to save the generated or updated resource sets immediately.</para>
+        /// <para>Merging is performed using the rules specified by the <see cref="AutoAppend"/> property.</para>
+        /// <note>This method has no effect if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// or when there are no append options enabled in the <see cref="AutoAppend"/> property.</note>
+        /// </remarks>
+        public void EnsureInvariantResourcesMerged(CultureInfo culture)
+        {
+            if (culture == null!)
+                Throw.ArgumentNullException(Argument.culture);
+            if (Equals(culture, CultureInfo.InvariantCulture))
+                return;
+
+            if (!IsAppendPossible(culture, AutoAppend))
+                return;
+
+            ResourceSet? invariantSet = InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false);
+            if (invariantSet == null)
+                return;
+
+            IDictionaryEnumerator enumerator = invariantSet.GetEnumerator();
+            while (enumerator.MoveNext())
+                GetObjectInternal((string)enumerator.Key, culture, false, false, true);
         }
 
         /// <summary>
@@ -1264,13 +1338,13 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private protected override object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
+        private protected override object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue, bool safeMode)
         {
             #region Local Methods to reduce complexity
 
             bool TryGetFromCache(ref GetObjectWithAppendContext ctx)
             {
-                ctx.CheckedResource = TryGetFromCachedResourceSet(ctx.Name, ctx.Culture, ctx.IsString, ctx.CloneValue, out ctx.Result);
+                ctx.CheckedResource = TryGetFromCachedResourceSet(ctx.Name, ctx.Culture, ctx.IsString, ctx.CloneValue, ctx.SafeMode, out ctx.Result);
 
                 // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
                 return ctx.Result != null
@@ -1306,7 +1380,7 @@ namespace KGySoft.Resources
                     // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
                     if (rs != null && rs != ctx.CheckedResource && !IsProxy(rs))
                     {
-                        ctx.Result = GetResourceFromAny(rs, ctx.Name, ctx.IsString, ctx.CloneValue || ctx.ToMerge.Count > 0 || isMergeNeeded && !currentCulture.Equals(ctx.Culture));
+                        ctx.Result = GetResourceFromAny(rs, ctx.Name, ctx.IsString, ctx.CloneValue || ctx.ToMerge.Count > 0 || isMergeNeeded && !currentCulture.Equals(ctx.Culture), ctx.SafeMode);
 
                         // there is a result
                         if (ctx.Result != null)
@@ -1355,17 +1429,26 @@ namespace KGySoft.Resources
                 Throw.ArgumentNullException(Argument.name);
 
             AdjustCulture(ref culture);
-            if (!IsAppendPossible(culture))
-                return base.GetObjectInternal(name, culture, isString, cloneValue);
+            AutoAppendOptions options = AutoAppend;
+            if (!IsAppendPossible(culture, options))
+                return base.GetObjectInternal(name, culture, isString, cloneValue, safeMode);
 
-            var context = new GetObjectWithAppendContext { Name = name, Culture = culture, IsString = isString, CloneValue = cloneValue};
+            var context = new GetObjectWithAppendContext
+            {
+                Name = name,
+                Culture = culture,
+                IsString = isString,
+                CloneValue = cloneValue,
+                SafeMode = safeMode,
+                Options = options
+            };
+
             if (TryGetFromCache(ref context))
                 return context.Result;
 
-            EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists);
+            EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists, context.Options);
 
             // Phase 1: finding the resource and meanwhile collecting cultures to merge
-            context.Options = AutoAppend;
             if (TryGetWhileTraverse(ref context))
                 return context.Result;
 
@@ -1471,6 +1554,7 @@ namespace KGySoft.Resources
             {
                 LanguageSettings.DynamicResourceManagersSourceChanged += LanguageSettings_DynamicResourceManagersSourceChanged;
                 LanguageSettings.DynamicResourceManagersAutoSaveChanged += LanguageSettings_DynamicResourceManagersAutoSaveChanged;
+                LanguageSettings.DynamicResourceManagersCommonSignal += LanguageSettings_DynamicResourceManagersCommonSignal;
             }
 
             if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
@@ -1488,6 +1572,7 @@ namespace KGySoft.Resources
         {
             LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
             LanguageSettings.DynamicResourceManagersAutoSaveChanged -= LanguageSettings_DynamicResourceManagersAutoSaveChanged;
+                LanguageSettings.DynamicResourceManagersCommonSignal -= LanguageSettings_DynamicResourceManagersCommonSignal;
             LanguageSettings.DisplayLanguageChanged -= LanguageSettings_DisplayLanguageChanged;
             if (AppDomain.CurrentDomain.IsDefaultAppDomain())
                 AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
@@ -1527,25 +1612,23 @@ namespace KGySoft.Resources
         /// <summary>
         /// Checks whether append is possible
         /// </summary>
-        private bool IsAppendPossible(CultureInfo culture)
+        private bool IsAppendPossible(CultureInfo culture, AutoAppendOptions options)
         {
-            AutoAppendOptions append;
-
             // append is not possible if only compiled resources are used...
             return !(base.Source == ResourceManagerSources.CompiledOnly
                 // ...or there is no appending at all...
-                || (append = AutoAppend) == AutoAppendOptions.None
+                || options == AutoAppendOptions.None
                 // ...invariant culture is requested but invariant is not appended...
-                || (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None && Equals(culture, CultureInfo.InvariantCulture)
+                || (options & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None && Equals(culture, CultureInfo.InvariantCulture)
                 // ...a neutral culture is requested but only specific culture is appended
-                || (append & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);
+                || (options & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);
         }
 
         /// <summary>
         /// Applies the AppendOnLoad rule.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
+        private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior, AutoAppendOptions options)
         {
             #region Local Methods to reduce complexity
 
@@ -1598,9 +1681,9 @@ namespace KGySoft.Resources
 
             #endregion
 
-            Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
+            Debug.Assert(behavior is ResourceSetRetrieval.LoadIfExists or ResourceSetRetrieval.CreateIfNotExists);
 
-            var context = new EnsureLoadedWithMergeContext { Culture = culture, Options = AutoAppend };
+            var context = new EnsureLoadedWithMergeContext { Culture = culture, Options = options };
             lock (SyncRoot)
             {
                 if (CanSkipMerge(ref context))
@@ -1711,6 +1794,28 @@ namespace KGySoft.Resources
         #endregion
 
         #region Event handlers
+
+        private void LanguageSettings_DynamicResourceManagersCommonSignal(object? sender, EventArgs<LanguageSettingsSignal> e)
+        {
+            switch (e.EventData)
+            {
+                case LanguageSettingsSignal.EnsureResourcesGenerated:
+                    EnsureResourcesGenerated(LanguageSettings.DisplayLanguage);
+                    break;
+                case LanguageSettingsSignal.SavePendingResources:
+                    SaveAllResources();
+                    break;
+                case LanguageSettingsSignal.ReleaseAllResourceSets:
+                    ReleaseAllResources();
+                    break;
+                case LanguageSettingsSignal.EnsureInvariantResourcesMerged:
+                    EnsureInvariantResourcesMerged(LanguageSettings.DisplayLanguage);
+                    break;
+                default:
+                    Throw.InternalError(Res.EnumOutOfRange(e.EventData));
+                    break;
+            }
+        }
 
         private void LanguageSettings_DynamicResourceManagersSourceChanged(object? sender, EventArgs e)
             => SetSource(LanguageSettings.DynamicResourceManagersSource);
