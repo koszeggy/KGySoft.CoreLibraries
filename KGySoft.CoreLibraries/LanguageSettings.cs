@@ -18,6 +18,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Resources;
 #if NETFRAMEWORK
 using System.Security; 
@@ -142,6 +143,7 @@ namespace KGySoft
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
         private static string unknownResourcePrefix = "[U]";
         private static string untranslatedResourcePrefix = "[T]";
+        private static string? resxResourcesDir;
 
         #endregion
 
@@ -211,8 +213,8 @@ namespace KGySoft
 
         internal static event EventHandler<EventArgs<LanguageSettingsSignal>>? DynamicResourceManagersCommonSignal;
         internal static event EventHandler? DynamicResourceManagersSourceChanged;
-
         internal static event EventHandler? DynamicResourceManagersAutoSaveChanged;
+        internal static event EventHandler? DynamicResourceManagersResXResourcesDirChanged;
 
         #endregion
 
@@ -396,6 +398,56 @@ namespace KGySoft
         }
 
         /// <summary>
+        /// Gets or sets the path of the .resx resource files for the <see cref="DynamicResourceManager"/> instances
+        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// If <see langword="null"/>, then even the centralized <see cref="DynamicResourceManager"/> instances may use individual path settings.
+        /// <br/>Default value: <see langword="null"/>
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>Due to compatibility reasons the .resx resources path can be handled individually for all <see cref="DynamicResourceManager"/> instances,
+        /// even if their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>. To opt-in using a centralized path,
+        /// set this property to a non-<see langword="null"/>&#160;value.</para>
+        /// <para>Setting this property to a non-<see langword="null"/>&#160;value overwrites the <see cref="HybridResourceManager.ResXResourcesDir"/> property
+        /// of all centralized <see cref="DynamicResourceManager"/> instances so setting it to <see langword="null"/>&#160;again will not make them switch back
+        /// to their previous value.</para>
+        /// <note>Changing this property does not trigger any auto save or release operation.
+        /// To save the possible changes regarding to the original path you need to call the <see cref="SavePendingResources">SavePendingResources</see> method
+        /// before changing this property. After changing this property it is recommended to call the <see cref="ReleaseAllResources">ReleaseAllResources</see>
+        /// method to drop all possibly loaded/created resources that are related to the original path.</note>
+        /// </remarks>
+        public static string? DynamicResourceManagersResXResourcesDir
+        {
+            get => resxResourcesDir;
+            set
+            {
+                if (value == resxResourcesDir)
+                    return;
+
+                if (value == null)
+                {
+                    resxResourcesDir = null;
+                    return;
+                }
+
+                if (value.IndexOfAny(Files.IllegalPathChars) >= 0)
+                    Throw.ArgumentException(Argument.value, Res.ValueContainsIllegalPathCharacters(value));
+
+                if (Path.IsPathRooted(value))
+                {
+                    string baseDir = Files.GetExecutingPath();
+                    string relPath = Files.GetRelativePath(value, baseDir);
+                    if (!Path.IsPathRooted(relPath))
+                        resxResourcesDir = relPath;
+                }
+                else
+                    resxResourcesDir = value;
+
+                DynamicResourceManagersResXResourcesDirChanged?.Invoke(null, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the prefix of an untranslated <see cref="string"/> resource.
         /// Used by the <see cref="DynamicResourceManager"/> instances if <see cref="DynamicResourceManagersAutoAppend"/>
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
@@ -477,6 +529,11 @@ namespace KGySoft
         /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read
+        /// by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better
+        /// accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <remarks>
         /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to save possibly changed or generated resources
         /// independently from the value of the <see cref="DynamicResourceManagersAutoSave"/> property.</para>
@@ -484,8 +541,8 @@ namespace KGySoft
         /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
         /// </remarks>
-        public static void SavePendingResources()
-            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.SavePendingResources));
+        public static void SavePendingResources(bool compatibleFormat = false)
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(compatibleFormat ? LanguageSettingsSignal.SavePendingResourcesCompatible : LanguageSettingsSignal.SavePendingResources));
 
         /// <summary>
         /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings release all loaded resource sets without saving. This method affects

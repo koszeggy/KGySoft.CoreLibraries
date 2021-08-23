@@ -416,6 +416,7 @@ namespace KGySoft.Resources
         /// Gets or sets a value that indicates whether the resource manager allows case-insensitive resource lookups in the
         /// <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
         /// and <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see> methods.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         public override bool IgnoreCase
         {

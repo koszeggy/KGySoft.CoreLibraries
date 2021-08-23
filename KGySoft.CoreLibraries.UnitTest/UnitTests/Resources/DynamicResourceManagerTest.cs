@@ -111,8 +111,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Methods
 
-        #region Public Methods
-
 #if NETFRAMEWORK
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
@@ -871,12 +869,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string value = set.GetString(key);
             Assert.IsTrue(value!.StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
-
-        #endregion
-
-        #region Private Methods
-
-        #endregion
 
         #endregion
     }

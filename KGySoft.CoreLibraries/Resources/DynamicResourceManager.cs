@@ -617,6 +617,9 @@ namespace KGySoft.Resources
                             SetSource(LanguageSettings.DynamicResourceManagersSource);
                         if (LanguageSettings.DynamicResourceManagersAutoAppend.IsWidening(autoAppend))
                             mergedCultures = null;
+                        string? dir = LanguageSettings.DynamicResourceManagersResXResourcesDir;
+                        if (dir != null)
+                            ResXResourcesDir = dir;
                     }
                     else if (autoAppend.IsWidening(LanguageSettings.DynamicResourceManagersAutoAppend))
                         mergedCultures = null;
@@ -1555,6 +1558,7 @@ namespace KGySoft.Resources
                 LanguageSettings.DynamicResourceManagersSourceChanged += LanguageSettings_DynamicResourceManagersSourceChanged;
                 LanguageSettings.DynamicResourceManagersAutoSaveChanged += LanguageSettings_DynamicResourceManagersAutoSaveChanged;
                 LanguageSettings.DynamicResourceManagersCommonSignal += LanguageSettings_DynamicResourceManagersCommonSignal;
+                LanguageSettings.DynamicResourceManagersResXResourcesDirChanged += LanguageSettings_DynamicResourceManagersResXResourcesDirChanged;
             }
 
             if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
@@ -1572,8 +1576,9 @@ namespace KGySoft.Resources
         {
             LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
             LanguageSettings.DynamicResourceManagersAutoSaveChanged -= LanguageSettings_DynamicResourceManagersAutoSaveChanged;
-                LanguageSettings.DynamicResourceManagersCommonSignal -= LanguageSettings_DynamicResourceManagersCommonSignal;
+            LanguageSettings.DynamicResourceManagersCommonSignal -= LanguageSettings_DynamicResourceManagersCommonSignal;
             LanguageSettings.DisplayLanguageChanged -= LanguageSettings_DisplayLanguageChanged;
+            LanguageSettings.DynamicResourceManagersResXResourcesDirChanged -= LanguageSettings_DynamicResourceManagersResXResourcesDirChanged;
             if (AppDomain.CurrentDomain.IsDefaultAppDomain())
                 AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
             else
@@ -1805,6 +1810,9 @@ namespace KGySoft.Resources
                 case LanguageSettingsSignal.SavePendingResources:
                     SaveAllResources();
                     break;
+                case LanguageSettingsSignal.SavePendingResourcesCompatible:
+                    SaveAllResources(compatibleFormat: true);
+                    break;
                 case LanguageSettingsSignal.ReleaseAllResourceSets:
                     ReleaseAllResources();
                     break;
@@ -1834,6 +1842,9 @@ namespace KGySoft.Resources
         private void CurrentDomain_DomainUnload(object? sender, EventArgs e) => OnDomainUnload();
 
         private void CurrentDomain_ProcessExit(object? sender, EventArgs e) => OnDomainUnload();
+
+        private void LanguageSettings_DynamicResourceManagersResXResourcesDirChanged(object? sender, EventArgs e)
+            => ResXResourcesDir = LanguageSettings.DynamicResourceManagersResXResourcesDir;
 
         #endregion
 

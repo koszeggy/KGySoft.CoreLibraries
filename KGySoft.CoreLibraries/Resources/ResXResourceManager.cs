@@ -456,7 +456,7 @@ namespace KGySoft.Resources
                     return;
                 }
 
-                if (value.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+                if (value.IndexOfAny(Files.IllegalPathChars) >= 0)
                     Throw.ArgumentException(Argument.value, Res.ValueContainsIllegalPathCharacters(value));
 
                 if (Path.IsPathRooted(value))
@@ -1168,7 +1168,7 @@ namespace KGySoft.Resources
 
                     if (first)
                     {
-                        var dir = GetResourceDirName();
+                        string dir = GetResourceDirName();
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
                         first = false;

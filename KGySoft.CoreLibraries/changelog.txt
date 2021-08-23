@@ -16,6 +16,8 @@
 + KGySoft namespace:
 ====================
 + LanguageSettings class:
+  + New DynamicResourceManagersResXResourcesDir property to be able to control the path of the resources for all
+    DynamicResourceManager instances with centralized settings.
   + New EnsureResourcesGenerated, EnsureInvariantResourcesMerged, SavePendingResources and ReleaseAllResources
     methods to provide more control over the centralized DynamicResourceManager instances.
 

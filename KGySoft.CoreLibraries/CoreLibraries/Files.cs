@@ -33,6 +33,18 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class Files
     {
+        #region Fields
+
+        private static char[]? illegalPathChars;
+
+        #endregion
+
+        #region Properties
+
+        internal static char[] IllegalPathChars => illegalPathChars ??= Path.GetInvalidPathChars();
+
+        #endregion
+
         #region Methods
 
         /// <summary>
