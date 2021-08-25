@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Resources;
 using System.Security;
 using System.Security.Policy;
+using System.Xml;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -868,6 +869,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsTrue(set!.ContainsResource(key));
             string value = set.GetString(key);
             Assert.IsTrue(value!.StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+        }
+
+        [Test]
+        public void IgnoreResXParseErrorsTest()
+        {
+            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            {
+                Source = ResourceManagerSources.CompiledAndResX,
+                IgnoreResXParseErrors = false
+            };
+
+            var culture = huHU;
+            string path = Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx");
+            manager.GetExpandoResourceSet(culture, ResourceSetRetrieval.CreateIfNotExists);
+
+            try
+            {
+                // generating a valid but empty resource set
+                manager.SaveAllResources(true);
+                Assert.IsTrue(File.Exists(path));
+
+                // overwriting it with invalid content
+                File.WriteAllText(path, @"invalid");
+                manager.ReleaseAllResources();
+
+                // With IgnoreResXParseErrors = false an exception is thrown for the invalid content
+                Throws<XmlException>(() => manager.GetString("unknown", culture));
+
+                // But the invalid resource file is ignored if IgnoreResXParseErrors is true
+                manager.IgnoreResXParseErrors = true;
+                Assert.IsNull(manager.GetString("unknown", culture));
+            }
+            finally
+            {
+                File.Delete(path);
+            }
         }
 
         #endregion

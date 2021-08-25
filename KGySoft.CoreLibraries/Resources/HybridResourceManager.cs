@@ -376,6 +376,17 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
+        /// Gets or sets whether .resx file errors should be ignored when attempting to load a resource set. If <see langword="true"/>,
+        /// then non-loadable resource sets are considered as missing ones; otherwise, an exception is thrown.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        public bool IgnoreResXParseErrors
+        {
+            get => resxResources.IgnoreResXParseErrors;
+            set => resxResources.IgnoreResXParseErrors = value;
+        }
+
+        /// <summary>
         /// Gets or sets the relative path to .resx resource files.
         /// <br/>Default value: <c>Resources</c>
         /// </summary>

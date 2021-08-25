@@ -482,6 +482,13 @@ namespace KGySoft.Resources
         public bool ThrowException { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets whether .resx file errors should be ignored when attempting to load a resource set. If <see langword="true"/>,
+        /// then non-loadable resource sets are considered as missing ones; otherwise, an exception is thrown.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        public bool IgnoreResXParseErrors { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceManager"/> works in safe mode. In safe mode the retrieved
         /// objects are not deserialized automatically.
         /// <br/>See the <strong>Remarks</strong> section for details.
@@ -1588,7 +1595,17 @@ namespace KGySoft.Resources
         {
             string? fileName = GetExistingResourceFileName(culture);
             exists = fileName != null;
-            return exists && loadIfExists ? new ResXResourceSet(fileName, GetResourceDirName()) : null;
+            try
+            {
+                return exists && loadIfExists ? new ResXResourceSet(fileName, GetResourceDirName()) : null;
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                // it still can throw MissingManifestResourceException from the caller
+                if (IgnoreResXParseErrors)
+                    return null;
+                throw;
+            }
         }
 
         private string? GetExistingResourceFileName(CultureInfo culture)
