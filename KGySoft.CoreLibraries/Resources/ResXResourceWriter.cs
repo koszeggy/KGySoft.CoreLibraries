@@ -870,16 +870,13 @@ namespace KGySoft.Resources
         /// <see cref="Close">Close</see> and <see cref="Dispose()">Dispose</see> methods call it internally if necessary.</remarks>
         public void Generate()
         {
-            if (writer == null)
-                Throw.ObjectDisposedException();
-
             if (hasBeenSaved)
                 Throw.InvalidOperationException(Res.ResourcesWriterSaved);
 
             hasBeenSaved = true;
-            if (initialized)
-                writer.WriteEndElement();
-            writer.Flush();
+            XmlWriter w = Writer;
+            w.WriteEndElement();
+            w.Flush();
         }
 
         #endregion

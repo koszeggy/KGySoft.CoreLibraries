@@ -86,6 +86,9 @@
 + DynamicResourceManager class:
   + New EnsureResourcesGenerated and EnsureInvariantResourcesMerged methods to be able to (re)generate merged
     resource sets for a specified culture respecting the currently set merging options.
+- ResXResourceWriter class:
+  - Generate method: Calling Generate without adding any content used to save an empty file. Now the header and the
+    root element is generated even without adding any content.
 
 
 ~~~~~~~~~
