@@ -801,6 +801,7 @@ namespace KGySoft.Resources
 
         [SuppressMessage("ReSharper", "UsePatternMatching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
+        [SuppressMessage("Style", "IDE0019:Use pattern matching", Justification = "False alarm, cannot use pattern matching because type must be nullable and 'value is string ? result' is invalid")]
         private static object? AsString(object? value)
         {
             string? result = value as string;
