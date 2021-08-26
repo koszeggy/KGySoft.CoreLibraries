@@ -81,6 +81,12 @@
     + New overload with Guid seed
   * GetRandomElement methods: Improving performance if source is not a list
 
++ KGySoft.ComponentModel namespace:
+===================================
++ SortableBindingList class:
+  + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
+    is an explicit one and used to be exposed as a protected property)
+
 + KGySoft.Resources namespace:
 ==============================
 + DynamicResourceManager class:

@@ -189,6 +189,26 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets the direction of the sort. Returns <see langword="null"/>, if the list is not sorted
+        /// (that is, when <see cref="FastBindingList{T}.IsSorted"/> returns <see langword="false"/>).
+        /// Setting <see langword="null"/>&#160;removes sorting. To change also the <see cref="FastBindingList{T}.SortProperty"/>
+        /// call the <see cref="FastBindingList{T}.ApplySort(PropertyDescriptor, ListSortDirection)"/> method instead.
+        /// </summary>
+        public ListSortDirection? SortDirection
+        {
+            get => sortDirection;
+            set
+            {
+                if (sortDirection == value)
+                    return;
+                if (value == null)
+                    RemoveSortCore();
+                else
+                    ApplySortCore(sortProperty, value.Value);
+            }
+        }
+
         #endregion
 
         #region Protected Properties
