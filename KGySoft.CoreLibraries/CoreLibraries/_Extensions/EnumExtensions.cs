@@ -216,19 +216,14 @@ namespace KGySoft.CoreLibraries
         internal static ulong ToUInt64(this Enum value)
         {
             IConvertible convertible = value;
-            switch (value.GetTypeCode())
+            return value.GetTypeCode() switch
             {
-                case TypeCode.SByte:
-                    return (byte)convertible.ToSByte(null);
-                case TypeCode.Int16:
-                    return (ushort)convertible.ToInt16(null);
-                case TypeCode.Int32:
-                    return (uint)convertible.ToInt32(null);
-                case TypeCode.Int64:
-                    return (ulong)convertible.ToInt64(null);
-                default:
-                    return convertible.ToUInt64(null);
-            }
+                TypeCode.SByte => (byte)convertible.ToSByte(null),
+                TypeCode.Int16 => (ushort)convertible.ToInt16(null),
+                TypeCode.Int32 => (uint)convertible.ToInt32(null),
+                TypeCode.Int64 => (ulong)convertible.ToInt64(null),
+                _ => convertible.ToUInt64(null)
+            };
         }
 
         #endregion

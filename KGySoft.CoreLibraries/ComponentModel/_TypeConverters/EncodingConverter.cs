@@ -16,14 +16,15 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 using KGySoft.Collections;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -37,8 +38,11 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
+        private static readonly Type[] supportedTypes = { Reflector.StringType, Reflector.IntType, typeof(InstanceDescriptor) };
+   
         private static StringKeyedDictionary<Encoding>? encodingByName;
         private static Encoding[]? encodings;
+        private static MethodInfo? getEncodingMethod;
 
         #endregion
 
@@ -52,12 +56,12 @@ namespace KGySoft.ComponentModel
                     return encodings;
 
                 EncodingInfo[] infos = Encoding.GetEncodings();
-                encodings = new Encoding[infos.Length];
+                var result = new Encoding[infos.Length];
                 for (int i = 0; i < infos.Length; i++)
-                    encodings[i] = infos[i].GetEncoding();
+                    result[i] = infos[i].GetEncoding();
 
-                Array.Sort(encodings, (e1, e2) => e1.CodePage.CompareTo(e2.CodePage));
-                return encodings;
+                Array.Sort(result, (e1, e2) => e1.CodePage.CompareTo(e2.CodePage));
+                return encodings = result;
             }
         }
 
@@ -68,13 +72,16 @@ namespace KGySoft.ComponentModel
                 if (encodingByName != null)
                     return encodingByName;
 
-                encodingByName = new StringKeyedDictionary<Encoding>();
+                var result = new StringKeyedDictionary<Encoding>();
                 foreach (Encoding e in Encodings)
-                    encodingByName.Add($"{e.CodePage.ToString(CultureInfo.InvariantCulture)} | {e.EncodingName}", e);
+                    result.Add($"{e.CodePage.ToString(CultureInfo.InvariantCulture)} | {e.EncodingName}", e);
 
-                return encodingByName;
+                return encodingByName = result;
             }
         }
+
+        private static MethodInfo GetEncodingMethod
+            => getEncodingMethod ??= typeof(Encoding).GetMethod(nameof(Encoding.GetEncoding), new[] { Reflector.IntType })!;
 
         #endregion
 
@@ -88,7 +95,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType) 
-            => destinationType == Reflector.StringType || destinationType == Reflector.IntType || base.CanConvertTo(context, destinationType);
+            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
         /// Converts the given value object to the specified type, using the specified context and culture information.
@@ -101,16 +108,19 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (value is not Encoding encoding)
+            if (!destinationType.In(supportedTypes))
                 return base.ConvertTo(context, culture, value, destinationType);
 
-            if (destinationType == Reflector.IntType)
-                return encoding.CodePage;
-
-            if (destinationType == Reflector.StringType)
-                return $"{encoding.CodePage.ToString(CultureInfo.InvariantCulture)} | {encoding.EncodingName}";
-
-            return base.ConvertTo(context, culture, value, destinationType);
+            return value switch
+            {
+                null => destinationType == Reflector.StringType ? String.Empty
+                    : destinationType == Reflector.IntType ? -1
+                    : new InstanceDescriptor(null, null),
+                Encoding encoding => destinationType == Reflector.StringType ? $"{encoding.CodePage.ToString(CultureInfo.InvariantCulture)} | {encoding.EncodingName}"
+                    : destinationType == Reflector.IntType ? encoding.CodePage
+                    : new InstanceDescriptor(GetEncodingMethod, new[] { encoding.CodePage }),
+                _ => base.ConvertTo(context, culture, value, destinationType)
+            };
         }
 
         /// <summary>
@@ -134,10 +144,14 @@ namespace KGySoft.ComponentModel
         public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             if (value is int codePage)
-                return Encoding.GetEncoding(codePage);
+                return codePage == -1 ? null : Encoding.GetEncoding(codePage);
 
             if (value is string name)
             {
+                // 0: null
+                if (name.Length == 0)
+                    return null;
+
                 // 1: by full string value representation
                 if (EncodingByName.TryGetValue(name, out Encoding? encoding))
                     return encoding;

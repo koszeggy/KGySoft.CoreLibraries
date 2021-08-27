@@ -86,6 +86,15 @@
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)
++ BinaryTypeConverter: Adding InstanceDescriptor support
++ EncodingConverter:
+  + Adding InstanceDescriptor support
+  - Supporting null instance
++ VersionConverter class:
+  + Adding InstanceDescriptor support
+  + Adding Version support (which is cloning like in .NET Core)
+  - Supporting null instance
++ StringSegmentConverter: Adding InstanceDescriptor support
 
 + KGySoft.Resources namespace:
 ==============================

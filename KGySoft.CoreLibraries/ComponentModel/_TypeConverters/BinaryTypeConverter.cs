@@ -17,7 +17,9 @@
 
 using System;
 using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
+using System.Reflection;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -33,6 +35,20 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="TypeConverter" />
     public class BinaryTypeConverter : TypeConverter
     {
+        #region Fields
+
+        private static readonly Type[] supportedTypes = { Reflector.StringType, Reflector.ByteArrayType, typeof(InstanceDescriptor) };
+
+        private static MethodInfo? deserializeMethod;
+
+        #endregion
+
+        #region Properties
+
+        private static MethodInfo DeserializeMethod => deserializeMethod ??= typeof(BinarySerializer).GetMethod(nameof(BinarySerializer.Deserialize))!;
+
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -43,7 +59,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType)
-            => destinationType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertTo(context, destinationType);
+            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
         /// Returns whether this converter can convert an object of the given type to the type of this converter, using the specified context.
@@ -53,7 +69,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
-            => sourceType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertFrom(context, sourceType);
+            => sourceType.In(supportedTypes) || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
         /// Converts the given value object to the specified type.
@@ -66,10 +82,12 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (!destinationType.In(Reflector.StringType, Reflector.ByteArrayType))
+            if (!destinationType.In(supportedTypes))
                 return base.ConvertTo(context, culture, value, destinationType);
             byte[] result = BinarySerializer.Serialize(value);
-            return destinationType == Reflector.ByteArrayType ? (object)result : Convert.ToBase64String(result);
+            return destinationType == Reflector.ByteArrayType ? result
+                : destinationType == Reflector.StringType ? Convert.ToBase64String(result)
+                : new InstanceDescriptor(DeserializeMethod, new object[] { result, 0, BinarySerializationOptions.SafeMode });
         }
 
         /// <summary>
