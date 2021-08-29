@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading;
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -364,6 +365,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             ThreadSafeDictionary<string, int> clone = dict.DeepClone();
             Assert.IsTrue(dict.SequenceEqual(clone));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void PreserveMergedKeysTest(bool preserveMergedKeys)
+        {
+            const int count = 100;
+            var dict = new ThreadSafeDictionary<int, string>(Enumerable.Range(0, count).ToDictionary(i => i, i => i.ToString()))
+            {
+                MergeInterval = infiniteTimeout,
+                PreserveMergedKeys = preserveMergedKeys
+            };
+
+            dict.EnsureMerged();
+
+            // removing half of the elements + 1 from the lock free storage
+            for (int i = 0; i < count / 2 + 1; i++)
+                Assert.IsTrue(dict.TryRemove(i));
+
+            // adding an element to the locking storage so there will be something to merge
+            dict[-1] = "-1";
+
+            // performing a new merge with 51 deleted keys
+            dict.EnsureMerged();
+
+            Assert.AreEqual(count / 2, dict.Count);
+            Assert.AreEqual(preserveMergedKeys ? count / 2 + 1 : 0, ((ThreadSafeDictionary<int, string>.FixedSizeStorage)Reflector.GetField(dict, "fixedSizeStorage"))!.DeletedCount);
+            dict.TrimExcess();
+            Assert.AreEqual(0, ((ThreadSafeDictionary<int, string>.FixedSizeStorage)Reflector.GetField(dict, "fixedSizeStorage"))!.DeletedCount);
+            Assert.AreEqual(count / 2, dict.Count);
         }
 
         #endregion

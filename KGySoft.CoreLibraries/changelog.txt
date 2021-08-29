@@ -75,6 +75,10 @@
 + StringKeyedDictionary class:
   + New constructor with (int capacity, bool ignoreCase, bool useRandomizedHash) parameters
   + New constructor with (bool ignoreCase, bool useRandomizedHash) parameters
++ ThreadSafeDictionaryClass:
+  + New PreserveMergedKeys property
+  + New TrimExcess method
+  - Automatic merging could occur even if MergeInterval was negative.
 * EnumerableExtensions class:
   * Shuffle methods:
     * Improving performance

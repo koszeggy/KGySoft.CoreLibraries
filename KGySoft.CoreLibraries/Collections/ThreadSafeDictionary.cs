@@ -68,16 +68,19 @@ namespace KGySoft.Collections
     /// While <see cref="ConcurrentDictionary{TKey,TValue}"/> uses a group of locks to perform modifications (their amount can be configured or depends on the number of CPU cores);
     /// on the other hand, <see cref="ThreadSafeDictionary{TKey,TValue}"/> uses two separate internal storage: items with new keys are added to a temporary storage using a single lock,
     /// which might regularly be merged into a faster lock-free storage, depending on the value of the <see cref="MergeInterval"/> property. Once the items are merged, their access
-    /// (both read and write, but even delete and re-add) becomes lock free. Even deleting and re-adding a value for the same key becomes faster after the key is merged into the lock-free storage.
+    /// (both read and write) becomes lock free. Even deleting and re-adding a value for the same key becomes faster after the key is merged into the lock-free storage.
     /// <note>Therefore, <see cref="ThreadSafeDictionary{TKey,TValue}"/> is not always a good alternative of <see cref="ConcurrentDictionary{TKey,TValue}"/>.
-    /// Using <see cref="ThreadSafeDictionary{TKey,TValue}"/> is <strong>NOT</strong> recommended if new keys are continuously added because the keys of merged items are not removed from
-    /// the <see cref="ThreadSafeDictionary{TKey,TValue}"/> even if they are deleted or when you <see cref="Clear">Clear</see> the dictionary. To remove even the merged keys
-    /// you must call the <see cref="Reset">Reset</see> method.</note></para>
+    /// If new keys are continuously added, then always a shared lock is used, in which case <see cref="ConcurrentDictionary{TKey,TValue}"/> might perform better, unless you need to use
+    /// some members, which are very slow in <see cref="ConcurrentDictionary{TKey,TValue}"/> (see the table below). If the newly added elements are regularly removed,
+    /// make sure the <see cref="PreserveMergedKeys"/> property is <see langword="false"/>; otherwise, the already merged keys are not removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
+    /// even if they are deleted or when you call the <see cref="Clear">Clear</see> method. To remove even the merged keys you must call the <see cref="Reset">Reset</see> method,
+    /// or to remove the deleted keys only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
     /// <h1 class="heading">Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h1>
     /// <para><strong>When to use</strong>&#160;<see cref="ThreadSafeDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
-    /// or even deleted and re-added with any value.</item>
+    /// or even deleted and re-added with any value. In this case consider to set the <see cref="PreserveMergedKeys"/> to <see langword="true"/> so it is not checked whether
+    /// a cleanup should be performed due to many deleted items.</item>
     /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</see> methods,
     /// which are separate try get/add/update operations at <see cref="ConcurrentDictionary{TKey,TValue}"/> but are optimized at <see cref="ThreadSafeDictionary{TKey,TValue}"/> to avoid
     /// multiple lookups.</item>
@@ -152,7 +155,7 @@ namespace KGySoft.Collections
         private IEqualityComparer<TKey>? comparer;
         private int initialLockingCapacity;
         private bool bitwiseAndHash;
-
+        private volatile bool preserveMergedKeys;
         private volatile bool isMerging;
         private long mergeInterval = TimeHelper.GetInterval(100);
         private long nextMerge;
@@ -220,6 +223,28 @@ namespace KGySoft.Collections
                 // once (changes are in locks) and expandableStorage is volatile so Count will see valid values.
                 return fixedSizeStorage.Count == 0 && (expandableStorage?.Count ?? 0) == 0;
             }
+        }
+
+        /// <summary>
+        /// Gets or sets whether keys of entries that have already been merged into the faster lock-free storage are preserved even when their value is removed.
+        /// <br/>Default value: <see langword="false"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>If the possible number of keys in this <see cref="ThreadSafeDictionary{TKey,TValue}"/> is known to be a limited value, then this property
+        /// can be set to <see langword="true"/>, so once the values have been merged into the faster lock-free storage, their entry is not removed anymore even if the
+        /// corresponding value is deleted. This ensures that removing and re-adding a value with the same key again and again remains a lock-free operation.
+        /// <note>Do not set this property to <see langword="true"/>, if the number of the possibly added keys is not limited.</note></para>
+        /// <para>If this property is <see langword="true"/>, then the already merged keys are not removed even when calling the <see cref="Clear">Clear</see> method.
+        /// The memory of the deleted entries can be freed by explicitly calling the <see cref="TrimExcess">TrimExcess</see> method,
+        /// whereas to remove all allocated entries you can call the <see cref="Reset">Reset</see> method.</para>
+        /// <para>Even if this property is <see langword="false"/>, the removed keys are not dropped immediately. Unused keys are removed during a merge operation and only
+        /// when their number exceeds a specific limit. You can call the <see cref="TrimExcess">TrimExcess</see> method to force removing unused keys on demand.</para>
+        /// </remarks>
+        public bool PreserveMergedKeys
+        {
+            get => preserveMergedKeys;
+            set => preserveMergedKeys = value;
         }
 
         /// <summary>
@@ -785,23 +810,33 @@ namespace KGySoft.Collections
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
-        /// <para>This method is an O(n) operation where n is the number of elements present in the inner lock-free storage.</para>
-        /// <note>Note that this method removes all values from the <see cref="ThreadSafeDictionary{TKey,TValue}"/> but does not remove
-        /// the keys that are already merged into the faster lock-free storage. This ensures that adding a new value with an already used key will be
-        /// a fast, lock-free operation. To remove all keys and values use the <see cref="Reset">Reset</see> method instead, which is an O(1) operation.</note>
+        /// <para>If <see cref="PreserveMergedKeys"/> is <see langword="true"/>, or when the amount of removed items does not exceed a limit, then
+        /// This method is an O(n) operation where n is the number of elements present in the inner lock-free storage. Otherwise,
+        /// this method calls the <see cref="Reset">Reset</see> method, which frees up all the allocated entries.</para>
+        /// <note>Note that if <see cref="PreserveMergedKeys"/> is <see langword="true"/>, then though this method removes all values from
+        /// the <see cref="ThreadSafeDictionary{TKey,TValue}"/>, it never removes the keys that are already merged into the faster lock-free storage.
+        /// This ensures that adding a new value with an already used key will always be a fast, lock-free operation.
+        /// To remove all keys and values use the <see cref="Reset">Reset</see> method instead.</note>
         /// </remarks>
         /// <seealso cref="Reset"/>
         public void Clear()
         {
-            // It is not a problem if a merge is in progress because it will nullify expandableStorage in the end anyway
-            expandableStorage = null;
+            if (!preserveMergedKeys && fixedSizeStorage.Capacity > 16)
+            {
+                Reset();
+                return;
+            }
 
             while (true)
             {
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 lockFreeValues.Clear();
-                if (IsUpToDate(lockFreeValues))
-                    return;
+                if (!IsUpToDate(lockFreeValues))
+                    continue;
+
+                // It is not a problem if a merge has been started before this line because it will nullify expandableStorage in the end anyway.
+                expandableStorage = null;
+                return;
             }
         }
 
@@ -812,10 +847,13 @@ namespace KGySoft.Collections
         /// <seealso cref="Clear"/>
         public void Reset()
         {
-            if (isMerging)
-                WaitWhileMerging();
-            fixedSizeStorage = FixedSizeStorage.Empty;
-            expandableStorage = null;
+            // We can't use a loop with IsUpToDate here because we replace fixedSizeStorage reference
+            // but the lock waits also for possible concurrent merges to finish
+            lock (syncRoot)
+            {
+                fixedSizeStorage = FixedSizeStorage.Empty;
+                expandableStorage = null; 
+            }
         }
 
         /// <summary>
@@ -1123,7 +1161,60 @@ namespace KGySoft.Collections
                 if (lockingValues == null)
                     return;
 
-                DoMerge();
+                DoMerge(!preserveMergedKeys && fixedSizeStorage.IsCleanupLimitReached);
+            }
+        }
+
+        /// <summary>
+        /// Forces to perform a merge while removing all possibly allocated but already deleted entries from the lock-free storage,
+        /// even if the <see cref="PreserveMergedKeys"/> property is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="PreserveMergedKeys"/> property for details.
+        /// </summary>
+        public void TrimExcess()
+        {
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                TempStorage? lockingValues = expandableStorage;
+
+                if (lockingValues == null && lockFreeValues.DeletedCount == 0)
+                {
+                    // this is just needed for awaiting a possible concurrent merge session
+                    if (IsUpToDate(lockFreeValues))
+                        return;
+                    continue;
+                }
+
+                lock (syncRoot)
+                {
+                    lockFreeValues = fixedSizeStorage;
+                    lockingValues = expandableStorage;
+
+                    if (lockingValues?.Count > 0)
+                    {
+                        DoMerge(true);
+                        return;
+                    }
+
+                    // lost race
+                    if (lockFreeValues.DeletedCount == 0)
+                        return;
+
+                    // special merge: just removing deleted entries from fixedSizeStorage
+                    // As we set isMerging it is guaranteed that concurrent updates will wait in IsUpToDate after up to one update attempt
+                    isMerging = true;
+                    try
+                    {
+                        fixedSizeStorage = new FixedSizeStorage(lockFreeValues);
+                    }
+                    finally
+                    {
+                        isMerging = false;
+                    }
+
+                    expandableStorage = null;
+                    return;
+                }
             }
         }
 
@@ -1282,17 +1373,17 @@ namespace KGySoft.Collections
         private void MergeIfExpired()
         {
             // must be called in lock
-            if (TimeHelper.GetTimeStamp() > nextMerge)
-                DoMerge();
+            if (mergeInterval >= 0L && TimeHelper.GetTimeStamp() > nextMerge)
+                DoMerge(!preserveMergedKeys && fixedSizeStorage.IsCleanupLimitReached);
         }
 
-        private void DoMerge()
+        private void DoMerge(bool removeDeletedKeys)
         {
             // Must be in a lock to work properly!
             Debug.Assert(!isMerging || expandableStorage != null, "Make sure caller is in a lock");
 
             TempStorage lockingValues = expandableStorage!;
-            if (lockingValues.Count != 0)
+            if (lockingValues.Count != 0 || removeDeletedKeys)
             {
                 // Indicating that from this point fixedSizeStorage cannot be considered safe even though its reference is not replaced yet.
                 // Note: we could spare the flag if we just nullified fixedSizeStorage before merging but this way can prevent that keys in the
@@ -1300,7 +1391,7 @@ namespace KGySoft.Collections
                 isMerging = true;
                 try
                 {
-                    fixedSizeStorage = new FixedSizeStorage(fixedSizeStorage, lockingValues);
+                    fixedSizeStorage = new FixedSizeStorage(fixedSizeStorage, lockingValues, removeDeletedKeys);
                 }
                 finally
                 {

@@ -69,7 +69,7 @@ namespace KGySoft.Collections
 
                 #region Properties
 
-                private object? DebugValue => Value == null ? "<Deleted>" : (object?)Value.Value;
+                private object? DebugValue => Value == null ? "<Deleted>" : Value.Value;
 
                 #endregion
             }
@@ -178,7 +178,19 @@ namespace KGySoft.Collections
 
             #region Properties
 
+            #region Public Properties
+            
             public int Count => entries.Length - Volatile.Read(ref deletedCount);
+
+            #endregion
+
+            #region Internal Properties
+
+            internal bool IsCleanupLimitReached => deletedCount > 16 && deletedCount > (entries.Length >> 1);
+            internal int DeletedCount => deletedCount;
+            internal int Capacity => entries.Length;
+
+            #endregion
 
             #endregion
 
@@ -203,11 +215,43 @@ namespace KGySoft.Collections
 
             #region Internal Constructors
 
-            internal FixedSizeStorage(FixedSizeStorage other, TempStorage mergeWith)
+            internal FixedSizeStorage(FixedSizeStorage other, TempStorage mergeWith, bool removeDeletedKeys)
             {
+                // isAndHash and comparer are not taken from other because it can be Empty
                 isAndHash = mergeWith.IsAndHash;
                 comparer = mergeWith.Comparer;
+
+                if (removeDeletedKeys)
+                {
+                    // Possible endless retries are prevented by WaitWhileMerging (this method is called with isMerging=true)
+                    // Data loss is prevented by the retry mechanisms in ThreadSafeDictionary.TryInsertInternal/TryRemove.
+                    while (!TryInitialize(other, mergeWith))
+                    {
+                    }
+
+                    return;
+                }
+
                 Initialize(other, mergeWith);
+            }
+
+            internal FixedSizeStorage(FixedSizeStorage other)
+            {
+                Debug.Assert(other.deletedCount > 0);
+
+                // As other is never Empty here isAndHash and comparer can be taken from it
+                isAndHash = other.isAndHash;
+                comparer = other.comparer;
+
+                // Possible endless retries are prevented by WaitWhileMerging (this method is called with isMerging=true)
+                while (true)
+                {
+                    int count = other.Count;
+                    buckets = new int[GetBucketSize(count)];
+                    entries = new Entry[count];
+                    if (TryCopyFrom(other, count))
+                        return;
+                }
             }
 
             #endregion
@@ -1027,6 +1071,22 @@ namespace KGySoft.Collections
                 CopyFrom(mergeWith, otherCount);
             }
 
+            /// <summary>
+            /// Similar to <see cref="Initialize"/> but tries to skip deleted entries.
+            /// Might fail if elements have been added/removed to other during the process.
+            /// </summary>
+            private bool TryInitialize(FixedSizeStorage other, TempStorage mergeWith)
+            {
+                int otherCount = other.Count;
+                int count = otherCount + mergeWith.Count;
+                buckets = new int[GetBucketSize(count)];
+                entries = new Entry[count];
+                if (!TryCopyFrom(other, otherCount))
+                    return false;
+                CopyFrom(mergeWith, otherCount);
+                return true;
+            }
+
             private bool TryInitialize(ICollection<KeyValuePair<TKey, TValue>> collection)
                 => comparer == null ? TryInitializeDefault(collection) : TryInitializeByComparer(collection);
 
@@ -1138,6 +1198,43 @@ namespace KGySoft.Collections
                     if (newItemRef.Value == null)
                         deletedCount += 1;
                 }
+            }
+
+            private bool TryCopyFrom(FixedSizeStorage other, int referenceCount)
+            {
+                int[] localBuckets = buckets;
+                Entry[] items = entries;
+
+                Entry[] otherItems = other.entries;
+                int len = otherItems.Length;
+                int count = 0;
+
+                for (int i = 0; i < len; i++)
+                {
+                    ref Entry oldItemRef = ref otherItems[i];
+#if NET35 || NET40
+                    StrongBox<TValue>? box = oldItemRef.Value;
+#else
+                    StrongBox<TValue>? box = Volatile.Read(ref oldItemRef.Value);
+#endif
+                    // skipping deleted items
+                    if (box == null)
+                        continue;
+
+                    // elements have been added
+                    if (count == referenceCount)
+                        return false;
+
+                    ref Entry newItemRef = ref items[count];
+                    ref int bucketRef = ref localBuckets[GetBucketIndex(oldItemRef.Hash)];
+                    newItemRef.Hash = oldItemRef.Hash;
+                    newItemRef.Key = oldItemRef.Key;
+                    newItemRef.Value = box; // non-volatile write because we are coming from constructor
+                    newItemRef.Next = bucketRef - 1; // Next is zero-based
+                    bucketRef = ++count; // bucket indices are 1-based
+                }
+
+                return count == referenceCount;
             }
 
             private void CopyFrom(TempStorage other, int index)
