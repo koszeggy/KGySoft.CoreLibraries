@@ -57,7 +57,7 @@ namespace KGySoft.CoreLibraries
                 Reflector.IntPtrType, Reflector.UIntPtrType
             };
 
-        private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate>();
+        private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate> { PreserveMergedKeys = true };
 
         /// <summary>
         /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse(string,Type,bool)"/> methods.
@@ -81,7 +81,7 @@ namespace KGySoft.CoreLibraries
             get
             {
                 if (conversions == null)
-                    Interlocked.CompareExchange(ref conversions, new ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>(), null);
+                    Interlocked.CompareExchange(ref conversions, new ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> { PreserveMergedKeys = true }, null);
                 return conversions;
             }
         }

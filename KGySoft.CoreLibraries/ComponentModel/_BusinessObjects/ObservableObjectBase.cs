@@ -226,7 +226,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected ObservableObjectBase()
         {
-            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, StringSegmentComparer.Ordinal);
+            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, StringSegmentComparer.Ordinal) { PreserveMergedKeys = true };
         }
 
         #endregion
@@ -352,7 +352,7 @@ namespace KGySoft.ComponentModel
 
         internal ThreadSafeDictionary<string, object?> CloneProperties()
         {
-            ThreadSafeDictionary<string, object?> result = new ThreadSafeDictionary<string, object?>(Properties.Count);
+            ThreadSafeDictionary<string, object?> result = new ThreadSafeDictionary<string, object?>(Properties.Count) { PreserveMergedKeys = true };
             foreach (KeyValuePair<string, object?> property in Properties)
                 result[property.Key] = property.Value.DeepClone(customClone);
 

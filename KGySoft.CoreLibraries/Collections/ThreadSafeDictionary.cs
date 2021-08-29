@@ -235,6 +235,8 @@ namespace KGySoft.Collections
         /// can be set to <see langword="true"/>, so once the values have been merged into the faster lock-free storage, their entry is not removed anymore even if the
         /// corresponding value is deleted. This ensures that removing and re-adding a value with the same key again and again remains a lock-free operation.
         /// <note>Do not set this property to <see langword="true"/>, if the number of the possibly added keys is not limited.</note></para>
+        /// <para>This property can be set to <see langword="true"/>&#160;even if keys are never removed so it is not checked before a merge operation whether
+        /// the amount of deleted items exceeds a specific limit.</para>
         /// <para>If this property is <see langword="true"/>, then the already merged keys are not removed even when calling the <see cref="Clear">Clear</see> method.
         /// The memory of the deleted entries can be freed by explicitly calling the <see cref="TrimExcess">TrimExcess</see> method,
         /// whereas to remove all allocated entries you can call the <see cref="Reset">Reset</see> method.</para>
