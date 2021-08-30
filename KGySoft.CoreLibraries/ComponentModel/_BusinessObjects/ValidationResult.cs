@@ -15,6 +15,7 @@
 
 #region Usings
 
+using System;
 using System.Diagnostics;
 
 using KGySoft.CoreLibraries;
@@ -27,7 +28,8 @@ namespace KGySoft.ComponentModel
     /// Represents a validation entry in a <see cref="ValidationResultsCollection"/>.
     /// </summary>
     [DebuggerDisplay("{" + nameof(Severity) + "}: {" + nameof(PropertyName) + "} - {" + nameof(Message) + "}")]
-    public class ValidationResult
+    [Serializable]
+    public sealed class ValidationResult
     {
         #region Properties
 

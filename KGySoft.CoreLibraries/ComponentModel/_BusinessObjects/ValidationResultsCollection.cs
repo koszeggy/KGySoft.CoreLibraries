@@ -30,11 +30,24 @@ namespace KGySoft.ComponentModel
     /// </summary>
     [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
     [Serializable]
-    public class ValidationResultsCollection : Collection<ValidationResult>
+    public sealed class ValidationResultsCollection : Collection<ValidationResult>
     {
         #region Fields
 
+        #region Static Fields
+
+        /// <summary>
+        /// Gets an empty, immutable <see cref="ValidationResultsCollection"/>. This field is read-only.
+        /// </summary>
+        public static readonly ValidationResultsCollection Empty = new ValidationResultsCollection().ToReadOnly();
+
+        #endregion
+
+        #region Instance Fields
+
         private ReadOnlyCollection<ValidationResult>? errors, warnings, infos;
+
+        #endregion
 
         #endregion
 
@@ -163,7 +176,7 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
-        internal ValidationResultsCollection ToReadOnly() => new ValidationResultsCollection(new ReadOnlyCollection<ValidationResult>(Items));
+        internal ValidationResultsCollection ToReadOnly() => Items.IsReadOnly ? this : new ValidationResultsCollection(new ReadOnlyCollection<ValidationResult>(Items));
 
         #endregion
 
