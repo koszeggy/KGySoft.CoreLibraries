@@ -87,6 +87,8 @@
 
 + KGySoft.ComponentModel namespace:
 ===================================
+! ValidationResultsCollection
+  + New Empty field
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)
@@ -99,6 +101,10 @@
   + Adding Version support (which is cloning like in .NET Core)
   - Supporting null instance
 + StringSegmentConverter: Adding InstanceDescriptor support
+- ValidatingObjectBase class
+  - PropertyChanged could be triggered for the ValidationResults property even without any change.
+- ValidationResult class:
+  - Adding the missing Serializable attribute (ValidationResultsCollection was serializable anyway)
 
 + KGySoft.Resources namespace:
 ==============================

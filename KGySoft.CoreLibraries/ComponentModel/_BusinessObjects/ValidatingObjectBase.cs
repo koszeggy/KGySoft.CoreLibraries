@@ -90,9 +90,9 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private ValidationResultsCollection? cachedValidationResults;
-        private bool lastIsValid = true;
-        private bool? isValid;
+        private ValidationResultsCollection cachedValidationResults = ValidationResultsCollection.Empty;
+        private bool cachedIsValid = true;
+        private bool isValidationUpToDate;
 
         #endregion
 
@@ -108,12 +108,23 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <value><see langword="true"/>&#160;if this instance is valid; otherwise, <see langword="false"/>.
         /// </value>
-        public bool IsValid => isValid ?? (bool)(isValid = !ValidationResults.HasErrors);
+        public bool IsValid
+        {
+            get
+            {
+                if (isValidationUpToDate)
+                    return cachedIsValid;
+
+                Validate();
+                Debug.Assert(isValidationUpToDate);
+                return cachedIsValid;
+            }
+        }
 
         /// <summary>
         /// Gets the validation results for this instance.
         /// </summary>
-        public ValidationResultsCollection ValidationResults => cachedValidationResults ?? Validate();
+        public ValidationResultsCollection ValidationResults => isValidationUpToDate ? cachedValidationResults! : Validate();
 
         #endregion
 
@@ -152,13 +163,15 @@ namespace KGySoft.ComponentModel
             if (result == null!)
                 Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
 
-            bool newIsValid = !result.HasErrors;
-            bool raiseIsValidChanged = newIsValid != lastIsValid;
-            isValid = lastIsValid = newIsValid;
-
-            ValidationResultsCollection? lastResult = cachedValidationResults;
-            bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
+            ValidationResultsCollection lastResult = cachedValidationResults;
+            bool raiseValidationResultsChanged = !lastResult.SequenceEqual(result);
             cachedValidationResults = result.ToReadOnly();
+
+            bool newIsValid = !result.HasErrors;
+            bool raiseIsValidChanged = newIsValid != cachedIsValid;
+            cachedIsValid = newIsValid;
+
+            isValidationUpToDate = true;
 
             if (raiseIsValidChanged)
                 OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));
@@ -200,11 +213,8 @@ namespace KGySoft.ComponentModel
                 Throw.ArgumentNullException(Argument.e);
 
             // Invalidating cached validation results if an affected property has changed.
-            if (isValid != null && AffectsModifiedState(e.PropertyName!))
-            {
-                isValid = null;
-                cachedValidationResults = null;
-            }
+            if (isValidationUpToDate && AffectsModifiedState(e.PropertyName!))
+                isValidationUpToDate = false;
 
             base.OnPropertyChanged(e);
         }
