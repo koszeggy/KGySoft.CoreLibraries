@@ -127,6 +127,11 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.AreEqual(1, validationResults.Infos.Count);
             Assert.AreEqual(nameof(TestClass.IntProp), validationResults.Infos[0].PropertyName);
 
+            ValidationResult highest = validationResults.TryGetFirstWithHighestSeverity();
+            Assert.IsNotNull(highest);
+            Assert.AreEqual(ValidationSeverity.Error, highest.Severity);
+            Assert.AreEqual(nameof(TestClass.StringProp), highest.PropertyName);
+
             // changing the properties
             testObject.IntProp = -1;
             testObject.StringProp = "alpha";
@@ -136,6 +141,17 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.IsFalse(validationResults.HasInfos);
             Assert.AreEqual(1, validationResults.Warnings.Count);
             Assert.AreEqual(nameof(TestClass.IntProp), validationResults.Warnings[0].PropertyName);
+
+            highest = validationResults.TryGetFirstWithHighestSeverity();
+            Assert.IsNotNull(highest);
+            Assert.AreEqual(ValidationSeverity.Warning, highest.Severity);
+            Assert.AreEqual(nameof(TestClass.IntProp), highest.PropertyName);
+
+            // changing again
+            testObject.IntProp = 1;
+            validationResults = testObject.ValidationResults;
+            Assert.AreEqual(0, validationResults.Count);
+            Assert.IsNull(validationResults.TryGetFirstWithHighestSeverity());
         }
 
         #endregion

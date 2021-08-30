@@ -138,7 +138,7 @@ namespace KGySoft.ComponentModel
 
         #region Indexers
 
-        string IDataErrorInfo.this[string propertyName] => ValidationResults.Errors[propertyName].Message;
+        string IDataErrorInfo.this[string propertyName] => ValidationResults[propertyName].Errors.Message;
 
         #endregion
 

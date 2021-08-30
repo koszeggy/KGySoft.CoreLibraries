@@ -138,8 +138,7 @@ namespace KGySoft.ComponentModel
             {
                 if (propertyName == null!)
                     Throw.ArgumentNullException(Argument.propertyName);
-                int len = Count;
-                if (len == 0)
+                if (Count == 0)
                     return Empty;
 
                 if (resultsByNameCache == null)
@@ -227,6 +226,23 @@ namespace KGySoft.ComponentModel
         /// <param name="message">The information message.</param>
         /// <exception cref="NotSupportedException">This <see cref="ValidationResultsCollection"/> instance is read-only and cannot be modified.</exception>
         public void AddInfo(string propertyName, string message) => Add(new ValidationResult(propertyName, message, ValidationSeverity.Information));
+
+        /// <summary>
+        /// Gets the first <see cref="ValidationResult"/> with highest severity, optionally using the specified <paramref name="propertyName"/>,
+        /// or <see langword="null"/>, if no such <see cref="ValidationResult"/> exists.
+        /// </summary>
+        /// <param name="propertyName">An optional property name to get the result for a specific property, or <see langword="null"/>&#160;to get the
+        /// highest severity <see cref="ValidationResult"/> for any property.</param>
+        /// <returns>The first <see cref="ValidationResult"/> with highest severity using the specified <paramref name="propertyName"/>, or <see langword="null"/>,
+        /// if no such <see cref="ValidationResult"/> exists.</returns>
+        public ValidationResult? TryGetFirstWithHighestSeverity(string? propertyName = null)
+        {
+            ValidationResultsCollection results = propertyName == null ? this : this[propertyName];
+            return results.HasErrors ? results.Errors[0]
+                : results.HasWarnings ? results.Warnings[0]
+                : results.HasInfos ? results.Infos[0]
+                : null;
+        }
 
         /// <summary>
         /// Gets the string representation of this <see cref="ValidationResultsCollection"/> instance.

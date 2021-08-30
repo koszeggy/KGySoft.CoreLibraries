@@ -94,6 +94,7 @@
   + New Empty field
   + New this[string] indexer
   + New Message property that combines all messages in this instance.
+  + New TryGetFirstWithHighestSeverity method
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)
