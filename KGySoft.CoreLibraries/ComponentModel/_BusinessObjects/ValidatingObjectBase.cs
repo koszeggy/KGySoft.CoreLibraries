@@ -17,7 +17,7 @@
 
 using System;
 using System.ComponentModel;
-using System.Linq;
+
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -130,7 +130,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Properties
 
-        string IDataErrorInfo.Error => ValidationResults.Errors.Select(e => e.Message).Join(Environment.NewLine);
+        string IDataErrorInfo.Error => ValidationResults.Errors.Message;
 
         #endregion
 
@@ -138,7 +138,7 @@ namespace KGySoft.ComponentModel
 
         #region Indexers
 
-        string IDataErrorInfo.this[string propertyName] => ValidationResults[propertyName, ValidationSeverity.Error].Select(e => e.Message).Join(Environment.NewLine);
+        string IDataErrorInfo.this[string propertyName] => ValidationResults.Errors[propertyName].Message;
 
         #endregion
 
@@ -163,14 +163,25 @@ namespace KGySoft.ComponentModel
             if (result == null!)
                 Throw.InvalidOperationException(Res.ComponentModelDoValidationNull);
 
+            if (result.Count == 0)
+                result = ValidationResultsCollection.Empty;
             ValidationResultsCollection lastResult = cachedValidationResults;
-            bool raiseValidationResultsChanged = !lastResult.SequenceEqual(result);
-            cachedValidationResults = result.ToReadOnly();
+            bool raiseValidationResultsChanged = lastResult.Count != result.Count;
+            if (!raiseValidationResultsChanged)
+            {
+                // SequenceEqual would be simpler but also slower
+                int count = result.Count;
+                for (int i = 0; !raiseValidationResultsChanged && i < count; i++)
+                    raiseValidationResultsChanged = !result[i].Equals(lastResult[i]);
+            }
 
+            // if there was no change we assign back lastResult so cached values will be preserved
+            result = raiseValidationResultsChanged ? result.ToReadOnly() : lastResult;
             bool newIsValid = !result.HasErrors;
             bool raiseIsValidChanged = newIsValid != cachedIsValid;
-            cachedIsValid = newIsValid;
 
+            cachedValidationResults = result;
+            cachedIsValid = newIsValid;
             isValidationUpToDate = true;
 
             if (raiseIsValidChanged)

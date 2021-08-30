@@ -18,8 +18,6 @@
 using System;
 using System.Diagnostics;
 
-using KGySoft.CoreLibraries;
-
 #endregion
 
 namespace KGySoft.ComponentModel
@@ -65,10 +63,10 @@ namespace KGySoft.ComponentModel
                 Throw.ArgumentNullException(Argument.propertyName);
             if (message == null!)
                 Throw.ArgumentNullException(Argument.message);
+            if ((uint)severity > (uint)ValidationSeverity.Error)
+                Throw.EnumArgumentOutOfRangeWithValues(Argument.severity, severity);
             PropertyName = propertyName;
             Message = message;
-            if (!Enum<ValidationSeverity>.IsDefined(severity))
-                Throw.EnumArgumentOutOfRangeWithValues(Argument.severity, severity);
             Severity = severity;
         }
 

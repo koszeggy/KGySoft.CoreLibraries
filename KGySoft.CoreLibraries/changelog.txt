@@ -88,7 +88,12 @@
 + KGySoft.ComponentModel namespace:
 ===================================
 ! ValidationResultsCollection
+  ! The type of the Errors, Warnings and Infos properties have been changed to ValidationResultsCollection. When
+    recompiling existing code, this is a non-breaking change and solves also the incompatibility issue between the
+    <=.NET 4.0 vs. other targets that different types (IList<ValidationResult> vs. IReadOnlyList<ValidationResult>).
   + New Empty field
+  + New this[string] indexer
+  + New Message property that combines all messages in this instance.
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)

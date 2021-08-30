@@ -19,7 +19,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
+using System.Threading;
+
+using KGySoft.Collections;
+using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -39,13 +43,15 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets an empty, immutable <see cref="ValidationResultsCollection"/>. This field is read-only.
         /// </summary>
-        public static readonly ValidationResultsCollection Empty = new ValidationResultsCollection().ToReadOnly();
+        public static readonly ValidationResultsCollection Empty = new ValidationResultsCollection(Reflector.EmptyArray<ValidationResult>());
 
         #endregion
 
         #region Instance Fields
 
-        private ReadOnlyCollection<ValidationResult>? errors, warnings, infos;
+        private ValidationResultsCollection? errors, warnings, infos;
+        private IThreadSafeCacheAccessor<string, ValidationResultsCollection>? resultsByNameCache;
+        private string? combinedMessage;
 
         #endregion
 
@@ -56,34 +62,19 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         /// <summary>
-        /// Gets the validation results denoting an error.
+        /// Gets a read-only <see cref="ValidationResultsCollection"/> containing <see cref="ValidationResult"/> entries with <see cref="ValidationSeverity.Error"/> severities.
         /// </summary>
-#if NET35 || NET40
-        public IList<ValidationResult>
-#else
-        public IReadOnlyList<ValidationResult>
-#endif
-            Errors => errors ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Error).ToArray());
+        public ValidationResultsCollection Errors => errors ??= FilterBySeverity(ValidationSeverity.Error);
 
         /// <summary>
-        /// Gets the validation results denoting a warning.
+        /// Gets the validation results denoting a warning.= as a read-only <see cref="ValidationResultsCollection"/>.
         /// </summary>
-#if NET35 || NET40
-        public IList<ValidationResult>
-#else
-        public IReadOnlyList<ValidationResult>
-#endif
-            Warnings => warnings ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray());
+        public ValidationResultsCollection Warnings => warnings ??= FilterBySeverity(ValidationSeverity.Warning);
 
         /// <summary>
         /// Gets the validation results denoting an information.
         /// </summary>
-#if NET35 || NET40
-        public IList<ValidationResult>
-#else
-        public IReadOnlyList<ValidationResult>
-#endif
-            Infos => infos ??= new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Information).ToArray());
+        public ValidationResultsCollection Infos => infos ??= FilterBySeverity(ValidationSeverity.Information);
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.
@@ -103,22 +94,84 @@ namespace KGySoft.ComponentModel
         /// <value><see langword="true"/>&#160;if this instance has information entries; otherwise, <see langword="false"/>.</value>
         public bool HasInfos => Infos.Count > 0;
 
+        /// <summary>
+        /// Gets a single combined <see cref="string"/> that contains all messages in this <see cref="ValidationResultsCollection"/>.
+        /// </summary>
+        public string Message
+        {
+            get
+            {
+                if (combinedMessage != null)
+                    return combinedMessage;
+
+                int len = Count;
+                switch (len)
+                {
+                    case 0:
+                        return combinedMessage = String.Empty;
+                    case 1:
+                        return combinedMessage = this[0].Message;
+                    default:
+                        // not using Select because Join would be much slower then
+                        var result = new List<string>(Count);
+                        
+                        // ReSharper disable once ForCanBeConvertedToForeach - performance
+                        // ReSharper disable once LoopCanBeConvertedToQuery - performance
+                        for (int i = 0; i < len; i++)
+                            result.Add(this[i].Message);
+                        return combinedMessage = result.Join(Environment.NewLine);
+                }
+            }
+        }
+
         #endregion
 
         #region Indexers
 
         /// <summary>
+        /// Gets the validation results for the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="propertyName">Name of the property to get the validation results.</param>
+        public ValidationResultsCollection this[string propertyName]
+        {
+            get
+            {
+                if (propertyName == null!)
+                    Throw.ArgumentNullException(Argument.propertyName);
+                int len = Count;
+                if (len == 0)
+                    return Empty;
+
+                if (resultsByNameCache == null)
+                    Interlocked.CompareExchange(ref resultsByNameCache, ThreadSafeCacheFactory.Create<string, ValidationResultsCollection>(FilterByName, LockFreeCacheOptions.Profile128), null);
+
+                // ReSharper disable once ConstantConditionalAccessQualifier - resultsByNameCache can be nullified again in InvalidateCaches, in which rare case we just ignore the cache.
+                // Once a ValidationResultsCollection has been built and returned publicly, it is read-only so can never be invalidated
+                return resultsByNameCache?[propertyName] ?? FilterByName(propertyName);
+            }
+        }
+
+        /// <summary>
         /// Gets the validation results for the specified <paramref name="propertyName"/> and <paramref name="severity"/>.
         /// </summary>
         /// <param name="propertyName">Name of the property to get the validation results.</param>
-        /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
-#if NET35 || NET40
-        public IList<ValidationResult>
-#else
-        public IReadOnlyList<ValidationResult>
-#endif
-            this[string propertyName, ValidationSeverity? severity = null] => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
+        /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities.</param>
+        public ValidationResultsCollection this[string propertyName, ValidationSeverity? severity]
+        {
+            get
+            {
+                if (severity.HasValue && (uint)severity.Value > (uint)ValidationSeverity.Error)
+                    Throw.EnumArgumentOutOfRange(Argument.severity, severity.Value);
+                ValidationResultsCollection byName = this[propertyName];
+                return severity switch
+                {
+                    null => byName,
+                    ValidationSeverity.Error => byName.Errors,
+                    ValidationSeverity.Warning => byName.Warnings,
+                    _ => byName.Infos,
+                };
+            }
+        }
 
         #endregion
 
@@ -156,6 +209,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">Name of the property.</param>
         /// <param name="message">The error message.</param>
+        /// <exception cref="NotSupportedException">This <see cref="ValidationResultsCollection"/> instance is read-only and cannot be modified.</exception>
         public void AddError(string propertyName, string message) => Add(new ValidationResult(propertyName, message));
 
         /// <summary>
@@ -163,6 +217,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">Name of the property.</param>
         /// <param name="message">The warning message.</param>
+        /// <exception cref="NotSupportedException">This <see cref="ValidationResultsCollection"/> instance is read-only and cannot be modified.</exception>
         public void AddWarning(string propertyName, string message) => Add(new ValidationResult(propertyName, message, ValidationSeverity.Warning));
 
         /// <summary>
@@ -170,7 +225,16 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">Name of the property.</param>
         /// <param name="message">The information message.</param>
+        /// <exception cref="NotSupportedException">This <see cref="ValidationResultsCollection"/> instance is read-only and cannot be modified.</exception>
         public void AddInfo(string propertyName, string message) => Add(new ValidationResult(propertyName, message, ValidationSeverity.Information));
+
+        /// <summary>
+        /// Gets the string representation of this <see cref="ValidationResultsCollection"/> instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="string" /> that represents this <see cref="ValidationResultsCollection"/> instance.
+        /// </returns>
+        public override string ToString() => Message;
 
         #endregion
 
@@ -223,7 +287,46 @@ namespace KGySoft.ComponentModel
 
         #region Private Methods
 
-        private void InvalidateCaches() => errors = warnings = infos = null;
+        private void InvalidateCaches()
+        {
+            errors = warnings = infos = null;
+            resultsByNameCache = null;
+            combinedMessage = null;
+        }
+
+        private ValidationResultsCollection FilterBySeverity(ValidationSeverity severity)
+        {
+            int len = Count;
+            if (len == 0)
+                return Empty;
+            var result = new List<ValidationResult>(len);
+            for (int i = 0; i < len; i++)
+            {
+                ValidationResult item = this[i];
+                if (item.Severity == severity)
+                    result.Add(item);
+            }
+
+            // ToArray is practical because that makes the result read-only without wrapping into a ReadOnlyCollection
+            return result.Count == 0 ? Empty : new ValidationResultsCollection(result.ToArray());
+        }
+
+        private ValidationResultsCollection FilterByName(string propertyName)
+        {
+            int len = Count;
+            if (len == 0)
+                return Empty;
+            var result = new List<ValidationResult>(len);
+            for (int i = 0; i < len; i++)
+            {
+                ValidationResult item = this[i];
+                if (item.PropertyName == propertyName)
+                    result.Add(item);
+            }
+
+            // ToArray is practical because that makes the result read-only without wrapping into a ReadOnlyCollection
+            return result.Count == 0 ? Empty : new ValidationResultsCollection(result.ToArray());
+        }
 
         #endregion
 

@@ -49,6 +49,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 var result = new ValidationResultsCollection();
                 if (IntProp < 0)
                     result.AddWarning(nameof(IntProp), "< 0");
+                else if (IntProp == 0)
+                    result.AddInfo(nameof(IntProp), "= 0");
                 if (StringProp == null)
                     result.AddError(nameof(StringProp), "null");
                 return result;
@@ -107,6 +109,33 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             CollectionAssert.Contains(changedProperties, nameof(testObject.IsValid));
             Assert.IsTrue(testObject.ValidationResults.HasErrors);
             Assert.AreEqual(2, testObject.ValidationResults.Count);
+        }
+
+        [Test]
+        public void ValidationResultsTest()
+        {
+            var testObject = new TestClass();
+            ValidationResultsCollection validationResults = testObject.ValidationResults;
+            Assert.AreEqual(2, validationResults.Count);
+            Assert.IsTrue(validationResults.HasErrors);
+            Assert.IsFalse(validationResults.HasWarnings);
+            Assert.IsTrue(validationResults.HasInfos);
+
+            Assert.AreEqual(1, validationResults.Errors.Count);
+            Assert.AreEqual(nameof(TestClass.StringProp), validationResults.Errors[0].PropertyName);
+
+            Assert.AreEqual(1, validationResults.Infos.Count);
+            Assert.AreEqual(nameof(TestClass.IntProp), validationResults.Infos[0].PropertyName);
+
+            // changing the properties
+            testObject.IntProp = -1;
+            testObject.StringProp = "alpha";
+            validationResults = testObject.ValidationResults;
+            Assert.IsFalse(validationResults.HasErrors);
+            Assert.IsTrue(validationResults.HasWarnings);
+            Assert.IsFalse(validationResults.HasInfos);
+            Assert.AreEqual(1, validationResults.Warnings.Count);
+            Assert.AreEqual(nameof(TestClass.IntProp), validationResults.Warnings[0].PropertyName);
         }
 
         #endregion
