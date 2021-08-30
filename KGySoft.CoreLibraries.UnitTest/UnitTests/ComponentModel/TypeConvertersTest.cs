@@ -116,7 +116,6 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.AreEqual(testData, retrieved);
         }
 
-
         [TestCase("value", typeof(string))]
         [TestCase("value", typeof(InstanceDescriptor))]
         [TestCase("", typeof(string))]

@@ -46,8 +46,6 @@ namespace KGySoft.Collections
 
         #region Properties
 
-        #region Public Properties
-
         /// <summary>
         /// Gets or sets the initial capacity of the cache.
         /// <br/>Default value: <c>16</c>.
@@ -93,8 +91,6 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see cref="Collections.HashingStrategy.Auto"/>.
         /// </summary>
         public HashingStrategy HashingStrategy { get; set; }
-
-        #endregion
 
         #endregion
 
