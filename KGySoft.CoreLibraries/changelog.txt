@@ -98,6 +98,9 @@
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)
++ Command class:
+  + New PropertyBindingComplete event
++ New PropertyBindingCompleteEventArgs class
 + BinaryTypeConverter: Adding InstanceDescriptor support
 + EncodingConverter:
   + Adding InstanceDescriptor support

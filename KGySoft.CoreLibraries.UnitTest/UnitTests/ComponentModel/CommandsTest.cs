@@ -28,7 +28,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 {
     [TestFixture]
-    public class CommandsTest
+    public class CommandsTest : TestBase
     {
         #region Nested classes
 
@@ -38,13 +38,14 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             #region Events
 
-            internal event EventHandler TestEvent;
+            internal event EventHandler StringPropChangedTestEvent;
 
             #endregion
 
             #region Properties
 
-            public string TestProp { get => Get<string>(); set => Set(value); }
+            public string StringProp { get => Get<string>(); set => Set(value); }
+            public int IntProp { get => Get<int>(); set => Set(value); }
 
             #endregion
 
@@ -53,8 +54,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
             {
                 base.OnPropertyChanged(e);
-                if (e.PropertyName == nameof(TestProp))
-                    TestEvent?.Invoke(this, EventArgs.Empty);
+                if (e.PropertyName == nameof(StringProp))
+                    StringPropChangedTestEvent?.Invoke(this, EventArgs.Empty);
             }
 
             #endregion
@@ -91,12 +92,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             ICommandBinding binding = LogPropChangeCommand.CreateBinding(test, nameof(test.PropertyChanged), Console.Out);
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
 
             // not triggered again after disposing
             binding.Dispose();
-            test.TestProp = "Beta";
+            test.StringProp = "Beta";
             Assert.AreEqual(2, binding.State["TriggerCount"]);
 
             // creating alternatively (command itself was not disposed)
@@ -105,7 +106,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 .AddTarget(Console.Out);
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
-            test.TestProp = "Gamma";
+            test.StringProp = "Gamma";
             Assert.AreEqual(1, binding.State["TriggerCount"]); // new state, only TestProp changed
 
             binding.InvokeCommand(this, "Fake event name", new PropertyChangedExtendedEventArgs("old", "new", "Fake property name"));
@@ -131,12 +132,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                     .AddTarget(Console.Out);
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
 
             // not triggered again after disposing the collection
             bindings.Dispose();
-            test.TestProp = "Beta";
+            test.StringProp = "Beta";
             Assert.AreEqual(2, binding.State["TriggerCount"]);
 
             // explicit dispose before disposing the collection is not a problem
@@ -158,17 +159,17 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             // Disabled command is not executed
             Assert.IsFalse(state.ContainsKey("TriggerCount"));
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.IsFalse(state.ContainsKey("TriggerCount"));
 
             // enabling by push
             state.Enabled = true;
-            test.TestProp = "Beta";
+            test.StringProp = "Beta";
             Assert.AreEqual(1, binding.State["TriggerCount"]);
 
             // disabling by poll
             binding.Executing += (sender, args) => args.State.Enabled = false;
-            test.TestProp = "Gamma";
+            test.StringProp = "Gamma";
             Assert.AreEqual(1, binding.State["TriggerCount"]);
         }
 
@@ -183,8 +184,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
-            binding.State[nameof(test.TestProp)] = "ByUpdater";
-            Assert.AreEqual("ByUpdater", test.TestProp);
+            binding.State[nameof(test.StringProp)] = "ByUpdater";
+            Assert.AreEqual("ByUpdater", test.StringProp);
             Assert.AreEqual(2, binding.State["TriggerCount"]);
         }
 
@@ -198,29 +199,77 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
         }
 
         [Test]
-        public void PropertyBinding()
+        public void PropertyBindingTest()
         {
-            var source = new TestClass { TestProp = "Alpha" };
-            var target = new TestClass { TestProp = "Beta" };
-            Assert.AreNotEqual(source.TestProp, target.TestProp);
+            var source = new TestClass { StringProp = "Alpha" };
+            var target = new TestClass { StringProp = "Beta" };
+            Assert.AreNotEqual(source.StringProp, target.StringProp);
 
             // they are synced immediately
-            ICommandBinding binding = source.CreatePropertyBinding(nameof(source.TestProp), nameof(target.TestProp), target);
-            Assert.AreEqual(source.TestProp, target.TestProp);
+            ICommandBinding binding = source.CreatePropertyBinding(nameof(source.StringProp), nameof(target.StringProp), target);
+            Assert.AreEqual(source.StringProp, target.StringProp);
 
             // or when source changes
-            source.TestProp = "Gamma";
-            Assert.AreEqual(source.TestProp, target.TestProp);
+            source.StringProp = "Gamma";
+            Assert.AreEqual(source.StringProp, target.StringProp);
 
             // but only until binding is disposed
             binding.Dispose();
-            source.TestProp = "Delta";
-            Assert.AreNotEqual(source.TestProp, target.TestProp);
+            source.StringProp = "Delta";
+            Assert.AreNotEqual(source.StringProp, target.StringProp);
+        }
+
+        [Test]
+        public void PropertyBindingWithFormattingTest()
+        {
+            const string bindingFormatErrorTestMessage = nameof(bindingFormatErrorTestMessage);
+            var source = new TestClass { StringProp = "42" };
+            var target = new TestClass();
+            PropertyBindingCompleteEventArgs bindingCompleteEventArgs = null;
+
+            static object FormatStringAsInt(object value) => Int32.TryParse((string)value, out int result) ? result : throw new ArgumentException(bindingFormatErrorTestMessage);
+
+            void HandleBindingComplete(object sender, PropertyBindingCompleteEventArgs e)
+            {
+                if (e.Source != source || e.Target != target)
+                    return;
+                Console.WriteLine($"{e.SourcePropertyName} -> {e.TargetPropertyName} [{e.Value}]: {e.Error?.Message ?? "OK"}");
+                bindingCompleteEventArgs = e;
+                e.Handled = true;
+            }
+
+            // handling PropertyBindingComplete
+            Command.PropertyBindingComplete += HandleBindingComplete;
+
+            // creating a binding from a string to int, which immediately triggers a binding
+            using ICommandBinding binding = source.CreatePropertyBinding(nameof(source.StringProp), nameof(target.IntProp), FormatStringAsInt, target);
+            Assert.AreEqual(42, target.IntProp);
+            Assert.IsNotNull(bindingCompleteEventArgs);
+            Assert.IsNull(bindingCompleteEventArgs.Error);
+            bindingCompleteEventArgs = null;
+
+            // setting invalid number: error, previous target value is preserved
+            source.StringProp = "-";
+            Assert.AreEqual(42, target.IntProp);
+            Assert.IsNotNull(bindingCompleteEventArgs);
+            Assert.IsNotNull(bindingCompleteEventArgs.Error);
+            Assert.AreEqual(bindingFormatErrorTestMessage, bindingCompleteEventArgs.Error.Message);
+            bindingCompleteEventArgs = null;
+
+            // setting valid number: the error goes away and the target is updated
+            source.StringProp = "-1";
+            Assert.AreEqual(-1, target.IntProp);
+            Assert.IsNotNull(bindingCompleteEventArgs);
+            Assert.IsNull(bindingCompleteEventArgs.Error);
+
+            // removing the subscription will not handle the error anymore
+            Command.PropertyBindingComplete -= HandleBindingComplete;
+            Throws<ArgumentException>(() => source.StringProp = "x", bindingFormatErrorTestMessage);
         }
 
         [Test]
@@ -230,10 +279,10 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new TestClass();
             using var bindings = new CommandBindingsCollection();
             bindings.Add(() => executed = true)
-                .AddSource(test, nameof(test.TestEvent));
+                .AddSource(test, nameof(test.StringPropChangedTestEvent));
 
             // triggering command
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.IsTrue(executed);
         }
 
@@ -243,17 +292,17 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             bool executed = false;
             var test = new TestClass();
             using var bindings = new CommandBindingsCollection();
-            bindings.Add(OnExecute, () => test.TestProp)
+            bindings.Add(OnExecute, () => test.StringProp)
                 .AddSource(test, nameof(test.PropertyChanged));
 
             void OnExecute(string value)
             {
-                Assert.AreEqual(test.TestProp, value);
+                Assert.AreEqual(test.StringProp, value);
                 executed = true;
             }
 
             // triggering command
-            test.TestProp = "Alpha";
+            test.StringProp = "Alpha";
             Assert.IsTrue(executed);
         }
 

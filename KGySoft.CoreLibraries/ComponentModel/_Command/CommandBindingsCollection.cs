@@ -118,6 +118,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="Command.PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, null);
@@ -143,6 +144,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="Command.PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[] targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, null);
@@ -169,6 +171,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="Command.PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, awaitCompletion);
@@ -196,6 +199,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="Command.PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public ICommandBinding AddSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
             => DoAddPropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, awaitCompletion);

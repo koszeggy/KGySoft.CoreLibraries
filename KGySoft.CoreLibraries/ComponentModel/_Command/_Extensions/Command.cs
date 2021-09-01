@@ -43,6 +43,18 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Events
+
+        /// <summary>
+        /// Occurs when a property binding created by the <see cref="O:KGySoft.ComponentModel.Command.CreatePropertyBinding">CreatePropertyBinding</see>
+        /// and <see cref="O:KGySoft.ComponentModel.Command.CreateSynchronizedPropertyBinding">CreateSynchronizedPropertyBinding</see> methods has been triggered
+        /// and completed a binding operation. In case of an error the <see cref="PropertyBindingCompleteEventArgs.Error"/> property returns an <see cref="Exception"/>,
+        /// which is about to be thrown, unless you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.
+        /// </summary>
+        public static event EventHandler<PropertyBindingCompleteEventArgs>? PropertyBindingComplete;
+
+        #endregion
+
         #region Properties
 
         private static ICommand UpdatePropertyCommand { get; } = new SourceAwareTargetedCommand<EventArgs, object>(OnUpdatePropertyCommand);
@@ -123,6 +135,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreatePropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, null, targets);
@@ -146,6 +159,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreatePropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, format, targets);
@@ -170,6 +184,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, null);
@@ -195,6 +210,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, null);
@@ -219,6 +235,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreateSynchronizedPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, null, targets, true, awaitCompletion);
@@ -244,6 +261,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreateSynchronizedPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, format, targets, true, awaitCompletion);
@@ -270,6 +288,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreateSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, awaitCompletion);
@@ -297,6 +316,7 @@ namespace KGySoft.ComponentModel
         /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// <note type="tip">You can subscribe to the <see cref="PropertyBindingComplete"/> event to handle possible errors that may occur when a binding operation is triggered.</note>
         /// </remarks>
         public static ICommandBinding CreateSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, awaitCompletion);
@@ -389,41 +409,57 @@ namespace KGySoft.ComponentModel
             string? sourcePropertyName = state.GetValueOrDefault<string?>(stateSourcePropertyName);
             if (sourcePropertyName == null)
                 Throw.InvalidOperationException(Res.ComponentModelMissingState(stateSourcePropertyName));
+
             string? targetPropertyName = state.GetValueOrDefault<string?>(stateTargetPropertyName);
             if (targetPropertyName == null)
                 Throw.InvalidOperationException(Res.ComponentModelMissingState(stateTargetPropertyName));
-
+            
             object? propertyValue = null;
             bool propertyValueObtained = false;
-            if (src.EventArgs is PropertyChangedEventArgs e)
+            if (src.EventArgs is PropertyChangedEventArgs changedArgs)
             {
-                if (e.PropertyName != sourcePropertyName)
+                if (changedArgs.PropertyName != sourcePropertyName)
                     return;
-                propertyValueObtained = e.TryGetNewPropertyValue(out propertyValue);
+                propertyValueObtained = changedArgs.TryGetNewPropertyValue(out propertyValue);
             }
 
-            if (!propertyValueObtained)
+            try
             {
-                object source = src.Source;
-                propertyValue = source is IPersistableObject persistableSource && persistableSource.TryGetPropertyValue(sourcePropertyName, out propertyValue)
-                    || source is ICommandState stateSource && stateSource.TryGetValue(sourcePropertyName, out propertyValue)
-                    ? propertyValue : Reflector.GetProperty(source, sourcePropertyName);
-            }
+                if (!propertyValueObtained)
+                {
+                    object source = src.Source;
+                    propertyValue = source is IPersistableObject persistableSource && persistableSource.TryGetPropertyValue(sourcePropertyName, out propertyValue)
+                        || source is ICommandState stateSource && stateSource.TryGetValue(sourcePropertyName, out propertyValue)
+                        ? propertyValue : Reflector.GetProperty(source, sourcePropertyName);
+                }
 
-            var formatValue = state.GetValueOrDefault<Func<object?, object?>?>(stateFormatValue);
-            if (formatValue != null)
-                propertyValue = formatValue.Invoke(propertyValue);
+                var formatValue = state.GetValueOrDefault<Func<object?, object?>?>(stateFormatValue);
+                if (formatValue != null)
+                    propertyValue = formatValue.Invoke(propertyValue);
 
-            var capturedContext = state.GetValueOrDefault<SynchronizationContext?>(stateSyncContext);
-            if (capturedContext != null)
-            {
-                if (state.GetValueOrDefault<bool>(stateAwaitCompletion))
-                    capturedContext.Send(_ => DoSetProperty(target, targetPropertyName, propertyValue), null);
+                var capturedContext = state.GetValueOrDefault<SynchronizationContext?>(stateSyncContext);
+                if (capturedContext != null)
+                {
+                    if (state.GetValueOrDefault<bool>(stateAwaitCompletion))
+                        capturedContext.Send(_ => DoSetProperty(target, targetPropertyName, propertyValue), null);
+                    else
+                        capturedContext.Post(_ => DoSetProperty(target, targetPropertyName, propertyValue), null);
+                }
                 else
-                    capturedContext.Post(_ => DoSetProperty(target, targetPropertyName, propertyValue), null);
+                    DoSetProperty(target, targetPropertyName, propertyValue);
+
+                PropertyBindingComplete?.Invoke(null, new PropertyBindingCompleteEventArgs(src.Source, target, sourcePropertyName, targetPropertyName, propertyValue));
             }
-            else
-                DoSetProperty(target, targetPropertyName, propertyValue);
+            catch (Exception e) when (!e.IsCritical())
+            {
+                EventHandler<PropertyBindingCompleteEventArgs>? handler = PropertyBindingComplete;
+                if (handler == null)
+                    throw;
+                var args = new PropertyBindingCompleteEventArgs(src.Source, target, sourcePropertyName, targetPropertyName, propertyValue, e);
+                handler.Invoke(null, args);
+                if (!args.Handled)
+                    throw;
+            }
         }
 
         #endregion
