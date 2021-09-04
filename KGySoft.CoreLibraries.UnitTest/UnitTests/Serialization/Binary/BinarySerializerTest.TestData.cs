@@ -1948,6 +1948,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region LargeStructToBeMarshaled
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct LargeStructToBeMarshaled
+        {
+            #region Fields
+
+            [MarshalAs(UnmanagedType.U1)]
+            internal bool Bool;
+            internal byte Byte;
+            internal sbyte SByte;
+            internal short Short;
+            internal ushort UShort;
+            internal int Int;
+            internal uint UInt;
+            internal long Long;
+            internal ulong ULong;
+            internal float Float;
+            internal double Double;
+            internal decimal Decimal;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+            internal string ValueString;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            internal byte[] ValueBytes;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region LargeUnmanagedStruct
+
+        private unsafe struct LargeUnmanagedStruct
+        {
+            #region Fields
+
+            internal bool Bool;
+            internal byte Byte;
+            internal sbyte SByte;
+            internal short Short;
+            internal ushort UShort;
+            internal int Int;
+            internal uint UInt;
+            internal long Long;
+            internal ulong ULong;
+            internal float Float;
+            internal double Double;
+            internal decimal Decimal;
+            internal ConsoleColor Color;
+            internal Guid Guid;
+            internal fixed char ValueString[16];
+            internal fixed byte ValueBytes[16];
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()

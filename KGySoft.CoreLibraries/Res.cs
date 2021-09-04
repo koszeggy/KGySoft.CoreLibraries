@@ -648,6 +648,9 @@ namespace KGySoft
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
         internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);
 
+        /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
+        internal static string BinarySerializationValueTypeContainsReferences<T>() => Get("BinarySerialization_ValueTypeContainsReferencesFormat", typeof(T));
+
         #endregion
 
         #region Cache<TKey, TValue>

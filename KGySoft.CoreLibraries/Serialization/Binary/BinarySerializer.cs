@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
@@ -40,6 +41,30 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="IBinarySerializable"/>
     public static class BinarySerializer
     {
+        #region Nested Types
+
+        #region RawDataHelper class
+
+#if NETCOREAPP3_0_OR_GREATER
+        /// <summary>
+        /// To be able to access the actual data of any class (or boxed struct) as ref byte
+        /// </summary>
+        [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Used in Unsafe.As<T>")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
+        private sealed class RawDataHelper
+        {
+            #region Fields
+
+            internal byte FirstByte;
+
+            #endregion
+        } 
+#endif
+
+        #endregion
+
+        #endregion
+
         #region Constants
 
         internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures;
@@ -115,63 +140,93 @@ namespace KGySoft.Serialization.Binary
         public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
 
         /// <summary>
-        /// Serializes a <see cref="ValueType"/> into a byte array.
+        /// Serializes a <see cref="ValueType"/> into a byte array. If the type of the specified instance contains any references,
+        /// then it is tried to be serialized by marshaling as a fallback option.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <returns>The byte array representation of the <see cref="ValueType"/> object.</returns>
         /// <remarks>
-        /// <note type="caution">Never call this method on a <see cref="ValueType"/> that has reference (non-value type) fields. Deserializing such value would result an invalid
-        /// object with undetermined object references. Only string and array reference fields can be serialized safely if they are decorated by <see cref="MarshalAsAttribute"/> using
-        /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.</note>
+        /// <para>If the specified instance does not have any references, then its actual raw data is returned. In this case this method is very fast.</para>
+        /// <para>If the specified instance has reference types, then as a fallback option, it is attempted to be serialized by using the <see cref="Marshal"/> class.
+        /// To work properly the string and array fields must be decorated by the <see cref="MarshalAsAttribute"/> using <see cref="UnmanagedType.ByValTStr"/>
+        /// or <see cref="UnmanagedType.ByValArray"/> values, and the <see cref="StructLayoutAttribute"/> must be defined on referenced classes.
+        /// The <see cref="MarshalAsAttribute"/> annotations are ignored if the type does not contain any references and hence it is serialized by its actual raw content.
+        /// <note>Serializing by the <see cref="Marshal"/> class as a fallback option is maintained only for compatibility reasons.
+        /// If a value type contains references, then it is recommended to use the <see cref="Serialize">Serialize</see> method instead.
+        /// You can use the <see cref="TrySerializeValueType"/> method to serialize only pure value types without any references. </note></para>
+        /// <para>If the instance cannot be serialized even by the <see cref="Marshal"/> class, then an <see cref="ArgumentException"/> is thrown.</para>
+        /// <note type="caution">If packing is not defined on the type of the instance by <see cref="StructLayoutAttribute.Pack">StructLayoutAttribute.Pack</see>,
+        /// or the type contains pointer fields, then the length of the result might be different on 32 and 64 bit systems.
+        /// The serialized content depends also on the endianness of the executing architecture.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> contains references and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
         [SecurityCritical]
-        public static byte[] SerializeValueType(ValueType obj)
+        public static unsafe byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            byte[] rawData = new byte[Marshal.SizeOf(obj)];
-            GCHandle handle = GCHandle.Alloc(rawData, GCHandleType.Pinned);
-            try
-            {
-                Marshal.StructureToPtr(obj, handle.AddrOfPinnedObject(), false);
-            }
-            finally
-            {
-                handle.Free();
-            }
+            if (!obj.GetType().IsManaged())
+                return SerializeValueTypeRaw(obj);
 
-            return rawData;
+            // Fallback with marshaling. Throws an ArgumentException on error
+            byte[] result = new byte[Marshal.SizeOf(obj)];
+            fixed (void* ptr = result)
+                Marshal.StructureToPtr(obj, new IntPtr(ptr), false);
+
+            return result;
         }
 
         /// <summary>
         /// Tries to serialize a <see cref="ValueType"/> into a byte array.
+        /// The operation will succeed if the type of the specified instance does not contain any references.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueType"/> method for details.
         /// </summary>
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
-        /// <param name="result">The byte array representation of the <see cref="ValueType"/> object.</param>
-        /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
+        /// <param name="result">When this method returns, the byte array representation of the <see cref="ValueType"/> instance. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the specified <see cref="ValueType"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)] out byte[] result)
+        public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)]out byte[] result)
         {
             result = null;
 
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (CanSerializeValueType(obj.GetType(), false))
-            {
-                try
-                {
-                    result = SerializeValueType(obj);
-                }
-                catch (Exception e) when (!e.IsCritical())
-                {
-                    // CanSerializeStruct filters a sort of conditions but serialization may fail even in that case - this catch is to protect this case.
-                    return false;
-                }
+            if (obj.GetType().IsManaged())
+                return false;
 
-                return true;
-            }
+            result = SerializeValueTypeRaw(obj);
+            return true;
+        }
 
-            return false;
+        /// <summary>
+        /// Serializes the specified <paramref name="value"/> into a byte array.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to serialize. It must be a value type that does not contain references.</typeparam>
+        /// <param name="value">The value to serialize.</param>
+        /// <returns>The byte array representation of the specified <paramref name="value"/>.</returns>
+        /// <remarks>
+        /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
+        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/>&#160;constraint,
+        /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
+        /// For performance reasons this method does not check if <typeparamref name="T"/> has references
+        /// (<see cref="DeserializeValueType{T}(byte[])"/> checks it though).</note>
+        /// </remarks>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static unsafe byte[] SerializeValueType<T>(in T value) where T : unmanaged
+        {
+            byte[] result = new byte[sizeof(T)];
+#if NETCOREAPP3_0_OR_GREATER
+            Unsafe.As<byte, T>(ref result[0]) = value;
+#else
+            fixed (byte* dst = result)
+                *(T*)dst = value;
+#endif
+            return result;
         }
 
         /// <summary>
@@ -252,28 +307,14 @@ namespace KGySoft.Serialization.Binary
         /// <param name="type">The type of the target object. Must be a <see cref="ValueType"/>.</param>
         /// <param name="data">The byte array that starts with byte representation of the object.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
-        [SecurityCritical]
-        public static object DeserializeValueType(Type type, byte[] data)
-        {
-            if (type == null!)
-                Throw.ArgumentNullException(Argument.type);
-            if (!type.IsValueType)
-                Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
-            if (data == null!)
-                Throw.ArgumentNullException(Argument.data);
-            if (data.Length < Marshal.SizeOf(type))
-                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
-
-            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            try
-            {
-                return Marshal.PtrToStructure(handle.AddrOfPinnedObject(), type)!;
-            }
-            finally
-            {
-                handle.Free();
-            }
-        }
+        /// <exception cref="ArgumentNullException"><paramref name="data"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="type"/> is not a value type
+        /// <br/>-or-
+        /// <br/>The length of <paramref name="data"/> is too small.
+        /// <br/>-or-
+        /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
+        [SecuritySafeCritical]
+        public static object DeserializeValueType(Type type, byte[] data) => DeserializeValueType(type, data, 0);
 
         /// <summary>
         /// Deserializes a <see cref="ValueType"/> object from a byte array that was previously serialized by <see cref="SerializeValueType">SerializeValueType</see> method
@@ -283,8 +324,15 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The byte array that contains the byte representation of the object.</param>
         /// <param name="offset">The offset that points to the beginning of the serialized data.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="data"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="offset"/> is negative or too large.</exception>
+        /// <exception cref="ArgumentException"><paramref name="type"/> is not a value type
+        /// <br/>-or-
+        /// <br/>The length of <paramref name="data"/> is too small.
+        /// <br/>-or-
+        /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         [SecurityCritical]
-        public static object DeserializeValueType(Type type, byte[] data, int offset)
+        public unsafe static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -292,23 +340,87 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
-
-            int len = Marshal.SizeOf(type);
-            if (data.Length < len)
-                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
-            if (data.Length - offset < len || offset < 0)
+            if ((uint)offset > (uint)data.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
 
-            IntPtr p = Marshal.AllocHGlobal(len);
-            try
-            {
-                Marshal.Copy(data, offset, p, len);
-                return Marshal.PtrToStructure(p, type)!;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(p);
-            }
+            if (!type.IsManaged())
+                return DeserializeValueTypeRaw(type, data, offset);
+
+            // Fallback with marshaling. Throws an ArgumentException on error
+            int len = Marshal.SizeOf(type);
+            if (offset + len > data.Length)
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
+
+            fixed (void* src = &data[offset])
+                return Marshal.PtrToStructure(new IntPtr(src), type)!;
+        }
+
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> from a byte array that was previously serialized
+        /// by the <see cref="SerializeValueType{T}"/> method.
+        /// </summary>
+        /// <typeparam name="T">The type of the result. It must be a value type that does not contain references.</typeparam>
+        /// <param name="data">The byte array that starts with byte representation of the object.</param>
+        /// <returns>The deserialized <typeparamref name="T"/> instance.</returns>
+        /// <exception cref="InvalidOperationException"><typeparamref name="T"/> contains references.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static unsafe T DeserializeValueType<T>(byte[] data) where T : unmanaged
+        {
+            // The unmanaged constraint is not enforced in CLR so we must check it
+            if (Reflector<T>.IsManaged)
+                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
+            if (data == null!)
+                Throw.ArgumentNullException(Argument.data);
+
+            int len = sizeof(T);
+            if (data.Length < len)
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
+
+#if NETCOREAPP3_0_OR_GREATER
+            return Unsafe.As<byte, T>(ref data[0]);
+#else
+            fixed (byte* src = data)
+                return *(T*)src;
+#endif
+        }
+
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> from a byte array that was previously serialized
+        /// by the <see cref="SerializeValueType{T}"/> method.
+        /// </summary>
+        /// <typeparam name="T">The type of the result. It must be a value type that does not contain references.</typeparam>
+        /// <param name="data">The byte array that starts with byte representation of the object.</param>
+        /// <param name="offset">The offset that points to the beginning of the serialized data.</param>
+        /// <returns>The deserialized <typeparamref name="T"/> instance.</returns>
+        /// <exception cref="InvalidOperationException"><typeparamref name="T"/> contains references.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="offset"/> is negative or too large.</exception>
+        /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static unsafe T DeserializeValueType<T>(byte[] data, int offset) where T : unmanaged
+        {
+            // The unmanaged constraint is not enforced in CLR so we must check it
+            if (Reflector<T>.IsManaged)
+                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
+            if (data == null!)
+                Throw.ArgumentNullException(Argument.data);
+            if ((uint)offset > (uint)data.Length)
+                Throw.ArgumentOutOfRangeException(Argument.offset);
+
+            int len = sizeof(T);
+            if (offset + len > data.Length)
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
+
+#if NETCOREAPP3_0_OR_GREATER
+            return Unsafe.As<byte, T>(ref data[offset]);
+#else
+            fixed (byte* src = &data[offset])
+                return *(T*)src;
+#endif
         }
 
         /// <summary>
@@ -412,6 +524,103 @@ namespace KGySoft.Serialization.Binary
 
             return true;
         }
+
+        #endregion
+
+        #region Private Methods
+
+#if NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static byte[] SerializeValueTypeRaw(object obj)
+        {
+            int len = obj.GetType().SizeOf();
+            byte[] result = new byte[len];
+            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<RawDataHelper>(obj).FirstByte, (uint)len);
+            return result;
+        }
+#else
+        [SecurityCritical]
+        private static unsafe byte[] SerializeValueTypeRaw(object obj)
+        {
+            int len = obj.GetType().SizeOf();
+            byte[] result = new byte[len];
+            TypedReference objRef = __makeref(obj);
+
+            while (true)
+            {
+                // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
+                // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
+                byte* rawData = GetRawDataAddress(objRef);
+                ref byte rawDataRef = ref *rawData;
+                fixed (byte* pinnedRawData = &rawDataRef)
+                {
+                    // trying again if object was relocated between first dereferencing and the actual pinning
+                    if (pinnedRawData != GetRawDataAddress(objRef))
+                        continue;
+
+                    // pinnedRawData points to the method table pointer, which is followed by the first actual byte
+                    Marshal.Copy(new IntPtr(pinnedRawData + IntPtr.Size), result, 0, len);
+                }
+
+                return result;
+            }
+        }
+#endif
+
+        [SecurityCritical]
+        private unsafe static object DeserializeValueTypeRaw(Type type, byte[] data, int offset)
+        {
+            Debug.Assert(offset >= 0);
+            int len = type.SizeOf();
+            if (offset + len > data.Length)
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
+
+            // for structs Activator is faster than obtaining a CreateInstanceAccessor by type and invoking it
+            object result = Activator.CreateInstance(type)!;
+
+#if NETCOREAPP3_0_OR_GREATER
+            ref byte src = ref data[offset];
+            ref byte dst = ref Unsafe.As<RawDataHelper>(result).FirstByte;
+            if (((nint)Unsafe.AsPointer(ref src) & IntPtr.Size) == 0)
+                Unsafe.CopyBlock(ref dst, ref src, (uint)len);
+            else
+                Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);
+
+            return result;
+#else
+            TypedReference objRef = __makeref(result);
+            while (true)
+            {
+                // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
+                // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
+                byte* rawData = GetRawDataAddress(objRef);
+                ref byte rawDataRef = ref *rawData;
+                fixed (byte* pinnedRawData = &rawDataRef)
+                {
+                    // trying again if object was relocated between first dereferencing and the actual pinning
+                    if (pinnedRawData != GetRawDataAddress(objRef))
+                        continue;
+
+                    // pinnedRawData points to the method table pointer, which is followed by the first actual byte
+                    Marshal.Copy(data, offset, new IntPtr(pinnedRawData + IntPtr.Size), len);
+                }
+
+                return result;
+            }
+#endif
+        }
+
+#if !NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe byte* GetRawDataAddress(TypedReference typedRef)
+        {
+            Debug.Assert(__reftype(typedRef) == typeof(object) && __refvalue(typedRef, object).GetType().IsValueType, "The reference should contain a value type boxed to object");
+
+            // Dereferencing the TypedReference of the boxed value manually to access the raw data
+            // See more in my SO answer here: https://stackoverflow.com/a/55552250/5114784
+            return (byte*)*(IntPtr*)*(IntPtr*)&typedRef;
+        }
+#endif
 
         #endregion
 

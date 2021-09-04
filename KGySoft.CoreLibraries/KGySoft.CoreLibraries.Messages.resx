@@ -631,6 +631,9 @@ You may try to preload the assembly before deserialization or disable SafeMode i
   <data name="BinarySerialization_CollectionPlatformNotSupportedFormat" xml:space="preserve">
     <value>The stream contains a collection of type '{0}', which is not supported on this platform.</value>
   </data>
+  <data name="BinarySerialization_ValueTypeContainsReferencesFormat" xml:space="preserve">
+    <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
+  </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>

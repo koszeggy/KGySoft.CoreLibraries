@@ -822,8 +822,17 @@ namespace KGySoft.CoreLibraries
                 return false;
             if (!type.IsValueType)
                 return true;
+
             FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            return fields.Any(f => HasReference(f.FieldType));
+            
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
+            for (var i = 0; i < fields.Length; i++)
+            {
+                if (HasReference(fields[i].FieldType))
+                    return true;
+            }
+
+            return false;
         }
 
         private static Type CreateGenericType((Type GenTypeDef, Type T1, Type? T2) key)

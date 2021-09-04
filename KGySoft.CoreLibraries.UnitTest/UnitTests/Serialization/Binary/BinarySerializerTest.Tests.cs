@@ -1762,8 +1762,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [TestCase(typeof(int), true)]
+        [TestCase(typeof(bool), true)]
+        [TestCase(typeof(KeyValuePair<int, int>), true)]
         [TestCase(typeof(KeyValuePair<int, string>), false)]
-        [TestCase(typeof(KeyValuePair<int, int>), false)]
         public void CanSerializeValueType(Type type, bool expectedResult)
         {
             Assert.AreEqual(expectedResult, BinarySerializer.CanSerializeValueType(type, true));
@@ -1771,7 +1772,53 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             if (!expectedResult)
                 return;
 
-            BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true));
+            Assert.IsInstanceOf(type, BinarySerializer.DeserializeValueType(type, BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true))));
+        }
+
+        [TestCase(typeof(bool))]
+        [TestCase(typeof(int))]
+        [TestCase(typeof(decimal))]
+        [TestCase(typeof(LargeUnmanagedStruct))]
+        [TestCase(typeof(LargeStructToBeMarshaled))]
+        [TestCase(typeof(KeyValuePair<int, int>))]
+        [TestCase(typeof(ValueTuple<int, int>))]
+        public void SerializeValueTypeNonGenericTest(Type type)
+        {
+            var settings = new GenerateObjectSettings
+            {
+                ObjectInitialization = ObjectInitialization.Fields,
+                CollectionsLength = (16, 16),
+                StringsLength = (16, 16)
+            };
+
+            object instance = ThreadSafeRandom.Instance.NextObject(type, settings);
+            byte[] serialized = BinarySerializer.SerializeValueType((ValueType)instance);
+            object deserialized = BinarySerializer.DeserializeValueType(type, serialized);
+            byte[] reserialized = BinarySerializer.SerializeValueType((ValueType)deserialized);
+            CollectionAssert.AreEqual(serialized, reserialized);
+        }
+
+        [TestCaseGeneric(TypeArguments = new[] { typeof(bool) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(int) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(decimal) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(LargeUnmanagedStruct) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(KeyValuePair<int, int>) })] // tricky: not unmanaged, still, it works
+        [TestCaseGeneric(TypeArguments = new[] { typeof(ValueTuple<int, int>) })] // tricky: not unmanaged, still, it works
+        public void SerializeValueTypeGenericTest<T>()
+            where T : unmanaged
+        {
+            var settings = new GenerateObjectSettings
+            {
+                ObjectInitialization = ObjectInitialization.Fields,
+                CollectionsLength = (16, 16),
+                StringsLength = (16, 16)
+            };
+
+            T instance = ThreadSafeRandom.Instance.NextObject<T>(settings);
+            byte[] serialized = BinarySerializer.SerializeValueType(instance);
+            T deserialized = BinarySerializer.DeserializeValueType<T>(serialized);
+            byte[] reserialized = BinarySerializer.SerializeValueType(deserialized);
+            CollectionAssert.AreEqual(serialized, reserialized);
         }
 
         [Test]
