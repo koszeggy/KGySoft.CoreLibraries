@@ -136,8 +136,10 @@
     incompatible with the previous versions for some value types. As a fallback, marshaling has also been preserved
     so this is a breaking change only when considering the content of the produced byte array.
   ! TrySerializeValueType method: It no longer serializes value types that have references. Performance improvement.
-  ! DeserializeValueType methods: They might not be able to deserialize the content of the previous versions.
-  + New generic SerializeValueType and DeserializeValueType overloads. They work only for value types without
+  ! DeserializeValueType methods: There might not be able to deserialize the content of the previous versions.
+  ! [Try]SerializeValueArray, DeserializeValueArray methods: replacing the 'struct' constraint with 'unmanaged'.
+    Performance improvement, fixing possible exception about non-blittable types.
+  + New generic [Try]SerializeValueType and DeserializeValueType overloads. They work only for value types without
     any references.
 
 

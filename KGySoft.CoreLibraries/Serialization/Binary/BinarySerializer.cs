@@ -41,30 +41,6 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="IBinarySerializable"/>
     public static class BinarySerializer
     {
-        #region Nested Types
-
-        #region RawDataHelper class
-
-#if NETCOREAPP3_0_OR_GREATER
-        /// <summary>
-        /// To be able to access the actual data of any class (or boxed struct) as ref byte
-        /// </summary>
-        [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Used in Unsafe.As<T>")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
-        private sealed class RawDataHelper
-        {
-            #region Fields
-
-            internal byte FirstByte;
-
-            #endregion
-        } 
-#endif
-
-        #endregion
-
-        #endregion
-
         #region Constants
 
         internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures;
@@ -213,7 +189,7 @@ namespace KGySoft.Serialization.Binary
         /// When using this library with a compiler that recognizes the <see langword="unmanaged"/>&#160;constraint,
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
         /// For performance reasons this method does not check if <typeparamref name="T"/> has references
-        /// (<see cref="DeserializeValueType{T}(byte[])"/> checks it though).</note>
+        /// but you can call the <see cref="TrySerializeValueType{T}"/> method that performs the check.</note>
         /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -230,74 +206,85 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
+        /// Tries to serialize the specified <paramref name="value"/> into a byte array.
+        /// The operation will succeed if <typeparamref name="T"/> does not contain any references.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="SerializeValueType{T}"/> method for details.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to serialize.</typeparam>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="result">When this method returns, the byte array representation of the specified <paramref name="value"/>. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if <typeparamref name="T"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
+        [SecuritySafeCritical]
+        public static bool TrySerializeValueType<T>(in T value, [MaybeNullWhen(false)]out byte[] result) where T : unmanaged
+        {
+            // The unmanaged constraint guards this but if used from an older compiler or by reflection, then this check matters
+            if (Reflector<T>.IsManaged)
+            {
+                result = null;
+                return false;
+            }
+
+            result = SerializeValueType(value);
+            return true;
+        }
+
+        /// <summary>
         /// Serializes an <see cref="Array"/> of <see cref="ValueType"/>s into a byte array.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="array">The array to serialize.</param>
         /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/>.</typeparam>
         /// <returns>The byte array representation of the <paramref name="array"/>.</returns>
         /// <remarks>
-        /// <note>
-        /// For primitive element types, use <see cref="Buffer.BlockCopy">Buffer.BlockCopy</see> instead for better performance.
-        /// </note>
-        /// <note type="caution">Never call this method on a <typeparamref name="T"/> that has reference (non-value type) fields. Deserializing such value would result an invalid
-        /// object with undetermined object references.</note>
+        /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
+        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/>&#160;constraint,
+        /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
+        /// For performance reasons this method does not check if <typeparamref name="T"/> has references
+        /// but you can call the <see cref="TrySerializeValueArray{T}"/> method that performs the check.</note>
         /// </remarks>
         [SecurityCritical]
-        public static byte[] SerializeValueArray<T>(T[] array) where T : struct
+        public static unsafe byte[] SerializeValueArray<T>(T[] array) where T : unmanaged
         {
             if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
             if (array.Length == 0)
                 return Reflector.EmptyArray<byte>();
 
-            byte[] rawData = new byte[Marshal.SizeOf(typeof(T)) * array.Length];
-            GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-            try
-            {
-                Marshal.Copy(handle.AddrOfPinnedObject(), rawData, 0, rawData.Length);
-            }
-            finally
-            {
-                handle.Free();
-            }
+            int len = sizeof(T) * array.Length;
+            byte[] result = new byte[len];
+#if NETCOREAPP3_0_OR_GREATER
+            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<T, byte>(ref array[0]), (uint)len);
+#else
+            fixed (void* src = array)
+                Marshal.Copy(new IntPtr(src), result, 0, len);
 
-            return rawData;
+#endif
+
+            return result;
         }
 
         /// <summary>
         /// Tries to serialize an <see cref="Array"/> of <see cref="ValueType"/>s into a byte array.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="SerializeValueArray{T}"/> method for details.
         /// </summary>
         /// <param name="array">The array to serialize.</param>
         /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/>.</typeparam>
-        /// <param name="result">The byte array representation of the <paramref name="array"/>.</param>
-        /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.
-        /// The <paramref name="array"/> can be serialized if <typeparamref name="T"/> contains only value type fields.</returns>
+        /// <param name="result">When this method returns, the byte array representation of the specified <paramref name="array"/>. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if <typeparamref name="T"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueArray<T>(T[] array, [MaybeNullWhen(false)] out byte[] result) where T : struct
+        public static bool TrySerializeValueArray<T>(T[] array, [MaybeNullWhen(false)]out byte[] result) where T : unmanaged
         {
-            result = null;
-
             if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
-            if (array.Length == 0)
-            {
-                result = Reflector.EmptyArray<byte>();
-                return true;
-            }
 
-            if (!CanSerializeValueType(typeof(T), true))
-                return false;
-
-            try
+            // The unmanaged constraint guards this but if used from an older compiler or by reflection, then this check matters
+            if (Reflector<T>.IsManaged)
             {
-                result = SerializeValueArray(array);
-            }
-            catch (Exception e) when (!e.IsCritical())
-            {
-                // CanSerializeStruct filters a sort of conditions but serialization may fail even in that case - this catch is to protect this case.
+                result = null;
                 return false;
             }
 
+            result = SerializeValueArray(array);
             return true;
         }
 
@@ -313,7 +300,6 @@ namespace KGySoft.Serialization.Binary
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
-        [SecuritySafeCritical]
         public static object DeserializeValueType(Type type, byte[] data) => DeserializeValueType(type, data, 0);
 
         /// <summary>
@@ -331,7 +317,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
-        [SecurityCritical]
+        [SecuritySafeCritical]
         public unsafe static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             if (type == null!)
@@ -365,7 +351,7 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="InvalidOperationException"><typeparamref name="T"/> contains references.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
-        [SecurityCritical]
+        [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static unsafe T DeserializeValueType<T>(byte[] data) where T : unmanaged
         {
@@ -399,7 +385,7 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentNullException"><paramref name="data"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="offset"/> is negative or too large.</exception>
         /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
-        [SecurityCritical]
+        [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static unsafe T DeserializeValueType<T>(byte[] data, int offset) where T : unmanaged
         {
@@ -432,34 +418,38 @@ namespace KGySoft.Serialization.Binary
         /// <param name="offset">The offset that points to the beginning of the serialized data.</param>
         /// <param name="count">Number of elements to deserialize from the <paramref name="data"/>.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
-        [SecurityCritical]
-        public static T[] DeserializeValueArray<T>(byte[] data, int offset, int count)
-            where T : struct
+        [SecuritySafeCritical]
+        public static unsafe T[] DeserializeValueArray<T>(byte[] data, int offset, int count)
+            where T : unmanaged
         {
+            // The unmanaged constraint is not enforced in CLR so we must check it
+            if (Reflector<T>.IsManaged)
+                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
             if (count < 0)
                 Throw.ArgumentOutOfRangeException(Argument.count);
-
-            int len = Marshal.SizeOf(typeof(T)) * count;
-            if (data.Length < len)
-                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
-            if (data.Length - offset < len || offset < 0)
+            if ((uint)offset > (uint)data.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
+
+            int len = sizeof(T) * count;
+            if (offset + len > data.Length)
+                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
             if (count == 0)
                 return Reflector.EmptyArray<T>();
 
             T[] result = new T[count];
-            GCHandle handle = GCHandle.Alloc(result, GCHandleType.Pinned);
-            try
-            {
-                Marshal.Copy(data, offset, handle.AddrOfPinnedObject(), len);
-            }
-            finally
-            {
-                handle.Free();
-            }
+#if NETCOREAPP3_0_OR_GREATER
+            ref byte src = ref data[offset];
+            if (((nint)Unsafe.AsPointer(ref src) & IntPtr.Size) == 0)
+                Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
+            else
+                Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
+#else
+            fixed (void* dst = result)
+                Marshal.Copy(data, offset, new IntPtr(dst), len);
+#endif
 
             return result;
         }
@@ -535,7 +525,7 @@ namespace KGySoft.Serialization.Binary
         {
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
-            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<RawDataHelper>(obj).FirstByte, (uint)len);
+            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<StrongBox<byte>>(obj).Value, (uint)len);
             return result;
         }
 #else
@@ -580,7 +570,7 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
             ref byte src = ref data[offset];
-            ref byte dst = ref Unsafe.As<RawDataHelper>(result).FirstByte;
+            ref byte dst = ref Unsafe.As<StrongBox<byte>>(result).Value;
             if (((nint)Unsafe.AsPointer(ref src) & IntPtr.Size) == 0)
                 Unsafe.CopyBlock(ref dst, ref src, (uint)len);
             else
