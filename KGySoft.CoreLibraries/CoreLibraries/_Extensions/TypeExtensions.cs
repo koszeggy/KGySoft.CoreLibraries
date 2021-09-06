@@ -22,12 +22,8 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices; 
-#if !NETSTANDARD2_0
-using System.Reflection.Emit; 
-#else
-using System.Runtime.InteropServices; 
-#endif
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 
@@ -43,6 +39,25 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class TypeExtensions
     {
+        #region Nested Types
+
+        #region SizeOfHelper struct
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct SizeOfHelper<T> where T : struct
+        {
+            #region Fields
+            
+            public T Item1;
+            public T Item2;
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
         #region Fields
 
         private static readonly string collectionGenTypeName = Reflector.ICollectionGenType.Name;
@@ -538,6 +553,7 @@ namespace KGySoft.CoreLibraries
         internal static bool CanBeCreatedWithoutParameters(this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
@@ -545,6 +561,7 @@ namespace KGySoft.CoreLibraries
             return sizeOfCache[type];
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsManaged(this Type type)
         {
             if (hasReferenceCache == null)
@@ -783,37 +800,39 @@ namespace KGySoft.CoreLibraries
             Conversions.GetOrAdd(targetType, conversionAddValueFactory)[sourceType] = conversion;
         }
 
-        private static int GetSize(Type type)
+        [SecuritySafeCritical]
+        private static unsafe int GetSize(Type type)
         {
-            if (type.IsPrimitive)
-            {
-                Array array = Array.CreateInstance(type, 1);
-                return Buffer.ByteLength(array);
-            }
-
             if (!type.IsValueType)
                 return IntPtr.Size;
 
-#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: using Marshal.SizeOf (which has a different result sometimes)
-            try
+            if (type.IsPrimitive)
+                return Buffer.ByteLength(Array.CreateInstance(type, 1));
+
+            // non-primitive struct: measuring the distance between two elements in a packed struct
+            Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
+            object instance = Activator.CreateInstance(helperType)!;
+
+            // pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
+            TypedReference boxReference = __makeref(instance);
+            while (true)
             {
-                // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
-                return Marshal.SizeOf(Activator.CreateInstance(type));
+                byte* unpinnedAddress = Reflector.GetReferencedDataAddress(boxReference);
+                ref byte asRef = ref *unpinnedAddress;
+                fixed (byte* pinnedAddress = &asRef)
+                {
+                    // the instance has been relocated before pinning: trying again
+                    if (pinnedAddress != Reflector.GetReferencedDataAddress(boxReference))
+                        continue;
+
+                    // Now we can assess the address of the fields safely. MakeTypedReference works here because primitive types are handled above
+                    TypedReference refItem1 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item1))! });
+                    TypedReference refItem2 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item2))! });
+                    Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
+
+                    return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
+                }
             }
-            catch (ArgumentException)
-            {
-                // contains a reference or whatever
-                return 0;
-            }
-#else
-            // Emitting the SizeOf OpCode for the type
-            var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
-            ILGenerator gen = dm.GetILGenerator();
-            gen.Emit(OpCodes.Sizeof, type);
-            gen.Emit(OpCodes.Ret);
-            var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
-            return (int)method.Invoke();
-#endif
         }
 
         private static bool HasReference(Type type)

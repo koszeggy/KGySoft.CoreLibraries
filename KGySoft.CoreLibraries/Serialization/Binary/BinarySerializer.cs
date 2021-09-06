@@ -521,7 +521,7 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static byte[] SerializeValueTypeRaw(object obj)
+        private static byte[] SerializeValueTypeRaw(ValueType obj)
         {
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
@@ -530,26 +530,25 @@ namespace KGySoft.Serialization.Binary
         }
 #else
         [SecurityCritical]
-        private static unsafe byte[] SerializeValueTypeRaw(object obj)
+        private static unsafe byte[] SerializeValueTypeRaw(ValueType obj)
         {
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
-            TypedReference objRef = __makeref(obj);
+            TypedReference boxReference = __makeref(obj);
 
             while (true)
             {
                 // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
                 // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
-                byte* rawData = GetRawDataAddress(objRef);
+                byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
                 ref byte rawDataRef = ref *rawData;
                 fixed (byte* pinnedRawData = &rawDataRef)
                 {
                     // trying again if object was relocated between first dereferencing and the actual pinning
-                    if (pinnedRawData != GetRawDataAddress(objRef))
+                    if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
                         continue;
 
-                    // pinnedRawData points to the method table pointer, which is followed by the first actual byte
-                    Marshal.Copy(new IntPtr(pinnedRawData + IntPtr.Size), result, 0, len);
+                    Marshal.Copy((IntPtr)pinnedRawData, result, 0, len);
                 }
 
                 return result;
@@ -578,39 +577,26 @@ namespace KGySoft.Serialization.Binary
 
             return result;
 #else
-            TypedReference objRef = __makeref(result);
+            TypedReference boxReference = __makeref(result);
             while (true)
             {
                 // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
                 // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
-                byte* rawData = GetRawDataAddress(objRef);
+                byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
                 ref byte rawDataRef = ref *rawData;
                 fixed (byte* pinnedRawData = &rawDataRef)
                 {
                     // trying again if object was relocated between first dereferencing and the actual pinning
-                    if (pinnedRawData != GetRawDataAddress(objRef))
+                    if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
                         continue;
 
-                    // pinnedRawData points to the method table pointer, which is followed by the first actual byte
-                    Marshal.Copy(data, offset, new IntPtr(pinnedRawData + IntPtr.Size), len);
+                    Marshal.Copy(data, offset, (IntPtr)pinnedRawData, len);
                 }
 
                 return result;
             }
 #endif
         }
-
-#if !NETCOREAPP3_0_OR_GREATER
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static unsafe byte* GetRawDataAddress(TypedReference typedRef)
-        {
-            Debug.Assert(__reftype(typedRef) == typeof(object) && __refvalue(typedRef, object).GetType().IsValueType, "The reference should contain a value type boxed to object");
-
-            // Dereferencing the TypedReference of the boxed value manually to access the raw data
-            // See more in my SO answer here: https://stackoverflow.com/a/55552250/5114784
-            return (byte*)*(IntPtr*)*(IntPtr*)&typedRef;
-        }
-#endif
 
         #endregion
 

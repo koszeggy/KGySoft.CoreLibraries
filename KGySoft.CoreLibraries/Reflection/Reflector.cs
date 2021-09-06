@@ -2985,6 +2985,42 @@ namespace KGySoft.Reflection
             return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!);
         }
 
+        /// <summary>
+        /// Gets a pointer to the raw data (first field member or array header) of a reference created from a reference type (including boxed values).
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SecurityCritical]
+        internal static unsafe byte* GetReferencedDataAddress(TypedReference typedRef)
+        {
+            Debug.Assert(!__reftype(typedRef).IsValueType,"A reference of a reference type is expected");
+
+            // Dereferencing the TypedReference of the reference manually to access the raw data
+            // byte***:
+            // - 1st is just due to &typedRef to cast TypedReference to a pointer
+            // - 2nd is dereferencing the pointer in the typedRef itself, which points to a reference (see the assert)
+            // - 3rd is the address of the raw data itself, which points to the method table pointer.
+            //   We do not dereference this one but adding pointer size to return the address of the first field
+            // See more in my SO answer here: https://stackoverflow.com/a/55552250/5114784
+            return **(byte***)&typedRef + IntPtr.Size; // which is the same as: (byte*) *(IntPtr*) *(IntPtr*)&typedRef + offset;
+        }
+
+        /// <summary>
+        /// Gets a pointer to the actual value (first field if the struct has fields) of a reference created from a value type.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SecurityCritical]
+        internal static unsafe byte* GetValueAddress(TypedReference typedRef)
+        {
+            Debug.Assert(__reftype(typedRef).IsValueType, "A reference of a value type is expected");
+
+            // Dereferencing the TypedReference of the value manually to access the raw data
+            // byte**:
+            // - 1st is just due to &typedRef to cast TypedReference to a pointer
+            // - 2nd is the address of the raw data itself, which is simply returned
+            return *(byte**)&typedRef; // which is the same as: (byte*) *(IntPtr*)&typedRef;
+        }
+
+
         private static string? GetDefaultMember(Type type)
         {
             CustomAttributeData? data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));

@@ -15,24 +15,20 @@
 
 #region Usings
 
+using System;
+using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
-
-#region Used Namespaces
-
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reflection;
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
-
-#endregion
 
 #endregion
 
@@ -89,6 +85,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<ConcurrentDictionary<int, string>>(true, true, typeof(IEnumerable<KeyValuePair<int, string>>), typeof(KeyValuePair<int, string>), true);
             Test<ConcurrentQueue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
 #endif
+        }
+
+        [Test]
+        public void SizeOfTest()
+        {
+            Assert.AreEqual(4, typeof(int).SizeOf());
+            Assert.AreEqual(16, typeof(decimal).SizeOf());
+            Assert.AreEqual(1, typeof(_).SizeOf());
+            Assert.AreEqual(IntPtr.Size, typeof(int*).SizeOf());
+
+            Assert.AreEqual(4, Reflector<int>.SizeOf);
+            Assert.AreEqual(16, Reflector<decimal>.SizeOf);
+            Assert.AreEqual(1, Reflector<_>.SizeOf);
+            Assert.AreEqual(IntPtr.Size, Reflector<nint>.SizeOf);
         }
 
         #endregion

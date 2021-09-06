@@ -16,13 +16,10 @@
 #region Usings
 
 using System;
-#if NETFRAMEWORK || NETSTANDARD2_0
-using System.Linq;
-using System.Reflection;
-# endif
-using System.Runtime.CompilerServices;
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#else
 using KGySoft.CoreLibraries; 
 #endif
 
@@ -50,15 +47,48 @@ namespace KGySoft.Reflection
         #endregion
 
         #region SizeOfCache
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !NETCOREAPP3_0_OR_GREATER
 
         private static class SizeOfCache
         {
             #region Fields
 
-            internal static readonly int Value = typeof(T).IsPrimitive
-                ? Buffer.ByteLength(new T[1])
-                : typeof(T).SizeOf();
+            // ReSharper disable once StaticMemberInGenericType - false alarm, value depends on T
+            internal static readonly int Value = Initialize();
+
+            #endregion
+            
+            #region Methods
+            
+            private static unsafe int Initialize()
+            {
+                if (!typeof(T).IsValueType)
+                    return IntPtr.Size;
+
+                if (typeof(T).IsPrimitive)
+                    return Buffer.ByteLength(new T[1]);
+
+                // We can't use stackalloc because T is not constrained here so we need to create an array
+                var items = new T[2];
+
+                // In .NET Core 3+ we could use Unsafe.ByteOffset for ref items[0]/[1] (if there wasn't Unsafe.SizeOf in the first place), which is not available here.
+                // So we need to pin the array and use unmanaged pointers. Not using the slow GCHandle.Alloc, which throws an exception for non-blittable types anyway.
+                TypedReference arrayReference = __makeref(items);
+                while (true)
+                {
+                    byte* unpinnedAddress = Reflector.GetReferencedDataAddress(arrayReference);
+                    ref byte asRef = ref *unpinnedAddress;
+                    fixed (byte* pinnedAddress = &asRef)
+                    {
+                        // If GC has relocated the array in the meantime, then trying again
+                        if (pinnedAddress != Reflector.GetReferencedDataAddress(arrayReference))
+                            continue;
+
+                        // Now we can safely obtain the address of the pinned items. We can't use T* here so using typed references again.
+                        return (int)(Reflector.GetValueAddress(__makeref(items[1])) - Reflector.GetValueAddress(__makeref(items[0])));
+                    }
+                }
+            }
 
             #endregion
         }
@@ -93,10 +123,10 @@ namespace KGySoft.Reflection
 #endif
 
         internal static int SizeOf =>
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
-            SizeOfCache.Value;
-#else
+#if NETCOREAPP3_0_OR_GREATER
             Unsafe.SizeOf<T>();
+#else
+            SizeOfCache.Value;
 #endif
 
         internal static bool IsManaged =>
