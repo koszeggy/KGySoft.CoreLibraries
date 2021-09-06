@@ -1955,6 +1955,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             #region Fields
 
+#pragma warning disable 649 // Field is never assigned to, and will always have its default value - false alarm, values are random generated
             [MarshalAs(UnmanagedType.U1)]
             internal bool Bool;
             internal byte Byte;
@@ -1972,6 +1973,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             internal string ValueString;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
             internal byte[] ValueBytes;
+#pragma warning restore 649
 
             #endregion
         }
@@ -1984,6 +1986,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             #region Fields
 
+#pragma warning disable 649 // Field is never assigned to, and will always have its default value - false alarm, values are random generated
             internal bool Bool;
             internal byte Byte;
             internal sbyte SByte;
@@ -2000,6 +2003,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             internal Guid Guid;
             internal fixed char ValueString[16];
             internal fixed byte ValueBytes[16];
+#pragma warning restore 649
 
             #endregion
         }

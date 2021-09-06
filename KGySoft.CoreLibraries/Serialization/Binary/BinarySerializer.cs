@@ -16,10 +16,8 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -229,11 +227,11 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
-        /// Serializes an <see cref="Array"/> of <see cref="ValueType"/>s into a byte array.
+        /// Serializes an <see cref="Array"/> of <see cref="ValueType"/> elements into a byte array.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="array">The array to serialize.</param>
-        /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/>.</typeparam>
+        /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/> that has no references.</typeparam>
         /// <returns>The byte array representation of the <paramref name="array"/>.</returns>
         /// <remarks>
         /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
@@ -264,11 +262,11 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
-        /// Tries to serialize an <see cref="Array"/> of <see cref="ValueType"/>s into a byte array.
+        /// Tries to serialize an <see cref="Array"/> of <see cref="ValueType"/> elements into a byte array.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="SerializeValueArray{T}"/> method for details.
         /// </summary>
         /// <param name="array">The array to serialize.</param>
-        /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/>.</typeparam>
+        /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/> that has no references.</typeparam>
         /// <param name="result">When this method returns, the byte array representation of the specified <paramref name="array"/>. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if <typeparamref name="T"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
         [SecuritySafeCritical]
@@ -461,59 +459,6 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options for the created formatter. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
         public static IFormatter CreateFormatter(BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options);
-
-        #endregion
-
-        #region Internal Methods
-
-        internal static bool CanSerializeValueType(Type type, bool strict)
-        {
-            if (type.IsGenericType)
-                return false;
-
-            HashSet<FieldInfo> fields = new HashSet<FieldInfo>(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
-
-            // adding private fields from base types
-            while (type.BaseType != null)
-            {
-                type = type.BaseType;
-                foreach (FieldInfo field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-                {
-                    if (!fields.Contains(field))
-                        fields.Add(field);
-                }
-            }
-
-            // checking fields
-            foreach (FieldInfo field in fields)
-            {
-                if (field.FieldType.IsValueType)
-                {
-                    if (field.FieldType.IsPrimitive)
-                        continue;
-                    if (!CanSerializeValueType(field.FieldType, strict))
-                        return false;
-                }
-                else if (field.FieldType.IsArray || field.FieldType == Reflector.StringType)
-                {
-                    if (strict)
-                        return false;
-                    object[] attrs = field.GetCustomAttributes(typeof(MarshalAsAttribute), false);
-                    MarshalAsAttribute? marshalAs = attrs.Length > 0 ? attrs[0] as MarshalAsAttribute : null;
-                    if (marshalAs != null && (field.FieldType.IsArray && marshalAs.Value == UnmanagedType.ByValArray ||
-                        field.FieldType == Reflector.StringType && marshalAs.Value == UnmanagedType.ByValTStr))
-                    {
-                        continue;
-                    }
-
-                    return false;
-                }
-                else
-                    return false;
-            }
-
-            return true;
-        }
 
         #endregion
 

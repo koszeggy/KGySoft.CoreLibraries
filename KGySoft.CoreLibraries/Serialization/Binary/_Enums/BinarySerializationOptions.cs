@@ -148,9 +148,7 @@ namespace KGySoft.Serialization.Binary
         /// <para>This flag is considered on serialization.</para>
         /// <note>
         /// Note: This option has higher priority than <see cref="RecursiveSerializationAsFallback"/> flag,
-        /// except for natively supported structures.
-        /// This option affects only instances that have either no reference fields at all or have only string or array references, which are decorated by <see cref="MarshalAsAttribute"/> using
-        /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
+        /// except for natively supported structures. This option affects only instances that have no references at all.
         /// </note>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>

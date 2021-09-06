@@ -1761,20 +1761,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), "Array of pointer type 'System.Int32*[]' is not supported.");
         }
 
-        [TestCase(typeof(int), true)]
-        [TestCase(typeof(bool), true)]
-        [TestCase(typeof(KeyValuePair<int, int>), true)]
-        [TestCase(typeof(KeyValuePair<int, string>), false)]
-        public void CanSerializeValueType(Type type, bool expectedResult)
-        {
-            Assert.AreEqual(expectedResult, BinarySerializer.CanSerializeValueType(type, true));
-
-            if (!expectedResult)
-                return;
-
-            Assert.IsInstanceOf(type, BinarySerializer.DeserializeValueType(type, BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true))));
-        }
-
         [TestCase(typeof(bool))]
         [TestCase(typeof(int))]
         [TestCase(typeof(decimal))]

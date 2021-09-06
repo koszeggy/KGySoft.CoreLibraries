@@ -485,7 +485,7 @@ namespace KGySoft.Serialization.Binary
                         return DataTypes.BinarySerializable;
 
                     // Any struct if can be serialized
-                    if (CompactSerializationOfStructures && t.IsValueType && BinarySerializer.CanSerializeValueType(t, false))
+                    if (CompactSerializationOfStructures && !t.IsManaged())
                         return DataTypes.RawStruct;
 
                     // Recursive serialization
@@ -1524,7 +1524,7 @@ namespace KGySoft.Serialization.Binary
                 if (encodedDataTypes == null)
                 {
                     dataType = GetDataType(type);
-                    encodedDataTypes = CanBeEncoded(dataType) ? EncodeDataType(type, dataType) : (IList<DataTypes>)new[] { dataType };
+                    encodedDataTypes = CanBeEncoded(dataType) ? EncodeDataType(type, dataType) : new[] { dataType };
                 }
 
                 dataType = encodedDataTypes[0];
