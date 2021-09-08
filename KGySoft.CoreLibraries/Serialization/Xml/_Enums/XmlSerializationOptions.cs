@@ -128,11 +128,10 @@ namespace KGySoft.Serialization.Xml
 
         /// <summary>
         /// <para>If a <see cref="ValueType"/> (<see langword="struct"/>) has no <see cref="TypeConverter"/> and contains no references,
-        /// then by enabling this option the instance will be serialized in a compact binary form if possible.
+        /// then by enabling this option the instance will be serialized in a compact binary form.
         /// <note>This option has higher priority than fallback options (<see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/>),
         /// except for <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances, which are always serialized recursively.
-        /// This option affects only instances, which have no reference fields at all, or have only <see cref="string"/> or <see cref="Array"/> references,
-        /// which are decorated by <see cref="MarshalAsAttribute"/> using <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.</note></para>
+        /// This option affects only instances, which have no reference fields at all.</note></para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 3,
