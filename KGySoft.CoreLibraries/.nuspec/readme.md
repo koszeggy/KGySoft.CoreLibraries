@@ -1,4 +1,4 @@
-[![KGy SOFT .net](https://docs.kgysoft.net/corelibraries/icons/logo.png)](https://kgysoft.net/corelibraries)
+[![KGy SOFT .net](https://user-images.githubusercontent.com/27336165/124292367-c93f3d00-db55-11eb-8003-6d943ee7d7fa.png)](https://kgysoft.net/corelibraries)
 
 [![Website](https://img.shields.io/website/https/kgysoft.net/corelibraries.svg)](https://kgysoft.net/corelibraries) [![Online Help](https://img.shields.io/website/https/docs.kgysoft.net/corelibraries.svg?label=online%20help&up_message=available)](https://docs.kgysoft.net/corelibraries) [![GitHub Repo](https://img.shields.io/github/repo-size/koszeggy/KGySoft.CoreLibraries.svg?label=github)](https://github.com/koszeggy/KGySoft.CoreLibraries) [![.NET Fiddle](https://img.shields.io/website/https/dotnetfiddle.net/Authors/84474/koszeggy.svg?label=.NET%20Fiddle)](https://dotnetfiddle.net/Authors/84474/koszeggy)
 

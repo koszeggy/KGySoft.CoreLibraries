@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>5.6.1</version>
+    <version>6.0.0-rc.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -48,6 +48,7 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
       <group targetFramework="netstandard2.0" />
       <group targetFramework="netstandard2.1" />
       <group targetFramework="net5.0" />
+      <group targetFramework="net6.0" />
     </dependencies>
   </metadata>
   <files>
@@ -73,5 +74,7 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
     <file src="..\bin\Release\netstandard2.1\KGySoft.CoreLibraries.xml" target="lib\netstandard2.1" />
     <file src="..\bin\Release\net5.0\KGySoft.CoreLibraries.dll" target="lib\net5.0" />
     <file src="..\bin\Release\net5.0\KGySoft.CoreLibraries.xml" target="lib\net5.0" />
+    <file src="..\bin\Release\net6.0\KGySoft.CoreLibraries.dll" target="lib\net6.0" />
+    <file src="..\bin\Release\net6.0\KGySoft.CoreLibraries.xml" target="lib\net6.0" />
   </files>
 </package>
