@@ -37,7 +37,14 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private static readonly Type[] supportedTypes = { Reflector.StringType, Reflector.ByteArrayType, typeof(InstanceDescriptor) };
+        private static readonly Type[] supportedTypes =
+        {
+            Reflector.StringType,
+            Reflector.ByteArrayType,
+#if !(NETSTANDARD2_0 || NETCOREAPP2_0)
+            typeof(InstanceDescriptor)
+#endif
+        };
 
         private static MethodInfo? deserializeMethod;
 

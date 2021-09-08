@@ -711,11 +711,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
+#pragma warning disable 618 // obsolete
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
+#pragma warning restore 618
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.RecursiveSerializationAsFallback);
         }
 
         [Test]
@@ -1434,7 +1439,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
-#if !(NETCOREAPP3_0 || NET) // works but Equals fails on the clone
+#if !NETCOREAPP // works but Equals fails on the clone
                 typeof(int),
 #endif
 
@@ -1773,8 +1778,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             var settings = new GenerateObjectSettings
             {
                 ObjectInitialization = ObjectInitialization.Fields,
-                CollectionsLength = (16, 16),
-                StringsLength = (16, 16)
+                CollectionsLength = new(16, 16),
+                StringsLength = new(16, 16)
             };
 
             object instance = ThreadSafeRandom.Instance.NextObject(type, settings);

@@ -38,7 +38,14 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private static readonly Type[] supportedTypes = { Reflector.StringType, Reflector.IntType, typeof(InstanceDescriptor) };
+        private static readonly Type[] supportedTypes =
+        {
+            Reflector.StringType,
+            Reflector.IntType,
+#if !(NETSTANDARD2_0 || NETCOREAPP2_0)
+            typeof(InstanceDescriptor)
+#endif
+        };
    
         private static StringKeyedDictionary<Encoding>? encodingByName;
         private static Encoding[]? encodings;
@@ -157,7 +164,12 @@ namespace KGySoft.ComponentModel
                     return encoding;
 
                 // 2: by code
-                if (Int32.TryParse(name, out codePage))
+                if (Int32.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out codePage))
+                    return Encoding.GetEncoding(codePage);
+
+                // 2/a: by code from full name
+                int pos = name.IndexOf('|');
+                if (pos > 0 && Int32.TryParse(name.Substring(0, pos), NumberStyles.Integer, CultureInfo.InvariantCulture, out codePage))
                     return Encoding.GetEncoding(codePage);
 
                 // 3: by display name

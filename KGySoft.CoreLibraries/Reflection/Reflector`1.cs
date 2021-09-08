@@ -16,9 +16,8 @@
 #region Usings
 
 using System;
-
-#if NETCOREAPP3_0_OR_GREATER
-using System.Runtime.CompilerServices;
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+using System.Runtime.CompilerServices; 
 #else
 using KGySoft.CoreLibraries; 
 #endif

@@ -29,6 +29,8 @@ using KGySoft.Resources;
 
 using NUnit.Framework;
 
+using ResXResourceSet = KGySoft.Resources.ResXResourceSet;
+
 #endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
@@ -364,7 +366,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual("HybridResourceSet", manager.GetResourceSet(inv, true, false).GetType().Name);
 
             // enUS exists only in compiled
-            Assert.AreEqual("RuntimeResourceSet", manager.GetResourceSet(enUS, true, false).GetType().Name);
+            var rsEnUS = manager.GetResourceSet(enUS, true, false);
+#if NET35
+            if (rsEnUS == null)
+                Assert.Inconclusive(".NET Runtime 2.x issue: satellite assembly is not loaded");
+#endif
+            Assert.IsNotNull(rsEnUS);
+
+            Assert.AreEqual("RuntimeResourceSet", rsEnUS.GetType().Name);
 
             // but an expando RS can be forced for it
             Assert.AreEqual("HybridResourceSet", manager.GetExpandoResourceSet(enUS, ResourceSetRetrieval.LoadIfExists, false).GetType().Name);
@@ -556,6 +565,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(rsEnUs);
             Assert.IsNull(manager.GetResourceSet(en, false, false));
             Assert.IsNull(manager.GetResourceSet(inv, false, false));
+
+#if NET35
+            if (rsEnUs is ResXResourceSet)
+                Assert.Inconclusive(".NET Runtime 2.x issue: satellite assembly is not loaded");
+#endif
 
             // enUS is hybrid
             Assert.IsInstanceOf<HybridResourceSet>(rsEnUs);

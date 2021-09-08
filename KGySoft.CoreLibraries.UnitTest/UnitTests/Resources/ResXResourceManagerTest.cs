@@ -79,6 +79,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetString(resName, inv), manager.GetString(resName, enUS));
 
             // but en is different from invariant
+#if NET35
+            if (!Equals(refManager.GetString(resName, en), manager.GetString(resName, en)))
+                Assert.Inconclusive(".NET Runtime 2.x issue: satellite assembly is not loaded");
+#endif
             Assert.AreEqual(refManager.GetString(resName, en), manager.GetString(resName, en));
             Assert.AreNotEqual(refManager.GetString(resName, en), refManager.GetString(resName, enUS));
             Assert.AreNotEqual(manager.GetString(resName, en), manager.GetString(resName, enUS));
@@ -147,6 +151,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetObject(resName, inv), manager.GetObject(resName, enUS));
 
             // but en is different from invariant
+#if NET35
+            if (!Equals(refManager.GetObject(resName, en), manager.GetObject(resName, en)))
+                Assert.Inconclusive(".NET Runtime 2.x issue: satellite assembly is not loaded");
+#endif
             Assert.AreEqual(refManager.GetObject(resName, en), manager.GetObject(resName, en));
             Assert.AreNotEqual(refManager.GetObject(resName, en), refManager.GetObject(resName, enUS));
             Assert.AreNotEqual(manager.GetObject(resName, en), manager.GetObject(resName, enUS));
@@ -360,6 +368,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
             object reference, check;
+
+#if NET35
+            if (refManager.GetString("TestString") != manager.GetString("TestString"))
+                Assert.Inconclusive(".NET Runtime 2.x issue: satellite assembly is not loaded");
+#endif
 
             // string
             Assert.AreEqual(refManager.GetString("TestString"), manager.GetString("TestString"));

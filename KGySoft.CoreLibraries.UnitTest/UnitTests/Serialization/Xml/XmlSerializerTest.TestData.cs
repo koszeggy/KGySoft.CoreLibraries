@@ -943,30 +943,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
         public struct NonSerializableStruct
         {
-            #region Fields
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
-            private string str10;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-            private byte[] bytes3;
-
-            #endregion
-
             #region Properties
 
             public int IntProp { get; set; }
-
-            public string Str10
-            {
-                get { return str10; }
-                set { str10 = value; }
-            }
-
-            public byte[] Bytes3
-            {
-                get { return bytes3; }
-                set { bytes3 = value; }
-            }
+            public bool Bool { get; set; }
+            public Point Point { get; set; }
 
             #endregion
 
@@ -987,22 +968,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Serializable]
         public struct BinarySerializableStruct : IBinarySerializable
         {
-            #region Fields
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 6)]
-            private string stringProp;
-
-            #endregion
-
             #region Properties
 
             public int IntProp { get; set; }
 
-            public string StringProp
-            {
-                get { return stringProp; }
-                set { stringProp = value; }
-            }
+            public string StringProp { get; set; }
 
             public Point Point { get; set; }
 
@@ -1048,6 +1018,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             {
                 throw new InvalidOperationException("This method never will be called");
             }
+
+            /// <summary>
+            /// Overridden for the test equality check
+            /// </summary>
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
 
             #endregion
         }

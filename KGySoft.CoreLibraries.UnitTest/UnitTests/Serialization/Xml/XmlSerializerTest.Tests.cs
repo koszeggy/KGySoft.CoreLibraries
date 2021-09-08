@@ -451,7 +451,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     new BinarySerializableClass {IntProp = 1, StringProp = "alpha", ObjectProp = " . "},
                     new BinarySerializableStruct {IntProp = 2, StringProp = "beta"},
                     new SystemSerializableClass {IntProp = 3, StringProp = "gamma"},
-                    new NonSerializableStruct {Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha"},
+                    new NonSerializableStruct {IntProp = 1, Point = new(10, 20)},
                 };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
@@ -460,8 +460,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); //  NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
@@ -675,7 +675,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
                     new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
                     new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                    new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null },
+                    new NonSerializableStruct?[] { new NonSerializableStruct{ IntProp = 10, Bool = true, Point = new(10, 20)}, null },
                 };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
@@ -691,7 +691,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             {
                 new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null },
+                new NonSerializableStruct?[] { new NonSerializableStruct{ IntProp = 10, Point = new(13, 43)}, null },
             };
 
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
@@ -783,22 +783,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass{IntProp = 2, StringProp = "beta", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
                     new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "gamma"} }, // array of a BinarySerializable sealed class
                     new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
-                    new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
+                    new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Point = new(1, 2)}, new NonSerializableStruct{IntProp = 2, Bool = true, Point = new(3, 4)} }, // array of any struct
                 };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
                     | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+                    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, NonSerializableStruct; otherwise, nothing
 
             // These collections cannot be serialized with system serializer
             referenceObjects = new IList[]
@@ -808,7 +808,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object
                 new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object, with an IBinarySerializable element
                 new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array
-                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
+                new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Point = new(1, 2)}, new NonSerializableStruct{IntProp = 2, Bool = true, Point = new(3, 4)} }, // array of any struct
 
                 new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1},
                 new IConvertible[] { null, 1 },
@@ -1101,7 +1101,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeComplexGenericCollections()
         {
-#if !NETCOREAPP3_0
+#if !NETCOREAPP3_0_OR_GREATER
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             ICollection[] referenceObjects =
