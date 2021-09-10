@@ -36,7 +36,7 @@
   ! NextInt32 method: To harmonize behavior with NextInt64 it returns a non-negative value less than Int32.MaxValue,
     just like Next(). Use the new SampleInt32 method to generate any int value.
   ! NextUInt64 method: To harmonize behavior with the methods above it now always returns smaller values
-    than UInt64.MaxValue. Use (ulung)SampleInt64 method to generate any ulong value.
+    than UInt64.MaxValue. Use (ulong)SampleInt64 method to generate any ulong value.
   ! NextUInt32 method: To harmonize behavior with the methods above it now always returns smaller values
     than UInt32.MaxValue. Use (uint)SampleInt32 method to generate any uint value.
   + New constructor overload from Guid seed
@@ -136,8 +136,8 @@
     incompatible with the previous versions for some value types. As a fallback, marshaling has also been preserved
     so this is a breaking change only when considering the content of the produced byte array.
   ! TrySerializeValueType method: It no longer serializes value types that have references. Performance improvement.
-  ! DeserializeValueType methods: There might not be able to deserialize the content of the previous versions.
-  ! [Try]SerializeValueArray, DeserializeValueArray methods: replacing the 'struct' constraint with 'unmanaged'.
+  ! DeserializeValueType methods: They might not be able to deserialize the content of the previous versions.
+  ! [Try]SerializeValueArray, DeserializeValueArray methods: replacing the 'struct' constraint to 'unmanaged'.
     Performance improvement, fixing possible exception about non-blittable types.
   ! Serialize* methods: Starting with this version The BinarySerializationOptions.CompactSerializationOfStructures
     flag affects structs only without any references, which is very fast. Marshaling is used only if the obsolete

@@ -13,11 +13,6 @@
 
 #endregion
 
-#region Usings
-
-
-#endregion
-
 namespace KGySoft
 {
     internal enum Argument
