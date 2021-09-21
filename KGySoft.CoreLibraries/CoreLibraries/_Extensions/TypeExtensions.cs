@@ -22,6 +22,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -809,6 +810,10 @@ namespace KGySoft.CoreLibraries
             if (type.IsPrimitive)
                 return Buffer.ByteLength(Array.CreateInstance(type, 1));
 
+            // If TypedReference layout is not recognized on current platform, then using a slow/unreliable fallback
+            if (!Reflector.CanUseTypedReference)
+                return GetSizeFallback(type);
+
             // non-primitive struct: measuring the distance between two elements in a packed struct
             Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
             object instance = Activator.CreateInstance(helperType)!;
@@ -833,6 +838,31 @@ namespace KGySoft.CoreLibraries
                     return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
                 }
             }
+        }
+
+        [SecurityCritical]
+        private static int GetSizeFallback(Type type)
+        {
+#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: using Marshal.SizeOf (which has a different result sometimes)
+            try
+            {
+                // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
+                return Marshal.SizeOf(Activator.CreateInstance(type));
+            }
+            catch (ArgumentException)
+            {
+                // contains a reference or whatever
+                return default;
+            }
+#else
+            // Emitting the SizeOf OpCode for the type
+            var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
+            ILGenerator gen = dm.GetILGenerator();
+            gen.Emit(OpCodes.Sizeof, type);
+            gen.Emit(OpCodes.Ret);
+            var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
+            return (int)method.Invoke();
+#endif
         }
 
         private static bool HasReference(Type type)

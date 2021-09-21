@@ -141,8 +141,14 @@ namespace KGySoft.Serialization.Binary
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (!obj.GetType().IsManaged())
+            if (!obj.GetType().IsManaged()
+#if !NETCOREAPP3_0_OR_GREATER
+                && Reflector.CanUseTypedReference
+#endif
+            )
+            {
                 return SerializeValueTypeRaw(obj);
+            }
 
             // Fallback with marshaling. Throws an ArgumentException on error
             byte[] result = new byte[Marshal.SizeOf(obj)];
@@ -327,8 +333,14 @@ namespace KGySoft.Serialization.Binary
             if ((uint)offset > (uint)data.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
 
-            if (!type.IsManaged())
+            if (!type.IsManaged()
+#if !NETCOREAPP3_0_OR_GREATER
+                && Reflector.CanUseTypedReference 
+#endif
+            )
+            {
                 return DeserializeValueTypeRaw(type, data, offset);
+            }
 
             // Fallback with marshaling. Throws an ArgumentException on error
             int len = Marshal.SizeOf(type);
@@ -477,6 +489,7 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         private static unsafe byte[] SerializeValueTypeRaw(ValueType obj)
         {
+            Debug.Assert(Reflector.CanUseTypedReference);
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
             TypedReference boxReference = __makeref(obj);
@@ -522,6 +535,7 @@ namespace KGySoft.Serialization.Binary
 
             return result;
 #else
+            Debug.Assert(Reflector.CanUseTypedReference);
             TypedReference boxReference = __makeref(result);
             while (true)
             {

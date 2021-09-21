@@ -112,8 +112,8 @@ namespace KGySoft.Serialization.Binary
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
     /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
-    /// loading assemblies during the deserialization as well as instantiating non-serializable types, and guards against some attack that may cause <see cref="OutOfMemoryException"/>.
-    /// When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly manually that are referred by the serialization stream.</para>
+    /// loading assemblies during the deserialization as well as instantiating non-serializable types, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
+    /// When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly referred by the serialization stream.</para>
     /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
     /// can be exploited for several attacks (causing unresponsiveness, <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not
     /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against such attacks.

@@ -67,6 +67,9 @@ namespace KGySoft.Reflection
                 if (typeof(T).IsPrimitive)
                     return Buffer.ByteLength(new T[1]);
 
+                if (!Reflector.CanUseTypedReference)
+                    return typeof(T).SizeOf();
+
                 // We can't use stackalloc because T is not constrained here so we need to create an array
                 var items = new T[2];
 

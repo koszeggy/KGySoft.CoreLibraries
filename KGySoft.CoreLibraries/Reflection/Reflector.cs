@@ -117,12 +117,33 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<Type, string?>? defaultMemberCache;
         private static bool? canCreateUninitializedObject;
+        private static bool? isMono;
+        private static int? typedReferenceValueIndex;
 
         #endregion
 
         #endregion
 
         #region Properties
+
+        #region Internal Properties
+
+        internal static bool CanUseTypedReference
+        {
+            [SecuritySafeCritical]
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get
+            {
+                if (typedReferenceValueIndex.HasValue)
+                    return typedReferenceValueIndex.Value >= 0;
+                InitTypedReferenceValueIndex();
+                return typedReferenceValueIndex!.Value >= 0;
+            }
+        }
+
+        #endregion
+
+        #region Private Properties
 
         private static IThreadSafeCacheAccessor<Type, string?> DefaultMemberCache
         {
@@ -133,6 +154,10 @@ namespace KGySoft.Reflection
                 return defaultMemberCache;
             }
         }
+
+        private static bool IsMono => isMono ??= Type.GetType("Mono.Runtime") != null;
+
+        #endregion
 
         #endregion
 
@@ -2985,6 +3010,17 @@ namespace KGySoft.Reflection
             return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!);
         }
 
+        private static string? GetDefaultMember(Type type)
+        {
+            CustomAttributeData? data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));
+            CustomAttributeTypedArgument? argument = data?.ConstructorArguments[0];
+            return argument?.Value as string;
+        }
+
+        #endregion
+
+        #region TypedReference reflection
+
         /// <summary>
         /// Gets a pointer to the raw data (first field member or array header) of a reference created from a reference type (including boxed values).
         /// </summary>
@@ -2992,16 +3028,19 @@ namespace KGySoft.Reflection
         [SecurityCritical]
         internal static unsafe byte* GetReferencedDataAddress(TypedReference typedRef)
         {
-            Debug.Assert(!__reftype(typedRef).IsValueType,"A reference of a reference type is expected");
+            Debug.Assert(typedReferenceValueIndex >= 0, "Check CanUseTypedReference before calling this method");
+            Debug.Assert(!__reftype(typedRef).IsValueType, "A reference of a reference type is expected");
 
             // Dereferencing the TypedReference of the reference manually to access the raw data
-            // byte***:
-            // - 1st is just due to &typedRef to cast TypedReference to a pointer
-            // - 2nd is dereferencing the pointer in the typedRef itself, which points to a reference (see the assert)
-            // - 3rd is the address of the raw data itself, which points to the method table pointer.
+            // Steps:
+            // - Firstly typedRef is cast to a pointer array (actually to IntPtr*)
+            // - As a pointer array, selecting the element, which contains the pointer to the value.
+            //   If it was always the first item, we could just return **(byte***)&typedRef + IntPtr.Size but it wouldn't work on Mono.
+            // - Then dereferencing the pointer in the typedRef itself, which is also a pointer (byte**) to a reference (see the assert)
+            // - Then we get the address of the raw data itself, which points to the method table pointer.
             //   We do not dereference this one but adding pointer size to return the address of the first field
-            // See more in my SO answer here: https://stackoverflow.com/a/55552250/5114784
-            return **(byte***)&typedRef + IntPtr.Size; // which is the same as: (byte*) *(IntPtr*) *(IntPtr*)&typedRef + offset;
+            // See more details in my SO answer here: https://stackoverflow.com/a/55552250/5114784
+            return *(byte**)((IntPtr*)&typedRef)[typedReferenceValueIndex!.Value] + IntPtr.Size;
         }
 
         /// <summary>
@@ -3011,21 +3050,42 @@ namespace KGySoft.Reflection
         [SecurityCritical]
         internal static unsafe byte* GetValueAddress(TypedReference typedRef)
         {
+            Debug.Assert(typedReferenceValueIndex >= 0, "Check CanUseTypedReference before calling this method");
             Debug.Assert(__reftype(typedRef).IsValueType, "A reference of a value type is expected");
 
             // Dereferencing the TypedReference of the value manually to access the raw data
-            // byte**:
-            // - 1st is just due to &typedRef to cast TypedReference to a pointer
-            // - 2nd is the address of the raw data itself, which is simply returned
-            return *(byte**)&typedRef; // which is the same as: (byte*) *(IntPtr*)&typedRef;
+            // Steps:
+            // - Firstly typedRef is cast to a pointer array (actually to IntPtr*)
+            // - As a pointer array, selecting the element, which contains the pointer to the value.
+            //   If it was always the first item, we could just return *(byte**)&typedRef but it wouldn't work on Mono.
+            // - And this pointer is the address of the raw data itself, which is simply returned as byte*
+            return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex!.Value];
         }
 
-
-        private static string? GetDefaultMember(Type type)
+        [SecurityCritical]
+        private unsafe static void InitTypedReferenceValueIndex()
         {
-            CustomAttributeData? data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));
-            CustomAttributeTypedArgument? argument = data?.ConstructorArguments[0];
-            return argument?.Value as string;
+            int typedRefSize = sizeof(TypedReference);
+
+            // Regular TypedReference: we assume that its first field is IntPtr Value
+            // (.NET 3.0 and above: ByReference<byte>), and the second one is IntPtr Type
+            if (typedRefSize == IntPtr.Size * 2)
+            {
+                typedReferenceValueIndex = 0;
+                return;
+            }
+
+            // On Mono the first field in TypedReference is a RuntimeTypeHandle, and the pointer to the value is the 2nd one.
+            // Fun fact: as RuntimeTypeHandle contains a reference, sizeof(RuntimeTypeHandle), and thus sizeof(TypedReference) wouldn't work normally
+            // but once the code is compiled, sizeof() evaluates just fine, and when compiling in Mono, it allows sizeof(StructWithReferences).
+            if (typedRefSize == IntPtr.Size * 3 && IsMono)
+            {
+                typedReferenceValueIndex = 1;
+                return;
+            }
+
+            // Unknown inner layout of TypedReference
+            typedReferenceValueIndex = -1;
         }
 
         #endregion

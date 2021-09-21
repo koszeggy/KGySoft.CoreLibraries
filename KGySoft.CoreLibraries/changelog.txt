@@ -85,12 +85,12 @@
     + New overload with Guid seed
   * GetRandomElement methods: Improving performance if source is not a list
 
-+ KGySoft.ComponentModel namespace:
+! KGySoft.ComponentModel namespace:
 ===================================
 ! ValidationResultsCollection
   ! The type of the Errors, Warnings and Infos properties have been changed to ValidationResultsCollection. When
     recompiling existing code, this is a non-breaking change and solves also the incompatibility issue between the
-    <=.NET 4.0 vs. other targets that different types (IList<ValidationResult> vs. IReadOnlyList<ValidationResult>).
+    <=.NET 4.0 vs. other targets used different types (IList<ValidationResult> vs. IReadOnlyList<ValidationResult>).
   + New Empty field
   + New this[string] indexer
   + New Message property that combines all messages in this instance.
@@ -134,7 +134,7 @@
   ! SerializeValueType method: Using direct content serialization instead of the Marshal class for value types
     that contain no references. This means a huge performance improvement but also that the result can be
     incompatible with the previous versions for some value types. As a fallback, marshaling has also been preserved
-    so this is a breaking change only when considering the content of the produced byte array.
+    so this is a breaking change only when considering the content of the produced byte array by previous versions.
   ! TrySerializeValueType method: It no longer serializes value types that have references. Performance improvement.
   ! DeserializeValueType methods: They might not be able to deserialize the content of the previous versions.
   ! [Try]SerializeValueArray, DeserializeValueArray methods: replacing the 'struct' constraint to 'unmanaged'.
