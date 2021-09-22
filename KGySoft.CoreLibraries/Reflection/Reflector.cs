@@ -118,7 +118,9 @@ namespace KGySoft.Reflection
         private static IThreadSafeCacheAccessor<Type, string?>? defaultMemberCache;
         private static bool? canCreateUninitializedObject;
         private static bool? isMono;
-        private static int? typedReferenceValueIndex;
+        private static bool? isTypedReferenceSupported;
+        private static int typedReferenceValueIndex;
+        private static int referenceRawDataOffset;
 
         #endregion
 
@@ -134,10 +136,9 @@ namespace KGySoft.Reflection
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (typedReferenceValueIndex.HasValue)
-                    return typedReferenceValueIndex.Value >= 0;
-                InitTypedReferenceValueIndex();
-                return typedReferenceValueIndex!.Value >= 0;
+                if (isTypedReferenceSupported.HasValue)
+                    return isTypedReferenceSupported.Value;
+                return InitTypedReferenceUsage();
             }
         }
 
@@ -3033,14 +3034,14 @@ namespace KGySoft.Reflection
 
             // Dereferencing the TypedReference of the reference manually to access the raw data
             // Steps:
-            // - Firstly typedRef is cast to a pointer array (actually to IntPtr*)
+            // - Firstly typedRef is cast to IntPtr* so can be indexed as an array
             // - As a pointer array, selecting the element, which contains the pointer to the value.
-            //   If it was always the first item, we could just return **(byte***)&typedRef + IntPtr.Size but it wouldn't work on Mono.
+            //   If it was always the first item, we could just return **(byte***)&typedRef + offset but it wouldn't work on Mono.
             // - Then dereferencing the pointer in the typedRef itself, which is also a pointer (byte**) to a reference (see the assert)
             // - Then we get the address of the raw data itself, which points to the method table pointer.
-            //   We do not dereference this one but adding pointer size to return the address of the first field
+            //   We do not dereference this one but adding an offset to return the address of the first field
             // See more details in my SO answer here: https://stackoverflow.com/a/55552250/5114784
-            return *(byte**)((IntPtr*)&typedRef)[typedReferenceValueIndex!.Value] + IntPtr.Size;
+            return *(byte**)((IntPtr*)&typedRef)[typedReferenceValueIndex] + referenceRawDataOffset;
         }
 
         /// <summary>
@@ -3055,24 +3056,27 @@ namespace KGySoft.Reflection
 
             // Dereferencing the TypedReference of the value manually to access the raw data
             // Steps:
-            // - Firstly typedRef is cast to a pointer array (actually to IntPtr*)
+            // - Firstly typedRef is cast to IntPtr* so can be indexed as an array
             // - As a pointer array, selecting the element, which contains the pointer to the value.
             //   If it was always the first item, we could just return *(byte**)&typedRef but it wouldn't work on Mono.
             // - And this pointer is the address of the raw data itself, which is simply returned as byte*
-            return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex!.Value];
+            return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex];
         }
 
         [SecurityCritical]
-        private unsafe static void InitTypedReferenceValueIndex()
+        private unsafe static bool InitTypedReferenceUsage()
         {
             int typedRefSize = sizeof(TypedReference);
 
             // Regular TypedReference: we assume that its first field is IntPtr Value
             // (.NET 3.0 and above: ByReference<byte>), and the second one is IntPtr Type
+            // The current Mono implementation is different, still, we try to prepare for changes.
             if (typedRefSize == IntPtr.Size * 2)
             {
+                isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 0;
-                return;
+                referenceRawDataOffset = IsMono ? IntPtr.Size * 2 : IntPtr.Size;
+                return true;
             }
 
             // On Mono the first field in TypedReference is a RuntimeTypeHandle, and the pointer to the value is the 2nd one.
@@ -3080,12 +3084,15 @@ namespace KGySoft.Reflection
             // but once the code is compiled, sizeof() evaluates just fine, and when compiling in Mono, it allows sizeof(StructWithReferences).
             if (typedRefSize == IntPtr.Size * 3 && IsMono)
             {
+                isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 1;
-                return;
+                referenceRawDataOffset = IntPtr.Size * 2;
+                return true;
             }
 
-            // Unknown inner layout of TypedReference
-            typedReferenceValueIndex = -1;
+            // Unexpected TypedReference size: we cannot be sure...
+            isTypedReferenceSupported = false;
+            return false;
         }
 
         #endregion

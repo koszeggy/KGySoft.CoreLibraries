@@ -17,9 +17,11 @@
 
 using System;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
-using System.Runtime.CompilerServices; 
-#else
-using KGySoft.CoreLibraries; 
+using System.Runtime.CompilerServices;
+#endif
+
+#if !NETCOREAPP3_0_OR_GREATER
+using KGySoft.CoreLibraries;
 #endif
 
 #endregion
