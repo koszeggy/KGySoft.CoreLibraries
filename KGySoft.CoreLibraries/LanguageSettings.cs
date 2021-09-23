@@ -433,15 +433,10 @@ namespace KGySoft
                 if (value.IndexOfAny(Files.IllegalPathChars) >= 0)
                     Throw.ArgumentException(Argument.value, Res.ValueContainsIllegalPathCharacters(value));
 
-                if (Path.IsPathRooted(value))
-                {
-                    string baseDir = Files.GetExecutingPath();
-                    string relPath = Files.GetRelativePath(value, baseDir);
-                    if (!Path.IsPathRooted(relPath))
-                        resxResourcesDir = relPath;
-                }
-                else
-                    resxResourcesDir = value;
+                // Trying to apply a relative path in the first place (but the result of GetRelativePath can be an absolute path, too)
+                resxResourcesDir = Path.IsPathRooted(value)
+                    ? Files.GetRelativePath(value, Files.GetExecutingPath())
+                    : value;
 
                 DynamicResourceManagersResXResourcesDirChanged?.Invoke(null, EventArgs.Empty);
             }
