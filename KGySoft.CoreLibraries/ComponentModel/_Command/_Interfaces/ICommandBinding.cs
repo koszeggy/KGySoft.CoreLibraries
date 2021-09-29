@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 #endregion
 
@@ -51,6 +52,15 @@ namespace KGySoft.ComponentModel
         /// Occurs when the associated <see cref="ICommand"/> has been executed.
         /// </summary>
         event EventHandler<ExecuteCommandEventArgs>? Executed;
+
+        /// <summary>
+        /// Occurs when an exception is thrown during the command execution.
+        /// The <see cref="CommandBindingErrorEventArgs.Error"/> property returns the <see cref="Exception"/>,
+        /// which is about to be thrown, and the <see cref="CommandBindingErrorEventArgs.Context"/> property gets a hint about
+        /// the source of the error. You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// suppress the error, but critical exceptions (<see cref="OutOfMemoryException"/>, <see cref="StackOverflowException"/>) cannot be handled by this event.
+        /// </summary>
+        event EventHandler<CommandBindingErrorEventArgs>? Error;
 
         #endregion
 

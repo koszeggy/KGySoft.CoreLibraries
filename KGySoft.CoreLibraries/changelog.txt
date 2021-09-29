@@ -98,17 +98,18 @@
 + SortableBindingList class:
   + New public writable and nullable SortDirection property (the non-nullable read-only IBindingList implementation
     is an explicit one and used to be exposed as a protected property)
-+ Command class:
-  + New PropertyBindingComplete event
-+ New PropertyBindingCompleteEventArgs class
++ ICommandBinding interface
+  + New Error event
++ New CommandBindingErrorContext enum
++ New CommandBindingErrorEventArgs class
 + BinaryTypeConverter: Adding InstanceDescriptor support
 + EncodingConverter:
   + Adding InstanceDescriptor support
-  - Supporting null instance
+  - Supporting null reference
 + VersionConverter class:
   + Adding InstanceDescriptor support
   + Adding Version support (which is cloning like in .NET Core)
-  - Supporting null instance
+  - Supporting null reference
 + StringSegmentConverter: Adding InstanceDescriptor support
 - ValidatingObjectBase class
   - PropertyChanged could be triggered for the ValidationResults property even without any change.

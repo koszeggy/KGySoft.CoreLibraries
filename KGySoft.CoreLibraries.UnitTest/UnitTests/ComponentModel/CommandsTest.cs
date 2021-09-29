@@ -225,50 +225,47 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         }
 
         [Test]
-        public void PropertyBindingWithFormattingTest()
+        public void BindingErrorTest()
         {
             const string bindingFormatErrorTestMessage = nameof(bindingFormatErrorTestMessage);
             var source = new TestClass { StringProp = "42" };
             var target = new TestClass();
-            PropertyBindingCompleteEventArgs bindingCompleteEventArgs = null;
+            CommandBindingErrorEventArgs errorEventArgs = null;
 
             static object FormatStringAsInt(object value) => Int32.TryParse((string)value, out int result) ? result : throw new ArgumentException(bindingFormatErrorTestMessage);
 
-            void HandleBindingComplete(object sender, PropertyBindingCompleteEventArgs e)
+            void HandleBindingError(object sender, CommandBindingErrorEventArgs e)
             {
-                if (e.Source != source || e.Target != target)
-                    return;
-                Console.WriteLine($"{e.SourcePropertyName} -> {e.TargetPropertyName} [{e.Value}]: {e.Error?.Message ?? "OK"}");
-                bindingCompleteEventArgs = e;
+                Console.WriteLine($"{e.Context}: {e.Error.Message}");
+                errorEventArgs = e;
                 e.Handled = true;
             }
 
-            // handling PropertyBindingComplete
-            Command.PropertyBindingComplete += HandleBindingComplete;
-
-            // creating a binding from a string to int, which immediately triggers a binding
+            // creating a binding from a string to int
             using ICommandBinding binding = source.CreatePropertyBinding(nameof(source.StringProp), nameof(target.IntProp), FormatStringAsInt, target);
+            binding.Executing += (_, _) => errorEventArgs = null;
+            binding.Error += HandleBindingError;
+
+            // creating a binding already triggered an execution
             Assert.AreEqual(42, target.IntProp);
-            Assert.IsNotNull(bindingCompleteEventArgs);
-            Assert.IsNull(bindingCompleteEventArgs.Error);
-            bindingCompleteEventArgs = null;
+            Assert.IsNull(errorEventArgs);
 
             // setting invalid number: error, previous target value is preserved
             source.StringProp = "-";
             Assert.AreEqual(42, target.IntProp);
-            Assert.IsNotNull(bindingCompleteEventArgs);
-            Assert.IsNotNull(bindingCompleteEventArgs.Error);
-            Assert.AreEqual(bindingFormatErrorTestMessage, bindingCompleteEventArgs.Error.Message);
-            bindingCompleteEventArgs = null;
+            Assert.IsNotNull(errorEventArgs);
+            Assert.IsNotNull(errorEventArgs.Error);
+            Assert.AreEqual(CommandBindingErrorContext.CommandExecute, errorEventArgs.Context);
+            Assert.AreEqual(bindingFormatErrorTestMessage, errorEventArgs.Error.Message);
+            errorEventArgs = null;
 
             // setting valid number: the error goes away and the target is updated
             source.StringProp = "-1";
             Assert.AreEqual(-1, target.IntProp);
-            Assert.IsNotNull(bindingCompleteEventArgs);
-            Assert.IsNull(bindingCompleteEventArgs.Error);
+            Assert.IsNull(errorEventArgs);
 
             // removing the subscription will not handle the error anymore
-            Command.PropertyBindingComplete -= HandleBindingComplete;
+            binding.Error -= HandleBindingError;
             Throws<ArgumentException>(() => source.StringProp = "x", bindingFormatErrorTestMessage);
         }
 

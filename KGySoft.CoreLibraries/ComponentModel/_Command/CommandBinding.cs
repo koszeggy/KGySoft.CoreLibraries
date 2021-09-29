@@ -21,6 +21,8 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -64,13 +66,26 @@ namespace KGySoft.ComponentModel
             [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "They are necessary")]
             [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Event handler")]
             [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Event handler")]
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             internal void Execute(object sender, TEventArgs e)
-                => Binding.InvokeCommand(new CommandSource<TEventArgs>
+            {
+                object? param = null;
+                try
+                {
+                    param = Binding.getParameterCallback?.Invoke();
+                }
+                catch (Exception ex) when (!ex.IsCritical())
+                {
+                    Binding.HandleError(CommandBindingErrorContext.EvaluateParameter, ex);
+                }
+
+                Binding.InvokeCommand(new CommandSource<TEventArgs>
                 {
                     Source = Source,
                     TriggeringEvent = EventName,
                     EventArgs = e
-                }, Binding.getParameterCallback?.Invoke());
+                }, param);
+            }
 
             #endregion
         }
@@ -99,8 +114,9 @@ namespace KGySoft.ComponentModel
 
         private bool disposed;
         private Func<object?>? getParameterCallback;
-        private EventHandler<ExecuteCommandEventArgs>? executing;
-        private EventHandler<ExecuteCommandEventArgs>? executed;
+        private EventHandler<ExecuteCommandEventArgs>? executingHandler;
+        private EventHandler<ExecuteCommandEventArgs>? executedHandler;
+        private EventHandler<CommandBindingErrorEventArgs>? errorHandler;
 
         #endregion
 
@@ -110,14 +126,20 @@ namespace KGySoft.ComponentModel
 
         public event EventHandler<ExecuteCommandEventArgs>? Executing
         {
-            add => value.AddSafe(ref executing);
-            remove => value.RemoveSafe(ref executing);
+            add => value.AddSafe(ref executingHandler);
+            remove => value.RemoveSafe(ref executingHandler);
         }
 
         public event EventHandler<ExecuteCommandEventArgs>? Executed
         {
-            add => value.AddSafe(ref executed);
-            remove => value.RemoveSafe(ref executed);
+            add => value.AddSafe(ref executedHandler);
+            remove => value.RemoveSafe(ref executedHandler);
+        }
+
+        public event EventHandler<CommandBindingErrorEventArgs>? Error
+        {
+            add => value.AddSafe(ref errorHandler);
+            remove => value.RemoveSafe(ref errorHandler);
         }
 
         #endregion
@@ -187,8 +209,9 @@ namespace KGySoft.ComponentModel
             disposed = true;
 
             state.PropertyChanged -= State_PropertyChanged;
-            executing = null;
-            executed = null;
+            executingHandler = null;
+            executedHandler = null;
+            errorHandler = null;
             getParameterCallback = null;
 
             foreach (object source in sources.Keys.ToArray())
@@ -350,8 +373,15 @@ namespace KGySoft.ComponentModel
 
             foreach (ICommandStateUpdater updater in stateUpdaters)
             {
-                if (updater.TryUpdateState(source, propertyName, stateValue))
-                    return;
+                try
+                {
+                    if (updater.TryUpdateState(source, propertyName, stateValue))
+                        return;
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    HandleError(CommandBindingErrorContext.UpdateState, e);
+                }
             }
         }
 
@@ -363,27 +393,62 @@ namespace KGySoft.ComponentModel
 
             ICommand<TEventArgs>? cmdTypedArgs = command as ICommand<TEventArgs>;
             ExecuteCommandEventArgs? e = null;
-            executing?.Invoke(this, e = new ExecuteCommandEventArgs(source, state));
+            try
+            {
+                executingHandler?.Invoke(this, e = new ExecuteCommandEventArgs(source, state));
+            }
+            catch (Exception ex) when (!ex.IsCritical())
+            {
+                HandleError(CommandBindingErrorContext.ExecutingEvent, ex);
+            }
+
             if (disposed || !state.Enabled)
                 return;
             try
             {
                 if (targets.IsNullOrEmpty())
                 {
-                    if (cmdTypedArgs != null)
-                        cmdTypedArgs.Execute(source, state, null, parameter);
-                    else
-                        command.Execute(source, state, null, parameter);
+                    try
+                    {
+                        if (cmdTypedArgs != null)
+                            cmdTypedArgs.Execute(source, state, null, parameter);
+                        else
+                            command.Execute(source, state, null, parameter);
+                    }
+                    catch (Exception ex) when (!ex.IsCritical())
+                    {
+                        HandleError(CommandBindingErrorContext.CommandExecute, ex);
+                    }
                 }
                 else
                 {
                     foreach (object targetEntry in targets)
                     {
-                        object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
-                        if (cmdTypedArgs != null)
-                            cmdTypedArgs.Execute(source, state, target, parameter);
-                        else
-                            command.Execute(source, state, target, parameter);
+                        object target = targetEntry;
+                        if (target is Func<object> factory)
+                        {
+                            try
+                            {
+                                target = factory.Invoke();
+                            }
+                            catch (Exception ex) when (!ex.IsCritical())
+                            {
+                                HandleError(CommandBindingErrorContext.EvaluateTarget, ex);
+                            }
+                        }
+
+                        try
+                        {
+                            if (cmdTypedArgs != null)
+                                cmdTypedArgs.Execute(source, state, target, parameter);
+                            else
+                                command.Execute(source, state, target, parameter);
+                        }
+                        catch (Exception ex) when (!ex.IsCritical())
+                        {
+                            HandleError(CommandBindingErrorContext.CommandExecute, ex);
+                        }
+
                         if (disposed || !state.Enabled)
                             return;
                     }
@@ -392,13 +457,18 @@ namespace KGySoft.ComponentModel
             finally
             {
                 if (!disposed)
-                    executed?.Invoke(this, e ?? new ExecuteCommandEventArgs(source, state));
+                {
+                    try
+                    {
+                        executedHandler?.Invoke(this, e ?? new ExecuteCommandEventArgs(source, state));
+                    }
+                    catch (Exception ex) when (!ex.IsCritical())
+                    {
+                        HandleError(CommandBindingErrorContext.ExecutedEvent, ex);
+                    }
+                }
             }
         }
-
-        #endregion
-
-        #region Private Methods
 
         private bool DoRemoveSource(object source)
         {
@@ -411,7 +481,23 @@ namespace KGySoft.ComponentModel
             return sources.Remove(source);
         }
 
-        private IEnumerable<object> GetInstanceSources() => sources.Keys.Where(k => !(k is Type));
+        private IEnumerable<object> GetInstanceSources() => sources.Keys.Where(k => k is not Type);
+
+        private void HandleError(CommandBindingErrorContext context, Exception error)
+        {
+            Debug.Assert(!error.IsCritical());
+            EventHandler<CommandBindingErrorEventArgs>? handler = errorHandler;
+
+            if (handler != null)
+            {
+                var args = new CommandBindingErrorEventArgs(context, error);
+                handler.Invoke(this, args);
+                if (args.Handled)
+                    return;
+            }
+
+            ExceptionDispatchInfo.Capture(error).Throw();
+        }
 
         #endregion
 
