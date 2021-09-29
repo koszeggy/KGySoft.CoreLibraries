@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 #if NETFRAMEWORK
 using System.Reflection;
 #endif
@@ -41,7 +42,7 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        internal static char[] IllegalPathChars => illegalPathChars ??= Path.GetInvalidPathChars();
+        internal static char[] IllegalPathChars => illegalPathChars ??= Path.GetInvalidPathChars().Concat(new[] { '*', '?' }).ToArray();
 
         #endregion
 
