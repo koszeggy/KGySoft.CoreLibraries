@@ -223,7 +223,11 @@ namespace KGySoft.Serialization.Xml
                     {
                         int low;
                         if ((low = array.GetLowerBound(i)) != 0)
+#if NET6_0_OR_GREATER
+                            dim.Append(CultureInfo.InvariantCulture, $"{low}..{low + array.GetLength(i) - 1}");
+#else
                             dim.Append($"{low.ToString(CultureInfo.InvariantCulture)}..{(low + array.GetLength(i) - 1).ToString(CultureInfo.InvariantCulture)}");
+#endif
                         else
                             dim.Append(array.GetLength(i).ToString(CultureInfo.InvariantCulture));
 
