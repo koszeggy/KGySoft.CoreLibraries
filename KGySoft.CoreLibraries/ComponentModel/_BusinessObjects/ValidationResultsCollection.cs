@@ -324,7 +324,9 @@ namespace KGySoft.ComponentModel
             }
 
             // ToArray is practical because that makes the result read-only without wrapping into a ReadOnlyCollection
-            return result.Count == 0 ? Empty : new ValidationResultsCollection(result.ToArray());
+            return result.Count == 0 ? Empty
+                : result.Count == Count ? ToReadOnly()
+                : new ValidationResultsCollection(result.ToArray());
         }
 
         private ValidationResultsCollection FilterByName(string propertyName)
@@ -341,7 +343,9 @@ namespace KGySoft.ComponentModel
             }
 
             // ToArray is practical because that makes the result read-only without wrapping into a ReadOnlyCollection
-            return result.Count == 0 ? Empty : new ValidationResultsCollection(result.ToArray());
+            return result.Count == 0 ? Empty
+                : result.Count == Count ? ToReadOnly()
+                : new ValidationResultsCollection(result.ToArray());
         }
 
         #endregion
