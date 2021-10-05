@@ -140,15 +140,20 @@
   ! DeserializeValueType methods: They might not be able to deserialize the content of the previous versions.
   ! [Try]SerializeValueArray, DeserializeValueArray methods: replacing the 'struct' constraint to 'unmanaged'.
     Performance improvement, fixing possible exception about non-blittable types.
-  ! Serialize* methods: Starting with this version The BinarySerializationOptions.CompactSerializationOfStructures
-    flag affects structs only without any references, which is very fast. Marshaling is used only if the obsolete
-    ForcedSerializationValueTypesAsFallback flag is enabled.
+  ! Serialize* methods: 
+      ! Starting with this version The BinarySerializationOptions.CompactSerializationOfStructures flag affects
+        structs only without any references, which is very fast. Marshaling is used only if the obsolete
+        ForcedSerializationValueTypesAsFallback flag is enabled.
+      ! The produced stream is not compatible with previous versions.
   + New generic [Try]SerializeValueType and DeserializeValueType overloads. They work only for value types without
     any references.
 ! BinarySerializationFormatter class:
-  ! Serialize* methods: Starting with this version the BinarySerializationOptions.CompactSerializationOfStructures
-    flag affects structs only without any references, which is very fast. Marshaling is used only if the obsolete
-    ForcedSerializationValueTypesAsFallback flag is enabled.
+  ! Serialize* methods:
+    ! Starting with this version the BinarySerializationOptions.CompactSerializationOfStructures flag affects
+      structs only without any references, which is very fast. Marshaling is used only if the obsolete
+      ForcedSerializationValueTypesAsFallback flag is enabled.
+    ! The produced stream is not compatible with previous versions.
+  + Supporting the Rune type natively (in .NET Core 3.0 and above)
 
 ! KGySoft.Serialization.Xml namespace:
 ======================================

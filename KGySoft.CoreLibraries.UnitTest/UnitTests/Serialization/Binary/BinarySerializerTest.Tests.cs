@@ -144,7 +144,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitVector32(13),
                 BitVector32.CreateSection(13),
                 BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
-                typeof(int)
+                typeof(int),
+
+#if NETCOREAPP3_0_OR_GREATER
+                new Rune('a')
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -523,7 +527,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitVector32[] { new BitVector32(13) },
                 new BitVector32.Section[] { BitVector32.CreateSection(13), BitVector32.CreateSection(42, BitVector32.CreateSection(13)) },
                 new Type[] { typeof(int), typeof(List<int>), null },
-                Array.CreateInstance(Reflector.RuntimeType, 3) // runtime type array, set below
+                Array.CreateInstance(Reflector.RuntimeType, 3), // runtime type array, set below
+#if NETCOREAPP3_0_OR_GREATER
+                new Rune[] { new Rune('a') },
+#endif
             };
 
             ((Array)referenceObjects[4]).SetValue(typeof(int), 0);
@@ -703,9 +710,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             referenceObjects = new object[]
             {
-                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null },
+                new NonSerializableStruct?[] { new NonSerializableStruct { Bytes3 = new byte[] { 1, 2, 3 }, IntProp = 10, Str10 = "alpha" }, null },
                 new BitVector32?[] { new BitVector32(13), null },
                 new BitVector32.Section?[] { BitVector32.CreateSection(13), null },
+
+#if NETCOREAPP3_0_OR_GREATER
+                new Rune?[] { new Rune('a'), null },
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
@@ -1331,6 +1342,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
+
+#if NETCOREAPP3_0_OR_GREATER
+                new Rune('a'),
+#endif
 
                 // dictionary with any object key and read-only collection value
                 new Dictionary<object, ReadOnlyCollection<int>> { { 1, new ReadOnlyCollection<int>(new[] { 1, 2 }) }, { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, null } },

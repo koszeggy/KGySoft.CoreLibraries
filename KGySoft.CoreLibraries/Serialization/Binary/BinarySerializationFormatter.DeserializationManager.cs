@@ -1293,6 +1293,13 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.RuntimeType:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
 
+                        case DataTypes.Rune:
+#if NET6_0_OR_GREATER
+                            return createdResult = new Rune(br.ReadInt32());
+#else
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                         case DataTypes.BinarySerializable:
                             return ReadBinarySerializable(br, addToCache.Value, dataTypeDescriptor);
                         case DataTypes.RecursiveObjectGraph:

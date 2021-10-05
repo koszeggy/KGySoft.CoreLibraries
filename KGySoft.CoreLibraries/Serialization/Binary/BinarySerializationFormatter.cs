@@ -192,6 +192,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Guid"/></item>
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
+    /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -217,15 +218,15 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="HashSet{T}"/></item>
     /// <item><see cref="Queue{T}"/></item>
     /// <item><see cref="Stack{T}"/></item>
-    /// <item><see cref="SortedSet{T}"/> (in .NET 4.0 and above)</item>
-    /// <item><see cref="ConcurrentBag{T}"/> (in .NET 4.0 and above)</item>
-    /// <item><see cref="ConcurrentQueue{T}"/> (in .NET 4.0 and above)</item>
-    /// <item><see cref="ConcurrentStack{T}"/> (in .NET 4.0 and above)</item>
+    /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentStack{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Dictionary{TKey,TValue}"/></item>
     /// <item><see cref="SortedList{TKey,TValue}"/></item>
     /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
     /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
-    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET 4.0 and above)</item>
+    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET Framework 4.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -367,7 +368,7 @@ namespace KGySoft.Serialization.Binary
             SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
 
             // ..... pure types (they are unambiguous without a type name): .....
-            PureTypes = 0x1F, // bits 0-4 (5 bits - up to 32 types)
+            // PureTypes = 0x3F, // bits 0-5 but never 11000 (5.5 bits - up to 48 types)
 
             // . . . Primitive types (they are never custom serialized) . . .
             //PrimitiveTypes = 0x0F, // bits 0-3 (4 bits - up to 16 types)
@@ -396,7 +397,7 @@ namespace KGySoft.Serialization.Binary
             UIntPtr = 15,
             // Compressible types end
 
-            // . . . Non-primitive pure types (16-31 - up to 16 types) . . .
+            // . . . Non-primitive pure types (16-47 - up to 32 types) . . .
             String = 16, // though not a primitive type, it cannot be custom serialized either
             StringBuilder = 17,
             Uri = 18,
@@ -421,18 +422,20 @@ namespace KGySoft.Serialization.Binary
 
             RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
 
-            // 31: reserved (though it would have the same value as the PureTypes mask)
+            // 31-32: reserved
+
+            Rune = 33, // Only in .NET Core 3.0 and above
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
-            ImpureType = 1 << 5,
+            ImpureType = 3 << 4,
 
-            // 32: Reserved (though it would have the same value as the ImpureType flag)
+            // 48: Reserved (though it would have the same value as the ImpureType flags)
 
-            GenericTypeDefinition = 33, // Must be combined with a supported generic collection type.
-            Pointer = 34, // Followed by DataTypes. Cannot be combined.
-            ByRef = 35, // Followed by DataTypes. Cannot be combined.
+            GenericTypeDefinition = 49, // Must be combined with a supported generic collection type.
+            Pointer = 50, // Followed by DataTypes. Cannot be combined.
+            ByRef = 51, // Followed by DataTypes. Cannot be combined.
 
-            // 37-59: 23 reserved values
+            // 52-59: 8 reserved values
 
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
@@ -919,6 +922,9 @@ namespace KGySoft.Serialization.Binary
             { Reflector.BitArrayType, DataTypes.BitArray },
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
+#if NETCOREAPP3_0_OR_GREATER
+            { typeof(Rune), DataTypes.Rune },
+#endif
         };
 
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
@@ -1050,17 +1056,17 @@ namespace KGySoft.Serialization.Binary
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null ? dt & DataTypes.CollectionTypes : dt & ~DataTypes.CollectionTypes;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypes) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null;
-        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null || dt.In(DataTypes.DictionaryEntryNullable, DataTypes.KeyValuePairNullable);
+        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null || dt is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
-        private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
-        private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
-        private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
-        private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable, DataTypes.Object);
-        private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt.In(DataTypes.Pointer, DataTypes.ByRef);
-        private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) != DataTypes.Null;
-        private static bool IsImpureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) != DataTypes.Null;
+        private static bool IsPureType(DataTypes dt) => !IsEnum(dt) && (dt & DataTypes.ImpureType) != DataTypes.ImpureType;
+        private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.SimpleTypes | DataTypes.Nullable)) == dt && (dt & DataTypes.SimpleTypes) < DataTypes.ImpureType;
+        private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
+        private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypes) is DataTypes.RecursiveObjectGraph or DataTypes.BinarySerializable or DataTypes.Object;
+        private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt is DataTypes.Pointer or DataTypes.ByRef;
+        private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) == DataTypes.ImpureType;
+        private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
 
         private static void Write7BitInt(BinaryWriter bw, int value)

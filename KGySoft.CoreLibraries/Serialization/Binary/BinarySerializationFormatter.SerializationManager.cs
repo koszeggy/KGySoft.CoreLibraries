@@ -719,6 +719,12 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.Object:
                         return;
 
+#if NETCOREAPP3_0_OR_GREATER
+                    case DataTypes.Rune:
+                        bw.Write(((Rune)obj).Value);
+                        return;
+#endif
+
                     default:
                         Throw.InternalError($"Unexpected pure type: {dataType}");
                         return;
