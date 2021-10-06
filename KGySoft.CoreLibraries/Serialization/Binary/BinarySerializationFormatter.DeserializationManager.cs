@@ -15,8 +15,6 @@
 
 #region Usings
 
-using KGySoft.Collections;
-
 #region Used Namespaces
 
 using System;
@@ -31,12 +29,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET5_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
+using KGySoft.Collections;
 using KGySoft.Reflection;
 
 #endregion
@@ -713,7 +715,15 @@ namespace KGySoft.Serialization.Binary
             {
                 int value = br.ReadInt32();
                 return new Index(value < 0 ? ~value : value, value < 0);
-            } 
+            }
+#endif
+
+#if NET5_0_OR_GREATER
+            private static Half ReadHalf(BinaryReader br)
+            {
+                ushort value = br.ReadUInt16();
+                return Unsafe.As<ushort, Half>(ref value);
+            }
 #endif
 
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
@@ -1316,6 +1326,13 @@ namespace KGySoft.Serialization.Binary
 #else
                         case DataTypes.Index:
                         case DataTypes.Range:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
+                        case DataTypes.Half:
+#if NET5_0_OR_GREATER
+                            return createdResult = ReadHalf(br);
+#else
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
 #endif
 

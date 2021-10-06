@@ -155,6 +155,7 @@
     ! The produced stream is not compatible with previous versions.
   + Supporting the Rune type natively (in .NET Core 3.0 and above)
   + Supporting the Index and Range types natively (in .NET Standard 2.1 and above)
+  + Supporting the Half type natively (in .NET 5.0 and above)
 
 ! KGySoft.Serialization.Xml namespace:
 ======================================

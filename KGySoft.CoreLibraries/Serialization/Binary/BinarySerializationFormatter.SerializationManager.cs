@@ -26,6 +26,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET5_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
@@ -277,6 +280,10 @@ namespace KGySoft.Serialization.Binary
                 WriteIndex(bw, range.Start);
                 WriteIndex(bw, range.End);
             }
+#endif
+
+#if NET5_0_OR_GREATER
+            private static void WriteHalf(BinaryWriter bw, Half value) => bw.Write(Unsafe.As<Half, ushort>(ref value));
 #endif
 
             private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
@@ -742,6 +749,12 @@ namespace KGySoft.Serialization.Binary
 
                     case DataTypes.Range:
                         WriteRange(bw, (Range)obj);
+                        return;
+#endif
+
+#if NET5_0_OR_GREATER
+                    case DataTypes.Half:
+                        WriteHalf(bw, (Half)obj);
                         return;
 #endif
 

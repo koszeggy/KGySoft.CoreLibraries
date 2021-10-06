@@ -151,6 +151,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Index(1),
                 new Range(Index.FromStart(13), Index.FromEnd(13)),
 #endif
+
+#if NET5_0_OR_GREATER
+                (Half)1,
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -535,6 +539,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Index[] { new Index(1), new Index(1, true) },
                 new Range[] { new Range(1, 2), new Range(Index.Start, Index.End) },
 #endif
+#if NET5_0_OR_GREATER
+                new Half[] { (Half)1, (Half)1.25 }
+#endif
             };
 
             ((Array)referenceObjects[4]).SetValue(typeof(int), 0);
@@ -722,6 +729,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Rune?[] { new Rune('a'), null },
                 new Index?[] { new Index(1), null },
                 new Range?[] { new Range(5, 10), null },
+#endif
+#if NET5_0_OR_GREATER
+                new Half?[] { (Half)1, null },
 #endif
             };
 
@@ -1353,6 +1363,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Rune('a'),
                 new Index(1),
                 new Range(1, 2),
+#endif
+
+#if NET5_0_OR_GREATER
+                (Half)1,
 #endif
 
                 // dictionary with any object key and read-only collection value

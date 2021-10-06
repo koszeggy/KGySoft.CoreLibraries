@@ -60,7 +60,7 @@ using KGySoft.Serialization.Xml;
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
  * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
- *    Otherwise, handle it in SerializationManager.WriteImpureObject and WriteImpureElement. Create a WriteXXX that can be called separately from writing type.
+ *    Otherwise, handle it in SerializationManager.WriteImpureObject. Create a WriteXXX that can be called separately from writing type.
  * 4. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
  * 5. Add type to DataTypeDescriptor.GetElementType.
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
@@ -194,6 +194,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
+    /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -428,6 +429,7 @@ namespace KGySoft.Serialization.Binary
             Rune = 33, // Only in .NET Core 3.0 and above
             Index = 34, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
             Range = 35, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
+            Half = 36, // Only in .NET 5 and above
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
             ImpureType = 3 << 4, // caution: 2-bits flag (11000)
@@ -931,6 +933,9 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             { typeof(Index), DataTypes.Index },
             { typeof(Range), DataTypes.Range },
+#endif
+#if NET5_0_OR_GREATER
+            { typeof(Half), DataTypes.Half },
 #endif
         };
 

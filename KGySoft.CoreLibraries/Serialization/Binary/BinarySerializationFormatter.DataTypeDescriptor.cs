@@ -481,6 +481,13 @@ namespace KGySoft.Serialization.Binary
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
+                    case DataTypes.Half:
+#if NET5_0_OR_GREATER
+                        return typeof(Half);
+#else
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.Pointer:
                         return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:
