@@ -269,6 +269,16 @@ namespace KGySoft.Serialization.Binary
                 bw.Write(section.Offset);
             }
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            private static void WriteIndex(BinaryWriter bw, Index index) => bw.Write(index.IsFromEnd ? ~index.Value : index.Value);
+
+            private static void WriteRange(BinaryWriter bw, Range range)
+            {
+                WriteIndex(bw, range.Start);
+                WriteIndex(bw, range.End);
+            }
+#endif
+
             private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
             {
                 if (type.IsGenericTypeDefinition)
@@ -722,6 +732,16 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
                     case DataTypes.Rune:
                         bw.Write(((Rune)obj).Value);
+                        return;
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                    case DataTypes.Index:
+                        WriteIndex(bw, (Index)obj);
+                        return;
+
+                    case DataTypes.Range:
+                        WriteRange(bw, (Range)obj);
                         return;
 #endif
 

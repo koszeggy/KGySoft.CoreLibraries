@@ -708,6 +708,14 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            private static Index ReadIndex(BinaryReader br)
+            {
+                int value = br.ReadInt32();
+                return new Index(value < 0 ? ~value : value, value < 0);
+            } 
+#endif
+
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
             {
                 if (!usages.CanBeReplaced && origObject != finalObject)
@@ -1294,9 +1302,20 @@ namespace KGySoft.Serialization.Binary
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
 
                         case DataTypes.Rune:
-#if NET6_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER
                             return createdResult = new Rune(br.ReadInt32());
 #else
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                        case DataTypes.Index:
+                            return createdResult = ReadIndex(br);
+                        case DataTypes.Range:
+                            return createdResult = new Range(ReadIndex(br), ReadIndex(br));
+#else
+                        case DataTypes.Index:
+                        case DataTypes.Range:
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
 #endif
 

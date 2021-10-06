@@ -52,7 +52,7 @@ using KGySoft.Serialization.Xml;
 #endregion
 
 /* How to add a new type
- * =====
+ * =====================
  *
  * I. Adding a simple type
  * ~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,9 +61,8 @@ using KGySoft.Serialization.Xml;
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
  * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
  *    Otherwise, handle it in SerializationManager.WriteImpureObject and WriteImpureElement. Create a WriteXXX that can be called separately from writing type.
- *    Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
  * 4. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
- * 5. Add type to DataTypeDescriptor.GetElementType (to the private overload).
+ * 5. Add type to DataTypeDescriptor.GetElementType.
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
  * 6. Add type to unit test:
  *    - SerializeSimpleTypes
@@ -193,6 +192,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
+    /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
+    /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -360,7 +361,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         [Flags]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
-        private enum DataTypes // : ushort
+        private enum DataTypes : ushort
         {
             // ===== LOW BYTE =====
 
@@ -368,7 +369,7 @@ namespace KGySoft.Serialization.Binary
             SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
 
             // ..... pure types (they are unambiguous without a type name): .....
-            // PureTypes = 0x3F, // bits 0-5 but never 11000 (5.5 bits - up to 48 types)
+            //PureTypes = 0x3F, // bits 0-5 but never 11xxx, see also ImpureType ('5.5 bits' - up to 48 types)
 
             // . . . Primitive types (they are never custom serialized) . . .
             //PrimitiveTypes = 0x0F, // bits 0-3 (4 bits - up to 16 types)
@@ -425,11 +426,13 @@ namespace KGySoft.Serialization.Binary
             // 31-32: reserved
 
             Rune = 33, // Only in .NET Core 3.0 and above
+            Index = 34, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
+            Range = 35, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
-            ImpureType = 3 << 4,
+            ImpureType = 3 << 4, // caution: 2-bits flag (11000)
 
-            // 48: Reserved (though it would have the same value as the ImpureType flags)
+            // 48: Reserved (though it would have the same value as the ImpureType flag)
 
             GenericTypeDefinition = 49, // Must be combined with a supported generic collection type.
             Pointer = 50, // Followed by DataTypes. Cannot be combined.
@@ -924,6 +927,10 @@ namespace KGySoft.Serialization.Binary
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
 #if NETCOREAPP3_0_OR_GREATER
             { typeof(Rune), DataTypes.Rune },
+#endif
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            { typeof(Index), DataTypes.Index },
+            { typeof(Range), DataTypes.Range },
 #endif
         };
 

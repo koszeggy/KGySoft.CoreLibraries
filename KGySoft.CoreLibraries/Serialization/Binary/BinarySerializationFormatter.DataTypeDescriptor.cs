@@ -470,6 +470,17 @@ namespace KGySoft.Serialization.Binary
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+                    case DataTypes.Index:
+                        return typeof(Index);
+                    case DataTypes.Range:
+                        return typeof(Range);
+#else
+                    case DataTypes.Index:
+                    case DataTypes.Range:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.Pointer:
                         return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:
