@@ -195,6 +195,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
+    /// <item><see cref="DateOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -399,7 +401,7 @@ namespace KGySoft.Serialization.Binary
             UIntPtr = 15,
             // Compressible types end
 
-            // . . . Non-primitive pure types (16-47 - up to 32 types) . . .
+            // . . . Non-primitive, platform independent pure types (16-31 - up to 16 types) . . .
             String = 16, // though not a primitive type, it cannot be custom serialized either
             StringBuilder = 17,
             Uri = 18,
@@ -424,12 +426,18 @@ namespace KGySoft.Serialization.Binary
 
             RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
 
-            // 31-32: reserved
+            // 31: reserved
 
-            Rune = 33, // Only in .NET Core 3.0 and above
-            Index = 34, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
-            Range = 35, // Only in .NET Standard 2.1 / .NET Core 3.0 and above
-            Half = 36, // Only in .NET 5 and above
+            // . . . Non-primitive, platform-dependent pure types (32-48 - up to 16 types) . . .
+
+            Rune = 32, // Only in .NET Core 3.0 and above
+            Index = 33, // Only in .NET Standard 2.1 and above
+            Range = 34, // Only in .NET Standard 2.1 and above
+            Half = 35, // Only in .NET 5 and above
+            DateOnly = 36, // Only in .NET 6 and above
+            TimeOnly = 37, // Only in .NET 6 and above
+
+            // 38-47: reserved
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
             ImpureType = 3 << 4, // caution: 2-bits flag (11000)
@@ -936,6 +944,10 @@ namespace KGySoft.Serialization.Binary
 #endif
 #if NET5_0_OR_GREATER
             { typeof(Half), DataTypes.Half },
+#endif
+#if NET6_0_OR_GREATER
+            { typeof(DateOnly), DataTypes.DateOnly },
+            { typeof(TimeOnly), DataTypes.TimeOnly },
 #endif
         };
 

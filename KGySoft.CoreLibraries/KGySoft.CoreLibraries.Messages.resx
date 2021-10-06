@@ -547,6 +547,9 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_CannotDeserializeObjectFormat" xml:space="preserve">
     <value>Cannot deserialize as a standalone object: {0}</value>
   </data>
+  <data name="BinarySerialization_TypePlatformNotSupportedFormat" xml:space="preserve">
+    <value>Cannot deserialize type on this platform: {0}</value>
+  </data>
   <data name="BinarySerialization_IEnumerableExpectedFormat" xml:space="preserve">
     <value>An IEnumerable type expected but {0} found during deserialization.</value>
   </data>

@@ -746,7 +746,6 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.Index:
                         WriteIndex(bw, (Index)obj);
                         return;
-
                     case DataTypes.Range:
                         WriteRange(bw, (Range)obj);
                         return;
@@ -755,6 +754,15 @@ namespace KGySoft.Serialization.Binary
 #if NET5_0_OR_GREATER
                     case DataTypes.Half:
                         WriteHalf(bw, (Half)obj);
+                        return;
+#endif
+
+#if NET5_0_OR_GREATER
+                    case DataTypes.DateOnly:
+                        bw.Write(((DateOnly)obj).DayNumber);
+                        return;
+                    case DataTypes.TimeOnly:
+                        bw.Write(((TimeOnly)obj).Ticks);
                         return;
 #endif
 

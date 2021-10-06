@@ -1315,7 +1315,7 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
                             return createdResult = new Rune(br.ReadInt32());
 #else
-                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -1326,14 +1326,25 @@ namespace KGySoft.Serialization.Binary
 #else
                         case DataTypes.Index:
                         case DataTypes.Range:
-                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
                         case DataTypes.Half:
 #if NET5_0_OR_GREATER
                             return createdResult = ReadHalf(br);
 #else
-                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
+
+#if NET6_0_OR_GREATER
+                        case DataTypes.DateOnly:
+                            return createdResult = DateOnly.FromDayNumber(br.ReadInt32());
+                        case DataTypes.TimeOnly:
+                            return createdResult = new TimeOnly(br.ReadInt64());
+#else
+                        case DataTypes.DateOnly:
+                        case DataTypes.TimeOnly:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
                         case DataTypes.BinarySerializable:
@@ -1803,7 +1814,7 @@ namespace KGySoft.Serialization.Binary
                     // we exploit that the supported ordered dictionary is not generic
                     object placeholderKey = keyUsages == null ? key! : new object();
                     object? placeholderValue = valueUsages == null ? value : null;
-                    dict.Add(placeholderKey!, placeholderValue);
+                    dict.Add(placeholderKey, placeholderValue);
 
                     keyUsages?.Add(new OrderedDictionaryKeyUsage(orderedDictionary, index));
                     valueUsages?.Add(new OrderedDictionaryValueUsage(orderedDictionary, index));

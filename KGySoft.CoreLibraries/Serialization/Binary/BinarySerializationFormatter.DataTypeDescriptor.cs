@@ -467,7 +467,7 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
                         return typeof(Rune);
 #else
-                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
@@ -478,14 +478,25 @@ namespace KGySoft.Serialization.Binary
 #else
                     case DataTypes.Index:
                     case DataTypes.Range:
-                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
                     case DataTypes.Half:
 #if NET5_0_OR_GREATER
                         return typeof(Half);
 #else
-                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypeNotSupported(DataTypeToString(ElementDataType)));
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
+#if NET6_0_OR_GREATER
+                    case DataTypes.DateOnly:
+                        return typeof(DateOnly);
+                    case DataTypes.TimeOnly:
+                        return typeof(TimeOnly);
+#else
+                    case DataTypes.DateOnly:
+                    case DataTypes.TimeOnly:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
                     case DataTypes.Pointer:

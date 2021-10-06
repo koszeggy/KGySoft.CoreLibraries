@@ -574,6 +574,9 @@ namespace KGySoft
         /// <summary>Cannot deserialize as a standalone object: {0}</summary>
         internal static string BinarySerializationCannotDeserializeObject(string dataType) => Get("BinarySerialization_CannotDeserializeObjectFormat", dataType);
 
+        /// <summary>Cannot deserialize type on this platform: {0}</summary>
+        internal static string BinarySerializationTypePlatformNotSupported(string dataType) => Get("BinarySerialization_TypePlatformNotSupportedFormat", dataType);
+
         /// <summary>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationObjectHierarchyChanged(Type type) => Get("BinarySerialization_ObjectHierarchyChangedFormat", type);
 

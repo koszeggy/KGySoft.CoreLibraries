@@ -155,6 +155,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET5_0_OR_GREATER
                 (Half)1,
 #endif
+
+#if NET6_0_OR_GREATER
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -540,7 +545,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Range[] { new Range(1, 2), new Range(Index.Start, Index.End) },
 #endif
 #if NET5_0_OR_GREATER
-                new Half[] { (Half)1, (Half)1.25 }
+                new Half[] { (Half)1, (Half)1.25 },
+#endif
+#if NET6_0_OR_GREATER
+                new DateOnly[] { DateOnly.FromDateTime(DateTime.Today), DateOnly.MaxValue },
+                new TimeOnly[] { TimeOnly.FromDateTime(DateTime.Now), TimeOnly.MaxValue },
 #endif
             };
 
@@ -732,6 +741,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 #if NET5_0_OR_GREATER
                 new Half?[] { (Half)1, null },
+#endif
+#if NET6_0_OR_GREATER
+                new DateOnly?[] { DateOnly.FromDateTime(DateTime.Today), null },
+                new TimeOnly?[] { TimeOnly.FromDateTime(DateTime.Now), null },
 #endif
             };
 
@@ -1367,6 +1380,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if NET5_0_OR_GREATER
                 (Half)1,
+#endif
+
+#if NET6_0_OR_GREATER
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
 #endif
 
                 // dictionary with any object key and read-only collection value
