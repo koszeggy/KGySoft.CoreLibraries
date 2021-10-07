@@ -120,13 +120,12 @@ namespace KGySoft.Serialization
         internal static bool IsSafeType(Type type)
         {
 #if NETFRAMEWORK
-            // These types are serializable in the .NET Framework but still we must not support them
+            // unsafeTypes are serializable in the .NET Framework but still we must not support them
             // in SafeMode because they can be used for known attacks
-            if (type.In(unsafeTypes))
-                return false;
+            return !type.In(unsafeTypes) && type.IsSerializable;
+#else
+            return type.IsSerializable || type.CanBeParsedNatively();
 #endif
-
-            return type.IsSerializable;
         }
 
         #endregion

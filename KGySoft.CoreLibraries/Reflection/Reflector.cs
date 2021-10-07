@@ -29,6 +29,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Security;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
 using System.Threading;
 
 using KGySoft.Collections;
@@ -62,6 +65,9 @@ namespace KGySoft.Reflection
         internal static readonly Type BoolType = typeof(bool);
         internal static readonly Type StringType = typeof(string);
         internal static readonly Type CharType = typeof(char);
+#if NETCOREAPP3_0_OR_GREATER
+        internal static readonly Type RuneType = typeof(Rune);
+#endif
         internal static readonly Type ByteType = typeof(byte);
         internal static readonly Type SByteType = typeof(sbyte);
         internal static readonly Type ShortType = typeof(short);
@@ -110,7 +116,6 @@ namespace KGySoft.Reflection
 #if !NET35 && !NET40
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
-
         #endregion
 
         #region Private Fields

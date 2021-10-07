@@ -412,22 +412,16 @@ namespace KGySoft.Serialization.Xml
             escaped = false;
             if (value == null)
                 return null;
-            if (value is bool boolValue)
-                return XmlConvert.ToString(boolValue);
-            if (value is double doubleValue)
-                return doubleValue.ToRoundtripString();
-            if (value is float floatValue)
-                return floatValue.ToRoundtripString();
-            if (value is decimal decimalValue)
-                return decimalValue.ToRoundtripString();
-            if (value is DateTime dateTime)
-                return XmlConvert.ToString(dateTime, XmlDateTimeSerializationMode.RoundtripKind);
-            if (value is DateTimeOffset dateTimeOffset)
-                return XmlConvert.ToString(dateTimeOffset);
-            if (value is Type type)
-                return GetTypeString(type);
 
-            string? result = value.ToString();
+            Type type = value.GetType();
+
+            // these types never have to be escaped so we can return a result immediately
+            if (type.IsPrimitive && type != Reflector.CharType || value is DateTime or DateTimeOffset || type.IsEnum)
+                return value.ToInvariantStringInternal();
+            if (value is Type t)
+                return GetTypeString(t);
+
+            string? result = (value as string) ?? value.ToInvariantStringInternal();
             if (String.IsNullOrEmpty(result))
                 return result;
 

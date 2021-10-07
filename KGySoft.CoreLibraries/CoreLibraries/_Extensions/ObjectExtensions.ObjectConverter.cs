@@ -93,8 +93,6 @@ namespace KGySoft.CoreLibraries
 
             #endregion
 
-            #endregion
-
             #region Private Methods
 
             private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo? culture, [MaybeNullWhen(false)]out object result)
@@ -144,16 +142,22 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (obj == null || obj is DBNull)
+                if (obj is null or DBNull)
                 {
                     value = null;
                     return targetType.CanAcceptValue(null);
                 }
 
+                Type sourceType = obj.GetType();
+                if (context.Culture.Equals(CultureInfo.InvariantCulture) && targetType == Reflector.StringType && sourceType.CanBeParsedNatively())
+                {
+                    value = obj.ToInvariantStringInternal();
+                    return true;
+                }
+
                 if (targetType.IsNullable())
                     targetType = Nullable.GetUnderlyingType(targetType)!;
 
-                Type sourceType = obj.GetType();
                 if (context.FailedAttempts?.Contains((obj, sourceType, targetType)) == true)
                 {
                     value = null;
@@ -453,6 +457,8 @@ namespace KGySoft.CoreLibraries
 
                 return false;
             }
+
+            #endregion
 
             #endregion
         }

@@ -29,7 +29,6 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Security;
 
-using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -42,6 +41,8 @@ namespace KGySoft.CoreLibraries
     public static partial class ObjectExtensions
     {
         #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
@@ -487,6 +488,33 @@ namespace KGySoft.CoreLibraries
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static bool TryConvert(this object? obj, Type targetType, CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
+
+        #endregion
+
+        #region Internal Methods
+
+        /// <summary>
+        /// This is the inverse operation for the public <see cref="StringExtensions.Parse(string?, Type, CultureInfo)"/> method for natively supported types.
+        /// </summary>
+        internal static string? ToInvariantStringInternal(this object obj)
+        {
+            Debug.Assert(obj.GetType().CanBeParsedNatively());
+            return obj switch
+            {
+                double d => d.ToRoundtripString(),
+                float f => f.ToRoundtripString(),
+                decimal d => d.ToRoundtripString(),
+                DateTime dt => dt.ToString("O"),
+                DateTimeOffset dto => dto.ToString("O"),
+                string s => s,
+                IConvertible c => c.ToString(CultureInfo.InvariantCulture),
+                IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+                Type t => t.GetName(TypeNameKind.AssemblyQualifiedName),
+                _ => obj.ToString()
+            };
+        }
+
+        #endregion
 
         #endregion
     }

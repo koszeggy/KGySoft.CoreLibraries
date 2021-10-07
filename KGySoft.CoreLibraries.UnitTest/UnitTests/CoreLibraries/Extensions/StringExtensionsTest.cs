@@ -18,7 +18,14 @@
 using System;
 using System.Globalization;
 using System.Linq;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
+
+#if NETFRAMEWORK || NETCOREAPP2_0
 using KGySoft.ComponentModel;
+#endif
+
 using NUnit.Framework;
 
 #endregion
@@ -64,8 +71,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Console.Write($"Parse as {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
                 TTarget actualResult = source.Parse<TTarget>();
                 AssertDeepEquals(expectedResult, actualResult);
-                actualResult = (TTarget)source.Parse(typeof(TTarget));
-                AssertDeepEquals(expectedResult, actualResult);
+                AssertDeepEquals(expectedResult, (TTarget)source.Parse(typeof(TTarget)));
                 Console.WriteLine($"({actualResult?.ToString() ?? "<null>"})");
             }
 
@@ -86,9 +92,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("true", true);
             Test("0", false);
             Test("-1", true);
+            Test("a", 'a');
             Test("1980-01-13", new DateTime(1980, 01, 13));
             Test("Black", ConsoleColor.Black);
             Test("1", new IntPtr(1));
+#if NETCOREAPP3_0_OR_GREATER
+            Test("a", new Rune('a'));
+            Test("🏯", new Rune("🏯"[0], "🏯"[1]));
+#endif
 
             // Registered conversions
 #if NETFRAMEWORK || NETCOREAPP2_0

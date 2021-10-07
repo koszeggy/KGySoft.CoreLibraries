@@ -63,6 +63,20 @@ namespace KGySoft.CoreLibraries
 
         private static readonly string collectionGenTypeName = Reflector.ICollectionGenType.Name;
 
+        // When adding new types maintain the following places, too:
+        // - ObjectExtensions.ToInvariantStringInternal
+        //   - Test: ObjectExtensionsTest.ToInvariantStringRoundtripTest, ObjectExtensionsTest.ConvertTest
+        // - StringExtensions.Parser.knownTypes
+        // - StringExtensions.Parser.TryParseKnownValueType<T>
+        //   - Test: StringExtensionsTest.ParseTest
+        // - SpanExtensions.Parser.knownTypes
+        // - SpanExtensions.Parser.TryParseKnownValueType<T>
+        //   - Test: SpanExtensionsTest.ParseTest
+        // - ResXDataNode.nonCompatibleModeNativeTypes (for compatible format)
+        // - ResXDataNode.InitNodeInfoNative (only special cases if needed)
+        //   - Test: ResXResourceWriterTest, ResXResourceSetTest.GenerateNodeInfo
+        // - XmlSerializerBase.GetStringValue (only special cases if needed)
+        //   - Test: XmlSerializerTest.Tests
         private static readonly HashSet<Type> nativelyParsedTypes =
             new HashSet<Type>
             {
@@ -70,7 +84,10 @@ namespace KGySoft.CoreLibraries
                 Reflector.ShortType, Reflector.UShortType, Reflector.IntType, Reflector.UIntType, Reflector.LongType, Reflector.ULongType,
                 Reflector.FloatType, Reflector.DoubleType, Reflector.DecimalType, Reflector.BoolType,
                 Reflector.DateTimeType, Reflector.DateTimeOffsetType, Reflector.TimeSpanType,
-                Reflector.IntPtrType, Reflector.UIntPtrType
+                Reflector.IntPtrType, Reflector.UIntPtrType,
+#if NETCOREAPP3_0_OR_GREATER
+                Reflector.RuneType,
+#endif
             };
 
         private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate> { PreserveMergedKeys = true };

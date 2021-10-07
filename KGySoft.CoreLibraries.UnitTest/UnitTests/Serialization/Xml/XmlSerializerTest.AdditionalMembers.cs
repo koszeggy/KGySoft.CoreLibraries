@@ -57,10 +57,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 {
                     SystemXmlSerializer serializer = new SystemXmlSerializer(type);
                     StringBuilder sb = new StringBuilder();
-                    using (StringWriter sw = new StringWriter(sb))
-                    {
-                        serializer.Serialize(sw, obj);
-                    }
+                    using XmlWriter xmlWriter = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true });
+                    serializer.Serialize(xmlWriter, obj);
 
                     Console.WriteLine(sb);
                     object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
@@ -92,10 +90,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
                         SystemXmlSerializer serializer = new SystemXmlSerializer(item.GetType());
                         StringBuilder sb = new StringBuilder();
-                        using (StringWriter sw = new StringWriter(sb))
-                        {
-                            serializer.Serialize(sw, item);
-                        }
+                        using XmlWriter xmlWriter = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true });
+                        serializer.Serialize(xmlWriter, item);
 
                         Console.WriteLine(sb);
                         Console.WriteLine();

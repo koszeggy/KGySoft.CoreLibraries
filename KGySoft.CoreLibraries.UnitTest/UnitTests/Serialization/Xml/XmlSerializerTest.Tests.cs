@@ -54,26 +54,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeNativelySupportedTypes()
         {
             object[] referenceObjects =
-                {
-                    null,
-                    new object(),
-                    true,
-                    (sbyte)1,
-                    (byte)1,
-                    (short)1,
-                    (ushort)1,
-                    1,
-                    (uint)1,
-                    (long)1,
-                    (ulong)1,
-                    'a',
-                    "alpha",
-                    (float)1,
-                    (double)1,
-                    (decimal)1,
-                    DateTime.UtcNow,
-                    DateTime.Now,
-                };
+            {
+                null,
+                new object(),
+                true,
+                (sbyte)1,
+                (byte)1,
+                (short)1,
+                (ushort)1,
+                1,
+                (uint)1,
+                (long)1,
+                (ulong)1,
+                'a',
+                "alpha",
+                (float)1,
+                (double)1,
+                (decimal)1,
+                DateTime.UtcNow,
+                DateTime.Now,
+            };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -92,6 +92,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new DateTimeOffset(DateTime.UtcNow),
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
                 new TimeSpan(1, 2, 3, 4, 5),
+#if NETCOREAPP3_0_OR_GREATER
+                new Rune('a'),
+#endif
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -102,30 +105,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeFloats()
         {
             object[] referenceObjects =
-                {
-                    +0.0f,
-                    -0.0f,
-                    Single.NegativeInfinity,
-                    Single.PositiveInfinity,
-                    Single.NaN,
-                    Single.MinValue,
-                    Single.MaxValue,
+            {
+                +0.0f,
+                -0.0f,
+                Single.NegativeInfinity,
+                Single.PositiveInfinity,
+                Single.NaN,
+                Single.MinValue,
+                Single.MaxValue,
 
-                    +0.0d,
-                    -0.0d,
-                    Double.NegativeInfinity,
-                    Double.PositiveInfinity,
-                    Double.NaN,
-                    Double.MinValue,
-                    Double.MaxValue,
+                +0.0d,
+                -0.0d,
+                Double.NegativeInfinity,
+                Double.PositiveInfinity,
+                Double.NaN,
+                Double.MinValue,
+                Double.MaxValue,
 
-                    +0m,
-                    -0m,
-                    +0.0m,
-                    -0.0m,
-                    Decimal.MinValue,
-                    Decimal.MaxValue
-                };
+                +0m,
+                -0m,
+                +0.0m,
+                -0.0m,
+                Decimal.MinValue,
+                Decimal.MaxValue
+            };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -138,29 +141,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeChars()
         {
             object[] referenceObjects =
-                {
-                    'a',
-                    'á',
-                    ' ',
-                    '\'',
-                    '<',
-                    '>',
-                    '"',
-                    '{',
-                    '}',
-                    '&',
-                    '\0',
-                    '\t', // U+0009 = <control> HORIZONTAL TAB
-                    '\n', // U+000a = <control> LINE FEED
-                    '\v', // U+000b = <control> VERTICAL TAB
-                    '\f', // U+000c = <control> FORM FEED
-                    '\r', // U+000d = <control> CARRIAGE RETURN
-                    '\x85', // U+0085 = <control> NEXT LINE
-                    '\xa0', // U+00a0 = NO-BREAK SPACE
-                    '\xffff', // U+FFFF = <noncharacter-FFFF>
-                    Char.ConvertFromUtf32(0x1D161)[0], // unpaired surrogate
-                    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'
-                };
+            {
+                'a',
+                'á',
+                ' ',
+                '\'',
+                '<',
+                '>',
+                '"',
+                '{',
+                '}',
+                '&',
+                '\0',
+                '\t', // U+0009 = <control> HORIZONTAL TAB
+                '\n', // U+000a = <control> LINE FEED
+                '\v', // U+000b = <control> VERTICAL TAB
+                '\f', // U+000c = <control> FORM FEED
+                '\r', // U+000d = <control> CARRIAGE RETURN
+                '\x85', // U+0085 = <control> NEXT LINE
+                '\xa0', // U+00a0 = NO-BREAK SPACE
+                '\xffff', // U+FFFF = <noncharacter-FFFF>
+                Char.ConvertFromUtf32(0x1D161)[0], // unpaired surrogate
+                ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'
+            };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -169,22 +172,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
+#if NETCOREAPP3_0_OR_GREATER
+        [Test]
+        public void SerializeRunes()
+        {
+            object[] referenceObjects =
+            {
+                new Rune('a'),
+                new Rune(' '),
+                new Rune('\r'),
+                new Rune('\n'),
+                Rune.GetRuneAt("🏯", 0)
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
+        }
+#endif
+
         [Test]
         public void SerializeStrings()
         {
             string[] referenceObjects =
-                {
-                    null,
-                    String.Empty,
-                    "One",
-                    "Two",
-                    " space ",
-                    "space after ",
-                    "space  space",
-                    "<>\\'\"&{}{{}}",
-                    "tab\ttab",
-                    "🏯", // paired surrogate
-                };
+            {
+                null,
+                String.Empty,
+                "One",
+                "Two",
+                " space ",
+                "space after ",
+                "space  space",
+                "<>\\'\"&{}{{}}",
+                "tab\ttab",
+                "🏯", // paired surrogate
+            };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -210,7 +231,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 "\xffff", // U+FFFF = <noncharacter-FFFF>
                 "🏯"[0].ToString(null), // unpaired surrogate
                 "<>\\'\"&{}{{}}\0\\0000",
-                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'}),
+                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' }),
                 "🏯" + "🏯"[0].ToString(null) + " b 🏯 " + "🏯"[1].ToString(null) + "\xffff \0 <>'\"&" // string containing unpaired surrogates
             };
 
@@ -332,10 +353,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 
             object[] referenceObjects =
-                {
-                    new Guid("ca761232ed4211cebacd00aa0057b223"),
-                    new Point(13, 13),
-                };
+            {
+                new Guid("ca761232ed4211cebacd00aa0057b223"),
+                new Point(13, 13),
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type System.Drawing.Point was not expected.
             SystemSerializeObjects(referenceObjects);
@@ -350,7 +371,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
                 new Version(1, 2, 3, 4),
 #if !NET
-		        Encoding.UTF7,  
+		        Encoding.UTF7,
 #endif
                 Color.Blue
             };
@@ -361,8 +382,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // Type converter as property
             referenceObjects = new object[]
             {
-                new BinarySerializableClass { ObjectProp = new Point(1, 2)}, // Point has self type converter
-                new ExplicitTypeConverterHolder {ExplicitTypeConverterProperty = 13} // converter on property
+                new BinarySerializableClass { ObjectProp = new Point(1, 2) }, // Point has self type converter
+                new ExplicitTypeConverterHolder { ExplicitTypeConverterProperty = 13 } // converter on property
             };
 
             // even escape can be omitted if deserialization is by XmlTextReader, which does not normalize newlines
@@ -374,23 +395,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeEnums()
         {
             Enum[] referenceObjects =
-                {
-                    TestEnum.One, // local enum
-                    TestEnum.Two, // local enum
+            {
+                TestEnum.One, // local enum
+                TestEnum.Two, // local enum
 
-                    ConsoleColor.White, // mscorlib enum
-                    ConsoleColor.Black, // mscorlib enum
+                ConsoleColor.White, // mscorlib enum
+                ConsoleColor.Black, // mscorlib enum
 
-                    UriKind.Absolute, // System enum
-                    UriKind.Relative, // System enum
+                UriKind.Absolute, // System enum
+                UriKind.Relative, // System enum
 
-                    HandleInheritability.Inheritable, // System.Core enum
+                HandleInheritability.Inheritable, // System.Core enum
 
-                    ActionTargets.Default, // NUnit.Framework enum
+                ActionTargets.Default, // NUnit.Framework enum
 
-                    BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
-                    BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
-                };
+                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
+                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum may not be used in this context.
             SystemSerializeObjects(referenceObjects);
@@ -415,11 +436,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeKeyValues()
         {
             ValueType[] referenceObjects =
-                {
-                    new DictionaryEntry(),
-                    new DictionaryEntry(1, "alpha"),
-                    new DictionaryEntry(new object(), "alpha"),
-                };
+            {
+                new DictionaryEntry(),
+                new DictionaryEntry(1, "alpha"),
+                new DictionaryEntry(new object(), "alpha"),
+            };
 
             // SystemSerializeObject(referenceObjects); - NotSupportedException: System.ValueType is an unsupported type.
             SystemSerializeObjects(referenceObjects);
@@ -434,7 +455,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             referenceObjects = new ValueType[]
             {
                 new KeyValuePair<object, string>(),
-                new KeyValuePair<int,string>(1, "alpha"),
+                new KeyValuePair<int, string>(1, "alpha"),
                 new KeyValuePair<object, object>(1, " "),
             };
 
@@ -446,13 +467,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeComplexTypes()
         {
             object[] referenceObjects =
-                {
-                    new EmptyType(),
-                    new BinarySerializableClass {IntProp = 1, StringProp = "alpha", ObjectProp = " . "},
-                    new BinarySerializableStruct {IntProp = 2, StringProp = "beta"},
-                    new SystemSerializableClass {IntProp = 3, StringProp = "gamma"},
-                    new NonSerializableStruct {IntProp = 1, Point = new(10, 20)},
-                };
+            {
+                new EmptyType(),
+                new BinarySerializableClass { IntProp = 1, StringProp = "alpha", ObjectProp = " . " },
+                new BinarySerializableStruct { IntProp = 2, StringProp = "beta" },
+                new SystemSerializableClass { IntProp = 3, StringProp = "gamma" },
+                new NonSerializableStruct { IntProp = 1, Point = new(10, 20) },
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
             SystemSerializeObjects(referenceObjects);
@@ -477,11 +498,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeByteArrays()
         {
             IList[] referenceObjects =
-                {
-                    Reflector.EmptyArray<byte>(), // empty array
-                    new byte[] { 1, 2, 3}, // single byte array
-                    new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
-                };
+            {
+                Reflector.EmptyArray<byte>(), // empty array
+                new byte[] { 1, 2, 3 }, // single byte array
+                new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -493,9 +514,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple array, inner array of jagged array
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
-                    | XmlSerializationOptions.OmitCrcAttribute); // compact parts
+                | XmlSerializationOptions.OmitCrcAttribute); // compact parts
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
-                    | XmlSerializationOptions.OmitCrcAttribute); // compact parts
+                | XmlSerializationOptions.OmitCrcAttribute); // compact parts
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
@@ -534,10 +555,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeStringArrays()
         {
             IList[] referenceObjects =
-                {
-                    new string[] { "One", "Two" }, // single string array
-                    new string[][] { new string[] {"One", "Two", "Three"}, new string[] {"One", "Two", null}, null }, // jagged string array with null values (first null as string, second null as array)
-                };
+            {
+                new string[] { "One", "Two" }, // single string array
+                new string[][] { new string[] { "One", "Two", "Three" }, new string[] { "One", "Two", null }, null }, // jagged string array with null values (first null as string, second null as array)
+            };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -550,8 +571,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             referenceObjects = new IList[]
             {
-                new string[,] { {"One", "Two"}, {"One", "Two"} }, // multidimensional string array
-                Array.CreateInstance(typeof(string), new int[] {3}, new int[]{-1}) // array with -1..1 index interval
+                new string[,] { { "One", "Two" }, { "One", "Two" } }, // multidimensional string array
+                Array.CreateInstance(typeof(string), new int[] { 3 }, new int[] { -1 }) // array with -1..1 index interval
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -568,25 +589,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             IList[] referenceObjects =
-                {
-                    Reflector.EmptyObjects,
-                    new object[] {new object(), null},
-                    new bool[] {true, false},
-                    new sbyte[] {1, 2},
-                    new byte[] {1, 2},
-                    new short[] {1, 2},
-                    new ushort[] {1, 2},
-                    new int[] {1, 2},
-                    new uint[] {1, 2},
-                    new long[] {1, 2},
-                    new ulong[] {1, 2},
-                    new char[] {'a', Char.ConvertFromUtf32(0x1D161)[0]}, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate
-                    new string[] {"alpha", null},
-                    new float[] {1, 2},
-                    new double[] {1, 2},
-                    new decimal[] {1, 2},
-                    new DateTime[] {DateTime.UtcNow, DateTime.Now},
-                };
+            {
+                Reflector.EmptyObjects,
+                new object[] { new object(), null },
+                new bool[] { true, false },
+                new sbyte[] { 1, 2 },
+                new byte[] { 1, 2 },
+                new short[] { 1, 2 },
+                new ushort[] { 1, 2 },
+                new int[] { 1, 2 },
+                new uint[] { 1, 2 },
+                new long[] { 1, 2 },
+                new ulong[] { 1, 2 },
+                new char[] { 'a', Char.ConvertFromUtf32(0x1D161)[0] }, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate
+                new string[] { "alpha", null },
+                new float[] { 1, 2 },
+                new double[] { 1, 2 },
+                new decimal[] { 1, 2 },
+                new DateTime[] { DateTime.UtcNow, DateTime.Now },
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -597,15 +618,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
 
             // these types cannot be serialized by system serializer
             referenceObjects = new IList[]
             {
-                new IntPtr[] {new IntPtr(1), IntPtr.Zero},
-                new UIntPtr[] {new UIntPtr(1), UIntPtr.Zero},
-                new Version[] {new Version(1, 2, 3, 4), null},
+                new IntPtr[] { new IntPtr(1), IntPtr.Zero },
+                new UIntPtr[] { new UIntPtr(1), UIntPtr.Zero },
+                new Version[] { new Version(1, 2, 3, 4), null },
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -614,7 +635,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
 
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
         }
 
         /// <summary>
@@ -624,10 +645,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeEnumArrays()
         {
             object[] referenceObjects =
-                {
-                    new TestEnum[] { TestEnum.One, TestEnum.Two }, // single enum array
-                    new TestEnum[][] { new TestEnum[] {TestEnum.One}, new TestEnum[] {TestEnum.Two} }, // jagged enum array
-                };
+            {
+                new TestEnum[] { TestEnum.One, TestEnum.Two }, // single enum array
+                new TestEnum[][] { new TestEnum[] { TestEnum.One }, new TestEnum[] { TestEnum.Two } }, // jagged enum array
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum[] may not be used in this context.
             SystemSerializeObjects(referenceObjects);
@@ -637,7 +658,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             referenceObjects = new object[]
             {
-                new TestEnum[,] { {TestEnum.One}, {TestEnum.Two} }, // multidimensional enum array
+                new TestEnum[,] { { TestEnum.One }, { TestEnum.Two } }, // multidimensional enum array
                 new object[] { TestEnum.One, null },
                 new IConvertible[] { TestEnum.One, null },
                 new Enum[] { TestEnum.One, null },
@@ -652,31 +673,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeNullableArrays()
         {
             IList[] referenceObjects =
-                {
-                    new bool?[] { true, false, null },
-                    new sbyte?[] { 1, 2, null },
-                    new byte?[] { 1, 2, null },
-                    new short?[] { 1, 2, null },
-                    new ushort?[] { 1, 2, null },
-                    new int?[] { 1, 2, null },
-                    new uint?[] { 1, 2, null },
-                    new long?[] { 1, 2, null },
-                    new ulong?[] { 1, 2, null },
-                    new char?[] { 'a', /*Char.ConvertFromUtf32(0x1D161)[0],*/ null },
-                    new float?[] { 1, 2, null },
-                    new double?[] { 1, 2, null },
-                    new decimal?[] { 1, 2, null },
-                    new DateTime?[] { DateTime.UtcNow, DateTime.Now, null },
-                    new Guid?[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid(), null },
+            {
+                new bool?[] { true, false, null },
+                new sbyte?[] { 1, 2, null },
+                new byte?[] { 1, 2, null },
+                new short?[] { 1, 2, null },
+                new ushort?[] { 1, 2, null },
+                new int?[] { 1, 2, null },
+                new uint?[] { 1, 2, null },
+                new long?[] { 1, 2, null },
+                new ulong?[] { 1, 2, null },
+                new char?[] { 'a', /*Char.ConvertFromUtf32(0x1D161)[0],*/ null },
+                new float?[] { 1, 2, null },
+                new double?[] { 1, 2, null },
+                new decimal?[] { 1, 2, null },
+                new DateTime?[] { DateTime.UtcNow, DateTime.Now, null },
+                new Guid?[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid(), null },
 
-                    new TestEnum?[] { TestEnum.One, TestEnum.Two, null },
+                new TestEnum?[] { TestEnum.One, TestEnum.Two, null },
 
-                    new DictionaryEntry?[] { new DictionaryEntry(1, "alpha"), null},
+                new DictionaryEntry?[] { new DictionaryEntry(1, "alpha"), null },
 
-                    new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                    new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                    new NonSerializableStruct?[] { new NonSerializableStruct{ IntProp = 10, Bool = true, Point = new(10, 20)}, null },
-                };
+                new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+                new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+                new NonSerializableStruct?[] { new NonSerializableStruct { IntProp = 10, Bool = true, Point = new(10, 20) }, null },
+            };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -689,18 +710,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             referenceObjects = new IList[]
             {
-                new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
-                new NonSerializableStruct?[] { new NonSerializableStruct{ IntProp = 10, Point = new(13, 43)}, null },
+                new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+                new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+                new NonSerializableStruct?[] { new NonSerializableStruct { IntProp = 10, Point = new(13, 43) }, null },
             };
 
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
 
             // these types cannot be serialized by system serializer
             referenceObjects = new IList[]
@@ -710,8 +731,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new TimeSpan?[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks), null },
                 new DateTimeOffset?[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)), null },
 
-                new KeyValuePair<int, string>?[] { new KeyValuePair<int,string>(1, "alpha"), null},
-                new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?,int?>(1, 2), new KeyValuePair<int?,int?>(2, null), null},
+                new KeyValuePair<int, string>?[] { new KeyValuePair<int, string>(1, "alpha"), null },
+                new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?, int?>(1, 2), new KeyValuePair<int?, int?>(2, null), null },
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -735,10 +756,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void IXmlSerializableTest()
         {
             object[] referenceObjects =
-                {
-                    new XmlSerializableClass(1, 2, 3),
-                    new XmlSerializableStruct(1, 2, 3),
-                };
+            {
+                new XmlSerializableClass(1, 2, 3),
+                new XmlSerializableStruct(1, 2, 3),
+            };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass may not be used in this context. To use _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass as a parameter, return type, or member of a class or struct, the parameter, return type, or member must be declared as type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass (it cannot be object). Objects of type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass may not be used in un-typed collections, such as ArrayLists.
             SystemSerializeObjects(referenceObjects);
@@ -748,7 +769,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             referenceObjects = new[]
             {
-                new ReadOnlyProperties().Init(xmlSerializableClass: new XmlSerializableClass(3, 2, 1))
+                new ReadOnlyProperties().Init(xmlSerializableClass:new XmlSerializableClass(3, 2, 1))
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
@@ -759,10 +780,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void IXmlSerializableCollectionsTest()
         {
             IList<XmlSerializableClass>[] referenceObjects =
-                {
-                    new XmlSerializableClass[] { new XmlSerializableClass(1, 2, 3) },
-                    new List<XmlSerializableClass> { new XmlSerializableClass(1, 2, 3) }
-                };
+            {
+                new XmlSerializableClass[] { new XmlSerializableClass(1, 2, 3) },
+                new List<XmlSerializableClass> { new XmlSerializableClass(1, 2, 3) }
+            };
 
             //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.Generic.IList`1[[_LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass, _LibrariesTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b45eba277439ddfe]].
             SystemSerializeObjects(referenceObjects);
@@ -778,13 +799,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeComplexArrays()
         {
             IList[] referenceObjects =
-                {
-                    new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, new BinarySerializableStruct{IntProp = 2, StringProp = "beta"} }, // array of a BinarySerializable struct
-                    new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass{IntProp = 2, StringProp = "beta", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
-                    new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "gamma"} }, // array of a BinarySerializable sealed class
-                    new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
-                    new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Point = new(1, 2)}, new NonSerializableStruct{IntProp = 2, Bool = true, Point = new(3, 4)} }, // array of any struct
-                };
+            {
+                new BinarySerializableStruct[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableStruct { IntProp = 2, StringProp = "beta" } }, // array of a BinarySerializable struct
+                new BinarySerializableClass[] { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
+                new BinarySerializableSealedClass[] { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass { IntProp = 3, StringProp = "gamma" } }, // array of a BinarySerializable sealed class
+                new SystemSerializableClass[] { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object - will be serialized by BinaryFormatter
+                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Point = new(1, 2) }, new NonSerializableStruct { IntProp = 2, Bool = true, Point = new(3, 4) } }, // array of any struct
+            };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -796,37 +817,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, NonSerializableStruct; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, NonSerializableStruct; otherwise, nothing
 
             // These collections cannot be serialized with system serializer
             referenceObjects = new IList[]
             {
-                new BinarySerializableClass[] {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a BinarySerializable non sealed class with derived elements
-                new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass {IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "gamma"} }, // IBinarySerializable array
-                new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object
-                new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object, with an IBinarySerializable element
-                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array
-                new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Point = new(1, 2)}, new NonSerializableStruct{IntProp = 2, Bool = true, Point = new(3, 4)} }, // array of any struct
+                new BinarySerializableClass[] { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a BinarySerializable non sealed class with derived elements
+                new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass { IntProp = 3, StringProp = "gamma" } }, // IBinarySerializable array
+                new AbstractClass[] { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object
+                new AbstractClass[] { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object, with an IBinarySerializable element
+                new IBinarySerializable[][] { new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } }, null }, // IBinarySerializable array
+                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Point = new(1, 2) }, new NonSerializableStruct { IntProp = 2, Bool = true, Point = new(3, 4) } }, // array of any struct
 
-                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1},
+                new ValueType[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" }, null, 1 },
                 new IConvertible[] { null, 1 },
-                new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
+                new IConvertible[][] { null, new IConvertible[] { null, 1 }, },
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
         }
 
         /// <summary>
@@ -855,9 +876,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-                    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-                    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
@@ -894,27 +915,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
                 new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
                 new Queue<int>[][] { new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) } },
-                #if !NET35
+#if !NET35
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
                 new ConcurrentBag<int> { 1, 2, 3 },
-                #if !NET40
+#if !NET40
                 new ArraySegment<int>(new[] { 1, 2, 3 }),
-                #endif
-                #endif
+#endif
+#endif
 
                 // non-populatable, reverse
                 new Stack<int>(new[] { 1, 2, 3 }),
                 new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
-                #if !NET35
+#if !NET35
                 new ConcurrentStack<int>(new[] { 1, 2, 3 }),
-                #endif
+#endif
 
                 // read-only
                 new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
 
-                #if !(NET35 || NET40)
+#if !(NET35 || NET40)
                 new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
-                #endif
+#endif
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
@@ -933,7 +954,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if NETCOREAPP3_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, true); // randomContent: ConcurrentStack
 #else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); 
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
 #endif
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
 #endif // !NET35
@@ -945,22 +966,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             object[] referenceObjects =
             {
                 new ReadOnlyProperties().Init(
-                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                    array: new object[] { 1, "string", DateTime.Now },
-                    toCache: new[] { 1, 2, 3 },
-                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
+                    xmlSerializableClass:new XmlSerializableClass(1, 2, 3),
+                    array:new object[] { 1, "string", DateTime.Now },
+                    toCache:new[] { 1, 2, 3 },
+                    readOnlyCollection:new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
                 ),
                 new PopulatableCollectionWithReadOnlyProperties { "one", "two" }.Init(
-                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                    array: new object[] { 1, "string", DateTime.Now },
-                    toCache: new[] { 1, 2, 3 },
-                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
+                    xmlSerializableClass:new XmlSerializableClass(1, 2, 3),
+                    array:new object[] { 1, "string", DateTime.Now },
+                    toCache:new[] { 1, 2, 3 },
+                    readOnlyCollection:new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
                 ),
                 new ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(new[] { "one", "two" }).Init(
-                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                    array: new object[] { 1, "string", DateTime.Now },
-                    toCache: new[] { 1, 2, 3 },
-                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })),
+                    xmlSerializableClass:new XmlSerializableClass(1, 2, 3),
+                    array:new object[] { 1, "string", DateTime.Now },
+                    toCache:new[] { 1, 2, 3 },
+                    readOnlyCollection:new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })),
             };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
@@ -972,10 +993,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             referenceObjects = new[]
             {
                 new ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties().Init(
-                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                    array: new object[]{1, "string", DateTime.Now},
-                    toCache: new []{1, 2, 3},
-                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} ))
+                    xmlSerializableClass:new XmlSerializableClass(1, 2, 3),
+                    array:new object[] { 1, "string", DateTime.Now },
+                    toCache:new[] { 1, 2, 3 },
+                    readOnlyCollection:new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" }))
             };
 
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback),
@@ -988,11 +1009,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeObjectsWithMemberNameCollision()
         {
             ConflictNameBase[] referenceObjects =
-                {
-                    new ConflictNameBase { item = 13 },
-                    new ConflictNameChild { ConflictingField = "ChildField", ConflictingProperty = "ChildProp", item = "itemChild" }.SetBase(-13, "BaseField", "BaseProp"),
-                    new ConflictingCollection<string>{"item", "item2"}.SetChild("ChildItem", "ChildField", "ChildProp").SetBase(-5, "BaseFieldFromCollection", "CollectionBaseProp")
-                };
+            {
+                new ConflictNameBase { item = 13 },
+                new ConflictNameChild { ConflictingField = "ChildField", ConflictingProperty = "ChildProp", item = "itemChild" }.SetBase(-13, "BaseField", "BaseProp"),
+                new ConflictingCollection<string> { "item", "item2" }.SetChild("ChildItem", "ChildField", "ChildProp").SetBase(-5, "BaseFieldFromCollection", "CollectionBaseProp")
+            };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ConflictNameBase is inaccessible due to its protection level. Only public types can be processed.
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ConflictNameBase is inaccessible due to its protection level. Only public types can be processed.
@@ -1015,9 +1036,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeBinaryTypeConverterProperties()
         {
             object[] referenceObjects =
-                {
-                    new BinaryMembers("One", "Two") { BinProp = DateTime.Now }
-                };
+            {
+                new BinaryMembers("One", "Two") { BinProp = DateTime.Now }
+            };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
@@ -1027,9 +1048,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeFields()
         {
             object[] referenceObjects =
-                {
-                    (13, "alpha")
-                };
+            {
+                (13, "alpha")
+            };
 
 #if !(NET35 || NET40 || NET45) // InvalidOperationException: System.ValueTuple`2 is inaccessible due to its protection level. Only public types can be processed.  
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.ValueTuple`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
@@ -1049,10 +1070,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeSimpleNonGenericCollections()
         {
             IEnumerable[] referenceObjects =
-                {
-                    new ArrayList { 1, "alpha", DateTime.Now },
-                    new StringCollection { "alpha", "beta", "gamma" },
-                };
+            {
+                new ArrayList { 1, "alpha", DateTime.Now },
+                new StringCollection { "alpha", "beta", "gamma" },
+            };
 
             //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
             SystemSerializeObjects(referenceObjects);
@@ -1105,34 +1126,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             ICollection[] referenceObjects =
-                {
-                    new List<byte>[] { new List<byte>{ 11, 12, 13}, new List<byte>{21, 22} }, // array of lists
-                    new List<byte[]> { new byte[]{ 11, 12, 13}, new byte[] {21, 22} }, // list of arrays
+            {
+                new List<byte>[] { new List<byte> { 11, 12, 13 }, new List<byte> { 21, 22 } }, // array of lists
+                new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of arrays
 
-                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } ,
+                new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
 
-                    // dictionary with dictionary<int, string> value
-                    new Dictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                // dictionary with dictionary<int, string> value
+                new Dictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
-                    // dictionary with array key
-                    new Dictionary<string[], Dictionary<int, string>> { { new string[] {"hu"}, new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {new string[] {"en"}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                // dictionary with array key
+                new Dictionary<string[], Dictionary<int, string>> { { new string[] { "hu" }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new string[] { "en" }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
-                    // dictionary with dictionary key and value
-                    new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string>{{new int[] {1}, "key.value1"}}, new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {new Dictionary<int[], string>{{new int[] {2}, "key.value2"}}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                // dictionary with dictionary key and value
+                new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { new int[] { 1 }, "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { new int[] { 2 }, "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
-                    // object list vith various elements
-                    new List<object> { 1, "alpha", new Version(13,0), new object[]{ 3, "gamma", null}, new object(), null},
+                // object list vith various elements
+                new List<object> { 1, "alpha", new Version(13, 0), new object[] { 3, "gamma", null }, new object(), null },
 
-                    // dictionary with object key and value
-                    new Dictionary<object, object> { {1, "alpha"}, {new object(), "beta"}, {new int[] {3, 4}, null}, { TestEnum.One, "gamma"} },
+                // dictionary with object key and value
+                new Dictionary<object, object> { { 1, "alpha" }, { new object(), "beta" }, { new int[] { 3, 4 }, null }, { TestEnum.One, "gamma" } },
 
-                    // non-sealed collections with base and derived elements
-                    new List<BinarySerializableClass> {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "beta"} },
-                    new Dictionary<object, BinarySerializableClass> { {new object(), new BinarySerializableSealedClass {IntProp = 1, StringProp = "alpha"}}, {2, new BinarySerializableSealedClass{IntProp = 2, StringProp = "beta"}} },
+                // non-sealed collections with base and derived elements
+                new List<BinarySerializableClass> { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } },
+                new Dictionary<object, BinarySerializableClass> { { new object(), new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" } }, { 2, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } } },
 
-                    new IList<int>[] { new int[]{1, 2, 3}, new List<int>{1, 2, 3}},
-                    new List<IList<int>> { new int[]{1, 2, 3}, new List<int>{1, 2, 3} }
-                };
+                new IList<int>[] { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
+                new List<IList<int>> { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } }
+            };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
@@ -1151,12 +1172,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeCustomCollections()
         {
             ICollection[] referenceObjects =
-                {
-                    new CustomGenericCollection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } ,
-                    new CustomNonGenericCollection { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } ,
-                    new CustomGenericDictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
-                    new CustomNonGenericDictionary { { "hu", new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
-                };
+            {
+                new CustomGenericCollection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
+                new CustomNonGenericCollection { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
+                new CustomGenericDictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new CustomNonGenericDictionary { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+            };
 
             // SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
             // SystemSerializeObjects(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+CustomGenericCollection`1[[System.Collections.Generic.KeyValuePair`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] is inaccessible due to its protection level. Only public types can be processed.
@@ -1169,10 +1190,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void FullExtraComponentSerializationTest()
         {
             FullExtraComponent[] referenceObjects =
-                {
-                    new FullExtraComponent(true),
-                    new FullExtraComponent(false),
-                };
+            {
+                new FullExtraComponent(true),
+                new FullExtraComponent(false),
+            };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
@@ -1180,12 +1201,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // every non-trusted type
-                    | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
-                    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // every non-trusted type
-                    | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
-                    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // every non-trusted type
+                | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
+                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // every non-trusted type
+                | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
+                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);

@@ -22,6 +22,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
 
 using KGySoft.Reflection;
 
@@ -71,6 +74,9 @@ namespace KGySoft.CoreLibraries
                 { Reflector.UIntPtrType, TryParseUIntPtr },
 
                 { Reflector.CharType, TryParseChar },
+#if NETCOREAPP3_0_OR_GREATER
+                { Reflector.RuneType, TryParseRune }, 
+#endif
 
                 { Reflector.FloatType, TryParseSingle },
                 { Reflector.DoubleType, TryParseDouble },
@@ -327,6 +333,20 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
+#if NETCOREAPP3_0_OR_GREATER
+                if (typeof(T) == typeof(Rune))
+                {
+                    // Issue: there is no Rune.TryParse or Rune.TryGetRuneAt overload with span
+                    if (s.Length == 1 && Rune.TryCreate(s[0], out Rune rune)
+                        || s.Length == 2 && Rune.TryCreate(s[0], s[1], out rune))
+                    {
+                        value = (T)(object)rune;
+                        return true;
+                    }
+
+                }
+#endif
+
                 if (typeof(T) == typeof(float))
                 {
                     if (Single.TryParse(s, floatStyle, culture, out float result))
@@ -556,6 +576,22 @@ namespace KGySoft.CoreLibraries
                 value = null;
                 return false;
             }
+
+#if NETCOREAPP3_0_OR_GREATER
+            private static bool TryParseRune(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                // Issue: there is no Rune.TryParse or Rune.TryGetRuneAt overload with span
+                if (s.Length == 1 && Rune.TryCreate(s[0], out Rune rune)
+                    || s.Length == 2 && Rune.TryCreate(s[0], s[1], out rune))
+                {
+                    value = rune;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+#endif
 
             private static bool TryParseSingle(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {

@@ -936,7 +936,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
 #if NETCOREAPP3_0_OR_GREATER
-            { typeof(Rune), DataTypes.Rune },
+            { Reflector.RuneType, DataTypes.Rune },
 #endif
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             { typeof(Index), DataTypes.Index },

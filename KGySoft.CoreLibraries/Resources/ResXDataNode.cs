@@ -31,7 +31,9 @@ using System.Xml;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+#if !NETFRAMEWORK
 using KGySoft.Serialization;
+#endif
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -425,6 +427,13 @@ namespace KGySoft.Resources
         #region Static Fields
 
         private static readonly char[] specialChars = { ' ', '\r', '\n' };
+        private static readonly Type[] nonCompatibleModeNativeTypes =
+        {
+            Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType,
+#if NETCOREAPP3_0_OR_GREATER
+            Reflector.RuneType
+#endif
+        };
 
         private static string? compatibleFileRefTypeName;
 
@@ -1247,55 +1256,19 @@ namespace KGySoft.Resources
 
         private void InitNodeInfoNative(Func<Type, string?>? typeNameConverter)
         {
+            Debug.Assert(cachedValue != null);
             nodeInfo!.AssemblyAliasValue = null;
-            nodeInfo.CompatibleFormat = true;
-            nodeInfo.TypeName = cachedValue is string
-                ? null
-                : ResXCommon.GetAssemblyQualifiedName(cachedValue!.GetType(), typeNameConverter, false);
-
-            switch (cachedValue)
+            if (cachedValue is string str)
             {
-                case string str:
-                    nodeInfo.ValueData = str;
-                    return;
-                case DateTime dateTime:
-                    nodeInfo.ValueData = XmlConvert.ToString(dateTime, XmlDateTimeSerializationMode.RoundtripKind);
-                    return;
-                case DateTimeOffset dateTimeOffset:
-                    nodeInfo.ValueData = XmlConvert.ToString(dateTimeOffset);
-                    return;
-                case double d:
-                    nodeInfo.ValueData = d.ToRoundtripString();
-                    return;
-                case float f:
-                    nodeInfo.ValueData = f.ToRoundtripString();
-                    return;
-                case decimal dec:
-                    nodeInfo.ValueData = dec.ToRoundtripString();
-                    return;
-
-                // char/byte/sbyte/short/ushort/int/uint/long/ulong/bool/DBNull
-                case IConvertible _:
-                    {
-                        nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
-                        if (cachedValue is DBNull)
-                            nodeInfo.CompatibleFormat = false;
-                        return;
-                    }
-            }
-
-            // the types below are supported natively only in non-compatibility mode
-            nodeInfo.CompatibleFormat = false;
-
-            // Type
-            if (cachedValue is Type type)
-            {
-                nodeInfo.ValueData = type.GetName(TypeNameKind.AssemblyQualifiedName);
+                nodeInfo.CompatibleFormat = true;
+                nodeInfo.ValueData = str;
                 return;
             }
 
-            // IntPtr/UIntPtr
-            nodeInfo.ValueData = cachedValue.ToString();
+            Type type = cachedValue!.GetType();
+            nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, false);
+            nodeInfo.ValueData = cachedValue.ToInvariantStringInternal();
+            nodeInfo.CompatibleFormat = !type.In(nonCompatibleModeNativeTypes);
         }
 
         private object? DoGetValue(ITypeResolutionService? typeResolver, string? basePath, bool cleanupRawData, bool safeMode)
@@ -1348,8 +1321,7 @@ namespace KGySoft.Resources
         private bool CanConvertNatively(bool compatibleFormat)
         {
             Type type = cachedValue!.GetType();
-            return type.CanBeParsedNatively() && (!compatibleFormat
-                || !type.In(Reflector.DBNullType, Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType));
+            return type.CanBeParsedNatively() && (!compatibleFormat || !type.In(nonCompatibleModeNativeTypes));
         }
 
         private object? NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)

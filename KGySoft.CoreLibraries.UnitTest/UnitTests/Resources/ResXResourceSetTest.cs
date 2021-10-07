@@ -276,7 +276,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rs.SetObject("long", 1L);
             rs.SetObject("ulong", 1ul);
             rs.SetObject("bool", true);
-            rs.SetObject("DBNull", DBNull.Value);
             rs.SetObject("Type", GetType());
             rs.SetObject("IntPtr", IntPtr.Zero);
             rs.SetObject("UIntPtr", UIntPtr.Zero);
@@ -293,6 +292,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
 
             // binary serialization
+            rs.SetObject("DBNull", DBNull.Value);
             rs.SetObject("serialized", new Collection<byte> { 1, 2, 3 });
 
             // getting the elements as string in safe mode will create the NodeInfos in non-compatible mode

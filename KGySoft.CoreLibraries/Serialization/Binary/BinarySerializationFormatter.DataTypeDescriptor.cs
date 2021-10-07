@@ -465,7 +465,7 @@ namespace KGySoft.Serialization.Binary
                     
                     case DataTypes.Rune:
 #if NETCOREAPP3_0_OR_GREATER
-                        return typeof(Rune);
+                        return Reflector.RuneType;
 #else
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
