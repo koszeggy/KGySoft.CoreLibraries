@@ -81,6 +81,9 @@ namespace KGySoft.Reflection
         internal static readonly Type FloatType = typeof(float);
         internal static readonly Type DoubleType = typeof(double);
         internal static readonly Type DecimalType = typeof(decimal);
+#if NET5_0_OR_GREATER
+        internal static readonly Type HalfType = typeof(Half);
+#endif
         internal static readonly Type TimeSpanType = typeof(TimeSpan);
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);

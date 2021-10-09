@@ -757,7 +757,7 @@ namespace KGySoft.Serialization.Binary
                         return;
 #endif
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                     case DataTypes.DateOnly:
                         bw.Write(((DateOnly)obj).DayNumber);
                         return;

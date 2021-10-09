@@ -943,7 +943,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(Range), DataTypes.Range },
 #endif
 #if NET5_0_OR_GREATER
-            { typeof(Half), DataTypes.Half },
+            { Reflector.HalfType, DataTypes.Half },
 #endif
 #if NET6_0_OR_GREATER
             { typeof(DateOnly), DataTypes.DateOnly },

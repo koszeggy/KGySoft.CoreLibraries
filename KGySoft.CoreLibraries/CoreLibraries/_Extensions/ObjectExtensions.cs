@@ -507,6 +507,9 @@ namespace KGySoft.CoreLibraries
                 DateTime dt => dt.ToString("O"),
                 DateTimeOffset dto => dto.ToString("O"),
                 string s => s,
+#if NET5_0_OR_GREATER
+                Half h => h.ToString("R", CultureInfo.InvariantCulture),
+#endif
                 IConvertible c => c.ToString(CultureInfo.InvariantCulture),
                 IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
                 Type t => t.GetName(TypeNameKind.AssemblyQualifiedName),

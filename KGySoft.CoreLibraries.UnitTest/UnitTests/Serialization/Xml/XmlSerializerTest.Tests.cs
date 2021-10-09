@@ -127,7 +127,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 +0.0m,
                 -0.0m,
                 Decimal.MinValue,
-                Decimal.MaxValue
+                Decimal.MaxValue,
             };
 
             SystemSerializeObject(referenceObjects);
@@ -135,6 +135,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+
+#if NET5_0_OR_GREATER
+            referenceObjects = new object[]
+            {
+                (Half)(+0.0f),
+                (Half)(-0.0f),
+                Half.NegativeInfinity,
+                Half.PositiveInfinity,
+                Half.NaN,
+                Half.MinValue,
+                Half.MaxValue,
+            };
+
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+#endif
         }
 
         [Test]

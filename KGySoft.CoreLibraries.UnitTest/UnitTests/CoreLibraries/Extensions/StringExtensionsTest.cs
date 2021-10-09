@@ -87,8 +87,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // Native types
             Test("1", 1);
             Test("1", (int?)1);
-            Test("1.0", 1.0d);
+            Test("1.0", 1f);
+            Test("-0", FloatExtensions.NegativeZero);
+            Test("1.0", 1d);
             Test("-0", DoubleExtensions.NegativeZero);
+            Test("1.0", 1.0m);
+            Test("-0.0", -0.0m);
             Test("true", true);
             Test("0", false);
             Test("-1", true);
@@ -100,7 +104,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("a", new Rune('a'));
             Test("🏯", new Rune("🏯"[0], "🏯"[1]));
 #endif
-
+#if NET5_0_OR_GREATER
+            Test("1.0", (Half)1);
+            Test("-0", (Half)(-0f));
+#endif
             // Registered conversions
 #if NETFRAMEWORK || NETCOREAPP2_0
             Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));

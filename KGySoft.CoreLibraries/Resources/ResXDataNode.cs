@@ -431,7 +431,10 @@ namespace KGySoft.Resources
         {
             Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType,
 #if NETCOREAPP3_0_OR_GREATER
-            Reflector.RuneType
+            Reflector.RuneType,
+#endif
+#if NET5_0_OR_GREATER
+            Reflector.HalfType,
 #endif
         };
 

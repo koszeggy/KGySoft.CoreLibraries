@@ -4,7 +4,7 @@
     <!--.NET Core 2.0 is needed because .NET Standard 2.0 lacks many features.-->
     <!--.NET Core 3.0 is needed because if .NET Core 2.0 version exists, then a .NET Core 3.0 consumer references that instead of the .NET Standard 2.1 version.-->
     <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;netstandard2.0;netstandard2.1;net5.0;net6.0</TargetFrameworks>-->
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net472;net6.0</TargetFrameworks>
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>-->
     <!--For help-->
@@ -18,6 +18,7 @@
     <!--<RunCodeAnalysis>true</RunCodeAnalysis>-->
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>
     <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -27,6 +28,11 @@
     <!--Suppression NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended -->
     <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
   </PropertyGroup>
+
+  <!-- To test preview features -->
+  <!--<ItemGroup Condition="'$(TargetFramework)'=='net6.0'">
+    <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" />
+  </ItemGroup>-->
 
   <ItemGroup>
     <Compile Remove="HelpOut\**" />

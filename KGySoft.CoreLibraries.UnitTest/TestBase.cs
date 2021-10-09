@@ -32,6 +32,9 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET5_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -331,6 +334,11 @@ namespace KGySoft.CoreLibraries
 
                 if (reference is double doubleRef && check is double doubleCheck)
                     return Check(BitConverter.DoubleToInt64Bits(doubleRef) == BitConverter.DoubleToInt64Bits(doubleCheck), $"Double equality failed: {doubleRef.ToRoundtripString()} <-> {doubleCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(doubleRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(doubleCheck).ToHexValuesString()}", errors);
+
+#if NET5_0_OR_GREATER
+                if (reference is Half halfRef && check is Half halfCheck)
+                    return Check(Unsafe.As<Half, ushort>(ref halfRef)  == Unsafe.As<Half, ushort>(ref halfCheck), $"Half equality failed: {halfRef:R} <-> {halfCheck:R}. Binary representation: 0x{Unsafe.As<Half, ushort>(ref halfRef):X4} <-> 0x{Unsafe.As<Half, ushort>(ref halfCheck):X4}", errors);
+#endif
 
                 if (reference is decimal decimalRef && check is decimal decimalCheck)
                     return Check(BinarySerializer.SerializeValueType(decimalRef).SequenceEqual(BinarySerializer.SerializeValueType(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeValueType(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeValueType(decimalCheck).ToHexValuesString()}", errors);

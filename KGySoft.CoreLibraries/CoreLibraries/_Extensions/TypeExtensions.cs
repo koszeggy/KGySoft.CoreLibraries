@@ -65,7 +65,7 @@ namespace KGySoft.CoreLibraries
 
         // When adding new types maintain the following places, too:
         // - ObjectExtensions.ToInvariantStringInternal
-        //   - Test: ObjectExtensionsTest.ToInvariantStringRoundtripTest, ObjectExtensionsTest.ConvertTest
+        //   - Test: ObjectExtensionsTest.ToInvariantStringRoundtripTest
         // - StringExtensions.Parser.knownTypes
         // - StringExtensions.Parser.TryParseKnownValueType<T>
         //   - Test: StringExtensionsTest.ParseTest
@@ -73,8 +73,7 @@ namespace KGySoft.CoreLibraries
         // - SpanExtensions.Parser.TryParseKnownValueType<T>
         //   - Test: SpanExtensionsTest.ParseTest
         // - ResXDataNode.nonCompatibleModeNativeTypes (for compatible format)
-        // - ResXDataNode.InitNodeInfoNative (only special cases if needed)
-        //   - Test: ResXResourceWriterTest, ResXResourceSetTest.GenerateNodeInfo
+        //   - Test: ResXResourceWriterTest
         // - XmlSerializerBase.GetStringValue (only special cases if needed)
         //   - Test: XmlSerializerTest.Tests
         private static readonly HashSet<Type> nativelyParsedTypes =
@@ -87,6 +86,9 @@ namespace KGySoft.CoreLibraries
                 Reflector.IntPtrType, Reflector.UIntPtrType,
 #if NETCOREAPP3_0_OR_GREATER
                 Reflector.RuneType,
+#endif
+#if NET5_0_OR_GREATER
+                Reflector.HalfType,
 #endif
             };
 

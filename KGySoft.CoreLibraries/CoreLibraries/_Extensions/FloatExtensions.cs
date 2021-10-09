@@ -70,8 +70,12 @@ namespace KGySoft.CoreLibraries
         /// The result of this method can be parsed by <see cref="float.Parse(string,IFormatProvider)">Float.Parse</see>; however, to retrieve exactly the
         /// original value, including a negative zero value, use the <see cref="StringExtensions.Parse{T}(string,CultureInfo)">Parse</see>&#160;<see cref="string"/> extension method instead.
         /// </remarks>
-        public static string ToRoundtripString(this float value)
-            => IsNegativeZero(value) ? "-0" : value.ToString("R", NumberFormatInfo.InvariantInfo);
+        public static string ToRoundtripString(this float value) =>
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+            IsNegativeZero(value) ? "-0" : value.ToString("R", NumberFormatInfo.InvariantInfo);
+#else
+            value.ToString("R", NumberFormatInfo.InvariantInfo);
+#endif
 
         /// <summary>
         /// Gets whether the specified <paramref name="value"/> is negative zero.

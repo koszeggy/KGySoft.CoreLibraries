@@ -191,7 +191,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             static void Test(object source)
             {
                 Type type = source.GetType();
-                Assert.IsTrue(type.CanBeParsedNatively());
+                Assert.IsTrue(type.CanBeParsedNatively(), $"Type {type.GetName(TypeNameKind.ShortName)} cannot be parsed natively");
                 Console.Write($"{type.GetName(TypeNameKind.ShortName)} ({source}) -> ");
                 string str = source.ToInvariantStringInternal();
                 Console.WriteLine(str);
@@ -202,39 +202,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 AssertDeepEquals(source, parsed); // bitwise equality such as negative zero
             }
 
-            //Test("alpha");
-            //Test('a');
-            //Test((byte)1);
-            //Test((sbyte)1);
-            //Test((short)1);
-            //Test((ushort)1);
-            //Test(1);
-            //Test(1u);
-            //Test(1L);
-            //Test(1UL);
-            //Test(1d);
-            //Test(-0d);
-            //Test(1f);
-            //Test(-0f);
-            //Test(1m);
-            //Test(-0.0m);
-            //Test(true);
-            //Test(DateTime.Now);
-            //Test(DateTime.UtcNow);
-            //Test(DateTimeOffset.Now);
-            //Test(DateTimeOffset.UtcNow);
-            //Test(TimeSpan.FromHours(1));
-            //Test((IntPtr)1);
-            //Test((UIntPtr)1);
-            //Test(ConsoleColor.Blue);
-            //Test(typeof(ObjectExtensionsTest));
+            Test("alpha");
+            Test('a');
+            Test((byte)1);
+            Test((sbyte)1);
+            Test((short)1);
+            Test((ushort)1);
+            Test(1);
+            Test(1u);
+            Test(1L);
+            Test(1UL);
+            Test(1d);
+            Test(-0d);
+            Test(1f);
+            Test(-0f);
+            Test(1m);
+            Test(-0.0m);
+            Test(true);
+            Test(DateTime.Now);
+            Test(DateTime.UtcNow);
+            Test(DateTimeOffset.Now);
+            Test(DateTimeOffset.UtcNow);
+            Test(TimeSpan.FromHours(1));
+            Test((IntPtr)1);
+            Test((UIntPtr)1);
+            Test(ConsoleColor.Blue);
+            Test(typeof(ObjectExtensionsTest));
 #if NETCOREAPP3_0_OR_GREATER
             Test(new Rune('a'));
             Test(new Rune("🏯"[0], "🏯"[1]));
 #endif
 #if NET5_0_OR_GREATER
-            //Test((Half)1);
-            //Test((Half)(-0f));
+            Test((Half)1);
+            Test((Half)(-0f));
 #endif
 #if NET6_0_OR_GREATER
             //Test(DateOnly.FromDateTime(DateTime.Today));

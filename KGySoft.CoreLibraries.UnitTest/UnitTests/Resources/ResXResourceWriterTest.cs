@@ -442,7 +442,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 +0.00m,
                 -0.00m,
                 Decimal.MinValue,
-                Decimal.MaxValue
+                Decimal.MaxValue,
+
+#if NET5_0_OR_GREATER
+                (Half)(+0.0f),
+                (Half)(-0.0f),
+                Half.NegativeInfinity,
+                Half.PositiveInfinity,
+                Half.NaN,
+                Half.MinValue,
+                Half.MaxValue,
+#endif
             };
 
 #if NETFRAMEWORK

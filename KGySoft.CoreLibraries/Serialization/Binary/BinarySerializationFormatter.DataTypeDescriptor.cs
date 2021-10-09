@@ -483,7 +483,7 @@ namespace KGySoft.Serialization.Binary
 
                     case DataTypes.Half:
 #if NET5_0_OR_GREATER
-                        return typeof(Half);
+                        return Reflector.HalfType;
 #else
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif

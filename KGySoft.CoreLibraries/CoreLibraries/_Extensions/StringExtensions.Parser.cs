@@ -80,6 +80,9 @@ namespace KGySoft.CoreLibraries
                 { Reflector.FloatType, TryParseSingle },
                 { Reflector.DoubleType, TryParseDouble },
                 { Reflector.DecimalType, TryParseDecimal },
+#if NET5_0_OR_GREATER
+                { Reflector.HalfType, TryParseHalf }, 
+#endif
 
                 { Reflector.TimeSpanType, TryParseTimeSpan },
                 { Reflector.DateTimeType, TryParseDateTime },
@@ -414,8 +417,10 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Single.TryParse(s, floatStyle, culture, out float result))
                     {
-                        if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+                        if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = FloatExtensions.NegativeZero;
+#endif
                         value = (T)(object)result;
                         return true;
                     }
@@ -425,8 +430,10 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Double.TryParse(s, floatStyle, culture, out double result))
                     {
-                        if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+                        if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = DoubleExtensions.NegativeZero;
+#endif
                         value = (T)(object)result;
                         return true;
                     }
@@ -440,6 +447,17 @@ namespace KGySoft.CoreLibraries
                         return true;
                     }
                 }
+
+#if NET5_0_OR_GREATER
+                if (typeof(T) == typeof(Half))
+                {
+                    if (Half.TryParse(s, floatStyle, culture, out Half result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+#endif
 
                 if (typeof(T) == typeof(TimeSpan))
                 {
@@ -667,8 +685,10 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
                 if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = FloatExtensions.NegativeZero;
+#endif
                 value = result;
                 return true;
             }
@@ -681,8 +701,10 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
                 if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = DoubleExtensions.NegativeZero;
+#endif
                 value = result;
                 return true;
             }
@@ -698,6 +720,20 @@ namespace KGySoft.CoreLibraries
                 value = result;
                 return true;
             }
+
+#if NET5_0_OR_GREATER
+            private static bool TryParseHalf(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                if (!Half.TryParse(s, floatStyle, culture, out Half result))
+                {
+                    value = null;
+                    return false;
+                }
+
+                value = result;
+                return true;
+            }
+#endif
 
             private static bool TryParseTimeSpan(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
