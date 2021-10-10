@@ -490,9 +490,9 @@ namespace KGySoft.Serialization.Binary
 
 #if NET6_0_OR_GREATER
                     case DataTypes.DateOnly:
-                        return typeof(DateOnly);
+                        return Reflector.DateOnlyType;
                     case DataTypes.TimeOnly:
-                        return typeof(TimeOnly);
+                        return Reflector.TimeOnlyType;
 #else
                     case DataTypes.DateOnly:
                     case DataTypes.TimeOnly:

@@ -68,10 +68,12 @@
   + [Try]Parse methods:
     + Natively supporting Rune type (.NET Core 3.0 and above)
     + Natively supporting Half type (.NET 5.0 and above)
+    + Natively supporting DateOnly and TimeOnly types (.NET 6.0 and above)
 + SpanExtensions class:
   + [Try]Parse methods:
     + Natively supporting Rune type (.NET Core 3.0 and above)
     + Natively supporting Half type (.NET 5.0 and above)
+    + Natively supporting DateOnly and TimeOnly types (.NET 6.0 and above)
 + StringSegmentComparer class:
   + New OrdinalRandomized property
   + New OrdinalIgnoreCaseRandomized property
@@ -135,6 +137,7 @@
 + ResXDataNode class:
   + Supporting Rune type natively in non-compatible mode (.NET Core 3.0 and above)
   + Supporting Half type natively in non-compatible mode (.NET 5.0 and above)
+  + Supporting DateOnly and TimeOnly types natively in non-compatible mode (.NET 6.0 and above)
 + DynamicResourceManager class:
   + New EnsureResourcesGenerated and EnsureInvariantResourcesMerged methods to be able to (re)generate merged
     resource sets for a specified culture respecting the currently set merging options.
@@ -170,18 +173,19 @@
       structs only without any references, which is very fast. Marshaling is used only if the obsolete
       ForcedSerializationValueTypesAsFallback flag is enabled.
     ! The produced stream is not compatible with previous versions.
-  + Supporting the Rune type natively (in .NET Core 3.0 and above)
-  + Supporting the Index and Range types natively (in .NET Standard 2.1 and above)
-  + Supporting the Half type natively (in .NET 5.0 and above)
-  + Supporting the DateOnly and TimeOnly types natively (in .NET 6.0 and above)
+  + Supporting the Rune type natively (.NET Core 3.0 and above)
+  + Supporting the Index and Range types natively (.NET Standard 2.1 and above)
+  + Supporting the Half type natively (.NET 5.0 and above)
+  + Supporting the DateOnly and TimeOnly types natively (.NET 6.0 and above)
 
 ! KGySoft.Serialization.Xml namespace:
 ======================================
 ! XmlSerializer class:
   ! Serialize* methods: Starting with this version the XmlSerializationOptions.CompactSerializationOfStructures
     flag affects structs only without any references, which is very fast.
-  + Supporting Rune type natively (.NET Core 3.0 and above)
-  + Supporting Half type natively (.NET 5.0 and above)
+  + Supporting the Rune type natively (.NET Core 3.0 and above)
+  + Supporting the Half type natively (.NET 5.0 and above)
+  + Supporting the DateOnly and TimeOnly types natively (.NET 6.0 and above)
 
 
 ~~~~~~~~~

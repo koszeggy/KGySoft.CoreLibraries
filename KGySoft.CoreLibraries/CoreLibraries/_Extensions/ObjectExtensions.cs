@@ -510,6 +510,10 @@ namespace KGySoft.CoreLibraries
 #if NET5_0_OR_GREATER
                 Half h => h.ToString("R", CultureInfo.InvariantCulture),
 #endif
+#if NET6_0_OR_GREATER
+                DateOnly d => d.ToString("O", CultureInfo.InvariantCulture),
+                TimeOnly t => t.ToString("O", CultureInfo.InvariantCulture),
+#endif
                 IConvertible c => c.ToString(CultureInfo.InvariantCulture),
                 IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
                 Type t => t.GetName(TypeNameKind.AssemblyQualifiedName),

@@ -108,6 +108,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1.0", (Half)1);
             Test("-0", (Half)(-0f));
 #endif
+#if NET6_0_OR_GREATER
+            Test("1980-01-01", new DateOnly(1980, 01, 01));
+            Test("13:13", new TimeOnly(13, 13));
+#endif
+
             // Registered conversions
 #if NETFRAMEWORK || NETCOREAPP2_0
             Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));

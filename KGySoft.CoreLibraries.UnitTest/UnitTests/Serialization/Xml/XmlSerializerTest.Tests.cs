@@ -95,6 +95,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if NETCOREAPP3_0_OR_GREATER
                 new Rune('a'),
 #endif
+#if NET6_0_OR_GREATER
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
+#endif
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);

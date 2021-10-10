@@ -237,8 +237,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test((Half)(-0f));
 #endif
 #if NET6_0_OR_GREATER
-            //Test(DateOnly.FromDateTime(DateTime.Today));
-            //Test(TimeOnly.FromDateTime(DateTime.Now));
+            Test(DateOnly.FromDateTime(DateTime.Today));
+            Test(TimeOnly.FromDateTime(DateTime.Now));
 #endif
         }
 

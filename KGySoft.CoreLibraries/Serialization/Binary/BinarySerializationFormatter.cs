@@ -946,8 +946,8 @@ namespace KGySoft.Serialization.Binary
             { Reflector.HalfType, DataTypes.Half },
 #endif
 #if NET6_0_OR_GREATER
-            { typeof(DateOnly), DataTypes.DateOnly },
-            { typeof(TimeOnly), DataTypes.TimeOnly },
+            { Reflector.DateOnlyType, DataTypes.DateOnly },
+            { Reflector.TimeOnlyType, DataTypes.TimeOnly },
 #endif
         };
 

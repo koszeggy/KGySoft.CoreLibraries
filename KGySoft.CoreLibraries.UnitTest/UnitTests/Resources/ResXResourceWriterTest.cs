@@ -479,6 +479,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 DateTimeOffset.MinValue,
                 DateTimeOffset.MaxValue,
                 new TimeSpan(1, 2, 3, 4, 5),
+#if NET6_0_OR_GREATER
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
+#endif
             };
 
             KGySerializeObjects(referenceObjects, true, false);

@@ -429,12 +429,18 @@ namespace KGySoft.Resources
         private static readonly char[] specialChars = { ' ', '\r', '\n' };
         private static readonly Type[] nonCompatibleModeNativeTypes =
         {
-            Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType,
+            Reflector.IntPtrType,
+            Reflector.UIntPtrType,
+            Reflector.RuntimeType,
 #if NETCOREAPP3_0_OR_GREATER
             Reflector.RuneType,
 #endif
 #if NET5_0_OR_GREATER
             Reflector.HalfType,
+#endif
+#if NET6_0_OR_GREATER
+            Reflector.DateOnlyType,
+            Reflector.TimeOnlyType,
 #endif
         };
 

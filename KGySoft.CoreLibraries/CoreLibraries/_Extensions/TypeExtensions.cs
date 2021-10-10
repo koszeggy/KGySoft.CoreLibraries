@@ -90,6 +90,10 @@ namespace KGySoft.CoreLibraries
 #if NET5_0_OR_GREATER
                 Reflector.HalfType,
 #endif
+#if NET6_0_OR_GREATER
+                Reflector.DateOnlyType,
+                Reflector.TimeOnlyType,
+#endif
             };
 
         private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate> { PreserveMergedKeys = true };

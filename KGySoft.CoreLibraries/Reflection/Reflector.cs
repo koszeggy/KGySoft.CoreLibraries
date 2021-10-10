@@ -87,6 +87,10 @@ namespace KGySoft.Reflection
         internal static readonly Type TimeSpanType = typeof(TimeSpan);
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
+#if NET5_0_OR_GREATER
+        internal static readonly Type DateOnlyType = typeof(DateOnly);
+        internal static readonly Type TimeOnlyType = typeof(TimeOnly);
+#endif
 
         // ReSharper disable once InconsistentNaming
         internal static readonly Type DBNullType = typeof(DBNull);

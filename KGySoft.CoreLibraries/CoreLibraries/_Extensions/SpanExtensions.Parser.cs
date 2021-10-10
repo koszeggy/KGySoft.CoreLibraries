@@ -88,6 +88,10 @@ namespace KGySoft.CoreLibraries
                 { Reflector.TimeSpanType, TryParseTimeSpan },
                 { Reflector.DateTimeType, TryParseDateTime },
                 { Reflector.DateTimeOffsetType, TryParseDateTimeOffset },
+#if NET6_0_OR_GREATER
+                { Reflector.DateOnlyType, TryParseDateOnly },
+                { Reflector.TimeOnlyType, TryParseTimeOnly }, 
+#endif
             };
 
             #endregion
@@ -407,11 +411,9 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(DateTime))
                 {
-                    s = s.TrimEnd();
                     if (s.Length > 0)
                     {
-                        DateTimeStyles style = s[^1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                        if (DateTime.TryParse(s, culture, style, out DateTime result))
+                        if (DateTime.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTime result))
                         {
                             value = (T)(object)result;
                             return true;
@@ -421,17 +423,41 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(DateTimeOffset))
                 {
-                    s = s.TrimEnd();
                     if (s.Length > 0)
                     {
-                        DateTimeStyles style = s[^1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                        if (DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                        if (DateTimeOffset.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTimeOffset result))
                         {
                             value = (T)(object)result;
                             return true;
                         }
                     }
                 }
+
+#if NET6_0_OR_GREATER
+                if (typeof(T) == typeof(DateOnly))
+                {
+                    if (s.Length > 0)
+                    {
+                        if (DateOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out DateOnly result))
+                        {
+                            value = (T)(object)result;
+                            return true;
+                        }
+                    }
+                }
+
+                if (typeof(T) == typeof(TimeOnly))
+                {
+                    if (s.Length > 0)
+                    {
+                        if (TimeOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out TimeOnly result))
+                        {
+                            value = (T)(object)result;
+                            return true;
+                        }
+                    }
+                }
+#endif
 
                 value = default;
                 return false;
@@ -683,11 +709,9 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseDateTime(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-                s = s.TrimEnd();
                 if (s.Length > 0)
                 {
-                    DateTimeStyles style = s[^1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    if (DateTime.TryParse(s, culture, style, out DateTime result))
+                    if (DateTime.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTime result))
                     {
                         value = result;
                         return true;
@@ -700,11 +724,9 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseDateTimeOffset(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-                s = s.TrimEnd();
                 if (s.Length > 0)
                 {
-                    DateTimeStyles style = s[^1] == 'Z' ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    if (DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                    if (DateTimeOffset.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTimeOffset result))
                     {
                         value = result;
                         return true;
@@ -714,6 +736,35 @@ namespace KGySoft.CoreLibraries
                 value = null;
                 return false;
             }
+
+#if NET6_0_OR_GREATER
+            private static bool TryParseDateOnly(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                if (s.Length > 0)
+                {
+                    if (DateOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out DateOnly result))
+                    {
+                        value = result;
+                        return true;
+                    }
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseTimeOnly(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                if (!TimeOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out TimeOnly result))
+                {
+                    value = null;
+                    return false;
+                }
+
+                value = result;
+                return true;
+            }
+#endif
 
             #endregion
 
