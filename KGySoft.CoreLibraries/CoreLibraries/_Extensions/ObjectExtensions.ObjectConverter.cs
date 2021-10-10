@@ -149,9 +149,9 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type sourceType = obj.GetType();
-                if (context.Culture.Equals(CultureInfo.InvariantCulture) && targetType == Reflector.StringType && sourceType.CanBeParsedNatively())
+                if (targetType == Reflector.StringType && sourceType.CanBeParsedNatively())
                 {
-                    value = obj.ToInvariantStringInternal();
+                    value = obj.ToStringInternal(context.Culture);
                     return true;
                 }
 

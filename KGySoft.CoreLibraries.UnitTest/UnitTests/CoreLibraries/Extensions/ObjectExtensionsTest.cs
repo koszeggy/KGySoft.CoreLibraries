@@ -193,7 +193,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Type type = source.GetType();
                 Assert.IsTrue(type.CanBeParsedNatively(), $"Type {type.GetName(TypeNameKind.ShortName)} cannot be parsed natively");
                 Console.Write($"{type.GetName(TypeNameKind.ShortName)} ({source}) -> ");
-                string str = source.ToInvariantStringInternal();
+                string str = source.ToStringInternal(CultureInfo.InvariantCulture);
                 Console.WriteLine(str);
                 Assert.AreEqual(str, source.Convert<string>());
                 object parsed = str.Parse(type);

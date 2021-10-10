@@ -99,11 +99,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <see cref="decimal"/> value to be converted to <see cref="string"/>.</param>
         /// <returns>A <see cref="decimal"/> value, from which the original value can be parsed without losing any information.</returns>
-        public static string ToRoundtripString(this decimal value)
-        {
-            string result = value.ToString(null, NumberFormatInfo.InvariantInfo);
-            return IsNegativeZero(value) ? "-" + result : result;
-        }
+        public static string ToRoundtripString(this decimal value) => value.ToRoundtripString(NumberFormatInfo.InvariantInfo);
 
         /// <summary>
         /// Gets whether the specified <paramref name="value"/> is negative zero.
@@ -302,6 +298,16 @@ namespace KGySoft.CoreLibraries
             }
 
             return result;
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static string ToRoundtripString(this decimal value, IFormatProvider provider)
+        {
+            string result = value.ToString(null, provider);
+            return IsNegativeZero(value) ? "-" + result : result;
         }
 
         #endregion

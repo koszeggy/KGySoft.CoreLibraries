@@ -496,26 +496,25 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// This is the inverse operation for the public <see cref="StringExtensions.Parse(string?, Type, CultureInfo)"/> method for natively supported types.
         /// </summary>
-        internal static string? ToInvariantStringInternal(this object obj)
+        internal static string? ToStringInternal(this object obj, CultureInfo culture)
         {
-            Debug.Assert(obj.GetType().CanBeParsedNatively());
             return obj switch
             {
-                double d => d.ToRoundtripString(),
-                float f => f.ToRoundtripString(),
-                decimal d => d.ToRoundtripString(),
-                DateTime dt => dt.ToString("O"),
-                DateTimeOffset dto => dto.ToString("O"),
+                double d => d.ToRoundtripString(culture),
+                float f => f.ToRoundtripString(culture),
+                decimal d => d.ToRoundtripString(culture),
+                DateTime dt => dt.ToString("O", culture),
+                DateTimeOffset dto => dto.ToString("O", culture),
                 string s => s,
 #if NET5_0_OR_GREATER
-                Half h => h.ToString("R", CultureInfo.InvariantCulture),
+                Half h => h.ToString("R", culture),
 #endif
 #if NET6_0_OR_GREATER
-                DateOnly d => d.ToString("O", CultureInfo.InvariantCulture),
-                TimeOnly t => t.ToString("O", CultureInfo.InvariantCulture),
+                DateOnly d => d.ToString("O", culture),
+                TimeOnly t => t.ToString("O", culture),
 #endif
-                IConvertible c => c.ToString(CultureInfo.InvariantCulture),
-                IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+                IConvertible c => c.ToString(culture),
+                IFormattable f => f.ToString(null, culture),
                 Type t => t.GetName(TypeNameKind.AssemblyQualifiedName),
                 _ => obj.ToString()
             };

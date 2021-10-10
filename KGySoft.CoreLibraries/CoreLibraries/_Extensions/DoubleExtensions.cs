@@ -56,6 +56,8 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
+        #region Public Methods
+
         /// <summary>
         /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="double"/>&#160;<paramref name="value"/>,
         /// from which the original value can be parsed without losing any information.
@@ -66,12 +68,7 @@ namespace KGySoft.CoreLibraries
         /// The result of this method can be parsed by <see cref="double.Parse(string,IFormatProvider)">Double.Parse</see>; however, to retrieve exactly the
         /// original value, including a negative zero value, use the <see cref="StringExtensions.Parse{T}(string,CultureInfo)">Parse</see>&#160;<see cref="string"/> extension method instead.
         /// </remarks>
-        public static string ToRoundtripString(this double value) =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            IsNegativeZero(value) ? "-0" : value.ToString("R", NumberFormatInfo.InvariantInfo);
-#else
-            value.ToString("R", NumberFormatInfo.InvariantInfo);
-#endif
+        public static string ToRoundtripString(this double value) => value.ToRoundtripString(NumberFormatInfo.InvariantInfo);
 
         /// <summary>
         /// Gets whether the specified <paramref name="value"/> is negative zero.
@@ -127,6 +124,20 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static double TolerantFloor(this double value, double tolerance = defaultTolerance)
             => TolerantIsZero(Math.IEEERemainder(value, 1), tolerance) ? Math.Round(value) : Math.Floor(value);
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static string ToRoundtripString(this double value, IFormatProvider provider) =>
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+            IsNegativeZero(value) ? "-0" : value.ToString("R", provider);
+#else
+            value.ToString("R", provider);
+#endif
+
+
+        #endregion
 
         #endregion
     }

@@ -29,7 +29,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Xml;
 using System.Xml.Serialization;
 
 using KGySoft.Collections;
@@ -417,17 +416,17 @@ namespace KGySoft.Serialization.Xml
 
             // these types never have to be escaped so we can return a result immediately
             if (type.IsPrimitive && type != Reflector.CharType || value is DateTime or DateTimeOffset || type.IsEnum)
-                return value.ToInvariantStringInternal();
+                return value.ToStringInternal(CultureInfo.InvariantCulture);
             if (value is Type t)
                 return GetTypeString(t);
 
-            string? result = (value as string) ?? value.ToInvariantStringInternal();
+            string? result = (value as string) ?? value.ToStringInternal(CultureInfo.InvariantCulture);
             if (String.IsNullOrEmpty(result))
                 return result;
 
             bool escapeNewline = (Options & XmlSerializationOptions.EscapeNewlineCharacters) != XmlSerializationOptions.None;
             StringBuilder? escapedResult = null;
-            spacePreserve = IsWhiteSpace(result[0], escapeNewline);
+            spacePreserve = IsWhiteSpace(result![0], escapeNewline);
 
             // checking result for escaping
             for (int i = 0; i < result.Length; i++)

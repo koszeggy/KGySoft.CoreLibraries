@@ -1276,7 +1276,7 @@ namespace KGySoft.Resources
 
             Type type = cachedValue!.GetType();
             nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, false);
-            nodeInfo.ValueData = cachedValue.ToInvariantStringInternal();
+            nodeInfo.ValueData = cachedValue.ToStringInternal(CultureInfo.InvariantCulture);
             nodeInfo.CompatibleFormat = !type.In(nonCompatibleModeNativeTypes);
         }
 

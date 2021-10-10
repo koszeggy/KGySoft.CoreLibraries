@@ -46,9 +46,9 @@
   + New SampleInt32 method. It has the same behavior as the NextInt32 used to have before this version.
 ! ObjectExtensions class:
   ! [Try]Convert methods:
-    ! When converting to string with the invariant culture, using round-trip formats for some natively supported
-      types that can be restored by an opposite [Try]Convert or by StringExtensions.[Try]Parse without losing
-      precision or information, including negative zero value or time zone.
+    ! When converting to string using round-trip formats for some natively supported types that can be restored by
+      an opposite [Try]Convert or by StringExtensions.[Try]Parse without losing precision or information, including
+      negative zero value or time zone.
     +? string as intermediate step
 ! RandomExtensions class:
   ! To be conform with the new NextInt64 methods appeared in .NET 6, Next[U]Int64, Next[U]Int32, Next[U]Int16 and
