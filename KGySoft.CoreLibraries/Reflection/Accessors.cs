@@ -633,8 +633,9 @@ namespace KGySoft.Reflection
         {
             // 1.) By Comparer/EqualityComparer property
             Type type = collection.GetType();
-            PropertyAccessor? property = GetProperty(type, "Comparer") // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
-                ?? GetProperty(type, "EqualityComparer"); // Hashtable
+            PropertyAccessor? property =  GetProperty(type, type == typeof(Hashtable)
+                ? "EqualityComparer" // Hashtable
+                : "Comparer"); // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
             if (property != null)
                 return property.Get(collection);
 
