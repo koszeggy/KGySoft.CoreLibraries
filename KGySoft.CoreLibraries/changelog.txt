@@ -49,7 +49,8 @@
     ! When converting to string using round-trip formats for some natively supported types that can be restored by
       an opposite [Try]Convert or by StringExtensions.[Try]Parse without losing precision or information, including
       negative zero value or time zone.
-    +? string as intermediate step
+    + Using string as a fallback intermediate step if the registered conversions could not be used.
+    + Natively supporting conversion between char and Rune collections in both ways (.NET Core 3.0 and above)
 ! RandomExtensions class:
   ! To be conform with the new NextInt64 methods appeared in .NET 6, Next[U]Int64, Next[U]Int32, Next[U]Int16 and
     Next[S]Byte methods without minValue/maxValue parameters from now on return only non-negative values,

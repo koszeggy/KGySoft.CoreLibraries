@@ -134,26 +134,37 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             static void Test<TTarget>(object source, TTarget expectedResult)
             {
-                Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({source}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
+                Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({AsString(source)}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
                 TTarget actualResult = source.Convert<TTarget>();
                 AssertDeepEquals(expectedResult, actualResult);
-                Console.WriteLine($"({actualResult?.ToString() ?? "<null>"})");
+                Console.WriteLine($"({AsString(actualResult)})");
+            }
+
+            static string AsString(object obj)
+            {
+                if (obj == null)
+                    return "<null>";
+
+                // KeyValuePair has a similar ToString to this one
+                if (obj is DictionaryEntry de)
+                    return $"[{de.Key}, {de.Value}]";
+
+                if (obj is not IEnumerable enumerable || enumerable is string)
+                    return obj.ToStringInternal(CultureInfo.InvariantCulture);
+
+                return enumerable.Cast<object>().Select(AsString).Join(", ");
             }
 
             // IConvertible
             Test("1", 1);
             Test(1, "1");
             Test(1.0, 1);
+            Test(-0f, -0d);
             Test("1", true); // Parse
-            Test(100.12, 'd'); // double -> long -> char
-            Test(13.45m, ConsoleColor.Magenta); // decimal -> long -> enum
+            Test(100, 'd');
+            Test(13m, ConsoleColor.Magenta); // decimal -> string -> ConsoleColor
 
-            // Registered conversions
-            Throws<ArgumentException>(() => Test(1L, new IntPtr(1)));
-            Throws<ArgumentException>(() => Test(1, new IntPtr(1)));
-            typeof(long).RegisterConversion(typeof(IntPtr), (obj, type, culture) => new IntPtr((long)obj));
-            Test(1L, new IntPtr(1));
-            Test(1, new IntPtr(1)); // int -> long -> IntPtr
+            // TypeConverter
             Test("1", "1".AsSegment());
             Test("1".AsSegment(), "1");
 
@@ -181,8 +192,44 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new Hashtable { { 1, "2" }, { 3, "4" } }); // gen -> non-gen
             Test(new SortedList { { 1, "2" }, { 3, "4" } }, new SortedList<int, string> { { 1, "2" }, { 3, "4" } }); // non-gen -> gen
 
-            // enumerable to string
+            // between enumerable and string
             Test(new List<char> { 'a', 'b', 'c' }, "abc");
+            Test(new List<int> { 'a', 'b', 'c' }, "abc");
+            Test("abc", new List<char> { 'a', 'b', 'c' });
+            Test("abc", new int[] { 'a', 'b', 'c' });
+
+            // between non-convertibles via string
+            Test(1L, new IntPtr(1));
+            Test(1, new IntPtr(1));
+            DateTime now = DateTime.Now;
+            Test(now, new DateTimeOffset(now));
+            Test(new DateTimeOffset(now), now);
+#if NETCOREAPP3_0_OR_GREATER
+            Test('a', new Rune('a'));
+            Test(new Rune('a'), 'a');
+            Test("abc", new Rune[] { new Rune('a'), new Rune('b'), new Rune('c') });
+            Test(new Rune[] { new Rune('a'), new Rune('b'), new Rune('c') }, "abc");
+            Test("🙂x🏯", new Rune[] { Rune.GetRuneAt("🙂", 0), new Rune('x'), Rune.GetRuneAt("🏯", 0) });
+            Test(new Rune[] { Rune.GetRuneAt("🙂", 0), new Rune('x'), Rune.GetRuneAt("🏯", 0) }, "🙂x🏯");
+            Test(new Rune[] { Rune.GetRuneAt("🙂", 0), new Rune('x'), Rune.GetRuneAt("🏯", 0) }, "🙂x🏯".ToCharArray());
+#endif
+#if NET5_0_OR_GREATER
+            Test(1f, (Half)1f);
+            Test((Half)(-0f), -0f);
+#endif
+#if NET6_0_OR_GREATER
+            Test(now, DateOnly.FromDateTime(now));
+            Test(now.TimeOfDay, TimeOnly.FromTimeSpan(now.TimeOfDay));
+            Test(DateOnly.FromDateTime(now), now.Date);
+            Test(TimeOnly.FromDateTime(now), now.TimeOfDay);
+#endif
+
+            // Registered conversions
+            Throws<ArgumentException>(() => Test(now, now.Ticks));
+            Throws<ArgumentException>(() => Test(now, (double)now.Ticks));
+            typeof(DateTime).RegisterConversion(typeof(long), (obj, _, _) => ((DateTime)obj).Ticks);
+            Test(now, now.Ticks);
+            Test(now, (double)now.Ticks); // DateTime -> long -> double
         }
 
         [Test]

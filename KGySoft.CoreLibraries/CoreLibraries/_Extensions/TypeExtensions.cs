@@ -26,6 +26,9 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
 using System.Threading;
 
 using KGySoft.Collections;
@@ -338,6 +341,8 @@ namespace KGySoft.CoreLibraries
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
         /// <item><see cref="DictionaryEntry"/> to <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// <item><see cref="IEnumerable{T}"/> of <see cref="char">char</see> to <see cref="IEnumerable{T}"/> of <see cref="Rune"/> (.NET Core 3.0 and above)</item>
+        /// <item><see cref="IEnumerable{T}"/> of <see cref="Rune"/> to <see cref="IEnumerable{T}"/> of <see cref="char">char</see> (.NET Core 3.0 and above)</item>
         /// </list>
         /// </para>
         /// </remarks>
@@ -364,6 +369,8 @@ namespace KGySoft.CoreLibraries
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
         /// <item><see cref="DictionaryEntry"/> to <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// <item><see cref="IEnumerable{T}"/> of <see cref="char">char</see> to <see cref="IEnumerable{T}"/> of <see cref="Rune"/> (.NET Core 3.0 and above)</item>
+        /// <item><see cref="IEnumerable{T}"/> of <see cref="Rune"/> to <see cref="IEnumerable{T}"/> of <see cref="char">char</see> (.NET Core 3.0 and above)</item>
         /// </list>
         /// </para>
         /// </remarks>
@@ -593,20 +600,30 @@ namespace KGySoft.CoreLibraries
             return hasReferenceCache[type];
         }
 
-        internal static List<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
+        internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
-            var result = new List<Delegate>();
-
             // the exact match first
-            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> conv = Conversions;
-            if (exactMatch != false && conv.TryGetValue(targetType, out ThreadSafeDictionary<Type, Delegate>? conversionsOfTarget)
-                && conversionsOfTarget.TryGetValue(sourceType, out Delegate? conversion))
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conv = conversions;
+            if (conv == null)
+                return Reflector.EmptyArray<Delegate>();
+
+            Delegate? exactConversion = null;
+            if (exactMatch != false)
             {
-                result.Add(conversion);
+                if (conv.TryGetValue(targetType, out ThreadSafeDictionary<Type, Delegate>? conversionsOfTarget)
+                    && conversionsOfTarget.TryGetValue(sourceType, out exactConversion)
+                    && exactMatch == true)
+                {
+                    return new[] { exactConversion };
+                }
             }
 
             if (exactMatch == true)
-                return result;
+                return Reflector.EmptyArray<Delegate>();
+
+            var result = new List<Delegate>();
+            if (exactConversion != null)
+                result.Add(exactConversion);
 
             // non-exact matches: targets can match generic type, sources can match also interfaces and abstract types
             foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in conv)
@@ -627,22 +644,48 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static List<Type> GetConversionSourceTypes(this Type targetType)
+        internal static ICollection<Type> GetConversionSourceTypes(this Type targetType)
         {
-            var result = new List<Type>();
-            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> conv = Conversions;
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conv = conversions;
+            return conv == null ? Type.EmptyTypes
+                : conv.TryGetValue(targetType, out var conversionsForTarget) ? conversionsForTarget.Keys
+                : Type.EmptyTypes;
+        }
 
-            // adding sources for exact target match
-            if (conv.TryGetValue(targetType, out var conversionsForTarget))
-                result.AddRange(conversionsForTarget.Keys);
+        internal static ICollection<Type> GetNonExactConversionIntermediateTypes(this Type sourceType, Type targetType)
+        {
+            var result = new HashSet<Type>();
 
-            // adding sources for generic target matches
-            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForGenericTarget in conv
-                .Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+            // iterating all conversions and adding possible intermediate types
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in Conversions)
             {
-                result.AddRange(conversionsForGenericTarget.Value.Keys);
+                // skipping if key is the exact targetType (those conversions are returned by GetConversionSourceTypes)
+                if (targetType == conversionsForTarget.Key)
+                    continue;
+
+                // non-exact target is compatible with target type: adding all sources
+                if (conversionsForTarget.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(conversionsForTarget.Key))
+                {
+                    result.AddRange(conversionsForTarget.Value.Keys);
+                    continue;
+                }
+
+                // iterating the sources of the current target type and adding the non-exact target type if there is at least one match
+                // ReSharper disable once LoopCanBeConvertedToQuery - performance, sparing an enumerator and delegate allocation
+                foreach (KeyValuePair<Type, Delegate> conversionForSource in conversionsForTarget.Value)
+                {
+                    if (conversionForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionForSource.Key))
+                    {
+                        result.Add(conversionsForTarget.Key);
+                        break;
+                    }
+                }
+
             }
 
+            // At last, we add the string type as an ultimate fallback. We exploit here that HashSet preserves order if there was no deletion so
+            // string will be tried lastly, unless it was already added by the registered conversions.
+            result.Add(Reflector.StringType);
             return result;
         }
 

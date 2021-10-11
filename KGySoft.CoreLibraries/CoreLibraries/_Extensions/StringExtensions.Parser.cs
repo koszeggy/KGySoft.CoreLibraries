@@ -155,7 +155,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // a registered converter from string
-                    switch (Reflector.StringType.GetConversions(type, true).ElementAtOrDefault(0))
+                    switch (Reflector.StringType.GetConversions(type, true).FirstOrDefault())
                     {
                         case ConversionAttempt conversionAttempt:
                             if (conversionAttempt.Invoke(s, type, culture, out value) && type.CanAcceptValue(value))
@@ -505,9 +505,10 @@ namespace KGySoft.CoreLibraries
                 {
                     if (s.Length > 0)
                     {
-                        if (DateOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out DateOnly result))
+                        // Parsing as DateTime so allowing possible timezone information, too
+                        if (DateTime.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTime result))
                         {
-                            value = (T)(object)result;
+                            value = (T)(object)DateOnly.FromDateTime(result);
                             return true;
                         }
                     }
@@ -812,9 +813,10 @@ namespace KGySoft.CoreLibraries
             {
                 if (s.Length > 0)
                 {
-                    if (DateOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out DateOnly result))
+                    // Parsing as DateTime so allowing possible timezone information, too
+                    if (DateTime.TryParse(s, culture, DateTimeStyles.RoundtripKind | DateTimeStyles.AllowWhiteSpaces, out DateTime result))
                     {
-                        value = result;
+                        value = DateOnly.FromDateTime(result);
                         return true;
                     }
                 }

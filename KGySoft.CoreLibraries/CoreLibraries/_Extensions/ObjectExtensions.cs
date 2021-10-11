@@ -285,6 +285,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="TTarget">The desired type of the return value.</typeparam>
         /// <param name="obj">The object to convert.</param>
@@ -294,11 +295,11 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <typeparamref name="TTarget"/>.</exception>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
-        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible.</para>
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
         /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><typeparamref name="TTarget"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
@@ -310,6 +311,7 @@ namespace KGySoft.CoreLibraries
         /// using System.Collections.Generic;
         /// using System.Collections.ObjectModel;
         /// using System.Linq;
+        ///
         /// using KGySoft.CoreLibraries;
         /// 
         /// public class Example
@@ -320,29 +322,32 @@ namespace KGySoft.CoreLibraries
         ///         ConvertTo<int>("123"); // culture can be specified, default is InvariantCulture
         ///         ConvertTo<float>(ConsoleColor.Blue);
         ///         ConvertTo<ConsoleColor>(13); // this would fail by Convert.ChangeType
-        /// 
+        ///
         ///         // TypeConverters are used if possible:
         ///         ConvertTo<Guid>("AADC78003DAB4906826EFD8B2D5CF33D");
-        /// 
-        ///         // New conversions can be registered:
-        ///         ConvertTo<IntPtr>(42L); // fail
-        ///         typeof(long).RegisterConversion(typeof(IntPtr), (obj, type, culture) => new IntPtr((long)obj));
-        ///         ConvertTo<IntPtr>(42L); // success
-        /// 
-        ///         // Registered conversions can be used as intermediate steps:
-        ///         ConvertTo<IntPtr>('x'); // char => long => IntPtr
-        /// 
+        ///
+        ///         // As a fallback, string is used as an intermediate step
+        ///         ConvertTo<DateTimeOffset>(DateTime.Now); // DateTime -> string -> DateTimeOffset
+        ///
         ///         // Collection conversion is also supported:
         ///         ConvertTo<bool[]>(new List<int> { 1, 0, 0, 1 });
         ///         ConvertTo<List<int>>("Blah"); // works because string is an IEnumerable<char>
         ///         ConvertTo<string>(new[] { 'h', 'e', 'l', 'l', 'o' }); // because string has a char[] constructor
         ///         ConvertTo<ReadOnlyCollection<string>>(new[] { 1.0m, 2, -1 }); // via the IList<T> constructor
-        /// 
+        ///
         ///         // even between non-generic collections:
         ///         ConvertTo<ArrayList>(new HashSet<int> { 1, 2, 3 });
         ///         ConvertTo<Dictionary<ConsoleColor, string>>(new Hashtable { { 1, "One" }, { "Black", 'x' } });
+        ///
+        ///         // New conversions can be registered:
+        ///         ConvertTo<long>(DateTime.Now); // fail
+        ///         typeof(DateTime).RegisterConversion(typeof(long), (obj, type, culture) => ((DateTime)obj).Ticks);
+        ///         ConvertTo<long>(DateTime.Now); // success
+        ///
+        ///         // Registered conversions can be used as intermediate steps:
+        ///         ConvertTo<double>(DateTime.Now); // DateTime -> long -> double
         ///     }
-        /// 
+        ///
         ///     private static void ConvertTo<T>(object source)
         ///     {
         ///         Console.Write($"{source.GetType().GetName(TypeNameKind.ShortName)} => {typeof(T).GetName(TypeNameKind.ShortName)}: {AsString(source)} => ");
@@ -356,19 +361,19 @@ namespace KGySoft.CoreLibraries
         ///             Console.WriteLine(e.Message.Replace(Environment.NewLine, " "));
         ///         }
         ///     }
-        /// 
+        ///
         ///     private static string AsString(object obj)
         ///     {
         ///         if (obj == null)
         ///             return "<null>";
-        /// 
+        ///
         ///         // KeyValuePair has a similar ToString to this one
         ///         if (obj is DictionaryEntry de)
         ///             return $"[{de.Key}, {de.Value}]";
-        /// 
+        ///
         ///         if (obj is not IEnumerable || obj is string)
         ///             return obj.ToString();
-        /// 
+        ///
         ///         return ((IEnumerable)obj).Cast<object>().Select(AsString).Join(", ");
         ///     }
         /// }
@@ -378,15 +383,16 @@ namespace KGySoft.CoreLibraries
         /// // ConsoleColor => Single: Blue => 9
         /// // Int32 => ConsoleColor: 13 => Magenta
         /// // String => Guid: AADC78003DAB4906826EFD8B2D5CF33D => aadc7800-3dab-4906-826e-fd8b2d5cf33d
-        /// // Int64 => IntPtr: 42 => The specified argument cannot be converted to type System.IntPtr. Parameter name: obj
-        /// // Int64 => IntPtr: 42 => 42
-        /// // Char => IntPtr: x => 120
-        /// // List`1 => Boolean[]: 1, 0, 0, 1 => True, False, False, True
-        /// // String => List`1: Blah => 66, 108, 97, 104
+        /// // DateTime => DateTimeOffset: 10/11/2021 7:45:46 PM => 10/11/2021 7:45:46 PM +02:00
+        /// // List`1[Int32] => Boolean[]: 1, 0, 0, 1 => True, False, False, True
+        /// // String => List`1[Int32]: Blah => 66, 108, 97, 104
         /// // Char[] => String: h, e, l, l, o => hello
-        /// // Decimal[] => ReadOnlyCollection`1: 1.0, 2, -1 => 1.0, 2, -1
-        /// // HashSet`1 => ArrayList: 1, 2, 3 => 1, 2, 3
-        /// // Hashtable => Dictionary`2: [1, One], [Black, x] => [DarkBlue, One], [Black, x]]]></code>
+        /// // Decimal[] => ReadOnlyCollection`1[String]: 1.0, 2, -1 => 1.0, 2, -1
+        /// // HashSet`1[Int32] => ArrayList: 1, 2, 3 => 1, 2, 3
+        /// // Hashtable => Dictionary`2[ConsoleColor,String]: [1, One], [Black, x] => [DarkBlue, One], [Black, x]
+        /// // DateTime => Int64: 10/11/2021 7:45:46 PM => The specified argument cannot be converted to type System.Int64. Parameter name: obj
+        /// // DateTime => Int64: 10/11/2021 7:45:46 PM => 637695783464721787
+        /// // DateTime => Double: 10/11/2021 7:45:46 PM => 6.37695783464721787E+17]]></code>
         /// </example>
         public static TTarget Convert<TTarget>(this object? obj, CultureInfo? culture = null)
         {
@@ -406,9 +412,11 @@ namespace KGySoft.CoreLibraries
         /// <returns>An object of <paramref name="targetType"/>, which is the result of the conversion.</returns>
         /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <paramref name="targetType"/>.</exception>
         /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
@@ -429,9 +437,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static bool TryConvert<TTarget>(this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
         {
@@ -454,28 +464,34 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static bool TryConvert<TTarget>(this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="Convert{TTarget}"/> method for a related example.
         /// </summary>
         /// <param name="obj">The object to convert.</param>
         /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static bool TryConvert(this object? obj, Type targetType, out object? value) => TryConvert(obj, targetType, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="Convert{TTarget}"/> method for a related example.
         /// </summary>
         /// <param name="obj">The object to convert.</param>
         /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
@@ -483,9 +499,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
+        /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static bool TryConvert(this object? obj, Type targetType, CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
