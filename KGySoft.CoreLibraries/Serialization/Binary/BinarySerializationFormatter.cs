@@ -22,6 +22,9 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -36,7 +39,6 @@ using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Xml;
-
 
 #endregion
 
@@ -191,6 +193,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Guid"/></item>
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
+    /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
@@ -430,14 +433,15 @@ namespace KGySoft.Serialization.Binary
 
             // . . . Non-primitive, platform-dependent pure types (32-48 - up to 16 types) . . .
 
-            Rune = 32, // Only in .NET Core 3.0 and above
-            Index = 33, // Only in .NET Standard 2.1 and above
-            Range = 34, // Only in .NET Standard 2.1 and above
-            Half = 35, // Only in .NET 5 and above
-            DateOnly = 36, // Only in .NET 6 and above
-            TimeOnly = 37, // Only in .NET 6 and above
+            BigInteger = 32, // Only in .NET Framework 4.0 and above
+            Rune = 33, // Only in .NET Core 3.0 and above
+            Index = 34, // Only in .NET Standard 2.1 and above
+            Range = 35, // Only in .NET Standard 2.1 and above
+            Half = 36, // Only in .NET 5 and above
+            DateOnly = 37, // Only in .NET 6 and above
+            TimeOnly = 38, // Only in .NET 6 and above
 
-            // 38-47: reserved
+            // 39-47: reserved
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
             ImpureType = 3 << 4, // caution: 2-bits flag (11000)
@@ -935,6 +939,9 @@ namespace KGySoft.Serialization.Binary
             { Reflector.BitArrayType, DataTypes.BitArray },
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
+#if !NET35
+		    { Reflector.BigIntegerType, DataTypes.BigInteger},
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             { Reflector.RuneType, DataTypes.Rune },
 #endif

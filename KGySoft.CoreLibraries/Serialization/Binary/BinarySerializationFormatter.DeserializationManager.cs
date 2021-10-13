@@ -28,6 +28,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 #if NET5_0_OR_GREATER
 using System.Runtime.CompilerServices;
@@ -1310,6 +1313,13 @@ namespace KGySoft.Serialization.Binary
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                         case DataTypes.RuntimeType:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
+
+                        case DataTypes.BigInteger:
+#if !NET35
+                            return createdResult = new BigInteger(br.ReadBytes(Read7BitInt(br)));
+#else
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
 
                         case DataTypes.Rune:
 #if NETCOREAPP3_0_OR_GREATER

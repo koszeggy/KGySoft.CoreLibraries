@@ -462,7 +462,14 @@ namespace KGySoft.Serialization.Binary
                         return Reflector.VoidType;
                     case DataTypes.RuntimeType:
                         return Reflector.RuntimeType;
-                    
+
+                    case DataTypes.BigInteger:
+#if !NET35
+                        return Reflector.BigIntegerType;
+#else
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.Rune:
 #if NETCOREAPP3_0_OR_GREATER
                         return Reflector.RuneType;

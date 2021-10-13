@@ -27,6 +27,9 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Runtime.Remoting.Messaging;
@@ -125,6 +128,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
+#if !NET35
+                new BigInteger(1),
+#endif
             };
 
             SystemSerializeObject(referenceObjects);
@@ -521,6 +527,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(1, "alpha") },
                 new BitArray[] { new BitArray(new[] { true, false, true }), null },
                 new StringBuilder[] { new StringBuilder("alpha"), null },
+#if !NET35
+                new BigInteger[] { 1, 2 }
+#endif
             };
 
             SystemSerializeObject(referenceObjects);
@@ -717,6 +726,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
+
+#if !NET35
+                new BigInteger?[] { 1, null },
+#endif
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1372,6 +1385,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
 
+#if !NET35
+                new BigInteger(1),
+#endif
+
 #if NETCOREAPP3_0_OR_GREATER
                 new Rune('a'),
                 new Index(1),
@@ -1441,12 +1458,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             };
 
             // default
-            SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable is not serializable
+            SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable, Rune, etc. is not serializable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             ISurrogateSelector selector = new TestSurrogateSelector();
             string title = nameof(TestSurrogateSelector);
-            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // system deserialization fails: Invalid BinaryFormatter stream.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 

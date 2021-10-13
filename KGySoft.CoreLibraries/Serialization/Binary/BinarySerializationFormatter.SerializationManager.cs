@@ -25,6 +25,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 #if NET5_0_OR_GREATER
 using System.Runtime.CompilerServices;
@@ -271,6 +274,15 @@ namespace KGySoft.Serialization.Binary
                 bw.Write(section.Mask);
                 bw.Write(section.Offset);
             }
+
+#if !NET35
+            private static void WriteBigInteger(BinaryWriter bw, BigInteger value)
+            {
+                byte[] bytes = value.ToByteArray();
+                Write7BitInt(bw, bytes.Length);
+                bw.Write(bytes);
+            }
+#endif
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             private static void WriteIndex(BinaryWriter bw, Index index) => bw.Write(index.IsFromEnd ? ~index.Value : index.Value);
@@ -735,6 +747,12 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.DBNull:
                     case DataTypes.Object:
                         return;
+
+#if !NET35
+                    case DataTypes.BigInteger:
+                        WriteBigInteger(bw, (BigInteger)obj);
+                        return;
+#endif
 
 #if NETCOREAPP3_0_OR_GREATER
                     case DataTypes.Rune:

@@ -24,6 +24,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -81,6 +84,9 @@ namespace KGySoft.Reflection
         internal static readonly Type FloatType = typeof(float);
         internal static readonly Type DoubleType = typeof(double);
         internal static readonly Type DecimalType = typeof(decimal);
+#if !NET35
+        internal static readonly Type BigIntegerType = typeof(BigInteger); 
+#endif
 #if NET5_0_OR_GREATER
         internal static readonly Type HalfType = typeof(Half);
 #endif
