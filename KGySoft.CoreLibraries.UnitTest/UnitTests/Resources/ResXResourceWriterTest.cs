@@ -31,6 +31,9 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Runtime.Serialization;
 using System.Text;
 #if NETFRAMEWORK
@@ -352,7 +355,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        public void SerializePrimitiveTypes()
+        public void SerializeNativelySupportedTypes()
         {
             object[] referenceObjects =
             {
@@ -373,11 +376,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 (double)1,
                 (decimal)1,
                 new IntPtr(1),
-                new UIntPtr(1)
+                new UIntPtr(1),
+#if !NET35
+                new BigInteger(1),
+#endif
             };
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
+#else
+            // preloading BigInteger original identity for safe deserialization in compatibility mode
+            Reflector.ResolveAssembly("System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089");
 #endif
             KGySerializeObjects(referenceObjects);
             KGySerializeObjects(referenceObjects, false);

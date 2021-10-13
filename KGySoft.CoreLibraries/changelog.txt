@@ -67,11 +67,13 @@
 + EnumFormattingOptions enum: New Number option.
 + StringExtensions class:
   + [Try]Parse methods:
+    + Natively supporting BigInteger type (.NET Framework 4.0 and above)
     + Natively supporting Rune type (.NET Core 3.0 and above)
     + Natively supporting Half type (.NET 5.0 and above)
     + Natively supporting DateOnly and TimeOnly types (.NET 6.0 and above)
 + SpanExtensions class:
   + [Try]Parse methods:
+    + Natively supporting BigInteger type (.NET Framework 4.0 and above)
     + Natively supporting Rune type (.NET Core 3.0 and above)
     + Natively supporting Half type (.NET 5.0 and above)
     + Natively supporting DateOnly and TimeOnly types (.NET 6.0 and above)
@@ -136,6 +138,7 @@
 + KGySoft.Resources namespace:
 ==============================
 + ResXDataNode class:
+  + Supporting BigInteger type natively in non-compatible mode (.NET Framework 4.0 and above)
   + Supporting Rune type natively in non-compatible mode (.NET Core 3.0 and above)
   + Supporting Half type natively in non-compatible mode (.NET 5.0 and above)
   + Supporting DateOnly and TimeOnly types natively in non-compatible mode (.NET 6.0 and above)
@@ -174,6 +177,7 @@
       structs only without any references, which is very fast. Marshaling is used only if the obsolete
       ForcedSerializationValueTypesAsFallback flag is enabled.
     ! The produced stream is not compatible with previous versions.
+  + Supporting the BigInteger type natively (.NET Framework 4.0 and above)
   + Supporting the Rune type natively (.NET Core 3.0 and above)
   + Supporting the Index and Range types natively (.NET Standard 2.1 and above)
   + Supporting the Half type natively (.NET 5.0 and above)
@@ -184,6 +188,7 @@
 ! XmlSerializer class:
   ! Serialize* methods: Starting with this version the XmlSerializationOptions.CompactSerializationOfStructures
     flag affects structs only without any references, which is very fast.
+  + Supporting the BigInteger type natively (.NET Framework 4.0 and above)
   + Supporting the Rune type natively (.NET Core 3.0 and above)
   + Supporting the Half type natively (.NET 5.0 and above)
   + Supporting the DateOnly and TimeOnly types natively (.NET 6.0 and above)

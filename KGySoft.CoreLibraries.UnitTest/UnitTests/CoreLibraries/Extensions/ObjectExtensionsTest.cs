@@ -20,10 +20,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -39,8 +41,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     {
         #region Nested Types
 
-        #region UnsafeStruct struct
-
         [Serializable]
         private unsafe struct UnsafeStruct
         {
@@ -53,9 +53,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             #endregion
         }
-
-        #endregion
-
 
         #endregion
 
@@ -155,7 +152,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 return enumerable.Cast<object>().Select(AsString).Join(", ");
             }
 
-            // IConvertible
+            // IConvertible or natively supported
             Test("1", 1);
             Test(1, "1");
             Test(1.0, 1);
@@ -163,6 +160,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", true); // Parse
             Test(100, 'd');
             Test(13m, ConsoleColor.Magenta); // decimal -> string -> ConsoleColor
+            Test("12.34", 12.34);
+            // TODO Test("12.34", 12);
+#if !NET35
+            // TODO Test("12.34", (BigInteger)12);
+#endif
+#if NET5_0_OR_GREATER
+            Test("12.34", (Half)12.34);
+#endif
 
             // TypeConverter
             Test("1", "1".AsSegment());
@@ -204,6 +209,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             DateTime now = DateTime.Now;
             Test(now, new DateTimeOffset(now));
             Test(new DateTimeOffset(now), now);
+#if !NET35
+            Test(1, new BigInteger(1));
+            // TODO Test(Double.MaxValue, new BigInteger(Double.MaxValue));
+            // TODO Test(12.34, new BigInteger(12.34));
+            Test(new BigInteger(1), 1);
+            Test(new BigInteger(12.34), 12d);
+            Test(new BigInteger(Double.MaxValue), Double.MaxValue);
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             Test('a', new Rune('a'));
             Test(new Rune('a'), 'a');
@@ -275,6 +288,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test((UIntPtr)1);
             Test(ConsoleColor.Blue);
             Test(typeof(ObjectExtensionsTest));
+#if !NET35
+            Test((BigInteger)1);
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             Test(new Rune('a'));
             Test(new Rune("🏯"[0], "🏯"[1]));

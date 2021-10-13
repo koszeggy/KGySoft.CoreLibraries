@@ -87,6 +87,9 @@ namespace KGySoft.CoreLibraries
                 Reflector.FloatType, Reflector.DoubleType, Reflector.DecimalType, Reflector.BoolType,
                 Reflector.DateTimeType, Reflector.DateTimeOffsetType, Reflector.TimeSpanType,
                 Reflector.IntPtrType, Reflector.UIntPtrType,
+#if !NET35
+                Reflector.BigIntegerType,
+#endif
 #if NETCOREAPP3_0_OR_GREATER
                 Reflector.RuneType,
 #endif

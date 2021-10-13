@@ -21,6 +21,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -68,6 +71,9 @@ namespace KGySoft.CoreLibraries
                 { Reflector.UIntType, TryParseUInt32 },
                 { Reflector.LongType, TryParseInt64 },
                 { Reflector.ULongType, TryParseUInt64 },
+#if !NET35
+                { Reflector.BigIntegerType, TryParseBigInteger },
+#endif
 
                 { Reflector.IntPtrType, TryParseIntPtr },
                 { Reflector.UIntPtrType, TryParseUIntPtr },
@@ -379,6 +385,17 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
+#if !NET35
+                if (typeof(T) == typeof(BigInteger))
+                {
+                    if (BigInteger.TryParse(s, NumberStyles.Integer, culture, out BigInteger result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+#endif
+
                 if (typeof(T) == typeof(IntPtr))
                 {
                     if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
@@ -608,7 +625,7 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseInt32(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-                if (Int32.TryParse(s, NumberStyles.Integer, culture, out int result))
+                if (Int32.TryParse(s, floatStyle, culture, out int result))
                 {
                     value = result;
                     return true;
@@ -653,6 +670,20 @@ namespace KGySoft.CoreLibraries
                 value = null;
                 return false;
             }
+
+#if !NET35
+            private static bool TryParseBigInteger(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                if (BigInteger.TryParse(s, NumberStyles.Integer, culture, out BigInteger result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+#endif
 
             private static bool TryParseIntPtr(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {

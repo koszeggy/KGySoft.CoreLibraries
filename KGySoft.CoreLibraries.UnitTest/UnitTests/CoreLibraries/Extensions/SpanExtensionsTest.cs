@@ -17,8 +17,9 @@
 #region Usings
 
 using System;
-
-using KGySoft.Reflection;
+#if !NET35
+using System.Numerics;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -26,6 +27,7 @@ using System.Text;
 #if NETFRAMEWORK || NETCOREAPP2_0
 using KGySoft.ComponentModel;
 #endif
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -214,6 +216,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // Native types
             Test("1", 1);
             Test("1", (int?)1);
+            // TODO Test("1.25", 1);
             Test("1.0", 1f);
             Test("-0", FloatExtensions.NegativeZero);
             Test("1.0", 1d);
@@ -227,6 +230,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1980-01-13", new DateTime(1980, 01, 13));
             Test("Black", ConsoleColor.Black);
             Test("1", new IntPtr(1));
+#if !NET35
+            Test("1", new BigInteger(1));
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             Test("a", new Rune('a'));
             Test("🏯", new Rune("🏯"[0], "🏯"[1]));

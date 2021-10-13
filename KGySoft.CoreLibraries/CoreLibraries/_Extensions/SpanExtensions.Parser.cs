@@ -22,6 +22,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -69,6 +72,7 @@ namespace KGySoft.CoreLibraries
                 { Reflector.UIntType, TryParseUInt32 },
                 { Reflector.LongType, TryParseInt64 },
                 { Reflector.ULongType, TryParseUInt64 },
+                { Reflector.BigIntegerType, TryParseBigInteger },
 
                 { Reflector.IntPtrType, TryParseIntPtr },
                 { Reflector.UIntPtrType, TryParseUIntPtr },
@@ -307,6 +311,15 @@ namespace KGySoft.CoreLibraries
                 if (typeof(T) == typeof(ulong))
                 {
                     if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+
+                if (typeof(T) == typeof(BigInteger))
+                {
+                    if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                     {
                         value = (T)(object)result;
                         return true;
@@ -577,6 +590,18 @@ namespace KGySoft.CoreLibraries
             private static bool TryParseUInt64(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseBigInteger(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                 {
                     value = result;
                     return true;

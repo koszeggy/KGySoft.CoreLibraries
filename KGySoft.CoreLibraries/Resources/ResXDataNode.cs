@@ -432,6 +432,9 @@ namespace KGySoft.Resources
             Reflector.IntPtrType,
             Reflector.UIntPtrType,
             Reflector.RuntimeType,
+#if !NET35
+            Reflector.BigIntegerType,
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             Reflector.RuneType,
 #endif

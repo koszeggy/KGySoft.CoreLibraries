@@ -25,6 +25,9 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -92,6 +95,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new DateTimeOffset(DateTime.UtcNow),
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
                 new TimeSpan(1, 2, 3, 4, 5),
+#if !NET35
+                new BigInteger(1),
+#endif
 #if NETCOREAPP3_0_OR_GREATER
                 new Rune('a'),
 #endif
