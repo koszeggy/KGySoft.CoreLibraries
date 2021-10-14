@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: EnumUnderlyingInfo.cs
+//  File: RangeInfo.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
 //
@@ -16,20 +16,21 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
+
+using KGySoft.Collections;
 
 #endregion
 
 namespace KGySoft.CoreLibraries
 {
-    internal readonly struct EnumUnderlyingInfo
+    internal readonly struct RangeInfo
     {
         #region Fields
 
         #region Static Fields
 
-        private static IDictionary<Type, EnumUnderlyingInfo>? cache;
+        private static IThreadSafeCacheAccessor<Type, RangeInfo>? cache;
 
         #endregion
 
@@ -48,7 +49,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constructors
 
-        public EnumUnderlyingInfo(Type type)
+        public RangeInfo(Type type)
         {
             TypeCode = Type.GetTypeCode(type);
             IsSigned = type.IsSignedIntegerType();
@@ -121,15 +122,11 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        internal static EnumUnderlyingInfo GetUnderlyingInfo(Type type)
+        internal static RangeInfo GetRangeInfo(Type type)
         {
             if (cache == null)
-                Interlocked.CompareExchange(ref cache, new Dictionary<Type, EnumUnderlyingInfo>(), null);
-            if (cache.TryGetValue(type, out EnumUnderlyingInfo result))
-                return result;
-            result = new EnumUnderlyingInfo(type);
-            cache[type] = result;
-            return result;
+                Interlocked.CompareExchange(ref cache, ThreadSafeCacheFactory.Create<Type, RangeInfo>(t => new RangeInfo(t), LockFreeCacheOptions.Profile16), null);
+            return cache[type];
         }
 
         #endregion
