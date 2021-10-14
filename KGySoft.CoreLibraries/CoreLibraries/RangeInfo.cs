@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -111,6 +112,22 @@ namespace KGySoft.CoreLibraries
                     SizeMask = UInt64.MaxValue;
                     BitSize = 64;
                     break;
+                case TypeCode.Object:
+                    if (type == Reflector.IntPtrType)
+                    {
+                        if (IntPtr.Size == sizeof(int))
+                            goto case TypeCode.Int32;
+                        goto case TypeCode.Int64;
+                    }
+
+                    if (type == Reflector.UIntPtrType)
+                    {
+                        if (IntPtr.Size == sizeof(uint))
+                            goto case TypeCode.UInt32;
+                        goto case TypeCode.UInt64;
+                    }
+
+                    goto default;
                 default:
                     this = default;
                     Throw.ArgumentOutOfRangeException(Argument.type);

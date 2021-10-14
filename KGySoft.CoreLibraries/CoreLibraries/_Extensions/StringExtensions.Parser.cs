@@ -144,8 +144,8 @@ namespace KGySoft.CoreLibraries
                         return true;
                     }
 
-                    if (tryKnownTypes && knownTypes.TryGetValue(type, out var tryParseMethod))
-                        return tryParseMethod.Invoke(s, culture, out value);
+                    if (tryKnownTypes && knownTypes.TryGetValue(type, out var tryParseMethod) && tryParseMethod.Invoke(s, culture, out value))
+                        return true;
 
                     if (type.In(Reflector.Type, Reflector.RuntimeType
 #if !NET35 && !NET40
@@ -173,6 +173,9 @@ namespace KGySoft.CoreLibraries
                                 return true;
                             break;
                     }
+
+                    if (TryParseDecimalAsInteger(s, type, culture, out value))
+                        return true;
 
                     // Trying type converter as a fallback
                     TypeConverter converter = TypeDescriptor.GetConverter(type);
@@ -386,9 +389,11 @@ namespace KGySoft.CoreLibraries
                 }
 
 #if !NET35
+                // Only for BigInteger, allowing float style because the fallback decimal range might not be enough
+                // Unfortunately, this will allow only .0* beyond the decimal range.
                 if (typeof(T) == typeof(BigInteger))
                 {
-                    if (BigInteger.TryParse(s, NumberStyles.Integer, culture, out BigInteger result))
+                    if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                     {
                         value = (T)(object)result;
                         return true;
@@ -398,20 +403,36 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(IntPtr))
                 {
+#if NET5_0_OR_GREATER
+                    if (IntPtr.TryParse(s, NumberStyles.Integer, culture, out IntPtr result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+#else
                     if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
                     {
                         value = (T)(object)new IntPtr(result);
                         return true;
                     }
+#endif
                 }
 
                 if (typeof(T) == typeof(UIntPtr))
                 {
+#if NET5_0_OR_GREATER
+                    if (UIntPtr.TryParse(s, NumberStyles.Integer, culture, out UIntPtr result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+#else
                     if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
                     {
                         value = (T)(object)new UIntPtr(result);
                         return true;
                     }
+#endif
                 }
 
                 if (typeof(T) == typeof(char))
@@ -548,6 +569,35 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
+            private static bool TryParseDecimalAsInteger(string s, Type type, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                // Parsing as an integer type but regular TryParse has been failed: trying also as a decimal and rounding the result if possible.
+                // This is needed to be compatible with general IConvertible behavior, which allows converting fractional numbers
+                TypeCode typeCode = Type.GetTypeCode(type);
+                if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.BigIntegerType))
+                    && Decimal.TryParse(s, floatStyle, culture, out decimal result))
+                {
+                    if (type == Reflector.BigIntegerType)
+                    {
+                        value = new BigInteger(result);
+                        return true;
+                    }
+
+                    result = Math.Round(result);
+                    var rangeInfo = RangeInfo.GetRangeInfo(type);
+                    if (result >= rangeInfo.MinValue && result <= rangeInfo.MaxValue)
+                    {
+                        value = typeCode != TypeCode.Object ? Convert.ChangeType(result, typeCode, culture)
+                            : type == Reflector.IntPtrType ? new IntPtr((long)result)
+                            : new UIntPtr((ulong)result);
+                        return true;
+                    }
+                }
+
+                value = null;
+                return false;
+            }
+
             private static bool TryParseBoolean(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 var segment = new StringSegmentInternal(s);
@@ -674,7 +724,9 @@ namespace KGySoft.CoreLibraries
 #if !NET35
             private static bool TryParseBigInteger(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
             {
-                if (BigInteger.TryParse(s, NumberStyles.Integer, culture, out BigInteger result))
+                // Only for BigInteger, allowing float style because the fallback decimal range might not be enough
+                // Unfortunately, this will allow only .0* beyond the decimal range.
+                if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                 {
                     value = result;
                     return true;
@@ -687,11 +739,19 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseIntPtr(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
+#if NET5_0_OR_GREATER
+                if (IntPtr.TryParse(s, NumberStyles.Integer, culture, out IntPtr result))
+                {
+                    value = result;
+                    return true;
+                }
+#else
                 if (Int64.TryParse(s, NumberStyles.Integer, culture, out long result))
                 {
                     value = new IntPtr(result);
                     return true;
                 }
+#endif
 
                 value = null;
                 return false;
@@ -699,11 +759,19 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseUIntPtr(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
+#if NET5_0_OR_GREATER
+                if (UIntPtr.TryParse(s, NumberStyles.Integer, culture, out UIntPtr result))
+                {
+                    value = result;
+                    return true;
+                }
+#else
                 if (UInt64.TryParse(s, NumberStyles.Integer, culture, out ulong result))
                 {
                     value = new UIntPtr(result);
                     return true;
                 }
+#endif
 
                 value = null;
                 return false;

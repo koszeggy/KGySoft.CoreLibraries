@@ -161,9 +161,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(100, 'd');
             Test(13m, ConsoleColor.Magenta); // decimal -> string -> ConsoleColor
             Test("12.34", 12.34);
-            // TODO Test("12.34", 12);
+            Test("12.34", 12);
 #if !NET35
-            // TODO Test("12.34", (BigInteger)12);
+            Test("12.34", (BigInteger)12);
 #endif
 #if NET5_0_OR_GREATER
             Test("12.34", (Half)12.34);
@@ -211,8 +211,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new DateTimeOffset(now), now);
 #if !NET35
             Test(1, new BigInteger(1));
-            // TODO Test(Double.MaxValue, new BigInteger(Double.MaxValue));
-            // TODO Test(12.34, new BigInteger(12.34));
+            Test(Double.MaxValue, new BigInteger(Double.MaxValue));
+            Test(12.34, new BigInteger(12.34));
             Test(new BigInteger(1), 1);
             Test(new BigInteger(12.34), 12d);
             Test(new BigInteger(Double.MaxValue), Double.MaxValue);

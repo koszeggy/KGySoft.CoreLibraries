@@ -88,15 +88,41 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", (object)"1");
 
             // Native types
+            Test("1", (byte)1);
+            Test("1", (sbyte)1);
+            Test("1", (short)1);
+            Test("1", (ushort)1);
             Test("1", 1);
+            Test("1", 1u);
+            Test("1", 1L);
+            Test("1", (IntPtr)1);
+            Test("1", (UIntPtr)1);
+            Test("1.25", (byte)1);
+            Test("1.25", (sbyte)1);
+            Test("1.25", (short)1);
+            Test("1.25", (ushort)1);
+            Test("1.25", 1);
+            Test("1.25", 1u);
+            Test("1.25", 1L);
+            Test("1.25", (IntPtr)1);
+            Test("1.25", (UIntPtr)1);
             Test("1", (int?)1);
-            // TODO Test("1.25", 1);
+
             Test("1.0", 1f);
+            Test("1.25", 1.25f);
             Test("-0", FloatExtensions.NegativeZero);
             Test("1.0", 1d);
+            Test("1.25", 1.25d);
             Test("-0", DoubleExtensions.NegativeZero);
             Test("1.0", 1.0m);
+            Test("1.25", 1.25m);
             Test("-0.0", -0.0m);
+#if NET5_0_OR_GREATER
+            Test("1.0", (Half)1f);
+            Test("1.25", (Half)1.25f);
+            Test("-0", (Half)(-0f));
+#endif
+
             Test("true", true);
             Test("0", false);
             Test("-1", true);
@@ -106,14 +132,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", new IntPtr(1));
 #if !NET35
             Test("1", new BigInteger(1));
+            Test("1.25", new BigInteger(1));
 #endif
 #if NETCOREAPP3_0_OR_GREATER
             Test("a", new Rune('a'));
             Test("🏯", new Rune("🏯"[0], "🏯"[1]));
-#endif
-#if NET5_0_OR_GREATER
-            Test("1.0", (Half)1);
-            Test("-0", (Half)(-0f));
 #endif
 #if NET6_0_OR_GREATER
             Test("1980-01-01", new DateOnly(1980, 01, 01));
