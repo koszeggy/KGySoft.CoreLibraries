@@ -21,13 +21,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+#if NETCOREAPP3_0_OR_GREATER
 using System.Linq;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text; 
 #endif
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 
@@ -43,10 +46,16 @@ namespace KGySoft.CoreLibraries
 
             private struct ConversionContext
             {
+                #region Constants
+
+                private const int cacheCapacity = 1024;
+
+                #endregion
+
                 #region Fields
 
                 #region Internal Fields
-                
+
                 internal readonly CultureInfo Culture;
                 internal Exception? Error;
                 internal Dictionary<(Type SourceType, Type TargetType), Delegate>? LastUsedConversion;
@@ -56,7 +65,7 @@ namespace KGySoft.CoreLibraries
                 #region Private Fields
                 
                 // A null value indicates a failed attempt or an unfinished conversion
-                private Dictionary<(object Instance, Type SourceType, Type TargetType), StrongBox<object?>?>? resultsCache;
+                private Cache<(object Instance, Type SourceType, Type TargetType), StrongBox<object?>?>? resultsCache;
 
                 #endregion
 
@@ -78,7 +87,8 @@ namespace KGySoft.CoreLibraries
                     var key = (instance, sourceType, targetType);
                     if (resultsCache == null)
                     {
-                        resultsCache = new Dictionary<(object, Type, Type), StrongBox<object?>?> { [key] = null };
+                        resultsCache = new Cache<(object, Type, Type), StrongBox<object?>?> { Capacity = cacheCapacity };
+                        resultsCache[key] = null;
                         value = null;
                         return false;
                     }
@@ -99,7 +109,8 @@ namespace KGySoft.CoreLibraries
                     var key = (instance, sourceType, targetType);
                     if (resultsCache == null)
                     {
-                        resultsCache = new Dictionary<(object, Type, Type), StrongBox<object?>?> { [key] = new StrongBox<object?>(result) };
+                        resultsCache = new Cache<(object, Type, Type), StrongBox<object?>?> { Capacity = cacheCapacity };
+                        resultsCache[key] = new StrongBox<object?>(result);
                         return;
                     }
 

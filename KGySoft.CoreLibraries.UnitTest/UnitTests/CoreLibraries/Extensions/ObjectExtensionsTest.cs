@@ -211,7 +211,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new DateTimeOffset(now), now);
 #if !NET35
             Test(1, new BigInteger(1));
-            Test(Double.MaxValue, new BigInteger(Double.MaxValue));
             Test(12.34, new BigInteger(12.34));
             Test(new BigInteger(1), 1);
             Test(new BigInteger(12.34), 12d);
