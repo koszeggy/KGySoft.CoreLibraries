@@ -574,14 +574,19 @@ namespace KGySoft.CoreLibraries
                 // Parsing as an integer type but regular TryParse has been failed: trying also as a decimal and rounding the result if possible.
                 // This is needed to be compatible with general IConvertible behavior, which allows converting fractional numbers
                 TypeCode typeCode = Type.GetTypeCode(type);
-                if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.BigIntegerType))
-                    && Decimal.TryParse(s, floatStyle, culture, out decimal result))
+                if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType
+#if !NET35
+                    , Reflector.BigIntegerType
+#endif
+                    )) && Decimal.TryParse(s, floatStyle, culture, out decimal result))
                 {
+#if !NET35
                     if (type == Reflector.BigIntegerType)
                     {
                         value = new BigInteger(result);
                         return true;
                     }
+#endif
 
                     result = Math.Round(result);
                     var rangeInfo = RangeInfo.GetRangeInfo(type);

@@ -21,8 +21,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 #if NETFRAMEWORK
 using System.Diagnostics;
-#endif
+#if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
+#endif
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 #if NETFRAMEWORK
 using System.Security;
@@ -30,6 +35,7 @@ using System.Security.Permissions;
 #endif
 using System.Text;
 using System.Xml.Schema;
+
 using KGySoft.Collections;
 
 using NUnit.Framework;
@@ -81,7 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         #region Sandbox class
 
 #if NETFRAMEWORK
-        private partial class Sandbox : MarshalByRefObject
+        private class Sandbox : MarshalByRefObject
         {
             internal void NextObjectTest() => new RandomExtensionsTest().NextObjectTest();
         } 
@@ -253,6 +259,62 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Assert.IsTrue(result >= 5UL && result <= Int64.MaxValue + 15UL);
             }
         }
+
+#if !NET35
+        [Test]
+        public void NextBigIntegerTest()
+        {
+            // full range
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextBigInteger(BigInteger.One, BigInteger.Zero));
+
+            // no range
+            BigInteger result = rnd.SampleBigInteger(0);
+            Assert.AreEqual(BigInteger.Zero, result);
+            result = rnd.NextBigInteger(0);
+            Assert.AreEqual(BigInteger.Zero, result);
+            result = rnd.NextBigInteger(BigInteger.One, BigInteger.One);
+            Assert.AreEqual(BigInteger.One, result);
+
+            // 1 range
+            result = rnd.NextBigInteger(BigInteger.One);
+            Assert.AreEqual(BigInteger.Zero, result);
+            result = rnd.NextBigInteger(BigInteger.One, new BigInteger(2));
+            Assert.AreEqual(BigInteger.One, result);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.SampleBigInteger(1);
+                Assert.IsTrue(result >= 0 && result <= 255);
+                result = rnd.SampleBigInteger(1, true);
+                Assert.IsTrue(result >= -128 && result <= 127);
+                result = rnd.NextBigInteger(10);
+                Assert.IsTrue(result >= 0 && result < 10);
+                result = rnd.NextBigInteger(-5, 5);
+                Assert.IsTrue(result >= -5 && result < 5);
+
+                // medium range (UInt32, fits in Sign)
+                result = rnd.SampleBigInteger(4);
+                Assert.IsTrue(result >= 0U && result <= UInt32.MaxValue);
+                result = rnd.SampleBigInteger(4, true);
+                Assert.IsTrue(result >= Int32.MinValue && result <= Int32.MaxValue);
+                result = rnd.NextBigInteger(Int32.MaxValue + 5L);
+                Assert.IsTrue(result >= 0L && result < Int32.MaxValue + 5L);
+                result = rnd.NextBigInteger(-5, Int32.MaxValue);
+                Assert.IsTrue(result >= -5 && result < Int32.MaxValue);
+
+                // big range
+                BigInteger maxDecimal = new BigInteger(Decimal.MaxValue);
+                result = rnd.NextBigInteger(maxDecimal, true);
+                Assert.IsTrue(result >= 0L && result <= maxDecimal);
+                result = rnd.NextBigInteger(-maxDecimal, maxDecimal, true);
+                Assert.IsTrue(result >= -maxDecimal && result <= maxDecimal);
+            }
+        }
+#endif
 
         [Test]
         public void NextDoubleTest()
@@ -459,7 +521,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             void Test<T>(GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);
-                //  Console.WriteLine($"Random {typeof(T).Name}: {obj}");
+                Console.WriteLine($"{typeof(T).Name}: {obj}");
             }
 
             // native types
@@ -486,6 +548,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<IntPtr>();
             Test<UIntPtr>();
             Test<byte?>();
+#if !NET35
+            Test<BigInteger>(); 
+#endif
 
             // enums
             Test<EmptyEnum>();

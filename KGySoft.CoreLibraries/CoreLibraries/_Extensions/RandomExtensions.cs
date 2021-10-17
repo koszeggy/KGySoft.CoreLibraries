@@ -23,6 +23,9 @@ using System.Runtime.CompilerServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
+#if !NET35
+using System.Numerics;
+#endif
 using System.Security; 
 using System.Text;
 
@@ -842,6 +845,108 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+        #endregion
+
+        #region BigInteger
+#if !NET35
+
+        /// <summary>
+        /// Returns a random <see cref="BigInteger"/> that represents an integer of <paramref name="byteSize"/> bytes.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="byteSize">Determines the range of the generated value in bytes. For example, if this parameter is <c>1</c>, then
+        /// the result will be between 0 and 255 if <paramref name="isSigned"/> is <see langword="false"/>,
+        /// or between -128 and 127 if <paramref name="isSigned"/> is <see langword="true"/>.</param>
+        /// <param name="isSigned"><see langword="true"/>&#160;to generate a signed result; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A random <see cref="BigInteger"/> that represents an integer of <paramref name="byteSize"/> bytes.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="byteSize"/> is negative.</exception>
+        public static BigInteger SampleBigInteger(this Random random, int byteSize, bool isSigned = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (byteSize <= 0)
+            {
+                if (byteSize == 0)
+                    return BigInteger.Zero;
+                Throw.ArgumentOutOfRangeException(nameof(byteSize), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+            }
+
+            // if an unsigned result is requested, then adding one extra byte to ensure that our result is not interpreted as two's complement
+            var bytes = new byte[byteSize + (isSigned ? 0 : 1)];
+            random.NextBytes(bytes);
+
+            // clearing the extra added byte if needed
+            if (!isSigned)
+                bytes[byteSize] = 0;
+
+            return new BigInteger(bytes);
+        }
+
+        /// <summary>
+        /// Returns a non-negative random <see cref="BigInteger"/> that is within the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A <see cref="BigInteger"/> that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
+        public static BigInteger NextBigInteger(this Random random, BigInteger maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue < BigInteger.Zero)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+
+            if (inclusiveUpperBound)
+                maxValue += 1;
+            if (maxValue.IsZero || maxValue.IsOne)
+                return BigInteger.Zero;
+
+            return DoGenerateBigInteger(random, maxValue);
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="BigInteger"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A <see cref="BigInteger"/> that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        public static BigInteger NextBigInteger(this Random random, BigInteger minValue, BigInteger maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue <= minValue)
+            {
+                if (minValue == maxValue)
+                    return minValue;
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            }
+
+            if (minValue.IsZero)
+                return random.NextBigInteger(maxValue, inclusiveUpperBound);
+
+            BigInteger range = maxValue - minValue;
+            if (inclusiveUpperBound)
+                range += 1;
+
+            if (range.IsZero || range.IsOne)
+                return minValue;
+
+            return DoGenerateBigInteger(random, range) + minValue;
+        }
+
+#endif
         #endregion
 
         #endregion
@@ -1953,6 +2058,46 @@ namespace KGySoft.CoreLibraries
                 return *(ulong*)p;
 #endif
         }
+
+#if !NET35
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static BigInteger DoGenerateBigInteger(Random random, BigInteger maxValue)
+        {
+            Debug.Assert(maxValue.Sign > 0, "A positive range is expected");
+
+            // We need to determine the length and the value of the most significant byte to generate a new value
+            // so we obtain the bytes and also reuse the buffer to prevent unnecessary copies.
+            byte[] bytes = maxValue.ToByteArray();
+            int byteCount = bytes.Length;
+
+            // the last byte can be zero to prevent interpreting the value as a negative two's complement number
+            if (bytes[byteCount - 1] == 0)
+                --byteCount;
+
+            // Storing a reference to the most significant byte, determining a valid mask for it and
+            // saving a copy only of this byte for range check.
+            ref byte msb = ref bytes[byteCount - 1];
+            Debug.Assert(msb != 0);
+            byte mask = (byte)((uint)msb).GetBitMask();
+            byte maxMsb = msb;
+
+            // Filling up the buffer with random bytes. Not creating any intermediate BigInteger instances
+            // to prevent unnecessary buffer copies. Applying the mask for MSB, which has been overwritten.
+            random.NextBytes(bytes);
+            msb &= mask;
+
+            // Using only the MSB to check whether the generated sample is too large. If so, then regenerating it.
+            // Depending on maxMsb we have 0-50% chance that we need to generate the MSB again.
+            while (msb >= maxMsb)
+                msb = (byte)(random.Next() & mask);
+
+            // If the last byte was empty in the original buffer, then we need to clear it again.
+            if (bytes.Length > byteCount)
+                bytes[byteCount] = 0;
+
+            return new BigInteger(bytes);
+        }
+#endif
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private static double DoGetNextDouble(Random random, double maxValue, FloatScale scale)

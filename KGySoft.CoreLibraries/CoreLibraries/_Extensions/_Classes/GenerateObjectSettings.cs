@@ -16,6 +16,17 @@
 #region Usings
 
 using System;
+#if !NET35
+using System.Numerics;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 
 #endregion
 
@@ -51,6 +62,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets or sets the length of the collections to generate.
+        /// It also affects the size of generated <see cref="BigInteger"/> instances (interpreted as the amount of 4 byte chunks to generate).
         /// <br/>Default value: <c>1..2</c>.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><see cref="Range{T}.LowerBound"/> is less than 0.</exception>

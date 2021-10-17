@@ -184,6 +184,9 @@ namespace KGySoft.CoreLibraries
                         recursionLevel -= 1;
                 }
 
+                internal int GetNextCollectionLength() => Random.NextInt32(
+                    Settings.CollectionsLength.LowerBound, Settings.CollectionsLength.UpperBound, true);
+
                 #endregion
 
                 #endregion
@@ -251,6 +254,11 @@ namespace KGySoft.CoreLibraries
                     // reflection types - no generation but random selection
                     { typeof(Assembly), PickRandomAssembly },
                     { Reflector.Type, PickRandomType },
+
+                    // platform-dependent types
+#if !NET35
+                    { Reflector.BigIntegerType, GenerateBigInteger },
+#endif
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
@@ -1059,12 +1067,12 @@ namespace KGySoft.CoreLibraries
             private static Array GenerateArray(Type arrayType, ref GeneratorContext context)
             {
                 if (arrayType == Reflector.ByteArrayType)
-                    return NextBytes(context.Random, NextInt32(context.Random, context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true));
+                    return NextBytes(context.Random, context.GetNextCollectionLength());
 
                 Type elementType = arrayType.GetElementType()!;
                 var lengths = new int[arrayType.GetArrayRank()];
                 for (int i = 0; i < lengths.Length; i++)
-                    lengths[i] = NextInt32(context.Random, context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true);
+                    lengths[i] = context.GetNextCollectionLength();
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 var result = Array.CreateInstance(elementType, lengths);
@@ -1100,7 +1108,7 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             private static void PopulateCollection(IEnumerable collection, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
-                int count = context.Random.NextInt32(context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true);
+                int count = context.GetNextCollectionLength();
 
                 // though this could populate dictionaries, too; duplicates and null keys are not checked
                 if (!isDictionary)
@@ -1179,6 +1187,11 @@ namespace KGySoft.CoreLibraries
 
             private static Type[] GetKeyValueTypes(Type elementType)
                 => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType };
+
+#if !NET35
+            private static object GenerateBigInteger(ref GeneratorContext context)
+                => SampleBigInteger(context.Random, context.GetNextCollectionLength() * 4, context.Settings.AllowNegativeValues);
+#endif
 
             #endregion
 
