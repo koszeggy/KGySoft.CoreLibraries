@@ -189,12 +189,20 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public override int Next(int maxValue)
         {
-            if (maxValue > 1)
-                return (int)((uint)SampleUInt64(ref state) % (uint)maxValue);
+            if (maxValue <= 1)
+            {
+                if (maxValue < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return 0;
+            }
 
-            if (maxValue < 0)
-                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
-            return 0;
+            uint mask = ((uint)maxValue).GetBitMask();
+            uint result;
+            do
+                result = (uint)SampleUInt64(ref state) & mask;
+            while (result >= (uint)maxValue);
+
+            return (int)result;
         }
 
         /// <summary>
@@ -215,7 +223,13 @@ namespace KGySoft.CoreLibraries
             if (range <= 1u)
                 return minValue;
 
-            return (int)((uint)SampleUInt64(ref state) % range) + minValue;
+            uint mask = range.GetBitMask();
+            uint result;
+            do
+                result = (uint)SampleUInt64(ref state) & mask;
+            while (result >= range);
+
+            return (int)result + minValue;
         }
 
         #endregion
@@ -273,17 +287,20 @@ namespace KGySoft.CoreLibraries
 #endif
         public long NextInt64(long maxValue)
         {
-            // using the slower 64-bit modulo division only for big range
-            if (maxValue > UInt32.MaxValue)
-                return maxValue == Int64.MaxValue
-                    ? NextInt64()
-                    : (long)(SampleUInt64(ref state) % (ulong)maxValue);
-            if (maxValue > 1L)
-                return (uint)SampleUInt64(ref state) % (uint)maxValue;
+            if (maxValue <= 1L)
+            {
+                if (maxValue < 0L)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0L));
+                return 0L;
+            }
 
-            if (maxValue < 0L)
-                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0L));
-            return 0L;
+            ulong mask = ((ulong)maxValue).GetBitMask();
+            ulong result;
+            do
+                result = SampleUInt64(ref state) & mask;
+            while (result >= (ulong)maxValue);
+
+            return (long)result;
         }
 
         /// <summary>
@@ -304,14 +321,16 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             ulong range = (ulong)(maxValue - minValue);
+            if (range <= 1UL)
+                return minValue;
 
-            // using the slower 64-bit modulo division only for big range
-            if (range > UInt32.MaxValue)
-                return (long)(SampleUInt64(ref state) % range) + minValue;
-            if (range > 1UL)
-                return ((uint)SampleUInt64(ref state) % (uint)range) + minValue;
+            ulong mask = range.GetBitMask();
+            ulong result;
+            do
+                result = SampleUInt64(ref state) & mask;
+            while (result >= range);
 
-            return minValue;
+            return (long)result + minValue;
         }
 
         #endregion
