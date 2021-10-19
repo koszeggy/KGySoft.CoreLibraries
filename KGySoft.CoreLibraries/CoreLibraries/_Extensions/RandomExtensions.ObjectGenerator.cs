@@ -259,6 +259,9 @@ namespace KGySoft.CoreLibraries
 #if !NET35
                     { Reflector.BigIntegerType, GenerateBigInteger },
 #endif
+#if NETCOREAPP3_0_OR_GREATER
+                    { Reflector.RuneType, GenerateRune },
+#endif
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
@@ -1190,7 +1193,11 @@ namespace KGySoft.CoreLibraries
 
 #if !NET35
             private static object GenerateBigInteger(ref GeneratorContext context)
-                => SampleBigInteger(context.Random, context.GetNextCollectionLength() * 4, context.Settings.AllowNegativeValues);
+                => context.Random.SampleBigInteger(context.GetNextCollectionLength() * 4, context.Settings.AllowNegativeValues);
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+            private static object GenerateRune(ref GeneratorContext context) => context.Random.NextRune();
 #endif
 
             #endregion

@@ -21,9 +21,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 #if NETFRAMEWORK
 using System.Diagnostics;
+#endif
 #if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
+#if NETCOREAPP3_0_OR_GREATER
+using System.Globalization;
 #endif
 #if !NET35
 using System.Numerics;
@@ -178,7 +181,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
         public void NextInt64Test()
         {
-            // full range
             var rnd = new Random();
 
             // min > max
@@ -264,7 +266,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextBigIntegerTest()
         {
-            // full range
             var rnd = new Random();
 
             // min > max
@@ -514,6 +515,51 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(10, s.Length);
         }
 
+#if NETCOREAPP3_0_OR_GREATER
+        [Test]
+        public void NextRuneTest()
+        {
+            var rnd = new Random();
+
+            // no range
+            Rune result = rnd.NextRune((Rune)0, (Rune)0);
+            Assert.AreEqual((Rune)0, result);
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextRune((Rune)2, (Rune)1));
+
+            // Surrogate Rune is invalid
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextRune(UnicodeCategory.Surrogate));
+
+            // But other categories are valid
+            foreach (UnicodeCategory category in Enum<UnicodeCategory>.GetValues())
+            {
+                if (category == UnicodeCategory.Surrogate)
+                    continue;
+
+                result = rnd.NextRune(category);
+                Assert.AreEqual(category, Rune.GetUnicodeCategory(result));
+            }
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.NextRune((Rune)0, (Rune)1);
+                Assert.IsTrue(result >= (Rune)0 && result <= (Rune)1);
+                result = rnd.NextRune((Rune)0xD7FF, (Rune)0xE000);
+                Assert.IsTrue(result == (Rune)0xD7FF || result == (Rune)0xE000);
+
+                // big range
+                result = rnd.NextRune(UnicodeCategory.UppercaseLetter);
+                Assert.AreEqual(UnicodeCategory.UppercaseLetter, Rune.GetUnicodeCategory(result));
+
+                // any value
+                result = rnd.NextRune();
+                Assert.IsTrue(result >= (Rune)0 && result <= (Rune)0x10FFFF);
+            }
+        }
+#endif
+
         [Test]
         public void NextObjectTest()
         {
@@ -549,7 +595,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<UIntPtr>();
             Test<byte?>();
 #if !NET35
-            Test<BigInteger>(); 
+            Test<BigInteger>();
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+            Test<Rune>();
 #endif
 
             // enums

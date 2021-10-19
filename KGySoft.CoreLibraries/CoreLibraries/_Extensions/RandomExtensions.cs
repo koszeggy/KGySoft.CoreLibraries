@@ -18,6 +18,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Globalization;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 #if NETCOREAPP3_0_OR_GREATER
@@ -1311,7 +1314,7 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region Chars and Strings
+        #region Chars/Runes and Strings
 
         #region Chars
 
@@ -1767,6 +1770,58 @@ namespace KGySoft.CoreLibraries
         public static string NextString(this Random random, StringCreation strategy = StringCreation.Ascii)
             => NextString(random, 4, 10, strategy);
 
+        #endregion
+
+        #region Rune
+#if NETCOREAPP3_0_OR_GREATER
+
+        /// <summary>
+        /// Returns a random <see cref="Rune"/> (Unicode character).
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A <see cref="Rune"/> (Unicode character).</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Rune NextRune(this Random random) => NextRune(random, RuneInfo.MinValue, RuneInfo.MaxValue);
+
+        /// <summary>
+        /// Returns a random <see cref="Rune"/> (Unicode character) that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random character returned.</param>
+        /// <param name="maxValue">The inclusive upper bound of the random character returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <returns>A <see cref="Rune"/> (Unicode character) that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        public static Rune NextRune(this Random random, Rune minValue, Rune maxValue)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue <= minValue)
+            {
+                if (maxValue == minValue)
+                    return minValue;
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            }
+
+            return RuneInfo.GetRuneByIndex(minValue.Value + random.Next(RuneInfo.GetInclusiveRange(minValue, maxValue)));
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="Rune"/> (Unicode character) that is within the specified <paramref name="category"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="category">The category of the character to be returned.</param>
+        /// <returns>A <see cref="Rune"/> (Unicode character) that is greater that is within the specified <paramref name="category"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="category"/> is <see cref="UnicodeCategory.Surrogate"/> or an undefined value.</exception>
+        public static Rune NextRune(this Random random, UnicodeCategory category)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return RuneInfo.GetRandomRune(random, category);
+        }
+
+#endif  
         #endregion
 
         #endregion

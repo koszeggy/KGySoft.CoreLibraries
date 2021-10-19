@@ -58,8 +58,10 @@
   + New SampleSByte, SampleByte, SampleInt16, SampleUInt16, SampleInt32, SampleUInt32, SampleInt64 and SampleUInt64
     methods to generate any integer value of their corresponding type.
   + New NextBigInteger and SampleBigInteger methods (.NET Framework 4.0 and above)
+  + New NextRune methods (.NET Core 3.0 and above)
   + NextObject methods:
     + Supporting BigInteger, considers GenerateObjectSettings.CollectionsLength (.NET Framework 4.0 and above)
+    + Supporting Rune (.NET Core 3.0 and above)
   * Improving performance
 + ThreadSafeRandom class:
   + New NextInt64 methods (even below .NET 6.0 where base does not have such methods).
