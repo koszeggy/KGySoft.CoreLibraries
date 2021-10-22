@@ -265,6 +265,10 @@ namespace KGySoft.CoreLibraries
 #if NET5_0_OR_GREATER
                     { Reflector.HalfType, GenerateHalf },
 #endif
+#if NET6_0_OR_GREATER
+                    { Reflector.DateOnlyType, GenerateDateOnly },
+                    { Reflector.TimeOnlyType, GenerateTimeOnly },
+#endif
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
@@ -1208,6 +1212,12 @@ namespace KGySoft.CoreLibraries
                 => context.Settings.AllowNegativeValues ? context.Random.NextHalf(Half.MinValue, Half.MaxValue, context.Settings.FloatScale) : context.Random.NextHalf(Half.MaxValue, context.Settings.FloatScale);
 
 #endif
+
+#if NET6_0_OR_GREATER
+            private static object GenerateDateOnly(ref GeneratorContext context) => DateOnly.FromDateTime((DateTime)GenerateDateTime(ref context));
+            private static object GenerateTimeOnly(ref GeneratorContext context) => NextTimeOnly(context.Random);
+#endif
+
             #endregion
 
             #endregion

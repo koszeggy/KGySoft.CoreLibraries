@@ -1948,8 +1948,8 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            var minTicks = minValue.GetValueOrDefault(DateTime.MinValue).Ticks;
-            var maxTicks = maxValue.GetValueOrDefault(DateTime.MaxValue).Ticks;
+            long minTicks = minValue.GetValueOrDefault(DateTime.MinValue).Ticks;
+            long maxTicks = maxValue.GetValueOrDefault(DateTime.MaxValue).Ticks;
             if (maxTicks < minTicks)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
@@ -1978,8 +1978,8 @@ namespace KGySoft.CoreLibraries
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            var minDate = minValue.GetValueOrDefault(DateTime.MinValue).Date;
-            var maxDate = maxValue.GetValueOrDefault(DateTime.MaxValue).Date;
+            DateTime minDate = minValue.GetValueOrDefault(DateTime.MinValue).Date;
+            DateTime maxDate = maxValue.GetValueOrDefault(DateTime.MaxValue).Date;
             if (maxDate < minDate)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
@@ -2003,15 +2003,15 @@ namespace KGySoft.CoreLibraries
             const int maximumOffset = 14 * 60;
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
-            var minDateTime = minValue?.UtcDateTime ?? DateTime.MinValue;
-            var maxDateTime = maxValue?.UtcDateTime ?? DateTime.MaxValue;
+            DateTime minDateTime = minValue?.UtcDateTime ?? DateTime.MinValue;
+            DateTime maxDateTime = maxValue?.UtcDateTime ?? DateTime.MaxValue;
             if (maxDateTime < minDateTime)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
-            var result = random.NextDateTime(minDateTime, maxDateTime);
+            DateTime result = random.NextDateTime(minDateTime, maxDateTime);
             double diffInMinutes;
-            var minOffset = (diffInMinutes = (maxDateTime - result).TotalMinutes) < maximumOffset ? (int)-diffInMinutes : -maximumOffset;
-            var maxOffset = (diffInMinutes = (result - minDateTime).TotalMinutes) < maximumOffset ? (int)diffInMinutes : maximumOffset;
+            int minOffset = (diffInMinutes = (maxDateTime - result).TotalMinutes) < maximumOffset ? (int)-diffInMinutes : -maximumOffset;
+            int maxOffset = (diffInMinutes = (result - minDateTime).TotalMinutes) < maximumOffset ? (int)diffInMinutes : maximumOffset;
             return new DateTimeOffset(result, TimeSpan.FromMinutes(random.NextInt32(minOffset, maxOffset, true)));
         }
 
@@ -2031,13 +2031,65 @@ namespace KGySoft.CoreLibraries
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
 
-            var minTicks = minValue.GetValueOrDefault(TimeSpan.MinValue).Ticks;
-            var maxTicks = maxValue.GetValueOrDefault(TimeSpan.MaxValue).Ticks;
+            long minTicks = minValue.GetValueOrDefault(TimeSpan.MinValue).Ticks;
+            long maxTicks = maxValue.GetValueOrDefault(TimeSpan.MaxValue).Ticks;
             if (maxTicks < minTicks)
                 Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
 
             return new TimeSpan(random.NextInt64(minTicks, maxTicks, true));
         }
+
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Returns a random <see cref="DateOnly"/> that is between the specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random <see cref="DateOnly"/> returned or <see langword="null"/>&#160;to
+        /// use <see cref="DateOnly.MinValue">DateOnly.MinValue</see>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="maxValue">The inclusive upper bound of the random <see cref="DateOnly"/> returned or <see langword="null"/>&#160;to
+        /// use <see cref="DateOnly.MaxValue">DateTime.MaxValue</see>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A <see cref="DateOnly"/> value that is in the specified range.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        public static DateOnly NextDateOnly(this Random random, DateOnly? minValue = null, DateOnly? maxValue = null)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            DateOnly minDate = minValue.GetValueOrDefault(DateOnly.MinValue);
+            DateOnly maxDate = maxValue.GetValueOrDefault(DateOnly.MaxValue);
+            if (maxDate < minDate)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            int range = maxDate.DayNumber - minDate.DayNumber;
+            return minDate.AddDays(random.NextInt32(range, true));
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="TimeOnly"/> that is between the specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random <see cref="TimeOnly"/> returned or <see langword="null"/>&#160;to use <see cref="TimeOnly.MinValue">TimeOnly.MinValue</see>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="maxValue">The inclusive upper bound of the random <see cref="TimeOnly"/> returned or <see langword="null"/>&#160;to use <see cref="TimeOnly.MaxValue">TimeOnly.MaxValue</see>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A <see cref="TimeOnly"/> value that is in the specified range.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        public static TimeOnly NextTimeOnly(this Random random, TimeOnly? minValue = null, TimeOnly? maxValue = null)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            long minTicks = minValue.GetValueOrDefault(TimeOnly.MinValue).Ticks;
+            long maxTicks = maxValue.GetValueOrDefault(TimeOnly.MaxValue).Ticks;
+            if (maxTicks < minTicks)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            return new TimeOnly(random.NextInt64(minTicks, maxTicks, true));
+        }
+#endif
 
         #endregion
 

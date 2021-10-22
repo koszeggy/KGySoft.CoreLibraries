@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 #if NETFRAMEWORK
 using System.Diagnostics;
 #endif
@@ -496,6 +497,68 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         }
 
         [Test]
+        public void NextDateTimeTest()
+        {
+            var rnd = new Random();
+            void Test(DateTime min, DateTime max)
+            {
+                Console.Write($@"Random DateTime {min:O}..{max:O}: ");
+                DateTime result;
+                try
+                {
+                    result = rnd.NextDateTime(min, max);
+                    Console.WriteLine(result.ToString("O"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
+
+            Test(DateTime.Now, DateTime.Now.AddDays(1));
+            Test(DateTime.MinValue, DateTime.MaxValue);
+
+            Test(DateTime.MinValue, DateTime.MinValue);
+            Test(DateTime.MinValue, DateTime.MinValue.AddMinutes(1));
+            Test(DateTime.MaxValue.AddMinutes(-1), DateTime.MaxValue);
+            Test(DateTime.MaxValue.AddHours(-1), DateTime.MaxValue);
+            Test(DateTime.MaxValue.AddDays(-1), DateTime.MaxValue);
+        }
+
+        [Test]
+        public void NextDateTest()
+        {
+            var rnd = new Random();
+            void Test(DateTime min, DateTime max)
+            {
+                Console.Write($@"Random date {min:yyyy-MM-dd}..{max:yyyy-MM-dd}: ");
+                DateTime result;
+                try
+                {
+                    result = rnd.NextDate(min, max);
+                    Console.WriteLine(result.ToString("yyyy-MM-dd"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
+
+            Test(DateTime.Now, DateTime.Now.AddDays(1));
+            Test(DateTime.MinValue, DateTime.MaxValue);
+
+            Test(DateTime.MinValue, DateTime.MinValue);
+            Test(DateTime.MinValue, DateTime.MinValue.AddDays(1));
+            Test(DateTime.MaxValue.AddDays(-1), DateTime.MaxValue);
+        }
+
+        [Test]
         public void NextDateTimeOffsetTest()
         {
             var rnd = new Random();
@@ -526,6 +589,92 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
             Test(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
         }
+
+        [Test]
+        public void NextTimeSpanTest()
+        {
+            var rnd = new Random();
+            void Test(TimeSpan min, TimeSpan max)
+            {
+                Console.Write($@"Random TimeSpan {min}..{max}: ");
+                TimeSpan result;
+                try
+                {
+                    result = rnd.NextTimeSpan(min, max);
+                    Console.WriteLine(result);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
+
+            Test(TimeSpan.MinValue, TimeSpan.MaxValue);
+            Test(TimeSpan.MinValue, TimeSpan.MinValue);
+            Test(TimeSpan.MinValue, TimeSpan.MinValue + new TimeSpan(1));
+            Test(TimeSpan.MaxValue - new TimeSpan(1), TimeSpan.MaxValue);
+        }
+
+#if NET6_0_OR_GREATER
+        [Test]
+        public void NextDateOnlyTest()
+        {
+            var rnd = new Random();
+            void Test(DateOnly min, DateOnly max)
+            {
+                Console.Write($@"Random date {min:O}..{max:O}: ");
+                DateOnly result;
+                try
+                {
+                    result = rnd.NextDateOnly(min, max);
+                    Console.WriteLine(result.ToString("O"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
+
+            Test(DateOnly.MinValue, DateOnly.MaxValue);
+            Test(DateOnly.MinValue, DateOnly.MinValue);
+            Test(DateOnly.MinValue, DateOnly.MinValue.AddDays(1));
+            Test(DateOnly.MaxValue.AddDays(-1), DateOnly.MaxValue);
+        }
+
+        [Test]
+        public void NextTimeOnlyTest()
+        {
+            var rnd = new Random();
+            void Test(TimeOnly min, TimeOnly max)
+            {
+                Console.Write($@"Random time {min:O}..{max:O}: ");
+                TimeOnly result;
+                try
+                {
+                    result = rnd.NextTimeOnly(min, max);
+                    Console.WriteLine(result.ToString("O"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
+
+            Test(TimeOnly.MinValue, TimeOnly.MaxValue);
+            Test(TimeOnly.MinValue, TimeOnly.MinValue);
+            Test(TimeOnly.MinValue, TimeOnly.MinValue.Add(new TimeSpan(1)));
+            Test(TimeOnly.MaxValue.Add(new TimeSpan(-1)), TimeOnly.MaxValue);
+        }
+#endif
 
         [TestCase(StringCreation.AnyChars)]
         [TestCase(StringCreation.AnyValidChars)]
@@ -600,7 +749,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             void Test<T>(GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);
-                Console.WriteLine($"{typeof(T).Name}: {obj}");
+                Console.WriteLine($"{typeof(T).GetName(TypeNameKind.ShortName)}: {AsString(obj)}");
+            }
+
+            static string AsString(object obj)
+            {
+                if (obj == null)
+                    return "<null>";
+
+                // KeyValuePair has a similar ToString to this one
+                if (obj is DictionaryEntry de)
+                    return $"[{de.Key}, {de.Value}]";
+
+                if (obj is not IEnumerable enumerable || enumerable is string)
+                    return obj.ToStringInternal(CultureInfo.InvariantCulture);
+
+                return enumerable.Cast<object>().Select(AsString).Join(", ");
             }
 
             // native types
@@ -635,6 +799,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
 #if NET5_0_OR_GREATER
             Test<Half>();
+#endif
+#if NET6_0_OR_GREATER
+            Test<DateOnly>();
+            Test<TimeOnly>();
 #endif
 
             // enums
