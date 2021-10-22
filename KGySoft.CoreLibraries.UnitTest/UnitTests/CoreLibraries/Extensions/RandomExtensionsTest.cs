@@ -409,6 +409,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(rnd, Single.NegativeInfinity, Single.PositiveInfinity);
         }
 
+#if NET5_0_OR_GREATER
+        [Test]
+        public void NextHalfTest()
+        {
+            void Test(Random random, Half min, Half max)
+            {
+                for (FloatScale scale = FloatScale.ForceLinear; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($@"Random Half {min.ToStringInternal(CultureInfo.InvariantCulture)}..{max.ToStringInternal(CultureInfo.InvariantCulture)} {scale}: ");
+                    Half result;
+                    try
+                    {
+                        result = min.Equals((Half)0f) ? random.NextHalf(max, scale) : random.NextHalf(min, max, scale);
+                        Console.WriteLine(result.ToStringInternal(CultureInfo.InvariantCulture));
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max);
+                }
+            }
+
+            var rnd = new Random();
+            Test(rnd, Half.MinValue, Half.MaxValue);
+            Test(rnd, (Half)0f, Half.Epsilon);
+            Test(rnd, Half.MaxValue, Half.PositiveInfinity);
+            Test(rnd, Half.NegativeInfinity, Half.PositiveInfinity);
+        }
+#endif
+
         [Test]
         public void NextDecimalTest()
         {
@@ -599,6 +632,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
 #if NETCOREAPP3_0_OR_GREATER
             Test<Rune>();
+#endif
+#if NET5_0_OR_GREATER
+            Test<Half>();
 #endif
 
             // enums

@@ -262,6 +262,9 @@ namespace KGySoft.CoreLibraries
 #if NETCOREAPP3_0_OR_GREATER
                     { Reflector.RuneType, GenerateRune },
 #endif
+#if NET5_0_OR_GREATER
+                    { Reflector.HalfType, GenerateHalf },
+#endif
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
@@ -1200,6 +1203,11 @@ namespace KGySoft.CoreLibraries
             private static object GenerateRune(ref GeneratorContext context) => context.Random.NextRune();
 #endif
 
+#if NET5_0_OR_GREATER
+            private static object GenerateHalf(ref GeneratorContext context)
+                => context.Settings.AllowNegativeValues ? context.Random.NextHalf(Half.MinValue, Half.MaxValue, context.Settings.FloatScale) : context.Random.NextHalf(Half.MaxValue, context.Settings.FloatScale);
+
+#endif
             #endregion
 
             #endregion
