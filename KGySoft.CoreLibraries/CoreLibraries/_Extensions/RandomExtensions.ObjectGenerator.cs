@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Security;
 using System.Text;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -200,11 +201,6 @@ namespace KGySoft.CoreLibraries
 
             #region Fields
 
-            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = ThreadSafeCacheFactory.Create<Assembly, Type[]>(LoadAssemblyTypes, LockFreeCacheOptions.Profile128);
-            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = ThreadSafeCacheFactory.Create<Type, Type[]>(SearchForImplementors, LockFreeCacheOptions.Profile128);
-            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> defaultConstructedGenerics = ThreadSafeCacheFactory.Create<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128);
-            private static readonly IThreadSafeCacheAccessor<Type, Delegate?> delegatesCache = ThreadSafeCacheFactory.Create<Type, Delegate?>(CreateDelegate, LockFreeCacheOptions.Profile128);
-
 #if !NETSTANDARD2_0
             /// <summary>
             /// Must be a separate instance because dynamic method references will never freed.
@@ -286,6 +282,55 @@ namespace KGySoft.CoreLibraries
             private static readonly Type eventInfoType = typeof(EventInfo);
             private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress))!.GetType();
 
+            private static IThreadSafeCacheAccessor<Assembly, Type[]>? assemblyTypesCache;
+            private static IThreadSafeCacheAccessor<Type, Type[]>? typeImplementorsCache;
+            private static IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?>? defaultConstructedGenerics;
+            private static IThreadSafeCacheAccessor<Type, Delegate?>? delegatesCache;
+
+            #endregion
+
+            #region Properties
+
+            private static IThreadSafeCacheAccessor<Assembly, Type[]> AssemblyTypesCache
+            {
+                get
+                {
+                    if (assemblyTypesCache == null)
+                        Interlocked.CompareExchange(ref assemblyTypesCache, ThreadSafeCacheFactory.Create<Assembly, Type[]>(LoadAssemblyTypes, LockFreeCacheOptions.Profile128), null);
+                    return assemblyTypesCache;
+                }
+            }
+
+            private static IThreadSafeCacheAccessor<Type, Type[]> TypeImplementorsCache
+            {
+                get
+                {
+                    if (typeImplementorsCache == null)
+                        Interlocked.CompareExchange(ref typeImplementorsCache, ThreadSafeCacheFactory.Create<Type, Type[]>(SearchForImplementors, LockFreeCacheOptions.Profile128), null);
+                    return typeImplementorsCache;
+                }
+            }
+
+            private static IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> DefaultConstructedGenerics
+            {
+                get
+                {
+                    if (defaultConstructedGenerics == null)
+                        Interlocked.CompareExchange(ref defaultConstructedGenerics, ThreadSafeCacheFactory.Create<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128), null);
+                    return defaultConstructedGenerics;
+                }
+            }
+
+            private static IThreadSafeCacheAccessor<Type, Delegate?> DelegatesCache
+            {
+                get
+                {
+                    if (delegatesCache == null)
+                        Interlocked.CompareExchange(ref delegatesCache, ThreadSafeCacheFactory.Create<Type, Delegate?>(CreateDelegate, LockFreeCacheOptions.Profile128), null);
+                    return delegatesCache;
+                }
+            }
+
             #endregion
 
             #region Methods
@@ -322,7 +367,7 @@ namespace KGySoft.CoreLibraries
                 Type[] genericArguments = type.GetGenericArguments();
                 foreach (var assembly in Reflector.GetLoadedAssemblies())
                 {
-                    foreach (Type t in assemblyTypesCache[assembly])
+                    foreach (Type t in AssemblyTypesCache[assembly])
                     {
                         // Skipping interfaces, abstract (and static) classes and delegates unless delegate types are searched
                         if (t.IsInterface || t.IsAbstract || (t.IsDelegate() && !type.IsDelegate()))
@@ -356,7 +401,7 @@ namespace KGySoft.CoreLibraries
 
                         // Generic type for non-generic interface or for non-interface (eg. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
-                        Type? constructedType = defaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
+                        Type? constructedType = DefaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
                         if (constructedType != null && type.IsAssignableFrom(constructedType))
                             result.Add(constructedType);
                     }
@@ -644,13 +689,13 @@ namespace KGySoft.CoreLibraries
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
                 Assembly asm = assemblies.GetRandomElement(context.Random)!;
-                Type[] types = assemblyTypesCache[asm];
+                Type[] types = AssemblyTypesCache[asm];
 
                 if (types.Length == 0)
                 {
                     foreach (Assembly candidate in assemblies.Except(new[] { asm }).Shuffle(context.Random))
                     {
-                        types = assemblyTypesCache[candidate];
+                        types = AssemblyTypesCache[candidate];
                         if (types.Length != 0)
                             break;
                     }
@@ -700,7 +745,7 @@ namespace KGySoft.CoreLibraries
 
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
                 Assembly asm = assemblies.GetRandomElement(context.Random)!;
-                MemberInfo? result = TryPickMemberInfo(assemblyTypesCache[asm].GetRandomElement(context.Random, true), memberTypes, ref context, constants);
+                MemberInfo? result = TryPickMemberInfo(AssemblyTypesCache[asm].GetRandomElement(context.Random, true), memberTypes, ref context, constants);
 
                 if (result != null)
                     return result;
@@ -708,7 +753,7 @@ namespace KGySoft.CoreLibraries
                 // low performance fallback: shuffling
                 foreach (Assembly assembly in assemblies.Except(new[] { asm }).Shuffle(context.Random))
                 {
-                    foreach (Type t in assemblyTypesCache[assembly].Shuffle(context.Random))
+                    foreach (Type t in AssemblyTypesCache[assembly].Shuffle(context.Random))
                     {
                         result = TryPickMemberInfo(t, memberTypes, ref context, constants);
                         if (result != null)
@@ -815,7 +860,7 @@ namespace KGySoft.CoreLibraries
                     // 5.) Delegate
                     if (!type.IsAbstract && type.IsDelegate())
                     {
-                        result = delegatesCache[type];
+                        result = DelegatesCache[type];
                         return true;
                     }
 
@@ -937,7 +982,7 @@ namespace KGySoft.CoreLibraries
                 Type? typeToCreate = type;
                 if (resolveType)
                 {
-                    typeCandidates = typeImplementorsCache[type];
+                    typeCandidates = TypeImplementorsCache[type];
                     typeToCreate = typeCandidates.GetRandomElement(context.Random, true);
                     if (typeToCreate == null)
                         return false;
