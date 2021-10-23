@@ -36,6 +36,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if !NETCOREAPP3_0_OR_GREATER
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     /// <summary>

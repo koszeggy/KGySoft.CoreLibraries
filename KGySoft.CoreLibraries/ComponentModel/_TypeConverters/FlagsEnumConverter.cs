@@ -91,19 +91,19 @@ namespace KGySoft.ComponentModel
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance to retrieve the flag value for.</param>
             /// <returns><see langword="true"/>&#160;if the enumeration field is included to the enumeration; otherwise, <see langword="false"/>.</returns>
-            public override object GetValue(object component)
-                => (((Enum)component).ToUInt64() & flagValue) != 0UL;
+            public override object GetValue(object? component)
+                => (((Enum)component!).ToUInt64() & flagValue) != 0UL;
 
             /// <summary>
             /// Sets the value of the <see cref="Enum"/> flag.
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance whose flag is about to be set.</param>
             /// <param name="value">The <see cref="bool"/> value of the flag to set.</param>
-            public override void SetValue(object component, object value)
+            public override void SetValue(object? component, object? value)
             {
                 // bit manipulation as UInt64
-                bool bit = (bool)value;
-                ulong result = ((Enum)component).ToUInt64();
+                bool bit = (bool)value!;
+                ulong result = ((Enum)component!).ToUInt64();
                 if (bit)
                     result |= flagValue;
                 else
@@ -175,7 +175,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
-        public override PropertyDescriptorCollection? GetProperties(ITypeDescriptorContext? context, object value, Attribute[] attributes)
+        public override PropertyDescriptorCollection? GetProperties(ITypeDescriptorContext? context, object value, Attribute[]? attributes)
         {
             if (value == null!)
                 Throw.ArgumentNullException(Argument.value);

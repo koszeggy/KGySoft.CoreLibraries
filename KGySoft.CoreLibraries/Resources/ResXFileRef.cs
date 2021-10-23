@@ -177,7 +177,7 @@ namespace KGySoft.Resources
 
             public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) => sourceType == Reflector.StringType;
 
-            public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType) => destinationType == Reflector.StringType;
+            public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) => destinationType == Reflector.StringType;
 
             public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
 

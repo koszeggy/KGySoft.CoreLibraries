@@ -509,6 +509,7 @@ namespace KGySoft.Diagnostics
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Interoperability", "CA1416:ValidatePlatformCompatibility", Justification = "Called only if CpuAffinity is set.")]
         private void SetCpuAffinity()
         {
             Process process = Process.GetCurrentProcess();
@@ -532,6 +533,7 @@ namespace KGySoft.Diagnostics
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Interoperability", "CA1416:ValidatePlatformCompatibility", Justification = "Called only if CpuAffinity is set.")]
         private void ResetCpuAffinity()
         {
             Process process = Process.GetCurrentProcess();

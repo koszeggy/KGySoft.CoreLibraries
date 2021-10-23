@@ -1394,7 +1394,7 @@ namespace KGySoft.Resources
 
             try
             {
-                return tc.ConvertFromInvariantString(valueData) ?? ResXNullRef.Value;
+                return tc.ConvertFromInvariantString(valueData!) ?? ResXNullRef.Value;
             }
             catch (NotSupportedException e)
             {

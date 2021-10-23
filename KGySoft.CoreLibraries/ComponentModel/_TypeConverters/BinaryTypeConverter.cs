@@ -65,7 +65,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
             => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace KGySoft.ComponentModel
             else if (value?.GetType() == Reflector.ByteArrayType) // cast is dangerous: works also from sbyte[] so type check must be performed
                 bytes = (byte[])value;
 
-            return bytes != null ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode) : base.ConvertFrom(context!, culture!, value);
+            return bytes != null ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode) : base.ConvertFrom(context!, culture!, value!);
         }
 
         #endregion

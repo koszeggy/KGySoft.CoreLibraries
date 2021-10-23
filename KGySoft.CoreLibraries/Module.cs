@@ -15,6 +15,7 @@
 
 #region Usings
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -26,6 +27,8 @@ namespace KGySoft
         #region Methods
 
         [ModuleInitializer]
+        [SuppressMessage("Usage", "CA2255:The 'ModuleInitializer' attribute should not be used in libraries",
+            Justification = "See the comment, it is intended and is important to work properly.")]
         internal static void ModuleInitializer()
         {
             // Just referencing Res in order to trigger its static constructor and initialize the project resources.

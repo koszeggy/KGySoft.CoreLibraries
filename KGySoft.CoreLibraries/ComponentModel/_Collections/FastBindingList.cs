@@ -428,7 +428,7 @@ namespace KGySoft.ComponentModel
                 Throw.ObjectDisposedException();
             if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
-            PropertyDescriptor property = PropertyDescriptors[propertyName];
+            PropertyDescriptor? property = PropertyDescriptors[propertyName];
             if (property == null)
                 Throw.ArgumentException(Argument.property, Res.ComponentModelPropertyNotExists(propertyName, typeof(T)));
             ApplySortCore(property, direction);

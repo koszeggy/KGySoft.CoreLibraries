@@ -44,7 +44,7 @@ using KGySoft.Serialization.Xml;
 
 #region Suppressions
 
-#if NET35
+#if !NET6_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if NET5_0_OR_GREATER

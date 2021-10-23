@@ -101,7 +101,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType) 
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) 
             => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -169,7 +169,13 @@ namespace KGySoft.ComponentModel
 
                 // 2/a: by code from full name
                 int pos = name.IndexOf('|');
-                if (pos > 0 && Int32.TryParse(name.Substring(0, pos), NumberStyles.Integer, CultureInfo.InvariantCulture, out codePage))
+                if (pos > 0 && Int32.TryParse(
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                    name.AsSpan(0, pos),
+#else
+                    name.Substring(0, pos),
+#endif
+                    NumberStyles.Integer, CultureInfo.InvariantCulture, out codePage))
                     return Encoding.GetEncoding(codePage);
 
                 // 3: by display name
@@ -180,7 +186,7 @@ namespace KGySoft.ComponentModel
                 return Encoding.GetEncoding(name);
             }
 
-            return base.ConvertFrom(context!, culture!, value);
+            return base.ConvertFrom(context!, culture!, value!);
         }
 
         /// <summary>
@@ -188,14 +194,14 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <returns>This method always returns <see langword="true" />.</returns>
-        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => true;
 
         /// <summary>
         /// Returns a collection of standard values for the data type this type converter is designed for when provided with a format context.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <returns>A <see cref="TypeConverter.StandardValuesCollection" /> that holds a standard set of valid values.</returns>
-        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) => new StandardValuesCollection(Encodings);
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext? context) => new StandardValuesCollection(Encodings);
 
         #endregion
     }

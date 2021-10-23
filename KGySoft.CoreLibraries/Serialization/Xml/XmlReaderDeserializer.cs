@@ -494,7 +494,8 @@ namespace KGySoft.Serialization.Xml
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
                 if (converter.CanConvertFrom(Reflector.StringType))
                 {
-                    result = converter.ConvertFromInvariantString(ReadStringValue(reader));
+                    // throwing an exception if the converter cannot handle the possibly null value
+                    result = converter.ConvertFromInvariantString(ReadStringValue(reader)!);
                     return true;
                 }
             }

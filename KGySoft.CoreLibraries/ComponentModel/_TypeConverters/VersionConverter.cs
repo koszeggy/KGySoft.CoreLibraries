@@ -61,7 +61,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext? context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
             => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
         /// <summary>

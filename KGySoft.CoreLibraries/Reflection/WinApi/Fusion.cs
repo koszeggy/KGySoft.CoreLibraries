@@ -31,11 +31,11 @@ namespace KGySoft.Reflection.WinApi
     [SecurityCritical]
     internal static class Fusion
     {
-#region Nested classes
+        #region Nested classes
 
         private static class NativeMethods
         {
-#region Methods
+            #region Methods
 
             /// <summary>
             /// Gets a pointer to a new <see cref="IAssemblyCache"/> instance that represents the global assembly cache.
@@ -46,12 +46,12 @@ namespace KGySoft.Reflection.WinApi
             [DllImport("fusion.dll")]
             internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
 
-#endregion
+            #endregion
         }
 
-#endregion
+        #endregion
 
-#region Methods
+        #region Methods
 
         /// <summary>
         /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
@@ -76,7 +76,7 @@ namespace KGySoft.Reflection.WinApi
             return null;
         }
 
-#endregion
+        #endregion
     }
 }
 #endif

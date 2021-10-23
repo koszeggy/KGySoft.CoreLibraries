@@ -396,7 +396,7 @@ namespace KGySoft.CoreLibraries
         /// </example>
         public static TTarget Convert<TTarget>(this object? obj, CultureInfo? culture = null)
         {
-            if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object? result, out Exception? error) || (!(result is TTarget) && !typeof(TTarget).CanAcceptValue(result)))
+            if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object? result, out Exception? error) || (result is not TTarget && !typeof(TTarget).CanAcceptValue(result)))
                 Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), error);
             return (TTarget)result!;
         }

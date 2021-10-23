@@ -475,7 +475,7 @@ namespace KGySoft.Reflection
         {
             if (instance == null!)
                 Throw.NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
-            PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
+            PropertyDescriptor? property = TypeDescriptor.GetProperties(instance)[propertyName];
             if (property != null)
             {
                 if (!throwError && !property.PropertyType.CanAcceptValue(value))
@@ -886,7 +886,7 @@ namespace KGySoft.Reflection
             {
                 if (instance == null)
                     Throw.NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
-                PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
+                PropertyDescriptor? property = TypeDescriptor.GetProperties(instance)[propertyName];
                 if (property != null)
                 {
                     value = property.GetValue(instance);
@@ -1919,9 +1919,7 @@ namespace KGySoft.Reflection
                     }
 
                 case ReflectionWays.TypeDescriptor:
-                    // ReSharper disable AssignNullToNotNullAttribute - false alarm
-                    result = TypeDescriptor.CreateInstance(null, type, null, null);
-                    // ReSharper restore AssignNullToNotNullAttribute
+                    result = TypeDescriptor.CreateInstance(null, type, null, null)!;
                     return true;
                 default:
                     Throw.EnumArgumentOutOfRange(Argument.way, way);
@@ -2218,8 +2216,7 @@ namespace KGySoft.Reflection
                 {
                     if (way == ReflectionWays.TypeDescriptor)
                     {
-                        // ReSharper disable once AssignNullToNotNullAttribute - argTypes can be null
-                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters);
+                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters!)!;
                         return true;
                     }
 

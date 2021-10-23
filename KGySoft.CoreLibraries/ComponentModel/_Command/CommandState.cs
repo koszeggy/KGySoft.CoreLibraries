@@ -71,9 +71,9 @@ namespace KGySoft.ComponentModel
             #region Methods
 
             public override bool CanResetValue(object component) => Name == nameof(Enabled);
-            public override object? GetValue(object component) => ((CommandState)component)[Name];
+            public override object? GetValue(object? component) => ((CommandState)component!)[Name];
             public override void ResetValue(object component) => ((CommandState)component).Enabled = true;
-            public override void SetValue(object component, object? value) => ((CommandState)component)[Name] = value;
+            public override void SetValue(object? component, object? value) => ((CommandState)component!)[Name] = value;
             public override bool ShouldSerializeValue(object component) => Name != nameof(Enabled) || !((CommandState)component).Enabled;
 
             #endregion
@@ -152,7 +152,7 @@ namespace KGySoft.ComponentModel
             get => stateProperties[key];
             set
             {
-                if (key == nameof(Enabled) && !(value is bool))
+                if (key == nameof(Enabled) && value is not bool)
                     Throw.ArgumentException(Argument.value, Res.ComponentModelEnabledMustBeBool);
 
                 bool differs = true;
@@ -187,7 +187,7 @@ namespace KGySoft.ComponentModel
 
             foreach (KeyValuePair<string, object?> state in initialConfiguration)
             {
-                if (state.Key == nameof(Enabled) && !(state.Value is bool))
+                if (state.Key == nameof(Enabled) && state.Value is not bool)
                     Throw.ArgumentException(Argument.initialConfiguration, Res.ComponentModelEnabledMustBeBool);
                 stateProperties[state.Key] = state.Value;
             }
@@ -322,15 +322,15 @@ namespace KGySoft.ComponentModel
         AttributeCollection ICustomTypeDescriptor.GetAttributes() => new AttributeCollection(null);
         string ICustomTypeDescriptor.GetClassName() => nameof(CommandState);
         string ICustomTypeDescriptor.GetComponentName() => ToString()!;
-        TypeConverter? ICustomTypeDescriptor.GetConverter() => null;
+        TypeConverter ICustomTypeDescriptor.GetConverter() => new TypeConverter();
         EventDescriptor? ICustomTypeDescriptor.GetDefaultEvent() => null;
         PropertyDescriptor? ICustomTypeDescriptor.GetDefaultProperty() => null;
         object? ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null;
         EventDescriptorCollection ICustomTypeDescriptor.GetEvents() => new EventDescriptorCollection(null);
-        EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[] attributes) => new EventDescriptorCollection(null);
+        EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[]? attributes) => new EventDescriptorCollection(null);
         PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties() => GetProperties();
-        PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[] attributes) => attributes.IsNullOrEmpty() ? GetProperties() : new PropertyDescriptorCollection(null);
-        object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor pd) => this;
+        PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[]? attributes) => attributes.IsNullOrEmpty() ? GetProperties() : new PropertyDescriptorCollection(null);
+        object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor? pd) => this;
 
 #if !NET35
         string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => ToString()!;

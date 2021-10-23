@@ -26,9 +26,7 @@ using System.Diagnostics;
 #if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
-#if NETCOREAPP3_0_OR_GREATER
 using System.Globalization;
-#endif
 #if !NET35
 using System.Numerics;
 #endif
@@ -321,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextDoubleTest()
         {
-            void Test(Random random, double min, double max)
+            static void Test(Random random, double min, double max)
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
@@ -382,7 +380,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextFloatTest()
         {
-            void Test(Random random, float min, float max)
+            static void Test(Random random, float min, float max)
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
@@ -414,7 +412,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextHalfTest()
         {
-            void Test(Random random, Half min, Half max)
+            static void Test(Random random, Half min, Half max)
             {
                 for (FloatScale scale = FloatScale.ForceLinear; scale <= FloatScale.ForceLogarithmic; scale++)
                 {

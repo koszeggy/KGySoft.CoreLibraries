@@ -313,7 +313,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // 1/b.) Successfully deserialized into the existing instance (or both are null)
-            if (!(deserializedValue is ValueType) && ReferenceEquals(existingValue, deserializedValue))
+            if (deserializedValue is not ValueType && ReferenceEquals(existingValue, deserializedValue))
                 return;
 
             // 1.c.) Processing result
@@ -430,9 +430,21 @@ namespace KGySoft.Serialization.Xml
                 }
                 else
                 {
-                    if (!Int32.TryParse(dims[i].Substring(0, boundSep), NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
+                    if (!Int32.TryParse(
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                        dims[i].AsSpan(0, boundSep),
+#else
+                        dims[i].Substring(0, boundSep),
+#endif
+                        NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
                         Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
-                    if (!Int32.TryParse(dims[i].Substring(boundSep + 2), NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i])
+                    if (!Int32.TryParse(
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                            dims[i].AsSpan(boundSep + 2),
+#else
+                            dims[i].Substring(boundSep + 2),
+#endif
+                            NumberStyles.Integer, CultureInfo.InvariantCulture, out lengths[i])
                         || lengths[i] < lowerBounds[i]
                         || (long)lengths[i] - lowerBounds[i] >= Int32.MaxValue)
                     {
@@ -590,7 +602,8 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
-            result = converter.ConvertFromInvariantString(readStringValue.Invoke());
+            // throwing an exception if the converter cannot handle the possibly null value
+            result = converter.ConvertFromInvariantString(readStringValue.Invoke()!);
             return true;
         }
 

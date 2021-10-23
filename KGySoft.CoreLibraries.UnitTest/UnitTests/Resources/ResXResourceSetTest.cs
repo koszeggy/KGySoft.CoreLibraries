@@ -24,6 +24,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+
+using KGySoft.Reflection;
 #if NETFRAMEWORK
 using System.Windows.Forms; 
 #endif
@@ -72,7 +74,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Methods
 
-        #region Public Methods
+        #region Static Methods
+
+#if !NETFRAMEWORK
+        private static void RemoveUnsupportedItems(ResXResourceSet rs)
+        {
+            string[] unsupported =
+#if NETCOREAPP2_0 // .NET Core 2.0 Drawing and WinForms types are not supported
+        		{ "System.Drawing", "System.Windows.Forms" }; 
+#else // .NET Core 3.0 and above: Drawing and WinForms types are supported, only binary serialized types are removed
+                Reflector.EmptyArray<string>();
+#endif
+
+            bool origMode = rs.SafeMode;
+            rs.SafeMode = true;
+            foreach (var item in rs.GetEnumerator().ToEnumerable<string, ResXDataNode>().ToList())
+            {
+                if (item.Value.AssemblyQualifiedName?.ContainsAny(unsupported) == true
+                    || item.Value.FileRef?.TypeName.ContainsAny(unsupported) == true
+                    || item.Value.MimeType == ResXCommon.BinSerializedObjectMimeType)
+                {
+                    rs.RemoveObject(item.Key);
+                }
+            }
+
+            rs.SafeMode = origMode;
+        }
+#endif 
+
+        #endregion
+
+        #region Instance Methods
 
         /// <summary>
         /// Tests whether the different kinds of objects can be deserialized.
@@ -410,36 +442,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
             Assert.AreSame(rs.GetString(key), rs.GetString(key));
         }
-
-        #endregion
-
-        #region Private Methods
-
-#if !NETFRAMEWORK
-        private void RemoveUnsupportedItems(ResXResourceSet rs)
-        {
-            string[] unsupported =
-#if NETCOREAPP2_0 // .NET Core 2.0 Drawing and WinForms types are not supported
-        		{ "System.Drawing", "System.Windows.Forms" }; 
-#else // .NET Core 3.0 and above: Drawing and WinForms types are supported, only binary serialized types are removed
-                new string[0];
-#endif
-
-            bool origMode = rs.SafeMode;
-            rs.SafeMode = true;
-            foreach (var item in rs.GetEnumerator().ToEnumerable<string, ResXDataNode>().ToList())
-            {
-                if (item.Value.AssemblyQualifiedName?.ContainsAny(unsupported) == true
-                    || item.Value.FileRef?.TypeName.ContainsAny(unsupported) == true
-                    || item.Value.MimeType == ResXCommon.BinSerializedObjectMimeType)
-                {
-                    rs.RemoveObject(item.Key);
-                }
-            }
-
-            rs.SafeMode = origMode;
-        }
-#endif 
 
         #endregion
 

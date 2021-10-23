@@ -1156,7 +1156,7 @@ namespace KGySoft.ComponentModel
             ProcessCollectionChanged(e);
         }
 
-        private void BindingList_ListChanged(object sender, ListChangedEventArgs e)
+        private void BindingList_ListChanged(object? sender, ListChangedEventArgs e)
         {
             // we don't maintain item subscriptions here because it is the inner IBindingList's task
             if (isExplicitChanging)
