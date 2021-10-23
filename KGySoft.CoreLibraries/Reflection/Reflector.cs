@@ -2047,7 +2047,7 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.type);
             object? result;
 
-            // In case of value types no parameterless constructor would be found - redirecting
+            // In case of value types a parameterless constructor does not necessarily exist - redirecting (a possible constructor still will be invoked)
             if (type.IsValueType && (parameters?.Length ?? 0) == 0)
                 TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result);
             else
@@ -2125,7 +2125,7 @@ namespace KGySoft.Reflection
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            // In case of value types no parameterless constructor would be found - redirecting
+            // In case of value types a parameterless constructor does not necessarily exist - redirecting (a possible constructor still will be invoked)
             return type.IsValueType && (parameters?.Length ?? 0) == 0
                 ? TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result)
                 : TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result);

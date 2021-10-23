@@ -17,11 +17,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
+#if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
+#endif
 
-using KGySoft.Collections;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
@@ -231,6 +233,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
         #region Nested structs
 
+        #region TestStruct struct
+
         private struct TestStruct
         {
             #region Fields
@@ -392,6 +396,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #endregion
         }
+
+        #endregion
+
+        #region TestStructWithParameterlessCtor struct
+
+        private struct TestStructWithParameterlessCtor
+        {
+            #region Properties
+
+            public bool Initialized { get; }
+
+            #endregion
+
+            #region Constructors
+
+            public TestStructWithParameterlessCtor() => Initialized = true;
+
+            #endregion
+        }
+
+        #endregion
 
         #endregion
 
@@ -1593,6 +1618,47 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = (TestStruct)Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], result.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+        }
+
+        [Test]
+        public void StructConstructionWithDefaultCtorByType()
+        {
+            Type testType = typeof(TestStructWithParameterlessCtor);
+
+            Console.Write("System Activator...");
+            var result = (TestStructWithParameterlessCtor)Activator.CreateInstance(testType);
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("Type Descriptor...");
+            result = (TestStructWithParameterlessCtor)TypeDescriptor.CreateInstance(null, testType, null, null);
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("Object Factory...");
+            result = (TestStructWithParameterlessCtor)CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("Reflector...");
+            result = (TestStructWithParameterlessCtor)Reflector.CreateInstance(testType);
+            Assert.IsTrue(result.Initialized);
+        }
+
+        [Test]
+        public void StructConstructionWithDefaultCtorByCtorInfo()
+        {
+            Type testType = typeof(TestStructWithParameterlessCtor);
+            ConstructorInfo ci = testType.GetConstructor(Type.EmptyTypes);
+
+            Console.Write("System Reflection...");
+            TestStructWithParameterlessCtor result = (TestStructWithParameterlessCtor)ci.Invoke(null);
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("Object Factory...");
+            result = (TestStructWithParameterlessCtor)CreateInstanceAccessor.GetAccessor(ci).CreateInstance();
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("Reflector...");
+            result = (TestStructWithParameterlessCtor)Reflector.CreateInstance(ci);
+            Assert.IsTrue(result.Initialized);
         }
 
         #endregion
