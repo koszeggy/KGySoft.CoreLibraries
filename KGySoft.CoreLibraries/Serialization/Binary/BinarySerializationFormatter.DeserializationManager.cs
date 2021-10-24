@@ -1681,6 +1681,8 @@ namespace KGySoft.Serialization.Binary
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
                 if (!structType.IsValueType)
                     Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
+                if (SafeMode && structType.IsManaged())
+                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceSafe(type));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);

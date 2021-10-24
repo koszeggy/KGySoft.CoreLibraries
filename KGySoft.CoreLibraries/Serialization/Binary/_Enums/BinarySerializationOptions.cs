@@ -58,8 +58,8 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>This option makes possible to serialize <see cref="ValueType"/>s (<see langword="struct"/>) that are not marked by <see cref="SerializableAttribute"/>.
         /// <note type="caution">
-        /// Never use this flag on a <see cref="ValueType"/> that has reference (non-value type) fields. Deserializing such value would result an invalid
-        /// object with undetermined object references. Only string and array reference fields can be serialized safely if they are decorated by <see cref="MarshalAsAttribute"/> using
+        /// Using this flag allows serializing value types with reference (non-value type) fields by marshaling. Deserializing such value may fail if the <see cref="SafeMode"/> flag
+        /// if enabled. To be able to serialize string and array reference fields they must be decorated by <see cref="MarshalAsAttribute"/> using
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
         /// </note></para>
         /// <para>This flag is considered on serialization.</para>

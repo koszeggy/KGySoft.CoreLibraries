@@ -452,7 +452,7 @@ namespace KGySoft.Serialization.Binary
             T[] result = new T[count];
 #if NETCOREAPP3_0_OR_GREATER
             ref byte src = ref data[offset];
-            if (((nint)Unsafe.AsPointer(ref src) & IntPtr.Size) == 0)
+            if (((nint)Unsafe.AsPointer(ref src) & (IntPtr.Size - 1)) == 0)
                 Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
             else
                 Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
@@ -528,7 +528,7 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
             ref byte src = ref data[offset];
             ref byte dst = ref Unsafe.As<StrongBox<byte>>(result).Value;
-            if (((nint)Unsafe.AsPointer(ref src) & IntPtr.Size) == 0)
+            if (((nint)Unsafe.AsPointer(ref src) & (IntPtr.Size - 1)) == 0)
                 Unsafe.CopyBlock(ref dst, ref src, (uint)len);
             else
                 Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);

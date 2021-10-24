@@ -637,6 +637,9 @@ You may try to preload the assembly before deserialization or disable SafeMode i
   <data name="BinarySerialization_ValueTypeContainsReferencesFormat" xml:space="preserve">
     <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
   </data>
+  <data name="BinarySerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
+    <value>Type '{0}' cannot be deserialized as a raw value type in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
+  </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>

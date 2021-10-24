@@ -654,6 +654,9 @@ namespace KGySoft
         /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
         internal static string BinarySerializationValueTypeContainsReferences<T>() => Get("BinarySerialization_ValueTypeContainsReferencesFormat", typeof(T));
 
+        /// <summary>Type '{0}' cannot be deserialized as a raw value type in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
+        internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type);
+
         #endregion
 
         #region Cache<TKey, TValue>
