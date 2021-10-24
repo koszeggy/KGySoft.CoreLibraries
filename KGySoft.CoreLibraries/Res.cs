@@ -654,8 +654,8 @@ namespace KGySoft
         /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
         internal static string BinarySerializationValueTypeContainsReferences<T>() => Get("BinarySerialization_ValueTypeContainsReferencesFormat", typeof(T));
 
-        /// <summary>Type '{0}' cannot be deserialized as a raw value type in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
-        internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type);
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
+        internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -1092,6 +1092,9 @@ namespace KGySoft
 
         /// <summary>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</summary>
         internal static string XmlSerializationCircularReference(object obj) => Get("XmlSerialization_CircularReferenceFormat", obj);
+
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
+        internal static string XmlSerializationValueTypeContainsReferenceSafe(Type type) => Get("XmlSerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 

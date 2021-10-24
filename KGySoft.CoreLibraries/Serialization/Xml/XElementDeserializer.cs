@@ -71,20 +71,6 @@ namespace KGySoft.Serialization.Xml
 
         #region Static Methods
 
-        [SecuritySafeCritical]
-        private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
-        {
-            byte[] data = Convert.FromBase64String(ctx.Element.Value);
-            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
-            if (attrCrc != null)
-            {
-                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
-                    Throw.ArgumentException(Res.XmlSerializationCrcError);
-            }
-
-            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
-        }
-
         private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XContainer parent)
         {
             XElement? content = parent.Elements().FirstOrDefault();
@@ -505,6 +491,22 @@ namespace KGySoft.Serialization.Xml
             }
 
             return builder.ToArray();
+        }
+
+        [SecuritySafeCritical]
+        private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
+        {
+            if (SafeMode && ctx.Type!.IsManaged())
+                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(ctx.Type));
+            byte[] data = Convert.FromBase64String(ctx.Element.Value);
+            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
+                    Throw.ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
         }
 
         #endregion

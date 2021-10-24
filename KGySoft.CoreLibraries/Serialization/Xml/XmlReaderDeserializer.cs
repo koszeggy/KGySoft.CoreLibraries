@@ -70,25 +70,6 @@ namespace KGySoft.Serialization.Xml
 
         #region Static Methods
 
-        [SecuritySafeCritical]
-        private static void DeserializeStructBinary(ref TryDeserializeObjectContext context)
-        {
-            string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
-            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
-            byte[] data = context.Reader.NodeType == XmlNodeType.Text
-                ? Convert.FromBase64String(context.Reader.Value)
-                : Reflector.EmptyArray<byte>();
-            if (attrCrc != null)
-            {
-                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                    Throw.ArgumentException(Res.XmlSerializationCrcError);
-            }
-
-            context.Result = BinarySerializer.DeserializeValueType(context.Type!, data);
-            if (data.Length > 0)
-                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
-        }
-
         private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XmlReader reader)
         {
             // to XmlRoot or type name
@@ -598,6 +579,27 @@ namespace KGySoft.Serialization.Xml
                 }
             }
             while (true);
+        }
+
+        [SecuritySafeCritical]
+        private void DeserializeStructBinary(ref TryDeserializeObjectContext context)
+        {
+            if (SafeMode && context.Type!.IsManaged())
+                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(context.Type));
+            string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
+            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
+            byte[] data = context.Reader.NodeType == XmlNodeType.Text
+                ? Convert.FromBase64String(context.Reader.Value)
+                : Reflector.EmptyArray<byte>();
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
+                    Throw.ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            context.Result = BinarySerializer.DeserializeValueType(context.Type!, data);
+            if (data.Length > 0)
+                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
         }
 
         #endregion

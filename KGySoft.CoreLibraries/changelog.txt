@@ -186,6 +186,7 @@
     ! Starting with this version the BinarySerializationOptions.CompactSerializationOfStructures flag affects
       structs only without any references, which is very fast. Marshaling is used only if the obsolete
       ForcedSerializationValueTypesAsFallback flag is enabled.
+    ! Deserializing value types with references from raw data is not allowed in safe mode.
     ! The produced stream is not compatible with previous versions.
   + Supporting the BigInteger type natively (.NET Framework 4.0 and above)
   + Supporting the Rune type natively (.NET Core 3.0 and above)
@@ -198,6 +199,7 @@
 ! XmlSerializer class:
   ! Serialize* methods: Starting with this version the XmlSerializationOptions.CompactSerializationOfStructures
     flag affects structs only without any references, which is very fast.
+  ! Deserializing value types with references from raw data is not allowed in safe mode.
   + Supporting the BigInteger type natively (.NET Framework 4.0 and above)
   + Supporting the Rune type natively (.NET Core 3.0 and above)
   + Supporting the Half type natively (.NET 5.0 and above)
