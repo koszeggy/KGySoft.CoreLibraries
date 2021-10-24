@@ -125,35 +125,47 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [Test]
         public void ToStringTest()
         {
-            Assert.AreEqual("Max", Enum<TestULongEnum>.ToString(TestULongEnum.Max));
-            Assert.AreEqual("0", Enum<EmptyEnum>.ToString(default(EmptyEnum)));
-            Assert.AreEqual("None", Enum<TestLongEnum>.ToString(default(TestLongEnum)));
-            Assert.AreEqual("Alpha", Enum<TestLongEnum>.ToString(TestLongEnum.Alpha));
-            Assert.AreEqual("1", Enum<TestLongEnum>.ToString(TestLongEnum.Alpha, EnumFormattingOptions.Number));
-            Assert.AreEqual("-2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)(1 << 31)));
-            Assert.AreEqual("-2147483647", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1)));
-            Assert.AreEqual("1, -2147483648", Enum<EmptyEnum>.ToString((EmptyEnum)((1 << 31) | 1), EnumFormattingOptions.DistinctFlags));
+            static void Test<TEnum>(string expectedValue, TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto)
+                where TEnum : struct, Enum
+            {
+                Assert.AreEqual(expectedValue, Enum<TEnum>.ToString(value, format));
+#if NETCOREAPP3_0_OR_GREATER
+                Span<char> buffer = stackalloc char[expectedValue.Length];
+                Assert.IsTrue(Enum<TEnum>.TryFormat(value, buffer, out int charsWritten, format));
+                Assert.AreEqual(expectedValue.Length, charsWritten);
+                Assert.AreEqual(expectedValue, buffer.ToString());
+#endif
+            }
+
+            Test("Max", TestULongEnum.Max);
+            Test("0", default(EmptyEnum));
+            Test("None", default(TestLongEnum));
+            Test("Alpha", TestLongEnum.Alpha);
+            Test("1", TestLongEnum.Alpha, EnumFormattingOptions.Number);
+            Test("-2147483648", (EmptyEnum)(1 << 31));
+            Test("-2147483647", (EmptyEnum)((1 << 31) | 1));
+            Test("1, -2147483648", (EmptyEnum)((1 << 31) | 1), EnumFormattingOptions.DistinctFlags);
 
             Assert.AreNotEqual("-10", Enum<TestULongEnum>.ToString(unchecked((TestULongEnum)(-10))));
-            Assert.AreEqual("-10", Enum<TestLongEnum>.ToString((TestLongEnum)(-10)));
-            Assert.AreEqual("-10", Enum<TestIntEnum>.ToString((TestIntEnum)(-10)));
+            Test("-10", (TestLongEnum)(-10));
+            Test("-10", (TestIntEnum)(-10));
 
             TestLongEnum e = TestLongEnum.Gamma | TestLongEnum.Alphabet;
-            Assert.AreEqual("Alphabet, Gamma", e.ToString(EnumFormattingOptions.Auto));
-            Assert.AreEqual("7", e.ToString(EnumFormattingOptions.NonFlags));
-            Assert.AreEqual("Alpha, Beta, Gamma", e.ToString(EnumFormattingOptions.DistinctFlags));
-            Assert.AreEqual("Alphabet, Gamma", e.ToString(EnumFormattingOptions.CompoundFlagsOrNumber));
-            Assert.AreEqual("Alphabet, Gamma", e.ToString(EnumFormattingOptions.CompoundFlagsAndNumber));
+            Test("Alphabet, Gamma", e);
+            Test("7", e, EnumFormattingOptions.NonFlags);
+            Test("Alpha, Beta, Gamma", e, EnumFormattingOptions.DistinctFlags);
+            Test("Alphabet, Gamma", e, EnumFormattingOptions.CompoundFlagsOrNumber);
+            Test("Alphabet, Gamma", e, EnumFormattingOptions.CompoundFlagsAndNumber);
 
             e += 16;
-            Assert.AreEqual("23", e.ToString(EnumFormattingOptions.Auto));
-            Assert.AreEqual("23", e.ToString(EnumFormattingOptions.NonFlags));
-            Assert.AreEqual("Alpha, Beta, Gamma, 16", e.ToString(EnumFormattingOptions.DistinctFlags));
-            Assert.AreEqual("23", e.ToString(EnumFormattingOptions.CompoundFlagsOrNumber));
-            Assert.AreEqual("16, Alphabet, Gamma", e.ToString(EnumFormattingOptions.CompoundFlagsAndNumber));
+            Test("23", e);
+            Test("23", e, EnumFormattingOptions.NonFlags);
+            Test("Alpha, Beta, Gamma, 16", e, EnumFormattingOptions.DistinctFlags);
+            Test("23", e, EnumFormattingOptions.CompoundFlagsOrNumber);
+            Test("16, Alphabet, Gamma", e, EnumFormattingOptions.CompoundFlagsAndNumber);
 
             TestIntEnum ie = TestIntEnum.Simple | TestIntEnum.Normal | TestIntEnum.Risky;
-            Assert.AreEqual("Simple, Normal, Risky", ie.ToString(EnumFormattingOptions.Auto));
+            Test("Simple, Normal, Risky", ie);
         }
 
         [Test]

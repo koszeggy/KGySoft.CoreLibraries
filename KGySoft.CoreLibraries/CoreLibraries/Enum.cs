@@ -393,10 +393,6 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static TEnum GetFlagsMask() => converter.ToEnum(FlagsMask);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-
-#endif
-
         /// <summary>
         /// Gets the defined flags in <typeparamref name="TEnum"/>, where each flags are returned as distinct values.
         /// </summary>

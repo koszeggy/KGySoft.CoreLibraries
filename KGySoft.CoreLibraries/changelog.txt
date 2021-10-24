@@ -90,8 +90,9 @@
   + New OrdinalRandomized property
   + New OrdinalIgnoreCaseRandomized property
 * Enum<TEnum> class:
-  * GetFlags(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
+  + New TryFormat methods to allow writing enum values in Span<char> (.NET Standard 2.1 and above)
   + ToString(TEnum,EnumFormattingOptions,string): Supporting EnumFormattingOptions.Number option
+  * GetFlags(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
 * EnumExtensions class:
   * GetFlags<TEnum>(TEnum,bool) method: the bool parameter (onlyDefinedValues) is now optional
 * SecureRandom class: improving performance

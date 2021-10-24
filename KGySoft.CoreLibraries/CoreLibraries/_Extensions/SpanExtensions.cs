@@ -556,6 +556,25 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
+        internal static bool TryWrite(this Span<char> destination, string value, out int charsWritten)
+        {
+            if (value.AsSpan().TryCopyTo(destination))
+            {
+                charsWritten = value.Length;
+                return true;
+            }
+
+            charsWritten = 0;
+            return false;
+        }
+
+        internal static void Append(this ref Span<char> destination, ReadOnlySpan<char> value)
+        {
+            Debug.Assert(destination.Length >= value.Length);
+            value.CopyTo(destination);
+            destination = destination.Slice(value.Length);
+        }
+
         #endregion
 
         #endregion
