@@ -1212,7 +1212,9 @@ namespace KGySoft.Serialization.Binary
             /// <param name="dataTypeDescriptor">The descriptor of the data type to be deserialized.</param>
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
+#endif
             private object? ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
                 bool TryGetFromCache(out object? cachedValue)
@@ -1682,7 +1684,7 @@ namespace KGySoft.Serialization.Binary
                 if (!structType.IsValueType)
                     Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
                 if (SafeMode && structType.IsManaged())
-                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceSafe(type));
+                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceSafe(structType));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);

@@ -545,7 +545,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     throw;
                 }
 
-                Assert.IsTrue(result >= min && result <= max);
+                Assert.IsTrue(result >= min.Date && result <= max.Date);
             }
 
             Test(DateTime.Now, DateTime.Now.AddDays(1));

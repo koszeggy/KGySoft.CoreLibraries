@@ -295,7 +295,9 @@ namespace KGySoft.Serialization.Xml
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
+#if NET5_0_OR_GREATER
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+#endif
         private bool TryDeserializeObject(Type? type, XmlReader reader, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
@@ -585,7 +587,7 @@ namespace KGySoft.Serialization.Xml
         private void DeserializeStructBinary(ref TryDeserializeObjectContext context)
         {
             if (SafeMode && context.Type!.IsManaged())
-                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(context.Type));
+                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(context.Type!));
             string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
             ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
             byte[] data = context.Reader.NodeType == XmlNodeType.Text

@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Security;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
 using System.Runtime.CompilerServices;
 #endif
@@ -50,6 +51,7 @@ namespace KGySoft.Reflection
         #region SizeOfCache
 #if !NETCOREAPP3_0_OR_GREATER
 
+        [SecuritySafeCritical]
         private static class SizeOfCache
         {
             #region Fields

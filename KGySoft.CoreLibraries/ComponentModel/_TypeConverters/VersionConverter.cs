@@ -20,6 +20,7 @@ using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 using System.Reflection;
+using System.Security;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -73,6 +74,7 @@ namespace KGySoft.ComponentModel
         /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
+        [SecuritySafeCritical]
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (!destinationType.In(supportedTypes))

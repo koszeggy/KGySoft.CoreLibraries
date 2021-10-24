@@ -201,7 +201,7 @@ namespace KGySoft.CoreLibraries
                 separator = EnumExtensions.DefaultFormatSeparator;
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator.Length * (origRawValue.GetFlagsCount() - 1));
+            string result = new String('\0', resultLength + separator!.Length * (origRawValue.GetFlagsCount() - 1));
 
             fixed (char* pinnedResult = result)
             {
@@ -367,7 +367,7 @@ namespace KGySoft.CoreLibraries
             }
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator.Length * (resultsCount - 1));
+            string result = new String('\0', resultLength + separator!.Length * (resultsCount - 1));
             fixed (char* pinnedResult = result)
             {
                 var sb = new MutableStringBuilder(pinnedResult, result.Length);
@@ -501,7 +501,10 @@ namespace KGySoft.CoreLibraries
         private static void ToNumericString(ulong value, ref Span<char> destination)
         {
             if (TryFormatNumericString(value, destination, out int charsWritten))
+            {
                 destination = destination.Slice(charsWritten);
+                return;
+            }
 
             Debug.Fail("Could not write value");
         }

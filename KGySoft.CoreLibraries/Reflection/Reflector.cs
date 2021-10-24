@@ -44,7 +44,9 @@ using KGySoft.CoreLibraries;
 
 #region Suppressions
 
-#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw class but FxCop ignores [DoesNotReturn]
+#if NET5_0_OR_GREATER
+#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw class but FxCop ignores [DoesNotReturn] 
+#endif
 
 #endregion
 
@@ -53,7 +55,9 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Provides reflection routines on objects that are in most case faster than standard System.Reflection ways.
     /// </summary>
+#if NET5_0_OR_GREATER
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
+#endif
     public static class Reflector
     {
         #region Fields
@@ -93,7 +97,7 @@ namespace KGySoft.Reflection
         internal static readonly Type TimeSpanType = typeof(TimeSpan);
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         internal static readonly Type DateOnlyType = typeof(DateOnly);
         internal static readonly Type TimeOnlyType = typeof(TimeOnly);
 #endif

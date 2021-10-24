@@ -88,7 +88,9 @@ namespace KGySoft.CoreLibraries
 
             #region Protected Methods
 
-            [SuppressMessage("Usage", "CA2215:Dispose methods should call base class dispose", Justification = "No, that's the point")]
+#if NET5_0_OR_GREATER
+            [SuppressMessage("Usage", "CA2215:Dispose methods should call base class dispose", Justification = "No, that's the point")] 
+#endif
             protected override void Dispose(bool disposing)
             {
                 // not calling base because this instance is exposed as a static singleton

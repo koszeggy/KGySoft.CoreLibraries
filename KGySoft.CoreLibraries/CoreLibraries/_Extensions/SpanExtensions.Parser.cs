@@ -215,8 +215,10 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
-                Justification = "Intended, in Release JIT compliler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+                Justification = "Intended, in Release JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+#endif
             private static bool TryParseKnownValueType<T>(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
@@ -333,7 +335,7 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(IntPtr))
                 {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                     if (IntPtr.TryParse(s, NumberStyles.Integer, culture, out IntPtr result))
                     {
                         value = (T)(object)result;
@@ -350,7 +352,7 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(UIntPtr))
                 {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                     if (UIntPtr.TryParse(s, NumberStyles.Integer, culture, out UIntPtr result))
                     {
                         value = (T)(object)result;
@@ -665,7 +667,7 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseIntPtr(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 if (IntPtr.TryParse(s, NumberStyles.Integer, culture, out IntPtr result))
                 {
                     value = result;
@@ -685,7 +687,7 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseUIntPtr(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 if (UIntPtr.TryParse(s, NumberStyles.Integer, culture, out UIntPtr result))
                 {
                     value = result;
