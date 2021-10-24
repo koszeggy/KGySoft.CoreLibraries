@@ -865,6 +865,8 @@ namespace KGySoft.CoreLibraries
         /// <returns>A random <see cref="BigInteger"/> that represents an integer of <paramref name="byteSize"/> bytes.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="byteSize"/> is negative.</exception>
+        /// <exception cref="OverflowException"><paramref name="byteSize"/> is too large.</exception>
+        /// <exception cref="OutOfMemoryException"><paramref name="byteSize"/> is too large.</exception>
         public static BigInteger SampleBigInteger(this Random random, int byteSize, bool isSigned = false)
         {
             if (random == null!)
@@ -876,8 +878,9 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(nameof(byteSize), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             }
 
-            // if an unsigned result is requested, then adding one extra byte to ensure that our result is not interpreted as two's complement
-            var bytes = new byte[byteSize + (isSigned ? 0 : 1)];
+            // If an unsigned result is requested, then adding one extra byte to ensure that our result is not interpreted as two's complement.
+            // Using uint just to prevent using a negative size (and throwing OverflowException instead) when byteSize is Int32.MaxValue
+            var bytes = new byte[(uint)byteSize + (isSigned ? 0U : 1U)];
             random.NextBytes(bytes);
 
             // clearing the extra added byte if needed
@@ -889,6 +892,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a non-negative random <see cref="BigInteger"/> that is within the specified maximum.
+        /// To generate a random n-byte integer use the <see cref="SampleBigInteger">SampleBigInteger</see> method instead.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
