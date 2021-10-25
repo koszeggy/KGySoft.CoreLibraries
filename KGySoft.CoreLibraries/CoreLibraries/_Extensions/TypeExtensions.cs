@@ -782,8 +782,10 @@ namespace KGySoft.CoreLibraries
             type.IsConstructedGenericType;
 #endif
 
+        [SecuritySafeCritical]
         internal static object? GetDefaultValue(this Type type) => type.IsValueType
-            ? Activator.CreateInstance(type)
+            // Trying to avoid executing possible existing parameterless struct constructor
+            ? Reflector.TryCreateUninitializedObject(type, out object? result) ? result : Activator.CreateInstance(type)
             : null;
 
         internal static bool IsSignedIntegerType(this Type type)

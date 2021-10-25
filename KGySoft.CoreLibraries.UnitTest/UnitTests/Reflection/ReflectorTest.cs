@@ -411,7 +411,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Constructors
 
-            public TestStructWithParameterlessCtor() => Initialized = true;
+            public TestStructWithParameterlessCtor()
+            {
+                Console.WriteLine($"{nameof(TestStructWithParameterlessCtor)}.Constructor() invoked");
+                Initialized = true;
+            }
 
             #endregion
         }
@@ -1628,6 +1632,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("System Activator...");
             var result = (TestStructWithParameterlessCtor)Activator.CreateInstance(testType);
             Assert.IsTrue(result.Initialized);
+
+            Console.Write("System Activator for the 2nd time...");
+            result = (TestStructWithParameterlessCtor)Activator.CreateInstance(testType);
+            if (!result.Initialized)
+                Console.WriteLine("Constructor was not invoked!");
+#if !NETFRAMEWORK // Activator.CreateInstance does not execute the default struct constructor for the 2nd time
+            Assert.IsTrue(result.Initialized);
+#endif
 
             Console.Write("Type Descriptor...");
             result = (TestStructWithParameterlessCtor)TypeDescriptor.CreateInstance(null, testType, null, null);

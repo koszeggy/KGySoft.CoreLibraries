@@ -522,7 +522,8 @@ namespace KGySoft.Serialization.Binary
             if (offset + len > data.Length)
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
-            // for structs Activator is faster than obtaining a CreateInstanceAccessor by type and invoking it
+            // For structs Activator is faster than obtaining a CreateInstanceAccessor by type and invoking it.
+            // Note: not an issue that possible default constructor is not executed in .NET Framework because the whole structure is overwritten
             object result = Activator.CreateInstance(type)!;
 
 #if NETCOREAPP3_0_OR_GREATER

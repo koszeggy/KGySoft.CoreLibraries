@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries
         public bool AllowDerivedTypesForNonSealedClasses { get; set; }
 
         /// <summary>
-        /// Gets or sets whether objects are allowed to be created without using the default constructor or (in case of collections) a constructor with a collection parameter.
+        /// Gets or sets whether non-value type objects are allowed to be created without using the default constructor or (in case of collections) a constructor with a collection parameter.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks><note type="caution">If the value of this property is <see langword="true"/>, then it cannot be guaranteed that a generated object will be in a consistent state.</note></remarks>

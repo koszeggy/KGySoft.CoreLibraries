@@ -20,6 +20,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+using KGySoft.CoreLibraries;
+
 #endregion
 
 namespace KGySoft.Reflection
@@ -177,7 +179,12 @@ namespace KGySoft.Reflection
                 case ConstructorInfo ci:
                     return new ParameterizedCreateInstanceAccessor(ci);
                 case Type t:
+#if NET6_0_OR_GREATER
                     return new DefaultCreateInstanceAccessor(t);
+#else
+                    // Pre.NET 6 platforms: Expression.New does not invoke structs with actual parameterless constructors so trying to obtain the default constructor in the first place
+                    return t.GetDefaultConstructor() is ConstructorInfo defaultCtor ? new ParameterizedCreateInstanceAccessor(defaultCtor) : new DefaultCreateInstanceAccessor(t);
+#endif
                 default:
                     return Throw.ArgumentException<CreateInstanceAccessor>(Argument.member, Res.ReflectionTypeOrCtorInfoExpected);
             }

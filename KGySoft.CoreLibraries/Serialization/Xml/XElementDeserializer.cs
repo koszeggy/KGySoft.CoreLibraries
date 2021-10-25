@@ -19,7 +19,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+#if NET5_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -339,7 +341,7 @@ namespace KGySoft.Serialization.Xml
                 }
 
                 ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
-                    ? ctx.Type.IsValueType ? Activator.CreateInstance(ctx.Type) : CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
+                    ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
                     : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
 
                 // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
@@ -384,7 +386,7 @@ namespace KGySoft.Serialization.Xml
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                    ? type.IsValueType ? Activator.CreateInstance(type)! : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
+                    ? CreateInstanceAccessor.GetAccessor(type).CreateInstance()
                     : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(type)));
                 if (instance is not IXmlSerializable xmlSerializable)
                 {

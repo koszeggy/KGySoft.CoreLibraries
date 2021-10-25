@@ -30,7 +30,9 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Runtime.Serialization;
+#endif
 using System.Security;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
@@ -138,7 +140,9 @@ namespace KGySoft.Reflection
         #region Private Fields
 
         private static IThreadSafeCacheAccessor<Type, string?>? defaultMemberCache;
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static bool? canCreateUninitializedObject;
+#endif
         private static bool? isMono;
         private static bool? isTypedReferenceSupported;
         private static int typedReferenceValueIndex;
@@ -200,7 +204,7 @@ namespace KGySoft.Reflection
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
         /// <remarks>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used,
-        /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the property is an instance member of a value type (<see langword="struct"/>),
+        /// except when the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the property is an instance member of a value type (<see langword="struct"/>),
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
@@ -1781,8 +1785,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>If you are not sure whether the type can be created without constructor parameters or by the provided <paramref name="genericParameters"/>, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static object CreateInstance(Type type, Type[]? genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1802,8 +1805,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>If you are not sure whether the type can be created without constructor parameters, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static object CreateInstance(Type type, ReflectionWays way = ReflectionWays.Auto)
             => CreateInstance(type, null, way);
@@ -1818,8 +1820,7 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, out object? result)
         {
@@ -1837,8 +1838,7 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, Type[]? genericParameters, out object? result)
             => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result);
@@ -1852,8 +1852,7 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, ReflectionWays way, out object? result)
             => TryCreateInstance(type, null, way, out result);
@@ -1866,8 +1865,7 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
-        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, out object? result)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result);
@@ -1902,17 +1900,18 @@ namespace KGySoft.Reflection
             switch (way)
             {
                 case ReflectionWays.Auto:
-                    if (type.IsValueType)
-                        goto case ReflectionWays.SystemReflection;
-                    else
-                        goto case ReflectionWays.DynamicDelegate;
                 case ReflectionWays.DynamicDelegate:
                     result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
                     return true;
                 case ReflectionWays.SystemReflection:
                     try
                     {
+#if NETFRAMEWORK || NETSTANDARD2_0
+                        // In .NET Framework Activator.CreateInstance fails to invoke the parameterless struct constructor if exists, see https://github.com/dotnet/runtime/issues/6536
+                        result = type.IsValueType && type.GetDefaultConstructor() is ConstructorInfo ci ? ci.Invoke(null) : Activator.CreateInstance(type, true);
+#else
                         result = Activator.CreateInstance(type, true);
+#endif
                         return result != null;
                     }
                     catch (TargetInvocationException e)
@@ -1935,22 +1934,10 @@ namespace KGySoft.Reflection
         internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowAlternativeWay, [MaybeNullWhen(false)]out object result)
         {
             result = null;
+            if (preferCtor && !allowAlternativeWay && type.IsValueType)
+                allowAlternativeWay = true;
 
-            // 1.) Value type: fails only if the type cannot be created from this domain
-            if (type.IsValueType)
-            {
-                try
-                {
-                    result = Activator.CreateInstance(type);
-                    return result != null;
-                }
-                catch (Exception e) when (!e.IsCritical())
-                {
-                    return false;
-                }
-            }
-
-            // 2.) By default constructor if preferred
+            // 1.) By default constructor if preferred (including structs with parameterless constructors)
             ConstructorInfo? defaultCtor = null;
             if (preferCtor && (defaultCtor = type.GetDefaultConstructor()) != null)
             {
@@ -1966,7 +1953,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            // 3.) Without constructor if allowed
+            // 2.) Without constructor if allowed
             if (!preferCtor || allowAlternativeWay)
             {
                 if (TryCreateUninitializedObject(type, out result))
@@ -1979,7 +1966,7 @@ namespace KGySoft.Reflection
             if (defaultCtor != null)
                 return false;
 
-            // 4.) By default constructor as a fallback
+            // 3.) By default constructor as a fallback
             if ((defaultCtor = type.GetDefaultConstructor()) != null)
             {
                 try
@@ -1999,23 +1986,44 @@ namespace KGySoft.Reflection
         [SecurityCritical]
         internal static bool TryCreateUninitializedObject(Type type, [MaybeNullWhen(false)]out object result)
         {
+#if NETFRAMEWORK || NETSTANDARD2_0
             result = null;
-            if (canCreateUninitializedObject == false)
+            if (canCreateUninitializedObject != false)
+            {
+                try
+                {
+                    result = DoCreateUninitializedObject(type);
+                    canCreateUninitializedObject = true;
+                    return true;
+                }
+                catch (SecurityException)
+                {
+                    canCreateUninitializedObject = false;
+                }
+            }
+
+            Debug.Assert(canCreateUninitializedObject == false);
+            if (!type.IsValueType)
                 return false;
 
             try
             {
-                result = DoCreateUninitializedObject(type);
-                canCreateUninitializedObject = true;
+                // This fails only if the value type cannot be created from this domain
+                // Note: Activator.CreateInstance might execute the possible existing default constructor, though it works only for the first time in .NET Framework.
+                result = Activator.CreateInstance(type);
                 return true;
             }
-            catch (SecurityException)
+            catch (Exception e) when (!e.IsCritical())
             {
-                canCreateUninitializedObject = false;
                 return false;
             }
+#else
+            result = RuntimeHelpers.GetUninitializedObject(type);
+            return true;
+#endif
         }
 
+#if NETFRAMEWORK || NETSTANDARD2_0
         /// <summary>
         /// At JIT-time this method may throw a SecurityException from a partially trusted domain. A separate method because
         /// the exception is thrown without even executing the code just by recognizing the GetUninitializedObject call in the body.
@@ -2023,6 +2031,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImplOptions.NoInlining)]
         [SecurityCritical]
         private static object DoCreateUninitializedObject(Type t) => FormatterServices.GetUninitializedObject(t);
+#endif
 
         #endregion
 
@@ -2039,9 +2048,9 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>If you are not sure whether the type can be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
-        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
-        /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way,
+        /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters,
+        /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
         public static object CreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
         {
@@ -2049,8 +2058,7 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.type);
             object? result;
 
-            // In case of value types a parameterless constructor does not necessarily exist - redirecting (a possible constructor still will be invoked)
-            if (type.IsValueType && (parameters?.Length ?? 0) == 0)
+            if ((parameters?.Length ?? 0) == 0)
                 TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result);
             else
                 TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result);
@@ -2118,17 +2126,16 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>.</returns>
         /// <remarks>
         /// <note>If a matching constructor could be found and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
-        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.
-        /// When the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters, then the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way,
+        /// except when the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the constructor has ref/out parameters,
+        /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, Type[]? genericParameters, ReflectionWays way, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
-            // In case of value types a parameterless constructor does not necessarily exist - redirecting (a possible constructor still will be invoked)
-            return type.IsValueType && (parameters?.Length ?? 0) == 0
+            return (parameters?.Length ?? 0) == 0
                 ? TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result)
                 : TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result);
         }
