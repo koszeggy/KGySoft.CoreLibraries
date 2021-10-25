@@ -216,7 +216,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new BigInteger(12.34), 12d);
             Test(new BigInteger(Double.MaxValue), Double.MaxValue);
 #endif
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
             Test('a', new Rune('a'));
             Test(new Rune('a'), 'a');
             Test("abc", new Rune[] { new Rune('a'), new Rune('b'), new Rune('c') });
@@ -290,7 +290,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if !NET35
             Test((BigInteger)1);
 #endif
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
             Test(new Rune('a'));
             Test(new Rune("🏯"[0], "🏯"[1]));
 #endif

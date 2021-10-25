@@ -3,8 +3,10 @@
   <PropertyGroup>
     <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;net5.0;net6.0</TargetFrameworks>
     <!--<TargetFrameworks>net6.0</TargetFrameworks>-->
+
     <!--For UnitTesting the .NET Standard versions-->
-    <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <DefineConstants>NETSTANDARD_TEST</DefineConstants>-->
 
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
 
@@ -28,7 +30,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsWindows)'=='true'">
-    <DefineConstants>WINDOWS</DefineConstants>
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <!-- Common NuGet references -->

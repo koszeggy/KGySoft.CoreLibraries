@@ -695,7 +695,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(10, s.Length);
         }
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
         [Test]
         public void NextRuneTest()
         {

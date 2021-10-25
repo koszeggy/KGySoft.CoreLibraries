@@ -260,7 +260,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", new BigInteger(1));
             Test("1.25", new BigInteger(1));
 #endif
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
             Test("a", new Rune('a'));
             Test("🏯", new Rune("🏯"[0], "🏯"[1]));
 #endif

@@ -588,7 +588,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
         [Test]
         public void SerializeRunes()
         {

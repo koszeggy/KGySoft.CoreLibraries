@@ -98,7 +98,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if !NET35
                 new BigInteger(1),
 #endif
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 new Rune('a'),
 #endif
 #if NET6_0_OR_GREATER
@@ -200,7 +200,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
         [Test]
         public void SerializeRunes()
         {

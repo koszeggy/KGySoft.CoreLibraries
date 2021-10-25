@@ -153,7 +153,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(int),
 
 #if NETCOREAPP3_0_OR_GREATER
-                new Rune('a'),
+#if !NETSTANDARD_TEST
+	            new Rune('a'),  
+#endif
                 new Index(1),
                 new Range(Index.FromStart(13), Index.FromEnd(13)),
 #endif
@@ -549,7 +551,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Type[] { typeof(int), typeof(List<int>), null },
                 Array.CreateInstance(Reflector.RuntimeType, 3), // runtime type array, set below
 #if NETCOREAPP3_0_OR_GREATER
-                new Rune[] { new Rune('a') },
+#if !NETSTANDARD_TEST
+	            new Rune[] { new Rune('a') },  
+#endif
                 new Index[] { new Index(1), new Index(1, true) },
                 new Range[] { new Range(1, 2), new Range(Index.Start, Index.End) },
 #endif
@@ -1390,7 +1394,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER
-                new Rune('a'),
+#if !NETSTANDARD_TEST
+                new Rune('a'),  
+#endif
                 new Index(1),
                 new Range(1, 2),
 #endif
