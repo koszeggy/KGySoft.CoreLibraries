@@ -308,7 +308,7 @@ Combines the features of `IBindingList` implementations (such as `BindingList<T>
 
 In .NET Framework some enum operations used to be legendarily slow. Back then I created the static [`Enum<TEnum>`][enum] and [`EnumComparer<TEnum>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_EnumComparer_1.htm) classes, which provide must faster enum operations than the `System.Enum` type. Since then, the performance has been radically improved, especially in .NET Core, so the difference became much narrower, though it [still exists](https://dotnetfiddle.net/xNTnLE).
 
-So today the main benefit of using the [`Enum<TEnum>`][enum] class is its extra features and maybe the support of `ReadOnlySpan<char>` type, which is still missing at `System.Enum`. And of course, if you target older frameworks, which can't use `ReadOnlySpan<char>`, you can still use the member overloads that accept [`StringSegment`][StringSegment] parameters.
+So today the main benefit of using the [`Enum<TEnum>`][enum] class is its extra features and maybe the support of formatting/parsing to and from `Span<char>`/`ReadOnlySpan<char>` types, which is missing at `System.Enum` on many platform versions. And if you target older frameworks, which can't use `ReadOnlySpan<char>`, you still can use the `Parse`/`TryParse` overloads that accept [`StringSegment`][StringSegment] parameters.
 
 > _Tip:_ See the performance comparison in .NET Core and try it [online](https://dotnetfiddle.net/xNTnLE).
 

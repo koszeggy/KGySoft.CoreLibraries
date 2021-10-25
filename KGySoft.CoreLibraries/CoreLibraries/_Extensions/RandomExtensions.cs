@@ -919,6 +919,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="BigInteger"/> value that is within a specified range.
+        /// To generate a random n-byte integer use the <see cref="SampleBigInteger">SampleBigInteger</see> method instead.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
