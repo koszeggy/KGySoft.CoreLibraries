@@ -49,6 +49,7 @@ namespace KGySoft.Collections
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="Array2D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
+    /// <para>The actual underlying single dimensional array can be accessed via the <see cref="Buffer"/> property that has an <see cref="ArraySection{T}.UnderlyingArray"/> property.</para>
     /// <para>If the current platform supports it, the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
     /// <note>Unlike the underlying <see cref="ArraySection{T}"/>, the <see cref="Array2D{T}"/> implements the <see cref="IDisposable"/> interface.
     /// Calling the <see cref="Dispose">Dispose</see> method is required if the <see cref="Array2D{T}"/> was not created from an existing <see cref="ArraySection{T}"/>

@@ -151,6 +151,17 @@ namespace KGySoft.Collections
         #region Public Properties
 
         /// <summary>
+        /// Gets the underlying array of this <see cref="ArraySection{T}"/>.
+        /// </summary>
+        [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Intended, same as for ArraySegment")]
+        public T[]? UnderlyingArray => array;
+
+        /// <summary>
+        /// Gets the offset, which denotes the start position of this <see cref="ArraySection{T}"/> within the <see cref="UnderlyingArray"/>.
+        /// </summary>
+        public int Offset => offset;
+
+        /// <summary>
         /// Gets the number of elements in this <see cref="ArraySection{T}"/>.
         /// </summary>
         public int Length => length;
