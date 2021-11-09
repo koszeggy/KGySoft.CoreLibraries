@@ -149,7 +149,9 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Retrieves the value type(s) for a dictionary.
             /// </summary>
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many common cases")]
+#endif
             private static DataTypesEnumerator GetDictionaryValueTypes(DataTypesEnumerator dataTypes)
             {
                 // descriptor must refer a generic dictionary type here
@@ -411,8 +413,10 @@ namespace KGySoft.Serialization.Binary
             /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/>.
             /// </summary>
             [SecurityCritical]
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+#endif
             private DataTypes GetDataType(Type type)
             {
                 #region Local methods to reduce complexity
@@ -565,8 +569,10 @@ namespace KGySoft.Serialization.Binary
                 WritePureObject(bw, obj, GetUnderlyingSimpleType(dataType));
             }
 
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+#endif
             [SecurityCritical]
             private void WriteCompressible(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
@@ -654,7 +660,9 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many cases.")]
+#endif
             private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
             {
                 switch (dataType)
@@ -1258,7 +1266,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void WriteObjectGraph(BinaryWriter bw, object data, Type? knownElementType, bool isRoot)
             {
-                Debug.Assert(!(data is Array), "Arrays cannot be serialized as an object graph.");
+                Debug.Assert(data is not Array, "Arrays cannot be serialized as an object graph.");
 
                 if (isRoot)
                 {

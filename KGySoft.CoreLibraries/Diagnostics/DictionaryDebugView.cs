@@ -51,7 +51,9 @@ namespace KGySoft.Diagnostics
         /// Gets the visible items in the debugger view
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+#if NET5_0_OR_GREATER
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Must be an array but it is not a problem as always a new array is created.")]
+#endif
         public KeyValuePair<TKey, TValue>[] Items
         {
             get

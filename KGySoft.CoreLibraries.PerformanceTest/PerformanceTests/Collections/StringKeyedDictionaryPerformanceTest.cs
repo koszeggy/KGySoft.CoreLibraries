@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 .AddCase(i => dictionary[i.ToString(CultureInfo.InvariantCulture)], "Dictionary read")
                 .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture)], "StringKeyedDictionary read (string)")
                 .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture).AsSegment()], "StringKeyedDictionary read (StringSegment)")
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                 .AddCase(i => strDict[i.ToString(CultureInfo.InvariantCulture).AsSpan()], "StringKeyedDictionary read (ReadOnlySpan<char>)") 
 #endif
                 .DoTest()

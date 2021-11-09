@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="In{T}(T,T[])"/> overload for an example.

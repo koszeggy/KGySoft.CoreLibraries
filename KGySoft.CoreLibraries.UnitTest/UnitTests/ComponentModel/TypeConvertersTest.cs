@@ -36,12 +36,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
         [TestCase(42, typeof(string))]
         [TestCase(42, typeof(byte[]))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(42, typeof(InstanceDescriptor))]
 #endif
         [TestCase(null, typeof(string))]
         [TestCase(null, typeof(byte[]))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(null, typeof(InstanceDescriptor))]
 #endif
         public void BinaryTypeConverterTest(object testData, Type targetType)
@@ -56,12 +56,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
         [TestCase(1250, typeof(string))]
         [TestCase(1250, typeof(int))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(1250, typeof(InstanceDescriptor))]
 #endif
         [TestCase(null, typeof(string))]
         [TestCase(null, typeof(int))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(null, typeof(InstanceDescriptor))]
 #endif
         public void EncodingConverterTest(int? codePage, Type targetType)
@@ -77,12 +77,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
         [TestCase(ConsoleColor.Blue, typeof(string))]
         [TestCase(ConsoleColor.Blue, typeof(Enum[]))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(ConsoleColor.Blue, typeof(InstanceDescriptor))]
 #endif
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(string))]
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(Enum[]))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(InstanceDescriptor))]
 #endif
         public void FlagsEnumConverterTest<TEnum>(TEnum testData, Type targetType)
@@ -105,12 +105,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
         [TestCase("1.2.0", typeof(string))]
         [TestCase("1.2.0", typeof(Version))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase("1.2.0", typeof(InstanceDescriptor))]
 #endif
         [TestCase(null, typeof(string))]
         [TestCase(null, typeof(Version))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(null, typeof(InstanceDescriptor))]
 #endif
         public void VersionConverterTest(string versionString, Type targetType)
@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         [TestCase("value", typeof(string))]
         [TestCase("", typeof(string))]
         [TestCase(null, typeof(string))]
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase("value", typeof(InstanceDescriptor))]
         [TestCase("", typeof(InstanceDescriptor))]
         [TestCase(null, typeof(InstanceDescriptor))]

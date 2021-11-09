@@ -301,7 +301,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<MemoryStream>(resx);
             Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
 
-#if !NETCOREAPP2_0 // System.NotSupportedException : Cannot read resources that depend on serialization.
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) // System.NotSupportedException : Cannot read resources that depend on serialization.
             // even for non-string resources
             resName = "TestImage";
             manager.Source = ResourceManagerSources.CompiledOnly;

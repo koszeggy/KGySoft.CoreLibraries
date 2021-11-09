@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+﻿#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,12 +106,12 @@ namespace KGySoft.CoreLibraries
 
             internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, bool safeMode, out object? value, out Exception? error)
             {
-                if (type == null)
+                if (type == null!)
                     Throw.ArgumentNullException(Argument.type);
 
                 error = null;
                 value = null;
-                if (s == null && type.CanAcceptValue(null))
+                if (s == null! && type.CanAcceptValue(null))
                     return true;
 
                 type = Nullable.GetUnderlyingType(type) ?? type;
@@ -124,11 +124,10 @@ namespace KGySoft.CoreLibraries
                     // ReSharper disable once PossibleNullReferenceException
                     if (type.IsEnum)
                     {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-                        return Enum.TryParse(type, s.ToString(), out value);
-#else
-                        // as of 06/2020 there is no such overload yet but we hope it for the future...
+#if NET6_0_OR_GREATER
                         return Enum.TryParse(type, s, out value);
+#else
+                        return Enum.TryParse(type, s.ToString(), out value);
 #endif
                     }
 
@@ -394,7 +393,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Single.TryParse(s, floatStyle, culture, out float result))
                     {
-#if NETSTANDARD
+#if !NETCOREAPP3_0_OR_GREATER
                         if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = FloatExtensions.NegativeZero;
 #endif
@@ -407,7 +406,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Double.TryParse(s, floatStyle, culture, out double result))
                     {
-#if NETSTANDARD
+#if !NETCOREAPP3_0_OR_GREATER
                         if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = DoubleExtensions.NegativeZero;
 #endif
@@ -741,7 +740,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-#if NETSTANDARD
+#if !NETCOREAPP3_0_OR_GREATER
                 if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = FloatExtensions.NegativeZero;
 #endif
@@ -757,7 +756,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-#if NETSTANDARD
+#if !NETCOREAPP3_0_OR_GREATER
                 if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = DoubleExtensions.NegativeZero;
 #endif

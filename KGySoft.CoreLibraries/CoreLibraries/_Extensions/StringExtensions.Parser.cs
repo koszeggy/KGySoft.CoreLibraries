@@ -279,8 +279,10 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
-                Justification = "Intended, in Release JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+                Justification = "Intended, in Release build the JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+#endif
             private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, [MaybeNullWhen(false)]out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
@@ -459,7 +461,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Single.TryParse(s, floatStyle, culture, out float result))
                     {
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
                         if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = FloatExtensions.NegativeZero;
 #endif
@@ -472,7 +474,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (Double.TryParse(s, floatStyle, culture, out double result))
                     {
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
                         if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                             result = DoubleExtensions.NegativeZero;
 #endif
@@ -816,7 +818,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
                 if (result.Equals(0f) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = FloatExtensions.NegativeZero;
 #endif
@@ -832,7 +834,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
                 if (result.Equals(0d) && s.TrimStart().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                     result = DoubleExtensions.NegativeZero;
 #endif

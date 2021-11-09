@@ -375,7 +375,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeByTypeConverter()
         {
-#if !NETCOREAPP3_0
+#if !NETCOREAPP3_0_OR_GREATER
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
@@ -613,7 +613,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeSimpleArrays()
         {
-#if !NETCOREAPP3_0
+#if !NETCOREAPP3_0_OR_GREATER
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             IList[] referenceObjects =

@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Buffers; 
 #endif
 using System.Collections;
@@ -48,7 +48,7 @@ namespace KGySoft.Collections
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
-    /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="Array2D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
+    /// <para>In .NET Core 2.1/.NET Standard 2.1 and above an <see cref="Array2D{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
     /// <para>The actual underlying single dimensional array can be accessed via the <see cref="Buffer"/> property that has an <see cref="ArraySection{T}.UnderlyingArray"/> property.</para>
     /// <para>If the current platform supports it, the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>.
     /// <note>Unlike the underlying <see cref="ArraySection{T}"/>, the <see cref="Array2D{T}"/> implements the <see cref="IDisposable"/> interface.
@@ -122,17 +122,17 @@ namespace KGySoft.Collections
         /// </summary>
         public ArraySection<T> Buffer => buffer;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => buffer.AsMemory;
 
         /// <summary>
         /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => buffer.AsSpan;
 #endif
 
@@ -231,7 +231,7 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(Array2D<T> array) => array.buffer;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="Array2D{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
         /// </summary>

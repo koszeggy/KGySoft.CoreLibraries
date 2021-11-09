@@ -221,7 +221,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
         }
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
         [Test]
         public void ReadToSeparatorSpanTest()
         {

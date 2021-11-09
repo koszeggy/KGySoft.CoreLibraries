@@ -31,6 +31,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 #if !NET35
 using System.Numerics;
 #endif
@@ -634,13 +635,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeByTypeConverter()
         {
-#if NETFRAMEWORK || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
             typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
 #endif
+#if NETCOREAPP
+            Assembly.Load("System.Drawing"); // preloading assembly for safe mode
+#endif
+
             object[] referenceObjects =
             {
                 // built-in
@@ -664,7 +669,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Cursors.Arrow, // a default cursor: by string
 #endif
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
                 Icons.Information, // multi-resolution icon (built-in saves one page only)
                 Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
 #if WINDOWS

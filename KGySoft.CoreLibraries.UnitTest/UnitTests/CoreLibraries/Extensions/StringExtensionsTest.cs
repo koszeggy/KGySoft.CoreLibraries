@@ -18,6 +18,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+
 #if !NET35
 using System.Numerics;
 #endif
@@ -25,7 +26,7 @@ using System.Numerics;
 using System.Text;
 #endif
 
-#if NETFRAMEWORK || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.ComponentModel;
 #endif
 
@@ -144,7 +145,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
 
             // Registered conversions
-#if NETFRAMEWORK || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
             Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));
             typeof(Version).RegisterTypeConverter<VersionConverter>(); 
 #endif

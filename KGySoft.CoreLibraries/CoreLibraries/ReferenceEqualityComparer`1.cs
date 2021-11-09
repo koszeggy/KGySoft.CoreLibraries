@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8769 // Nullability of reference types in type of parameter doesn't match implemented member (possibly because of nullability attributes).
 #endif
 

@@ -319,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // by type converter
             rs.SetObject("TypeConverter/string", Point.Empty);
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
             rs.SetObject("TypeConverter/byte[]", SystemIcons.Application.ToBitmap()); 
 #endif
 

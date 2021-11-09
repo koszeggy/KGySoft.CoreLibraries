@@ -15,7 +15,9 @@
 
 #region Usings
 
+#if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -27,8 +29,10 @@ namespace KGySoft
         #region Methods
 
         [ModuleInitializer]
+#if NET6_0_OR_GREATER
         [SuppressMessage("Usage", "CA2255:The 'ModuleInitializer' attribute should not be used in libraries",
             Justification = "See the comment, it is intended and is important to work properly.")]
+#endif
         internal static void ModuleInitializer()
         {
             // Just referencing Res in order to trigger its static constructor and initialize the project resources.

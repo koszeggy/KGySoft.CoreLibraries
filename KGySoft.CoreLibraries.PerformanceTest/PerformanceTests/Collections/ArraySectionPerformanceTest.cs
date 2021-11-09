@@ -120,7 +120,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             arraySection.Release();
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [Test]
         public void AsSpanTest()
         {

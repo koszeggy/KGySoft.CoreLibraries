@@ -17,7 +17,9 @@
 
 using System;
 using System.Collections.Generic;
+#if NET5_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 #if NET40_OR_GREATER || NETSTANDARD2_0
 using System.Linq.Expressions; 
 #endif
@@ -78,7 +80,9 @@ namespace KGySoft.CoreLibraries
     /// </example>
     [Serializable]
     [CLSCompliant(false)]
+#if NET5_0_OR_GREATER
     [SuppressMessage("Usage", "CA2229:Implement serialization constructors", Justification = "False alarm, SerializationUnityHolder will be deserialized.")]
+#endif
     public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>, ISerializable
     {
         #region Nested Classes

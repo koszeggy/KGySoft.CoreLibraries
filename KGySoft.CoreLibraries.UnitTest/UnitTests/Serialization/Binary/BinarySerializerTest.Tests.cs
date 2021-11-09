@@ -406,7 +406,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // Type is not serializable in .NET Core
+#if !NETCOREAPP // Type is not serializable in .NET Core
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 #endif
@@ -846,7 +846,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETCOREAPP2_1
             // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
@@ -2019,7 +2019,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 DBNull.Value, // mscorlib -> System.Private.CorLib via UnitySerializationHolder (missing attribute)  
 #endif
                 new BitArray(new[] { 1 }), // mscorlib -> System.Collections
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
                 // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
                 new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections  
 #endif

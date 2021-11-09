@@ -172,7 +172,7 @@ namespace KGySoft.ComponentModel
                 // 2/a: by code from full name
                 int pos = name.IndexOf('|');
                 if (pos > 0 && Int32.TryParse(
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                     name.AsSpan(0, pos),
 #else
                     name.Substring(0, pos),

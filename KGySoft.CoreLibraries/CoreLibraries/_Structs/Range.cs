@@ -23,7 +23,7 @@ using System.ComponentModel;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8604 // Possible null reference argument. - IEqualityComparer.Equals
 #endif
 

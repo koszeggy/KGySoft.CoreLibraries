@@ -21,7 +21,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 
-using KGySoft.Annotations;
 using KGySoft.Collections;
 
 using NUnit.Framework;
@@ -72,7 +71,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
             Assert.AreEqual(1, dict["alpha".AsSegment()]);
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(1, dict["alpha".AsSpan()]);
 #endif
 
@@ -85,7 +84,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(2, dict.Count);
             Assert.AreEqual(-1, dict["alpha"]);
             Assert.AreEqual(-1, dict["alpha".AsSegment()]);
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Assert.AreEqual(-1, dict["alpha".AsSpan()]);
 #endif
 

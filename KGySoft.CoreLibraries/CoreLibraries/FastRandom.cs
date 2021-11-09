@@ -370,7 +370,7 @@ namespace KGySoft.CoreLibraries
                 FillBytes(pBuf, buffer.Length);
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>

@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
             Assert.AreEqual(1, dictObjRw.GetValueOrDefault("".AsSegment(), 1));
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             // Span overloads
             Assert.IsNull(dictConv.GetValueOrDefault("".AsSpan()));
             Assert.IsNull(dictObj.GetValueOrDefault("".AsSpan()));

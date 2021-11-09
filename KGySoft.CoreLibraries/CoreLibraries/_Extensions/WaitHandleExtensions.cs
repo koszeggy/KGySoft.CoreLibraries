@@ -61,10 +61,10 @@ namespace KGySoft.CoreLibraries
             finally
             {
                 registeredHandle?.Unregister(null);
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
-                tokenRegistration.Dispose();
-#else
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                 await tokenRegistration.DisposeAsync().ConfigureAwait(false);
+#else
+                tokenRegistration.Dispose();
 #endif
             }
         }

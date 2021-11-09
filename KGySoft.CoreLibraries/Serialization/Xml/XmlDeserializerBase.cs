@@ -431,7 +431,7 @@ namespace KGySoft.Serialization.Xml
                 else
                 {
                     if (!Int32.TryParse(
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                         dims[i].AsSpan(0, boundSep),
 #else
                         dims[i].Substring(0, boundSep),
@@ -439,7 +439,7 @@ namespace KGySoft.Serialization.Xml
                         NumberStyles.Integer, CultureInfo.InvariantCulture, out lowerBounds[i]))
                         Throw.ArgumentException(Res.XmlSerializationInvalidArrayBounds(dims[i]));
                     if (!Int32.TryParse(
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                             dims[i].AsSpan(boundSep + 2),
 #else
                             dims[i].Substring(boundSep + 2),

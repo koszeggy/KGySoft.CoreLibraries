@@ -35,7 +35,7 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if !NET5_0_OR_GREATER
@@ -56,7 +56,7 @@ namespace KGySoft.Collections
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
     /// <para>The <see cref="ArraySection{T}"/> type is similar to the combination of the <see cref="Memory{T}"/> type and the .NET Core version of the <see cref="ArraySegment{T}"/> type.</para>
-    /// <para>In .NET Core 3.0/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
+    /// <para>In .NET Core 2.1/.NET Standard 2.1 and above an <see cref="ArraySection{T}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property),
     /// which is much faster than using the <see cref="Memory{T}.Span">Span</see> property of a <see cref="Memory{T}"/> instance.</para>
     /// <para>If an <see cref="ArraySection{T}"/> is created by the <see cref="ArraySection{T}(int,bool)">constructor with a specified size</see>, then depending on the size and the
     /// current platform the underlying array might be obtained by using the <see cref="ArrayPool{T}"/>. 
@@ -153,7 +153,9 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the underlying array of this <see cref="ArraySection{T}"/>.
         /// </summary>
+#if NET5_0_OR_GREATER
         [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Intended, same as for ArraySegment")]
+#endif
         public T[]? UnderlyingArray => array;
 
         /// <summary>
@@ -177,17 +179,17 @@ namespace KGySoft.Collections
         /// </summary>
         public bool IsNullOrEmpty => length == 0;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public Span<T> AsSpan => new Span<T>(array, offset, length);
 #endif
 
@@ -285,7 +287,7 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(T[]? array) => array == null ? Null : new ArraySection<T>(array);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
         /// </summary>
@@ -328,7 +330,7 @@ namespace KGySoft.Collections
         /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
 #if NETFRAMEWORK || NETSTANDARD2_0
-        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Used in .NET Core 3.0/Standard 2.1 and above")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Used in .NET Core 2.1/Standard 2.1 and above")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
 #endif
         public ArraySection(int length, bool assureClean = true)
@@ -463,16 +465,15 @@ namespace KGySoft.Collections
         {
             if (IsNullOrEmpty)
             {
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETSTANDARD2_1 || NETCOREAPP2_0
-                Throw.InvalidOperationException(Res.ArraySectionEmpty);
+#if NET5_0_OR_GREATER
+                return ref Unsafe.NullRef<T>();
 #elif NETCOREAPP3_0
                 unsafe
                 {
                     return ref Unsafe.AsRef<T>(null);
                 }
 #else
-                return ref Unsafe.NullRef<T>();
-
+                Throw.InvalidOperationException(Res.ArraySectionEmpty);
 #endif
             }
 

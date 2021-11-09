@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries
             return StringSegment.GetNextSegment(ref rest, separators);
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Advances the specified <paramref name="rest"/> parameter after the next <paramref name="separator"/> and returns
         /// the consumed part without the <paramref name="separator"/>. If <paramref name="rest"/> started with <paramref name="separator"/>
@@ -334,7 +334,7 @@ namespace KGySoft.CoreLibraries
             if (!Enum<TEnum>.TryParse(s, out TEnum value))
                 return null;
 
-            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : null;
         }
 
         #endregion

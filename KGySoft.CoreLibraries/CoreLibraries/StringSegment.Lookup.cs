@@ -146,12 +146,12 @@ namespace KGySoft.CoreLibraries
             if (comparison == StringComparison.Ordinal)
                 return IndexOfInternal(value, startIndex, count);
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0
-            int result = str!.IndexOf(value.ToString()!, offset + startIndex, count, comparison);
-            return result >= 0 ? result - offset : -1;
-#else
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             int result = str.AsSpan(offset + startIndex, count).IndexOf(value, comparison);
             return result >= 0 ? result + startIndex : -1;
+#else
+            int result = str!.IndexOf(value.ToString()!, offset + startIndex, count, comparison);
+            return result >= 0 ? result - offset : -1;
 #endif
         }
 
@@ -218,7 +218,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value) => IndexOfInternal(value, 0, length);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
         /// using ordinal comparison.
@@ -371,12 +371,12 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return IsNull || value.length > 0 ? -1 : 0;
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD
-            int result = str!.LastIndexOf(value.ToString()!, offset + startIndex + count - 1, count, comparison);
-            return result >= 0 ? result - offset : -1;
-#else
+#if NETCOREAPP3_0_OR_GREATER
             int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
             return result >= 0 ? result + startIndex : -1;
+#else
+            int result = str!.LastIndexOf(value.ToString()!, offset + startIndex + count - 1, count, comparison);
+            return result >= 0 ? result - offset : -1;
 #endif
         }
 
@@ -454,7 +454,7 @@ namespace KGySoft.CoreLibraries
             return result >= 0 ? result - offset : -1;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
         /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
@@ -483,16 +483,16 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return IsNull || value.Length > 0 ? -1 : 0;
 
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER
+            int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
+            return result >= 0 ? result + startIndex : -1;
+#else
             int result = comparison == StringComparison.Ordinal
                 ? str.AsSpan(offset + startIndex, count).LastIndexOf(value)
                 : str!.LastIndexOf(value.ToString(), offset + startIndex, count, comparison);
             return result < 0 ? -1
                 : comparison == StringComparison.Ordinal ? result + startIndex
                 : result - offset;
-#else
-            int result = str.AsSpan(offset + startIndex, count).LastIndexOf(value, comparison);
-            return result >= 0 ? result + startIndex : -1;
 #endif
         }
 
@@ -679,7 +679,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(char value) => length > 0 && GetCharInternal(0) == value;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>
         /// using the specified <paramref name="comparison"/>.
@@ -742,7 +742,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(char value) => length > 0 && GetCharInternal(length - 1) == value;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets whether this <see cref="StringSegment"/> instance ends with the specified <paramref name="value"/>
         /// using the specified <paramref name="comparison"/>.
@@ -854,7 +854,7 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfInternal(ReadOnlySpan<char> s, int startIndex, int count)
         {

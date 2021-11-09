@@ -39,33 +39,33 @@ namespace KGySoft.CoreLibraries
         internal static long ToStopwatchTicks(int milliseconds) => milliseconds * stopwatchTicksPerMillisecond;
 
         internal static long GetTimeStamp() =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            // If high resolution is enabled, this can be 3.2 times faster than UtcNow
-            Stopwatch.GetTimestamp();
-#else
+#if NETCOREAPP3_0_OR_GREATER
             // On .NET 5 this is 8.1 times faster than UtcNow, though it changes in every 15 ms or so.
             Environment.TickCount64;
+#else
+            // If high resolution is enabled, this can be 3.2 times faster than UtcNow
+            Stopwatch.GetTimestamp();
 #endif
 
         internal static long GetInterval(int milliseconds) =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            ToStopwatchTicks(milliseconds);
-#else
+#if NETCOREAPP3_0_OR_GREATER
             milliseconds;
+#else
+            ToStopwatchTicks(milliseconds);
 #endif
 
         internal static long GetInterval(TimeSpan timeSpan) =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            timeSpan.Ticks * stopwatchTicksPerMillisecond / TimeSpan.TicksPerMillisecond;
-#else
+#if NETCOREAPP3_0_OR_GREATER
             timeSpan.Ticks / TimeSpan.TicksPerMillisecond;
+#else
+            timeSpan.Ticks * stopwatchTicksPerMillisecond / TimeSpan.TicksPerMillisecond;
 #endif
 
         internal static TimeSpan GetTimeSpan(long interval) =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            new TimeSpan(interval * TimeSpan.TicksPerMillisecond / stopwatchTicksPerMillisecond);
-#else
+#if NETCOREAPP3_0_OR_GREATER
             new TimeSpan(interval * TimeSpan.TicksPerMillisecond);
+#else
+            new TimeSpan(interval * TimeSpan.TicksPerMillisecond / stopwatchTicksPerMillisecond);
 #endif
 
         #endregion

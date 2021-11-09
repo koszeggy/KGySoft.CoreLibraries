@@ -93,7 +93,7 @@ namespace KGySoft.Security.Cryptography
             provider.GetBytes(buffer);
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of the specified <paramref name="buffer"/> with random numbers.
         /// </summary>
@@ -300,7 +300,7 @@ namespace KGySoft.Security.Cryptography
             Span<byte> bytes = stackalloc byte[4];
             provider.GetBytes(bytes);
             return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes)); 
-#elif NETSTANDARD2_1_OR_GREATER
+#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[4];
             provider.GetBytes(bytes);
             fixed (byte* p = bytes)
@@ -321,7 +321,7 @@ namespace KGySoft.Security.Cryptography
             Span<byte> bytes = stackalloc byte[8];
             provider.GetBytes(bytes);
             return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
-#elif NETSTANDARD2_1_OR_GREATER
+#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[8];
             provider.GetBytes(bytes);
             fixed (byte* p = bytes)

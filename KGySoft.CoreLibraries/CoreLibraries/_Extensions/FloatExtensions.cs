@@ -152,10 +152,10 @@ namespace KGySoft.CoreLibraries
         #region Internal Methods
 
         internal static string ToRoundtripString(this float value, IFormatProvider provider) =>
-#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_0
-            IsNegativeZero(value) ? "-0" : value.ToString("R", provider);
-#else
+#if NETCOREAPP3_0_OR_GREATER
             value.ToString("R", provider);
+#else
+            IsNegativeZero(value) ? "-0" : value.ToString("R", provider);
 #endif
 
 

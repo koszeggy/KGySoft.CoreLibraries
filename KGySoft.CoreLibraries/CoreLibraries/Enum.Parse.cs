@@ -302,7 +302,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Span
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.

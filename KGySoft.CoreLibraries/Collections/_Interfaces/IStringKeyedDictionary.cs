@@ -32,7 +32,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Represents an <see cref="IDictionary{TKey,TValue}"/> with <see cref="string">string</see> key
     /// that can be queried also by <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"/>
-    /// (in .NET Core 3.0/.NET Standard 2.1 and above) instances.
+    /// (in .NET Core 2.1/.NET Standard 2.1 and above) instances.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <seealso cref="string" />
@@ -51,7 +51,7 @@ namespace KGySoft.Collections
         /// <exception cref="KeyNotFoundException"><paramref name="key"/> is not found.</exception>
         TValue this[StringSegment key] { get; }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the value associated with the specified <paramref name="key"/>.
         /// </summary>
@@ -60,7 +60,7 @@ namespace KGySoft.Collections
         /// </returns>
         /// <param name="key">The key of the value to get or set.</param>
         /// <exception cref="KeyNotFoundException"><paramref name="key"/> is not found.</exception>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         TValue this[ReadOnlySpan<char> key] { get; }
 #endif
 
@@ -78,7 +78,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
         bool ContainsKey(StringSegment key);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Determines whether this instance contains an element with the specified <paramref name="key"/>.
         /// </summary>
@@ -86,7 +86,7 @@ namespace KGySoft.Collections
         /// <see langword="true"/>, if the dictionary contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key to locate.</param>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         bool ContainsKey(ReadOnlySpan<char> key);
 #endif
 
@@ -102,7 +102,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see cref="StringSegment.Null">StringSegment.Null</see>.</exception>
         bool TryGetValue(StringSegment key, [MaybeNullWhen(false)]out TValue value);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Tries to get the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
@@ -112,7 +112,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)] out TValue value);
 #endif
 
@@ -174,13 +174,13 @@ namespace KGySoft.Collections
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
         TActualValue GetValueOrDefault<TActualValue>(StringSegment key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Tries to get the value from the dictionary for the given <paramref name="key"/>.
         /// </summary>
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         TValue? GetValueOrDefault(ReadOnlySpan<char> key);
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, TActualValue defaultValue = default!) where TActualValue : TValue;
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace KGySoft.Collections
         /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the dictionary.</returns>
-        /// <remarks><note>This member is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         TActualValue GetValueOrDefault<TActualValue>(ReadOnlySpan<char> key, Func<TActualValue> defaultValueFactory) where TActualValue : TValue;
 #endif
 

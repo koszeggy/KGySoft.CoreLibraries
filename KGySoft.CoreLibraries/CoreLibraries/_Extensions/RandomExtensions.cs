@@ -1504,7 +1504,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns an <see cref="Array"/> of random characters that has the specified <paramref name="length"/>.
         /// </summary>
@@ -1649,7 +1649,7 @@ namespace KGySoft.CoreLibraries
                 FillChars(random, new MutableString(s, buffer.Length), strategy);
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Fills the elements of a <paramref name="buffer"/> with random characters using the specified <paramref name="allowedCharacters"/>.
         /// </summary>
@@ -1777,7 +1777,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
         /// </summary>
@@ -2135,7 +2135,7 @@ namespace KGySoft.CoreLibraries
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             // Interestingly, in .NET Core 3.0 this is still slower than pure byte arrays.
             // Still, we hope that Span performance (or the cast to ReadOnlySpan?) will be faster later
             // and that sparing heap allocation is worth it.
@@ -2238,7 +2238,7 @@ namespace KGySoft.CoreLibraries
             Span<byte> bytes = stackalloc byte[4];
             random.NextBytes(bytes);
             return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes));
-#elif NETSTANDARD2_1_OR_GREATER
+#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[4];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)
@@ -2259,7 +2259,7 @@ namespace KGySoft.CoreLibraries
             Span<byte> bytes = stackalloc byte[8];
             random.NextBytes(bytes);
             return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
-#elif NETSTANDARD2_1_OR_GREATER
+#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[8];
             random.NextBytes(bytes);
             fixed (byte* p = bytes)

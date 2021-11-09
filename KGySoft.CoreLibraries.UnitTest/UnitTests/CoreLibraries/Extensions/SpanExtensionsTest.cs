@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+﻿#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -17,14 +17,12 @@
 #region Usings
 
 using System;
-#if !NET35
 using System.Numerics;
-#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
 
-#if NETFRAMEWORK || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.ComponentModel;
 #endif
 using KGySoft.Reflection;
@@ -270,7 +268,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
 
             // Registered conversions
-#if NETFRAMEWORK || NETCOREAPP2_0
+#if !NETCOREAPP3_0_OR_GREATER
             Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));
             typeof(Version).RegisterTypeConverter<VersionConverter>(); 
 #endif

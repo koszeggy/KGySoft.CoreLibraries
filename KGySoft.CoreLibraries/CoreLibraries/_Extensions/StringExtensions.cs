@@ -31,8 +31,8 @@ using KGySoft.Reflection;
 
 #region Suppressions
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(string, StrongComparison) method in some targeted platforms  
+#if NET5_0_OR_GREATER
+#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(string, StringComparison) method in some targeted platforms  
 #endif
 
 #endregion
@@ -53,9 +53,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">The string to be extracted from quotes.</param>
         /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
-        [return:NotNullIfNotNull("s")]public static string RemoveQuotes(this string? s)
+        [return:NotNullIfNotNull("s")]public static string? RemoveQuotes(this string? s)
             => (s?.Length ?? 0) < 2
-                ? s!
+                ? s
                 : s!.Length > 1 && (s[0] == '"' && s[s.Length - 1] == '"' || s[0] == '\'' && s[s.Length - 1] == '\'')
                     ? s.Substring(1, s.Length - 2)
                     : s;
@@ -217,7 +217,7 @@ namespace KGySoft.CoreLibraries
             if (!Enum<TEnum>.TryParse(s, out TEnum value))
                 return null;
 
-            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : null;
         }
 
         /// <summary>

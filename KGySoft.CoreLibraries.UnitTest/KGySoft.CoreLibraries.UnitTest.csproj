@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp3.0;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0</TargetFrameworks>
     <!--<TargetFrameworks>net6.0</TargetFrameworks>-->
 
     <!--For UnitTesting the .NET Standard versions-->
@@ -24,7 +24,7 @@
 
     <!--Suppressions:
       MSB3568: Duplicate resources - intended, test data
-      NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
+      NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
       -->
     <NoWarn>$(NoWarn);MSB3568;NETSDK1138</NoWarn>
   </PropertyGroup>
@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <!-- .NET/Core only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1' OR '$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="System.Drawing.Common">
       <Version>5.0.2</Version>
     </PackageReference>

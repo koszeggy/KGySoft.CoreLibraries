@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString(TEnum value, string? separator) => ToString(value, EnumFormattingOptions.Auto, separator);
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Tries to format the <paramref name="value"/> of the current <typeparamref name="TEnum"/> instance into the provided span of characters.
         /// </summary>
@@ -225,7 +225,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static bool TryFormatDistinctFlags(TEnum e, Span<char> destination, out int charsWritten, ReadOnlySpan<char> separator)
         {
             EnsureRawValueNamePairs();
@@ -394,7 +394,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static bool TryFormatCompoundFlags(TEnum e, Span<char> destination, out int charsWritten, ReadOnlySpan<char> separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();
@@ -497,7 +497,7 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static void ToNumericString(ulong value, ref Span<char> destination)
         {
             if (TryFormatNumericString(value, destination, out int charsWritten))

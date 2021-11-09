@@ -78,7 +78,7 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.SequenceEqual(y);
             public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinal(obj);
@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y) => x.Equals(y, StringComparison.OrdinalIgnoreCase);
             public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinalIgnoreCase(obj);
@@ -171,7 +171,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
             private readonly StringComparer stringComparer;
 #endif
-#if NETSTANDARD2_1 || NETCOREAPP3_0
+#if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
             private readonly StringComparison? knownComparison;
 #endif
 
@@ -188,7 +188,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
                 stringComparer = StringComparer.Create(culture, ignoreCase);
 #endif
-#if NETSTANDARD2_1 || NETCOREAPP3_0
+#if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
                 // span comparison is not supported with a custom culture even in .NET Core 3 so using StringComparison when possible
                 knownComparison = culture.Equals(CultureInfo.InvariantCulture)
                     ? ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture
@@ -233,12 +233,12 @@ namespace KGySoft.CoreLibraries
                 if (obj.IsNull)
                     return 0;
 
-#if NET35 || NET40 || NET45
-                return stringComparer.GetHashCode(obj.ToString()!);
-#elif NET472 || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER
+                return compareInfo.GetHashCode(obj.AsSpan, options);
+#elif NET472 || NETCOREAPP || NETSTANDARD
                 return compareInfo.GetHashCode(obj.ToString()!, options);
 #else
-                return compareInfo.GetHashCode(obj.AsSpan, options);
+                return stringComparer.GetHashCode(obj.ToString()!);
 #endif
             }
 
@@ -247,36 +247,36 @@ namespace KGySoft.CoreLibraries
             #endregion
 
             #region Span
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
             public override bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
             {
-#if NETSTANDARD2_1 || NETCOREAPP3_0
+#if NET5_0_OR_GREATER
+                return compareInfo.Compare(x, y, options) == 0;
+#else
                 return knownComparison != null
                     ? x.Equals(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options) == 0;
-#else
-                return compareInfo.Compare(x, y, options) == 0;
 #endif
             }
 
             public override int GetHashCode(ReadOnlySpan<char> obj)
             {
-#if NETSTANDARD2_1
-                return compareInfo.GetHashCode(obj.ToString(), options);
-#else
+#if NETCOREAPP3_0_OR_GREATER
                 return compareInfo.GetHashCode(obj, options);
+#else
+                return compareInfo.GetHashCode(obj.ToString(), options);
 #endif
             }
 
             public override int Compare(ReadOnlySpan<char> x, ReadOnlySpan<char> y)
             {
-#if NETSTANDARD2_1 || NETCOREAPP3_0
+#if NET5_0_OR_GREATER
+                return compareInfo.Compare(x, y, options);
+#else
                 return knownComparison != null
                     ? x.CompareTo(y, knownComparison.Value)
                     : compareInfo.Compare(x.ToString(), y.ToString(), options);
-#else
-                return compareInfo.Compare(x, y, options);
 #endif
             }
 
@@ -364,17 +364,17 @@ namespace KGySoft.CoreLibraries
                 GetHashCode(obj.String, obj.Offset, obj.Length);
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int GetHashCode(ReadOnlySpan<char> s)
             {
-#if NETSTANDARD
+#if NETCOREAPP3_0_OR_GREATER
+                return String.GetHashCode(s);
+#else
                 // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
                 int result = seed;
                 for (int i = 0; i < s.Length; i++)
                     result = result * ((i & 1) == 0 ? factor1 : factor2) + s[i];
                 return result;
-#else
-                return String.GetHashCode(s);
 #endif
             }
 #endif
@@ -467,17 +467,17 @@ namespace KGySoft.CoreLibraries
                 GetHashCode(obj.String, obj.Offset, obj.Length);
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int GetHashCode(ReadOnlySpan<char> s)
             {
-#if NETSTANDARD
+#if NETCOREAPP3_0_OR_GREATER
+                return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
+#else
                 // using two factors to avoid possible bucket size match of a consumer collection, in which case the hash code would depend on the last char only
                 int result = seed;
                 for (int i = 0; i < s.Length; i++)
                     result = result * ((i & 1) == 0 ? factor1 : factor2) + Char.ToUpperInvariant(s[i]);
                 return result;
-#else
-                return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
 #endif
             }
 #endif
@@ -680,11 +680,11 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinal(ReadOnlySpan<char> s)
         {
-#if !NETSTANDARD
+#if NETCOREAPP3_0_OR_GREATER
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s); 
 #endif
@@ -701,7 +701,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(string s)
         {
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER // would work also for 2.1 but must be consistent with the Span version
             if (s.Length > lengthThreshold)
                 return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
 #endif
@@ -729,11 +729,11 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int GetHashCodeOrdinalIgnoreCase(ReadOnlySpan<char> s)
         {
-#if !NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
 #endif
@@ -914,7 +914,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Span
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 
         /// <summary>
         /// When overridden in a derived class, indicates whether two <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances are equal.

@@ -73,8 +73,10 @@ namespace KGySoft.CoreLibraries
 
                 #region Constructors
 
+#if NET5_0_OR_GREATER
                 [SuppressMessage("Globalization", "CA1304:Specify CultureInfo",
                     Justification = "False alarm, culture is set after calling this()")]
+#endif
                 internal ConversionContext(CultureInfo culture) : this() => Culture = culture;
 
                 #endregion

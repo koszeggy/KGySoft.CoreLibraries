@@ -11,6 +11,7 @@
 
 + Assembly changes:
 ===================
++ Targeting also .NET Core 2.1
 + Targeting also .NET 6.0.
 
 + KGySoft namespace:

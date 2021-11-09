@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security;
 
 using KGySoft.Collections;
 
@@ -188,7 +187,7 @@ namespace KGySoft.CoreLibraries
             return NameValuePairs.ContainsKey(value);
         }
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>

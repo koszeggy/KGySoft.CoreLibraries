@@ -28,7 +28,7 @@ using KGySoft.Diagnostics;
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETCOREAPP2_0 || NETSTANDARD2_0 || NETSTANDARD2_1
+#if !NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #endif
 

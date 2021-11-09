@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries
     /// <item><see cref="O:KGySoft.CoreLibraries.StringSegment.LastIndexOf">LastIndexOf</see> overloads with <see cref="StringSegment"/> parameter: affects all comparisons.</item>
     /// </list>
     /// <note>On .NET Core 3.0 and newer platforms none of the members above allocate a new string.
-    /// On .NET Standard 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf">IndexOf</see> overloads are not affected.</note></para>
+    /// On .NET Standard 2.1/.NET Core 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf">IndexOf</see> overloads are not affected.</note></para>
     /// <para>As opposed to the <see cref="String"/> class, the default comparison strategy in <see cref="StringSegment"/> members is <see cref="StringComparison.Ordinal"/>.</para>
     /// <example>
     /// <para>The following example demonstrates how to use the <see cref="StringSegment"/> type:
@@ -99,7 +99,7 @@ namespace KGySoft.CoreLibraries
     ///         Console.WriteLine(subsegment.UnderlyingString); // "Some string literal"
     ///
     ///         // As StringSegment can be implicitly converted to ReadOnlySpan<char> it can be passed
-    ///         // to many already existing API accepting spans (in .NET Core 3.0/.NET Standard 2.1 and above):
+    ///         // to many already existing API accepting spans (in .NET Core 2.1/.NET Standard 2.1 and above):
     ///         int parsedResult = Int32.Parse("Value=42".AsSegment().Split('=')[1]);
     ///     }
     /// }]]></code></para>
@@ -354,17 +354,17 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         public bool IsNullOrWhiteSpace => length == 0 || TrimStart().length == 0;
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlySpan{T}"/> of characters.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public ReadOnlySpan<char> AsSpan => str.AsSpan(offset, length);
 
         /// <summary>
         /// Returns the current <see cref="StringSegment"/> instance as a <see cref="ReadOnlyMemory{T}"/> of characters.
         /// </summary>
-        /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public ReadOnlyMemory<char> AsMemory => str.AsMemory(offset, length);
 #endif
 
@@ -442,7 +442,7 @@ namespace KGySoft.CoreLibraries
         /// </returns>
         public static explicit operator string?(StringSegment stringSegment) => stringSegment.ToString();
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Performs an implicit conversion from <see cref="StringSegment"/> to <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>.
         /// </summary>

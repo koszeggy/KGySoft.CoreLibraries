@@ -18,8 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using KGySoft.Collections;
+
 using KGySoft.Reflection;
 
 using NUnit.Framework;
@@ -128,7 +127,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf((" " + toSearch).AsSegment(1)));
             }
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
             if (s != null)
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
@@ -162,7 +161,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf((" " + toSearch).AsSegment(1)));
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
 #endif
@@ -187,7 +186,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
                 Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value.AsSpan(), stringComparison));
 #endif
             }
@@ -207,7 +206,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSegment(), stringComparison));
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
                 Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSpan(), stringComparison));
 #endif
             }
@@ -275,7 +274,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 actual = segments.Join("|");
                 Assert.AreEqual(expected, actual);
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
                 // as span
                 segments = s.AsSegment().Split(separator.AsSpan(), options);
                 actual = segments.Join("|");
@@ -453,8 +452,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             Assert.AreEqual(s.Substring(1), s.AsSegment().Substring(1).ToString());
             Assert.AreEqual(s.Substring(1).Substring(1), s.AsSegment().Substring(1).Substring(1).ToString());
-#if NETCOREAPP3_0_OR_GREATER
-            Assert.AreEqual(s[1..^1], s.AsSegment()[1..^1]);
+#if NETCOREAPP2_1_OR_GREATER
+            Assert.AreEqual(s.Substring(1, s.Length - 2), s.AsSegment().Substring(1, s.Length - 2));
 #endif
         }
 
@@ -476,7 +475,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             if (s == null)
             {
                 Assert.AreEqual(segment, segment.Trim(chars));
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
                 Assert.AreEqual(segment, segment.Trim(chars.AsSpan()));
 #endif
                 return;
@@ -486,7 +485,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expected, segment.Trim(chars));
             if (chars?.Length == 1)
                 Assert.AreEqual(expected, segment.Trim(chars[0]));
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
             Assert.AreEqual(expected, segment.Trim(chars.AsSpan()));
 #endif
         }

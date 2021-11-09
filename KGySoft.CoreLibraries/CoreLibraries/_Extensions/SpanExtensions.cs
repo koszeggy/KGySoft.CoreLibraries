@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+﻿#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Provides extension methods for <see cref="Span{T}"/> and <see cref="ReadOnlySpan{T}"/> types.
     /// </summary>
-    /// <remarks><note>This class is available only in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+    /// <remarks><note>This class is available only in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
     public static partial class SpanExtensions
     {
         #region Fields
@@ -296,8 +296,8 @@ namespace KGySoft.CoreLibraries
         public static ReadOnlySpan<char> RemoveQuotes(this ReadOnlySpan<char> span)
             => span.Length < 2
                 ? span
-                : span.Length > 1 && (span[0] == '"' && span[^1] == '"' || span[0] == '\'' && span[^1] == '\'')
-                    ? span[1..^1]
+                : span.Length > 1 && (span[0] == '"' && span[span.Length - 1] == '"' || span[0] == '\'' && span[span.Length - 1] == '\'')
+                    ? span.Slice(1, span.Length - 2)
                     : span;
 
         /// <summary>
@@ -308,8 +308,8 @@ namespace KGySoft.CoreLibraries
         public static Span<char> RemoveQuotes(this Span<char> span)
             => span.Length < 2
                 ? span
-                : span.Length > 1 && (span[0] == '"' && span[^1] == '"' || span[0] == '\'' && span[^1] == '\'')
-                    ? span[1..^1]
+                : span.Length > 1 && (span[0] == '"' && span[span.Length - 1] == '"' || span[0] == '\'' && span[span.Length - 1] == '\'')
+                    ? span.Slice(1, span.Length - 2)
                     : span;
 
         #endregion

@@ -23,8 +23,8 @@ using System.Security;
 
 #region Suppressions
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(char) method in some targeted platforms  
+#if NET5_0_OR_GREATER
+#pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(char) method in some targeted platforms
 #endif
 
 #endregion
@@ -398,11 +398,11 @@ namespace KGySoft.CoreLibraries
                 Debug.Assert(context[context.CurrentWordStartPosition - 1] == ' ');
                 switch (context.Random.NextDouble())
                 {
-                    case double d when d < 0.1d:
+                    case < 0.1d:
                         context.Insert(context.CurrentWordStartPosition - 1, ';');
                         return;
 
-                    case double d when d < 0.2d:
+                    case < 0.2d:
                         context.Insert(context.CurrentWordStartPosition - 1, ':');
                         return;
 
