@@ -146,7 +146,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // Registered conversions
 #if !NETCOREAPP3_0_OR_GREATER
-            Throws<ArgumentException>(() => Test("1.2.3.4", new Version(1, 2, 3, 4)));
             typeof(Version).RegisterTypeConverter<VersionConverter>(); 
 #endif
             Test("1.2.3.4", new Version(1, 2, 3, 4));
