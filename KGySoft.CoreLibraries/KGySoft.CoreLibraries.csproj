@@ -9,9 +9,6 @@
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>-->
     
-    <!--For help-->
-    <!--<TargetFramework>netstandard2.1</TargetFramework>-->
-    
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
     <RootNamespace>KGySoft</RootNamespace>
@@ -20,7 +17,7 @@
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
     <!--<RunCodeAnalysis>true</RunCodeAnalysis>-->
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>

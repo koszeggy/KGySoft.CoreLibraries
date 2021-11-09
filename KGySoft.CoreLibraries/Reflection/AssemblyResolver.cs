@@ -16,14 +16,13 @@
 #region Usings
 
 using System;
-#if NET35
-using System.Diagnostics.CodeAnalysis; 
-#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if !NET35
 using System.Runtime.CompilerServices;
+#endif
 using System.Security;
 using System.Threading;
 
@@ -189,9 +188,6 @@ namespace KGySoft.Reflection
             return false;
         }
 
-#if NET35
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Same signature for every target platform.")] 
-#endif
         internal static string? GetForwardedAssemblyName(Type type, bool omitIfCoreLibrary)
         {
 #if NET35

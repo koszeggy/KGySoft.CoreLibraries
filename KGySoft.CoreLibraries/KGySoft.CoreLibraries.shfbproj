@@ -52,36 +52,9 @@
     <HtmlSdkLinkType>Msdn</HtmlSdkLinkType>
     <IncludeFavorites>True</IncludeFavorites>
     <BinaryTOC>True</BinaryTOC>
-    <ComponentConfigurations>
-      <ComponentConfig id="Code Block Component" enabled="True">
-        <component id="Code Block Component">
-          <basePath value="{@HtmlEncProjectFolder}" />
-          <outputPaths>{@HelpFormatOutputPaths}</outputPaths>
-          <allowMissingSource value="false" />
-          <removeRegionMarkers value="false" />
-          <colorizer syntaxFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.xml" styleFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.xsl" stylesheet="{@SHFBFolder}PresentationStyles\Colorizer\highlight.css" scriptFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.js" language="cs" tabSize="0" numberLines="false" outlining="false" keepSeeTags="false" defaultTitle="true" />
-        </component>
-      </ComponentConfig>
-    </ComponentConfigurations>
-    <PlugInConfigurations>
-      <PlugInConfig id="Member ID Fix-Ups" enabled="False">
-        <configuration>
-          <expressions>
-            <expression matchExpression="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan{``0})" replacementValue="M:KGySoft.CoreLibraries.ObjectExtensions.In``1(``0,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span{System.Char},System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextChars(System.Random,System.Span`1,System.Void)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan{System.Char})" replacementValue="M:KGySoft.CoreLibraries.RandomExtensions.NextString(System.Random,System.Int32,System.Int32,System.ReadOnlySpan`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.CoreLibraries.ThreadSafeRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression{System.Func{``0}})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf``1(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression{System.Action})" replacementValue="M:KGySoft.Reflection.Reflector.MemberOf(System.Linq.Expressions.Expression`1)" matchAsRegEx="false" />
-            <expression matchExpression="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span{System.Byte})" replacementValue="M:KGySoft.Security.Cryptography.SecureRandom.NextBytes(System.Span`1)" matchAsRegEx="false" />
-          </expressions>
-        </configuration>
-      </PlugInConfig>
-    </PlugInConfigurations>
     <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>6.0.0-rc.3</HelpFileVersion>
+    <HelpFileVersion>6.0.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
@@ -99,6 +72,7 @@
       <Argument Key="logoAltText" Value="KGy SOFT" />
       <Argument Key="logoPlacement" Value="above" />
       <Argument Key="logoAlignment" Value="left" />
+      <Argument Key="logoUrl" Value="https://kgysoft.net/corelibraries" />
       <Argument Key="maxVersionParts" Value="" />
       <Argument Key="defaultLanguage" Value="cs" />
       <Argument Key="includeEnumValues" Value="true" />
