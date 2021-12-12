@@ -6,6 +6,15 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v6.0.1:
+~~~~~~~~~
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- RandomExtensions class:
+  - NextBigInteger methods did not always use the full specified range.
+
+~~~~~~~~~
 ! v6.0.0:
 ~~~~~~~~~
 
