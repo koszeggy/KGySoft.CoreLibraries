@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries
             /// <summary>
             /// Gets the character at the current position of the <see cref="Enumerator"/>.
             /// </summary>
-            public char Current => current;
+            public readonly char Current => current;
 
             #endregion
 

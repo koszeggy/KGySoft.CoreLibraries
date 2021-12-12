@@ -532,7 +532,7 @@ namespace KGySoft.Collections
             /// <summary>
             /// Gets the element at the current position of the enumerator.
             /// </summary>
-            public KeyValuePair<TKey, TValue> Current => current;
+            public readonly KeyValuePair<TKey, TValue> Current => current;
 
             #endregion
 

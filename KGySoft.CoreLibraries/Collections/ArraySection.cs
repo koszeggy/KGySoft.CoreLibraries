@@ -66,7 +66,7 @@ namespace KGySoft.Collections
     /// <para>Though <see cref="ArraySection{T}"/> is practically immutable (has only <see langword="readonly"/>&#160;fields) it is not marked as <c>readonly</c>,
     /// which is needed for the <see cref="Release">Release</see> method to work properly. As <see cref="ArraySection{T}"/> is a
     /// non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
-    /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
+    /// accessing its members would make the pre-C# 8.0 compilers to create defensive copies, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
     [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
@@ -156,47 +156,47 @@ namespace KGySoft.Collections
 #if NET5_0_OR_GREATER
         [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Intended, same as for ArraySegment")]
 #endif
-        public T[]? UnderlyingArray => array;
+        public readonly T[]? UnderlyingArray => array;
 
         /// <summary>
         /// Gets the offset, which denotes the start position of this <see cref="ArraySection{T}"/> within the <see cref="UnderlyingArray"/>.
         /// </summary>
-        public int Offset => offset;
+        public readonly int Offset => offset;
 
         /// <summary>
         /// Gets the number of elements in this <see cref="ArraySection{T}"/>.
         /// </summary>
-        public int Length => length;
+        public readonly int Length => length;
 
         /// <summary>
         /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/>&#160;array.
         /// <br/>Please note that the <see cref="ToArray">ToArray</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
-        public bool IsNull => array == null;
+        public readonly bool IsNull => array == null;
 
         /// <summary>
         /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty array section or a <see langword="null"/>&#160;array.
         /// </summary>
-        public bool IsNullOrEmpty => length == 0;
+        public readonly bool IsNullOrEmpty => length == 0;
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public Memory<T> AsMemory => new Memory<T>(array, offset, length);
+        public readonly Memory<T> AsMemory => new Memory<T>(array, offset, length);
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public Span<T> AsSpan => new Span<T>(array, offset, length);
+        public readonly Span<T> AsSpan => new Span<T>(array, offset, length);
 #endif
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as an <see cref="ArraySegment{T}"/>.
         /// </summary>
-        public ArraySegment<T> AsArraySegment => array == null ? default : new ArraySegment<T>(array, offset, length);
+        public readonly ArraySegment<T> AsArraySegment => array == null ? default : new ArraySegment<T>(array, offset, length);
 
         #endregion
 
@@ -231,7 +231,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
-        public T this[int index]
+        public readonly T this[int index]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
@@ -432,7 +432,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Clears the items in this <see cref="ArraySection{T}"/> instance so all elements will have the default value of type <typeparamref name="T"/>.
         /// </summary>
-        public void Clear()
+        public readonly void Clear()
         {
             if (length == 0)
                 return;
@@ -444,7 +444,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/>.</returns>
-        public ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array!, offset + startIndex, length - startIndex);
+        public readonly ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array!, offset + startIndex, length - startIndex);
 
         /// <summary>
         /// Gets a new <see cref="ArraySection{T}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
@@ -454,14 +454,14 @@ namespace KGySoft.Collections
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
-        public ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array!, offset + startIndex, length);
+        public readonly ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array!, offset + startIndex, length);
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="ArraySection{T}"/>.
         /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/>&#160;statement.
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/>&#160;if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
-        public ref T GetPinnableReference()
+        public readonly ref T GetPinnableReference()
         {
             if (IsNullOrEmpty)
             {
@@ -485,7 +485,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="ArraySection{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[]? ToArray()
+        public readonly T[]? ToArray()
         {
             if (length == 0)
                 return array; // it can be even null
@@ -502,7 +502,7 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>An <see cref="Array2D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
-        public Array2D<T> AsArray2D(int height, int width) => new Array2D<T>(this, height, width);
+        public readonly Array2D<T> AsArray2D(int height, int width) => new Array2D<T>(this, height, width);
 
         /// <summary>
         /// Gets this <see cref="ArraySection{T}"/> as an <see cref="Array3D{T}"/> instance
@@ -513,7 +513,7 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>An <see cref="Array3D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
-        public Array3D<T> AsArray3D(int depth, int height, int width) => new Array3D<T>(this, depth, height, width);
+        public readonly Array3D<T> AsArray3D(int depth, int height, int width) => new Array3D<T>(this, depth, height, width);
 
         /// <summary>
         /// Gets the reference to the element at the specified <paramref name="index"/>.
@@ -521,7 +521,7 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref T GetElementReference(int index)
+        public readonly ref T GetElementReference(int index)
         {
             if ((uint)index >= (uint)length)
                 Throw.IndexOutOfRangeException();
@@ -535,7 +535,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
         /// </returns>
-        public int IndexOf(T item)
+        public readonly int IndexOf(T item)
         {
             if (length == 0)
                 return -1;
@@ -550,7 +550,7 @@ namespace KGySoft.Collections
         /// <see langword="true"/>&#160;if <paramref name="item"/> is found in this <see cref="ArraySection{T}"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="item">The object to locate in this <see cref="ArraySection{T}"/>.</param>
-        public bool Contains(T item) => IndexOf(item) >= 0;
+        public readonly bool Contains(T item) => IndexOf(item) >= 0;
 
         /// <summary>
         /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible one-dimensional array, starting at a particular index.
@@ -558,7 +558,7 @@ namespace KGySoft.Collections
         /// <param name="target">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="ArraySection{T}"/>.</param>
         /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
         /// <br/>Default value: 0.</param>
-        public void CopyTo(T[] target, int targetIndex = 0)
+        public readonly void CopyTo(T[] target, int targetIndex = 0)
         {
             if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
@@ -574,7 +574,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="target">The <see cref="ArraySection{T}"/> that is the destination of the elements copied from this instance.</param>
         /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins.</param>
-        public void CopyTo(ArraySection<T> target, int targetIndex = 0)
+        public readonly void CopyTo(ArraySection<T> target, int targetIndex = 0)
         {
             if (target.IsNull)
                 Throw.ArgumentNullException(Argument.target);
@@ -592,7 +592,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ArraySectionEnumerator<T> GetEnumerator() => new ArraySectionEnumerator<T>(array, offset, length);
+        public readonly ArraySectionEnumerator<T> GetEnumerator() => new ArraySectionEnumerator<T>(array, offset, length);
 
         /// <summary>
         /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
@@ -618,7 +618,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(ArraySection<T> other)
+        public readonly bool Equals(ArraySection<T> other)
             => array == other.array && offset == other.offset && length == other.length;
 
         /// <summary>
@@ -626,7 +626,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object? obj)
+        public readonly override bool Equals(object? obj)
             => obj == null ? IsNull
                 : obj is ArraySection<T> other ? Equals(other)
                 : obj is T[] arr && Equals(new ArraySection<T>(arr)); // must check array because == operator supports it as well
@@ -637,20 +637,20 @@ namespace KGySoft.Collections
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public override int GetHashCode() => array == null ? 0 : (array, offset, length).GetHashCode();
+        public readonly override int GetHashCode() => array == null ? 0 : (array, offset, length).GetHashCode();
 
         #endregion
 
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal T GetItemInternal(int index) => array![offset + index];
+        internal readonly T GetItemInternal(int index) => array![offset + index];
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal void SetItemInternal(int index, T value) => array![offset + index] = value;
+        internal readonly void SetItemInternal(int index, T value) => array![offset + index] = value;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal ref T GetElementReferenceInternal(int index) => ref array![offset + index];
+        internal readonly ref T GetElementReferenceInternal(int index) => ref array![offset + index];
 
         #endregion
 

@@ -54,8 +54,9 @@ namespace KGySoft.Collections
     /// <note>Unlike the underlying <see cref="ArraySection{T}"/>, the <see cref="Array2D{T}"/> implements the <see cref="IDisposable"/> interface.
     /// Calling the <see cref="Dispose">Dispose</see> method is required if the <see cref="Array2D{T}"/> was not created from an existing <see cref="ArraySection{T}"/>
     /// instance. Not calling the <see cref="Dispose">Dispose</see> method may lead to decreased application performance.</note></para>
-    /// <para>As <see cref="Array2D{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
-    /// accessing its members would make the compiler to create a defensive copy, which leads to a slight performance degradation.</para>
+    /// <para>Due to the <see cref="Dispose">Dispose</see> method <see cref="Array2D{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>.
+    /// It is not recommended to use it as a <c>readonly</c> field; otherwise, accessing its members would make the pre-C# 8.0 compilers to create defensive copies,
+    /// which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Height) + "}, {" + nameof(Width) + "}]")]
@@ -93,7 +94,7 @@ namespace KGySoft.Collections
         private readonly int width;
         private readonly int height;
 
-        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly to prevent defensive copy when accessing members")]
+        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly due to Dispose")]
         private ArraySection<T> buffer;
 
         #endregion
@@ -105,35 +106,35 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the width of this <see cref="Array2D{T}"/> instance.
         /// </summary>
-        public int Width => width;
+        public readonly int Width => width;
 
         /// <summary>
         /// Gets the height of this <see cref="Array2D{T}"/> instance.
         /// </summary>
-        public int Height => height;
+        public readonly int Height => height;
 
         /// <summary>
         /// Gets the total length of this <see cref="Array2D{T}"/> instance.
         /// </summary>
-        public int Length => buffer.Length;
+        public readonly int Length => buffer.Length;
 
         /// <summary>
         /// Gets the underlying buffer as a single dimensional <see cref="ArraySection{T}"/>.
         /// </summary>
-        public ArraySection<T> Buffer => buffer;
+        public readonly ArraySection<T> Buffer => buffer;
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public Memory<T> AsMemory => buffer.AsMemory;
+        public readonly Memory<T> AsMemory => buffer.AsMemory;
 
         /// <summary>
         /// Returns the current <see cref="Array2D{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public Span<T> AsSpan => buffer.AsSpan;
+        public readonly Span<T> AsSpan => buffer.AsSpan;
 #endif
 
         /// <summary>
@@ -141,12 +142,12 @@ namespace KGySoft.Collections
         /// <br/>Please note that the <see cref="ToArray">ToArray</see>/<see cref="To2DArray">To2DArray</see>/<see cref="ToJaggedArray">ToJaggedArray</see> methods
         /// return <see langword="null"/>&#160;when this property returns <see langword="true"/>.
         /// </summary>
-        public bool IsNull => buffer.IsNull;
+        public readonly bool IsNull => buffer.IsNull;
 
         /// <summary>
         /// Gets whether this <see cref="Array2D{T}"/> instance represents an empty or a <see langword="null"/>&#160;array.
         /// </summary>
-        public bool IsNullOrEmpty => buffer.IsNullOrEmpty;
+        public readonly bool IsNullOrEmpty => buffer.IsNullOrEmpty;
 
         #endregion
 
@@ -159,7 +160,7 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The element at the specified indices.</returns>
-        public T this[int y, int x]
+        public readonly T this[int y, int x]
         {
             // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -173,7 +174,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="y">The index of the row to obtain.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
-        public ArraySection<T> this[int y]
+        public readonly ArraySection<T> this[int y]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
@@ -191,7 +192,7 @@ namespace KGySoft.Collections
         /// <param name="y">The index of the row to obtain.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        public ArraySection<T> this[Index y]
+        public readonly ArraySection<T> this[Index y]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -204,7 +205,7 @@ namespace KGySoft.Collections
         /// <param name="range">The range of rows to get.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
-        public Array2D<T> this[Range range]
+        public readonly Array2D<T> this[Range range]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -322,7 +323,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance starting with the specified <paramref name="startRowIndex"/>.</returns>
-        public Array2D<T> Slice(int startRowIndex) => new Array2D<T>(buffer.Slice(startRowIndex * width), height - startRowIndex, width);
+        public readonly Array2D<T> Slice(int startRowIndex) => new Array2D<T>(buffer.Slice(startRowIndex * width), height - startRowIndex, width);
 
         /// <summary>
         /// Gets a new <see cref="Array2D{T}"/> instance, which represents a subrange of rows of the current instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.
@@ -330,7 +331,7 @@ namespace KGySoft.Collections
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <param name="rowCount">The desired number of rows of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.</returns>
-        public Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
+        public readonly Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
         /// <summary>
         /// Gets the reference to the element at the specified indices. Parameter order is the same as in case of a regular two-dimensional array.
@@ -339,7 +340,7 @@ namespace KGySoft.Collections
         /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref T GetElementReference(int y, int x)
+        public readonly ref T GetElementReference(int y, int x)
         {
             // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
             return ref buffer.GetElementReference(y * width + x);
@@ -352,7 +353,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ArraySectionEnumerator<T> GetEnumerator() => buffer.GetEnumerator();
+        public readonly ArraySectionEnumerator<T> GetEnumerator() => buffer.GetEnumerator();
 
         /// <summary>
         /// Releases the underlying buffer. If this <see cref="Array2D{T}"/> instance was instantiated by the <see cref="Array2D{T}(int,int)">self allocating constructor</see>,
@@ -370,21 +371,21 @@ namespace KGySoft.Collections
         /// This makes possible to use the <see cref="Array2D{T}"/> in a <see langword="fixed"/>&#160;statement.
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="Array2D{T}"/>, or <see langword="null"/>&#160;if <see cref="Length"/> is zero.</returns>
-        public ref T GetPinnableReference() => ref buffer.GetPinnableReference();
+        public readonly ref T GetPinnableReference() => ref buffer.GetPinnableReference();
 
         /// <summary>
         /// Indicates whether the current <see cref="Array2D{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="Array2D{T}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(Array2D<T> other) => width == other.width && height == other.height && buffer.Equals(other.buffer);
+        public readonly bool Equals(Array2D<T> other) => width == other.width && height == other.height && buffer.Equals(other.buffer);
 
         /// <summary>
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object? obj) => obj is Array2D<T> other && Equals(other);
+        public readonly override bool Equals(object? obj) => obj is Array2D<T> other && Equals(other);
 
         /// <summary>
         /// Returns a hash code for this <see cref="Array2D{T}"/> instance.
@@ -395,7 +396,7 @@ namespace KGySoft.Collections
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode",
             Justification = "Field 'buffer' is practically read-only but it is not marked as so to prevent creating defensive copies")]
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             if (buffer.IsNull)
                 return 0;
@@ -407,14 +408,14 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[]? ToArray() => buffer.ToArray();
+        public readonly T[]? ToArray() => buffer.ToArray();
 
         /// <summary>
         /// Copies the elements of this <see cref="Array2D{T}"/> to a new two dimensional array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[,]? To2DArray()
+        public readonly T[,]? To2DArray()
         {
             if (buffer.IsNull)
                 return null;
@@ -437,7 +438,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
-        public T[][]? ToJaggedArray()
+        public readonly T[][]? ToJaggedArray()
         {
             if (buffer.IsNull)
                 return null;
