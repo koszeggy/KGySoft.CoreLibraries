@@ -153,9 +153,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the underlying array of this <see cref="ArraySection{T}"/>.
         /// </summary>
-#if NET5_0_OR_GREATER
         [SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "Intended, same as for ArraySegment")]
-#endif
         public readonly T[]? UnderlyingArray => array;
 
         /// <summary>

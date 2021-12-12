@@ -44,14 +44,6 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
-#region Suppressions
-
-#if NET5_0_OR_GREATER
-#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw class but FxCop ignores [DoesNotReturn] 
-#endif
-
-#endregion
-
 namespace KGySoft.Reflection
 {
     /// <summary>
@@ -1159,7 +1151,9 @@ namespace KGySoft.Reflection
                 {
                     method = method.GetGenericMethod(genericParameters);
                 }
+#pragma warning disable CA1031 // false alarm, exception is re-thrown
                 catch (Exception e)
+#pragma warning restore CA1031 // false alarm, exception is re-thrown
                 {
                     Throw.ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
                 }

@@ -15,7 +15,7 @@
 
 #region Usings
 
-#if NET6_0_OR_GREATER
+#if !NET5_0
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Runtime.CompilerServices;
@@ -29,7 +29,7 @@ namespace KGySoft
         #region Methods
 
         [ModuleInitializer]
-#if NET6_0_OR_GREATER
+#if !NET5_0
         [SuppressMessage("Usage", "CA2255:The 'ModuleInitializer' attribute should not be used in libraries",
             Justification = "See the comment, it is intended and is important to work properly.")]
 #endif

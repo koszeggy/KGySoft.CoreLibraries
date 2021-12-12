@@ -49,30 +49,12 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
-  <!-- .NET/Core only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1' OR '$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0'">
-    <PackageReference Include="System.Drawing.Common">
-      <Version>5.0.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.Encoding.CodePages">
-      <Version>5.0.0</Version>
-    </PackageReference>
-    
-    <!--Required for non-string resources-->
-    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
-
-  </ItemGroup>
-
   <!-- Project references -->
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="Resources\TestResourceResX2.resx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Update="Resources\TestResourceResX.en-US.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -84,7 +66,6 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <!--TestRes.resx: Embedded in .NET Framework and .NET Core 2.0 but only copied in .NET Core 3 because it contains errors (on purpose) that cannot be handled by .NET Core 3 -->
   <ItemGroup>
     <EmbeddedResource Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
