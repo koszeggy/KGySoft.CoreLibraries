@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using KGySoft.Collections;
+
 using NUnit.Framework;
 
 #endregion
@@ -146,6 +148,37 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             CollectionAssert.AreNotEqual(numbers, shuffled);
             CollectionAssert.AreEquivalent(numbers, shuffled);
             CollectionAssert.AreEqual(numbers, shuffled.OrderBy(i => i));
+        }
+
+        [Test]
+        public void TryGetCountTest()
+        {
+            // ICollection<T>
+            Assert.IsTrue(new int[1].TryGetCount(out int count));
+            Assert.AreEqual(1, count);
+
+            // IReadOnlyCollection<T>
+            Assert.IsTrue(new Queue<int>(new int[2]).TryGetCount(out count));
+            Assert.AreEqual(2, count);
+
+            // ICollection
+            Assert.IsTrue(new ArrayList { 1, 2, 3 }.TryGetCount(out count));
+            Assert.AreEqual(3, count);
+
+            // IIListProvider<T>
+            Assert.IsTrue(new int[5].Select(c => (byte)c).TryGetCount(out count));
+            Assert.AreEqual(5, count);
+
+            // ICollection<T> that is not ICollection via non-generic access
+            Assert.IsTrue(((IEnumerable)new LockingCollection<int>(new int[8])).TryGetCount(out count));
+            Assert.AreEqual(8, count);
+
+            // IIListProvider<T> via non-generic access
+            Assert.IsTrue(((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count));
+            Assert.AreEqual(13, count);
+
+            // Cannot be determined without counting
+            Assert.IsFalse(Enumerable.Range(0, 10).Where(n => n > 1).TryGetCount(out count));
         }
 
         #endregion

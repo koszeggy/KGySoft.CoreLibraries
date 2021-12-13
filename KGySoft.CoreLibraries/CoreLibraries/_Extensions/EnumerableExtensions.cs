@@ -1067,7 +1067,7 @@ namespace KGySoft.CoreLibraries
                 switch (collection)
                 {
                     case IList<T> genericList:
-                        if (checkReadOnlyAndBounds && ((!(collection is T[]) && genericList.IsReadOnly) || index < 0 || index >= genericList.Count))
+                        if (checkReadOnlyAndBounds && ((collection is not T[] && genericList.IsReadOnly) || index < 0 || index >= genericList.Count))
                             return false;
                         genericList[index] = item;
                         return true;
@@ -1135,7 +1135,7 @@ namespace KGySoft.CoreLibraries
                 {
                     if (checkReadOnlyAndBounds && ((
 #if NET35
-                        !(collection is object?[]) && // as we skip null above we can reach this point with an array in .NET 3.5, which is ReadOnly as IList<T>
+                        collection is not object?[] && // as we skip null above we can reach this point with an array in .NET 3.5, which is ReadOnly as IList<T>
 #endif
                         genericList.IsReadOnly) || index < 0 || index >= genericList.Count))
                     {
@@ -1160,7 +1160,7 @@ namespace KGySoft.CoreLibraries
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || (
 #if NET35
-                            !(collection is Array) && 
+                            collection is not Array && 
 #endif
                             collection.IsReadOnly(genericCollectionInterface)))
                         {
@@ -1454,7 +1454,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Searches for an element in the <paramref name="source"/> enumeration.
         /// </summary>
-        /// <typeparam name="T">The type of the elements in the enumeration..</typeparam>
+        /// <typeparam name="T">The type of the elements in the enumeration.</typeparam>
         /// <param name="source">The source enumeration to search.</param>
         /// <param name="element">The element to search.</param>
         /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
@@ -1514,7 +1514,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
         /// <param name="collection">The collection to retrieve the <paramref name="item"/> from.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be returned.</param>
-        /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item.</param>
+        /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item. This parameter is passed uninitialized.</param>
         /// <param name="checkBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found getting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found getting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
@@ -1592,7 +1592,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="collection">The collection to retrieve the <paramref name="item"/> from.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be returned.</param>
-        /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item.</param>
+        /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item. This parameter is passed uninitialized.</param>
         /// <param name="checkBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found getting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found getting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
@@ -1642,6 +1642,96 @@ namespace KGySoft.CoreLibraries
             }
 
             return collection.Cast<object>().TryGetElementAt(index, out item, checkBounds, throwError);
+        }
+
+        /// <summary>
+        /// Tries to get the number of elements in the <paramref name="source"/> enumeration without enumerating it.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the enumeration.</typeparam>
+        /// <param name="source">The source to check.</param>
+        /// <param name="count">If this method returns <see langword="true"/>, then this parameter contains the number of elements in the <paramref name="source"/> enumeration. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the number of elements could be determined without enumeration; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method supports some public interfaces as well as some common LINQ iterators.</para>
+        /// <note>This method is similar to the <see cref="Enumerable.TryGetNonEnumeratedCount{TSource}">Enumerable.TryGetNonEnumeratedCount</see> method in .NET 6 and above but can be used
+        /// in any targeted platform and considers also <see cref="IReadOnlyCollection{T}"/> implementations.</note>
+        /// </remarks>
+        public static bool TryGetCount<T>([NoEnumeration]this IEnumerable<T> source, out int count)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+
+#if NET6_0_OR_GREATER
+            if (source.TryGetNonEnumeratedCount(out count))
+                return true;
+
+            // This is not checked by TryGetNonEnumeratedCount
+            if (source is IReadOnlyCollection<T> readOnlyCollection)
+            {
+                count = readOnlyCollection.Count;
+                return true;
+            }
+
+            count = 0;
+            return false;
+#else
+            switch (source)
+            {
+                case ICollection<T> genericCollection:
+                    count = genericCollection.Count;
+                    return true;
+
+#if !(NET35 || NET40)
+                case IReadOnlyCollection<T> readOnlyCollection:
+                    count = readOnlyCollection.Count;
+                    return true;
+#endif
+
+                case ICollection nonGenericCollection:
+                    count = nonGenericCollection.Count;
+                    return true;
+
+                default:
+                    int? result = source.GetListProviderCount();
+                    count = result ?? default;
+                    return result.HasValue;
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Tries to get the number of elements in the <paramref name="source"/> enumeration without enumerating it.
+        /// </summary>
+        /// <param name="source">The source to check.</param>
+        /// <param name="count">If this method returns <see langword="true"/>, then this parameter contains the number of elements in the <paramref name="source"/> enumeration. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the number of elements could be determined without enumeration; otherwise, <see langword="false"/>.</returns>
+        public static bool TryGetCount([NoEnumeration]this IEnumerable source, out int count)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+
+            switch (source)
+            {
+                case ICollection nonGenericCollection:
+                    count = nonGenericCollection.Count;
+                    return true;
+
+                case IEnumerable<object> genericCollection:
+                    return genericCollection.TryGetCount(out count);
+
+                default:
+                    // ICollection<T>
+                    if (source.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? collectionType))
+                    {
+                        count = source.Count(collectionType);
+                        return true;
+                    }
+
+                    // IIListProvider<T>
+                    int? result = source.GetListProviderCount();
+                    count = result ?? default;
+                    return result.HasValue;
+            }
         }
 
         #endregion

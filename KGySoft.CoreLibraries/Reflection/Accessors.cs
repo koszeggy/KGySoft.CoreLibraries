@@ -129,6 +129,14 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region IIListProvider<T>
+
+        private static IThreadSafeCacheAccessor<Type, MethodAccessor?>? methodsIIListProvider_GetCount;
+        private static bool? hasIIListProvider;
+        private static Type? typeIIListProvider;
+
+        #endregion
+
         #endregion
 
         #region Any Member
@@ -210,7 +218,6 @@ namespace KGySoft.Reflection
 
             return methodsListExtensions_ReplaceRange[genericArgument];
         }
-
 
         #endregion
 
@@ -381,6 +388,42 @@ namespace KGySoft.Reflection
         #region Object
 
         private static FunctionMethodAccessor Object_MemberwiseClone => methodObject_MemberwiseClone ??= new FunctionMethodAccessor(typeof(object).GetMethod(nameof(MemberwiseClone), BindingFlags.Instance | BindingFlags.NonPublic)!);
+
+        #endregion
+
+        #region IIListProvider<T>
+
+        private static Type? IIListProviderType
+        {
+            get
+            {
+                if (!hasIIListProvider.HasValue)
+                {
+                    typeIIListProvider = Reflector.ResolveType(typeof(Enumerable).Assembly, "System.Linq.IIListProvider`1");
+                    hasIIListProvider = typeIIListProvider != null;
+                }
+
+                return typeIIListProvider;
+            }
+        }
+
+        private static MethodAccessor? IIListProvider_GetCount(Type genericArgument)
+        {
+            static MethodAccessor? GetGetCountMethod(Type arg)
+            {
+                Type? listProviderType = IIListProviderType;
+                if (listProviderType == null)
+                    return null;
+                Type genericType = listProviderType.GetGenericType(arg);
+                MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
+                return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+            }
+
+            if (methodsIIListProvider_GetCount == null)
+                Interlocked.CompareExchange(ref methodsIIListProvider_GetCount, ThreadSafeCacheFactory.Create<Type, MethodAccessor?>(GetGetCountMethod, LockFreeCacheOptions.Profile128), null);
+
+            return methodsIIListProvider_GetCount[genericArgument];
+        }
 
         #endregion
 
@@ -559,6 +602,33 @@ namespace KGySoft.Reflection
         #region Object
 
         internal static object MemberwiseClone(this object obj) => Object_MemberwiseClone.Invoke(obj)!;
+
+        #endregion
+
+        #region IIListProvider<T>
+
+#if !NET6_0_OR_GREATER
+        internal static int? GetListProviderCount<T>([NoEnumeration]this IEnumerable<T> collection)
+        {
+            MethodAccessor? accessor = IIListProvider_GetCount(typeof(T));
+            if (accessor == null || !accessor.MemberInfo.DeclaringType!.IsInstanceOfType(collection))
+                return null;
+            return accessor.Invoke(collection, true) as int?;
+        }
+#endif
+
+        internal static int? GetListProviderCount([NoEnumeration]this IEnumerable collection)
+        {
+            Type? listProviderType = IIListProviderType;
+            if (listProviderType == null || !collection.GetType().IsImplementationOfGenericType(listProviderType, out Type? genericType))
+                return null;
+
+            MethodAccessor? accessor = IIListProvider_GetCount(genericType.GetGenericArguments()[0]);
+            if (accessor == null)
+                return null;
+            Debug.Assert(accessor.MemberInfo.DeclaringType!.IsInstanceOfType(collection));
+            return accessor.Invoke(collection, true) as int?;
+        }
 
         #endregion
 
