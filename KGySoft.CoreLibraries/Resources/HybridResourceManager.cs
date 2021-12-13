@@ -1115,7 +1115,7 @@ namespace KGySoft.Resources
         private protected bool IsNonProxyLoaded(CultureInfo culture)
         {
             lock (SyncRoot)
-                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet? rs) && !(rs is ProxyResourceSet);
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet? rs) && rs is not ProxyResourceSet;
         }
 
         /// <summary>
@@ -1562,8 +1562,8 @@ namespace KGySoft.Resources
                     // of those cultures.  So when we lose the race, we must make sure our ResourceSet
                     // isn't in our dictionary before closing it.
                     // But if a proxy or non-hybrid resource is already in the cache, we replace that.
-                    if (lostRace is ProxyResourceSet && !(rs is ProxyResourceSet)
-                        || !(lostRace is HybridResourceSet) && rs is HybridResourceSet)
+                    if (lostRace is ProxyResourceSet && rs is not ProxyResourceSet
+                        || lostRace is not HybridResourceSet && rs is HybridResourceSet)
                     {
                         resourceSets[cultureName] = rs;
                     }
