@@ -1830,7 +1830,7 @@ namespace KGySoft.CoreLibraries
                 case IList<string?> strList:
                     // we can preallocate result
 #if NET40_OR_GREATER
-                    if (!AppDomain.CurrentDomain.IsFullyTrusted)
+                    if (EnvironmentHelper.IsPartiallyTrustedDomain)
                         goto default;
 #endif
                     return FastJoin(strList, separator);

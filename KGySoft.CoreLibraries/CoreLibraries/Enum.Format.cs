@@ -16,7 +16,9 @@
 #region Usings
 
 using System;
+using System.Globalization;
 using System.Security;
+using System.Text;
 
 #endregion
 
@@ -43,14 +45,26 @@ namespace KGySoft.CoreLibraries
                 Throw.EnumArgumentOutOfRange(Argument.format, value);
 
             if (format == EnumFormattingOptions.DistinctFlags)
+            {
+#if NETFRAMEWORK && !NET35
+                if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                    return FormatDistinctFlagsPartiallyTrusted(value, separator);
+#endif
                 return FormatDistinctFlags(value, separator);
+            }
 
             if (format == EnumFormattingOptions.Number)
                 return ToNumericString(converter.ToUInt64(value));
 
             // returning as flags
             if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
+            {
+#if NETFRAMEWORK && !NET35
+                if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                    return FormatCompoundFlagsPartiallyTrusted(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
+#endif
                 return FormatCompoundFlags(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
+            }
 
             // defined value exists
             if (ValueNamePairs.TryGetValue(value, out string? name))
@@ -225,6 +239,87 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+#if NETFRAMEWORK && !NET35
+        private static string FormatDistinctFlagsPartiallyTrusted(TEnum e, string? separator)
+        {
+            EnsureRawValueNamePairs();
+            ulong origRawValue = converter.ToUInt64(e);
+            if (origRawValue == 0UL)
+                return Zero;
+
+            ulong value = origRawValue;
+
+            // Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
+            // MinValue: Flag is unset; <0: Flag has no name (digits size are stored); >=0: Name index
+            int[] resultsQueue = new int[underlyingInfo.BitSize];
+
+            int maxFlag = 0; // Indicates the valuable length of resultsQueue
+            int resultLength = 0; // Indicates the length of the string to be allocated
+
+            for (int i = 0; i < underlyingInfo.BitSize; i++)
+            {
+                ulong flagValue = 1UL << i;
+
+                // unset flag
+                if ((value & flagValue) == 0UL)
+                {
+                    resultsQueue[i] = Int32.MinValue;
+                    continue;
+                }
+
+                maxFlag = i;
+                int nameIndex = FindIndex(flagValue);
+
+                // flag with name
+                if (nameIndex >= 0)
+                {
+                    // The value can be covered by a single name
+                    if (origRawValue == flagValue)
+                        return rawValueNamePairs.Names![nameIndex];
+
+                    resultsQueue[i] = nameIndex;
+                    resultLength += rawValueNamePairs.Names![nameIndex].Length;
+                }
+                // flag without name
+                else
+                {
+                    // The numeric value of the single flag can be returned
+                    if (origRawValue == flagValue)
+                        return ToNumericString(flagValue);
+
+                    int size = GetStringLength(flagValue);
+                    resultsQueue[i] = -size;
+                    resultLength += size;
+                }
+
+                value &= ~flagValue;
+                if (value == 0UL)
+                    break;
+            }
+
+            if (String.IsNullOrEmpty(separator))
+                separator = EnumExtensions.DefaultFormatSeparator;
+
+            var sb = new StringBuilder(resultLength + separator!.Length * (origRawValue.GetFlagsCount() - 1));
+
+            // Applying the names/numbers
+            for (int i = 0; i <= maxFlag; i++)
+            {
+                if (resultsQueue[i] >= 0)
+                    sb.Append(rawValueNamePairs.Names![resultsQueue[i]]);
+                else if (resultsQueue[i] == Int32.MinValue)
+                    continue;
+                else
+                    sb.Append(ToNumericString(1UL << i));
+
+                if (i < maxFlag)
+                    sb.Append(separator);
+            }
+
+            return sb.ToString();
+        }
+#endif
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static bool TryFormatDistinctFlags(TEnum e, Span<char> destination, out int charsWritten, ReadOnlySpan<char> separator)
         {
@@ -394,6 +489,85 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+#if NETFRAMEWORK && !NET35
+        private static string FormatCompoundFlagsPartiallyTrusted(TEnum e, string? separator, bool allowNumberWithNames)
+        {
+            EnsureRawValueNamePairs();
+            ulong origRawValue = converter.ToUInt64(e);
+            if (origRawValue == 0UL)
+                return Zero;
+
+            // Finally, thanks to the changes in .NET Core 3.0 (see https://github.com/dotnet/coreclr/pull/21254/files)
+            // the System.Enum.ToString performance is not terrible anymore. This is also a similar solution (apart
+            // from the feature differences). We can't use Span here because that is not available for all targets.
+            ulong[] rawValues = rawValueNamePairs.RawValues!;
+            ulong value = origRawValue;
+
+            // Unlike in FormatDistinctFlags it is used as a stack because the largest value is added first.
+            int[] resultsStack = new int[underlyingInfo.BitSize];
+
+            int resultsCount = 0; // Indicates the top of resultsStack
+            int resultLength = 0; // Indicates the length of the string to be allocated
+
+            // Processing existing values from largest to smallest
+            for (int i = rawValues.Length - 1; value > 0 && i >= 0; i--)
+            {
+                ulong biggestUnprocessedValue = rawValues[i];
+                if (biggestUnprocessedValue == 0UL)
+                    break;
+
+                if ((value & biggestUnprocessedValue) == biggestUnprocessedValue)
+                {
+                    // The value can be covered by a single name
+                    if (origRawValue == biggestUnprocessedValue)
+                        return rawValueNamePairs.Names![i];
+
+                    resultsStack[resultsCount] = i;
+                    resultLength += rawValueNamePairs.Names![i].Length;
+                    resultsCount += 1;
+                    value &= ~biggestUnprocessedValue;
+                }
+            }
+
+            // There is a rest value but numbers cannot be mixed with names: returning a standalone number
+            if (value != 0UL && !allowNumberWithNames)
+                return ToNumericString(origRawValue);
+
+            if (String.IsNullOrEmpty(separator))
+                separator = EnumExtensions.DefaultFormatSeparator;
+
+            int numericValueLen = 0;
+            if (value != 0UL)
+            {
+                numericValueLen = GetStringLength(value);
+                resultLength += numericValueLen;
+                resultsCount += 1;
+            }
+
+            var sb = new StringBuilder(resultLength + separator!.Length * (resultsCount - 1));
+
+            // Applying the number (if any)
+            if (numericValueLen != 0)
+            {
+                sb.Append(ToNumericString(value));
+                resultsCount -= 1;
+                if (resultsCount > 1)
+                    sb.Append(separator);
+            }
+
+            // Applying the names
+            for (int i = resultsCount - 1; i >= 0; i--)
+            {
+                sb.Append(rawValueNamePairs.Names![resultsStack[i]]);
+
+                if (i > 0)
+                    sb.Append(separator);
+            }
+
+            return sb.ToString();
+        }
+#endif
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static bool TryFormatCompoundFlags(TEnum e, Span<char> destination, out int charsWritten, ReadOnlySpan<char> separator, bool allowNumberWithNames)
         {
@@ -477,9 +651,19 @@ namespace KGySoft.CoreLibraries
         private static string ToNumericString(ulong value)
         {
             if (!underlyingInfo.IsSigned)
+            {
+#if NETFRAMEWORK && !NET35
+                if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                    return value.ToString(CultureInfo.InvariantCulture);
+#endif
                 return value.QuickToString(false);
+            }
 
             long signedValue = ToSigned(value);
+#if NETFRAMEWORK && !NET35
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return signedValue.ToString(CultureInfo.InvariantCulture);
+#endif
             bool isNeg = signedValue < 0;
             return (isNeg ? (ulong)-signedValue : (ulong)signedValue).QuickToString(isNeg);
         }

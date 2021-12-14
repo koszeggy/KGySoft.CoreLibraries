@@ -20,6 +20,11 @@ using System;
 using System.Diagnostics.CodeAnalysis; 
 #endif
 using System.Linq;
+#if NETFRAMEWORK
+using System.Reflection;
+using System.Security;
+using System.Security.Permissions;
+#endif
 
 using KGySoft.Reflection;
 
@@ -32,6 +37,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
     [TestFixture]
     public class EnumTest : TestBase
     {
+        #region Nested Types
+        
         #region Enumerations
 
         [Flags]
@@ -70,6 +77,28 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
         private enum EmptyEnum { }
+
+        #endregion
+
+        #region Sandbox class
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void TestEnum()
+            {
+#if !NET35
+                Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted);
+#endif
+                var test = new EnumTest();
+                test.ToStringTest();
+                test.ParseTest();
+                test.GetFlagsTest(); // uses also the non-public generated converter members internally
+            }
+        }
+#endif
+
+        #endregion
 
         #endregion
 
@@ -322,6 +351,26 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(-1, Enum<TestLongEnum>.GetFlagsCount(UInt64.MaxValue));
             Assert.AreEqual(-1, Enum<TestULongEnum>.GetFlagsCount(Int64.MinValue));
         }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void TestEnum_PartiallyTrusted()
+        {
+            var domain = CreateSandboxDomain(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.TestEnum();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

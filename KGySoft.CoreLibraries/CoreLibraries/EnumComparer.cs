@@ -322,9 +322,9 @@ namespace KGySoft.CoreLibraries
 #if NETSTANDARD2_0
             new FallbackEnumComparer();
 #elif NETFRAMEWORK && !NET35
-            AppDomain.CurrentDomain.IsFullyTrusted
-                ? EnumComparerBuilder.GetComparer<TEnum>()
-                : new PartiallyTrustedEnumComparer();
+            EnvironmentHelper.IsPartiallyTrustedDomain
+                ? new PartiallyTrustedEnumComparer()
+                : EnumComparerBuilder.GetComparer<TEnum>();
 #else
             EnumComparerBuilder.GetComparer<TEnum>();
 #endif

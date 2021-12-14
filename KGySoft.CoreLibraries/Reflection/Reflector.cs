@@ -135,7 +135,6 @@ namespace KGySoft.Reflection
 #if NETFRAMEWORK || NETSTANDARD2_0
         private static bool? canCreateUninitializedObject;
 #endif
-        private static bool? isMono;
         private static bool? isTypedReferenceSupported;
         private static int typedReferenceValueIndex;
         private static int referenceRawDataOffset;
@@ -173,8 +172,6 @@ namespace KGySoft.Reflection
                 return defaultMemberCache;
             }
         }
-
-        private static bool IsMono => isMono ??= Type.GetType("Mono.Runtime") != null;
 
         #endregion
 
@@ -3095,14 +3092,14 @@ namespace KGySoft.Reflection
             {
                 isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 0;
-                referenceRawDataOffset = IsMono ? IntPtr.Size * 2 : IntPtr.Size;
+                referenceRawDataOffset = EnvironmentHelper.IsMono ? IntPtr.Size * 2 : IntPtr.Size;
                 return true;
             }
 
             // On Mono the first field in TypedReference is a RuntimeTypeHandle, and the pointer to the value is the 2nd one.
             // Fun fact: as RuntimeTypeHandle contains a reference, sizeof(RuntimeTypeHandle), and thus sizeof(TypedReference) wouldn't work normally
             // but once the code is compiled, sizeof() evaluates just fine, and when compiling in Mono, it allows sizeof(StructWithReferences).
-            if (typedRefSize == IntPtr.Size * 3 && IsMono)
+            if (typedRefSize == IntPtr.Size * 3 && EnvironmentHelper.IsMono)
             {
                 isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 1;
