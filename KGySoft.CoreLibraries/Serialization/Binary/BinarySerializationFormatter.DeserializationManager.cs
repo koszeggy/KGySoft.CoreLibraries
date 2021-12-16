@@ -1212,9 +1212,7 @@ namespace KGySoft.Serialization.Binary
             /// <param name="dataTypeDescriptor">The descriptor of the data type to be deserialized.</param>
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
-#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
-#endif
             private object? ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
                 bool TryGetFromCache(out object? cachedValue)

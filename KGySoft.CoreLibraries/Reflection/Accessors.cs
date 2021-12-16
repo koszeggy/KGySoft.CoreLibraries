@@ -116,10 +116,7 @@ namespace KGySoft.Reflection
         #region MemoryStream
 
         private static FunctionMethodAccessor? methodMemoryStream_InternalGetBuffer;
-
-#if !NETFRAMEWORK
         private static bool? hasMemoryStream_InternalGetBuffer;
-#endif
 
         #endregion
 
@@ -135,6 +132,15 @@ namespace KGySoft.Reflection
         private static bool? hasIIListProvider;
         private static Type? typeIIListProvider;
 
+        #endregion
+
+        #region Pointer
+#if NETFRAMEWORK && !NET35
+
+        private static FunctionMethodAccessor? methodPointer_GetPointerValue;
+        private static bool? hasPointer_GetPointerValue;
+
+#endif
         #endregion
 
         #endregion
@@ -363,9 +369,6 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-#if NETFRAMEWORK
-        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ??= new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)!);
-#else
         private static FunctionMethodAccessor? MemoryStream_InternalGetBuffer
         {
             get
@@ -381,7 +384,6 @@ namespace KGySoft.Reflection
                 return hasMemoryStream_InternalGetBuffer == true ? methodMemoryStream_InternalGetBuffer : null;
             }
         }
-#endif
 
         #endregion
 
@@ -425,6 +427,28 @@ namespace KGySoft.Reflection
             return methodsIIListProvider_GetCount[genericArgument];
         }
 
+        #endregion
+
+        #region Pointer
+#if NETFRAMEWORK && !NET35
+
+        private static FunctionMethodAccessor? Pointer_GetPointerValue
+        {
+            get
+            {
+                if (hasPointer_GetPointerValue == null)
+                {
+                    MethodInfo? mi = typeof(Pointer).GetMethod("GetPointerValue", BindingFlags.Instance | BindingFlags.NonPublic);
+                    hasPointer_GetPointerValue = mi != null;
+                    if (hasPointer_GetPointerValue == true)
+                        methodPointer_GetPointerValue = new FunctionMethodAccessor(mi!);
+                }
+
+                return hasPointer_GetPointerValue == true ? methodPointer_GetPointerValue : null;
+            }
+        }
+
+#endif
         #endregion
 
         #endregion
@@ -833,25 +857,29 @@ namespace KGySoft.Reflection
 #endif
         }
 
-        [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe object? Get(this FieldInfo field, object? instance)
+        internal static object? Get(this FieldInfo field, object? instance)
         {
             if (field.FieldType.IsPointer)
-                return new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
+            {
+#if NETFRAMEWORK && !NET35
+                if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                    return GetPointerPartiallyTrusted(field, instance);
+#endif
+                return GetPointer(field, instance);
+            }
 
             return FieldAccessor.GetAccessor(field).Get(instance);
         }
 
-        [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this FieldInfo field, object? instance, object? value)
+        internal static void Set(this FieldInfo field, object? instance, object? value)
         {
             Debug.Assert(!field.IsLiteral);
 
             if (field.FieldType.IsPointer)
             {
-                field.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), field.FieldType));
+                SetPointer(field, instance, value);
                 return;
             }
 
@@ -915,6 +943,16 @@ namespace KGySoft.Reflection
 
             return MethodAccessor.GetAccessor(method).Invoke(instance, parameters);
         }
+
+        [SecuritySafeCritical]
+        private static unsafe object GetPointer(FieldInfo field, object? instance) => new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
+
+#if NETFRAMEWORK && !NET35
+        private static object? GetPointerPartiallyTrusted(FieldInfo field, object? instance) => Pointer_GetPointerValue?.Invoke((Pointer)field.GetValue(instance));
+#endif
+
+        [SecuritySafeCritical]
+        private static unsafe void SetPointer(FieldInfo field, object? instance, object? value) => field.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), field.FieldType));
 
         #endregion
 

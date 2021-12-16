@@ -1792,7 +1792,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new EnvironmentPermission(PermissionState.Unrestricted),
 #endif
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
-                new SecurityPermission(SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlAppDomain | SecurityPermissionFlag.SerializationFormatter | SecurityPermissionFlag.UnmanagedCode),
+                new SecurityPermission(SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlAppDomain | SecurityPermissionFlag.SerializationFormatter | SecurityPermissionFlag.UnmanagedCode | SecurityPermissionFlag.ControlPolicy),
                 new FileIOPermission(PermissionState.Unrestricted));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
             var sandbox = (Sandbox)handle.Unwrap();
