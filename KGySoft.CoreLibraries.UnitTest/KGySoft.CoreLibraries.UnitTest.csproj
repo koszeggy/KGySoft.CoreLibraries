@@ -49,11 +49,18 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
-  <!-- Project references -->
+  <!-- .NET Core 2.x only references -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
+    <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0"/>
+  </ItemGroup>
+
+    <!-- Project references -->
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
   </ItemGroup>
 
+  <!--Deployed resources-->
   <ItemGroup>
     <EmbeddedResource Update="Resources\TestResourceResX.en-US.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -64,15 +71,9 @@
     <EmbeddedResource Update="Resources\TestResourceResX.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Resources\TestBinFile.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

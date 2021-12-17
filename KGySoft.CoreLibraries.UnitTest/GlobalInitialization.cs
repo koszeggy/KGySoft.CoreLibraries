@@ -17,9 +17,7 @@
 #region Usings
 
 using System.Drawing;
-#if NETCOREAPP3_0_OR_GREATER
 using System.Text;
-#endif
 
 using NUnit.Framework;
 
@@ -35,9 +33,7 @@ namespace KGySoft.CoreLibraries
         [OneTimeSetUp]
         public void Initialize()
         {
-#if NETCOREAPP3_0_OR_GREATER
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-#endif
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
             typeof(Icon).RegisterTypeConverter<IconConverter>();
         }
