@@ -165,20 +165,25 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(new ArrayList { 1, 2, 3 }.TryGetCount(out count));
             Assert.AreEqual(3, count);
 
+#if !NETFRAMEWORK
             // IIListProvider<T>
             Assert.IsTrue(new int[5].Select(c => (byte)c).TryGetCount(out count));
             Assert.AreEqual(5, count);
+#endif
 
             // ICollection<T> that is not ICollection via non-generic access
             Assert.IsTrue(((IEnumerable)new LockingCollection<int>(new int[8])).TryGetCount(out count));
             Assert.AreEqual(8, count);
 
+#if !NETFRAMEWORK
             // IIListProvider<T> via non-generic access
             Assert.IsTrue(((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count));
             Assert.AreEqual(13, count);
+#endif
 
             // Cannot be determined without counting
             Assert.IsFalse(Enumerable.Range(0, 10).Where(n => n > 1).TryGetCount(out count));
+            Assert.AreEqual(0, count);
         }
 
         #endregion

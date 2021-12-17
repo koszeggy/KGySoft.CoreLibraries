@@ -1652,7 +1652,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="count">If this method returns <see langword="true"/>, then this parameter contains the number of elements in the <paramref name="source"/> enumeration. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the number of elements could be determined without enumeration; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>This method supports some public interfaces as well as some common LINQ iterators.</para>
+        /// <para>This method supports some public interfaces as well as some common LINQ iterators (in .NET Core/.NET platforms).</para>
         /// <note>This method is similar to the <see cref="Enumerable.TryGetNonEnumeratedCount{TSource}">Enumerable.TryGetNonEnumeratedCount</see> method in .NET 6 and above but can be used
         /// in any targeted platform and considers also <see cref="IReadOnlyCollection{T}"/> implementations.</note>
         /// </remarks>
@@ -1693,8 +1693,8 @@ namespace KGySoft.CoreLibraries
 
                 default:
                     int? result = source.GetListProviderCount();
-                    count = result ?? default;
-                    return result.HasValue;
+                    count = result >= 0 ? result.Value : default;
+                    return result >= 0;
             }
 #endif
         }
@@ -1729,8 +1729,8 @@ namespace KGySoft.CoreLibraries
 
                     // IIListProvider<T>
                     int? result = source.GetListProviderCount();
-                    count = result ?? default;
-                    return result.HasValue;
+                    count = result >= 0 ? result.Value : default;
+                    return result >= 0;
             }
         }
 
