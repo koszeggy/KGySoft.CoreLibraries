@@ -279,10 +279,8 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
-#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "Intended, in Release build the JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
-#endif
             private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, [MaybeNullWhen(false)]out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");

@@ -29,11 +29,11 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Needed for <see cref="Bitmap"/> type to be able to be serialized to and from byte[] the same way as in the .NET Framework.
+    /// Needed for <see cref="Icon"/> type to be able to be serialized to and from byte[] the same way as in the .NET Framework.
     /// </summary>
     internal class IconConverter : TypeConverter
     {
-#region Methods
+        #region Methods
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == Reflector.ByteArrayType || base.CanConvertFrom(context, sourceType);
 
@@ -44,7 +44,7 @@ namespace KGySoft.CoreLibraries
             return base.ConvertFrom(context, culture, value);
         }
 
-#endregion
+        #endregion
     }
-} 
+}
 #endif

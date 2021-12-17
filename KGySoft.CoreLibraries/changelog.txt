@@ -11,7 +11,7 @@
 
 * Common changes:
 =================
-* Using C# 8.0 readonly modifier for all possible members of non-readonly public structs.
+* Using C# 8.0 readonly modifier for all possible properties and methods of non-readonly public structs.
 
 * KGySoft.CoreLibraries namespace:
 ==================================

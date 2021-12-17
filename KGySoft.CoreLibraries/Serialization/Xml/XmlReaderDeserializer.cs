@@ -19,9 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-#if NET5_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Globalization;
 using System.Reflection;
 using System.Security;
@@ -297,9 +295,7 @@ namespace KGySoft.Serialization.Xml
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
-#if NET5_0_OR_GREATER
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-#endif
         private bool TryDeserializeObject(Type? type, XmlReader reader, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity

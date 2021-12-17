@@ -16,10 +16,11 @@
 
 #region Usings
 
-using System;
 using System.Drawing;
+#if NETCOREAPP3_0_OR_GREATER
 using System.Text;
-using KGySoft.Reflection;
+#endif
+
 using NUnit.Framework;
 
 #endregion
@@ -34,7 +35,9 @@ namespace KGySoft.CoreLibraries
         [OneTimeSetUp]
         public void Initialize()
         {
+#if NETCOREAPP3_0_OR_GREATER
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
             typeof(Icon).RegisterTypeConverter<IconConverter>();
         }

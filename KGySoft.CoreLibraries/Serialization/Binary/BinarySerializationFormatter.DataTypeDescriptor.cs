@@ -176,9 +176,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Methods
 
-#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-#endif
             private static Type GetCollectionType(DataTypes collectionDataType)
             {
                 switch (collectionDataType)
@@ -398,9 +396,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Private Methods
 
-#if NET5_0_OR_GREATER
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-#endif
             private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes, out DataTypeDescriptor? existingDescriptor)
             {
                 existingDescriptor = null;

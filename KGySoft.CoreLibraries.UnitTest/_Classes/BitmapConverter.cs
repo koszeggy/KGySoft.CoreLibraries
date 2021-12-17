@@ -33,7 +33,7 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     internal class BitmapConverter : TypeConverter
     {
-#region Methods
+        #region Methods
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == Reflector.ByteArrayType || base.CanConvertFrom(context, sourceType);
 
@@ -44,7 +44,7 @@ namespace KGySoft.CoreLibraries
             return base.ConvertFrom(context, culture, value);
         }
 
-#endregion
+        #endregion
     }
-} 
+}
 #endif
