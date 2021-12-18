@@ -1,4 +1,4 @@
-[![KGy SOFT .net](https://user-images.githubusercontent.com/27336165/124292367-c93f3d00-db55-11eb-8003-6d943ee7d7fa.png)](https://kgysoft.net)
+﻿[![KGy SOFT .net](https://user-images.githubusercontent.com/27336165/124292367-c93f3d00-db55-11eb-8003-6d943ee7d7fa.png)](https://kgysoft.net)
 
 # KGy SOFT Core Libraries
 
@@ -110,7 +110,7 @@ while (!rest.IsNull)
     DoSomenthingWithSegment(rest.ReadToSeparator('|'));
 ```
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/Byk0YM).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/Byk0YM).
 
 [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array3D_1.htm) types work similarly but for arrays. They are not just faster than `Memory<T>` (whose `Span` property has some extra cost) but offer some additional features as well:
 
@@ -133,11 +133,11 @@ ArraySection<byte> singleRow = as2d[0];
 
 Please note that none of the lines in the example above allocate anything on the heap.
 
-> _Tip:_ [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array3D_1.htm) types have constructors where you can specify an arbitrary capacity. If the targeted platform supports it, then these use array pooling, which can be much faster than allocating new arrays. Do not forget to release the created instances that were created by the allocator constructors.
+> 💡 _Tip:_ [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_Array3D_1.htm) types have constructors where you can specify an arbitrary capacity. If the targeted platform supports it, then these use array pooling, which can be much faster than allocating new arrays. Do not forget to release the created instances that were created by the allocator constructors.
 
 - #### [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) extension methods:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/GKSif4).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/GKSif4).
 ```cs
 // old way:
 object obj;
@@ -165,7 +165,7 @@ Depending on the actual implementation inserting/removing/setting elements in an
 
 - #### [`Object.Convert<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_CoreLibraries_ObjectExtensions_Convert.htm) extension method:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/rzg8If).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/rzg8If).
 ```cs
 // between convertible types: like the Convert class but supports also enums in both ways
 result = "123".Convert<int>(); // culture can be specified, default is InvariantCulture
@@ -208,7 +208,7 @@ if (stringValue.In("something", "something else", "maybe some other value", "or.
 
 - #### [`Random` extensions methods](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_RandomExtensions.htm):
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/EPHRIx).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/EPHRIx).
 
 ```cs
 // Or FastRandom for the fastest results, or SecureRandom for cryptographically safe results.
@@ -238,7 +238,7 @@ rnd.NextObject<ArrayList>(new GenerateObjectSettings { SubstitutionForObjectType
 rnd.NextObject<object>(new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true });
 ```
 
-> _Tip:_ Find more extensions in the [online documentation](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_CoreLibraries.htm).
+> 💡 _Tip:_ Find more extensions in the [online documentation](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_CoreLibraries.htm).
 
 ### High Performance Collections:
 
@@ -248,7 +248,7 @@ A `Dictionary`-like type with a specified capacity. If the cache is full and new
 
 If an item loader is passed to the constructor, then it is enough only to read the cache via the indexer and the corresponding item will be transparently loaded when necessary.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/YGDY9c).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/YGDY9c).
 
 ```cs
 // instantiating the cache by a loader method and a capacity of 1000 possible items
@@ -265,7 +265,7 @@ var threadSafeCache = personCache.GetThreadSafeAccessor(protectItemLoader: false
 person = threadSafeCache[id];
 ```
 
-> _Tip:_ To obtain a thread-safe cache accessor it is recommended to use the [`ThreadSafeCacheFactory`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeCacheFactory.htm) class, where you can configure the characteristics of the cache to create. You can create completely lock-free caches, or caches with strict capacity management, expiring values, etc. See the ***Remarks*** section of the [`ThreadSafeCacheFactory.Create`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Collections_ThreadSafeCacheFactory_Create__2_1.htm) method for details.
+> 💡 _Tip:_ To obtain a thread-safe cache accessor it is recommended to use the [`ThreadSafeCacheFactory`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeCacheFactory.htm) class, where you can configure the characteristics of the cache to create. You can create completely lock-free caches, or caches with strict capacity management, expiring values, etc. See the ***Remarks*** section of the [`ThreadSafeCacheFactory.Create`](https://docs.kgysoft.net/corelibraries/?topic=html/M_KGySoft_Collections_ThreadSafeCacheFactory_Create__2_1.htm) method for details.
 
 - #### [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm):
 
@@ -302,7 +302,7 @@ Console.WriteLine(clist.SkipWhile(i => i < 0).Count());
 
 Combines the features of `IBindingList` implementations (such as `BindingList<T>`) and `INotifyCollectionChanged` implementations (such as `ObservableCollection<T>`). It makes it an ideal collection type in many cases (such as in a technology-agnostic View-Model layer) because it can used in practically any UI environments. By default it is initialized by a [`SortableBindingList<T>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_SortableBindingList_1.htm) but can wrap any `IList<T>` implementation.
 
-> _Tip:_ See more collections in the [`KGySoft.Collections`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections.htm), [`KGySoft.Collections.ObjectModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections_ObjectModel.htm) and [`KGySoft.ComponentModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespaces.
+> 💡 _Tip:_ See more collections in the [`KGySoft.Collections`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections.htm), [`KGySoft.Collections.ObjectModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections_ObjectModel.htm) and [`KGySoft.ComponentModel`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespaces.
 
 ### Fast Enum Handling
 
@@ -310,7 +310,7 @@ In .NET Framework some enum operations used to be legendarily slow. Back then I 
 
 So today the main benefit of using the [`Enum<TEnum>`][enum] class is its extra features and maybe the support of formatting/parsing to and from `Span<char>`/`ReadOnlySpan<char>` types, which is missing at `System.Enum` on many platform versions. And if you target older frameworks, which can't use `ReadOnlySpan<char>`, you still can use the `Parse`/`TryParse` overloads that accept [`StringSegment`][StringSegment] parameters.
 
-> _Tip:_ See the performance comparison in .NET Core and try it [online](https://dotnetfiddle.net/xNTnLE).
+> 💡 _Tip:_ See the performance comparison in .NET Core and try it [online](https://dotnetfiddle.net/xNTnLE).
 
 [enum]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_Enum_1.htm
 
@@ -332,7 +332,7 @@ There are four public classes derived from [`MemberAccessor`](https://docs.kgyso
 [ma]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_MethodAccessor.htm
 [ca]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_CreateInstanceAccessor.htm
 
-> _Tip:_ See the links in the table above for performance comparison examples.
+> 💡 _Tip:_ See the links in the table above for performance comparison examples.
 
 - #### [`Reflector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_Reflector.htm) class - the convenient way:
 
@@ -359,13 +359,13 @@ result = Reflector.InvokeMethod(instance, "MethodName", new[] { typeof(GenericAr
 bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out result, param1, param2);
 ```
 
-> _Note:_ `Try...` methods return false if a matching member with the given name/parameters cannot be found. However, if a member could be successfully invoked, which threw an exception, then this exception will be thrown further.
+> 📝 _Note:_ `Try...` methods return false if a matching member with the given name/parameters cannot be found. However, if a member could be successfully invoked, which threw an exception, then this exception will be thrown further.
 
 ### Serialization
 
 - #### Binary Serialization
 
-> _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise deep clones. If you still need to deserialize possibly harmful content make sure to use the [`SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
+> 🔒 _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise deep clones. If you still need to deserialize possibly harmful content make sure to use the [`SafeMode`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
 
 [`BinarySerializationFormatter`][bsf] serves the same purpose as `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. It supports many core types natively, including many collections and newer basic types that are not marked serializable anymore (eg. `Half`, `Rune`, `DateOnly`, `TimeOnly`, etc.). It means that serialization of those types does not involve storing assembly and type names at all, which ensures very compact sizes as well as their safe deserialization on every possible platform. Apart from the natively supported types it works similarly to `BinaryFormatter`: uses recursive serialization of fields and supports the full binary serialization infrastructure including `ISerializable`, `IDeserializationCallback`, `IObjectReference`, serialization method attributes, binder and surrogates support.
 
@@ -373,7 +373,7 @@ Even if used in a secure environment or on a cryptographically secured channel, 
 
 Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/T7BUyB).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/T7BUyB).
 
 ```cs
 // Simple way: by the static BinarySerializer class
@@ -408,13 +408,13 @@ formatter.Binder = new WeakAssemblySerializationBinder { SafeMode = true }; // w
 result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssemblyVersion);
 ```
 
-> _Solving compatibility issues between different platforms:_ In .NET Core there are many types that used to be serializable in .NET Framework but the `[Serializable]` attribute is not applied to them in .NET Core/Standard. Though the binary serialization of such types is not recommended anymore, their support could be required for compatibility reasons. In this case the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) can be a solution, which can be used both with `BinaryFormatter` and [`BinarySerializationFormatter`][bsf]. See the **Remarks** section of the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) class for various use cases and their solutions.
+> ℹ️ _Solving compatibility issues between different platforms:_ In .NET Core there are many types that used to be serializable in .NET Framework but the `[Serializable]` attribute is not applied to them in .NET Core/Standard. Though the binary serialization of such types is not recommended anymore, their support could be required for compatibility reasons. In this case the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) can be a solution, which can be used both with `BinaryFormatter` and [`BinarySerializationFormatter`][bsf]. See the **Remarks** section of the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) class for various use cases and their solutions.
 
 [bsf]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm
 
 - #### XML Serialization
 
-> _Security Note:_ KGy SOFT's [`XmlSerializer`][xml] is a polymorphic serializer. If the serialized content comes from an untrusted source make sure you use its [`DeserializeSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeSafe.htm)/[`DeserializeContentSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeContentSafe.htm) methods that disallow loading assemblies during the deserialization even if types are specified with their assembly qualified names. Of course, this can only protect you if your library (along with the other loaded assemblies) can't be exploited for security attacks. The [`XmlSerializer`][xml] can only create objects by using their default constructor and is able to set the public fields and properties. It can also create collections by special initializer constructors and can populate them by the standard interface implementations. See the security notes at the **Remarks** section of the [`XmlSerializer`][xml] class for more details.
+> 🔒 _Security Note:_ KGy SOFT's [`XmlSerializer`][xml] is a polymorphic serializer. If the serialized content comes from an untrusted source make sure you use its [`DeserializeSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeSafe.htm)/[`DeserializeContentSafe`](https://docs.kgysoft.net/corelibraries/?topic=html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeContentSafe.htm) methods that disallow loading assemblies during the deserialization even if types are specified with their assembly qualified names. Of course, this can only protect you if your library (along with the other loaded assemblies) can't be exploited for security attacks. The [`XmlSerializer`][xml] can only create objects by using their default constructor and is able to set the public fields and properties. It can also create collections by special initializer constructors and can populate them by the standard interface implementations. See the security notes at the **Remarks** section of the [`XmlSerializer`][xml] class for more details.
 
 Unlike binary serialization, which is meant to save the bitwise content of an object, the [`XmlSerializer`][xml] can save and restore the public properties and fields. Meaning, it cannot guarantee that the original state of an object can be fully restored unless it is completely exposed by public members. The [`XmlSerializer`][xml] can be a good choice for saving configurations or components whose state can be edited in a property grid, for example.
 
@@ -440,7 +440,7 @@ public class Person
 
 And the serialization:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/M2dfrx).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/M2dfrx).
 
 ```cs
 var person = ThreadSafeRandom.Instance.NextObject<Person>();
@@ -495,7 +495,7 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
-> _Tip:_ For a real-life example see also the [KGy SOFT Imaging Tools](https://github.com/koszeggy/KGySoft.Drawing.Tools#localization) application that supports creating and applying new localizations on-the-fly, from within the application.
+> 💡 _Tip:_ For a real-life example see also the [KGy SOFT Imaging Tools](https://github.com/koszeggy/KGySoft.Drawing.Tools#localization) application that supports creating and applying new localizations on-the-fly, from within the application.
 
 The KGy SOFT Core Libraries contain numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used on all platforms) and they got a bunch of improvements at the same time. Most importantly, they all have a `SafeMode` property, which guarantees that no assembly loading and deserialization occurs unless it is explicitly requested. But even if `SafeMode` is false, an item is not deserialized until it is explicitly obtained. Or, the [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) class is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
@@ -504,7 +504,7 @@ On top of those, KGy SOFT Core Libraries introduce a sort of new types that can 
 - The [`HybridResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_HybridResourceManager.htm) is able to work both with compiled and .resx resources even at the same time: it can be used to override the compiled resources with .resx content.
 - The [`DynamicResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_DynamicResourceManager.htm) can be used to generate new .resx files automatically for languages without a localization. The KGy SOFT Libraries also use `DynamicResourceManager` instances to maintain their resources. The library assemblies are compiled only with the English resources but any consumer library or application can enable the .resx expansion for any language.
 
-> _Tip:_ See the **Remarks** section of the [`KGySoft.Resources`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Resources.htm) namespace description, which may help you to choose the most appropriate class for your needs.
+> 💡 _Tip:_ See the **Remarks** section of the [`KGySoft.Resources`](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Resources.htm) namespace description, which may help you to choose the most appropriate class for your needs.
 
 - #### Enabling the localization of the Core Libraries resources:
 
@@ -592,7 +592,7 @@ public class MyModel : ValidatingObjectBase
     }
 }
 ```
-> _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try business objects in action
+> 💡 _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try business objects in action
 
 ### Command Binding
 
@@ -619,7 +619,7 @@ public static class MyCommands
 
 To use a command it has to be bound to one or more sources (and to some targets if the command is targeted). To create a binding the `CreateBinding` extension method can be used:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/7b0lFq).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/7b0lFq).
 
 ```cs
 var binding = MyCommands.PasteCommand.CreateBinding(menuItemPaste, "Click", textBox);
@@ -811,7 +811,7 @@ public class MyView : ViewBase<MyViewModel>
     }
 }
 ```
-> _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try command bindings in action
+> 💡 _Tip:_ See the [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) repository to try command bindings in action
 
 [ICommand]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommand.htm
 [ICommandBinding]: https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommandBinding.htm
@@ -825,7 +825,7 @@ KGy SOFT CoreLibraries offers two ways for performance measurement, which can be
 
 You can use the `Profiler` class to inject measurement sections as `using` blocks into your code base:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/BuuisW).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/BuuisW).
 ```cs
 const string category = "Example";
 
@@ -864,7 +864,7 @@ The result .xml can be imported easily into Microsoft Excel:
 
 For more direct operations you can use the [`PerformanceTest`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Diagnostics_PerformanceTest.htm) and [`PerformanceTest<TResult>`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Diagnostics_PerformanceTest_1.htm) classes to measure operations with `void` and non-`void` return values, respectively.
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/PCcVuD).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/PCcVuD).
 ```cs
 new PerformanceTest
     {
@@ -902,7 +902,7 @@ Cases are sorted by time (quickest first)
 
 If you need to use parameterized tests you can simply derive the `PerformanceTestBase<TDelegate, TResult>` class. Override the `OnBeforeCase` method to reset the parameter for each test cases. For example, this is how you can use a prepared `Random` instance in a performance test:
 
-> _Tip:_ Try also [online](https://dotnetfiddle.net/KNiZa7).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/KNiZa7).
 
 ```cs
 public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>

@@ -8,6 +8,7 @@ Many of them aim to replace existing APIs of the original .NET framework with mo
 Among others:
 - Useful [extensions](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_CoreLibraries.htm) for simple types, collections, and others
 - High-performance [collections](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Collections.htm)
+- [Fast enum handling](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_CoreLibraries_Enum_1.htm)
 - High-performance [reflection API](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Reflection.htm)
 - Very compact and efficient [binary serializer](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm) with safe mode
 - Powerful [XML serializer](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Serialization_Xml_XmlSerializer.htm)

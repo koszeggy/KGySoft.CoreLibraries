@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 6.0.0
+Thank you for installing KGy SOFT Core Libraries 6.0.1
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 
@@ -25,6 +25,7 @@ Download link for the offline documentation: https://github.com/koszeggy/KGySoft
 Some Highlights of KGy SOFT Core Libraries:
 - Useful extensions for simple types, collections, and others
 - High-performance collections
+- Fast enum handling
 - High-performance reflection API
 - Very compact binary serializer with safe mode
 - Powerful XML serializer 
