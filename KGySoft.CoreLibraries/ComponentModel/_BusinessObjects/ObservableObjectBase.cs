@@ -541,7 +541,7 @@ namespace KGySoft.ComponentModel
                 return;
             isDisposed = true;
             properties = null;
-            properties = null;
+            reflectedProperties = null;
             propertyChanged = null;
         }
 
