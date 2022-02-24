@@ -507,7 +507,7 @@ namespace KGySoft.Resources
     /// <note type="tip"><list type="bullet">
     /// <item>You can use the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method to create possible non-existing resources for a language.</item>
     /// <item>You can use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to forcibly merge all resource entries in the invariant
-    /// resource set for a language. This can be useful if new resources have been introduced since a previous version the newly introduced entries also have to be added to the localized resource sets.</item>
+    /// resource set for a language. This can be useful if new resources have been introduced since a previous version and the newly introduced entries also have to be added to the localized resource sets.</item>
     /// <item>To see how to use dynamically created resources for any language in a live application with editing support see
     /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</item>
     /// </list></note>

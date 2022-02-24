@@ -267,7 +267,7 @@ namespace KGySoft.Collections
         /// <para>This property is ignored if a value is accessed in the fast-accessing storage including removing and adding values of keys that have already been merged to the lock-free storage.</para>
         /// <note>Some operations (such as enumerating the <see cref="ThreadSafeDictionary{TKey,TValue}"/> or its <see cref="Keys"/> and <see cref="Values"/>,
         /// calling the <see cref="ToArray">ToArray</see> or the <see cref="ICollection.CopyTo">ICollection.CopyTo</see> implementations) as well as serializing the dictionary may trigger a merging
-        /// regardless of the value of this property.</note>
+        /// regardless the value of this property.</note>
         /// </remarks>
         public TimeSpan MergeInterval
         {
