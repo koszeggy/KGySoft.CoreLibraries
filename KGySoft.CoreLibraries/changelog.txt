@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v6.0.2:
+~~~~~~~~~
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- EnumComparer<TEnum> class: fixing possible AccessViolationException in .NET Core 3.0 and above when a consumer
+  project targets the x86 platform.
+
+
+~~~~~~~~~
 * v6.0.1:
 ~~~~~~~~~
 
