@@ -81,7 +81,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void TestEnumComparer()
         {
             var c1 = EnumComparer<EmptyEnum>.Comparer;
-            c1.Compare((EmptyEnum)(-1), (EmptyEnum)1);
             var d1 = Comparer<EmptyEnum>.Default;
             var e1 = EqualityComparer<EmptyEnum>.Default;
             var v1 = new EmptyEnum[] { (EmptyEnum)(-1), (EmptyEnum)1 };
@@ -93,6 +92,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e1.Equals(v1[1], v1[1]), c1.Equals(v1[1], v1[1]));
             Assert.AreEqual(e1.GetHashCode(v1[0]), c1.GetHashCode(v1[0]));
             Assert.AreNotEqual(c1.GetHashCode(v1[0]), c1.GetHashCode(v1[1]));
+            Assert.AreEqual(-1L, c1.ToInt64(v1[0]));
+            Assert.AreEqual(1L, c1.ToInt64(v1[1]));
+            Assert.AreEqual((ulong)UInt32.MaxValue, c1.ToUInt64(v1[0]));
+            Assert.AreEqual(1UL, c1.ToUInt64(v1[1]));
 
             var c2 = EnumComparer<TestLongEnum>.Comparer;
             var d2 = Comparer<TestLongEnum>.Default;

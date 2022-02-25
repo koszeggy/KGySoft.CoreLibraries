@@ -265,7 +265,7 @@ namespace KGySoft.CoreLibraries
             ulong sizeMask = underlyingType.GetSizeMask();
             if (sizeMask != UInt64.MaxValue)
             {
-                il.Emit(GetConvOpCode(underlyingType));
+                il.Emit(OpCodes.Conv_U8);
                 if (underlyingType.IsSignedIntegerType())
                 {
                     il.Emit(OpCodes.Ldc_I8, (long)sizeMask);
@@ -288,7 +288,7 @@ namespace KGySoft.CoreLibraries
             ILGenerator il = methodToUInt64.GetILGenerator();
             il.Emit(OpCodes.Ldarg_1);
             if (underlyingType.GetSizeMask() != UInt64.MaxValue)
-                il.Emit(GetConvOpCode(underlyingType));
+                il.Emit(OpCodes.Conv_I8);
 
             il.Emit(OpCodes.Ret);
         }
