@@ -41,7 +41,7 @@ using KGySoft.Serialization.Binary;
 #region Suppressions
 
 #if NET
-#if NET5_0 || NET6_0
+#if NET5_0 || NET6_0 || NET7_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses IFormatter implementations for compatibility reasons
 #pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
@@ -1155,6 +1155,24 @@ namespace KGySoft.Resources
         /// </summary>
         private void InitNodeInfo(Func<Type, string?>? typeNameConverter, bool compatibleFormat)
         {
+            #region Local Methods
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD
+            static void SurrogateSelectorGettingFieldMemoryStream(object? sender, GettingFieldEventArgs e)
+            {
+                // Special handling for non-derived MemoryStream, which used to be serializable so we must provide compatibility for it
+                // because the designer may produce embdedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
+                // So we just skip skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
+                // Note: In .NET Core 2.x MemoryStream was already non-serializable but the Task field still had the [NonSerialized] property
+                Debug.Assert(e.Object.GetType() == typeof(MemoryStream));
+                Type fieldType = e.Field.FieldType;
+                if (!fieldType.IsPrimitive && !fieldType.IsArray)
+                    e.Handled = true;
+            }
+#endif
+
+            #endregion
+
             Debug.Assert(cachedValue != null, "value is null in FillDataNodeInfoFromObject");
 
             // 1.) natively supported type
@@ -1247,7 +1265,15 @@ namespace KGySoft.Resources
                     // When serializing, we allow unsafe handling. On deserialization safe mode can be specified.
                     // Known regression: AnyObjectSerializerWrapper used to be support non-zero based, non-primitive arrays in compatible mode
                     if (!type.IsSerializable)
-                        binaryFormatter.SurrogateSelector = new CustomSerializerSurrogateSelector();
+                    {
+                        var surrogate = new CustomSerializerSurrogateSelector();
+                        binaryFormatter.SurrogateSelector = surrogate;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD
+                        // Special handling for MemoryStream. See SurrogateSelectorGettingFieldMemoryStream for details.
+                        if (type == typeof(MemoryStream))
+                            surrogate.GettingField += SurrogateSelectorGettingFieldMemoryStream;
+#endif
+                    }
                     binaryFormatter.Serialize(ms, cachedValue);
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
                 }
@@ -1261,6 +1287,15 @@ namespace KGySoft.Resources
             var serializer = new BinarySerializationFormatter();
             if (typeNameConverter != null)
                 serializer.Binder = new ResXSerializationBinder(typeNameConverter, false);
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD
+            // Special handling for MemoryStream. See SurrogateSelectorGettingFieldMemoryStream for details.
+            if (type == typeof(MemoryStream))
+            {
+                var surrogate = new CustomSerializerSurrogateSelector();
+                serializer.SurrogateSelector = surrogate;
+                surrogate.GettingField += SurrogateSelectorGettingFieldMemoryStream;
+            }
+#endif
             nodeInfo.ValueData = ResXCommon.ToBase64(serializer.Serialize(cachedValue));
             nodeInfo.MimeType = ResXCommon.KGySoftSerializedObjectMimeType;
             nodeInfo.CompatibleFormat = false;
@@ -1425,6 +1460,7 @@ namespace KGySoft.Resources
                 if (safeMode)
                     surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
 #endif
+
                 var binaryFormatter = new BinaryFormatter
                 {
                     SurrogateSelector = surrogate,
