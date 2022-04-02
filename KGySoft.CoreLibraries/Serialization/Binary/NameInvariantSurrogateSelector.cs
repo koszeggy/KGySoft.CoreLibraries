@@ -38,7 +38,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="security"><para>If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
     /// which prevents supporting non-serializable types.</para>
     /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
-    /// <para>You can use this surrogate selector for any non-primitive types that does not implement <see cref="ISerializable"/> interface.</para>
+    /// <para>You can use this surrogate selector for any non-primitive types that do not implement <see cref="ISerializable"/> interface.</para>
     /// <note>Versioning by this surrogate selector can be accomplished only if new fields are always defined after the old ones on every level of the hierarchy.
     /// You might want to use also the <see cref="WeakAssemblySerializationBinder"/> class to ignore version information of assemblies on deserialization.</note>
     /// <note type="caution">Please note that this surrogate selector does not identify field names on deserialization so reordering members may corrupt or fail deserialization.</note>

@@ -372,6 +372,11 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
+        /// <item><description><see cref="BigInteger"/> (.NET Framework 4.0 and above)</description></item>
+        /// <item><description><see cref="Rune"/> (.NET Core 3.0 and above)</description></item>
+        /// <item><description><see cref="Half"/> (.NET 5.0 and above)</description></item>
+        /// <item><description><see cref="DateOnly"/> (.NET 6.0 and above)</description></item>
+        /// <item><description><see cref="TimeOnly"/> (.NET 6.0 and above)</description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/>&#160;or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// </list>
         /// <note>Apart from <see cref="Enum"/> and <see cref="Type"/> types, no string allocation occurs when parsing any of the types above.</note>
