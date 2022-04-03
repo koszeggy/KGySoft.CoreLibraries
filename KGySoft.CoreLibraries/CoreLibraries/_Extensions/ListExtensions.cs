@@ -70,7 +70,8 @@ namespace KGySoft.CoreLibraries
                     list.InsertRange(index, collection);
                     return;
                 default:
-                    collection.ForEach(item => target.Insert(index++, item));
+                    foreach (T item in collection)
+                        target.Insert(index++, item);
                     return;
             }
         }
@@ -134,6 +135,12 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void ReplaceRange<T>(this IList<T> target, int index, int count, IEnumerable<T> collection)
         {
+            if (count == 0)
+            {
+                target.InsertRange(index, collection);
+                return;
+            }
+
             if (target == null!)
                 Throw.ArgumentNullException(Argument.target);
             if (collection == null!)

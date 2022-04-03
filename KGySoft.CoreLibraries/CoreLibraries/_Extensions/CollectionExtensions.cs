@@ -69,7 +69,8 @@ namespace KGySoft.CoreLibraries
                     return;
                 // TODO: Reflector.TryRunMethod(AddRange) first
                 default:
-                    collection.ForEach(target.Add);
+                    foreach (T item in collection)
+                        target.Add(item);
                     return;
             }
         }

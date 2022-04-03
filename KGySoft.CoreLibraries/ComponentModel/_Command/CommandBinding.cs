@@ -289,7 +289,10 @@ namespace KGySoft.ComponentModel
                 Throw.ArgumentNullException(Argument.updater);
             stateUpdaters.Add(updater);
             if (updateSources && sources.Count > 0)
-                GetInstanceSources().ForEach(UpdateSource);
+            {
+                foreach (object source in GetInstanceSources())
+                    UpdateSource(source);
+            }
             return this;
         }
 

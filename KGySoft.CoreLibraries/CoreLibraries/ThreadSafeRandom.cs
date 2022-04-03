@@ -183,7 +183,11 @@ namespace KGySoft.CoreLibraries
                 if (disposed)
                     return;
                 if (trackValues)
-                    threadInstance.Values.ForEach(rnd => (rnd as IDisposable)?.Dispose());
+                {
+                    foreach (Random rnd in threadInstance.Values)
+                        (rnd as IDisposable)?.Dispose();
+                }
+
                 threadInstance.Dispose();
                 base.Dispose(disposing);
                 disposed = true;
