@@ -329,7 +329,6 @@ namespace KGySoft.Collections
         /// <br/>Default value: <see langword="true"/>.</param>
 #if NETFRAMEWORK || NETSTANDARD2_0
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Used in .NET Core 2.1/Standard 2.1 and above")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
 #endif
         public ArraySection(int length, bool assureClean = true)
         {
@@ -357,7 +356,6 @@ namespace KGySoft.Collections
         /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array) : this(array, 0, array?.Length ?? 0)
         {
@@ -394,7 +392,6 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
         {
@@ -450,7 +447,6 @@ namespace KGySoft.Collections
         /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
         /// <param name="length">The desired length of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
         public readonly ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array!, offset + startIndex, length);
 

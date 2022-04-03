@@ -770,7 +770,6 @@ namespace KGySoft.CoreLibraries
             return type;
         }
 
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "PossibleMistakenCallToGetType.2")]
         internal static bool IsRuntimeType(this Type type) => type.GetType() == Reflector.RuntimeType;
 

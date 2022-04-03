@@ -89,7 +89,6 @@ namespace KGySoft.Serialization.Binary
             internal string? SpecificAddMethod { get; set; }
 
 #if !NET35
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
 #endif
             internal bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;

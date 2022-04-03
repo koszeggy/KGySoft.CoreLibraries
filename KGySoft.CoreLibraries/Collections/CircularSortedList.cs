@@ -976,7 +976,6 @@ namespace KGySoft.Collections
         /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
         /// Otherwise it is an O(n*n) operation.</para>
         /// </remarks>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey>? comparer = null)
             : this(dictionary?.Count ?? 0, comparer)

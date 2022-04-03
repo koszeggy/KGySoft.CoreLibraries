@@ -122,7 +122,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [TestCase(",")]
         [TestCase(", ")]
         [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "Intended")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper")]
         public void JoinTest(string separator)
         {
             IEnumerable<string> values = Enumerable.Range(1, 10).Select(i => i.ToString());

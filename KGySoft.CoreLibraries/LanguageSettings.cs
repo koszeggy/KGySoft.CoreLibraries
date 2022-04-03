@@ -448,7 +448,6 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
         /// <br/>Default value: <c>[T]</c>
         /// </summary>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UntranslatedResourcePrefix
         {
@@ -462,7 +461,6 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to add non existing resources to the invariant resource set.
         /// <br/>Default value: <c>[U]</c>
         /// </summary>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UnknownResourcePrefix
         {

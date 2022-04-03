@@ -393,7 +393,6 @@ namespace KGySoft.Collections
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode",
             Justification = "Field 'buffer' is practically read-only but it is not marked as so to prevent creating defensive copies")]
         public readonly override int GetHashCode()

@@ -2443,7 +2443,6 @@ namespace KGySoft.CoreLibraries
             return result > maxValue ? maxValue : result;
         }
 
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator", Justification = "In this method this is intended")]
         private static double DoGetNextDouble(Random random, double minValue, double maxValue, FloatScale scale)
         {

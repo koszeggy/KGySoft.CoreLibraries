@@ -251,7 +251,6 @@ namespace KGySoft.CoreLibraries
 
         #region Private Constructors
 
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "It's to distinct from the default constructor")]
         private ThreadSafeRandom(bool _)
         {

@@ -16,7 +16,6 @@
 #region Usings
 
 using System;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -35,7 +34,6 @@ using NUnit.Framework;
 #if NET
 #if NET5_0 || NET6_0 || NET7_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
-#pragma warning disable IDE0079 // Remove unnecessary suppression - CS0618 is emitted by ReSharper
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
 #else
 #error Check whether IFormatter is still available in this .NET version
@@ -117,10 +115,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void FromNodeInfo()
         {
             var path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
-            var rs = new ResXResourceSet(path, null) { SafeMode = true };
+            var rs = new ResXResourceSet(path) { SafeMode = true };
             var node = (ResXDataNode)rs.GetObject("string");
 
-            Assert.IsNotNull(node.ValueData);
+            Assert.IsNotNull(node!.ValueData);
             node.GetValue(cleanupRawData: true);
             Assert.IsNull(node.ValueData);
         }

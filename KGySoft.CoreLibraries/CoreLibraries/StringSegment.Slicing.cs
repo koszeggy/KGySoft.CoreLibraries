@@ -503,7 +503,6 @@ namespace KGySoft.CoreLibraries
         /// <param name="length">The desired length of the returned segment.</param>
         /// <returns>The subsegment of the current <see cref="StringSegment"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because of compatibility with string and because it will be the new length of the returned instance")]
         public StringSegment Substring(int startIndex, int length)
         {
@@ -1144,7 +1143,6 @@ namespace KGySoft.CoreLibraries
         #region Internal Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
         internal StringSegment SubstringInternal(int start, int length) =>
             new StringSegment(str!, offset + start, length);

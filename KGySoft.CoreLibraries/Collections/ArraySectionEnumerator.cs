@@ -49,7 +49,6 @@ namespace KGySoft.Collections
         /// Gets the element at the current position of the enumerator.
         /// </summary>
         [SuppressMessage("ReSharper", "ReturnTypeCanBeNotNullable", Justification = "False alarm, can return null before/after enumerating, even if T is not nullable. Actually it should be T? also on IEnumerator<T>")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")]
         public readonly T? Current
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]

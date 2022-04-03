@@ -63,7 +63,6 @@ namespace KGySoft.ComponentModel
         {
             #region Methods
 
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "They are necessary")]
             [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Event handler")]
             [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Event handler")]
             [MethodImpl(MethodImpl.AggressiveInlining)]

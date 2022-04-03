@@ -249,7 +249,6 @@ namespace KGySoft.Resources
 
             #region Public Methods
 
-            [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
             [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, prefix and ns can be null")]
             public override void WriteStartAttribute(string? prefix, string localName, string? ns)
             {

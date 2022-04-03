@@ -90,7 +90,6 @@ namespace KGySoft.CoreLibraries
         public override bool Equals(object? obj) => obj is StringSegmentInternal other && Equals(other);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "False alarm for ReSharper issue")]
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode", Justification = "These are not expected to be changed in a hashed collection")]
         public override int GetHashCode()
         {

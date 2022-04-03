@@ -176,7 +176,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
 #if !NET6_0_OR_GREATER
         [SuppressMessage("ReSharper", "InvokeAsExtensionMethod", Justification = "That would call the virtual NextInt64 in .NET 6 and above")]
-        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "ReSharper issue")] 
 #endif
         public void NextInt64Test()
         {
