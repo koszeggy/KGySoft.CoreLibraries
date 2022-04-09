@@ -6,6 +6,29 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v7.0.0:
+~~~~~~~~~
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- ListExtensions class:
+  - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
+    in which case the replacement collection is inserted at the end of the target list.
+
++ KGySoft.ComponentModel namespace:
+===================================
++ Command and CommandBindingsCollection classes: Explicitly implemented interface events now can be specified by the
+  original event name. This allows using myBindings.Add(myCommand).AddSource(source, nameof(IMyInterface.EventName))
+  instead of myBindings.Add(myCommand).AddSource(source, "MyNamespace.IMyInterface.EventName") even if the event is
+  implemented explicitly.
+
++ KGySoft.Reflection namespace:
+===============================
++ Reflector class:
+  + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
+
+
+~~~~~~~~~
 - v6.0.2:
 ~~~~~~~~~
 

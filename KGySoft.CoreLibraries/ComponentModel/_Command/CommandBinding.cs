@@ -174,23 +174,32 @@ namespace KGySoft.ComponentModel
 
         private static StringKeyedDictionary<EventInfo> GetEvents(Type type)
         {
-            static void PopulateEvents(StringKeyedDictionary<EventInfo> dict, IEnumerable<EventInfo> events)
+            static void PopulateEvents(StringKeyedDictionary<EventInfo> dict, IEnumerable<EventInfo> events, bool checkExplicit)
             {
                 foreach (EventInfo eventInfo in events)
                 {
+                    string name = eventInfo.Name;
+
                     // for conflicting names only the first event is added
-                    if (!dict.ContainsKey(eventInfo.Name))
-                        dict[eventInfo.Name] = eventInfo;
+                    if (!dict.ContainsKey(name))
+                        dict[name] = eventInfo;
+
+                    if (!checkExplicit)
+                        continue;
+
+                    // For explicit interface implementations allowing mapping by simple event name so AddSource(src, nameof(IHasEvent.EventName)) always works
+                    if (Reflector.IsExplicitInterfaceImplementation(eventInfo, out EventInfo? interfaceEvent) && !dict.ContainsKey(interfaceEvent.Name))
+                        dict[interfaceEvent.Name] = eventInfo;
                 }
             }
 
             // public events of all levels
             var result = new StringKeyedDictionary<EventInfo>();
-            PopulateEvents(result, type.GetEvents());
+            PopulateEvents(result, type.GetEvents(), false);
 
             // non-public events by type (because private events cannot be obtained for all levels in one step)
             for (Type? t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
-                PopulateEvents(result, t.GetEvents(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
+                PopulateEvents(result, t.GetEvents(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly), true);
 
             return result;
         }
@@ -239,7 +248,7 @@ namespace KGySoft.ComponentModel
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo? eventInfo))
                 Throw.ArgumentException(Argument.eventName, Res.ComponentModelMissingEvent(eventName, sourceType));
             MethodInfo? addMethod = eventInfo.GetAddMethod(true);
-            MethodInfo? invokeMethod = eventInfo.EventHandlerType?.GetMethod(nameof(Action.Invoke));
+            MethodInfo? invokeMethod = eventInfo.EventHandlerType?.GetMethod(nameof(EventHandler.Invoke));
             ParameterInfo[]? invokerParameters = invokeMethod?.GetParameters();
 
             if (addMethod == null || invokeMethod?.ReturnType != Reflector.VoidType || invokerParameters?.Length != 2

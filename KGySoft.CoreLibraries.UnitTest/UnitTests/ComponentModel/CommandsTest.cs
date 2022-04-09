@@ -16,8 +16,11 @@
 #region Usings
 
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 using KGySoft.ComponentModel;
 using KGySoft.Diagnostics;
@@ -57,6 +60,53 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 if (e.PropertyName == nameof(StringProp))
                     StringPropChangedTestEvent?.Invoke(this, EventArgs.Empty);
             }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region TestClassExplicit class
+
+        private class TestClassExplicit : INotifyPropertyChanged
+        {
+            #region Fields
+
+            private PropertyChangedEventHandler propertyChanged;
+            private string testProp;
+
+            #endregion
+
+            #region Events
+
+            event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
+            {
+                add => value.AddSafe(ref propertyChanged);
+                remove => value.RemoveSafe(ref propertyChanged);
+            }
+
+            #endregion
+
+            #region Properties
+
+            public string TestProp
+            {
+                get => testProp;
+                set
+                {
+                    if (testProp == value)
+                        return;
+                    testProp = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            #endregion
+
+            #region Methods
+
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+                => propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
             #endregion
         }
@@ -280,6 +330,20 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             // triggering command
             test.StringProp = "Alpha";
+            Assert.IsTrue(executed);
+        }
+
+        [Test]
+        public void ExplicitEventImplementationTest()
+        {
+            bool executed = false;
+            var test = new TestClassExplicit();
+            using var bindings = new CommandBindingsCollection();
+            bindings.Add(() => executed = true)
+                .AddSource(test, nameof(INotifyPropertyChanged.PropertyChanged));
+
+            // triggering command
+            test.TestProp = "Alpha";
             Assert.IsTrue(executed);
         }
 
