@@ -619,7 +619,7 @@ namespace KGySoft.Reflection
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
-                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName!, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
@@ -1064,7 +1064,7 @@ namespace KGySoft.Reflection
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
-                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName!, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
@@ -2990,11 +2990,20 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
-        public static bool IsExplicitInterfaceImplementation(MethodInfo method)
+        public static bool IsExplicitInterfaceImplementation(MethodInfo method) => IsExplicitInterfaceImplementation(method, out var _);
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="method"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="method">The method to check.</param>
+        /// <param name="interfaceMethod">When this method returns <see langword="true"/>, then contains the method declared on the interface. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        public static bool IsExplicitInterfaceImplementation(MethodInfo method, [MaybeNullWhen(false)]out MethodInfo interfaceMethod)
         {
             if (method == null!)
                 Throw.ArgumentNullException(Argument.method);
             Type? declaringType = method.DeclaringType;
+            interfaceMethod = null;
             if (declaringType == null)
                 return false;
 
@@ -3007,9 +3016,12 @@ namespace KGySoft.Reflection
                     if (map.TargetMethods[i] != method)
                         continue;
 
-                    // Now method is an interface implementation for sure.
-                    // ReSharper disable once ConstantConditionalAccessQualifier - false alarm, can also be null if type is abstract and implementation is in a derived class.
-                    return map.InterfaceMethods[i]?.Name != methodName;
+                    // Now method is an interface implementation for sure. It is implicit if the name is the same as the interface name.
+                    if (map.InterfaceMethods[i].Name == methodName)
+                        return false;
+
+                    interfaceMethod = map.InterfaceMethods[i];
+                    return true;
                 }
             }
 
@@ -3026,6 +3038,65 @@ namespace KGySoft.Reflection
             if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
             return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!);
+        }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="property"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="property">The property to check.</param>
+        /// <param name="interfaceProperty">When this method returns <see langword="true"/>, then contains the property declared on the interface. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        public static bool IsExplicitInterfaceImplementation(PropertyInfo property, [MaybeNullWhen(false)]out PropertyInfo interfaceProperty)
+        {
+            if (property == null!)
+                Throw.ArgumentNullException(Argument.property);
+            interfaceProperty = null;
+            MethodInfo? accessor = property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true);
+            if (accessor == null)
+                return false;
+            if (!IsExplicitInterfaceImplementation(accessor, out MethodInfo? interfaceMethod))
+                return false;
+
+            // _get/_set special name prefix is a CLR specification, not just a C# compiler feature. Non-public, static: C# 8, C# 11
+            Debug.Assert(interfaceMethod.Attributes.HasFlag<MethodAttributes>(MethodAttributes.SpecialName) && interfaceMethod.Name.IndexOfAny("get_", "set_") == 0);
+            interfaceProperty = (PropertyInfo?)interfaceMethod.DeclaringType!.GetMember(interfaceMethod.Name.Substring(4), MemberTypes.Property, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static).FirstOrDefault();
+            return interfaceProperty != null;
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="EventInfo"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="info">The <see cref="EventInfo"/> to check.</param>
+        /// <returns><see langword="true"/>, if the specified <see cref="EventInfo"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        public static bool IsExplicitInterfaceImplementation(EventInfo info)
+        {
+            if (info == null!)
+                Throw.ArgumentNullException(Argument.info);
+            MethodInfo? addMethod = info.GetAddMethod(true);
+            return addMethod != null && IsExplicitInterfaceImplementation(addMethod);
+        }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="EventInfo"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="info">The <see cref="EventInfo"/> to check.</param>
+        /// <param name="interfaceEvent">When this method returns <see langword="true"/>, then contains the event declared on the interface. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/>, if the specified <see cref="EventInfo"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        public static bool IsExplicitInterfaceImplementation(EventInfo info, [MaybeNullWhen(false)]out EventInfo interfaceEvent)
+        {
+            if (info == null!)
+                Throw.ArgumentNullException(Argument.info);
+            interfaceEvent = null;
+            MethodInfo? addMethod = info.GetAddMethod(true);
+            if (addMethod == null)
+                return false;
+            if (!IsExplicitInterfaceImplementation(addMethod, out MethodInfo? interfaceMethod))
+                return false;
+
+            // _add special name prefix is a CLR specification, not just a C# compiler feature. Non-public, static: C# 8, C# 11
+            Debug.Assert(interfaceMethod.Attributes.HasFlag<MethodAttributes>(MethodAttributes.SpecialName) && interfaceMethod.Name.StartsWith("add_", StringComparison.Ordinal));
+            interfaceEvent = (EventInfo?)interfaceMethod.DeclaringType!.GetMember(interfaceMethod.Name.Substring(4), MemberTypes.Event, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static).FirstOrDefault();
+            return interfaceEvent != null;
         }
 
         private static string? GetDefaultMember(Type type)
