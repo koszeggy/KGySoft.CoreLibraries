@@ -108,6 +108,8 @@ namespace KGySoft.Reflection
 
         private Delegate? getter;
         private Delegate? setter;
+        private Delegate? genericGetter;
+        private Delegate? genericSetter;
 
         #endregion
 
@@ -129,35 +131,21 @@ namespace KGySoft.Reflection
 
         #region Private Protected Properties
 
-        /// <summary>
-        /// Gets the property getter delegate.
-        /// </summary>
-        private protected Delegate Getter
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                if (getter != null)
-                    return getter;
-                if (!CanRead)
-                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return getter = CreateGetter();
-            }
-        }
+        private protected Delegate Getter => getter ??= CreateGetter();
+        private protected Delegate Setter => setter ??= CreateSetter();
+        private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
+        private protected Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
 
-        /// <summary>
-        /// Gets the property setter delegate.
-        /// </summary>
-        private protected Delegate Setter
+        #endregion
+
+        #region Private Properties
+
+        private bool IsStatic
         {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if (setter != null)
-                    return setter;
-                if (!CanWrite)
-                    Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
-                return setter = CreateSetter();
+                var property = (PropertyInfo)MemberInfo;
+                return (property.GetGetMethod(true) ?? property.GetSetMethod(true)!).IsStatic;
             }
         }
 
@@ -223,11 +211,11 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// If the property is not an indexer, then <paramref name="indexerParameters"/> parameter is omitted.
+        /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
         /// </summary>
         /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
         /// <param name="value">The value to be set.</param>
-        /// <param name="indexerParameters">The parameters if the property is an indexer.</param>
+        /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <remarks>
         /// <note>
         /// Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
@@ -238,15 +226,15 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
-        public abstract void Set(object? instance, object? value, params object?[]? indexerParameters);
+        public abstract void Set(object? instance, object? value, params object?[]? indexParameters);
 
         /// <summary>
         /// Gets the value of the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// If the property is not an indexer, then <paramref name="indexerParameters"/> parameter is omitted.
+        /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
         /// </summary>
         /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
-        /// <param name="indexerParameters">The parameters if the property is an indexer.</param>
+        /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <returns>The value of the property.</returns>
         /// <remarks>
         /// <note>
@@ -258,23 +246,95 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
         /// </remarks>
-        public abstract object? Get(object? instance, params object?[]? indexerParameters);
+        public abstract object? Get(object? instance, params object?[]? indexParameters);
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetStaticValue<TProperty>(TProperty value)
+        {
+            if (GenericSetter is Action<TProperty> setter)
+                setter.Invoke(value);
+            else
+                ThrowStatic<TProperty>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TProperty GetStaticValue<TProperty>()
+            => GenericGetter is Func<TProperty> getter ? getter.Invoke() : ThrowStatic<TProperty>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
+        {
+            if (GenericSetter is Action<TInstance, TProperty> setter)
+                setter.Invoke(instance, value);
+            else
+                ThrowInstance<TProperty>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
+            => GenericGetter is Func<TInstance, TProperty> getter ? getter.Invoke(instance) : ThrowInstance<TProperty>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetInstanceValue<TInstance, TProperty>(ref TInstance instance, TProperty value) where TInstance : struct
+        {
+            if (GenericSetter is ValueTypeAction<TInstance, TProperty> setter)
+                setter.Invoke(ref instance, value);
+            else
+                ThrowInstance<TProperty>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TProperty GetInstanceValue<TInstance, TProperty>(ref TInstance instance) where TInstance : struct
+            => GenericGetter is ValueTypeFunction<TInstance, TProperty> getter ? getter.Invoke(ref instance) : ThrowInstance<TProperty>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
+        {
+            if (GenericSetter is Action<TInstance, TProperty, TIndex> setter)
+                setter.Invoke(instance, value, index);
+            else
+                ThrowInstance<TProperty>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
+            => GenericGetter is Func<TInstance, TIndex, TProperty> getter ? getter.Invoke(instance, index) : ThrowInstance<TProperty>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TProperty value, TIndex index) where TInstance : struct
+        {
+            if (GenericSetter is ValueTypeAction<TInstance, TProperty, TIndex> setter)
+                setter.Invoke(ref instance, value, index);
+            else
+                ThrowInstance<TProperty>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TIndex index) where TInstance : struct
+            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> getter ? getter.Invoke(ref instance, index) : ThrowInstance<TProperty>();
 
         #endregion
 
         #region Private Protected Methods
 
-        /// <summary>
-        /// In a derived class returns a delegate that executes the getter method of the property.
-        /// </summary>
-        /// <returns>A delegate instance that can be used to get the value of the property.</returns>
         private protected abstract Delegate CreateGetter();
-
-        /// <summary>
-        /// In a derived class returns a delegate that executes the setter method of the property.
-        /// </summary>
-        /// <returns>A delegate instance that can be used to set the property.</returns>
         private protected abstract Delegate CreateSetter();
+        private protected abstract Delegate CreateGenericGetter();
+        private protected abstract Delegate CreateGenericSetter();
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowStatic<T>() => !IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionStaticPropertyExpectedGeneric(MemberInfo.Name, MemberInfo.DeclaringType!))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(MemberInfo.Name, MemberInfo.DeclaringType));
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowInstance<T>() => IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionInstancePropertyExpectedGeneric(MemberInfo.Name, MemberInfo.DeclaringType))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(MemberInfo.Name, MemberInfo.DeclaringType));
 
         #endregion
 

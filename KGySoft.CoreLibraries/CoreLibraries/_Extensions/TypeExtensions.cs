@@ -707,7 +707,7 @@ namespace KGySoft.CoreLibraries
             return genericTypeCache[(genTypeDef, t1, t2)];
         }
 
-        internal static Type GetGenericType(this Type genTypeDef, Type[] args)
+        internal static Type GetGenericType(this Type genTypeDef, params Type[] args)
         {
             if (args == null!)
                 Throw.ArgumentNullException(Argument.args);

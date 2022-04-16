@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries
             Type? comparerDefinition;
 
             // Locking the whole generating process to prevent building the same type concurrently
-            // Locking is alright because this will executed once per enum type at the first EnumComparer<TEnum>.Comparer access.
+            // Locking is alright because this will be executed once per enum type at the first EnumComparer<TEnum>.Comparer access.
             lock (comparers)
             {
                 if (!comparers.TryGetValue(underlyingType, out comparerDefinition))

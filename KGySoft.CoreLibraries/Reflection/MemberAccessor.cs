@@ -44,6 +44,17 @@ namespace KGySoft.Reflection
     /// <seealso cref="CreateInstanceAccessor"/>
     public abstract class MemberAccessor
     {
+        #region Delegates
+
+        private protected delegate void ValueTypeAction<TInstance>(ref TInstance instance) where TInstance : struct;
+        private protected delegate void ValueTypeAction<TInstance, in TParam>(ref TInstance instance, TParam value) where TInstance : struct;
+        private protected delegate void ValueTypeAction<TInstance, in T1, in T2>(ref TInstance instance, T1 arg1, T2 arg2) where TInstance : struct;
+
+        private protected delegate TResult ValueTypeFunction<TInstance, out TResult>(ref TInstance instance) where TInstance : struct;
+        private protected delegate TResult ValueTypeFunction<TInstance, in TParam, out TResult>(ref TInstance instance, TParam value) where TInstance : struct;
+
+        #endregion
+
         #region Constants
 
         private const string methodInvokerPrefix = "<InvokeMethod>__";

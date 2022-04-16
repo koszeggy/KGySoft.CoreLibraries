@@ -379,6 +379,9 @@ namespace KGySoft
         /// - Remove the AllowPartiallyTrustedCallersAttribute. This will not allow partially trusted callers to use your assembly though.</summary>
         internal static string ReflectionSecuritySettingsConflict => Get("Reflection_SecuritySettingsConflict");
 
+        /// <summary>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</summary>
+        internal static string ReflectionCannotInvokeIndexerGeneric => Get("Reflection_CannotInvokeIndexerGeneric");
+
         #endregion
 
         #region Resources
@@ -890,6 +893,15 @@ namespace KGySoft
 
         /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.LongName));
+
+        /// <summary>This method can be used to access static properties but {0}.{1} is an instance property.</summary>
+        internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type, propertyName);
+
+        /// <summary>This method can be used to access instance properties but {0}.{1} is a static property.</summary>
+        internal static string ReflectionInstancePropertyExpectedGeneric(string propertyName, Type? type) => Get("Reflection_InstancePropertyExpectedGenericFormat", type, propertyName);
+
+        /// <summary>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</summary>
+        internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type, propertyName);
 
         #endregion
 

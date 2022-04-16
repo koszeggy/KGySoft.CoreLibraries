@@ -162,7 +162,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             MethodAccessor accessorInstance = MethodAccessor.GetAccessor(miInstance);
             MethodAccessor accessorStatic = MethodAccessor.GetAccessor(miStatic);
 
-            new PerformanceTest<int> { TestName = "Method Invoke", Iterations = 1_000_000 }
+            new PerformanceTest<int> { TestName = "Method Invoke", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t.InstanceMethod(p1, p2), "Direct invoke (instance)")
                 .AddCase(() => TestClass.StaticMethod(p1, p2), "Direct invoke (static)")
 
@@ -200,7 +200,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             FieldAccessor accessorInstance = FieldAccessor.GetAccessor(fiInstance);
             FieldAccessor accessorStatic = FieldAccessor.GetAccessor(fiStatic);
 
-            new PerformanceTest { TestName = "Set Field", Iterations = 1_000_000 }
+            new PerformanceTest { TestName = "Set Field", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t.InstanceField = value, "Direct set (instance)")
                 .AddCase(() => TestClass.StaticField = value, "Direct set (static)")
 
@@ -225,7 +225,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest<int> { TestName = "Get Field", Iterations = 1_000_000 }
+            new PerformanceTest<int> { TestName = "Get Field", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t.InstanceField, "Direct get (instance)")
                 .AddCase(() => TestClass.StaticField, "Direct get (static)")
 
@@ -265,12 +265,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             PropertyDescriptorCollection propertyDescriptorCollection = TypeDescriptor.GetProperties(typeof(TestClass));
             PropertyDescriptor propertyDescriptor = propertyDescriptorCollection[nameInstance];
 
-            new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000 }
+            new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t.InstanceProperty = value, "Direct set (instance)")
                 .AddCase(() => TestClass.StaticProperty = value, "Direct set (static)")
 
                 .AddCase(() => piInstance.SetValue(t, value, null), "PropertyInfo.SetValue (instance)")
                 .AddCase(() => piStatic.SetValue(null, value, null), "PropertyInfo.SetValue (static)")
+
+                .AddCase(() => ((dynamic)t).InstanceProperty = value, "Dynamic set (instance)")
 
                 .AddCase(() => typeof(TestClass).GetProperty(nameInstance).SetValue(t, value, null), "Type.GetProperty(name).SetValue (instance)")
                 .AddCase(() => typeof(TestClass).GetProperty(nameStatic).SetValue(null, value, null), "Type.GetProperty(name).SetValue (static)")
@@ -281,6 +283,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
                 .AddCase(() => accessorInstance.Set(t, value), "PropertyAccessor.Set (instance)")
                 .AddCase(() => accessorStatic.Set(null, value), "PropertyAccessor.Set (static)")
+
+                .AddCase(() => accessorInstance.SetInstanceValue(t, value), "PropertyAccessor.SetInstanceValue<,>")
+                .AddCase(() => accessorStatic.SetStaticValue(value), "PropertyAccessor.SetStaticValue<>")
 
                 .AddCase(() => PropertyAccessor.GetAccessor(piInstance).Set(t, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (instance)")
                 .AddCase(() => PropertyAccessor.GetAccessor(piStatic).Set(null, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (static)")
@@ -294,12 +299,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
+            new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t.InstanceProperty, "Direct get (instance)")
                 .AddCase(() => TestClass.StaticProperty, "Direct get (static)")
 
                 .AddCase(() => (int)piInstance.GetValue(t, null), "PropertyInfo.GetValue (instance)")
                 .AddCase(() => (int)piStatic.GetValue(null, null), "PropertyInfo.GetValue (static)")
+
+                .AddCase(() => ((dynamic)t).InstanceProperty, "Dynamic get (instance)")
 
                 .AddCase(() => (int)typeof(TestClass).GetProperty(nameInstance).GetValue(t, null), "Type.GetProperty(name).GetValue (instance)")
                 .AddCase(() => (int)typeof(TestClass).GetProperty(nameStatic).GetValue(null, null), "Type.GetProperty(name).GetValue (static)")
@@ -310,6 +317,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
                 .AddCase(() => (int)accessorInstance.Get(t), "PropertyAccessor.Get (instance)")
                 .AddCase(() => (int)accessorStatic.Get(null), "PropertyAccessor.Get (static)")
+
+                .AddCase(() => accessorInstance.GetInstanceValue<TestClass, int>(t), "PropertyAccessor.GetInstanceValue<,>")
+                .AddCase(() => accessorStatic.GetStaticValue<int>(), "PropertyAccessor.GetStaticValue<>")
 
                 .AddCase(() => (int)PropertyAccessor.GetAccessor(piInstance).Get(t), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (instance)")
                 .AddCase(() => (int)PropertyAccessor.GetAccessor(piStatic).Get(null), "PropertyAccessor.GetAcceccor(PropertyInfo).Get (static)")
@@ -334,24 +344,28 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             PropertyInfo piIndexer = t.GetType().GetProperty(name);
             PropertyAccessor accessorIndexer = PropertyAccessor.GetAccessor(piIndexer);
 
-            new PerformanceTest { TestName = "Set Indexer", Iterations = 1_000_000 }
+            new PerformanceTest { TestName = "Set Indexer", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t[index] = value, "Direct set")
                 .AddCase(() => piIndexer.SetValue(t, value, new object[] { index }), "PropertyInfo.SetValue")
+                .AddCase(() => ((dynamic)t)[index] = value, "Dynamic set")
                 .AddCase(() => typeof(TestClass).GetProperty(name).SetValue(t, value, new object[] { index }), "Type.GetProperty(name).SetValue")
                 .AddCase(() => accessorIndexer.Set(t, value, index), "PropertyAccessor.Set")
-                .AddCase(() => PropertyAccessor.GetAccessor(piIndexer).Set(t, value, index), "PropertyAccessor.GetAcceccor(PropertyInfo).Set")
+                .AddCase(() => accessorIndexer.SetInstanceValue(t, value, index), "PropertyAccessor.SetInstanceValue<,,>")
+                .AddCase(() => PropertyAccessor.GetAccessor(piIndexer).Set(t, value, index), "PropertyAccessor.GetAccessor(PropertyInfo).Set")
                 .AddCase(() => Reflector.SetProperty(t, piIndexer, value, index), "Reflector.SetProperty (by PropertyInfo)")
                 .AddCase(() => Reflector.SetProperty(t, name, value, index), "Reflector.SetProperty (by name)")
                 .AddCase(() => Reflector.SetIndexedMember(t, value, index), "Reflector.SetIndexedMember")
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest<int> { TestName = "Get Indexer", Iterations = 1_000_000 }
+            new PerformanceTest<int> { TestName = "Get Indexer", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => t[index], "Direct get")
                 .AddCase(() => (int)piIndexer.GetValue(t, new object[] { index }), "PropertyInfo.GetValue")
+                .AddCase(() => ((dynamic)t)[index], "Dynamic get")
                 .AddCase(() => (int)typeof(TestClass).GetProperty(name).GetValue(t, new object[] { index }), "Type.GetProperty(name).GetValue")
                 .AddCase(() => (int)accessorIndexer.Get(t, index), "PropertyAccessor.Get")
-                .AddCase(() => (int)PropertyAccessor.GetAccessor(piIndexer).Get(t, index), "PropertyAccessor.GetAcceccor(PropertyInfo).Get")
+                .AddCase(() => accessorIndexer.GetInstanceValue<TestClass, int, int>(t, index), "PropertyAccessor.GetInstanceValue<,,>")
+                .AddCase(() => (int)PropertyAccessor.GetAccessor(piIndexer).Get(t, index), "PropertyAccessor.GetAccessor(PropertyInfo).Get")
                 .AddCase(() => (int)Reflector.GetProperty(t, piIndexer, index), "Reflector.GetProperty (by PropertyInfo)")
                 .AddCase(() => (int)Reflector.GetProperty(t, name, index), "Reflector.GetProperty (by name)")
                 .AddCase(() => (int)Reflector.GetIndexedMember(t, index), "Reflector.GetIndexedMember")
@@ -366,14 +380,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             const int index = 1;
             const byte value = 10;
 
-            new PerformanceTest { TestName = "Set Array Element", Iterations = 1_000_000 }
+            new PerformanceTest { TestName = "Set Array Element", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => a[index] = value, "Direct set")
                 .AddCase(() => a.SetValue(value, index), "Array.SetValue")
                 .AddCase(() => Reflector.SetIndexedMember(a, value, index), "Reflector.SetIndexedMember")
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest<byte> { TestName = "Get Array Element", Iterations = 1_000_000 }
+            new PerformanceTest<byte> { TestName = "Get Array Element", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => a[index], "Direct get")
                 .AddCase(() => (byte)a.GetValue(index), "Array.GetValue")
                 .AddCase(() => (byte)Reflector.GetIndexedMember(a, index), "Reflector.GetIndexedMember")
@@ -393,7 +407,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorCtorDefault = CreateInstanceAccessor.GetAccessor(ciDefault);
             CreateInstanceAccessor accessorCtorParams = CreateInstanceAccessor.GetAccessor(ciParams);
 
-            new PerformanceTest<TestClass> { TestName = "Create Class", Iterations = 1_000_000 }
+            new PerformanceTest<TestClass> { TestName = "Create Class", Iterations = 1_000_000, TestTime = 25 }
                 //.AddCase(() => new TestClass(), "Direct constructor invoke (default)")
                 //.AddCase(() => new TestClass(p1, p2), "Direct constructor invoke (parameterized)")
 
@@ -434,7 +448,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorType = CreateInstanceAccessor.GetAccessor(type);
             CreateInstanceAccessor accessorCtor = CreateInstanceAccessor.GetAccessor(ci);
 
-            new PerformanceTest<TestStruct> { TestName = "Create Struct", Iterations = 1_000_000 }
+            new PerformanceTest<TestStruct> { TestName = "Create Struct", Iterations = 1_000_000, TestTime = 25 }
                 //.AddCase(() => new TestStruct(), "Direct default initialization")
                 //.AddCase(() => new TestStruct(p1, p2), "Direct constructor invoke")
 
@@ -468,7 +482,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             var list = new List<int>();
             string typeNameList = list.GetType().ToString();
 
-            new PerformanceTest<Type> { TestName = "Resolve Type", Iterations = 1_000_000 }
+            new PerformanceTest<Type> { TestName = "Resolve Type", Iterations = 1_000_000, TestTime = 25 }
                 .AddCase(() => typeof(int), "typeof(int)")
                 .AddCase(() => 0.GetType(), "intConstant.GetType")
                 .AddCase(() => Type.GetType(typeNameInt), $"Type.GetType(\"{typeNameInt}\")")

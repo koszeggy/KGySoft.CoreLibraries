@@ -85,16 +85,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Indexers
 
-            public int this[int intValue, string stringValue]
+            public int this[int intValue]
             {
                 get
                 {
-                    Console.WriteLine($"{nameof(TestClass)}.IndexerGetter[{intValue},{stringValue}] invoked");
+                    Console.WriteLine($"{nameof(TestClass)}.IndexerGetter[{intValue}] invoked");
                     return IntProp;
                 }
                 set
                 {
-                    Console.WriteLine($"{nameof(TestClass)}.IndexerSetter[{intValue},{stringValue}] = {value} invoked");
+                    Console.WriteLine($"{nameof(TestClass)}.IndexerSetter[{intValue}] = {value} invoked");
                     IntProp = value;
                 }
             }
@@ -277,16 +277,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Indexers
 
-            public int this[int intValue, string stringValue]
+            public int this[int intValue]
             {
                 get
                 {
-                    Console.WriteLine($"{nameof(TestStruct)}.IndexerGetter[{intValue},{stringValue}] invoked");
+                    Console.WriteLine($"{nameof(TestStruct)}.IndexerGetter[{intValue}] invoked");
                     return IntProp;
                 }
                 set
                 {
-                    Console.WriteLine($"{nameof(TestStruct)}.IndexerSetter[{intValue},{stringValue}] = {value} invoked");
+                    Console.WriteLine($"{nameof(TestStruct)}.IndexerSetter[{intValue}] = {value} invoked");
                     IntProp = value;
                 }
             }
@@ -1049,6 +1049,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
+            Console.Write("Property Accessor Generic...");
+            PropertyAccessor.GetAccessor(pi).SetInstanceValue((TestClass)test, (int)value);
+            result = PropertyAccessor.GetAccessor(pi).GetInstanceValue<TestClass, int>((TestClass)test);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
             Console.Write("Reflector (by PropertyInfo)...");
             Reflector.SetProperty(test, pi, value);
             result = Reflector.GetProperty(test, pi);
@@ -1080,6 +1086,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(value, result);
 
             TestClass.StaticIntProp = 0;
+            Console.Write("Property Accessor Generic...");
+            PropertyAccessor.GetAccessor(pi).SetStaticValue((int)value);
+            result = PropertyAccessor.GetAccessor(pi).GetStaticValue<int>();
+            Assert.AreEqual(value, result);
+
+            TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by PropertyInfo)...");
             Reflector.SetProperty(null, pi, value);
             result = Reflector.GetProperty(null, pi);
@@ -1096,8 +1108,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void ClassInstanceIndexerAccess()
         {
             object test = new TestClass(0);
-            PropertyInfo pi = test.GetType().GetProperty("Item", new[] { typeof(int), typeof(string) });
-            object[] args = { 1, "dummy" };
+            PropertyInfo pi = test.GetType().GetProperty("Item", new[] { typeof(int) });
+            object[] args = { 1 };
             object result, value = 1;
 
             Console.Write("System Reflection...");
@@ -1111,6 +1123,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             PropertyAccessor.GetAccessor(pi).Set(test, value, parameters);
             result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Property Accessor Generic...");
+            PropertyAccessor.GetAccessor(pi).SetInstanceValue((TestClass)test, (int)value, (int)args[0]);
+            result = PropertyAccessor.GetAccessor(pi).GetInstanceValue<TestClass, int, int>((TestClass)test, (int)args[0]);
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1152,6 +1170,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 result = PropertyAccessor.GetAccessor(pi).Get(test);
                 Assert.AreEqual(value, result);
             }
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Property Accessor Generic...");
+            PropertyAccessor.GetAccessor(pi).SetInstanceValue(ref testStruct, (int)value);
+            result = PropertyAccessor.GetAccessor(pi).GetInstanceValue<TestStruct, int>(ref testStruct);
+            Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by PropertyInfo)...");
@@ -1201,8 +1225,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void StructInstanceIndexerAccess()
         {
             object test = new TestStruct(0);
-            PropertyInfo pi = test.GetType().GetProperty("Item", new[] { typeof(int), typeof(string) });
-            object[] args = { 1, "dummy" };
+            PropertyInfo pi = test.GetType().GetProperty("Item", new[] { typeof(int) });
+            object[] args = { 1 };
             object result, value = 1;
 
             Console.Write("System Reflection...");
@@ -1220,6 +1244,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
                 Assert.AreEqual(value, result);
             }
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Property Accessor Generic...");
+            PropertyAccessor.GetAccessor(pi).SetInstanceValue(ref testStruct, (int)value, (int)args[0]);
+            result = PropertyAccessor.GetAccessor(pi).GetInstanceValue<TestStruct, int, int>(ref testStruct, (int)args[0]);
+            Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by PropertyInfo)...");
