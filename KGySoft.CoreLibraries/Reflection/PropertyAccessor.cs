@@ -16,9 +16,22 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+
+using KGySoft.Annotations;
+using KGySoft.CoreLibraries;
+
+#endregion
+
+#region Suppressions
+
+#if NETFRAMEWORK
+#pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
+#endif
 
 #endregion
 
@@ -31,6 +44,9 @@ namespace KGySoft.Reflection
     /// <remarks>
     /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
     /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the property, respectively.
+    /// If you know the instance/property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>/<see cref="GetStaticValue{TProperty}">GetStaticValue</see>
+    /// (for static properties) or the <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see>
+    /// (for instance properties) methods for better performance as long as the property has no more than one index parameter.
     /// The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
@@ -39,7 +55,8 @@ namespace KGySoft.Reflection
     /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Set">Set</see> method throws a <see cref="PlatformNotSupportedException"/>
     /// if the property is an instance member of a value type (<see langword="struct"/>).
     /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-    /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
+    /// <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> overloads (if you know the instance type and the property value at compile time),
+    /// or <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
     /// </remarks>
     /// <example>
     /// <code lang="C#"><![CDATA[
@@ -65,6 +82,7 @@ namespace KGySoft.Reflection
     ///             .AddCase(() => instance.TestProperty = 1, "Direct set")
     ///             .AddCase(() => property.SetValue(instance, 1), "PropertyInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "PropertyAccessor.Set")
+    ///             .AddCase(() => accessor.SetInstanceValue(instance, 1), "PropertyAccessor.SetInstanceValue<,>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     /// 
@@ -72,6 +90,7 @@ namespace KGySoft.Reflection
     ///             .AddCase(() => instance.TestProperty, "Direct get")
     ///             .AddCase(() => (int)property.GetValue(instance), "PropertyInfo.GetValue")
     ///             .AddCase(() => (int)accessor.Get(instance), "PropertyAccessor.Get")
+    ///             .AddCase(() => accessor.GetInstanceValue<TestClass, int>(instance), "PropertyAccessor.GetInstanceValue<,>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     ///     }
@@ -81,26 +100,28 @@ namespace KGySoft.Reflection
     /// // ==[Set Property Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
-    /// // Test cases: 3
+    /// // Test cases: 4
     /// // Calling GC.Collect: Yes
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct set: average time: 2.93 ms
-    /// // 2. PropertyAccessor.Set: average time: 24.22 ms (+21.29 ms / 825.79 %)
-    /// // 3. PropertyInfo.SetValue: average time: 214.56 ms (+211.63 ms / 7,314.78 %)
+    /// // 1. Direct set: average time: 2.65 ms
+    /// // 2. PropertyAccessor.SetInstanceValue<,>: average time: 6.40 ms (+3.74 ms / 241.10%)
+    /// // 3. PropertyAccessor.Set: average time: 10.05 ms(+7.40 ms / 378.98%)
+    /// // 4. PropertyInfo.SetValue: average time: 124.49 ms(+121.84 ms / 4,692.95%)
     /// // 
     /// // ==[Get Property Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
-    /// // Test cases: 3
+    /// // Test cases: 4
     /// // Calling GC.Collect: Yes
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct get: average time: 2.58 ms
-    /// // 2. PropertyAccessor.Get: average time: 16.62 ms (+14.05 ms / 645.30 %)
-    /// // 3. PropertyInfo.GetValue: average time: 169.12 ms (+166.54 ms / 6,564.59 %)]]></code>
+    /// // 1. Direct get: average time: 2.06 ms
+    /// // 2. PropertyAccessor.GetInstanceValue<,>: average time: 4.90 ms (+2.84 ms / 237.98%)
+    /// // 3. PropertyAccessor.Get: average time: 9.72 ms(+7.66 ms / 471.89%)
+    /// // 4. PropertyInfo.GetValue: average time: 81.46 ms(+79.41 ms / 3,955.18%)]]></code>
     /// </example>
     public abstract class PropertyAccessor : MemberAccessor
     {
@@ -120,17 +141,18 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets whether the property can be read (has get accessor).
         /// </summary>
-        public bool CanRead => ((PropertyInfo)MemberInfo).CanRead;
+        public bool CanRead => Property.CanRead;
 
         /// <summary>
         /// Gets whether the property can be written (has set accessor).
         /// </summary>
-        public bool CanWrite => ((PropertyInfo)MemberInfo).CanWrite;
+        public bool CanWrite => Property.CanWrite;
 
         #endregion
 
         #region Private Protected Properties
 
+        private protected PropertyInfo Property => (PropertyInfo)MemberInfo;
         private protected Delegate Getter => getter ??= CreateGetter();
         private protected Delegate Setter => setter ??= CreateSetter();
         private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
@@ -140,14 +162,7 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private bool IsStatic
-        {
-            get
-            {
-                var property = (PropertyInfo)MemberInfo;
-                return (property.GetGetMethod(true) ?? property.GetSetMethod(true)!).IsStatic;
-            }
-        }
+        private bool IsStatic => (Property.GetGetMethod(true) ?? Property.GetSetMethod(true)!).IsStatic;
 
         #endregion
 
@@ -197,7 +212,7 @@ namespace KGySoft.Reflection
         /// <returns>A <see cref="PropertyAccessor"/> instance that can be used to get or set the property.</returns>
         internal static PropertyAccessor CreateAccessor(PropertyInfo property)
             => property.GetIndexParameters().Length == 0
-                ? (PropertyAccessor)new SimplePropertyAccessor(property)
+                ? new SimplePropertyAccessor(property)
                 : new IndexerAccessor(property);
 
         #endregion
@@ -212,19 +227,21 @@ namespace KGySoft.Reflection
         /// Sets the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
         /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
-        /// <param name="value">The value to be set.</param>
+        /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <remarks>
-        /// <note>
-        /// Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
+        /// method but further calls are much faster.</para>
+        /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
+        /// (and also the declaring type for instance properties), then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
+        /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> methods for better performance.</note>
         /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
         /// if the property is an instance member of a value type (<see langword="struct"/>).
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
+        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly and cannot use the generic setter methods,
+        /// then use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
         public abstract void Set(object? instance, object? value, params object?[]? indexParameters);
 
@@ -232,15 +249,17 @@ namespace KGySoft.Reflection
         /// Gets the value of the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
         /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
         /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <returns>The value of the property.</returns>
         /// <remarks>
-        /// <note>
-        /// Getting the property for the first time is slower than the <see cref="PropertyInfo.GetValue(object,object[])">System.Reflection.PropertyInfo.GetValue</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Getting the property for the first time is slower than the <see cref="PropertyInfo.GetValue(object,object[])">System.Reflection.PropertyInfo.GetValue</see>
+        /// method but further calls are much faster.</para>
+        /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
+        /// (and also the declaring type for instance properties), then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>
+        /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see> methods for better performance.</note>
         /// <note type="caller">When using the .NET Standard 2.0 version of this method, and the getter of an instance property of a value type (<see langword="struct"/>) mutates the instance,
         /// then the changes will not be applied to the <paramref name="instance"/> parameter.
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
@@ -248,70 +267,165 @@ namespace KGySoft.Reflection
         /// </remarks>
         public abstract object? Get(object? instance, params object?[]? indexParameters);
 
+        /// <summary>
+        /// Sets the strongly typed value of a static property. If the type of the property is not known at compile time
+        /// the non-generic <see cref="Set">Set</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <param name="value">The value to set.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
-            if (GenericSetter is Action<TProperty> setter)
-                setter.Invoke(value);
+            if (GenericSetter is Action<TProperty> staticSetter)
+                staticSetter.Invoke(value);
             else
                 ThrowStatic<TProperty>();
         }
 
+        /// <summary>
+        /// Gets the strongly typed value of a static property. If the type of the property is not known at compile time
+        /// the non-generic <see cref="Get">Get</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TProperty GetStaticValue<TProperty>()
-            => GenericGetter is Func<TProperty> getter ? getter.Invoke() : ThrowStatic<TProperty>();
+        public TProperty GetStaticValue<TProperty>() => GenericGetter is Func<TProperty> func ? func.Invoke() : ThrowStatic<TProperty>();
 
+        /// <summary>
+        /// Sets the strongly typed value of a non-indexed instance property in a reference type.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Set">Set</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="value">The value to set.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
         {
-            if (GenericSetter is Action<TInstance, TProperty> setter)
-                setter.Invoke(instance, value);
+            if (GenericSetter is Action<TInstance, TProperty> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value);
             else
                 ThrowInstance<TProperty>();
         }
 
+        /// <summary>
+        /// Gets the strongly typed value of a non-indexed instance property in a reference type.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Get">Get</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
-            => GenericGetter is Func<TInstance, TProperty> getter ? getter.Invoke(instance) : ThrowInstance<TProperty>();
+            => GenericGetter is Func<TInstance, TProperty> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
+                : ThrowInstance<TProperty>();
 
+        /// <summary>
+        /// Sets the strongly typed value of a non-indexed instance property in a value type.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Set">Set</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="value">The value to set.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty>(ref TInstance instance, TProperty value) where TInstance : struct
         {
-            if (GenericSetter is ValueTypeAction<TInstance, TProperty> setter)
-                setter.Invoke(ref instance, value);
+            if (GenericSetter is ValueTypeAction<TInstance, TProperty> action)
+                action.Invoke(ref instance, value);
             else
                 ThrowInstance<TProperty>();
         }
 
+        /// <summary>
+        /// Gets the strongly typed value of a non-indexed instance property in a value type.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Get">Get</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty>(ref TInstance instance) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TProperty> getter ? getter.Invoke(ref instance) : ThrowInstance<TProperty>();
+            => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(ref instance) : ThrowInstance<TProperty>();
 
+        /// <summary>
+        /// Sets the strongly typed value of a single-parameter indexed property in a reference type.
+        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
+        /// or the indexer has more than one parameters, then the non-generic <see cref="Set">Set</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <typeparam name="TIndex">The type of the index parameter.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="index">The value of the index parameter.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
         {
-            if (GenericSetter is Action<TInstance, TProperty, TIndex> setter)
-                setter.Invoke(instance, value, index);
+            if (GenericSetter is Action<TInstance, TProperty, TIndex> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value, index);
             else
                 ThrowInstance<TProperty>();
         }
 
+        /// <summary>
+        /// Gets the strongly typed value of a single-parameter indexed property in a reference type.
+        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
+        /// or the indexer has more than one parameters, then the non-generic <see cref="Get">Get</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <typeparam name="TIndex">The type of the index parameter.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="index">The value of the index parameter.</param>
+        /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
-            => GenericGetter is Func<TInstance, TIndex, TProperty> getter ? getter.Invoke(instance, index) : ThrowInstance<TProperty>();
+            => GenericGetter is Func<TInstance, TIndex, TProperty> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), index)
+                : ThrowInstance<TProperty>();
 
+        /// <summary>
+        /// Sets the strongly typed value of a single-parameter indexed property in a value type.
+        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
+        /// or the indexer has more than one parameters, then the non-generic <see cref="Set">Set</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <typeparam name="TIndex">The type of the index parameter.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="index">The value of the index parameter.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
-            if (GenericSetter is ValueTypeAction<TInstance, TProperty, TIndex> setter)
-                setter.Invoke(ref instance, value, index);
+            if (GenericSetter is ValueTypeAction<TInstance, TProperty, TIndex> action)
+                action.Invoke(ref instance, value, index);
             else
                 ThrowInstance<TProperty>();
         }
 
+        /// <summary>
+        /// Gets the strongly typed value of a single-parameter indexed property in a value type.
+        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
+        /// or the indexer has more than one parameters, then the non-generic <see cref="Get">Get</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
+        /// <typeparam name="TProperty">The type of the property.</typeparam>
+        /// <typeparam name="TIndex">The type of the index parameter.</typeparam>
+        /// <param name="instance">The instance that the property belongs to.</param>
+        /// <param name="index">The value of the index parameter.</param>
+        /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TIndex index) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> getter ? getter.Invoke(ref instance, index) : ThrowInstance<TProperty>();
+            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(ref instance, index) : ThrowInstance<TProperty>();
 
         #endregion
 
@@ -321,6 +435,49 @@ namespace KGySoft.Reflection
         private protected abstract Delegate CreateSetter();
         private protected abstract Delegate CreateGenericGetter();
         private protected abstract Delegate CreateGenericSetter();
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
+        //[SuppressMessage("Design", "CS8763:Do not catch general exception types",
+        //    Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        private protected void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter)
+        {
+            if (!IsStatic)
+            {
+                if (instance == null)
+                    Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
+                if (!Property.DeclaringType!.CanAcceptValue(instance))
+                    Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(Property.DeclaringType!));
+            }
+
+            if (isSetter)
+            {
+                if (!Property.PropertyType.CanAcceptValue(value))
+                {
+                    if (value == null)
+                        Throw.ArgumentNullException(Argument.value, Res.NotAnInstanceOfType(Property.PropertyType));
+                    Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(Property.PropertyType));
+                }
+            }
+
+            if (ParameterTypes.Length > 0)
+            {
+                if (indexParameters == null)
+                    Throw.ArgumentNullException(Argument.indexParameters, Res.ArgumentNull);
+                if (indexParameters.Length == 0)
+                    Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
+                if (indexParameters.Length != ParameterTypes.Length)
+                    Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
+                for (int i = 0; i < ParameterTypes.Length; i++)
+                {
+                    if (!ParameterTypes[i].CanAcceptValue(indexParameters[i]))
+                        Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
+                }
+            }
+
+            // exceptions from the property itself: re-throwing the original exception
+            ExceptionDispatchInfo.Capture(exception).Throw();
+        }
 
         #endregion
 

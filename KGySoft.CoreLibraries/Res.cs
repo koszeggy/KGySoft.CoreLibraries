@@ -382,6 +382,9 @@ namespace KGySoft
         /// <summary>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</summary>
         internal static string ReflectionCannotInvokeIndexerGeneric => Get("Reflection_CannotInvokeIndexerGeneric");
 
+        /// <summary>The number or type of the specified parameters are invalid.</summary>
+        internal static string ReflectionParametersInvalid => Get("Reflection_ParametersInvalid");
+
         #endregion
 
         #region Resources

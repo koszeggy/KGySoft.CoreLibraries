@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v7.0.0:
+! v7.0.0:
 ~~~~~~~~~
 
 - KGySoft.CoreLibraries namespace:
@@ -22,8 +22,14 @@
   instead of myBindings.Add(myCommand).AddSource(source, "MyNamespace.IMyInterface.EventName") even if the event is
   implemented explicitly.
 
-+ KGySoft.Reflection namespace:
+! KGySoft.Reflection namespace:
 ===============================
+! PropertyAccessor class:
+  ! Get/Set methods now do argument validation so throwing ArgumentNullException and ArgumentException instead of
+    letting the InvalidCastException, NullReferenceException or IndexOutOfRangeException to be thrown. The
+    validation is performed only when an exception occurs to prevent performance degradation on the hot path.
+  + New generic GetStaticValue/SetStaticValue and GetInstanceValue/SetInstanceValue methods for better performance
+    when the type of the property (and declaring type, index parameter when applicable) are known at compile time.
 + Reflector class:
   + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 
