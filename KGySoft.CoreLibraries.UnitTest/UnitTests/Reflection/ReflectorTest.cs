@@ -1276,12 +1276,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             var testStruct = new TestStruct(0);
             Console.Write("Property Accessor Generic...");
-            accessor.SetInstanceValue(ref testStruct, (int)value);
-            result = accessor.GetInstanceValue<TestStruct, int>(ref testStruct);
+            accessor.SetInstanceValue(testStruct, (int)value);
+            result = accessor.GetInstanceValue<TestStruct, int>(testStruct);
             Assert.AreEqual(value, result);
             Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticPropertyExpectedGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
             Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), 1), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(ref testStruct, "1"), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, "1"), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
             Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticPropertyExpectedGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
             Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int>(new object()), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.IntProp), pi.DeclaringType!));
 
@@ -1339,9 +1339,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             PropertyAccessor.GetAccessor(pi).SetStaticValue((int)value);
             result = PropertyAccessor.GetAccessor(pi).GetStaticValue<int>();
             Assert.AreEqual(value, result);
-            Throws<InvalidOperationException>(() => accessor.SetInstanceValue(ref testStruct, value), Res.ReflectionInstancePropertyExpectedGeneric(nameof(TestStruct.StaticIntProp), testType));
+            Throws<InvalidOperationException>(() => accessor.SetInstanceValue(testStruct, value), Res.ReflectionInstancePropertyExpectedGeneric(nameof(TestStruct.StaticIntProp), testType));
             Throws<ArgumentException>(() => accessor.SetStaticValue("1"), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.StaticIntProp), testType));
-            Throws<InvalidOperationException>(() => accessor.GetInstanceValue<TestStruct, int>(ref testStruct), Res.ReflectionInstancePropertyExpectedGeneric(nameof(TestStruct.StaticIntProp), testType));
+            Throws<InvalidOperationException>(() => accessor.GetInstanceValue<TestStruct, int>(testStruct), Res.ReflectionInstancePropertyExpectedGeneric(nameof(TestStruct.StaticIntProp), testType));
             Throws<ArgumentException>(() => accessor.GetStaticValue<object>(), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestStruct.StaticIntProp), testType));
 
             TestStruct.StaticIntProp = 0;
@@ -1408,18 +1408,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             var testStruct = new TestStruct(0);
             Console.Write("Property Accessor Generic...");
-            accessor.SetInstanceValue(ref testStruct, (int)value, (int)args[0]);
-            result = accessor.GetInstanceValue<TestStruct, int, int>(ref testStruct, (int)args[0]);
+            accessor.SetInstanceValue(testStruct, (int)value, (int)args[0]);
+            result = accessor.GetInstanceValue<TestStruct, int, int>(testStruct, (int)args[0]);
             Assert.AreEqual(value, result);
             Throws<InvalidOperationException>(() => accessor.SetStaticValue(1), Res.ReflectionStaticPropertyExpectedGeneric(pi.Name, pi.DeclaringType!));
             Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), 1, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(ref testStruct, "1", 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(ref testStruct, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(ref testStruct, 1, "1"), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, "1", 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, 1, "1"), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
             Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticPropertyExpectedGeneric("Item", pi.DeclaringType!));
             Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int, int>(new object(), 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestStruct, int>(ref testStruct), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestStruct, int, string>(ref testStruct, "1"), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestStruct, int>(testStruct), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestStruct, int, string>(testStruct, "1"), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by PropertyInfo)...");
@@ -1934,7 +1934,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 new EnvironmentPermission(PermissionState.Unrestricted),
 #endif
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
-                new SecurityPermission(SecurityPermissionFlag.ControlEvidence));
+                new SecurityPermission(SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.SerializationFormatter));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
             var sandbox = (Sandbox)handle.Unwrap();
             try

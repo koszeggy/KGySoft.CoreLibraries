@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: PropertyAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -333,10 +333,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public void SetInstanceValue<TInstance, TProperty>(ref TInstance instance, TProperty value) where TInstance : struct
+        public void SetInstanceValue<TInstance, TProperty>(in TInstance instance, TProperty value) where TInstance : struct
         {
             if (GenericSetter is ValueTypeAction<TInstance, TProperty> action)
-                action.Invoke(ref instance, value);
+                action.Invoke(instance, value);
             else
                 ThrowInstance<TProperty>();
         }
@@ -350,8 +350,8 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TProperty GetInstanceValue<TInstance, TProperty>(ref TInstance instance) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(ref instance) : ThrowInstance<TProperty>();
+        public TProperty GetInstanceValue<TInstance, TProperty>(in TInstance instance) where TInstance : struct
+            => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(instance) : ThrowInstance<TProperty>();
 
         /// <summary>
         /// Sets the strongly typed value of a single-parameter indexed property in a reference type.
@@ -404,10 +404,10 @@ namespace KGySoft.Reflection
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public void SetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TProperty value, TIndex index) where TInstance : struct
+        public void SetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
             if (GenericSetter is ValueTypeAction<TInstance, TProperty, TIndex> action)
-                action.Invoke(ref instance, value, index);
+                action.Invoke(in instance, value, index);
             else
                 ThrowInstance<TProperty>();
         }
@@ -424,8 +424,8 @@ namespace KGySoft.Reflection
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(ref TInstance instance, TIndex index) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(ref instance, index) : ThrowInstance<TProperty>();
+        public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TIndex index) where TInstance : struct
+            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(instance, index) : ThrowInstance<TProperty>();
 
         #endregion
 
@@ -438,8 +438,6 @@ namespace KGySoft.Reflection
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
-        //[SuppressMessage("Design", "CS8763:Do not catch general exception types",
-        //    Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
         private protected void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter)
         {
             if (!IsStatic)
@@ -474,6 +472,8 @@ namespace KGySoft.Reflection
                         Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
                 }
             }
+
+            ThrowIfSecurityConflict(exception);
 
             // exceptions from the property itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
