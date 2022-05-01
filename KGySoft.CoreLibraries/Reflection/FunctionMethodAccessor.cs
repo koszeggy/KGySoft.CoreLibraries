@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: FunctionMethodAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -15,6 +15,10 @@
 
 #region Usings
 
+using System.Diagnostics.CodeAnalysis;
+
+#region Used Namespaces
+
 using System;
 #if !NETSTANDARD2_0
 using System.Linq;
@@ -25,7 +29,14 @@ using System.Reflection;
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
-using System.Security;
+
+#endregion
+
+#region Used Aliases
+
+using AnyFunction = System.Func<object?, object?[]?, object?>;
+
+#endregion
 
 #endregion
 
@@ -36,15 +47,6 @@ namespace KGySoft.Reflection
     /// </summary>
     internal sealed class FunctionMethodAccessor : MethodAccessor
     {
-        #region Delegates
-
-        /// <summary>
-        /// Represents a non-generic function that can be used for any function methods.
-        /// </summary>
-        private delegate object? AnyFunction(object? target, object?[]? arguments);
-
-        #endregion
-
         #region Constructors
 
         internal FunctionMethodAccessor(MethodInfo mi)
@@ -59,16 +61,19 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
         public override object? Invoke(object? instance, params object?[]? parameters)
         {
             try
             {
                 return ((AnyFunction)Invoker)(instance, parameters);
             }
-            catch (VerificationException e) when (IsSecurityConflict(e))
+            catch (Exception e)
             {
-                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
-                return default;
+                // Post-validation if there was any exception
+                PostValidate(instance, parameters, e);
+                return null; // actually never reached, just to satisfy the compiler
             }
         }
 

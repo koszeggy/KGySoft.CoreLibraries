@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: MethodAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -16,9 +16,15 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+using System.Security;
+
+using KGySoft.Annotations;
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -35,7 +41,7 @@ namespace KGySoft.Reflection
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to invoke a method by name rather then by a <see cref="MethodInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">InvokeMethod</see>
-    /// methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
+    /// methods in the <see cref="Reflector"/> class, which have some overloads with a <c>methodName</c> parameter.</note>
     /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Invoke">Invoke</see> method does not return the ref/out parameters.
     /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
     /// then the changes will not be applied to the instance on which the method is invoked.
@@ -95,14 +101,8 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        /// <summary>
-        /// Gets the method invoker delegate.
-        /// </summary>
-        private protected Delegate Invoker
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => invoker ??= CreateInvoker();
-        }
+        private protected MethodBase Method => (MethodBase)MemberInfo;
+        private protected Delegate Invoker => invoker ??= CreateInvoker();
 
         #endregion
 
@@ -144,7 +144,7 @@ namespace KGySoft.Reflection
         #region Internal Methods
 
         /// <summary>
-        /// Creates an accessor for a property without caching.
+        /// Creates an accessor for a method without caching.
         /// </summary>
         /// <param name="method">The method for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="MethodAccessor"/> instance that can be used to invoke the method.</returns>
@@ -163,15 +163,14 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes the method. The return value of <see cref="Void"/> methods are <see langword="null"/>.
         /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/>&#160;for static methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method, or <see langword="null"/>&#160;for <see cref="Void"/> methods.</returns>
         /// <remarks>
-        /// <note>
-        /// Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
+        /// method but further calls are much faster.</para>
         /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
         /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
         /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
@@ -190,6 +189,37 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <returns>A delegate instance that can be used to invoke the method.</returns>
         private protected abstract Delegate CreateInvoker();
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
+        private protected void PostValidate(object? instance, object?[]? parameters, Exception exception)
+        {
+            if (!Method.IsStatic)
+            {
+                if (instance == null)
+                    Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
+                if (!Method.DeclaringType!.CanAcceptValue(instance))
+                    Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(Method.DeclaringType!));
+            }
+
+            if (ParameterTypes.Length > 0)
+            {
+                if (parameters == null)
+                    Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
+                if (parameters.Length != ParameterTypes.Length)
+                    Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
+                for (int i = 0; i < ParameterTypes.Length; i++)
+                {
+                    if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
+                        Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
+                }
+            }
+
+            ThrowIfSecurityConflict(exception);
+
+            // exceptions from the method itself: re-throwing the original exception
+            ExceptionDispatchInfo.Capture(exception).Throw();
+        }
 
         #endregion
 

@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: FieldAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -239,14 +239,13 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the field.
         /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
-        /// <param name="value">The value to be set.</param>
+        /// <param name="value">The value to set.</param>
         /// <remarks>
-        /// <note>
-        /// Setting the field for the first time is slower than the <see cref="FieldInfo.SetValue(object,object)">System.Reflection.FieldInfo.SetValue</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Setting the field for the first time is slower than the <see cref="FieldInfo.SetValue(object,object)">System.Reflection.FieldInfo.SetValue</see>
+        /// method but further calls are much faster.</para>
         /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
         /// if the field to set is read-only or is an instance member of a value type (<see langword="struct"/>).
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
@@ -255,27 +254,26 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void Set(object? instance, object? value)
         {
-            try
-            {
-                Setter.Invoke(instance, value);
-            }
-            catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
-            {
-                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
-            }
+            //try
+            //{
+            Setter.Invoke(instance, value);
+            //}
+            //catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
+            //{
+            //    Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
+            //}
         }
 
         /// <summary>
         /// Gets the value of the field.
         /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
         /// <returns>The value of the field.</returns>
         /// <remarks>
-        /// <note>
-        /// Getting the field for the first time is slower than the <see cref="FieldInfo.GetValue">System.Reflection.FieldInfo.GetValue</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Getting the field for the first time is slower than the <see cref="FieldInfo.GetValue">System.Reflection.FieldInfo.GetValue</see>
+        /// method but further calls are much faster.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public object? Get(object? instance) => Getter.Invoke(instance);

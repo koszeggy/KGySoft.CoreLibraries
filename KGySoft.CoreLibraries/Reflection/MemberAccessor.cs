@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: MemberAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -16,16 +16,20 @@
 #region Usings
 
 using System;
+#if !NETSTANDARD2_0
+using System.Collections.Generic;
+#endif
 using System.Diagnostics;
+#if !NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis; 
+#endif
 using System.Linq;
 using System.Reflection;
-using System.Security;
 #if !NETSTANDARD2_0
-using System.Collections.Generic; 
-using System.Diagnostics.CodeAnalysis; 
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
+using System.Security;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -128,20 +132,24 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        private protected static bool IsSecurityConflict(VerificationException ve, string? accessorPrefix = null)
+        private protected static void ThrowIfSecurityConflict(Exception exception, string? accessorPrefix = null)
         {
+            if (exception is not VerificationException ve)
+                return;
+
             try
             {
                 var stackTrace = new StackTrace(ve);
                 string? methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0)?.GetMethod()?.Name : null;
-                if (methodName == null)
-                    return false;
-                return accessorPrefix == null ? methodName.ContainsAny(methodInvokerPrefix, ctorInvokerPrefix) : methodName.StartsWith(accessorPrefix, StringComparison.Ordinal);
+                if (methodName == null || !(accessorPrefix == null ? methodName.ContainsAny(methodInvokerPrefix, ctorInvokerPrefix) : methodName.StartsWith(accessorPrefix, StringComparison.Ordinal)))
+                    return;
+
+                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, exception);
             }
             catch (Exception e) when (!e.IsCritical())
             {
                 // if we cannot obtain the stack trace we assume the VerificationException is due to the used security settings
-                return true;
+                Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, exception);
             }
         }
 

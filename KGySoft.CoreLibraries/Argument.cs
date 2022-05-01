@@ -104,6 +104,7 @@ namespace KGySoft
         options,
         newIndex,
         newName,
+        parameters,
         parent,
         password,
         path,

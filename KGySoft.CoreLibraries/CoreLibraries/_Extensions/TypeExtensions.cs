@@ -22,7 +22,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -174,7 +176,6 @@ namespace KGySoft.CoreLibraries
                 type = type.GetGenericArguments()[0];
 
             // if parameter is passed by reference (ref, out modifiers) the element type must be checked
-            // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above
             if (type.IsByRef)
                 type = type.GetElementType()!;
 
