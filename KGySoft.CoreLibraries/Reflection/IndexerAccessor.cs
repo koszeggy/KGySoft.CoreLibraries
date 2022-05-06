@@ -193,13 +193,13 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
             if (ParameterTypes.Length > 1)
-                Throw.NotSupportedException(Res.ReflectionCannotInvokeIndexerGeneric);
+                Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
 
             bool isValueType = declaringType.IsValueType;
             ParameterExpression instanceParameter = Expression.Parameter(isValueType ? declaringType.MakeByRefType() : declaringType, "instance");
             ParameterExpression indexParameter = Expression.Parameter(ParameterTypes[0], "index");
             MethodCallExpression getterCall = Expression.Call(instanceParameter, getterMethod, indexParameter);
-            Type delegateType = (isValueType ? typeof(ValueTypeFunction<,,>) : typeof(Func<,,>))
+            Type delegateType = (isValueType ? typeof(ValueTypeFunction<,,>) : typeof(ReferenceTypeFunction<,,>))
                 .GetGenericType(declaringType, indexParameter.Type, Property.PropertyType);
             LambdaExpression lambda = Expression.Lambda(delegateType, getterCall, instanceParameter, indexParameter);
             return lambda.Compile();
@@ -216,14 +216,14 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
             if (ParameterTypes.Length > 1)
-                Throw.NotSupportedException(Res.ReflectionCannotInvokeIndexerGeneric);
+                Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
 
             bool isValueType = declaringType.IsValueType;
             ParameterExpression instanceParameter = Expression.Parameter(isValueType ? declaringType.MakeByRefType() : declaringType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Property.PropertyType, "value");
             ParameterExpression indexParameter = Expression.Parameter(ParameterTypes[0], "index");
             MethodCallExpression setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter, indexParameter);
-            Type delegateType = (isValueType ? typeof(ValueTypeAction<,,>) : typeof(Action<,,>))
+            Type delegateType = (isValueType ? typeof(ValueTypeAction<,,>) : typeof(ReferenceTypeAction<,,>))
                 .GetGenericType(declaringType, Property.PropertyType, indexParameter.Type);
             LambdaExpression lambda = Expression.Lambda(delegateType, setterCall, instanceParameter, valueParameter, indexParameter);
             return lambda.Compile();

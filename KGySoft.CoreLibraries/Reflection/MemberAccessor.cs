@@ -50,12 +50,29 @@ namespace KGySoft.Reflection
     {
         #region Delegates
 
+        private protected delegate void ReferenceTypeAction<in TInstance>(TInstance instance) where TInstance : class;
+        private protected delegate void ReferenceTypeAction<in TInstance, in T>(TInstance instance, T arg) where TInstance : class;
+        private protected delegate void ReferenceTypeAction<in TInstance, in T1, in T2>(TInstance instance, T1 arg1, T2 arg2) where TInstance : class;
+        private protected delegate void ReferenceTypeAction<in TInstance, in T1, in T2, in T3>(TInstance instance, T1 arg1, T2 arg2, T3 arg3) where TInstance : class;
+        private protected delegate void ReferenceTypeAction<in TInstance, in T1, in T2, in T3, in T4>(TInstance instance, T1 arg1, T2 arg2, T3 arg3, T4 arg4) where TInstance : class;
+
         private protected delegate void ValueTypeAction<TInstance>(in TInstance instance) where TInstance : struct;
-        private protected delegate void ValueTypeAction<TInstance, in TParam>(in TInstance instance, TParam value) where TInstance : struct;
+        private protected delegate void ValueTypeAction<TInstance, in T>(in TInstance instance, T arg) where TInstance : struct;
         private protected delegate void ValueTypeAction<TInstance, in T1, in T2>(in TInstance instance, T1 arg1, T2 arg2) where TInstance : struct;
+        private protected delegate void ValueTypeAction<TInstance, in T1, in T2, in T3>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3) where TInstance : struct;
+        private protected delegate void ValueTypeAction<TInstance, in T1, in T2, in T3, in T4>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3, T4 arg4) where TInstance : struct;
+
+        private protected delegate TResult ReferenceTypeFunction<in TInstance, out TResult>(TInstance instance) where TInstance : class;
+        private protected delegate TResult ReferenceTypeFunction<in TInstance, in T, out TResult>(TInstance instance, T arg) where TInstance : class;
+        private protected delegate TResult ReferenceTypeFunction<in TInstance, in T1, in T2, out TResult>(TInstance instance, T1 arg1, T2 arg2) where TInstance : class;
+        private protected delegate TResult ReferenceTypeFunction<in TInstance, in T1, in T2, in T3, out TResult>(TInstance instance, T1 arg1, T2 arg2, T3 arg3) where TInstance : class;
+        private protected delegate TResult ReferenceTypeFunction<in TInstance, in T1, in T2, in T3, in T4, out TResult>(TInstance instance, T1 arg1, T2 arg2, T3 arg3, T4 arg4) where TInstance : class;
 
         private protected delegate TResult ValueTypeFunction<TInstance, out TResult>(in TInstance instance) where TInstance : struct;
-        private protected delegate TResult ValueTypeFunction<TInstance, in TParam, out TResult>(in TInstance instance, TParam value) where TInstance : struct;
+        private protected delegate TResult ValueTypeFunction<TInstance, in T, out TResult>(in TInstance instance, T arg) where TInstance : struct;
+        private protected delegate TResult ValueTypeFunction<TInstance, in T1, in T2, out TResult>(in TInstance instance, T1 arg1, T2 arg2) where TInstance : struct;
+        private protected delegate TResult ValueTypeFunction<TInstance, in T1, in T2, in T3, out TResult>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3) where TInstance : struct;
+        private protected delegate TResult ValueTypeFunction<TInstance, in T1, in T2, in T3, in T4, out TResult>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3, T4 arg4) where TInstance : struct;
 
         #endregion
 

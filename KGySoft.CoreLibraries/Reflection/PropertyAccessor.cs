@@ -276,8 +276,8 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
-            if (GenericSetter is Action<TProperty> staticSetter)
-                staticSetter.Invoke(value);
+            if (GenericSetter is Action<TProperty> action)
+                action.Invoke(value);
             else
                 ThrowStatic<TProperty>();
         }
@@ -303,7 +303,7 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
         {
-            if (GenericSetter is Action<TInstance, TProperty> action)
+            if (GenericSetter is ReferenceTypeAction<TInstance, TProperty> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value);
             else
                 ThrowInstance<TProperty>();
@@ -320,7 +320,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
-            => GenericGetter is Func<TInstance, TProperty> func
+            => GenericGetter is ReferenceTypeFunction<TInstance, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
                 : ThrowInstance<TProperty>();
 
@@ -368,7 +368,7 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
         {
-            if (GenericSetter is Action<TInstance, TProperty, TIndex> action)
+            if (GenericSetter is ReferenceTypeAction<TInstance, TProperty, TIndex> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value, index);
             else
                 ThrowInstance<TProperty>();
@@ -388,7 +388,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
-            => GenericGetter is Func<TInstance, TIndex, TProperty> func
+            => GenericGetter is ReferenceTypeFunction<TInstance, TIndex, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), index)
                 : ThrowInstance<TProperty>();
 
