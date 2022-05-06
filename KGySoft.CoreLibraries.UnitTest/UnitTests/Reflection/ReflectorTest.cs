@@ -434,30 +434,48 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             var test = new TestClass(0);
             MethodInfo mi = test.GetType().GetMethod(nameof(TestClass.TestAction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             mi.Invoke(test, parameters);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, test.IntProp);
 
             test = new TestClass(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], test.IntProp);
+            accessor.Invoke(test, parameters);
+            Assert.AreEqual(arg1, test.IntProp);
+            Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParametersInvalid);
+
+            test = new TestClass(0);
+            Console.Write("Method Accessor Generic...");
+            accessor.InvokeInstanceAction(test, arg1, arg2);
+            Assert.AreEqual(arg1, test.IntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticAction(arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestClass.TestAction), mi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticAction<TestClass, int, string>(null, arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestClass.TestAction), mi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.InvokeInstanceAction<TestClass, int, string>(null, arg1, arg2), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.InvokeInstanceAction(test, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceAction(test, arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestAction), mi.DeclaringType));
 
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, test.IntProp);
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, nameof(TestClass.TestAction), parameters);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, test.IntProp);
         }
 
         [Test]
@@ -465,30 +483,44 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestClass);
             MethodInfo mi = testType.GetMethod(nameof(TestClass.StaticTestAction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             mi.Invoke(null, parameters);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
 
             TestClass.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
+            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParametersInvalid);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Method Accessor Generic...");
+            accessor.InvokeStaticAction(arg1, arg2);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeInstanceAction(new TestClass(), arg1, arg2), Res.ReflectionInstanceMethodExpectedGeneric(nameof(TestClass.StaticTestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticAction(arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.StaticTestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticAction(arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.StaticTestAction), mi.DeclaringType));
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestAction), parameters);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
         }
 
         [Test]
@@ -505,7 +537,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestClass(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -543,7 +575,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestClass.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -572,34 +604,54 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             var test = new TestClass(0);
             MethodInfo mi = test.GetType().GetMethod(nameof(TestClass.TestFunction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             object result = mi.Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
 
             test = new TestClass(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
+            result = accessor.Invoke(test, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
+            Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParametersInvalid);
+
+            test = new TestClass(0);
+            Console.Write("Method Accessor Generic...");
+            result = accessor.InvokeInstanceFunction<TestClass, int, string, int>(test, arg1, arg2);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticFunction<int, string, int>(arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestClass.TestFunction), mi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticFunction<TestClass, int, string, int>(null, arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestClass.TestFunction), mi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.InvokeInstanceFunction<TestClass, int, string, int>(null, arg1, arg2), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int, int>(test, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, string, int, int>(test, arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int, string, object>(test, arg1, arg2), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestFunction), mi.DeclaringType));
 
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(test, nameof(TestClass.TestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
         }
 
         [Test]
@@ -607,35 +659,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestClass);
             MethodInfo mi = testType.GetMethod(nameof(TestClass.StaticTestFunction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
             object result;
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             result = mi.Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
 
             TestClass.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            result = accessor.Invoke(null, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
+            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParametersInvalid);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Method Accessor Generic...");
+            result = accessor.InvokeStaticFunction<int, string, int>(arg1, arg2);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeInstanceFunction<TestClass, int, string, int>(new TestClass(), arg1, arg2), Res.ReflectionInstanceMethodExpectedGeneric(nameof(TestClass.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<int, int>(arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<string, int, int>(arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<int, string, object>(arg1, arg2), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.StaticTestFunction), mi.DeclaringType));
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
         }
 
         [Test]
@@ -653,7 +721,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestClass(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
@@ -695,7 +763,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestClass.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
@@ -731,31 +799,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             object test = new TestStruct(0);
             MethodInfo mi = test.GetType().GetMethod(nameof(TestStruct.TestAction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             mi.Invoke(test, parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
+            accessor.Invoke(test, parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            {
+                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+                Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
+            }
+
+            Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParametersInvalid);
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Method Accessor Generic...");
+            accessor.InvokeInstanceAction(testStruct, arg1, arg2);
+            Assert.AreEqual(arg1, testStruct.IntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticAction(arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestStruct.TestAction), mi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticAction<TestStruct, int, string>(default, arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestStruct.TestAction), mi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceAction(testStruct, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.TestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceAction(testStruct, arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.TestAction), mi.DeclaringType));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, nameof(TestStruct.TestAction), parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
         }
 
         [Test]
@@ -763,7 +851,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestStruct);
             MethodInfo mi = testType.GetMethod(nameof(TestStruct.StaticTestAction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
@@ -771,10 +862,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
 
             TestStruct.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
+            accessor.Invoke(null, parameters);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParametersInvalid);
+
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Method Accessor Generic...");
+            accessor.InvokeStaticAction(arg1, arg2);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeInstanceAction(new TestStruct(), arg1, arg2), Res.ReflectionInstanceMethodExpectedGeneric(nameof(TestStruct.StaticTestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticAction(arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.StaticTestAction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticAction(arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.StaticTestAction), mi.DeclaringType));
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
@@ -803,7 +905,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestStruct(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -841,7 +943,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestStruct.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -870,35 +972,54 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             object test = new TestStruct(0);
             MethodInfo mi = test.GetType().GetMethod(nameof(TestStruct.TestFunction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             object result = mi.Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
+            result = accessor.Invoke(test, parameters);
+            Assert.AreEqual(arg1, result);
             if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+            Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParametersInvalid);
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Method Accessor Generic...");
+            result = accessor.InvokeInstanceFunction<TestStruct, int, string, int>(testStruct, arg1, arg2);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, testStruct.IntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticFunction<int, string, int>(arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestStruct.TestFunction), mi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.InvokeStaticFunction<TestStruct, int, string, int>(new TestStruct(), arg1, arg2), Res.ReflectionStaticMethodExpectedGeneric(nameof(TestStruct.TestFunction), mi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestStruct, int, int>(testStruct, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.TestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestStruct, string, int, int>(testStruct, arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.TestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestStruct, int, string, object>(testStruct, arg1, arg2), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.TestFunction), mi.DeclaringType));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(test, nameof(TestStruct.TestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
         }
 
         [Test]
@@ -906,35 +1027,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestStruct);
             MethodInfo mi = testType.GetMethod(nameof(TestStruct.StaticTestFunction));
-            object[] args = { 1, "dummy" };
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg1 = 1;
+            string arg2 = "dummy";
+            object[] args = { arg1, arg2 };
             object result;
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             result = mi.Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
 
             TestStruct.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
-            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            result = accessor.Invoke(null, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
+            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParametersInvalid);
+
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Method Accessor Generic...");
+            result = accessor.InvokeStaticFunction<int, string, int>(arg1, arg2);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
+            Throws<InvalidOperationException>(() => accessor.InvokeInstanceFunction<TestStruct, int, string, int>(new TestStruct(), arg1, arg2), Res.ReflectionInstanceMethodExpectedGeneric(nameof(TestStruct.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<int, int>(arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<string, int, int>(arg2, arg1), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.StaticTestFunction), mi.DeclaringType));
+            Throws<ArgumentException>(() => accessor.InvokeStaticFunction<int, string, object>(arg1, arg2), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestStruct.StaticTestFunction), mi.DeclaringType));
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(testType, nameof(TestStruct.StaticTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
         }
 
         [Test]
@@ -953,7 +1090,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestStruct(0);
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
@@ -996,7 +1133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestStruct.StaticIntProp = 0;
-            Console.Write("Method Invoker...");
+            Console.Write("Method Accessor...");
             parameters = (object[])args.Clone();
             result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);

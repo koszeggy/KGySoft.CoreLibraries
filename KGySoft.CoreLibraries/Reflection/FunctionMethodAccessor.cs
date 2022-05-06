@@ -15,20 +15,19 @@
 
 #region Usings
 
-using System.Diagnostics.CodeAnalysis;
-
 #region Used Namespaces
 
 using System;
-#if !NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#endif
 using System.Linq.Expressions;
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
+
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -129,6 +128,91 @@ namespace KGySoft.Reflection
                 Expression.Convert(methodToCall, Reflector.ObjectType), // return type converted to object
                 instanceParameter, // instance (object)
                 argumentsParameter);
+            return lambda.Compile();
+        }
+
+        private protected override Delegate CreateGenericInvoker()
+        {
+            var method = (MethodInfo)Method;
+            Type? declaringType = Method.DeclaringType;
+            if (!Method.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (ParameterTypes.Length > 4 || ParameterTypes.Any(p => p.IsByRef))
+                Throw.NotSupportedException(Res.ReflectionMethodGenericNotSupported);
+            if (Method is MethodInfo { ReturnType.IsPointer: true })
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
+            if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
+
+            ParameterExpression[] parameters;
+            MethodCallExpression methodCall;
+            LambdaExpression lambda;
+            Type delegateType;
+
+            // Static methods
+            if (Method.IsStatic)
+            {
+                parameters = new ParameterExpression[ParameterTypes.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                    parameters[i] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+                methodCall = Expression.Call(null, method, parameters);
+                delegateType = ParameterTypes.Length switch
+                {
+                    0 => typeof(Func<>),
+                    1 => typeof(Func<,>),
+                    2 => typeof(Func<,,>),
+                    3 => typeof(Func<,,,>),
+                    4 => typeof(Func<,,,,>),
+                    _ => Throw.InternalError<Type>("Unexpected number of parameters")
+                };
+
+                if (delegateType.IsGenericTypeDefinition)
+                    delegateType = delegateType.GetGenericType(ParameterTypes.Concat(new[] { method.ReturnType }).ToArray());
+                lambda = Expression.Lambda(delegateType, methodCall, parameters);
+                return lambda.Compile();
+            }
+
+            parameters = new ParameterExpression[ParameterTypes.Length + 1];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+                parameters[i + 1] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+
+            // Class instance methods
+            if (!declaringType!.IsValueType)
+            {
+                parameters[0] = Expression.Parameter(declaringType, "instance");
+                delegateType = ParameterTypes.Length switch
+                {
+                    // NOTE: actually we could use simple Func but that would make possible to invoke an instance method by a static invoker
+                    0 => typeof(ReferenceTypeFunction<,>),
+                    1 => typeof(ReferenceTypeFunction<,,>),
+                    2 => typeof(ReferenceTypeFunction<,,,>),
+                    3 => typeof(ReferenceTypeFunction<,,,,>),
+                    4 => typeof(ReferenceTypeFunction<,,,,,>),
+                    _ => Throw.InternalError<Type>("Unexpected number of parameters")
+                };
+            }
+            // Struct instance methods
+            else
+            {
+                parameters[0] = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+                delegateType = ParameterTypes.Length switch
+                {
+                    0 => typeof(ValueTypeFunction<,>),
+                    1 => typeof(ValueTypeFunction<,,>),
+                    2 => typeof(ValueTypeFunction<,,,>),
+                    3 => typeof(ValueTypeFunction<,,,,>),
+                    4 => typeof(ValueTypeFunction<,,,,,>),
+                    _ => Throw.InternalError<Type>("Unexpected number of parameters")
+                };
+            }
+
+#if NET35
+            methodCall = Expression.Call(parameters[0], method, parameters.Cast<Expression>().Skip(1));
+#else
+            methodCall = Expression.Call(parameters[0], method, parameters.Skip(1)); 
+#endif
+            delegateType = delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).Concat(new[] { method.ReturnType }).ToArray());
+            lambda = Expression.Lambda(delegateType, methodCall, parameters);
             return lambda.Compile();
         }
 

@@ -96,6 +96,7 @@ namespace KGySoft.Reflection
         #region Fields
 
         private Delegate? invoker;
+        private Delegate? genericInvoker;
 
         #endregion
 
@@ -103,6 +104,7 @@ namespace KGySoft.Reflection
 
         private protected MethodBase Method => (MethodBase)MemberInfo;
         private protected Delegate Invoker => invoker ??= CreateInvoker();
+        private protected Delegate GenericInvoker => genericInvoker ??= CreateGenericInvoker();
 
         #endregion
 
@@ -180,15 +182,197 @@ namespace KGySoft.Reflection
         /// </remarks>
         public abstract object? Invoke(object? instance, params object?[]? parameters);
 
+        public void InvokeStaticAction()
+        {
+            if (GenericInvoker is Action action)
+                action.Invoke();
+            else
+                ThrowStatic<_>();
+        }
+
+        public void InvokeStaticAction<T>(T param)
+        {
+            if (GenericInvoker is Action<T> action)
+                action.Invoke(param);
+            else
+                ThrowStatic<_>();
+        }
+
+        public void InvokeStaticAction<T1, T2>(T1 param1, T2 param2)
+        {
+            if (GenericInvoker is Action<T1, T2> action)
+                action.Invoke(param1, param2);
+            else
+                ThrowStatic<_>();
+        }
+
+        public void InvokeStaticAction<T1, T2, T3>(T1 param1, T2 param2, T3 param3)
+        {
+            if (GenericInvoker is Action<T1, T2, T3> action)
+                action.Invoke(param1, param2, param3);
+            else
+                ThrowStatic<_>();
+        }
+
+        public void InvokeStaticAction<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
+        {
+            if (GenericInvoker is Action<T1, T2, T3, T4> action)
+                action.Invoke(param1, param2, param3, param4);
+            else
+                ThrowStatic<_>();
+        }
+
+        public TResult InvokeStaticFunction<TResult>()
+            => GenericInvoker is Func<TResult> func ? func.Invoke() : ThrowStatic<TResult>();
+
+        public TResult InvokeStaticFunction<T, TResult>(T param)
+            => GenericInvoker is Func<T, TResult> func ? func.Invoke(param) : ThrowStatic<TResult>();
+
+        public TResult InvokeStaticFunction<T1, T2, TResult>(T1 param1, T2 param2)
+            => GenericInvoker is Func<T1, T2, TResult> func ? func.Invoke(param1, param2) : ThrowStatic<TResult>();
+
+        public TResult InvokeStaticFunction<T1, T2, T3, TResult>(T1 param1, T2 param2, T3 param3)
+            => GenericInvoker is Func<T1, T2, T3, TResult> func ? func.Invoke(param1, param2, param3) : ThrowStatic<TResult>();
+
+        public TResult InvokeStaticFunction<T1, T2, T3, T4, TResult>(T1 param1, T2 param2, T3 param3, T4 param4)
+            => GenericInvoker is Func<T1, T2, T3, T4, TResult> func ? func.Invoke(param1, param2, param3, param4) : ThrowStatic<TResult>();
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public void InvokeInstanceAction<TInstance>(TInstance instance) where TInstance : class
+        {
+            if (GenericInvoker is ReferenceTypeAction<TInstance> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance));
+            else
+                ThrowInstance<_>();
+        }
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public void InvokeInstanceAction<TInstance, T>(TInstance instance, T param) where TInstance : class
+        {
+            if (GenericInvoker is ReferenceTypeAction<TInstance, T> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param);
+            else
+                ThrowInstance<_>();
+        }
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public void InvokeInstanceAction<TInstance, T1, T2>(TInstance instance, T1 param1, T2 param2) where TInstance : class
+        {
+            if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2);
+            else
+                ThrowInstance<_>();
+        }
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public void InvokeInstanceAction<TInstance, T1, T2, T3>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
+        {
+            if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3);
+            else
+                ThrowInstance<_>();
+        }
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
+        {
+            if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3, T4> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4);
+            else
+                ThrowInstance<_>();
+        }
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public TResult InvokeInstanceFunction<TInstance, TResult>(TInstance instance) where TInstance : class
+            => GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
+                : ThrowInstance<TResult>();
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public TResult InvokeInstanceFunction<TInstance, T, TResult>(TInstance instance, T param) where TInstance : class
+            => GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param)
+                : ThrowInstance<TResult>();
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(TInstance instance, T1 param1, T2 param2) where TInstance : class
+            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2)
+                : ThrowInstance<TResult>();
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
+            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3)
+                : ThrowInstance<TResult>();
+
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
+            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4)
+                : ThrowInstance<TResult>();
+
+        public void InvokeInstanceAction<TInstance>(in TInstance instance) where TInstance : struct
+        {
+            if (GenericInvoker is ValueTypeAction<TInstance> action)
+                action.Invoke(instance);
+            else
+                ThrowInstance<_>();
+        }
+
+        public void InvokeInstanceAction<TInstance, T>(in TInstance instance, T param) where TInstance : struct
+        {
+            if (GenericInvoker is ValueTypeAction<TInstance, T> action)
+                action.Invoke(instance, param);
+            else
+                ThrowInstance<_>();
+        }
+
+        public void InvokeInstanceAction<TInstance, T1, T2>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
+        {
+            if (GenericInvoker is ValueTypeAction<TInstance, T1, T2> action)
+                action.Invoke(instance, param1, param2);
+            else
+                ThrowInstance<_>();
+        }
+
+        public void InvokeInstanceAction<TInstance, T1, T2, T3>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
+        {
+            if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3> action)
+                action.Invoke(instance, param1, param2, param3);
+            else
+                ThrowInstance<_>();
+        }
+
+        public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
+        {
+            if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3, T4> action)
+                action.Invoke(instance, param1, param2, param3, param4);
+            else
+                ThrowInstance<_>();
+        }
+
+        public TResult InvokeInstanceFunction<TInstance, TResult>(in TInstance instance) where TInstance : struct
+            => GenericInvoker is ValueTypeFunction<TInstance, TResult> func ? func.Invoke(instance) : ThrowInstance<TResult>();
+
+        public TResult InvokeInstanceFunction<TInstance, T, TResult>(in TInstance instance, T param) where TInstance : struct
+            => GenericInvoker is ValueTypeFunction<TInstance, T, TResult> func ? func.Invoke(instance, param) : ThrowInstance<TResult>();
+
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
+            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, TResult> func ? func.Invoke(instance, param1, param2) : ThrowInstance<TResult>();
+
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
+            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, TResult> func ? func.Invoke(instance, param1, param2, param3) : ThrowInstance<TResult>();
+
+        public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
+            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult> func ? func.Invoke(instance, param1, param2, param3, param4) : ThrowInstance<TResult>();
+
         #endregion
 
         #region Private Protected Methods
 
-        /// <summary>
-        /// In a derived class returns a delegate that executes the method.
-        /// </summary>
-        /// <returns>A delegate instance that can be used to invoke the method.</returns>
         private protected abstract Delegate CreateInvoker();
+        private protected abstract Delegate CreateGenericInvoker();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
@@ -220,6 +404,20 @@ namespace KGySoft.Reflection
             // exceptions from the method itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowStatic<T>() => !Method.IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionStaticMethodExpectedGeneric(Method.Name, Method.DeclaringType!))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeMethodGeneric(Method.Name, Method.DeclaringType));
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowInstance<T>() => Method.IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionInstanceMethodExpectedGeneric(Method.Name, Method.DeclaringType))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeMethodGeneric(Method.Name, Method.DeclaringType));
 
         #endregion
 
