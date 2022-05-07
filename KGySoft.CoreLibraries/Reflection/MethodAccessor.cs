@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using System.Security;
 
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
@@ -36,8 +35,16 @@ namespace KGySoft.Reflection
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
-    /// <para>The <see cref="Invoke">Invoke</see> method can be used to invoke the method.
-    /// The first call of this method is slow because the delegate is generated on the first access, but further calls are much faster.</para>
+    /// <para>The <see cref="Invoke">Invoke</see> method can be used to invoke the method. It can be used even for methods with parameters passed by reference.
+    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/>&#160;parameters, pass a preallocated array to the <see cref="Invoke">Invoke</see> method.
+    /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
+    /// <para>If you know the parameter types at compile time (and the return type for function methods), then you can use
+    /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>
+    /// methods to invoke static methods. If you know also the instance type, then
+    /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
+    /// methods can be used to invoke instance methods for better performance. These strongly types methods can be used as
+    /// long as the methods to invoke have no more than four parameters and none of the parameters are passed by reference.</para>
+    /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to invoke a method by name rather then by a <see cref="MethodInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">InvokeMethod</see>
@@ -73,6 +80,7 @@ namespace KGySoft.Reflection
     ///             .AddCase(() => instance.TestMethod(1), "Direct call")
     ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "MethodInfo.Invoke")
     ///             .AddCase(() => accessor.Invoke(instance, 1), "MethodAccessor.Invoke")
+    ///             .AddCase(() => accessor.InvokeInstanceFunction<TestClass, int, int>(instance, 1), "MethodAccessor.InvokeInstanceFunction<,,>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     ///     }
@@ -82,14 +90,15 @@ namespace KGySoft.Reflection
     /// // ==[Performance Test Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
-    /// // Test cases: 3
+    /// // Test cases: 4
     /// // Calling GC.Collect: Yes
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct call: average time: 2.87 ms
-    /// // 2. MethodAccessor.Invoke: average time: 26.02 ms (+23.15 ms / 906.97 %)
-    /// // 3. MethodInfo.Invoke: average time: 241.47 ms (+238.60 ms / 8,416.44 %)]]></code>
+    /// // 1. Direct call: average time: 3.23 ms
+    /// // 2. MethodAccessor.InvokeInstanceFunction<,,>: average time: 5.72 ms (+2.49 ms / 177.25%)
+    /// // 3. MethodAccessor.Invoke: average time: 18.96 ms(+15.73 ms / 587.38%)
+    /// // 4. MethodInfo.Invoke: average time: 155.54 ms(+152.31 ms / 4,819.52%)]]></code>
     /// </example>
     public abstract class MethodAccessor : MemberAccessor
     {
@@ -136,7 +145,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static MethodAccessor GetAccessor(MethodInfo method)
         {
-            if (method == null)
+            if (method == null!)
                 Throw.ArgumentNullException(Argument.method);
             return (MethodAccessor)GetCreateAccessor(method);
         }
@@ -151,7 +160,7 @@ namespace KGySoft.Reflection
         /// <param name="method">The method for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="MethodAccessor"/> instance that can be used to invoke the method.</returns>
         internal static MethodAccessor CreateAccessor(MethodInfo method) => method.ReturnType == Reflector.VoidType
-            ? (MethodAccessor)new ActionMethodAccessor(method)
+            ? new ActionMethodAccessor(method)
             : new FunctionMethodAccessor(method);
 
         #endregion
@@ -163,16 +172,20 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         /// <summary>
-        /// Invokes the method. The return value of <see cref="Void"/> methods are <see langword="null"/>.
+        /// Invokes the method. The return value of <see langword="void"/>&#160;methods is always <see langword="null"/>.
         /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/>&#160;for static methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
-        /// <returns>The return value of the method, or <see langword="null"/>&#160;for <see cref="Void"/> methods.</returns>
+        /// <returns>The return value of the method, or <see langword="null"/>&#160;for <see langword="void"/>&#160;methods.</returns>
         /// <remarks>
         /// <para>Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
         /// method but further calls are much faster.</para>
+        /// <note type="tip">If the method has no more than four parameters and none of them are passed by reference, then you can use the strongly typed
+        /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>, <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>,
+        /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see> or <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
+        /// methods for better performance if the types are known at compile time.</note>
         /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
         /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
         /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
@@ -182,6 +195,9 @@ namespace KGySoft.Reflection
         /// </remarks>
         public abstract object? Invoke(object? instance, params object?[]? parameters);
 
+        /// <summary>
+        /// Invokes a parameterless static action method.
+        /// </summary>
         public void InvokeStaticAction()
         {
             if (GenericInvoker is Action action)
@@ -190,6 +206,12 @@ namespace KGySoft.Reflection
                 ThrowStatic<_>();
         }
 
+        /// <summary>
+        /// Invokes a static action method with one parameter. If the type of the parameter is not known at compile time
+        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <param name="param">The value of the parameter.</param>
         public void InvokeStaticAction<T>(T param)
         {
             if (GenericInvoker is Action<T> action)
@@ -198,6 +220,14 @@ namespace KGySoft.Reflection
                 ThrowStatic<_>();
         }
 
+        /// <summary>
+        /// Invokes a static action method with two parameters. If the type of the parameters are not known at compile time
+        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
         public void InvokeStaticAction<T1, T2>(T1 param1, T2 param2)
         {
             if (GenericInvoker is Action<T1, T2> action)
@@ -206,6 +236,16 @@ namespace KGySoft.Reflection
                 ThrowStatic<_>();
         }
 
+        /// <summary>
+        /// Invokes a static action method with three parameters. If the type of the parameters are not known at compile time
+        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
         public void InvokeStaticAction<T1, T2, T3>(T1 param1, T2 param2, T3 param3)
         {
             if (GenericInvoker is Action<T1, T2, T3> action)
@@ -214,6 +254,18 @@ namespace KGySoft.Reflection
                 ThrowStatic<_>();
         }
 
+        /// <summary>
+        /// Invokes a static action method with four parameters. If the type of the parameters are not known at compile time
+        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
         public void InvokeStaticAction<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
         {
             if (GenericInvoker is Action<T1, T2, T3, T4> action)
@@ -222,22 +274,78 @@ namespace KGySoft.Reflection
                 ThrowStatic<_>();
         }
 
+        /// <summary>
+        /// Invokes a parameterless static function method. If the return type is not known at compile time
+        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeStaticFunction<TResult>()
             => GenericInvoker is Func<TResult> func ? func.Invoke() : ThrowStatic<TResult>();
 
+        /// <summary>
+        /// Invokes a static function method with one parameter. If the type of the parameter or the return value
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="param">The value of the parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeStaticFunction<T, TResult>(T param)
             => GenericInvoker is Func<T, TResult> func ? func.Invoke(param) : ThrowStatic<TResult>();
 
+        /// <summary>
+        /// Invokes a static function method with two parameters. If the type of the parameters or the return value
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeStaticFunction<T1, T2, TResult>(T1 param1, T2 param2)
             => GenericInvoker is Func<T1, T2, TResult> func ? func.Invoke(param1, param2) : ThrowStatic<TResult>();
 
+        /// <summary>
+        /// Invokes a static function method with three parameters. If the type of the parameters or the return value
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeStaticFunction<T1, T2, T3, TResult>(T1 param1, T2 param2, T3 param3)
             => GenericInvoker is Func<T1, T2, T3, TResult> func ? func.Invoke(param1, param2, param3) : ThrowStatic<TResult>();
 
+        /// <summary>
+        /// Invokes a static function method with four parameters. If the type of the parameters or the return value
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeStaticFunction<T1, T2, T3, T4, TResult>(T1 param1, T2 param2, T3 param3, T4 param4)
             => GenericInvoker is Func<T1, T2, T3, T4, TResult> func ? func.Invoke(param1, param2, param3, param4) : ThrowStatic<TResult>();
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes a parameterless instance action method in a reference type. If the type of the declaring instance
+        /// is not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance>(TInstance instance) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance> action)
@@ -246,7 +354,15 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance action method with one parameter in a reference type. If the type of the parameter or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param">The value of the parameter.</param>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T>(TInstance instance, T param) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T> action)
@@ -255,7 +371,17 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance action method with two parameters in a reference type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2>(TInstance instance, T1 param1, T2 param2) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2> action)
@@ -264,7 +390,19 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance action method with three parameters in a reference type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3> action)
@@ -273,7 +411,21 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance action method with four parameters in a reference type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3, T4> action)
@@ -282,36 +434,102 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes a parameterless instance function method in a reference type. If the type of the return value or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <returns>The return value of the method.</returns>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, TResult>(TInstance instance) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
                 : ThrowInstance<TResult>();
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance function method with one parameter in a reference type. If the type of the parameter, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param">The value of the parameter.</param>
+        /// <returns>The return value of the method.</returns>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(TInstance instance, T param) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param)
                 : ThrowInstance<TResult>();
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance function method with two parameters in a reference type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <returns>The return value of the method.</returns>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(TInstance instance, T1 param1, T2 param2) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2)
                 : ThrowInstance<TResult>();
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance function method with three parameters in a reference type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <returns>The return value of the method.</returns>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3)
                 : ThrowInstance<TResult>();
 
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        /// <summary>
+        /// Invokes an instance function method with four parameters in a reference type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        /// <returns>The return value of the method.</returns>
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4)
                 : ThrowInstance<TResult>();
 
+        /// <summary>
+        /// Invokes a parameterless instance action method in a value type. If the type of the declaring instance
+        /// is not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
         public void InvokeInstanceAction<TInstance>(in TInstance instance) where TInstance : struct
         {
             if (GenericInvoker is ValueTypeAction<TInstance> action)
@@ -320,6 +538,14 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
+        /// <summary>
+        /// Invokes an instance action method with one parameter in a value type. If the type of the parameter or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param">The value of the parameter.</param>
         public void InvokeInstanceAction<TInstance, T>(in TInstance instance, T param) where TInstance : struct
         {
             if (GenericInvoker is ValueTypeAction<TInstance, T> action)
@@ -328,6 +554,16 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
+        /// <summary>
+        /// Invokes an instance action method with two parameters in a value type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
         public void InvokeInstanceAction<TInstance, T1, T2>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
         {
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2> action)
@@ -336,6 +572,18 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
+        /// <summary>
+        /// Invokes an instance action method with three parameters in a value type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
         {
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3> action)
@@ -344,6 +592,20 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
+        /// <summary>
+        /// Invokes an instance action method with four parameters in a value type. If the type of the parameters or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
         {
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3, T4> action)
@@ -352,18 +614,78 @@ namespace KGySoft.Reflection
                 ThrowInstance<_>();
         }
 
+        /// <summary>
+        /// Invokes a parameterless instance function method in a value type. If the type of the return value or the declaring instance
+        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeInstanceFunction<TInstance, TResult>(in TInstance instance) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, TResult> func ? func.Invoke(instance) : ThrowInstance<TResult>();
 
+        /// <summary>
+        /// Invokes an instance function method with one parameter in a value type. If the type of the parameter, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T">The type of the parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param">The value of the parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(in TInstance instance, T param) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T, TResult> func ? func.Invoke(instance, param) : ThrowInstance<TResult>();
 
+        /// <summary>
+        /// Invokes an instance function method with two parameters in a value type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, TResult> func ? func.Invoke(instance, param1, param2) : ThrowInstance<TResult>();
 
+        /// <summary>
+        /// Invokes an instance function method with three parameters in a value type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, TResult> func ? func.Invoke(instance, param1, param2, param3) : ThrowInstance<TResult>();
 
+        /// <summary>
+        /// Invokes an instance function method with four parameters in a value type. If the type of the parameters, the return value
+        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
+        /// <typeparam name="T1">The type of the first parameter.</typeparam>
+        /// <typeparam name="T2">The type of the second parameter.</typeparam>
+        /// <typeparam name="T3">The type of the third parameter.</typeparam>
+        /// <typeparam name="T4">The type of the fourth parameter.</typeparam>
+        /// <typeparam name="TResult">The return type of the method.</typeparam>
+        /// <param name="instance">The instance that the method belongs to.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        /// <returns>The return value of the method.</returns>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult> func ? func.Invoke(instance, param1, param2, param3, param4) : ThrowInstance<TResult>();
 

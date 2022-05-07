@@ -43,11 +43,13 @@ namespace KGySoft.Reflection
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
-    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the property, respectively.
-    /// If you know the instance/property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>/<see cref="GetStaticValue{TProperty}">GetStaticValue</see>
-    /// (for static properties) or the <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see>
-    /// (for instance properties) methods for better performance as long as the property has no more than one index parameter.
-    /// The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get or set the property, respectively.
+    /// These methods can be used for any properties, including indexed ones.</para>
+    /// <para>If you know the property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>/<see cref="GetStaticValue{TProperty}">GetStaticValue</see>
+    /// methods for static properties. If you know also the instance type (and the index parameter for indexers), then
+    /// the <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see>
+    /// methods can be used for instance properties for better performance. These generic methods can be used for properties with no more than one index parameter.</para>
+    /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a property by name rather then by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
@@ -300,7 +302,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
         {
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty> action)
@@ -318,7 +320,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
             => GenericGetter is ReferenceTypeFunction<TInstance, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
@@ -365,7 +367,7 @@ namespace KGySoft.Reflection
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
         {
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty, TIndex> action)
@@ -386,7 +388,7 @@ namespace KGySoft.Reflection
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance can be null.")]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
             => GenericGetter is ReferenceTypeFunction<TInstance, TIndex, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), index)
