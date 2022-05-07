@@ -27,6 +27,14 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK
+#pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
+#endif
+
+#endregion
+
 namespace KGySoft.Reflection
 {
     /// <summary>
@@ -123,7 +131,7 @@ namespace KGySoft.Reflection
         /// Initializes a new instance of the <see cref="MethodAccessor"/> class.
         /// </summary>
         /// <param name="method">The method for which the accessor is to be created.</param>
-        protected MethodAccessor(MethodBase method) :
+        private protected MethodAccessor(MethodBase method) :
             // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
             base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
         {

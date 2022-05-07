@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: CreateInstanceAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -20,7 +20,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+#if !NET6_0_OR_GREATER
 using KGySoft.CoreLibraries;
+#endif
 
 #endregion
 
@@ -103,19 +105,14 @@ namespace KGySoft.Reflection
         #region Fields
 
         private Delegate? initializer;
+        private Delegate? genericInitializer;
 
         #endregion
 
         #region Properties
 
-        /// <summary>
-        /// Gets the instance creator delegate.
-        /// </summary>
-        private protected Delegate Initializer
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => initializer ??= CreateInitializer();
-        }
+        private protected Delegate Initializer => initializer ??= CreateInitializer();
+        private protected Delegate GenericInitializer => genericInitializer ??= CreateGenericInitializer();
 
         #endregion
 
@@ -140,7 +137,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets a <see cref="CreateInstanceAccessor"/> for the specified <see cref="Type"/>.
-        /// Given <paramref name="type"/> must have a parameterless constructor or type must be <see cref="ValueType"/>.
+        /// Given <paramref name="type"/> must have a parameterless constructor or must be a <see cref="ValueType"/>.
         /// </summary>
         /// <param name="type">A <see cref="Type"/> for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance of <paramref name="type"/>.</returns>
@@ -201,29 +198,47 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates a new instance by the associated <see cref="ConstructorInfo"/> or <see cref="Type"/>.
         /// For types and parameterless constructors the <paramref name="parameters"/> parameter is omitted.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="parameters">The parameters for parameterized constructors.</param>
         /// <returns>The created instance.</returns>
         /// <remarks>
-        /// <note>
-        /// Invoking the constructor for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
-        /// method but further calls are much faster.
-        /// </note>
+        /// <para>Invoking the constructor for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
+        /// method but further calls are much faster.</para>
         /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">Reflector.CreateInstance</see> methods to invoke constructors with ref/out parameters without losing the returned parameter values.</note>
         /// </remarks>
         public abstract object CreateInstance(params object?[]? parameters);
 
+        public TInstance CreateInstance<TInstance>()
+            => GenericInitializer is Func<TInstance> func ? func.Invoke() : ThrowGeneric<TInstance>();
+
+        public TInstance CreateInstance<TInstance, T>(T param)
+            => GenericInitializer is Func<T, TInstance> func ? func.Invoke(param) : ThrowGeneric<TInstance>();
+
+        public TInstance CreateInstance<TInstance, T1, T2>(T1 param1, T2 param2)
+            => GenericInitializer is Func<T1, T2, TInstance> func ? func.Invoke(param1, param2) : ThrowGeneric<TInstance>();
+
+        public TInstance CreateInstance<TInstance, T1, T2, T3>(T1 param1, T2 param2, T3 param3)
+            => GenericInitializer is Func<T1, T2, T3, TInstance> func ? func.Invoke(param1, param2, param3) : ThrowGeneric<TInstance>();
+
+        public TInstance CreateInstance<TInstance, T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
+            => GenericInitializer is Func<T1, T2, T3, T4, TInstance> func ? func.Invoke(param1, param2, param3, param4) : ThrowGeneric<TInstance>();
+
         #endregion
 
         #region Private Protected Methods
 
-        /// <summary>
-        /// In a derived class returns a delegate that creates the new instance.
-        /// </summary>
-        /// <returns>A delegate instance that can be used to invoke the method.</returns>
         private protected abstract Delegate CreateInitializer();
+        private protected abstract Delegate CreateGenericInitializer();
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowGeneric<T>() => Throw.ArgumentException<T>(Res.ReflectionCannotCreateInstanceGeneric(MemberInfo is Type type ? type : MemberInfo.DeclaringType!));
 
         #endregion
 

@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: DefaultCreateInstanceAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -15,9 +15,21 @@
 
 #region Usings
 
+using KGySoft.CoreLibraries;
+
+#region Used Namespaces
+
 using System;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+
+#endregion
+
+#region Aliases
+
+using DefaultCtor = System.Func<object>;
+
+#endregion
 
 #endregion
 
@@ -29,15 +41,6 @@ namespace KGySoft.Reflection
     /// </summary>
     internal sealed class DefaultCreateInstanceAccessor : CreateInstanceAccessor
     {
-        #region Delegates
-
-        /// <summary>
-        /// Represents a default constructor.
-        /// </summary>
-        private delegate object DefaultCtor();
-
-        #endregion
-
         #region Constructors
 
         internal DefaultCreateInstanceAccessor(Type instanceType)
@@ -64,9 +67,30 @@ namespace KGySoft.Reflection
         /// </summary>
         private protected override Delegate CreateInitializer()
         {
-            NewExpression construct = Expression.New((Type)MemberInfo);
+            Type type = (Type)MemberInfo;
+            // TODO
+            //if (type.IsAbstract || type.ContainsGenericParameters)
+            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
+            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+
+            NewExpression construct = Expression.New(type);
             LambdaExpression lambda = Expression.Lambda<DefaultCtor>(
-                    Expression.Convert(construct, Reflector.ObjectType)); // return type converted to object
+                Expression.Convert(construct, Reflector.ObjectType)); // return type converted to object
+            return lambda.Compile();
+        }
+
+        private protected override Delegate CreateGenericInitializer()
+        {
+            Type type = (Type)MemberInfo;
+            // TODO
+            //if (type.IsAbstract || type.ContainsGenericParameters)
+            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
+            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+
+            NewExpression construct = Expression.New(type);
+            LambdaExpression lambda = Expression.Lambda(typeof(Func<>).GetGenericType(type), construct);
             return lambda.Compile();
         }
 

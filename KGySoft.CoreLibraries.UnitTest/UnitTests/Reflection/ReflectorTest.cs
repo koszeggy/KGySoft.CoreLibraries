@@ -28,6 +28,7 @@ using System.Security.Permissions;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 #endregion
 
@@ -1845,14 +1846,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void ClassConstructionByType()
         {
             Type testType = typeof(TestClass);
+            var accessor = CreateInstanceAccessor.GetAccessor(testType);
 
             Console.Write("System Activator...");
             TestClass result = (TestClass)Activator.CreateInstance(testType);
             Assert.AreEqual(1, result.IntProp);
 
-            Console.Write("Object Factory...");
-            result = (TestClass)CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
+            Console.Write("CreateInstanceAccessor...");
+            result = (TestClass)accessor.CreateInstance();
             Assert.AreEqual(1, result.IntProp);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<TestClass>();
+            Assert.AreEqual(1, result.IntProp);
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct>(), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestClass, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
             Console.Write("Reflector...");
             result = (TestClass)Reflector.CreateInstance(testType);
@@ -1864,22 +1872,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestClass);
             ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int) });
-            object[] args = { 1 };
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            int arg = 1;
+            object[] args = { arg };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             TestClass result = (TestClass)ci.Invoke(parameters);
-            Assert.AreEqual(args[0], result.IntProp);
+            Assert.AreEqual(arg, result.IntProp);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             parameters = (object[])args.Clone();
-            result = (TestClass)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
-            Assert.AreEqual(args[0], result.IntProp);
+            result = (TestClass)accessor.CreateInstance(parameters);
+            Assert.AreEqual(arg, result.IntProp);
+            Throws<ArgumentNullException>(() => accessor.CreateInstance(null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.CreateInstance(), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.CreateInstance("x"), Res.ReflectionParametersInvalid);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<TestClass, int>(arg);
+            Assert.AreEqual(arg, result.IntProp);
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct, int>(arg), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestClass, string>(null), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
             result = (TestClass)Reflector.CreateInstance(ci, parameters);
-            Assert.AreEqual(args[0], result.IntProp);
+            Assert.AreEqual(arg, result.IntProp);
         }
 
         [Test]
@@ -1895,7 +1914,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             parameters = (object[])args.Clone();
             result = (TestClass)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -1919,14 +1938,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         public void StructConstructionByType()
         {
             Type testType = typeof(TestStruct);
+            var accessor = CreateInstanceAccessor.GetAccessor(testType);
 
             Console.Write("System Activator...");
             object result = Activator.CreateInstance(testType);
             Assert.AreEqual(default(TestStruct), result);
 
-            Console.Write("Object Factory...");
-            result = CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
+            Console.Write("CreateInstanceAccessor...");
+            result = accessor.CreateInstance();
             Assert.AreEqual(default(TestStruct), result);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<TestStruct>();
+            Assert.AreEqual(default(TestStruct), result);
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestClass>(), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
             Console.Write("Reflector...");
             result = Reflector.CreateInstance(testType);
@@ -1938,17 +1964,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestStruct);
             ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int) });
-            object[] args = { 1 };
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            int arg = 1;
+            object[] args = { arg };
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             TestStruct result = (TestStruct)ci.Invoke(parameters);
             Assert.AreEqual(args[0], result.IntProp);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             parameters = (object[])args.Clone();
-            result = (TestStruct)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
+            result = (TestStruct)accessor.CreateInstance(parameters);
             Assert.AreEqual(args[0], result.IntProp);
+            Throws<ArgumentNullException>(() => accessor.CreateInstance(null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.CreateInstance(), Res.ReflectionParametersInvalid);
+            Throws<ArgumentException>(() => accessor.CreateInstance("x"), Res.ReflectionParametersInvalid);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<TestStruct, int>(arg);
+            Assert.AreEqual(arg, result.IntProp);
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestClass, int>(arg), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct, string>(null), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
@@ -1969,7 +2006,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             parameters = (object[])args.Clone();
             result = (TestStruct)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             if (TestedFramework != TargetFramework.NetStandard20)
@@ -2006,8 +2043,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = (TestStructWithParameterlessCtor)TypeDescriptor.CreateInstance(null, testType, null, null);
             Assert.IsTrue(result.Initialized);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             result = (TestStructWithParameterlessCtor)CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = CreateInstanceAccessor.GetAccessor(testType).CreateInstance<TestStructWithParameterlessCtor>();
             Assert.IsTrue(result.Initialized);
 
             Console.Write("Reflector...");
@@ -2025,8 +2066,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             TestStructWithParameterlessCtor result = (TestStructWithParameterlessCtor)ci.Invoke(null);
             Assert.IsTrue(result.Initialized);
 
-            Console.Write("Object Factory...");
+            Console.Write("CreateInstanceAccessor...");
             result = (TestStructWithParameterlessCtor)CreateInstanceAccessor.GetAccessor(ci).CreateInstance();
+            Assert.IsTrue(result.Initialized);
+
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = CreateInstanceAccessor.GetAccessor(ci).CreateInstance<TestStructWithParameterlessCtor>();
             Assert.IsTrue(result.Initialized);
 
             Console.Write("Reflector...");

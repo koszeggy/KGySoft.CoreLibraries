@@ -135,6 +135,7 @@ namespace KGySoft.Reflection
             return lambda.Compile();
         }
 
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.Call does not write the parameters")]
         private protected override Delegate CreateGenericInvoker()
         {
             if (Method is not MethodInfo method)
@@ -145,7 +146,7 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4 || ParameterTypes.Any(p => p.IsByRef))
                 Throw.NotSupportedException(Res.ReflectionMethodGenericNotSupported);
-            if (method.ReturnType.IsPointer == true)
+            if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));

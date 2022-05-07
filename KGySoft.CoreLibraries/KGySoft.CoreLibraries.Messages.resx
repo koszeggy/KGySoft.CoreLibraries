@@ -379,7 +379,7 @@ Hit rate: {8:P2}</value>
 - Use the SecurityRulesAttribute with SkipVerificationInFullTrust = true. If used with SecurityRuleSet.Level2 this will not solve the problem from a partially trusted domain though.
 - Remove the AllowPartiallyTrustedCallersAttribute. This will not allow partially trusted callers to use your assembly though.</value>
   </data>
-  <data name="Reflection_CannotInvokeIndexerGeneric" xml:space="preserve">
+  <data name="Reflection_IndexerGenericNotSupported" xml:space="preserve">
     <value>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</value>
   </data>
   <data name="Reflection_CannotInvokeIndexerGeneric" xml:space="preserve">
@@ -390,6 +390,12 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="Reflection_ParametersInvalid" xml:space="preserve">
     <value>The number or type of the specified parameters are invalid.</value>
+  </data>
+  <data name="Reflection_MethodGenericNotSupported" xml:space="preserve">
+    <value>Generic access of methods with more than four parameters or by reference arguments is not supported. Use the non-generic Invoke method to access such methods.</value>
+  </data>
+  <data name="Reflection_CtorGenericNotSupported" xml:space="preserve">
+    <value>Generic access of constructors with more than four parameters or by reference arguments is not supported. Use the non-generic CreateInstance method to access such constructors.</value>
   </data>
   <data name="ArraySection_Null" xml:space="preserve">
     <value>The underlying array is null.</value>
@@ -625,6 +631,18 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
   </data>
   <data name="Reflection_CannotInvokePropertyGenericFormat" xml:space="preserve">
     <value>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</value>
+  </data>
+  <data name="Reflection_StaticMethodExpectedGenericFormat" xml:space="preserve">
+    <value>This method can be used to access static methods but {0}.{1} is an instance method.</value>
+  </data>
+  <data name="Reflection_InstanceMethodExpectedGenericFormat" xml:space="preserve">
+    <value>This method can be used to access instance methods but {0}.{1} is a static method.</value>
+  </data>
+  <data name="Reflection_CannotInvokeMethodGenericFormat" xml:space="preserve">
+    <value>Cannot access {0}.{1} method with the provided type arguments and/or parameters.</value>
+  </data>
+  <data name="Reflection_CannotCreateInstanceGenericFormat" xml:space="preserve">
+    <value>Cannot create an instance of type {0} with the provided type arguments and/or parameters.</value>
   </data>
   <data name="BinarySerialization_CannotResolveAssemblySafeFormat" xml:space="preserve">
     <value>Cannot resolve assembly in safe mode: "{0}".

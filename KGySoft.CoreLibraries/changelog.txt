@@ -36,6 +36,12 @@
     validation is performed only when an exception occurs to prevent performance degradation on the hot path.
   + New generic InvokeStaticAction/InvokeStaticFunction and InvokeInstanceAction/InvokeInstanceFunction methods for
     better performance when the type of the parameters and return value are known at compile time.
+! CreateInstanceAccessor class:
+  ! The CreateInstance method now does argument validation so throwing ArgumentNullException and ArgumentException
+    instead of letting the InvalidCastException, NullReferenceException or IndexOutOfRangeException to be thrown.
+    The validation is performed only when an exception occurs to prevent performance degradation on the hot path.
+  + New generic CreateInstance methods for better performance when the type of the instance and the parameters are
+    known at compile time.
 + Reflector class:
   + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 

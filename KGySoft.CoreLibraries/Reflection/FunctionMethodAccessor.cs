@@ -131,6 +131,7 @@ namespace KGySoft.Reflection
             return lambda.Compile();
         }
 
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.Call does not write the parameters")]
         private protected override Delegate CreateGenericInvoker()
         {
             var method = (MethodInfo)Method;
@@ -156,7 +157,7 @@ namespace KGySoft.Reflection
                 for (int i = 0; i < parameters.Length; i++)
                     parameters[i] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
                 methodCall = Expression.Call(null, method, parameters);
-                delegateType = ParameterTypes.Length switch
+                delegateType = (ParameterTypes.Length switch
                 {
                     0 => typeof(Func<>),
                     1 => typeof(Func<,>),
@@ -164,10 +165,8 @@ namespace KGySoft.Reflection
                     3 => typeof(Func<,,,>),
                     4 => typeof(Func<,,,,>),
                     _ => Throw.InternalError<Type>("Unexpected number of parameters")
-                };
+                }).GetGenericType(ParameterTypes.Concat(new[] { method.ReturnType }).ToArray());
 
-                if (delegateType.IsGenericTypeDefinition)
-                    delegateType = delegateType.GetGenericType(ParameterTypes.Concat(new[] { method.ReturnType }).ToArray());
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
                 return lambda.Compile();
             }

@@ -380,10 +380,16 @@ namespace KGySoft
         internal static string ReflectionSecuritySettingsConflict => Get("Reflection_SecuritySettingsConflict");
 
         /// <summary>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</summary>
-        internal static string ReflectionCannotInvokeIndexerGeneric => Get("Reflection_CannotInvokeIndexerGeneric");
+        internal static string ReflectionIndexerGenericNotSupported => Get("Reflection_IndexerGenericNotSupported");
 
         /// <summary>The number or type of the specified parameters are invalid.</summary>
         internal static string ReflectionParametersInvalid => Get("Reflection_ParametersInvalid");
+
+        /// <summary>Generic access of methods with more than four parameters or by reference arguments is not supported. Use the non-generic Invoke method to access such methods.</summary>
+        internal static string ReflectionMethodGenericNotSupported => Get("Reflection_MethodGenericNotSupported");
+
+        /// <summary>Generic access of constructors with more than four parameters or by reference arguments is not supported. Use the non-generic CreateInstance method to access such constructors.</summary>
+        internal static string ReflectionCtorGenericNotSupported => Get("Reflection_CtorGenericNotSupported");
 
         #endregion
 
@@ -905,6 +911,18 @@ namespace KGySoft
 
         /// <summary>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</summary>
         internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type, propertyName);
+
+        /// <summary>This method can be used to access static methods but {0}.{1} is an instance method.</summary>
+        internal static string ReflectionStaticMethodExpectedGeneric(string methodName, Type type) => Get("Reflection_StaticMethodExpectedGenericFormat", type, methodName);
+
+        /// <summary>This method can be used to access instance methods but {0}.{1} is a static method.</summary>
+        internal static string ReflectionInstanceMethodExpectedGeneric(string methodName, Type? type) => Get("Reflection_InstanceMethodExpectedGenericFormat", type, methodName);
+
+        /// <summary>Cannot access {0}.{1} method with the provided type arguments and/or parameters.</summary>
+        internal static string ReflectionCannotInvokeMethodGeneric(string methodName, Type? type) => Get("Reflection_CannotInvokeMethodGenericFormat", type, methodName);
+
+        /// <summary>Cannot create an instance of type {0} with the provided type arguments and/or parameters.</summary>
+        internal static string ReflectionCannotCreateInstanceGeneric(Type type) => Get("Reflection_CannotCreateInstanceGenericFormat", type);
 
         #endregion
 
