@@ -30,22 +30,6 @@ namespace KGySoft.ComponentModel
     {
         #region Properties
 
-        ///// <summary>
-        ///// Gets the source of the property binding.
-        ///// </summary>
-        //public object Source { get; }
-
-        ///// <summary>
-        ///// Gets the target of the property binding.
-        ///// </summary>
-        //public object Target { get; }
-
-        ///// <summary>
-        ///// Gets the value to be set. This is either the value of the source property,
-        ///// or a converted value if a formatting delegate has been specified.
-        ///// </summary>
-        //public object? Value { get; }
-
         /// <summary>
         /// Gets the context of the error.
         /// </summary>

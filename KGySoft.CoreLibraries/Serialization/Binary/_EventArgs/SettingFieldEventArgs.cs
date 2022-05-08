@@ -60,7 +60,7 @@ namespace KGySoft.Serialization.Binary
         public FieldInfo? Field { get; set; }
 
         /// <summary>
-        /// Gets or sets the value to be set.
+        /// Gets or sets the value to set.
         /// <br/>To prevent setting any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default deserialization logic.
         /// </summary>
