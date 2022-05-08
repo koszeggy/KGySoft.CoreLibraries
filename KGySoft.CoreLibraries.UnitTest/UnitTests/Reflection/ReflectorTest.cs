@@ -1787,7 +1787,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             TestClass.StaticIntField = 0;
             Console.Write("Field Accessor Generic...");
-            accessor.SetStaticValue((int)value);
+            accessor.SetStaticValue(value);
             result = accessor.GetStaticValue<int>();
             Assert.AreEqual(value, result);
             Throws<InvalidOperationException>(() => accessor.SetInstanceValue(new TestClass(), value), Res.ReflectionInstanceFieldExpectedGeneric(nameof(TestClass.StaticIntField), testType));
@@ -1975,7 +1975,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestStruct);
             FieldInfo fi = testType.GetField(nameof(TestStruct.StaticIntField));
-            object result, value = 1;
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
 
             Console.Write("System Reflection...");
             fi.SetValue(null, value);
@@ -1984,9 +1986,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(null, value);
-            result = FieldAccessor.GetAccessor(fi).Get(null);
+            accessor.Set(null, value);
+            result = accessor.Get(null);
             Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(null, "1"), Res.NotAnInstanceOfType(value.GetType()));
+
+            TestStruct.StaticIntField = 0;
+            Console.Write("Field Accessor Generic...");
+            accessor.SetStaticValue(value);
+            result = accessor.GetStaticValue<int>();
+            Assert.AreEqual(value, result);
+            Throws<InvalidOperationException>(() => accessor.SetInstanceValue(new TestStruct(), value), Res.ReflectionInstanceFieldExpectedGeneric(nameof(TestStruct.StaticIntField), testType));
+            Throws<ArgumentException>(() => accessor.SetStaticValue("1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.StaticIntField), testType));
+            Throws<InvalidOperationException>(() => accessor.GetInstanceValue<TestStruct, int>(new TestStruct()), Res.ReflectionInstanceFieldExpectedGeneric(nameof(TestStruct.StaticIntField), testType));
+            Throws<ArgumentException>(() => accessor.GetStaticValue<object>(), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.StaticIntField), testType));
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by FieldInfo)...");
