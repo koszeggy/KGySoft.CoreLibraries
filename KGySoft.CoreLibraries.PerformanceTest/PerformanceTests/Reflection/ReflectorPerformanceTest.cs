@@ -169,11 +169,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => (int)miInstance.Invoke(t, new object[] { p1, p2 }), "MethodInfo.Invoke (instance)")
                 .AddCase(() => (int)miStatic.Invoke(null, new object[] { p1, p2 }), "MethodInfo.Invoke (static)")
 
+                .AddCase(() => ((dynamic)t).InstanceMethod(p1, p2), "Dynamic invoke (instance)")
+
                 .AddCase(() => (int)typeof(TestClass).GetMethod(nameInstance).Invoke(t, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (instance)")
                 .AddCase(() => (int)typeof(TestClass).GetMethod(nameStatic).Invoke(null, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (static)")
 
                 .AddCase(() => (int)accessorInstance.Invoke(t, p1, p2), "MethodAccessor.Invoke (instance)")
                 .AddCase(() => (int)accessorStatic.Invoke(null, p1, p2), "MethodAccessor.Invoke (static)")
+                
+                .AddCase(() => accessorInstance.InvokeInstanceFunction<TestClass, int, int, int>(t, p1, p2), "MethodAccessor.InvokeInstanceFunction<,,,>")
+                .AddCase(() => accessorStatic.InvokeStaticFunction<int, int, int>(p1, p2), "MethodAccessor.InvokeStaticFunction<,,>")
 
                 .AddCase(() => (int)MethodAccessor.GetAccessor(miInstance).Invoke(t, p1, p2), "MethodAccessor.GetAcceccor(MethodInfo).Invoke (instance)")
                 .AddCase(() => (int)MethodAccessor.GetAccessor(miStatic).Invoke(null, p1, p2), "MethodAccessor.GetAcceccor(MethodInfo).Invoke (static)")
@@ -207,11 +212,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => fiInstance.SetValue(t, value), "FieldInfo.SetValue (instance)")
                 .AddCase(() => fiStatic.SetValue(null, value), "FieldInfo.SetValue (static)")
 
+                .AddCase(() => ((dynamic)t).InstanceField = value, "Dynamic set (instance)")
+
                 .AddCase(() => typeof(TestClass).GetField(nameInstance).SetValue(t, value), "Type.GetField(name).SetValue (instance)")
                 .AddCase(() => typeof(TestClass).GetField(nameStatic).SetValue(null, value), "Type.GetField(name).SetValue (static)")
 
                 .AddCase(() => accessorInstance.Set(t, value), "FieldAccessor.Set (instance)")
                 .AddCase(() => accessorStatic.Set(null, value), "FieldAccessor.Set (static)")
+
+                .AddCase(() => accessorInstance.SetInstanceValue(t, value), "FieldAccessor.SetInstanceValue<,>")
+                .AddCase(() => accessorStatic.SetStaticValue(value), "FieldAccessor.SetStaticValue<>")
 
                 .AddCase(() => FieldAccessor.GetAccessor(fiInstance).Set(t, value), "FieldAccessor.GetAcceccor(FieldInfo).Set (instance)")
                 .AddCase(() => FieldAccessor.GetAccessor(fiStatic).Set(null, value), "FieldAccessor.GetAcceccor(FieldInfo).Set (static)")
@@ -232,11 +242,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => (int)fiInstance.GetValue(t), "FieldInfo.GetValue (instance)")
                 .AddCase(() => (int)fiStatic.GetValue(null), "FieldInfo.GetValue (static)")
 
+                .AddCase(() => ((dynamic)t).InstanceField, "Dynamic get (instance)")
+
                 .AddCase(() => (int)typeof(TestClass).GetField(nameInstance).GetValue(t), "Type.GetField(name).GetValue (instance)")
                 .AddCase(() => (int)typeof(TestClass).GetField(nameStatic).GetValue(null), "Type.GetField(name).GetValue (static)")
 
                 .AddCase(() => (int)accessorInstance.Get(t), "FieldAccessor.Get (instance)")
                 .AddCase(() => (int)accessorStatic.Get(null), "FieldAccessor.Get (static)")
+
+                .AddCase(() => accessorInstance.GetInstanceValue<TestClass, int>(t), "FieldAccessor.GetInstanceValue<,>")
+                .AddCase(() => accessorStatic.GetStaticValue<int>(), "FieldAccessor.GetStaticValue<>")
 
                 .AddCase(() => (int)FieldAccessor.GetAccessor(fiInstance).Get(t), "FieldAccessor.GetAcceccor(FieldInfo).Get (instance)")
                 .AddCase(() => (int)FieldAccessor.GetAccessor(fiStatic).Get(null), "FieldAccessor.GetAcceccor(FieldInfo).Get (static)")
@@ -408,8 +423,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorCtorParams = CreateInstanceAccessor.GetAccessor(ciParams);
 
             new PerformanceTest<TestClass> { TestName = "Create Class", Iterations = 1_000_000, TestTime = 25 }
-                //.AddCase(() => new TestClass(), "Direct constructor invoke (default)")
-                //.AddCase(() => new TestClass(p1, p2), "Direct constructor invoke (parameterized)")
+                .AddCase(() => new TestClass(), "Direct constructor invoke (default)")
+                .AddCase(() => new TestClass(p1, p2), "Direct constructor invoke (parameterized)")
 
                 .AddCase(() => (TestClass)ciDefault.Invoke(null), "ConstructorInfo.Invoke (default)")
                 .AddCase(() => (TestClass)ciParams.Invoke(new object[] { p1, p2 }), "ConstructorInfo.Invoke (parameterized)")
@@ -424,6 +439,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => (TestClass)accessorType.CreateInstance(), "CreateInstanceAccessor.CreateInstance (by type)")
                 .AddCase(() => (TestClass)accessorCtorDefault.CreateInstance(), "CreateInstanceAccessor.CreateInstance (by default constructor)")
                 .AddCase(() => (TestClass)accessorCtorParams.CreateInstance(p1, p2), "CreateInstanceAccessor.CreateInstance (by parameterized constructor)")
+
+                .AddCase(() => accessorType.CreateInstance<TestClass>(), "CreateInstanceAccessor.CreateInstance<> (by type)")
+                .AddCase(() => accessorCtorDefault.CreateInstance<TestClass>(), "CreateInstanceAccessor.CreateInstance<> (by default constructor)")
+                .AddCase(() => accessorCtorParams.CreateInstance<TestClass, int, int>(p1, p2), "CreateInstanceAccessor.CreateInstance<,,>")
 
                 .AddCase(() => (TestClass)CreateInstanceAccessor.GetAccessor(type).CreateInstance(), "CreateInstanceAccessor.GetAccessor(Type).CreateInstance")
                 .AddCase(() => (TestClass)CreateInstanceAccessor.GetAccessor(ciDefault).CreateInstance(), "CreateInstanceAccessor.GetAccessor(ConstructorInfo).CreateInstance (default)")
@@ -449,8 +468,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorCtor = CreateInstanceAccessor.GetAccessor(ci);
 
             new PerformanceTest<TestStruct> { TestName = "Create Struct", Iterations = 1_000_000, TestTime = 25 }
-                //.AddCase(() => new TestStruct(), "Direct default initialization")
-                //.AddCase(() => new TestStruct(p1, p2), "Direct constructor invoke")
+                .AddCase(() => new TestStruct(), "Direct default initialization")
+                .AddCase(() => new TestStruct(p1, p2), "Direct constructor invoke")
 
                 .AddCase(() => (TestStruct)ci.Invoke(new object[] { p1, p2 }), "ConstructorInfo.Invoke")
 
@@ -463,6 +482,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
                 .AddCase(() => (TestStruct)accessorType.CreateInstance(), "CreateInstanceAccessor.CreateInstance (by type)")
                 .AddCase(() => (TestStruct)accessorCtor.CreateInstance(p1, p2), "CreateInstanceAccessor.CreateInstance (by constructor)")
+
+                .AddCase(() => accessorType.CreateInstance<TestStruct>(), "CreateInstanceAccessor.CreateInstance<>")
+                .AddCase(() => accessorCtor.CreateInstance<TestStruct, int, int>(p1, p2), "CreateInstanceAccessor.CreateInstance<,,>")
 
                 .AddCase(() => (TestStruct)CreateInstanceAccessor.GetAccessor(type).CreateInstance(), "CreateInstanceAccessor.GetAccessor(Type).CreateInstance")
                 .AddCase(() => (TestStruct)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(p1, p2), "CreateInstanceAccessor.GetAccessor(ConstructorInfo).CreateInstance")
