@@ -319,6 +319,9 @@ namespace KGySoft
         /// <summary>Argument must be either Type or ConstructorInfo.</summary>
         internal static string ReflectionTypeOrCtorInfoExpected => Get("Reflection_TypeOrCtorInfoExpected");
 
+        /// <summary>A ConstructorInfo of an instance constructor is expected.</summary>
+        internal static string ReflectionInstanceCtorExpected => Get("Reflection_InstanceCtorExpected");
+
         /// <summary>Getting property via TypeDescriptor is not supported in this overload of GetProperty method.</summary>
         internal static string ReflectionGetPropertyTypeDescriptorNotSupported => Get("Reflection_GetPropertyTypeDescriptorNotSupported");
 

@@ -481,6 +481,9 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_TypeOrCtorInfoExpected" xml:space="preserve">
     <value>Argument must be either Type or ConstructorInfo.</value>
   </data>
+  <data name="Reflection_InstanceCtorExpected" xml:space="preserve">
+    <value>A ConstructorInfo of an instance constructor is expected.</value>
+  </data>
   <data name="Enum_TypeParameterInvalid" xml:space="preserve">
     <value>Type parameter is expected to be a System.Enum type.</value>
   </data>

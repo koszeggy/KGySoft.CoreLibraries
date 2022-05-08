@@ -184,7 +184,7 @@ namespace KGySoft.Reflection
             ParameterExpression instanceParameter;
             LambdaExpression lambda;
 
-            // Static properties
+            // Static property
             if (getterMethod.IsStatic)
             {
                 getterCall = Expression.Call(null, getterMethod);
@@ -192,7 +192,7 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
-            // Class instance properties
+            // Class instance property
             if (!declaringType!.IsValueType)
             {
                 instanceParameter = Expression.Parameter(declaringType, "instance");
@@ -201,7 +201,7 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
-            // Struct instance properties
+            // Struct instance property
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
             getterCall = Expression.Call(instanceParameter, getterMethod);
             lambda = Expression.Lambda(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType), getterCall, instanceParameter);
@@ -221,32 +221,29 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
             ParameterExpression instanceParameter;
-            ParameterExpression valueParameter;
+            ParameterExpression valueParameter = Expression.Parameter(Property.PropertyType, "value");
             MethodCallExpression setterCall;
             LambdaExpression lambda;
 
-            // Static properties
+            // Static property
             if (setterMethod.IsStatic)
             {
-                valueParameter = Expression.Parameter(Property.PropertyType, "value");
                 setterCall = Expression.Call(null, setterMethod, valueParameter);
                 lambda = Expression.Lambda(typeof(Action<>).GetGenericType(Property.PropertyType), setterCall, valueParameter);
                 return lambda.Compile();
             }
 
-            // Class instance properties
+            // Class instance property
             if (!declaringType!.IsValueType)
             {
                 instanceParameter = Expression.Parameter(declaringType, "instance");
-                valueParameter = Expression.Parameter(Property.PropertyType, "value");
                 setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
                 lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Property.PropertyType), setterCall, instanceParameter, valueParameter);
                 return lambda.Compile();
             }
 
-            // Struct instance properties
+            // Struct instance property
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            valueParameter = Expression.Parameter(Property.PropertyType, "value");
             setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
             lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Property.PropertyType), setterCall, instanceParameter, valueParameter);
             return lambda.Compile();

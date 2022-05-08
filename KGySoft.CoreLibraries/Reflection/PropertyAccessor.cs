@@ -29,7 +29,7 @@ using KGySoft.CoreLibraries;
 
 #region Suppressions
 
-#if NETFRAMEWORK
+#if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
 #pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
 
@@ -245,6 +245,17 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly and cannot use the generic setter methods,
         /// then use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
+        /// <br/>-or-
+        /// <br/>This <see cref="PropertyAccessor"/> represents a value type property and <paramref name="value"/> is <see langword="null"/>
+        /// <br/>-or-
+        /// <br/>This <see cref="PropertyAccessor"/> represents an indexed property and <paramref name="indexParameters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/>, <paramref name="value"/> or one of the <paramref name="indexParameters"/> is invalid.
+        /// <br/>-or-
+        /// <br/><paramref name="indexParameters"/> has too few elements.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a read-only property or its declaring type is a value type.</exception>
         public abstract void Set(object? instance, object? value, params object?[]? indexParameters);
 
         /// <summary>
@@ -267,6 +278,13 @@ namespace KGySoft.Reflection
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
+        /// <br/>-or-
+        /// <br/>This <see cref="PropertyAccessor"/> represents an indexed property and <paramref name="indexParameters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or one of the <paramref name="indexParameters"/> is invalid.
+        /// <br/>-or-
+        /// <br/><paramref name="indexParameters"/> has too few elements.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.</exception>
         public abstract object? Get(object? instance, params object?[]? indexParameters);
 
         /// <summary>
@@ -275,6 +293,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="value">The value to set.</param>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property.</exception>
+        /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
@@ -290,6 +312,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <returns>The value of the property.</returns>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property.</exception>
+        /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetStaticValue<TProperty>() => GenericGetter is Func<TProperty> func ? func.Invoke() : ThrowStatic<TProperty>();
 
@@ -301,6 +327,11 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
@@ -319,6 +350,11 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
@@ -334,6 +370,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty>(in TInstance instance, TProperty value) where TInstance : struct
         {
@@ -351,6 +391,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty>(in TInstance instance) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(instance) : ThrowInstance<TProperty>();
@@ -366,6 +410,11 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
@@ -387,6 +436,11 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
@@ -405,6 +459,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
@@ -425,6 +483,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
+        /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TIndex index) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(instance, index) : ThrowInstance<TProperty>();
@@ -466,7 +528,7 @@ namespace KGySoft.Reflection
                     Throw.ArgumentNullException(Argument.indexParameters, Res.ArgumentNull);
                 if (indexParameters.Length == 0)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
-                if (indexParameters.Length != ParameterTypes.Length)
+                if (indexParameters.Length < ParameterTypes.Length)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
@@ -487,13 +549,13 @@ namespace KGySoft.Reflection
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private T ThrowStatic<T>() => !IsStatic
-            ? Throw.InvalidOperationException<T>(Res.ReflectionStaticPropertyExpectedGeneric(MemberInfo.Name, MemberInfo.DeclaringType!))
-            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(MemberInfo.Name, MemberInfo.DeclaringType));
+            ? Throw.InvalidOperationException<T>(Res.ReflectionStaticPropertyExpectedGeneric(Property.Name, Property.DeclaringType!))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(Property.Name, Property.DeclaringType));
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private T ThrowInstance<T>() => IsStatic
-            ? Throw.InvalidOperationException<T>(Res.ReflectionInstancePropertyExpectedGeneric(MemberInfo.Name, MemberInfo.DeclaringType))
-            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(MemberInfo.Name, MemberInfo.DeclaringType));
+            ? Throw.InvalidOperationException<T>(Res.ReflectionInstancePropertyExpectedGeneric(Property.Name, Property.DeclaringType))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokePropertyGeneric(Property.Name, Property.DeclaringType));
 
         #endregion
 
