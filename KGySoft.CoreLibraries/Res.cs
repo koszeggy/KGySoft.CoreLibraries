@@ -897,7 +897,8 @@ namespace KGySoft
         /// <summary>Setting read-only field '{0}' of type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionSetReadOnlyFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetReadOnlyFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.LongName));
 
-        /// <summary>Setting instance field '{0}' of value type '{1}' is not supported by FieldAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        /// <summary>Setting instance field '{0}' of value type '{1}' is not supported by FieldAccessor.Set in the .NET Standard 2.0 version of this library.
+        /// If possible, try to use the generic SetInstanceValue method, or reference the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionSetStructFieldNetStandard20(string fieldName, Type type) => Get("Reflection_SetStructFieldNetStandard20Format", fieldName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
@@ -911,6 +912,15 @@ namespace KGySoft
 
         /// <summary>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</summary>
         internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type, propertyName);
+
+        /// <summary>This method can be used to access static fields but {0}.{1} is an instance field.</summary>
+        internal static string ReflectionStaticFieldExpectedGeneric(string fieldName, Type type) => Get("Reflection_StaticFieldExpectedGenericFormat", type, fieldName);
+
+        /// <summary>This method can be used to access instance fields but {0}.{1} is a static field.</summary>
+        internal static string ReflectionInstanceFieldExpectedGeneric(string fieldName, Type? type) => Get("Reflection_InstanceFieldExpectedGenericFormat", type, fieldName);
+
+        /// <summary>Cannot access {0}.{1} field with the provided type arguments and/or parameters.</summary>
+        internal static string ReflectionCannotInvokeFieldGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokeFieldGenericFormat", type, propertyName);
 
         /// <summary>This method can be used to access static methods but {0}.{1} is an instance method.</summary>
         internal static string ReflectionStaticMethodExpectedGeneric(string methodName, Type type) => Get("Reflection_StaticMethodExpectedGenericFormat", type, methodName);

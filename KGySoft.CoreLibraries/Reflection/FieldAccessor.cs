@@ -15,14 +15,40 @@
 
 #region Usings
 
+using System.Linq;
+
+#region Used Namespaces
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 #if !NETSTANDARD2_0
-using System.Reflection.Emit; 
+using System.Collections.Generic;
+using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
-using System.Security;
+using System.Runtime.ExceptionServices;
+
+using KGySoft.Annotations;
+using KGySoft.CoreLibraries;
+
+#endregion
+
+#region Used Aliases
+
+using NonGenericSetter = System.Action<object?, object?>;
+using NonGenericGetter = System.Func<object?, object?>;
+
+#endregion
+
+#endregion
+
+#region Suppressions
+
+#if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+#pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
+#endif
 
 #endregion
 
@@ -107,20 +133,6 @@ namespace KGySoft.Reflection
     /// </example>
     public sealed class FieldAccessor : MemberAccessor
     {
-        #region Delegates
-
-        /// <summary>
-        /// Represents a non-generic setter that can be used for any fields.
-        /// </summary>
-        private delegate void FieldSetter(object? instance, object? value);
-
-        /// <summary>
-        /// Represents a non-generic getter that can be used for any fields.
-        /// </summary>
-        private delegate object? FieldGetter(object? instance);
-
-        #endregion
-
         #region Constants
 
         private const string setterPrefix = "<SetField>__";
@@ -129,8 +141,10 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        private FieldGetter? getter;
-        private FieldSetter? setter;
+        private NonGenericGetter? getter;
+        private NonGenericSetter? setter;
+        private Delegate? genericGetter;
+        private Delegate? genericSetter;
 
         #endregion
 
@@ -157,30 +171,11 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        /// <summary>
-        /// Gets the field getter delegate.
-        /// </summary>
-        private FieldGetter Getter
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => getter ??= CreateGetter();
-        }
-
-        /// <summary>
-        /// Gets the field setter delegate.
-        /// </summary>
-        private FieldSetter Setter
-        {
-            [MethodImpl(MethodImpl.AggressiveInlining)]
-            get
-            {
-                if (setter != null)
-                    return setter;
-                if (IsConstant)
-                    Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
-                return setter = CreateSetter();
-            }
-        }
+        private FieldInfo Field => (FieldInfo)MemberInfo;
+        private NonGenericGetter Getter => getter ??= CreateGetter();
+        private NonGenericSetter Setter => setter ??= CreateSetter();
+        private Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
+        private Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
 
         #endregion
 
@@ -252,16 +247,20 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only or value type instance fields.</note>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
         public void Set(object? instance, object? value)
         {
-            //try
-            //{
-            Setter.Invoke(instance, value);
-            //}
-            //catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
-            //{
-            //    Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, e);
-            //}
+            try
+            {
+                // For the best performance not validating the arguments in advance
+                Setter.Invoke(instance, value);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, value, e, true);
+            }
         }
 
         /// <summary>
@@ -276,85 +275,286 @@ namespace KGySoft.Reflection
         /// method but further calls are much faster.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public object? Get(object? instance) => Getter.Invoke(instance);
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Get(object? instance)
+        {
+            try
+            {
+                // For the best performance not validating the arguments in advance
+                return Getter.Invoke(instance);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, null, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetStaticValue<TField>(TField value)
+        {
+            if (GenericSetter is Action<TField> action)
+                action.Invoke(value);
+            else
+                ThrowStatic<TField>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TField GetStaticValue<TField>() => GenericGetter is Func<TField> func ? func.Invoke() : ThrowStatic<TField>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        public void SetInstanceValue<TInstance, TField>(TInstance instance, TField value) where TInstance : class
+        {
+            if (GenericSetter is ReferenceTypeAction<TInstance, TField> action)
+                action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value);
+            else
+                ThrowInstance<TField>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        public TField GetInstanceValue<TInstance, TField>(TInstance instance) where TInstance : class
+            => GenericGetter is ReferenceTypeFunction<TInstance, TField> func
+                ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
+                : ThrowInstance<TField>();
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetInstanceValue<TInstance, TField>(in TInstance instance, TField value) where TInstance : struct
+        {
+            if (GenericSetter is ValueTypeAction<TInstance, TField> action)
+                action.Invoke(instance, value);
+            else
+                ThrowInstance<TField>();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TField GetInstanceValue<TInstance, TField>(in TInstance instance) where TInstance : struct
+            => GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();
 
         #endregion
 
         #region Private Methods
 
-        private FieldGetter CreateGetter()
+        private NonGenericGetter CreateGetter()
         {
-            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-
-            FieldInfo field = (FieldInfo)MemberInfo;
-            Type? declaringType = field.DeclaringType;
-            if (!field.IsStatic && declaringType == null)
+            Type? declaringType = Field.DeclaringType;
+            if (!Field.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (field.FieldType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
+
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             MemberExpression member = Expression.Field(
                     // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
-                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
-                    field);
+                    Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
+                    Field);
 
-            LambdaExpression lambda = Expression.Lambda<FieldGetter>(
+            Expression<NonGenericGetter> lambda = Expression.Lambda<NonGenericGetter>(
                     Expression.Convert(member, Reflector.ObjectType), // object return type
                     instanceParameter); // instance (object)
-            return (FieldGetter)lambda.Compile();
+            return lambda.Compile();
         }
 
-        private FieldSetter CreateSetter()
+        private NonGenericSetter CreateSetter()
         {
-            FieldInfo field = (FieldInfo)MemberInfo;
-            Type? declaringType = field.DeclaringType;
+            Type? declaringType = Field.DeclaringType;
+            if (IsConstant)
+                Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (field.FieldType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
-            if (field.IsInitOnly)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(field.Name, declaringType));
-            if (!field.IsStatic && declaringType.IsValueType)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(field.Name, declaringType));
+            if (Field.IsInitOnly)
+                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
+            if (!Field.IsStatic && declaringType.IsValueType)
+                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(Field.Name, declaringType));
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
-            UnaryExpression castValue = Expression.Convert(valueParameter, field.FieldType);
+            UnaryExpression castValue = Expression.Convert(valueParameter, Field.FieldType);
 
             MemberExpression member = Expression.Field(
-                field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                field);
+                Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                Field);
 
             BinaryExpression assign = Expression.Assign(member, castValue);
-            Expression<FieldSetter> lambda = Expression.Lambda<FieldSetter>(
+            Expression<NonGenericSetter> lambda = Expression.Lambda<NonGenericSetter>(
                 assign,
                 instanceParameter, // instance (object)
                 valueParameter);
             return lambda.Compile();
 #else
-            // Expressions would not work for value types so using always dynamic methods
-            DynamicMethod dm = new DynamicMethod(setterPrefix + field.Name, // setter method name
+            // Expressions would not work for value types and read-only fields so using always dynamic methods
+            DynamicMethod dm = new DynamicMethod(setterPrefix + Field.Name, // setter method name
                 Reflector.VoidType, // return type
                 new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 
             // if instance field, then processing instance parameter
-            if (!field.IsStatic)
+            if (!Field.IsStatic)
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
                 il.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType); // casting object instance to target type
             }
 
             il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter
-            il.Emit(field.FieldType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.FieldType); // casting object value to field type
-            il.Emit(field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, field); // processing assignment
+            il.Emit(Field.FieldType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, Field.FieldType); // casting object value to field type
+            il.Emit(Field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, Field); // processing assignment
             il.Emit(OpCodes.Ret); // returning without return value
 
-            return (FieldSetter)dm.CreateDelegate(typeof(FieldSetter));
+            return (NonGenericSetter)dm.CreateDelegate(typeof(NonGenericSetter));
 #endif
         }
+
+        private Delegate CreateGenericGetter()
+        {
+            Type? declaringType = Field.DeclaringType;
+            if (!Field.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
+
+            MemberExpression member;
+            ParameterExpression instanceParameter;
+            LambdaExpression lambda;
+
+            // Static field
+            if (Field.IsStatic)
+            {
+                member = Expression.Field(null, Field);
+                lambda = Expression.Lambda(typeof(Func<>).GetGenericType(Field.FieldType), member);
+                return lambda.Compile();
+            }
+
+            // Class instance field
+            if (!declaringType!.IsValueType)
+            {
+                instanceParameter = Expression.Parameter(declaringType, "instance");
+                member = Expression.Field(instanceParameter, Field);
+                lambda = Expression.Lambda(typeof(ReferenceTypeFunction<,>).GetGenericType(declaringType, Field.FieldType), member, instanceParameter);
+                return lambda.Compile();
+            }
+
+            // Struct instance field
+            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+            member = Expression.Field(instanceParameter, Field);
+            lambda = Expression.Lambda(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Field.FieldType), member, instanceParameter);
+            return lambda.Compile();
+        }
+
+        private Delegate CreateGenericSetter()
+        {
+            Type? declaringType = Field.DeclaringType;
+            if (IsConstant)
+                Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
+            if (declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
+
+#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
+            if (Field.IsInitOnly)
+                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
+
+            ParameterExpression instanceParameter;
+            ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");
+            MemberExpression member;
+            BinaryExpression assign;
+            LambdaExpression lambda;
+
+            // Static field
+            if (Field.IsStatic)
+            {
+                member = Expression.Field(null, Field);
+                assign = Expression.Assign(member, valueParameter);
+                lambda = Expression.Lambda(typeof(Action<>).GetGenericType(Field.FieldType), assign, valueParameter);
+                return lambda.Compile();
+            }
+
+            // Class instance field
+            if (!declaringType.IsValueType)
+            {
+                instanceParameter = Expression.Parameter(declaringType, "instance");
+                member = Expression.Field(instanceParameter, Field);
+                assign = Expression.Assign(member, valueParameter);
+                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
+                return lambda.Compile();
+            }
+
+            // Struct instance field
+            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+            member = Expression.Field(instanceParameter, Field);
+            assign = Expression.Assign(member, valueParameter);
+            lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
+            return lambda.Compile();
+#else
+            // Expressions would not work for read-only fields so using always dynamic methods
+            Type[] parameterTypes = (Field.IsStatic ? Type.EmptyTypes : new[] { declaringType.IsValueType ? declaringType.MakeByRefType() : declaringType })
+                .Concat(new[] { Field.FieldType })
+                .ToArray();
+
+            var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance for instance fields, value for static fields
+            if (Field.IsStatic)
+                il.Emit(OpCodes.Stsfld, Field); // assigning static field
+            else
+            {
+                il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter for instance fields
+                il.Emit(OpCodes.Stfld, Field); // assigning instance field
+            }
+
+            il.Emit(OpCodes.Ret); // returning without return value
+            Type delegateType = Field.IsStatic ? typeof(Action<>).GetGenericType(parameterTypes)
+                : declaringType.IsValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType)
+                : typeof(ReferenceTypeAction<,>).GetGenericType(parameterTypes);
+            return dm.CreateDelegate(delegateType);
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
+        private void PostValidate(object? instance, object? value, Exception exception, bool isSetter)
+        {
+            if (!Field.IsStatic)
+            {
+                if (instance == null)
+                    Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
+                if (!Field.DeclaringType!.CanAcceptValue(instance))
+                    Throw.ArgumentException(Argument.instance, Res.NotAnInstanceOfType(Field.DeclaringType!));
+            }
+
+            if (isSetter)
+            {
+                if (!Field.FieldType.CanAcceptValue(value))
+                {
+                    if (value == null)
+                        Throw.ArgumentNullException(Argument.value, Res.NotAnInstanceOfType(Field.FieldType));
+                    Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(Field.FieldType));
+                }
+            }
+
+            ThrowIfSecurityConflict(exception, isSetter ? setterPrefix : null);
+
+            // exceptions from the property itself: re-throwing the original exception
+            ExceptionDispatchInfo.Capture(exception).Throw();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowStatic<T>() => !Field.IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionStaticFieldExpectedGeneric(Field.Name, Field.DeclaringType!))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeFieldGeneric(Field.Name, Field.DeclaringType));
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private T ThrowInstance<T>() => Field.IsStatic
+            ? Throw.InvalidOperationException<T>(Res.ReflectionInstanceFieldExpectedGeneric(Field.Name, Field.DeclaringType))
+            : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeFieldGeneric(Field.Name, Field.DeclaringType));
 
         #endregion
 

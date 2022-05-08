@@ -1249,16 +1249,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             TestClass.StaticIntProp = 0;
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetAccessor(pi).Set(null, value);
-            result = PropertyAccessor.GetAccessor(pi).Get(null);
+            accessor.Set(null, value);
+            result = accessor.Get(null);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => accessor.Set(null, null), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => accessor.Set(null, "1"), Res.NotAnInstanceOfType(value.GetType()));
 
             TestClass.StaticIntProp = 0;
             Console.Write("Property Accessor Generic...");
-            PropertyAccessor.GetAccessor(pi).SetStaticValue((int)value);
-            result = PropertyAccessor.GetAccessor(pi).GetStaticValue<int>();
+            accessor.SetStaticValue((int)value);
+            result = accessor.GetStaticValue<int>();
             Assert.AreEqual(value, result);
             Throws<InvalidOperationException>(() => accessor.SetInstanceValue(new TestClass(), value), Res.ReflectionInstancePropertyExpectedGeneric(nameof(TestClass.StaticIntProp), testType));
             Throws<ArgumentException>(() => accessor.SetStaticValue("1"), Res.ReflectionCannotInvokePropertyGeneric(nameof(TestClass.StaticIntProp), testType));
@@ -1603,11 +1603,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         #region Class field access
 
         [Test]
-        public void ClassInstanceReadOnlyValueFieldAccess()
+        public void ClassInstanceFieldAccess()
         {
-            object test = new TestClass(0);
-            FieldInfo fi = test.GetType().GetField(nameof(TestClass.ReadOnlyValueField));
-            object result, value = 1;
+            var test = new TestClass(0);
+            FieldInfo fi = test.GetType().GetField(nameof(TestClass.IntField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
 
             Console.Write("System Reflection...");
             fi.SetValue(test, value);
@@ -1616,11 +1618,82 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
-                TargetFramework.NetStandard20))
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+            test = new TestClass(0);
+            Console.Write("Field Accessor Generic...");
+            accessor.SetInstanceValue(test, value);
+            result = accessor.GetInstanceValue<TestClass, int>(test);
+            Assert.AreEqual(value, result);
+            Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.IntField), fi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.SetInstanceValue((TestClass)null, 1), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), 1), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.IntField), fi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, "1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.IntField), fi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.IntField), fi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.GetInstanceValue<TestClass, int>(null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.IntField), fi.DeclaringType!));
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by FieldInfo)...");
+            Reflector.SetField(test, fi, value);
+            result = Reflector.GetField(test, fi);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetField(test, nameof(TestClass.ReadOnlyValueField), value);
+            result = Reflector.GetField(test, nameof(TestClass.ReadOnlyValueField));
+            Assert.AreEqual(value, result);
+        }
+
+        [Test]
+        public void ClassInstanceReadOnlyValueFieldAccess()
+        {
+            var test = new TestClass(0);
+            FieldInfo fi = test.GetType().GetField(nameof(TestClass.ReadOnlyValueField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
+
+            Console.Write("System Reflection...");
+            fi.SetValue(test, value);
+            result = fi.GetValue(test);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Field Accessor...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+                    TargetFramework.NetStandard20))
             {
-                result = FieldAccessor.GetAccessor(fi).Get(test);
+                result = accessor.Get(test);
                 Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+                test = new TestClass(0);
+                Console.Write("Field Accessor Generic...");
+                accessor.SetInstanceValue(test, value);
+                result = accessor.GetInstanceValue<TestClass, int>(test);
+                Assert.AreEqual(value, result);
+                Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentNullException>(() => accessor.SetInstanceValue((TestClass)null, 1), Res.ArgumentNull);
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), 1), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, "1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentNullException>(() => accessor.GetInstanceValue<TestClass, int>(null), Res.ArgumentNull);
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
             }
 
             test = new TestClass(0);
@@ -1639,9 +1712,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public void ClassInstanceReadOnlyRefFieldAccess()
         {
-            object test = new TestClass(0);
+            var test = new TestClass(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestClass.ReadOnlyReferenceField));
-            object result, value = "dummy";
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            string value = "dummy";
 
             Console.Write("System Reflection...");
             fi.SetValue(test, value);
@@ -1655,6 +1730,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             {
                 result = FieldAccessor.GetAccessor(fi).Get(test);
                 Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+                test = new TestClass(0);
+                Console.Write("Field Accessor Generic...");
+                accessor.SetInstanceValue(test, value);
+                result = accessor.GetInstanceValue<TestClass, string>(test);
+                Assert.AreEqual(value, result);
+                Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentNullException>(() => accessor.SetInstanceValue((TestClass)null, value), Res.ArgumentNull);
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), value), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, 1), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentNullException>(() => accessor.GetInstanceValue<TestClass, string>(null), Res.ArgumentNull);
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<object, string>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
             }
 
             test = new TestClass(0);
@@ -1675,26 +1768,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             Type testType = typeof(TestClass);
             FieldInfo fi = testType.GetField(nameof(TestClass.StaticIntField));
-            object result, value = 1;
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
 
             Console.Write("System Reflection...");
             fi.SetValue(null, value);
             result = fi.GetValue(null);
             Assert.AreEqual(value, result);
 
-            TestClass.StaticIntProp = 0;
+            TestClass.StaticIntField = 0;
             Console.Write("Field Accessor...");
-            FieldAccessor.GetAccessor(fi).Set(null, value);
+            accessor.Set(null, value);
             result = FieldAccessor.GetAccessor(fi).Get(null);
             Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(null, "1"), Res.NotAnInstanceOfType(value.GetType()));
 
-            TestClass.StaticIntProp = 0;
+            TestClass.StaticIntField = 0;
+            Console.Write("Field Accessor Generic...");
+            accessor.SetStaticValue((int)value);
+            result = accessor.GetStaticValue<int>();
+            Assert.AreEqual(value, result);
+            Throws<InvalidOperationException>(() => accessor.SetInstanceValue(new TestClass(), value), Res.ReflectionInstanceFieldExpectedGeneric(nameof(TestClass.StaticIntField), testType));
+            Throws<ArgumentException>(() => accessor.SetStaticValue("1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.StaticIntField), testType));
+            Throws<InvalidOperationException>(() => accessor.GetInstanceValue<TestClass, int>(new TestClass()), Res.ReflectionInstanceFieldExpectedGeneric(nameof(TestClass.StaticIntField), testType));
+            Throws<ArgumentException>(() => accessor.GetStaticValue<object>(), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestClass.StaticIntField), testType));
+
+            TestClass.StaticIntField = 0;
             Console.Write("Reflector (by FieldInfo)...");
             Reflector.SetField(null, fi, value);
             result = Reflector.GetField(null, fi);
             Assert.AreEqual(value, result);
 
-            TestClass.StaticIntProp = 0;
+            TestClass.StaticIntField = 0;
             Console.Write("Reflector (by name)...");
             Reflector.SetField(testType, nameof(TestClass.StaticIntField), value);
             result = Reflector.GetField(testType, nameof(TestClass.StaticIntField));
@@ -1710,7 +1817,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             object test = new TestStruct(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestStruct.IntField));
-            object result, value = 1;
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
 
             Console.Write("System Reflection...");
             fi.SetValue(test, value);
@@ -1719,12 +1828,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
                 TargetFramework.NetStandard20))
             {
-                result = FieldAccessor.GetAccessor(fi).Get(test);
+                result = accessor.Get(test);
                 Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
             }
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Field Accessor Generic...");
+            accessor.SetInstanceValue(testStruct, value);
+            result = accessor.GetInstanceValue<TestStruct, int>(testStruct);
+            Assert.AreEqual(value, result);
+            Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.IntField), fi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), value), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.IntField), fi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, "1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.IntField), fi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.IntField), fi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.IntField), fi.DeclaringType!));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by FieldInfo)...");
@@ -1744,7 +1870,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             object test = new TestStruct(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestStruct.ReadOnlyValueField));
-            object result, value = 1;
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            int value = 1;
 
             Console.Write("System Reflection...");
             fi.SetValue(test, value);
@@ -1753,11 +1881,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
                 TargetFramework.NetStandard20))
             {
-                result = FieldAccessor.GetAccessor(fi).Get(test);
+                result = accessor.Get(test);
                 Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+                var testStruct = new TestStruct(0);
+                Console.Write("Field Accessor Generic...");
+                accessor.SetInstanceValue(testStruct, value);
+                result = accessor.GetInstanceValue<TestStruct, int>(testStruct);
+                Assert.AreEqual(value, result);
+                Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), value), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, "1"), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<InvalidOperationException>(() => accessor.GetStaticValue<int>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
             }
 
             test = new TestStruct(0);
@@ -1778,7 +1923,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         {
             object test = new TestStruct(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestStruct.ReadOnlyReferenceField));
-            object result, value = "dummy";
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            string value = "dummy";
 
             Console.Write("System Reflection...");
             fi.SetValue(test, value);
@@ -1787,11 +1934,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
                 TargetFramework.NetStandard20))
             {
-                result = FieldAccessor.GetAccessor(fi).Get(test);
+                result = accessor.Get(test);
                 Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+                var testStruct = new TestStruct(0);
+                Console.Write("Field Accessor Generic...");
+                accessor.SetInstanceValue(testStruct, value);
+                result = accessor.GetInstanceValue<TestStruct, string>(testStruct);
+                Assert.AreEqual(value, result);
+                Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), value), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(testStruct, 1), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<InvalidOperationException>(() => accessor.GetStaticValue<string>(), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<object, string>(new object()), Res.ReflectionCannotInvokeFieldGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
             }
 
             test = new TestStruct(0);
