@@ -318,7 +318,7 @@ So today the main benefit of using the [`Enum<TEnum>`][enum] class is its extra 
 
 - #### Accessors - the performant way:
 
-There are four public classes derived from [`MemberAccessor`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_MemberAccessor.htm), which can be used where you would use `MemberInfo` instances. The following table summarizes the relations among them:
+There are four public classes derived from [`MemberAccessor`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Reflection_MemberAccessor.htm), which can be used where you would use `MemberInfo` instances. All of them support generic access in some specialized cases for even better performance. But even the non-generic access, which can be used in all cases, is at least one order of magnitude faster than system reflection. The following table summarizes the relation between the system reflection types and their KGy SOFT counterpart:
 
 | System Type                    | KGy SOFT Type                 |
 |--------------------------------|-------------------------------|
