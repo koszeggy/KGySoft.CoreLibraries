@@ -29,6 +29,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Security;
 
+using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -514,6 +515,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// This is the inverse operation for the public <see cref="StringExtensions.Parse(string?, Type, CultureInfo)"/> method for natively supported types.
         /// </summary>
+        [SuppressMessage("ReSharper", "ReturnTypeCanBeNotNullable")]
         internal static string? ToStringInternal(this object obj, CultureInfo culture)
         {
             return obj switch
@@ -536,6 +538,20 @@ namespace KGySoft.CoreLibraries
                 Type t => t.GetName(TypeNameKind.AssemblyQualifiedName),
                 _ => obj.ToString()
             };
+        }
+
+        internal static string GetName(this object? obj)
+        {
+            if (obj == null)
+                return Res.Null;
+            if (obj is Type type)
+                return type.GetName(TypeNameKind.ShortName);
+            if (Reflector.TryGetProperty(obj, "Name", out object? result) && result is string name)
+                return name;
+
+            string? asString = obj.ToString();
+            type = obj.GetType();
+            return asString == null || asString == type.ToString() ? type.GetName(TypeNameKind.ShortName) : asString;
         }
 
         #endregion

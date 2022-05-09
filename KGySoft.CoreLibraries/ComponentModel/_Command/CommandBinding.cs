@@ -365,6 +365,13 @@ namespace KGySoft.ComponentModel
             }, parameter);
         }
 
+        public override string ToString()
+        {
+            string sources = Sources.Select(s => $"{s.Key.GetName()}.{s.Value.Join('/')}").Join('|');
+            string targets = Targets.Select(t => t.GetName()).Join('|');
+            return $"{(sources.Length == 0 ? null : this.sources.Count == 1 ? $"{sources} => " : $"[{sources}] => ")}{command}{(targets.Length == 0 ? null : this.targets.Count == 1 ? $" => {targets}" : $" => [{targets}]")}";
+        }
+
         #endregion
 
         #region Private Methods

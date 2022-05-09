@@ -77,7 +77,7 @@ namespace KGySoft.CoreLibraries
             if (declaringType is { IsNested: true } nested && nested.Name.StartsWith("<>", StringComparison.Ordinal))
                 declaringType = declaringType.DeclaringType;
 
-            return $"{declaringType?.GetName(TypeNameKind.LongName)}.{del.Method.Name}";
+            return $"{declaringType?.GetName(TypeNameKind.ShortName)}.{del.Method.Name}";
         }
 
         #endregion
