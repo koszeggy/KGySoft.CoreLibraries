@@ -28,6 +28,8 @@ namespace KGySoft.CoreLibraries
     public static class DelegateExtensions
     {
         #region Methods
+        
+        #region Public Methods
 
         /// <summary>
         /// Combines <paramref name="value"/> with the referenced <paramref name="location"/> in a thread-safe way.
@@ -62,6 +64,23 @@ namespace KGySoft.CoreLibraries
                     return;
             }
         }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static string GetName(this Delegate del)
+        {
+            Type? declaringType = del.Method.DeclaringType;
+
+            // filtering out compiler generated display classes
+            if (declaringType is { IsNested: true } nested && nested.Name.StartsWith("<>", StringComparison.Ordinal))
+                declaringType = declaringType.DeclaringType;
+
+            return $"{declaringType?.GetName(TypeNameKind.LongName)}.{del.Method.Name}";
+        }
+
+        #endregion
 
         #endregion
     }

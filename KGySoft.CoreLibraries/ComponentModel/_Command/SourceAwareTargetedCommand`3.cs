@@ -16,7 +16,9 @@
 #region Usings
 
 using System;
-using System.Runtime.CompilerServices; 
+using System.Runtime.CompilerServices;
+
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -36,6 +38,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
+        private readonly string name;
         private Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? callback;
 
         #endregion
@@ -52,6 +55,7 @@ namespace KGySoft.ComponentModel
             if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = callback;
+            name = callback.GetName();
         }
 
         /// <summary>
@@ -64,6 +68,7 @@ namespace KGySoft.ComponentModel
             if (callback == null!)
                 Throw.ArgumentNullException(Argument.callback);
             this.callback = (src, _, t, pars) => callback.Invoke(src, t, pars);
+            name = callback.GetName();
         }
 
         #endregion
@@ -77,6 +82,10 @@ namespace KGySoft.ComponentModel
         /// </summary>
         public void Dispose() => callback = null;
 
+        /// <summary>Returns a string that represents the current command.</summary>
+        /// <returns>A string that represents the current command.</returns>
+        public override string ToString() => name;
+
         #endregion
 
         #region Explicitly Implemented Interface Methods
@@ -86,7 +95,7 @@ namespace KGySoft.ComponentModel
         {
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? copy = callback;
             if (copy == null)
-                Throw.ObjectDisposedException();
+                Throw.ObjectDisposedException(name);
             copy.Invoke(source, state, (TTarget)target!, (TParam)parameter!);
         }
 
@@ -95,7 +104,7 @@ namespace KGySoft.ComponentModel
         {
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget, TParam>? copy = callback;
             if (copy == null)
-                Throw.ObjectDisposedException();
+                Throw.ObjectDisposedException(name);
             copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target!, (TParam)parameter!);
         }
 

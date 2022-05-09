@@ -21,6 +21,8 @@
   original event name. This allows using myBindings.Add(myCommand).AddSource(source, nameof(IMyInterface.EventName))
   instead of myBindings.Add(myCommand).AddSource(source, "MyNamespace.IMyInterface.EventName") even if the event is
   implemented explicitly.
++ SimpleCommand, TargetedCommand, SourceAwareCommand, SourceAwareTargetedCommand classes: Their ToString now
+  reflects the name of the method the commands were created from, making debugging easier.
 
 ! KGySoft.Reflection namespace:
 ===============================
