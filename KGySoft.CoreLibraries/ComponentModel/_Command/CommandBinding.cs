@@ -248,7 +248,7 @@ namespace KGySoft.ComponentModel
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo? eventInfo))
                 Throw.ArgumentException(Argument.eventName, Res.ComponentModelMissingEvent(eventName, sourceType));
             MethodInfo? addMethod = eventInfo.GetAddMethod(true);
-            MethodInfo? invokeMethod = eventInfo.EventHandlerType?.GetMethod(nameof(EventHandler.Invoke));
+            MethodInfo? invokeMethod = eventInfo.EventHandlerType!.GetMethod(nameof(EventHandler.Invoke));
             ParameterInfo[]? invokerParameters = invokeMethod?.GetParameters();
 
             if (addMethod == null || invokeMethod?.ReturnType != Reflector.VoidType || invokerParameters?.Length != 2
@@ -367,9 +367,23 @@ namespace KGySoft.ComponentModel
 
         public override string ToString()
         {
-            string sources = Sources.Select(s => $"{s.Key.GetName()}.{s.Value.Join('/')}").Join('|');
-            string targets = Targets.Select(t => t.GetName()).Join('|');
-            return $"{(sources.Length == 0 ? null : this.sources.Count == 1 ? $"{sources} => " : $"[{sources}] => ")}{command}{(targets.Length == 0 ? null : this.targets.Count == 1 ? $" => {targets}" : $" => [{targets}]")}";
+            static string GetName(object? obj)
+            {
+                if (obj == null)
+                    return Res.Null;
+                if (obj is Type type)
+                    return type.GetName(TypeNameKind.ShortName);
+                if (Reflector.TryGetProperty(obj, "Name", out object? result) && result is string name)
+                    return name;
+
+                string? asString = obj.ToString();
+                type = obj.GetType();
+                return asString == null! || asString == type.ToString() ? type.GetName(TypeNameKind.ShortName) : asString;
+            }
+
+            string sourceNames = Sources.Select(s => $"{GetName(s.Key)}.{s.Value.Join('/')}").Join('|');
+            string targetNames = Targets.Select(GetName).Join('|');
+            return $"{(sourceNames.Length == 0 ? null : this.sources.Count == 1 ? $"{sourceNames} => " : $"[{sourceNames}] => ")}{command}{(targetNames.Length == 0 ? null : this.targets.Count == 1 ? $" => {targetNames}" : $" => [{targetNames}]")}";
         }
 
         #endregion
