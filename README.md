@@ -760,11 +760,13 @@ In WPF you can pass a parameter to a command, whose value is determined when the
 
 ```cs
 bindings.Add(MyCommands.ReplaceTextCommand)
+    .WithParameter(() => GetNewText()) // the delegate will be called when the command is executed
     .AddSource(menuItemPaste, nameof(menuItemPaste.Click))
     .AddSource(buttonPaste, nameof(buttonPaste.Click))
-    .AddTarget(textBox)
-    .WithParameter(() => GetNewText()); // the delegate will be called when the command is executed
+    .AddTarget(textBox);
 ```
+
+> 💡 _Tip:_ It is recommended to specify the parameter callback before adding any sources to avoid the possible issues if there is any chance that the source can be triggered before completing the initialization.
 
 - #### Command Targets vs. Parameter:
 

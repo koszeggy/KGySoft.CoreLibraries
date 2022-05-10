@@ -130,9 +130,11 @@ namespace KGySoft.ComponentModel
     /// 
     /// // The parameter is evaluated only once whenever the command is triggered but SetBackColorCommand
     /// // will be invoked three times (once for each target) with the same parameter value.
+    /// // It is recommended to specify the parameter callback before adding any sources to avoid the possible
+    /// // issues if there is any chance that the source can be triggered before completing the initialization.
     /// commandBindings.Add(MyCommands.SetBackColorCommand)
-    ///     .AddSource(myViewModel, nameof(myViewModel.SeverityChanged)) // whatever source event
     ///     .WithParameter(() => GetSomeColor(myViewModel.Severity)) // specifying a callback to return a parameter value
+    ///     .AddSource(myViewModel, nameof(myViewModel.SeverityChanged)) // whatever source event
     ///     .AddTarget(this)
     ///     .AddTarget(panelInfo) // now multiple targets will be set by the same parameter
     ///     .AddTarget(buttonDoSomething);]]></code></para>

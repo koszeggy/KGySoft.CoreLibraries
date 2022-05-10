@@ -149,6 +149,8 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <note>Calling the <see cref="WithParameter">WithParameter</see> method multiple times on the same <see cref="ICommandBinding"/> instance
         /// just overwrites the lastly set callback function. To use more parameter values the function should return a compound type such as an array or tuple.</note>
+        /// <note type="tip">It is recommended to specify the parameter callback before adding any sources to avoid the possible
+        /// issues if there is any chance that the source can be triggered before completing the initialization.</note>
         /// </remarks>
         ICommandBinding WithParameter(Func<object?>? getParameterValue);
 
