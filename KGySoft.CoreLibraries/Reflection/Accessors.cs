@@ -103,29 +103,6 @@ namespace KGySoft.Reflection
         // In this region non-public accessors need conditions only if they are not applicable for every supported framework.
         // The #else-#error branches for open-ended versions are in the factories.
 
-        #region Exception
-
-#if NET35 || NET40
-        private static FieldAccessor? fieldException_source;
-        private static FieldAccessor? fieldException_remoteStackTraceString;
-        private static ActionMethodAccessor? methodException_InternalPreserveStackTrace;
-#endif
-
-        #endregion
-
-        #region MemoryStream
-
-        private static FunctionMethodAccessor? methodMemoryStream_InternalGetBuffer;
-        private static bool? hasMemoryStream_InternalGetBuffer;
-
-        #endregion
-
-        #region Object
-
-        private static FunctionMethodAccessor? methodObject_MemberwiseClone;
-
-        #endregion
-
         #region IIListProvider<T>
 
         private static IThreadSafeCacheAccessor<Type, MethodAccessor?>? methodsIIListProvider_GetCount;
@@ -134,21 +111,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Pointer
-#if NETFRAMEWORK && !NET35
-
-        private static FunctionMethodAccessor? methodPointer_GetPointerValue;
-        private static bool? hasPointer_GetPointerValue;
-
-#endif
-        #endregion
-
         #endregion
 
         #region Any Member
 
         private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor?>? properties;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName), MethodAccessor?>? methods;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? P1, Type? P2), ActionMethodAccessor?>? ctorMethods;
 
         #endregion
@@ -357,42 +326,6 @@ namespace KGySoft.Reflection
         // Non-Framework versions can be executed on any runtime (even .NET Core picks a semi-random installation) so for .NET Core/Standard the internal methods must be prepared for null MemberInfos.
         // Whenever possible, use some workaround for non-public .NET Core/Standard libraries.
 
-        #region Exception
-
-#if NET35 || NET40
-        private static FieldAccessor Exception_source => fieldException_source ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)!);
-        private static FieldAccessor Exception_remoteStackTraceString => fieldException_remoteStackTraceString ??= FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic)!);
-        private static MethodAccessor Exception_InternalPreserveStackTrace => methodException_InternalPreserveStackTrace ??= new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic)!);
-#endif
-
-        #endregion
-
-        #region MemoryStream
-
-        private static FunctionMethodAccessor? MemoryStream_InternalGetBuffer
-        {
-            get
-            {
-                if (hasMemoryStream_InternalGetBuffer == null)
-                {
-                    MethodInfo? mi = typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic);
-                    hasMemoryStream_InternalGetBuffer = mi != null;
-                    if (hasMemoryStream_InternalGetBuffer == true)
-                        methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(mi!);
-                }
-
-                return hasMemoryStream_InternalGetBuffer == true ? methodMemoryStream_InternalGetBuffer : null;
-            }
-        }
-
-        #endregion
-
-        #region Object
-
-        private static FunctionMethodAccessor Object_MemberwiseClone => methodObject_MemberwiseClone ??= new FunctionMethodAccessor(typeof(object).GetMethod(nameof(MemberwiseClone), BindingFlags.Instance | BindingFlags.NonPublic)!);
-
-        #endregion
-
         #region IIListProvider<T>
 
         private static Type? IIListProviderType
@@ -427,28 +360,6 @@ namespace KGySoft.Reflection
             return methodsIIListProvider_GetCount[genericArgument];
         }
 
-        #endregion
-
-        #region Pointer
-#if NETFRAMEWORK && !NET35
-
-        private static FunctionMethodAccessor? Pointer_GetPointerValue
-        {
-            get
-            {
-                if (hasPointer_GetPointerValue == null)
-                {
-                    MethodInfo? mi = typeof(Pointer).GetMethod("GetPointerValue", BindingFlags.Instance | BindingFlags.NonPublic);
-                    hasPointer_GetPointerValue = mi != null;
-                    if (hasPointer_GetPointerValue == true)
-                        methodPointer_GetPointerValue = new FunctionMethodAccessor(mi!);
-                }
-
-                return hasPointer_GetPointerValue == true ? methodPointer_GetPointerValue : null;
-            }
-        }
-
-#endif
         #endregion
 
         #endregion
@@ -500,22 +411,26 @@ namespace KGySoft.Reflection
             return field == null ? defaultValue : (T)field.Get(obj)!;
         }
 
-        private static T GetFieldValueOrDefault<T>(object obj, Func<T> defaultValueFactory)
+        private static TField? GetFieldValueOrDefault<TInstance, TField>(TInstance obj, TField? defaultValue = default, string? fieldNamePattern = null)
+            where TInstance : class
         {
-            FieldAccessor? field = GetField(obj.GetType(), typeof(T), null);
-            return field == null ? defaultValueFactory.Invoke() : (T)field.Get(obj)!;
+            FieldAccessor? field = GetField(obj.GetType(), typeof(TField), fieldNamePattern);
+            return field == null ? defaultValue : field.GetInstanceValue<TInstance, TField>(obj);
         }
 
-        private static void SetFieldValue(object obj, string fieldNamePattern, object? value, bool throwIfMissing = true)
+        private static TField GetFieldValueOrDefault<TInstance, TField>(TInstance obj, Func<TField> defaultValueFactory)
+            where TInstance : class
+        {
+            FieldAccessor? field = GetField(obj.GetType(), typeof(TField), null);
+            return field == null ? defaultValueFactory.Invoke() : field.GetInstanceValue<TInstance, TField>(obj);
+        }
+
+        private static void SetFieldValue(object obj, string fieldNamePattern, object? value)
         {
             Type type = obj.GetType();
             FieldAccessor? field = GetField(type, null, fieldNamePattern);
             if (field == null)
-            {
-                if (throwIfMissing)
-                    Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
-                return;
-            }
+                Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
 #if NETSTANDARD2_0
             if (field.IsReadOnly || field.MemberInfo.DeclaringType?.IsValueType == true)
             {
@@ -525,6 +440,20 @@ namespace KGySoft.Reflection
 #endif
 
             field.Set(obj, value);
+        }
+
+        private static MethodAccessor? GetMethod(Type type, string methodName)
+        {
+            static MethodAccessor? GetMethodAccessor((Type DeclaringType, string MethodName) key)
+            {
+                // Properties are meant to be used for visible members so always exact names are searched
+                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.NonPublic);
+                return method == null ? null : MethodAccessor.GetAccessor(method);
+            }
+
+            if (methods == null)
+                Interlocked.CompareExchange(ref methods, ThreadSafeCacheFactory.Create<(Type, string), MethodAccessor?>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+            return methods[(type, methodName)];
         }
 
         private static ActionMethodAccessor? GetCtorMethod(Type type, object?[] ctorArgs)
@@ -599,10 +528,10 @@ namespace KGySoft.Reflection
         #region Exception
 
 #if NET35 || NET40
-        internal static string? GetSource(this Exception exception) => (string?)Exception_source.Get(exception);
-        internal static void SetSource(this Exception exception, string? value) => Exception_source.Set(exception, value);
-        internal static void SetRemoteStackTraceString(this Exception exception, string value) => Exception_remoteStackTraceString.Set(exception, value);
-        internal static void InternalPreserveStackTrace(this Exception exception) => Exception_InternalPreserveStackTrace.Invoke(exception);
+        internal static string? GetSource(this Exception exception) => GetFieldValueOrDefault<Exception, string?>(exception, null, "_source");
+        internal static void SetSource(this Exception exception, string? value) => GetField(typeof(Exception), null, "_source")?.SetInstanceValue(exception, value);
+        internal static void SetRemoteStackTraceString(this Exception exception, string value) => GetField(typeof(Exception), null, "_remoteStackTraceString")?.SetInstanceValue(exception, value);
+        internal static void InternalPreserveStackTrace(this Exception exception) => GetMethod(typeof(Exception), nameof(InternalPreserveStackTrace))?.InvokeInstanceAction(exception);
 #endif
 
         #endregion
@@ -618,14 +547,13 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-        // ReSharper disable once ConstantConditionalAccessQualifier - there are some targets where it can be null
-        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => (byte[]?)MemoryStream_InternalGetBuffer?.Invoke(ms);
+        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => GetMethod(typeof(MemoryStream), "InternalGetBuffer")?.InvokeInstanceFunction<MemoryStream, byte[]>(ms);
 
         #endregion
 
         #region Object
 
-        internal static object MemberwiseClone(this object obj) => Object_MemberwiseClone.Invoke(obj)!;
+        internal static object MemberwiseClone(this object obj) => GetMethod(Reflector.ObjectType, nameof(MemberwiseClone))!.InvokeInstanceFunction<object, object>(obj);
 
         #endregion
 
@@ -721,7 +649,7 @@ namespace KGySoft.Reflection
         }
 
         internal static bool IsCaseInsensitive([NoEnumeration]this IEnumerable collection)
-            => GetFieldValueOrDefault(collection, false, "caseInsensitive"); // HybridDictionary
+            => GetFieldValueOrDefault<bool>(collection, false, "caseInsensitive"); // HybridDictionary
 
         internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {
@@ -741,8 +669,7 @@ namespace KGySoft.Reflection
 
         #region Comparer
 
-        internal static CompareInfo? CompareInfo(this Comparer comparer)
-            => GetFieldValueOrDefault<CompareInfo?>(comparer);
+        internal static CompareInfo? CompareInfo(this Comparer comparer) => GetFieldValueOrDefault<Comparer, CompareInfo?>(comparer);
 
         #endregion
 
@@ -750,7 +677,7 @@ namespace KGySoft.Reflection
 
         internal static int[] GetUnderlyingArray(this BitArray bitArray)
         {
-            int[]? result = GetFieldValueOrDefault<int[]?>(bitArray);
+            int[]? result = GetFieldValueOrDefault<BitArray, int[]?>(bitArray);
             if (result != null)
                 return result;
 
@@ -796,7 +723,7 @@ namespace KGySoft.Reflection
         #region Type
 #if NETFRAMEWORK
 
-        internal static bool IsSzArray(this Type type) => (bool)GetPropertyValue(type, nameof(IsSzArray))!;
+        internal static bool IsSzArray(this Type type) => GetProperty(Reflector.Type, nameof(IsSzArray))!.GetInstanceValue<Type, bool>(type);
 
 #endif
         #endregion
@@ -804,7 +731,7 @@ namespace KGySoft.Reflection
         #region SerializationInfo
 
         internal static IFormatterConverter GetConverter(this SerializationInfo info)
-            => GetFieldValueOrDefault<IFormatterConverter>(info, () => new FormatterConverter());
+            => GetFieldValueOrDefault<SerializationInfo, IFormatterConverter>(info, () => new FormatterConverter());
 
         #endregion
 
@@ -948,7 +875,7 @@ namespace KGySoft.Reflection
         private static unsafe object GetPointer(FieldInfo field, object? instance) => new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
 
 #if NETFRAMEWORK && !NET35
-        private static object? GetPointerPartiallyTrusted(FieldInfo field, object? instance) => Pointer_GetPointerValue?.Invoke((Pointer)field.GetValue(instance));
+        private static object? GetPointerPartiallyTrusted(FieldInfo field, object? instance) => GetMethod(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)field.GetValue(instance));
 #endif
 
         [SecuritySafeCritical]
