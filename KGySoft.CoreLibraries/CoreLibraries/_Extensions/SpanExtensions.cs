@@ -20,6 +20,18 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Numerics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if !NET6_0_OR_GREATER
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 
 #endregion
 

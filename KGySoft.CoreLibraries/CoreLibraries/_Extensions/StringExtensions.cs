@@ -21,8 +21,14 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Runtime.CompilerServices;
 using System.Security;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Text;
+#endif
 using System.Text.RegularExpressions;
 
 using KGySoft.Reflection;
@@ -31,8 +37,11 @@ using KGySoft.Reflection;
 
 #region Suppressions
 
-#if NET5_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(string, StringComparison) method in some targeted platforms  
+#endif
+#if !NET6_0_OR_GREATER
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
 #endregion

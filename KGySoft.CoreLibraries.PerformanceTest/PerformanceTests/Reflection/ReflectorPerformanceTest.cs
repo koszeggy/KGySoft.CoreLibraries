@@ -113,7 +113,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
             #region Instance Methods
 
+#if NET5_0_OR_GREATER
             [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Must be a property for the test")]
+#endif
             public int InstanceMethod(int p1, int p2) => p1 + p2;
 
             #endregion

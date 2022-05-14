@@ -153,7 +153,7 @@ namespace KGySoft.Reflection
                 3 => typeof(Func<,,,>),
                 4 => typeof(Func<,,,,>),
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
-            }).GetGenericType(ParameterTypes.Concat(new[] { ctor.DeclaringType }).ToArray());
+            }).GetGenericType(ParameterTypes.Concat(new[] { ctor.DeclaringType! }).ToArray());
             LambdaExpression lambda = Expression.Lambda(delegateType, construct, parameters);
             return lambda.Compile();
         }
