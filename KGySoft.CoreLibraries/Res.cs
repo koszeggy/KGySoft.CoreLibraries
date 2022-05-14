@@ -21,7 +21,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
-using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -1022,7 +1021,7 @@ namespace KGySoft
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
 
         /// <summary>The specified span '{0}' cannot be parsed as type {1}.</summary>
-        internal static string SpanExtensionsCannotParseAsType(ReadOnlySpan<char> s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s.ToString(), type);
+        internal static string SpanExtensionsCannotParseAsType(string s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s, type);
 
 #endif
         #endregion
@@ -1148,9 +1147,9 @@ namespace KGySoft
 
         #region Private Methods
 
-        private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(CultureInfo.InvariantCulture, unavailableResource, id);
+        private static string Get(string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(CultureInfo.InvariantCulture, unavailableResource, id);
 
-        private static string Get([NotNull]string id, params object?[]? args)
+        private static string Get(string id, params object?[]? args)
         {
             string format = Get(id);
             return args == null ? format : SafeFormat(format, args);

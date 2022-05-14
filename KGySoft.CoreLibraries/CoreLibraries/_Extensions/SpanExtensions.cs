@@ -390,7 +390,7 @@ namespace KGySoft.CoreLibraries
         [return:MaybeNull]public static T Parse<T>(this ReadOnlySpan<char> s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
-                Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, typeof(T)), error);
+                Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s.ToString(), typeof(T)), error);
             return value;
         }
 
@@ -411,7 +411,7 @@ namespace KGySoft.CoreLibraries
         public static object? Parse(this ReadOnlySpan<char> s, Type type, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, type, culture, true, false, out object? value, out Exception? error) || !type.CanAcceptValue(value))
-                Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s, type), error);
+                Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s.ToString(), type), error);
             return value;
         }
 
