@@ -37,6 +37,11 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- .NET Framework 4.x only references -->
+  <ItemGroup Condition="'$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net472'">
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0"/>
