@@ -201,11 +201,22 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if NET35
+            // Expression.Call fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
+            var dm = new DynamicMethod("<GetProperty>__" + Property.Name, Property.PropertyType,
+                new[] { declaringType.MakeByRefType() }, declaringType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+            il.Emit(getterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, getterMethod); // calling the getter
+            il.Emit(OpCodes.Ret); // return
+            return dm.CreateDelegate(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType));
+#else
             // Struct instance property
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
             getterCall = Expression.Call(instanceParameter, getterMethod);
             lambda = Expression.Lambda(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType), getterCall, instanceParameter);
             return lambda.Compile();
+#endif
         }
 
         private protected override Delegate CreateGenericSetter()
@@ -242,11 +253,23 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if NET35
+            // Expression.Call fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
+            var dm = new DynamicMethod("<SetProperty>__" + Property.Name, Reflector.VoidType,
+                new[] { declaringType.MakeByRefType(), Property.PropertyType }, declaringType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+            il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value
+            il.Emit(setterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, setterMethod); // calling the setter
+            il.Emit(OpCodes.Ret); // return
+            return dm.CreateDelegate(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Property.PropertyType));
+#else
             // Struct instance property
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
             setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
             lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Property.PropertyType), setterCall, instanceParameter, valueParameter);
             return lambda.Compile();
+#endif
         }
 
         #endregion

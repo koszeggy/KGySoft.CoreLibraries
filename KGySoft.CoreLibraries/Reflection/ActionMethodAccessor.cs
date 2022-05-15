@@ -180,13 +180,10 @@ namespace KGySoft.Reflection
             }
 
             parameters = new ParameterExpression[ParameterTypes.Length + 1];
-            for (int i = 0; i < ParameterTypes.Length; i++)
-                parameters[i + 1] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
 
             // Class instance methods
             if (!declaringType!.IsValueType)
             {
-                parameters[0] = Expression.Parameter(declaringType, "instance");
                 delegateType = ParameterTypes.Length switch
                 {
                     // NOTE: actually we could use simple Action but that would make possible to invoke an instance method by a static invoker
@@ -197,11 +194,11 @@ namespace KGySoft.Reflection
                     4 => typeof(ReferenceTypeAction<,,,,>),
                     _ => Throw.InternalError<Type>("Unexpected number of parameters")
                 };
+                parameters[0] = Expression.Parameter(declaringType, "instance");
             }
             // Struct instance methods
             else
             {
-                parameters[0] = Expression.Parameter(declaringType.MakeByRefType(), "instance");
                 delegateType = ParameterTypes.Length switch
                 {
                     0 => typeof(ValueTypeAction<>),
@@ -211,7 +208,27 @@ namespace KGySoft.Reflection
                     4 => typeof(ValueTypeAction<,,,,>),
                     _ => Throw.InternalError<Type>("Unexpected number of parameters")
                 };
+#if NET35
+                // Expression.Call fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
+                var dm = new DynamicMethod("<InvokeMethod>__" + method.Name, Reflector.VoidType,
+                    new[] { declaringType.MakeByRefType() }.Concat(ParameterTypes).ToArray(), declaringType, true);
+                ILGenerator il = dm.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+
+                // loading parameters
+                for (int i = 0; i < ParameterTypes.Length; i++)
+                    il.Emit(OpCodes.Ldarg, i + 1);
+
+                il.Emit(method.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method); // calling the method
+                il.Emit(OpCodes.Ret); // return
+                return dm.CreateDelegate(delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).ToArray()));
+#else
+                parameters[0] = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+#endif
             }
+
+            for (int i = 0; i < ParameterTypes.Length; i++)
+                parameters[i + 1] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
 
 #if NET35
             methodCall = Expression.Call(parameters[0], method, parameters.Cast<Expression>().Skip(1));

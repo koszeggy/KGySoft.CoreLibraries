@@ -143,6 +143,7 @@ namespace KGySoft.Reflection
     {
         #region Constants
 
+        private const string getterPrefix = "<GetField>__";
         private const string setterPrefix = "<SetField>__";
 
         #endregion
@@ -529,11 +530,22 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if NET35
+            // Expression.Field fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
+            var dm = new DynamicMethod(getterPrefix + Field.Name, Field.FieldType,
+                new[] { declaringType.MakeByRefType() }, declaringType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+            il.Emit(OpCodes.Ldfld, Field); // loading field
+            il.Emit(OpCodes.Ret); // returning field value
+            return dm.CreateDelegate(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Field.FieldType));
+#else
             // Struct instance field
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
             member = Expression.Field(instanceParameter, Field);
             lambda = Expression.Lambda(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Field.FieldType), member, instanceParameter);
             return lambda.Compile();
+#endif
         }
 
         private Delegate CreateGenericSetter()
@@ -628,7 +640,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            ThrowIfSecurityConflict(exception, isSetter ? setterPrefix : null);
+            ThrowIfSecurityConflict(exception, isSetter ? setterPrefix : getterPrefix);
 
             // anything else: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
