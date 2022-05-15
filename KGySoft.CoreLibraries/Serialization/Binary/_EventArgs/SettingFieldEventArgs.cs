@@ -41,12 +41,12 @@ namespace KGySoft.Serialization.Binary
         public StreamingContext Context { get; }
 
         /// <summary>
-        /// Gets the <see cref="System.Runtime.Serialization.SerializationInfo"/> of the of the <see cref="Object"/> being deserialized.
+        /// Gets the <see cref="System.Runtime.Serialization.SerializationInfo"/> of the <see cref="Object"/> being deserialized.
         /// </summary>
         public SerializationInfo SerializationInfo { get; }
 
         /// <summary>
-        /// Gets the current <see cref="SerializationEntry"/> of the of the <see cref="Object"/> being deserialized.
+        /// Gets the current <see cref="SerializationEntry"/> of the <see cref="Object"/> being deserialized.
         /// </summary>
         public SerializationEntry Entry { get; }
 

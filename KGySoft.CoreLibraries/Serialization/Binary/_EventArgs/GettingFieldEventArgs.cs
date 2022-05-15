@@ -49,7 +49,7 @@ namespace KGySoft.Serialization.Binary
         public StreamingContext Context { get; }
 
         /// <summary>
-        /// Gets the <see cref="System.Runtime.Serialization.SerializationInfo"/> of the of the <see cref="Object"/> being serialized.
+        /// Gets the <see cref="System.Runtime.Serialization.SerializationInfo"/> of the <see cref="Object"/> being serialized.
         /// If you add the data manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
         /// omit the default serialization logic.
         /// </summary>

@@ -49,7 +49,7 @@ namespace KGySoft.Reflection
     /// <para>If you know the parameter types at compile time (and the return type for function methods), then you can use
     /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>
     /// methods to invoke static methods. If you know also the instance type, then
-    /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
+    /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
     /// methods can be used to invoke instance methods for better performance. These strongly typed methods can be used as
     /// long as the methods to invoke have no more than four parameters and none of the parameters are passed by reference.</para>
     /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
@@ -62,7 +62,7 @@ namespace KGySoft.Reflection
     /// then the changes will not be applied to the instance on which the method is invoked.
     /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
     /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
-    /// and to preserve changes the of the mutated value type instances.</note>
+    /// and to preserve changes of the mutated value type instances.</note>
     /// </remarks>
     /// <example>
     /// <code lang="C#"><![CDATA[
@@ -200,7 +200,7 @@ namespace KGySoft.Reflection
         /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
         /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
         /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
-        /// and to preserve changes the of the mutated value type instances.</note>
+        /// and to preserve changes of the mutated value type instances.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>
         /// <br/>-or-
