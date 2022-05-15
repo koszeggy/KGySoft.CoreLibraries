@@ -1429,10 +1429,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetProperty(test, pi);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+#endif
             Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi), Res.NotAnInstanceOfType(test.GetType()));
 
             test = new TestStruct(0);
@@ -1441,11 +1443,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetProperty(test, nameof(TestStruct.IntProp));
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestStruct.IntProp), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestStruct.IntProp)), Res.ArgumentNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestStruct.IntProp), null), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestStruct.IntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.IntProp), typeof(object)));
             Throws<ReflectionException>(() => Reflector.SetProperty(test, nameof(TestStruct.StaticIntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
             Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestStruct.IntProp), "1"), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestStruct.IntProp)), Res.ArgumentNull);
+#endif
             Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestStruct.IntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.IntProp), typeof(object)));
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
         }
@@ -1566,13 +1570,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, parameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value, args), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi, args), Res.ReflectionInstanceIsNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null, args), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, value, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value, args), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1", args), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value), Res.ReflectionEmptyIndices);
             Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, "1"), Res.ReflectionParametersInvalid);
-            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi, args), Res.ReflectionInstanceIsNull);
+#endif
             Throws<ArgumentNullException>(() => Reflector.GetProperty(test, pi, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi, args), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => Reflector.GetProperty(test, pi), Res.ReflectionEmptyIndices);
@@ -1585,13 +1591,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetIndexedMember(test, parameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(null, value, args), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, args), Res.ArgumentNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, null, args), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, value, null), Res.ArgumentNull);
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, "1", args), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, value), Res.ReflectionEmptyIndices);
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, "1"), Res.ReflectionIndexerNotFound(test.GetType()));
-            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, args), Res.ArgumentNull);
+
+#endif
             Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(test, null), Res.ArgumentNull);
             Throws<ReflectionException>(() => Reflector.GetIndexedMember(new object(), args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
             Throws<ArgumentException>(() => Reflector.GetIndexedMember(test), Res.ReflectionEmptyIndices);
