@@ -88,6 +88,9 @@ namespace KGySoft
         /// <summary>This operation is not supported.</summary>
         internal static string NotSupported => Get("General_NotSupported");
 
+        /// <summary>The operation was canceled.</summary>
+        internal static string OperationCanceled => Get("General_OperationCanceled");
+
         /// <summary>Input string contains an invalid value.</summary>
         internal static string ArgumentInvalidString => Get("General_ArgumentInvalidString");
 
@@ -556,6 +559,9 @@ namespace KGySoft
 
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
+
+        /// <summary>Either the IAsyncResult object did not come from the corresponding '{0}' method, or the End method was called multiple times with the same IAsyncResult.</summary>
+        internal static string InvalidAsyncResult(string beginMethodName) => Get("General_InvalidAsyncResultFormat", beginMethodName);
 
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);

@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: WaitHandleExtensions.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 #endregion
 
-namespace KGySoft.CoreLibraries
+namespace KGySoft.Threading
 {
     /// <summary>
     /// Provides extension methods for the <see cref="WaitHandle"/> type.
@@ -76,7 +76,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="cancellationToken">A token for cancellation.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="handle"/> receives a signal before canceling; otherwise, <see langword="false"/>.</returns>
         public static Task<bool> WaitOneAsync(this WaitHandle handle, CancellationToken cancellationToken)
-            => WaitOneAsync(handle, Timeout.Infinite, cancellationToken);
+            => handle.WaitOneAsync(Timeout.Infinite, cancellationToken);
 
         #endregion
     }

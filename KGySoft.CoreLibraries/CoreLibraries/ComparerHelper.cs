@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ComparerHelper.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2021 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -18,8 +18,6 @@
 using System;
 using System.Collections.Generic;
 
-using KGySoft.Reflection;
-
 #endregion
 
 namespace KGySoft.CoreLibraries
@@ -32,14 +30,14 @@ namespace KGySoft.CoreLibraries
 #if NETSTANDARD2_0
             EqualityComparer<T>.Default;
 #else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IEqualityComparer<T>)EqualityComparer<T>.Default;
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
 #endif
 
         internal static IComparer<T> Comparer { get; } =
 #if NETSTANDARD2_0
             Comparer<T>.Default;
 #else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : (IComparer<T>)Comparer<T>.Default;
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
 #endif
 
         #endregion

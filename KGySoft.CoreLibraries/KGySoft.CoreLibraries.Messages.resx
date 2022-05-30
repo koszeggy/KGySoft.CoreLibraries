@@ -496,6 +496,9 @@ Hit rate: {8:P2}</value>
   <data name="General_ValueContainsIllegalPathCharactersFormat" xml:space="preserve">
     <value>Value "{0}" contains illegal path characters.</value>
   </data>
+  <data name="General_InvalidAsyncResultFormat" xml:space="preserve">
+    <value>Either the IAsyncResult object did not come from the corresponding '{0}' method, or the End method was called multiple times with the same IAsyncResult.</value>
+  </data>
   <data name="General_InternalErrorFormat" xml:space="preserve">
     <value>Internal Error: {0}</value>
   </data>
@@ -878,6 +881,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="General_NotSupported" xml:space="preserve">
     <value>This operation is not supported.</value>
+  </data>
+  <data name="General_OperationCanceled" xml:space="preserve">
+    <value>The operation was canceled.</value>
   </data>
   <data name="Resources_InvalidResXReaderPropertyChange" xml:space="preserve">
     <value>Property can be changed only before the enumeration.</value>
