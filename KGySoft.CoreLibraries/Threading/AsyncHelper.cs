@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: AsyncContext.cs
+//  File: AsyncHelper.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
 //
@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 
 namespace KGySoft.Threading
 {
-    internal static class AsyncContext
+    internal static class AsyncHelper
     {
         #region Nested classes
 

@@ -15,19 +15,6 @@ using AsyncConfig = KGySoft.Threading.AsyncConfig;
 using TaskConfig = KGySoft.Threading.TaskConfig;
 using IAsyncContext = KGySoft.Threading.IAsyncContext;
 
-namespace KGySoft.Drawing
-{
-    public enum DrawingOperation
-    {
-        ProcessingPixels
-    }
-
-    //public sealed class AsyncConfig : AsyncConfig<DrawingOperation>{}
-    //public sealed class TaskConfig : TaskConfig<DrawingOperation>{ }
-    //public interface IAsyncContext : IAsyncContext<DrawingOperation> { }
-    //public interface IAsyncContext : IAsyncContext<object> { }
-}
-
 public static class Example
 {
 
@@ -41,7 +28,7 @@ public static class Example
             return bitmap;
 
         // The actual processing. From the sync version it gets a Null context. The result is never null from here.
-        return ProcessToGrayscale(AsyncContext.Null, bitmap)!;
+        return ProcessToGrayscale(AsyncHelper.Null, bitmap)!;
     }
 
     // The Task-returning version. Requires .NET Framework 4.0 or later and can be awaited in .NET Framework 4.5 or later.
@@ -51,10 +38,10 @@ public static class Example
 
         // Use AsyncContext.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled properly.
         if (IsGrayscale(bitmap))
-            return AsyncContext.FromResult(bitmap, null, asyncConfig);
+            return AsyncHelper.FromResult(bitmap, null, asyncConfig);
 
         // The actual processing for Task returning async methods.
-        return AsyncContext.DoOperationAsync(ctx => ProcessToGrayscale(ctx, bitmap), asyncConfig);
+        return AsyncHelper.DoOperationAsync(ctx => ProcessToGrayscale(ctx, bitmap), asyncConfig);
     }
 
     // The old-style Begin/End methods that work even in .NET Framework 3.5. Can be omitted if not needed.
@@ -65,14 +52,14 @@ public static class Example
         // Use AsyncContext.FromResult for immediate return.
         // It handles asyncConfig.ThrowIfCanceled and sets IAsyncResult.CompletedSynchronously.
         if (IsGrayscale(bitmap))
-            return AsyncContext.FromResult(bitmap, null, asyncConfig);
+            return AsyncHelper.FromResult(bitmap, null, asyncConfig);
 
         // The actual processing for IAsyncResult returning async methods.
-        return AsyncContext.BeginOperation(ctx => ProcessToGrayscale(ctx, bitmap), asyncConfig);
+        return AsyncHelper.BeginOperation(ctx => ProcessToGrayscale(ctx, bitmap), asyncConfig);
     }
 
     // Note that the name of "BeginToGrayscale" is explicitly specified here. Older compilers need it also for AsyncContext.BeginOperation.
-    public static Bitmap? EndToGrayscale(IAsyncResult asyncResult) => AsyncContext.EndOperation<Bitmap?>(asyncResult, nameof(BeginToGrayscale));
+    public static Bitmap? EndToGrayscale(IAsyncResult asyncResult) => AsyncHelper.EndOperation<Bitmap?>(asyncResult, nameof(BeginToGrayscale));
 
     // The method of the actual processing has the same parameters as the sync version and also an IAsyncContext parameter.
     // The result can be null if the operation is canceled (throwing possible exception due to cancellation is handled by the caller)
