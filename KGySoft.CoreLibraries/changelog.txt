@@ -54,6 +54,10 @@
 + Reflector class:
   + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 
+- KGySoft.Serialization.Xml namespace:
+======================================
+- XmlSerializer class: Fixing an issue regarding DesignerSerializerVisibilityAttribute handling.
+
 
 ~~~~~~~~~
 - v6.0.2:

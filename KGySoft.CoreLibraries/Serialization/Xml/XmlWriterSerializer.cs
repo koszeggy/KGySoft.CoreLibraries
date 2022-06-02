@@ -445,10 +445,11 @@ namespace KGySoft.Serialization.Xml
             Throw.SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
-        private void SerializeMembers(object obj, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeMembers(object obj, XmlWriter writer, DesignerSerializationVisibility parentVisibility)
         {
             foreach (Member member in GetMembersToSerialize(obj))
             {
+                DesignerSerializationVisibility visibility = parentVisibility;
                 if (SkipMember(obj, member.MemberInfo, out object? value, ref visibility))
                     continue;
 

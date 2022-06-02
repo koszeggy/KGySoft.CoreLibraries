@@ -511,6 +511,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             public XmlSerializableClass InnerXmlSerializable { get; set; }
 
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+            public object HiddenProperty { get; set; }
+
             public Point Point { get; set; }
 
             public Point[] PointArray { get; set; }
