@@ -452,13 +452,14 @@ namespace KGySoft.Serialization.Xml
             Throw.SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
-        private void SerializeMembers(object obj, XContainer parent, DesignerSerializationVisibility visibility)
+        private void SerializeMembers(object obj, XContainer parent, DesignerSerializationVisibility parentVisibility)
         {
             // signing that object is not null
             parent.Add(String.Empty);
 
             foreach (Member member in GetMembersToSerialize(obj))
             {
+                DesignerSerializationVisibility visibility = parentVisibility;
                 if (SkipMember(obj, member.MemberInfo, out object? value, ref visibility))
                     continue;
 
