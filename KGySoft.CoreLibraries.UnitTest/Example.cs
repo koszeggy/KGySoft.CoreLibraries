@@ -28,7 +28,7 @@ public static class Example
             return bitmap;
 
         // The actual processing. From the sync version it gets a Null context. The result is never null from here.
-        return ProcessToGrayscale(AsyncHelper.Null, bitmap)!;
+        return ProcessToGrayscale(AsyncHelper.DefaultContext, bitmap)!;
     }
 
     // The Task-returning version. Requires .NET Framework 4.0 or later and can be awaited in .NET Framework 4.5 or later.

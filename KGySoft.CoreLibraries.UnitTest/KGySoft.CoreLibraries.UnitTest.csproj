@@ -35,7 +35,7 @@
 
   <!-- Common NuGet references -->
   <ItemGroup>
-    <PackageReference Include="KGySoft.Drawing" Version="5.0.0" />
+    <PackageReference Include="KGySoft.Drawing" Version="6.3.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
@@ -55,7 +55,17 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0"/>
   </ItemGroup>
 
-    <!-- Project references -->
+  <!-- .NET Core 3.0 only references -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+    <PackageReference Include="System.Resources.Extensions" Version="5.0.0"/>
+  </ItemGroup>
+
+  <!-- .NET only references -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="System.Resources.Extensions" Version="6.0.0"/>
+  </ItemGroup>
+
+  <!-- Project references -->
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
   </ItemGroup>

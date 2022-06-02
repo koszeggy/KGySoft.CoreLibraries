@@ -33,9 +33,9 @@ namespace KGySoft.Threading
     {
         #region Nested classes
 
-        #region NullContext class
+        #region EmptyContext class
 
-        private sealed class NullContext : IAsyncContext
+        private sealed class EmptyContext : IAsyncContext
         {
             #region Properties
 
@@ -479,13 +479,13 @@ namespace KGySoft.Threading
 
         #region Fields
 
-        private static IAsyncContext? nullContext;
+        private static IAsyncContext? emptyContext;
 
         #endregion
 
         #region Properties
 
-        internal static IAsyncContext Null => nullContext ??= new  NullContext();
+        internal static IAsyncContext DefaultContext => emptyContext ??= new EmptyContext();
 
         #endregion
 
