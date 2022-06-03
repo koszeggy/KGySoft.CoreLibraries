@@ -30,11 +30,7 @@ using System.Threading.Tasks;
 
 namespace KGySoft.Threading
 {
-#if NET35
-#pragma warning disable CS1574 // XML comment has references that cannot not be resolved on all platforms
-#endif
-
-    internal static class ParallelHelper
+    public static class ParallelHelper
     {
         #region Fields
 
@@ -48,11 +44,58 @@ namespace KGySoft.Threading
 
         #region Properties
 
-        internal static int CoreCount => coreCount ??= Environment.ProcessorCount;
+        private static int CoreCount => coreCount ??= Environment.ProcessorCount;
 
         #endregion
 
         #region Methods
+
+        #region Public Methods
+
+        // TODO: Functionally the same as Parallel.For but it adjusts used threads more optimally (does not use any threads if there is 1 CPU),
+        //       and works even on .NET Framework 3.5. Unlike Parallel.For, it is void because if there was no exception the loop is guaranteed to be completed.
+        public static void For(int fromInclusive, int toExclusive, Action<int> body)
+        {
+            if (body == null!)
+                Throw.ArgumentNullException(Argument.body);
+            if (fromInclusive <= toExclusive)
+                return;
+
+            DoFor<object?>(AsyncHelper.DefaultContext, null, fromInclusive, toExclusive, body);
+        }
+
+        public static IAsyncResult BeginFor<T>(T operation, int fromInclusive, int toExclusive, Action<int> body, AsyncConfig? asyncConfig = null)
+        {
+            if (body == null!)
+                Throw.ArgumentNullException(Argument.body);
+            if (fromInclusive <= toExclusive)
+                return AsyncHelper.FromCompleted(asyncConfig);
+
+            return AsyncHelper.BeginOperation(ctx => DoFor(ctx, operation, fromInclusive, toExclusive, body), asyncConfig);
+        }
+
+        public static IAsyncResult BeginFor(int fromInclusive, int toExclusive, Action<int> body, AsyncConfig? asyncConfig = null)
+            => BeginFor(nameof(BeginFor), fromInclusive, toExclusive, body, asyncConfig);
+
+        public static void EndFor(IAsyncResult asyncResult) => AsyncHelper.EndOperation(asyncResult, nameof(BeginFor));
+
+#if !NET35
+        public static Task ForAsync<T>(T operation, int fromInclusive, int toExclusive, Action<int> body, TaskConfig? asyncConfig = null)
+        {
+            if (body == null!)
+                Throw.ArgumentNullException(Argument.body);
+            if (fromInclusive <= toExclusive)
+                return AsyncHelper.FromCompleted(asyncConfig);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoFor(ctx, operation, fromInclusive, toExclusive, body), asyncConfig);
+        }
+
+        public static Task ForAsync(int fromInclusive, int toExclusive, Action<int> body, TaskConfig? asyncConfig = null)
+            => ForAsync(nameof(ForAsync), fromInclusive, toExclusive, body, asyncConfig);
+
+#endif
+
+        #endregion
 
         #region Internal Methods
 
@@ -65,7 +108,7 @@ namespace KGySoft.Threading
         [SuppressMessage("Microsoft.Maintainability", "CA1502: Avoid excessive complexity",
             Justification = "Special optimization for .NET 3.5 version where there is no Parallel.For")]
 #endif
-        internal static void For<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
+        internal static void DoFor<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
         {
             #region Local Methods
 #if !NET35
@@ -102,13 +145,14 @@ namespace KGySoft.Threading
 #endif
             #endregion
 
+            Debug.Assert(toExclusive > fromInclusive);
             int count = toExclusive - fromInclusive;
-            context.Progress?.New(operation, Math.Max(count, 0));
+            context.Progress?.New(operation, count);
 
             // a single iteration: invoke once
-            if (count <= 1)
+            if (count == 1)
             {
-                if (count < 1 || context.IsCancellationRequested)
+                if (context.IsCancellationRequested)
                     return;
 
                 body.Invoke(fromInclusive);
@@ -249,7 +293,7 @@ namespace KGySoft.Threading
             }
 
             // we merge some iterations to be processed by the same core
-            var partitions = Partitioner.Create(fromInclusive, toExclusive, rangeSize);
+            OrderablePartitioner<Tuple<int, int>> partitions = Partitioner.Create(fromInclusive, toExclusive, rangeSize);
             if (bodyWithState != null)
             {
                 Parallel.ForEach(partitions, options, (range, state) =>

@@ -33,6 +33,7 @@ namespace KGySoft
         beginMethodName,
         behavior,
         binder,
+        body,
         buffer,
         bufferSize,
         bytes,
