@@ -45,6 +45,12 @@ namespace KGySoft.Threading
         /// </summary>
         IAsyncProgress? Progress { get; }
 
+        /// <summary>
+        /// Gets the user provided object that was configured in the <see cref="AsyncConfigBase.State"/> property
+        /// this <see cref="IAsyncContext"/> instance was created from.
+        /// </summary>
+        object? State { get; }
+
         #endregion
 
         #region Methods

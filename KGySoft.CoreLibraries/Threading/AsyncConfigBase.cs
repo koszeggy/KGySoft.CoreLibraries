@@ -23,6 +23,7 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents the base class for configuration of asynchronous operations.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public abstract class AsyncConfigBase
     {
@@ -51,6 +52,8 @@ namespace KGySoft.Threading
         /// <summary>
         /// Gets or sets a user-provided object that will be returned by the <see cref="IAsyncResult.AsyncState"/> property that
         /// can be used to distinguish this particular asynchronous operation from other ones.
+        /// This object will be returned also in the <see cref="IAsyncContext.State">IAsyncContext.State</see> property created by
+        /// the methods of the <see cref="AsyncHelper"/> class.
         /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         public object? State { get; set; }

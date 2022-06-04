@@ -17,10 +17,10 @@
 
 using System;
 #if NET35
-using System.Diagnostics.CodeAnalysis;
-using System.Threading; 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
+using System.Threading; 
 #else
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -52,63 +52,87 @@ namespace KGySoft.Threading
 
         #region Public Methods
 
-        // TODO: Functionally the same as Parallel.For but it adjusts used threads more optimally (does not use any threads if there is 1 CPU),
-        //       and works even on .NET Framework 3.5. Unlike Parallel.For, it is void because if there was no exception the loop is guaranteed to be completed.
+        // Works even on .NET Framework 3.5. Unlike Parallel.For, it is void because if there was no exception the loop is guaranteed to be completed.
         public static void For(int fromInclusive, int toExclusive, Action<int> body)
         {
             if (body == null!)
                 Throw.ArgumentNullException(Argument.body);
-            if (fromInclusive <= toExclusive)
+            if (fromInclusive >= toExclusive)
                 return;
 
             DoFor<object?>(AsyncHelper.DefaultContext, null, fromInclusive, toExclusive, body);
         }
 
-        public static IAsyncResult BeginFor<T>(T operation, int fromInclusive, int toExclusive, Action<int> body, AsyncConfig? asyncConfig = null)
+        public static void For(int fromInclusive, int toExclusive, ParallelConfig? configuration, Action<int> body)
+            => For<object?>(null, fromInclusive, toExclusive, configuration, body);
+
+        public static void For<T>(T operation, int fromInclusive, int toExclusive, ParallelConfig? configuration, Action<int> body)
         {
             if (body == null!)
                 Throw.ArgumentNullException(Argument.body);
-            if (fromInclusive <= toExclusive)
+            if (fromInclusive >= toExclusive)
+                return;
+
+            AsyncHelper.DoOperationSynchronously(ctx => DoFor(ctx, operation, fromInclusive, toExclusive, body), configuration);
+        }
+
+        public static IAsyncResult BeginFor(int fromInclusive, int toExclusive, Action<int> body)
+            => BeginFor<object?>(null, fromInclusive, toExclusive, null, body);
+
+        public static IAsyncResult BeginFor(int fromInclusive, int toExclusive, AsyncConfig? asyncConfig, Action<int> body)
+            => BeginFor<object?>(null, fromInclusive, toExclusive, asyncConfig, body);
+
+        public static IAsyncResult BeginFor<T>(T operation, int fromInclusive, int toExclusive, AsyncConfig? asyncConfig, Action<int> body)
+        {
+            if (body == null!)
+                Throw.ArgumentNullException(Argument.body);
+            if (fromInclusive >= toExclusive)
                 return AsyncHelper.FromCompleted(asyncConfig);
 
             return AsyncHelper.BeginOperation(ctx => DoFor(ctx, operation, fromInclusive, toExclusive, body), asyncConfig);
         }
 
-        public static IAsyncResult BeginFor(int fromInclusive, int toExclusive, Action<int> body, AsyncConfig? asyncConfig = null)
-            => BeginFor(nameof(BeginFor), fromInclusive, toExclusive, body, asyncConfig);
-
         public static void EndFor(IAsyncResult asyncResult) => AsyncHelper.EndOperation(asyncResult, nameof(BeginFor));
 
 #if !NET35
-        public static Task ForAsync<T>(T operation, int fromInclusive, int toExclusive, Action<int> body, TaskConfig? asyncConfig = null)
+        public static Task ForAsync(int fromInclusive, int toExclusive, Action<int> body)
+            => ForAsync<object?>(null, fromInclusive, toExclusive, null, body);
+        
+        public static Task ForAsync(int fromInclusive, int toExclusive, TaskConfig? asyncConfig, Action<int> body)
+            => ForAsync<object?>(null, fromInclusive, toExclusive, asyncConfig, body);
+
+        public static Task ForAsync<T>(T operation, int fromInclusive, int toExclusive, TaskConfig? asyncConfig, Action<int> body)
         {
             if (body == null!)
                 Throw.ArgumentNullException(Argument.body);
-            if (fromInclusive <= toExclusive)
+            if (fromInclusive >= toExclusive)
                 return AsyncHelper.FromCompleted(asyncConfig);
 
             return AsyncHelper.DoOperationAsync(ctx => DoFor(ctx, operation, fromInclusive, toExclusive, body), asyncConfig);
         }
-
-        public static Task ForAsync(int fromInclusive, int toExclusive, Action<int> body, TaskConfig? asyncConfig = null)
-            => ForAsync(nameof(ForAsync), fromInclusive, toExclusive, body, asyncConfig);
-
 #endif
+
+        public static void For<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
+        {
+            if (body == null!)
+                Throw.ArgumentNullException(Argument.body);
+            if (fromInclusive >= toExclusive)
+                return;
+
+            DoFor(context, operation, fromInclusive, toExclusive, body);
+        }
 
         #endregion
 
         #region Internal Methods
 
-        /// <summary>
-        /// Similar to <see cref="Parallel.For(int,int,Action{int})"/> but tries to balance resources and works also in .NET 3.5.
-        /// </summary>
 #if NET35
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Exceptions in pool threads must not be thrown in place but from the caller thread.")]
         [SuppressMessage("Microsoft.Maintainability", "CA1502: Avoid excessive complexity",
             Justification = "Special optimization for .NET 3.5 version where there is no Parallel.For")]
 #endif
-        internal static void DoFor<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
+        private static void DoFor<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
         {
             #region Local Methods
 #if !NET35
@@ -271,14 +295,12 @@ namespace KGySoft.Threading
             ParallelOptions options;
             if (context.MaxDegreeOfParallelism <= 0)
             {
-                // we allow a bit more fine resolution than the actual core counts
-                rangeSize = (count / CoreCount) >> 2;
+                rangeSize = count / CoreCount;
                 options = defaultParallelOptions;
             }
             else
             {
-                // we allow a bit more fine resolution than the specified degree
-                rangeSize = (count / context.MaxDegreeOfParallelism) >> 2;
+                rangeSize = count / context.MaxDegreeOfParallelism;
                 options = new ParallelOptions { MaxDegreeOfParallelism = context.MaxDegreeOfParallelism };
             }
 
@@ -292,14 +314,15 @@ namespace KGySoft.Threading
                 return;
             }
 
-            // we merge some iterations to be processed by the same core
-            OrderablePartitioner<Tuple<int, int>> partitions = Partitioner.Create(fromInclusive, toExclusive, rangeSize);
+            // We merge some iterations to be processed by the same core
+            // NOTE: We could use CreateRanges just like for .NET Framework 3.5 but even though it allocates less an uses value tuples,
+            //       processing some general IEnumerable<> seems to be slower than processing the returned OrderablePartitioner<> instance.
+            OrderablePartitioner<Tuple<int, int>> ranges = Partitioner.Create(fromInclusive, toExclusive, rangeSize);
             if (bodyWithState != null)
             {
-                Parallel.ForEach(partitions, options, (range, state) =>
+                Parallel.ForEach(ranges, options, (range, state) =>
                 {
-                    (int from, int to) = range;
-                    for (int i = from; i < to; i++)
+                    for (int i = range.Item1; i < range.Item2; i++)
                     {
                         bodyWithState.Invoke(i, state);
                         if (state.IsStopped)
@@ -310,10 +333,9 @@ namespace KGySoft.Threading
                 return;
             }
 
-            Parallel.ForEach(partitions, options, range =>
+            Parallel.ForEach(ranges, options, range =>
             {
-                (int from, int to) = range;
-                for (int i = from; i < to; i++)
+                for (int i = range.Item1; i < range.Item2; i++)
                     simpleBody!.Invoke(i);
             });
 #endif
@@ -327,7 +349,16 @@ namespace KGySoft.Threading
         private static IEnumerable<(int From, int To)> CreateRanges(int fromInclusive, int toExclusive, int rangeSize)
         {
             for (int i = fromInclusive; i < toExclusive; i += rangeSize)
+            {
+                // overflow check
+                if (i + rangeSize < i)
+                {
+                    yield return (i, toExclusive);
+                    yield break;
+                }
+
                 yield return (i, Math.Min(toExclusive, i + rangeSize));
+            }
         }
 
 #endif

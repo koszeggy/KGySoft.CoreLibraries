@@ -51,12 +51,59 @@ namespace KGySoft.Threading
             public bool IsCancellationRequested => false;
             public bool CanBeCanceled => false;
             public IAsyncProgress? Progress => null;
+            public object? State => null;
 
             #endregion
 
             #region Methods
 
             public void ThrowIfCancellationRequested() { }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region SyncContext class
+
+        private sealed class SyncContext : IAsyncContext
+        {
+            #region Fields
+
+            private volatile bool isCancellationRequested;
+            private Func<bool>? isCancelRequestedCallback;
+
+            #endregion
+
+            #region Properties
+
+            public int MaxDegreeOfParallelism { get; }
+            public bool IsCancellationRequested => isCancelRequestedCallback != null && (isCancellationRequested || (isCancellationRequested = isCancelRequestedCallback.Invoke()));
+            public bool CanBeCanceled => isCancelRequestedCallback != null;
+            public IAsyncProgress? Progress { get; }
+            public object? State { get; }
+
+            #endregion
+
+            #region Constructors
+
+            internal SyncContext(ParallelConfig config)
+            {
+                MaxDegreeOfParallelism = config.MaxDegreeOfParallelism;
+                isCancelRequestedCallback = config.IsCancelRequestedCallback;
+                Progress = config.Progress;
+                State = config.State;
+            }
+
+            #endregion
+
+            #region Methods
+
+            public void ThrowIfCancellationRequested()
+            {
+                if (IsCancellationRequested)
+                    Throw.OperationCanceledException();
+            }
 
             #endregion
         }
@@ -87,13 +134,13 @@ namespace KGySoft.Threading
             public bool IsCancellationRequested => token.IsCancellationRequested;
             public bool CanBeCanceled => token.CanBeCanceled;
             public IAsyncProgress? Progress { get; }
+            public object? State { get; }
 
             #endregion
 
             #region Internal Properties
 
             internal bool ThrowIfCanceled { get; } = true;
-            internal object? State { get; }
 
             #endregion
 
@@ -148,8 +195,6 @@ namespace KGySoft.Threading
             public bool CanBeCanceled => isCancelRequestedCallback != null;
             public IAsyncProgress? Progress { get; }
             public bool IsCompleted => isCompleted;
-            public string BeginMethodName { get; }
-            public bool IsDisposed { get; private set; }
 
             public WaitHandle AsyncWaitHandle => InternalWaitHandle.WaitHandle;
 
@@ -162,6 +207,8 @@ namespace KGySoft.Threading
 
             internal bool ThrowIfCanceled { get; } = true;
             internal Action<IAsyncContext>? Operation { get; private set; }
+            internal string BeginMethodName { get; }
+            internal bool IsDisposed { get; private set; }
 
             #endregion
 
@@ -185,6 +232,12 @@ namespace KGySoft.Threading
                     return waitHandle;
                 }
             }
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object? IAsyncContext.State => AsyncState;
 
             #endregion
 
@@ -674,13 +727,59 @@ namespace KGySoft.Threading
             }
         }
 
+        public static void DoOperationSynchronously(Action<IAsyncContext> operation, ParallelConfig? configuration)
+        {
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
+
+            if (configuration?.IsCancelRequestedCallback?.Invoke() == true)
+            {
+                if (configuration.ThrowIfCanceled)
+                    Throw.InvalidOperationException(Res.OperationCanceled);
+                return;
+            }
+
+            try
+            {
+                operation.Invoke(configuration == null ? DefaultContext : new SyncContext(configuration));
+            }
+            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
+            {
+            }
+        }
+
+        public static TResult? DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, ParallelConfig? configuration)
+            => DoOperationSynchronously(operation, default, configuration);
+
+        public static TResult DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, ParallelConfig? configuration)
+        {
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
+
+            if (configuration?.IsCancelRequestedCallback?.Invoke() == true)
+            {
+                if (configuration.ThrowIfCanceled)
+                    Throw.InvalidOperationException(Res.OperationCanceled);
+                return canceledResult;
+            }
+
+            try
+            {
+                return operation.Invoke(configuration == null ? DefaultContext : new SyncContext(configuration));
+            }
+            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
+            {
+                return canceledResult;
+            }
+        }
+
 #if !NET35
         public static Task<TResult?> DoOperationAsync<TResult>(Func<IAsyncContext, TResult?> operation, TaskConfig? asyncConfig)
             => DoOperationAsync(operation, default, asyncConfig);
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
-        public static Task<TResult?> DoOperationAsync<TResult>(Func<IAsyncContext, TResult?> operation, TResult canceledResult, TaskConfig? asyncConfig)
+        public static Task<TResult> DoOperationAsync<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, TaskConfig? asyncConfig)
         {
             #region Local Methods
 
@@ -716,14 +815,16 @@ namespace KGySoft.Threading
 
             #endregion
 
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
             var taskContext = new TaskContext(asyncConfig);
-            var completionSource = new TaskCompletionSource<TResult?>(taskContext.State);
+            var completionSource = new TaskCompletionSource<TResult>(taskContext.State);
             if (taskContext.IsCancellationRequested)
             {
                 if (taskContext.ThrowIfCanceled)
                     completionSource.SetCanceled();
                 else
-                    completionSource.SetResult(default);
+                    completionSource.SetResult(canceledResult);
             }
             else
                 ThreadPool.QueueUserWorkItem(DoWork!, (taskContext, completionSource, operation, canceledResult));
@@ -764,6 +865,8 @@ namespace KGySoft.Threading
 
             #endregion
 
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
             var taskContext = new TaskContext(asyncConfig);
             var completionSource = new TaskCompletionSource<object?>(taskContext.State);
             if (taskContext.IsCancellationRequested)

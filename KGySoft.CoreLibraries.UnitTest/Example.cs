@@ -1,4 +1,5 @@
-﻿#nullable enable
+﻿#if !NET35
+#nullable enable
 
 using System;
 using System.Drawing;
@@ -42,7 +43,7 @@ public static class Example
 
         // The actual processing for Task returning async methods.
         return AsyncHelper.DoOperationAsync(ctx => ProcessToGrayscale(ctx, bitmap), asyncConfig);
-    }
+    } 
 
     // The old-style Begin/End methods that work even in .NET Framework 3.5. Can be omitted if not needed.
     public static IAsyncResult BeginToGrayscale(Bitmap bitmap, AsyncConfig? asyncConfig = null)
@@ -148,8 +149,9 @@ public static class Example
         }
     }
 
-    public static void Main()
-    {
+    //public static void Main()
+    //{
 
-    }
+    //}
 }
+#endif
