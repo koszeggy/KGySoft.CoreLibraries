@@ -732,20 +732,24 @@ namespace KGySoft.Threading
             if (operation == null!)
                 Throw.ArgumentNullException<string>(Argument.operation);
 
-            if (configuration?.IsCancelRequestedCallback?.Invoke() == true)
+            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
+            if (context.IsCancellationRequested)
             {
-                if (configuration.ThrowIfCanceled)
+                if (configuration?.ThrowIfCanceled != false)
                     Throw.InvalidOperationException(Res.OperationCanceled);
                 return;
             }
 
             try
             {
-                operation.Invoke(configuration == null ? DefaultContext : new SyncContext(configuration));
+                operation.Invoke(context);
             }
             catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
             {
             }
+
+            if (context.IsCancellationRequested && configuration?.ThrowIfCanceled != false)
+                Throw.InvalidOperationException(Res.OperationCanceled);
         }
 
         public static TResult? DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, ParallelConfig? configuration)
@@ -756,21 +760,47 @@ namespace KGySoft.Threading
             if (operation == null!)
                 Throw.ArgumentNullException<string>(Argument.operation);
 
-            if (configuration?.IsCancelRequestedCallback?.Invoke() == true)
+            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
+            if (context.IsCancellationRequested)
             {
-                if (configuration.ThrowIfCanceled)
+                if (configuration?.ThrowIfCanceled != false)
                     Throw.InvalidOperationException(Res.OperationCanceled);
                 return canceledResult;
             }
 
             try
             {
-                return operation.Invoke(configuration == null ? DefaultContext : new SyncContext(configuration));
+                TResult result = operation.Invoke(context);
+                if (!context.IsCancellationRequested)
+                    return result;
             }
             catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
             {
                 return canceledResult;
             }
+
+            if (configuration?.ThrowIfCanceled != false)
+                Throw.InvalidOperationException(Res.OperationCanceled);
+            return canceledResult;
+        }
+
+        public static void HandleCompleted(ParallelConfig? configuration)
+        {
+            if (configuration?.IsCancelRequestedCallback?.Invoke() == true && configuration.ThrowIfCanceled)
+                Throw.InvalidOperationException(Res.OperationCanceled);
+        }
+
+        public static TResult? FromResult<TResult>(TResult result, ParallelConfig? configuration)
+            => FromResult(result, default, configuration);
+
+        public static TResult FromResult<TResult>(TResult result, TResult canceledResult, ParallelConfig? configuration)
+        {
+            if (configuration?.IsCancelRequestedCallback?.Invoke() != true)
+                return result;
+
+            if (configuration.ThrowIfCanceled)
+                Throw.InvalidOperationException(Res.OperationCanceled);
+            return canceledResult;
         }
 
 #if !NET35
@@ -885,7 +915,7 @@ namespace KGySoft.Threading
         public static Task FromCompleted(TaskConfig? asyncConfig)
         {
             var taskContext = new TaskContext(asyncConfig);
-            var completionSource = new TaskCompletionSource<_>(taskContext.State);
+            var completionSource = new TaskCompletionSource<object?>(taskContext.State);
             if (taskContext.IsCancellationRequested && taskContext.ThrowIfCanceled)
                 completionSource.SetCanceled();
             else
@@ -894,10 +924,10 @@ namespace KGySoft.Threading
             return completionSource.Task;
         }
 
-        public static Task<TResult> FromResult<TResult>(TResult result, TaskConfig? asyncConfig)
-            => FromResult(result, default!, asyncConfig);
+        public static Task<TResult?> FromResult<TResult>(TResult result, TaskConfig? asyncConfig)
+            => FromResult(result, default, asyncConfig);
 
-        public static Task<TResult> FromResult<TResult>(TResult result, TResult canceledValue, TaskConfig? asyncConfig)
+        public static Task<TResult> FromResult<TResult>(TResult result, TResult canceledResult, TaskConfig? asyncConfig)
         {
             var taskContext = new TaskContext(asyncConfig);
             var completionSource = new TaskCompletionSource<TResult>(taskContext.State);
@@ -906,7 +936,7 @@ namespace KGySoft.Threading
                 if (taskContext.ThrowIfCanceled)
                     completionSource.SetCanceled();
                 else
-                    completionSource.SetResult(canceledValue);
+                    completionSource.SetResult(canceledResult);
             }
             else
                 completionSource.SetResult(result);
