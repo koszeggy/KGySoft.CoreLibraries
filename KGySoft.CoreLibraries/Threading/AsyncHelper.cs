@@ -736,7 +736,7 @@ namespace KGySoft.Threading
             if (context.IsCancellationRequested)
             {
                 if (configuration?.ThrowIfCanceled != false)
-                    Throw.InvalidOperationException(Res.OperationCanceled);
+                    Throw.OperationCanceledException();
                 return;
             }
 
@@ -749,7 +749,7 @@ namespace KGySoft.Threading
             }
 
             if (context.IsCancellationRequested && configuration?.ThrowIfCanceled != false)
-                Throw.InvalidOperationException(Res.OperationCanceled);
+                Throw.OperationCanceledException();
         }
 
         public static TResult? DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, ParallelConfig? configuration)
@@ -764,7 +764,7 @@ namespace KGySoft.Threading
             if (context.IsCancellationRequested)
             {
                 if (configuration?.ThrowIfCanceled != false)
-                    Throw.InvalidOperationException(Res.OperationCanceled);
+                    Throw.OperationCanceledException();
                 return canceledResult;
             }
 
@@ -780,14 +780,14 @@ namespace KGySoft.Threading
             }
 
             if (configuration?.ThrowIfCanceled != false)
-                Throw.InvalidOperationException(Res.OperationCanceled);
+                Throw.OperationCanceledException();
             return canceledResult;
         }
 
         public static void HandleCompleted(ParallelConfig? configuration)
         {
             if (configuration?.IsCancelRequestedCallback?.Invoke() == true && configuration.ThrowIfCanceled)
-                Throw.InvalidOperationException(Res.OperationCanceled);
+                Throw.OperationCanceledException();
         }
 
         public static TResult? FromResult<TResult>(TResult result, ParallelConfig? configuration)
@@ -799,7 +799,7 @@ namespace KGySoft.Threading
                 return result;
 
             if (configuration.ThrowIfCanceled)
-                Throw.InvalidOperationException(Res.OperationCanceled);
+                Throw.OperationCanceledException();
             return canceledResult;
         }
 

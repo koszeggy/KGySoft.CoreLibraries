@@ -69,8 +69,8 @@ namespace KGySoft.Threading
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
         /// <para>This method has no return type because if there was no exception, then the loop is guaranteed to be completed.</para>
         /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation or reporting progress.
-        /// Use the <see cref="O:KGySoft.Threading.ParallelHelper.For">For</see> overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization,
-        /// set up cancellation or to report progress, or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginFor">BeginFor</see>/<see cref="O:KGySoft.Threading.ParallelHelper.ForAsync">ForAsync</see>
+        /// Use the <see cref="For{T}(T, int, int, ParallelConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation, report progress;
+        /// or the <see cref="BeginFor{T}(T, int, int, AsyncConfig?, Action{int})"/>/<see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/>
         /// (in .NET Framework 4.0 and above) methods to do these asynchronously.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
@@ -90,9 +90,9 @@ namespace KGySoft.Threading
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
-        /// <param name="configuration">An optional configuration to adjust parallelization, cancellation or reporting progress.
-        /// If <see cref="AsyncConfigBase.Progress"/> is set, this overload passes a <see langword="null"/>&#160;reference with <see cref="object"/> type
-        /// in the <c>operationType</c> parameter on calling the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation.
+        /// This method does not report progress even if <see cref="AsyncConfigBase.Progress"/> is set in this parameter.
+        /// To report progress use the <see cref="For{T}(T, int, int, ParallelConfig?, Action{int})"/> overload.</param>
         /// <param name="body">The delegate that is invoked once per iteration.</param>
         /// <returns><see langword="true"/>, if the operation completed successfully.
         /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
@@ -106,7 +106,8 @@ namespace KGySoft.Threading
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
-        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/>.</param>
+        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/>.
+        /// Progress is reported only if this parameter is not <see langword="null"/>.</param>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
         /// <param name="configuration">An optional configuration to adjust parallelization, cancellation or reporting progress.</param>
@@ -117,9 +118,9 @@ namespace KGySoft.Threading
         /// <para>This method is similar to <see cref="Parallel.For(int, int, ParallelOptions, Action{int})">Parallel.For(int, int, ParallelOptions, Action&lt;int>)</see>
         /// but it can be used even in .NET Framework 3.5 and supports reporting progress.</para>
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
-        /// <para>If <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/> and there is at least one iteration,
-        /// then the <see cref="IAsyncProgress.New{T}"/> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
-        /// It will be followed by as many <see cref="IAsyncProgress.Increment"/> calls as many iterations were completed successfully.</para>
+        /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/> and there is at least one iteration,
+        /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
+        /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>
         /// <note>This method blocks the caller until the iterations are completed. To perform the execution asynchronously use
         /// the <see cref="O:KGySoft.Threading.ParallelHelper.BeginFor">BeginFor</see> or <see cref="O:KGySoft.Threading.ParallelHelper.ForAsync">ForAsync</see>
         /// (in .NET Framework 4.0 and above) methods.</note>
@@ -149,9 +150,8 @@ namespace KGySoft.Threading
         /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndFor">EndFor</see> method.</para>
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <note>This method adjusts the degree of parallelization automatically and does not support cancellation or reporting progress.
-        /// Use the <see cref="O:KGySoft.Threading.ParallelHelper.BeginFor">BeginFor</see> overloads with an <see cref="AsyncConfig"/> parameter to adjust parallelization,
-        /// set up cancellation or to report progress, or the <see cref="O:KGySoft.Threading.ParallelHelper.ForAsync">ForAsync</see> methods with <see cref="TaskConfig"/> parameter
-        /// (if you target .NET Framework 4.0 or later).</note>
+        /// Use the <see cref="BeginFor{T}(T, int, int, AsyncConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation, report progress;
+        /// or the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> method if you target .NET Framework 4.0 or later.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
         public static IAsyncResult BeginFor(int fromInclusive, int toExclusive, Action<int> body)
@@ -163,9 +163,9 @@ namespace KGySoft.Threading
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
-        /// <param name="asyncConfig">An optional configuration to adjust parallelization, cancellation, completion callback or reporting progress.
-        /// If <see cref="AsyncConfigBase.Progress"/> is set, this overload passes a <see langword="null"/>&#160;reference with <see cref="object"/> type
-        /// in the <c>operationType</c> parameter on calling the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization, cancellation or completion callback.
+        /// This method does not report progress even if <see cref="AsyncConfigBase.Progress"/> is set in this parameter.
+        /// To report progress use the <see cref="BeginFor{T}(T, int, int, AsyncConfig?, Action{int})"/> overload.</param>
         /// <param name="body">The delegate that is invoked once per iteration.</param>
         /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
@@ -177,7 +177,8 @@ namespace KGySoft.Threading
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
-        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.</param>
+        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.
+        /// Progress is reported only if this parameter is not <see langword="null"/>.</param>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
         /// <param name="asyncConfig">An optional configuration to adjust parallelization, cancellation, completion callback or reporting progress.</param>
@@ -187,9 +188,9 @@ namespace KGySoft.Threading
         /// <para>In .NET Framework 4.0 and above you can use also the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> method.</para>
         /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndFor">EndFor</see> method.</para>
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
-        /// <para>If <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
-        /// then the <see cref="IAsyncProgress.New{T}"/> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
-        /// It will be followed by as many <see cref="IAsyncProgress.Increment"/> calls as many iterations were completed successfully.</para>
+        /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
+        /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
+        /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
@@ -211,6 +212,8 @@ namespace KGySoft.Threading
         /// <returns><see langword="true"/>, if the operation completed successfully.
         /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in the <c>asyncConfig</c> parameter was set to <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="asyncResult"/> is <see langword="null"/>.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="asyncResult"/> was not returned by a <see cref="O:KGySoft.Threading.ParallelHelper.BeginFor">BeginFor</see> overload or
+        /// this method was called with the same instance multiple times.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in the <c>asyncConfig</c> parameter was <see langword="true"/>.</exception>
         public static bool EndFor(IAsyncResult asyncResult) => AsyncHelper.EndOperation<bool>(asyncResult, nameof(BeginFor));
 
@@ -227,8 +230,7 @@ namespace KGySoft.Threading
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <para>The <see cref="Task"/> returned by this method has no result because if there was no exception, then the loop is guaranteed to be completed.</para>
         /// <note>This method adjusts the degree of parallelization automatically and does not support cancellation or reporting progress.
-        /// Use the <see cref="O:KGySoft.Threading.ParallelHelper.ForAsync">ForAsync</see> overloads with a <see cref="TaskConfig"/> parameter to adjust parallelization,
-        /// set up cancellation or to report progress.</note>
+        /// Use the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation or to report progress.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
         public static Task ForAsync(int fromInclusive, int toExclusive, Action<int> body)
@@ -240,9 +242,9 @@ namespace KGySoft.Threading
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
-        /// <param name="asyncConfig">An optional configuration to adjust parallelization, cancellation, completion callback or reporting progress.
-        /// If <see cref="AsyncConfigBase.Progress"/> is set, this overload passes a <see langword="null"/>&#160;reference with <see cref="object"/> type
-        /// in the <c>operationType</c> parameter on calling the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation.
+        /// This method does not report progress even if <see cref="AsyncConfigBase.Progress"/> is set in this parameter.
+        /// To report progress use the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> overload.</param>
         /// <param name="body">The delegate that is invoked once per iteration.</param>
         /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
         /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
@@ -255,7 +257,8 @@ namespace KGySoft.Threading
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
-        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.</param>
+        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.
+        /// Progress is reported only if this parameter is not <see langword="null"/>.</param>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
         /// <param name="asyncConfig">An optional configuration to adjust parallelization, cancellation, completion callback or reporting progress.</param>
@@ -264,9 +267,9 @@ namespace KGySoft.Threading
         /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
-        /// <para>If <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
-        /// then the <see cref="IAsyncProgress.New{T}"/> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
-        /// It will be followed by as many <see cref="IAsyncProgress.Increment"/> calls as many iterations were completed successfully.</para>
+        /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
+        /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
+        /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
@@ -289,7 +292,8 @@ namespace KGySoft.Threading
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="context">Contains information for asynchronous processing about the current operation.</param>
-        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> in <paramref name="context"/> is not <see langword="null"/>.</param>
+        /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> in <paramref name="context"/> is not <see langword="null"/>.
+        /// Progress is reported only if this parameter is not <see langword="null"/>.</param>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
         /// <param name="body">The delegate that is invoked once per iteration.</param>
@@ -324,7 +328,7 @@ namespace KGySoft.Threading
             void DoWorkWithProgress(int y)
             {
                 body.Invoke(y);
-                context.Progress.Increment();
+                context.Progress!.Increment();
             }
 
             void DoWorkWithCancellation(int y, ParallelLoopState state)
@@ -355,7 +359,9 @@ namespace KGySoft.Threading
 
             Debug.Assert(toExclusive > fromInclusive);
             int count = toExclusive - fromInclusive;
-            context.Progress?.New(operation, count);
+            bool reportProgress = context.Progress != null && operation != null;
+            if (reportProgress)
+                context.Progress!.New(operation, count);
 
             // a single iteration: invoke once
             if (count == 1)
@@ -364,7 +370,8 @@ namespace KGySoft.Threading
                     return false;
 
                 body.Invoke(fromInclusive);
-                context.Progress?.Increment();
+                if (reportProgress)
+                    context.Progress!.Increment();
                 return true;
             }
 
@@ -376,7 +383,8 @@ namespace KGySoft.Threading
                     if (context.IsCancellationRequested)
                         return false;
                     body.Invoke(i);
-                    context.Progress?.Increment();
+                    if (reportProgress)
+                        context.Progress!.Increment();
                 }
 
                 return true;
@@ -408,7 +416,8 @@ namespace KGySoft.Threading
                         try
                         {
                             body.Invoke(value);
-                            context.Progress?.Increment();
+                            if (reportProgress)
+                                context.Progress!.Increment();
                         }
                         catch (Exception e)
                         {
@@ -445,7 +454,8 @@ namespace KGySoft.Threading
                                 if (context.IsCancellationRequested)
                                     return;
                                 body.Invoke(i);
-                                context.Progress?.Increment();
+                                if (reportProgress)
+                                    context.Progress!.Increment();
                             }
                         }
                         catch (Exception e)
@@ -471,9 +481,9 @@ namespace KGySoft.Threading
             Action<int, ParallelLoopState>? bodyWithState = null;
             Action<int>? simpleBody = null;
             if (context.CanBeCanceled)
-                bodyWithState = context.Progress == null ? DoWorkWithCancellation : DoWorkWithCancellationAndProgress;
+                bodyWithState = reportProgress ? DoWorkWithCancellationAndProgress : DoWorkWithCancellation;
             else
-                simpleBody = context.Progress == null ? body : DoWorkWithProgress;
+                simpleBody = reportProgress ? DoWorkWithProgress : body;
 
             int rangeSize;
             ParallelOptions options;
@@ -499,7 +509,7 @@ namespace KGySoft.Threading
             }
 
             // We merge some iterations to be processed by the same core
-            // NOTE: We could use CreateRanges just like for .NET Framework 3.5 but even though it allocates less an uses value tuples,
+            // NOTE: We could use CreateRanges just like for .NET Framework 3.5 but even though it allocates less and uses value tuples,
             //       processing some general IEnumerable<> seems to be slower than processing the returned OrderablePartitioner<> instance.
             OrderablePartitioner<Tuple<int, int>> ranges = Partitioner.Create(fromInclusive, toExclusive, rangeSize);
             if (bodyWithState != null)

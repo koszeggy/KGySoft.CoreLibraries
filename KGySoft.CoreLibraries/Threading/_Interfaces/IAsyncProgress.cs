@@ -15,9 +15,6 @@
 
 #region Usings
 
-#if !(NET35 || NET40)
-using System;
-#endif
 #if !NET35
 using System.Threading.Tasks;
 #endif
@@ -35,9 +32,6 @@ namespace KGySoft.Threading
     /// It provides methods for updating the progress from concurrent threads.
     /// </summary>
     public interface IAsyncProgress
-#if !(NET35 || NET40)
-        : IProgress<AsyncProgress<object>>
-#endif
     {
         #region Methods
 
