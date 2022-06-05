@@ -22,8 +22,8 @@ using System;
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// Represents the base class for configuration of asynchronous operations.
-    /// <br/>See the <strong>Remarks</strong> section of the <see cref="AsyncHelper"/> class for details.
+    /// Represents the base class for configuration of possibly asynchronous and multi-threaded operations.
+    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public abstract class AsyncConfigBase
     {
@@ -44,7 +44,8 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Gets or sets whether an <see cref="OperationCanceledException"/> should be thrown when ending or awaiting a canceled async operation.
-        /// If the value of this property is <see langword="false"/>, then canceled operations with a return value will return the default value of their return type.
+        /// If the value of this property is <see langword="false"/>, then canceled operations with a return value will return some default value,
+        /// which is usually the default value of their return type.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         public bool ThrowIfCanceled { get; set; } = true;

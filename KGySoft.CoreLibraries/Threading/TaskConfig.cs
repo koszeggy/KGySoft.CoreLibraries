@@ -25,7 +25,7 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents asynchronous configuration for <see cref="Task"/>-returning methods.
-    /// <br/>See the <strong>Remarks</strong> section of the <see cref="AsyncHelper"/> class for details.
+    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public class TaskConfig : AsyncConfigBase
     {

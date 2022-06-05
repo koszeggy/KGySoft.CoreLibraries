@@ -47,13 +47,15 @@ namespace KGySoft.Threading
         /// after starting a new progress because this method cannot guarantee that <see cref="AsyncProgress{T}.CurrentValue"/> will be a strictly
         /// increasing value when called from <see cref="Parallel"/> members, for example.
         /// </summary>
+        /// <typeparam name="T">The type of the <see cref="AsyncProgress{T}.OperationType"/> property in the specified <paramref name="progress"/>.</typeparam>
         /// <param name="progress">The value of the updated progress.</param>
         void Report<T>(AsyncProgress<T> progress);
 
         /// <summary>
         /// Indicates that a new progress session is started that consists of <paramref name="maximumValue"/> steps.
         /// </summary>
-        /// <param name="operationType">Type of the new operation.</param>
+        /// <typeparam name="T">The type of the <paramref name="operationType"/> parameter.</typeparam>
+        /// <param name="operationType">An instance if <typeparamref name="T"/> that describes the type of the new operation.</param>
         /// <param name="maximumValue">Specifies the possible maximum steps of the new operation (the <see cref="Increment">Increment</see> method is recommended to be called later on
         /// if a parallel processing does not know or may reorder the current step). 0 means an operation with no separate steps. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
@@ -77,7 +79,7 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Indicates that a progress value of the last <see cref="New{T}">New</see> or <see cref="Report{T}">Report</see> method should be set to the maximum value.
-        /// It is not required to be called at the end of each sessions so it just indicated that whatever progress has reached the last step.
+        /// It is not required to be called at the end of each sessions so it just indicates that whatever progress has reached the last step.
         /// </summary>
         void Complete();
 

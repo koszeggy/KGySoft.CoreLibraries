@@ -27,7 +27,7 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents asynchronous configuration for <see cref="IAsyncResult"/>-returning methods.
-    /// <br/>See the <strong>Remarks</strong> section of the <see cref="AsyncHelper"/> class for details.
+    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public class AsyncConfig : ParallelConfig
     {
@@ -35,6 +35,7 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Gets or sets a callback that will be invoked when the operation is completed.
+        /// This property is ignored for methods that expect a <see cref="ParallelConfig"/> parameter.
         /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         public AsyncCallback? CompletedCallback { get; set; }
