@@ -18,7 +18,16 @@
 using System;
 #if !NET35
 using System.Threading;
-using System.Threading.Tasks; 
+using System.Threading.Tasks;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#pragma warning disable CS1580 // the documentation contains types that are not available in every target
 #endif
 
 #endregion

@@ -48,24 +48,24 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        //internal static void Main()
-        //{
-        //    // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
-        //    // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
-        //    // or just calling the method to debug directly
-        //    Console.WriteLine(FrameworkVersion);
+        internal static void Main()
+        {
+            // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
+            // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
+            // or just calling the method to debug directly
+            Console.WriteLine(FrameworkVersion);
 
-        //    var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
-        //    runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
-        //    Console.WriteLine("Executing tests...");
-        //    ITestResult result = runner.Run(null, TestFilter.Empty);
-        //    Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
-        //        : result.SkipCount > 0 ? ConsoleColor.Yellow
-        //        : ConsoleColor.Green;
-        //    Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Skipped: {result.SkipCount}");
-        //    Console.WriteLine($"Message: {result.Message}");
-        //    ProcessChildren(result.Children);
-        //}
+            var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
+            runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
+            Console.WriteLine("Executing tests...");
+            ITestResult result = runner.Run(null, TestFilter.Empty);
+            Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
+                : result.SkipCount > 0 ? ConsoleColor.Yellow
+                : ConsoleColor.Green;
+            Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Skipped: {result.SkipCount}");
+            Console.WriteLine($"Message: {result.Message}");
+            ProcessChildren(result.Children);
+        }
 
         private static void ProcessChildren(IEnumerable<ITestResult> children)
         {

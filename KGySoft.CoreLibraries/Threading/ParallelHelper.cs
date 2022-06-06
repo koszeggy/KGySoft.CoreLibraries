@@ -20,10 +20,18 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
-using System.Threading; 
+using System.Threading;
 #else
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
 #endregion
@@ -249,6 +257,8 @@ namespace KGySoft.Threading
         /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
         /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> ForAsync(int fromInclusive, int toExclusive, TaskConfig? asyncConfig, Action<int> body)
             => ForAsync<object?>(null, fromInclusive, toExclusive, asyncConfig, body);
 
@@ -273,6 +283,8 @@ namespace KGySoft.Threading
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> ForAsync<T>(T operation, int fromInclusive, int toExclusive, TaskConfig? asyncConfig, Action<int> body)
         {
             if (body == null!)
@@ -285,10 +297,10 @@ namespace KGySoft.Threading
 #endif
 
         /// <summary>
-        /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>.
-        /// The call is blocking on the caller thread but as it has a <paramref name="context"/> parameter it makes possible to use an already created context from an optionally async caller.
+        /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>. The call is blocking on the
+        /// caller thread but it might already be a worker thread if <paramref name="context"/> was created by one of the <see cref="AsyncHelper"/> members.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class to see how to create sync and async methods (supporting
-        /// both <see cref="Task"/> and <see cref="IAsyncResult"/> return types) with parallel processing using a single shared core implementation with an <see cref="IAsyncContext"/> parameter.
+        /// both <see cref="Task"/> and <see cref="IAsyncResult"/> return types) using the same shared implementation with an <see cref="IAsyncContext"/> parameter.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="context">Contains information for asynchronous processing about the current operation.</param>

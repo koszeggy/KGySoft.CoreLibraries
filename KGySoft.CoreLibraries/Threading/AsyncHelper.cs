@@ -27,15 +27,167 @@ using System.Threading.Tasks;
 
 #endregion
 
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#pragma warning disable CS8620 // nullability of generic delegates is detected incorrectly for .NET Framework 3.5
+#endif
+
+#endregion
+
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// A helper class to implement CPU-bound async operations returning either an <see cref="IAsyncResult"/> or a <see cref="Task"/> (.NET Framework 4.0 and above) instance
-    /// that can be configured by an <see cref="AsyncConfig"/> or <see cref="TaskConfig"/> parameter, respectively.
+    /// A helper class to implement CPU-bound operations with adjustable parallelization, cancellation and progress reporting,
+    /// allowing a single shared implementation for both sync and async overloads where the latter can be
+    /// either <see cref="IAsyncResult"/> or <see cref="Task"/> (.NET Framework 4.0 and later) returning methods.
     /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <example>
-    /// TODO
+    /// The following example demonstrates how to use the <see cref="AsyncHelper"/> class to create sync/async versions of a method
+    /// sharing the common implementation in a single method.
+    /// <code lang="C#"><![CDATA[
+    /// #nullable enable
+    /// 
+    /// using System;
+    /// using System.Threading;
+    /// using System.Threading.Tasks;
+    /// 
+    /// using KGySoft;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Reflection;
+    /// using KGySoft.Security.Cryptography;
+    /// using KGySoft.Threading;
+    /// 
+    /// public static class Example
+    /// {
+    ///     // The sync version. This method is blocking, cannot be canceled, does not report progress and auto adjusts parallelization.
+    ///     public static double[] GenerateRandomValues(int count, double min, double max)
+    ///     {
+    ///         ValidateArguments(count, min, max);
+    /// 
+    ///         // Just to demonstrate some immediate return (which is quite trivial in this overload).
+    ///         if (count == 0)
+    ///             return Reflector.EmptyArray<double>(); // same as Array.Empty but available also for older targets
+    /// 
+    ///         // The actual processing is called directly from this overload with DefaultContext. The result is never null from here.
+    ///         return DoGenerateRandomValues(AsyncHelper.DefaultContext, count, min, max)!;
+    ///     }
+    /// 
+    ///     // Another sync overload. This is still blocking but allows cancellation, reporting progress and adjusting parallelization.
+    ///     // The result can be null if the operation is canceled and config.ThrowIfCanceled was false.
+    ///     public static double[]? GenerateRandomValues(int count, double min, double max, ParallelConfig? config)
+    ///     {
+    ///         ValidateArguments(count, min, max);
+    /// 
+    ///         // For immediate return use AsyncHelper.FromResult, which handles throwing possible OperationCanceledException
+    ///         // or returning null if config.ThrowIfCanceled was false. For void methods use AsyncHelper.HandleCompleted instead.
+    ///         if (count == 0)
+    ///             return AsyncHelper.FromResult(Reflector.EmptyArray<double>(), config);
+    /// 
+    ///         // Even though this is a synchronous call, use AsyncHelper to take care of the context and handle cancellation.
+    ///         return AsyncHelper.DoOperationSynchronously(context => DoGenerateRandomValues(context, count, min, max), config);
+    ///     }
+    /// 
+    ///     // The Task-returning version. Requires .NET Framework 4.0 or later and can be awaited in .NET Framework 4.5 or later.
+    ///     public static Task<double[]?> GenerateRandomValuesAsync(int count, double min, double max, TaskConfig? asyncConfig = null)
+    ///     {
+    ///         ValidateArguments(count, min, max);
+    /// 
+    ///         // Use AsyncContext.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled properly.
+    ///         // To return a Task without a result use AsyncHelper.FromCompleted instead.
+    ///         if (count == 0)
+    ///             return AsyncHelper.FromResult(Reflector.EmptyArray<double>(), asyncConfig);
+    /// 
+    ///         // The actual processing for Task returning async methods.
+    ///         return AsyncHelper.DoOperationAsync(context => DoGenerateRandomValues(context, count, min, max), asyncConfig);
+    ///     }
+    /// 
+    ///     // The old-style Begin/End methods that work even in .NET Framework 3.5. Can be omitted if not needed.
+    ///     public static IAsyncResult BeginGenerateRandomValues(int count, double min, double max, AsyncConfig? asyncConfig = null)
+    ///     {
+    ///         ValidateArguments(count, min, max);
+    /// 
+    ///         // Use AsyncContext.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled and
+    ///         // sets IAsyncResult.CompletedSynchronously. Use AsyncHelper.FromCompleted if the End method has no return value.
+    ///         if (count == 0)
+    ///             return AsyncHelper.FromResult(Reflector.EmptyArray<double>(), asyncConfig);
+    /// 
+    ///         // The actual processing for IAsyncResult returning async methods.
+    ///         return AsyncHelper.BeginOperation(context => DoGenerateRandomValues(context, count, min, max), asyncConfig);
+    ///     }
+    /// 
+    ///     // Note that the name of "BeginGenerateRandomValues" is explicitly specified here.
+    ///     // Older compilers need it also for AsyncContext.BeginOperation.
+    ///     public static double[]? EndGenerateRandomValues(IAsyncResult asyncResult)
+    ///         => AsyncHelper.EndOperation<double[]?>(asyncResult, nameof(BeginGenerateRandomValues));
+    /// 
+    ///     // The method of the actual processing has the same parameters as the sync version after an IAsyncContext parameter.
+    ///     // The result can be null if the operation is canceled (but see also the next comment)
+    ///     private static double[]? DoGenerateRandomValues(IAsyncContext context, int count, double min, double max)
+    ///     {
+    ///         // Not throwing OperationCanceledException explicitly: it will be thrown by the caller
+    ///         // if the asyncConfig.ThrowIfCanceled was true in the async overloads.
+    ///         // Actually we could call context.ThrowIfCancellationRequested() that would be caught conditionally by the caller
+    ///         // but use that only if really needed because using exceptions as control flow is really ineffective.
+    ///         if (context.IsCancellationRequested)
+    ///             return null;
+    /// 
+    ///         // New progress without max value: in a UI this can be displayed with some indeterminate progress bar/circle
+    ///         context.Progress?.New("Initializing");
+    ///         Thread.Sleep(100); // imitating some really slow initialization, blocking the current thread
+    ///         var result = new double[count];
+    ///         using var rnd = new SecureRandom(); // just because it's slow
+    /// 
+    ///         // We should periodically check after longer steps whether the processing has already been canceled
+    ///         if (context.IsCancellationRequested)
+    ///             return null;
+    /// 
+    ///         // Possible shortcut: ParallelHelper has a For overload that can accept an already created context from
+    ///         // implementations like this one. It will call IAsyncProgress.New and IAsyncProgress.Increment implicitly.
+    ///         ParallelHelper.For(context, "Generating values", 0, count,
+    ///             body: i => result[i] = rnd.NextDouble(min, max, FloatScale.ForceLogarithmic)); // some slow number generation
+    /// 
+    ///         // Actually the previous ParallelHelper.For call returns false if the operation was canceled
+    ///         if (context.IsCancellationRequested)
+    ///             return null;
+    /// 
+    ///         // Alternative version with Parallel.For (only in .NET Framework 4.0 and above)
+    ///         context.Progress?.New("Generating values (alternative way)", maximumValue: count);
+    ///         Parallel.For(0, count,
+    ///             // for auto-adjusting parallelism ParallelOptions strictly requires -1, whereas context allows <= 0
+    ///             new ParallelOptions { MaxDegreeOfParallelism = context.MaxDegreeOfParallelism <= 0 ? -1 : context.MaxDegreeOfParallelism },
+    ///             (i, state) =>
+    ///             {
+    ///                 // Breaking the loop on cancellation. Note that we did not set a CancellationToken in ParallelOptions
+    ///                 // because if context comes from the .NET Framework 3.5-compatible Begin method it cannot even have any.
+    ///                 // But if you really need a CancellationToken you can pass one to asyncConfig.State from the caller.
+    ///                 if (context.IsCancellationRequested)
+    ///                 {
+    ///                     state.Stop();
+    ///                     return;
+    ///                 }
+    /// 
+    ///                 result[i] = rnd.NextDouble(min, max, FloatScale.ForceLogarithmic);
+    ///                 context.Progress?.Increment();
+    ///             });
+    /// 
+    ///         return context.IsCancellationRequested ? null : result;
+    ///     }
+    /// 
+    ///     private static void ValidateArguments(int count, double min, double max)
+    ///     {
+    ///         if (count < 0)
+    ///             throw new ArgumentOutOfRangeException(nameof(count), PublicResources.ArgumentMustBeGreaterThanOrEqualTo(0));
+    ///         if (Double.IsNaN(min))
+    ///             throw new ArgumentOutOfRangeException(nameof(min), PublicResources.ArgumentOutOfRange);
+    ///         if (Double.IsNaN(max))
+    ///             throw new ArgumentOutOfRangeException(nameof(max), PublicResources.ArgumentOutOfRange);
+    ///         if (max < min)
+    ///             throw new ArgumentException(PublicResources.MaxValueLessThanMinValue);
+    ///     }
+    /// }]]></code>
     /// </example>
     public static class AsyncHelper
     {
@@ -70,8 +222,9 @@ namespace KGySoft.Threading
         {
             #region Fields
 
+            private readonly Func<bool>? isCancelRequestedCallback;
+
             private volatile bool isCancellationRequested;
-            private Func<bool>? isCancelRequestedCallback;
 
             #endregion
 
@@ -173,10 +326,11 @@ namespace KGySoft.Threading
 
         #region AsyncResultContext class
 
-        private class AsyncResultContext : IAsyncResult, IAsyncContext
+        private class AsyncResultContext : IAsyncResult, IAsyncContext, IDisposable
         {
             #region Fields
 
+            private readonly bool throwIfCanceled = true;
             private volatile bool isCancellationRequested;
             private volatile bool isCompleted;
             private Func<bool>? isCancelRequestedCallback;
@@ -205,7 +359,6 @@ namespace KGySoft.Threading
 
             #region Internal Properties
 
-            internal bool ThrowIfCanceled { get; } = true;
             internal Action<IAsyncContext>? Operation { get; private set; }
             internal string BeginMethodName { get; }
             internal bool IsDisposed { get; private set; }
@@ -254,7 +407,7 @@ namespace KGySoft.Threading
                 MaxDegreeOfParallelism = asyncConfig.MaxDegreeOfParallelism;
                 callback = asyncConfig.CompletedCallback;
                 AsyncState = asyncConfig.State;
-                ThrowIfCanceled = asyncConfig.ThrowIfCanceled;
+                throwIfCanceled = asyncConfig.ThrowIfCanceled;
                 isCancelRequestedCallback = asyncConfig.IsCancelRequestedCallback;
                 Progress = asyncConfig.Progress;
             }
@@ -283,7 +436,7 @@ namespace KGySoft.Threading
             {
                 if (!isCompleted)
                     InternalWaitHandle.Wait();
-                if (isCancellationRequested && ThrowIfCanceled)
+                if (isCancellationRequested && throwIfCanceled)
                     ThrowOperationCanceled();
                 if (error != null)
                     ExceptionDispatchInfo.Capture(error).Throw();
@@ -547,12 +700,181 @@ namespace KGySoft.Threading
 
         #region Properties
 
+        /// <summary>
+        /// Gets a default context for non-async operations.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
         public static IAsyncContext DefaultContext => emptyContext ??= new EmptyContext();
 
         #endregion
 
         #region Methods
 
+        #region Sync
+
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> synchronously, in which some sub-operations may run in parallel.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static void DoOperationSynchronously(Action<IAsyncContext> operation, ParallelConfig? configuration)
+        {
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
+
+            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
+            if (context.IsCancellationRequested)
+            {
+                if (configuration?.ThrowIfCanceled != false)
+                    Throw.OperationCanceledException();
+                return;
+            }
+
+            try
+            {
+                operation.Invoke(context);
+            }
+            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
+            {
+            }
+
+            if (context.IsCancellationRequested && configuration?.ThrowIfCanceled != false)
+                Throw.OperationCanceledException();
+        }
+
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> synchronously, in which some sub-operations may run in parallel.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <returns>The result of the <paramref name="operation"/> if the operation has not been canceled,
+        /// or the default value of <typeparamref name="TResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static TResult? DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, ParallelConfig? configuration)
+            => DoOperationSynchronously(operation, default, configuration);
+
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> synchronously, in which some sub-operations may run in parallel.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="canceledResult">The result to be returned if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> of <paramref name="configuration"/> returns <see langword="false"/>.</param>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <returns>The result of the <paramref name="operation"/> if the operation has not been canceled,
+        /// or <paramref name="canceledResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static TResult DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, ParallelConfig? configuration)
+        {
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
+
+            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
+            if (context.IsCancellationRequested)
+            {
+                if (configuration?.ThrowIfCanceled != false)
+                    Throw.OperationCanceledException();
+                return canceledResult;
+            }
+
+            try
+            {
+                TResult result = operation.Invoke(context);
+                if (!context.IsCancellationRequested)
+                    return result;
+            }
+            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
+            {
+                return canceledResult;
+            }
+
+            if (configuration?.ThrowIfCanceled != false)
+                Throw.OperationCanceledException();
+            return canceledResult;
+        }
+
+        /// <summary>
+        /// This method can be used to immediately finish a synchronous operation that does not have a return value.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// The example uses the similarly working <see cref="FromResult{TResult}(TResult,ParallelConfig?)">FromResult</see> method.
+        /// </summary>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static void HandleCompleted(ParallelConfig? configuration)
+        {
+            if (configuration?.IsCancelRequestedCallback?.Invoke() == true && configuration.ThrowIfCanceled)
+                Throw.OperationCanceledException();
+        }
+
+        /// <summary>
+        /// This method can be used to immediately return from a synchronous operation that has a return value.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned if the operation was not canceled.</param>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <returns><paramref name="result"/> if the operation has not been canceled,
+        /// or the default value of <typeparamref name="TResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static TResult? FromResult<TResult>(TResult result, ParallelConfig? configuration)
+            => FromResult(result, default, configuration);
+
+        /// <summary>
+        /// This method can be used to immediately return from a synchronous operation that has a return value.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned if the operation has not been canceled.</param>
+        /// <param name="canceledResult">The result to be returned if the operation has been canceled.</param>
+        /// <param name="configuration">The configuration for the operation.</param>
+        /// <returns><paramref name="result"/> if the operation has not been canceled,
+        /// or <paramref name="canceledResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static TResult FromResult<TResult>(TResult result, TResult canceledResult, ParallelConfig? configuration)
+        {
+            if (configuration?.IsCancelRequestedCallback?.Invoke() != true)
+                return result;
+
+            if (configuration.ThrowIfCanceled)
+                Throw.OperationCanceledException();
+            return canceledResult;
+        }
+
+        #endregion
+
+        #region Async APM
+
+        /// <summary>
+        /// Exposes the specified <paramref name="operation"/> with no return value as an <see cref="IAsyncResult"/>-returning async operation.
+        /// The operation can be completed by calling the <see cref="EndOperation">EndOperation</see> method.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the <paramref name="operation"/>.
+        /// This must be passed also to the <see cref="EndOperation">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> or <paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when calling the EndOperation method.")]
         public static IAsyncResult BeginOperation(Action<IAsyncContext> operation, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
@@ -605,9 +927,39 @@ namespace KGySoft.Threading
             return asyncResult;
         }
 
+        /// <summary>
+        /// Exposes the specified <paramref name="operation"/> with a return value as an <see cref="IAsyncResult"/>-returning async operation.
+        /// To obtain the result the <see cref="EndOperation{TResult}">EndOperation</see> method must be called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the <paramref name="operation"/>.
+        /// This must be passed also to the <see cref="EndOperation{TResult}">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation{TResult}">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> or <paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         public static IAsyncResult BeginOperation<TResult>(Func<IAsyncContext, TResult> operation, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
             => BeginOperation(operation, default, asyncConfig, beginMethodName);
 
+        /// <summary>
+        /// Exposes the specified <paramref name="operation"/> with a return value as an <see cref="IAsyncResult"/>-returning async operation.
+        /// To obtain the result the <see cref="EndOperation{TResult}">EndOperation</see> method must be called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="canceledResult">The result to be returned by <see cref="EndOperation{TResult}">EndOperation</see> if the operation is canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> of <paramref name="asyncConfig"/> returns <see langword="false"/>.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the <paramref name="operation"/>.
+        /// This must be passed also to the <see cref="EndOperation{TResult}">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation{TResult}">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> or <paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
                 Justification = "Pool thread exceptions are not suppressed, they will be thrown when calling the EndOperation method.")]
         public static IAsyncResult BeginOperation<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
@@ -661,6 +1013,19 @@ namespace KGySoft.Threading
             return asyncResult;
         }
 
+        /// <summary>
+        /// Returns an <see cref="IAsyncResult"/> instance that represents an already completed operation without a result.
+        /// The <see cref="EndOperation">EndOperation</see> method still must be called with the result of this method.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// The example uses the similarly working <see cref="FromResult{TResult}(TResult,AsyncConfig?,string)">FromResult</see> method.
+        /// </summary>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the operation.
+        /// This must be passed also to the <see cref="EndOperation">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         public static IAsyncResult FromCompleted(AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
         {
             if (beginMethodName == null!)
@@ -672,9 +1037,39 @@ namespace KGySoft.Threading
             return asyncResult;
         }
 
+        /// <summary>
+        /// Returns an <see cref="IAsyncResult"/> instance that represents an already completed operation with a result.
+        /// To obtain the result the <see cref="EndOperation{TResult}">EndOperation</see> method must be called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned by the <see cref="EndOperation{TResult}">EndOperation</see> method if the operation has not been canceled.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the operation.
+        /// This must be passed also to the <see cref="EndOperation">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         public static IAsyncResult FromResult<TResult>(TResult result, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
             => FromResult(result, default, asyncConfig, beginMethodName);
 
+        /// <summary>
+        /// Returns an <see cref="IAsyncResult"/> instance that represents an already completed operation with a result.
+        /// To obtain the result the <see cref="EndOperation{TResult}">EndOperation</see> method must be called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned by the <see cref="EndOperation{TResult}">EndOperation</see> method if the operation has not been canceled.</param>
+        /// <param name="canceledResult">The result to be returned by <see cref="EndOperation{TResult}">EndOperation</see> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> of <paramref name="asyncConfig"/> returns <see langword="false"/>.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <param name="beginMethodName">The name of the method that represents the operation.
+        /// This must be passed also to the <see cref="EndOperation">EndOperation</see> method. This parameter is optional.
+        /// <br/>Default value: The name of the caller method when used with a compiler that recognizes <see cref="CallerMemberNameAttribute"/>; otherwise, <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> instance representing the asynchronous operation.
+        /// To complete the operation it must be passed to the <see cref="EndOperation">EndOperation</see> method.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         public static IAsyncResult FromResult<TResult>(TResult result, TResult canceledResult, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
         {
             if (beginMethodName == null!)
@@ -686,6 +1081,23 @@ namespace KGySoft.Threading
             return asyncResult;
         }
 
+        /// <summary>
+        /// Waits for the completion of an operation started by a corresponding <see cref="BeginOperation">BeginOperation</see>,
+        /// <see cref="FromResult{TResult}(TResult, TResult, AsyncConfig?, string)">FromResult</see> or <see cref="FromCompleted(AsyncConfig?,string)">FromCompleted</see> call.
+        /// If the operation is still running, then this method blocks the caller and waits for the completion.
+        /// The possibly occurred exceptions are also thrown then this method is called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <param name="asyncResult">The result of a corresponding <see cref="BeginOperation">BeginOperation</see> or <see cref="FromCompleted(AsyncConfig?,string)">FromCompleted</see> call.</param>
+        /// <param name="beginMethodName">The same name that was passed to the <see cref="BeginOperation">BeginOperation</see>,
+        /// <see cref="FromResult{TResult}(TResult, TResult, AsyncConfig?, string)">FromResult</see> or <see cref="FromCompleted(AsyncConfig?,string)">FromCompleted</see> method.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="asyncResult"/> is <see langword="null"/>.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="asyncResult"/> was not returned by the corresponding <see cref="BeginOperation">BeginOperation</see>
+        /// or <see cref="FromCompleted(AsyncConfig?,string)">FromCompleted</see> methods with a matching <paramref name="beginMethodName"/>
+        /// <br/>-or-
+        /// <br/>this method was already called for this <paramref name="asyncResult"/> instance.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in the corresponding <see cref="AsyncConfig"/> was <see langword="true"/>.</exception>
         public static void EndOperation(IAsyncResult asyncResult, string beginMethodName)
         {
             if (asyncResult == null!)
@@ -708,6 +1120,27 @@ namespace KGySoft.Threading
             }
         }
 
+        /// <summary>
+        /// Waits for the completion of an operation started by a corresponding <see cref="BeginOperation{TResult}(Func{IAsyncContext, TResult}, TResult, AsyncConfig?, string)">BeginOperation</see>
+        /// or <see cref="FromResult{TResult}(TResult, TResult, AsyncConfig?, string)">FromResult</see> call.
+        /// If the operation is still running, then this method blocks the caller and waits for the completion.
+        /// The possibly occurred exceptions are also thrown then this method is called.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="asyncResult">The result of a corresponding <see cref="BeginOperation{TResult}(Func{IAsyncContext, TResult}, AsyncConfig?, string)">BeginOperation</see>
+        /// or <see cref="FromResult{TResult}(TResult, AsyncConfig?, string)">FromResult</see> call.</param>
+        /// <param name="beginMethodName">The same name that was passed to the <see cref="BeginOperation{TResult}(Func{IAsyncContext, TResult}, AsyncConfig?, string)">BeginOperation</see>
+        /// or <see cref="FromResult{TResult}(TResult, AsyncConfig?, string)">FromResult</see> method.</param>
+        /// <returns>The result of the operation, or a default value representing the canceled result if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in the <c>asyncConfig</c> parameter was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="asyncResult"/> is <see langword="null"/>.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="asyncResult"/> was not returned by the corresponding <see cref="BeginOperation{TResult}(Func{IAsyncContext, TResult}, AsyncConfig?, string)">BeginOperation</see>
+        /// or <see cref="FromResult{TResult}(TResult, AsyncConfig?, string)">FromResult</see> methods with a matching <paramref name="beginMethodName"/>
+        /// <br/>-or-
+        /// <br/>this method was already called for this <paramref name="asyncResult"/> instance.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in the corresponding <see cref="AsyncConfig"/> was <see langword="true"/>.</exception>
         public static TResult EndOperation<TResult>(IAsyncResult asyncResult, string beginMethodName)
         {
             if (asyncResult == null!)
@@ -726,86 +1159,102 @@ namespace KGySoft.Threading
             }
         }
 
-        public static void DoOperationSynchronously(Action<IAsyncContext> operation, ParallelConfig? configuration)
-        {
-            if (operation == null!)
-                Throw.ArgumentNullException<string>(Argument.operation);
+        #endregion
 
-            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
-            if (context.IsCancellationRequested)
-            {
-                if (configuration?.ThrowIfCanceled != false)
-                    Throw.OperationCanceledException();
-                return;
-            }
-
-            try
-            {
-                operation.Invoke(context);
-            }
-            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
-            {
-            }
-
-            if (context.IsCancellationRequested && configuration?.ThrowIfCanceled != false)
-                Throw.OperationCanceledException();
-        }
-
-        public static TResult? DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, ParallelConfig? configuration)
-            => DoOperationSynchronously(operation, default, configuration);
-
-        public static TResult DoOperationSynchronously<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, ParallelConfig? configuration)
-        {
-            if (operation == null!)
-                Throw.ArgumentNullException<string>(Argument.operation);
-
-            IAsyncContext context = configuration == null ? DefaultContext : new SyncContext(configuration);
-            if (context.IsCancellationRequested)
-            {
-                if (configuration?.ThrowIfCanceled != false)
-                    Throw.OperationCanceledException();
-                return canceledResult;
-            }
-
-            try
-            {
-                TResult result = operation.Invoke(context);
-                if (!context.IsCancellationRequested)
-                    return result;
-            }
-            catch (OperationCanceledException) when (configuration?.ThrowIfCanceled == false)
-            {
-                return canceledResult;
-            }
-
-            if (configuration?.ThrowIfCanceled != false)
-                Throw.OperationCanceledException();
-            return canceledResult;
-        }
-
-        public static void HandleCompleted(ParallelConfig? configuration)
-        {
-            if (configuration?.IsCancelRequestedCallback?.Invoke() == true && configuration.ThrowIfCanceled)
-                Throw.OperationCanceledException();
-        }
-
-        public static TResult? FromResult<TResult>(TResult result, ParallelConfig? configuration)
-            => FromResult(result, default, configuration);
-
-        public static TResult FromResult<TResult>(TResult result, TResult canceledResult, ParallelConfig? configuration)
-        {
-            if (configuration?.IsCancelRequestedCallback?.Invoke() != true)
-                return result;
-
-            if (configuration.ThrowIfCanceled)
-                Throw.OperationCanceledException();
-            return canceledResult;
-        }
-
+        #region Async TPL
 #if !NET35
+
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> asynchronously.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
+        public static Task DoOperationAsync(Action<IAsyncContext> operation, TaskConfig? asyncConfig)
+        {
+            #region Local Methods
+
+            // this method is executed on a pool thread
+            static void DoWork(object state)
+            {
+                var (context, completion, op) = ((TaskContext, TaskCompletionSource<object?>, Action<IAsyncContext>))state;
+                try
+                {
+                    op.Invoke(context);
+                    if (context.IsCancellationRequested && context.ThrowIfCanceled)
+                        completion.SetCanceled();
+                    else
+                        completion.SetResult(default);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (context.ThrowIfCanceled)
+                        completion.SetCanceled();
+                    else
+                        completion.SetResult(default);
+                }
+                catch (Exception e)
+                {
+                    completion.SetException(e);
+                }
+            }
+
+            #endregion
+
+            if (operation == null!)
+                Throw.ArgumentNullException<string>(Argument.operation);
+            var taskContext = new TaskContext(asyncConfig);
+            var completionSource = new TaskCompletionSource<object?>(taskContext.State);
+            if (taskContext.IsCancellationRequested)
+            {
+                if (taskContext.ThrowIfCanceled)
+                    completionSource.SetCanceled();
+                else
+                    completionSource.SetResult(default);
+            }
+            else
+                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, (taskContext, completionSource, operation));
+
+            return completionSource.Task;
+        }
+
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> asynchronously.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. Its result is the result of the <paramref name="operation"/> if it has not been canceled,
+        /// or the default value of <typeparamref name="TResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<TResult?> DoOperationAsync<TResult>(Func<IAsyncContext, TResult?> operation, TaskConfig? asyncConfig)
             => DoOperationAsync(operation, default, asyncConfig);
 
+        /// <summary>
+        /// Executes the specified <paramref name="operation"/> asynchronously.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result of the specified <paramref name="operation"/>.</typeparam>
+        /// <param name="operation">The operation to be executed.</param>
+        /// <param name="canceledResult">The result to be returned by the returned task if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> of <paramref name="asyncConfig"/> returns <see langword="false"/>.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous operation. Its result is the result of the <paramref name="operation"/> if it has not been canceled,
+        /// or <paramref name="canceledResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
         public static Task<TResult> DoOperationAsync<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, TaskConfig? asyncConfig)
@@ -861,56 +1310,15 @@ namespace KGySoft.Threading
             return completionSource.Task;
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
-            Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
-        public static Task DoOperationAsync(Action<IAsyncContext> operation, TaskConfig? asyncConfig)
-        {
-            #region Local Methods
-
-            // this method is executed on a pool thread
-            static void DoWork(object state)
-            {
-                var (context, completion, op) = ((TaskContext, TaskCompletionSource<object?>, Action<IAsyncContext>))state;
-                try
-                {
-                    op.Invoke(context);
-                    if (context.IsCancellationRequested && context.ThrowIfCanceled)
-                        completion.SetCanceled();
-                    else
-                        completion.SetResult(default);
-                }
-                catch (OperationCanceledException)
-                {
-                    if (context.ThrowIfCanceled)
-                        completion.SetCanceled();
-                    else
-                        completion.SetResult(default);
-                }
-                catch (Exception e)
-                {
-                    completion.SetException(e);
-                }
-            }
-
-            #endregion
-
-            if (operation == null!)
-                Throw.ArgumentNullException<string>(Argument.operation);
-            var taskContext = new TaskContext(asyncConfig);
-            var completionSource = new TaskCompletionSource<object?>(taskContext.State);
-            if (taskContext.IsCancellationRequested)
-            {
-                if (taskContext.ThrowIfCanceled)
-                    completionSource.SetCanceled();
-                else
-                    completionSource.SetResult(default);
-            }
-            else
-                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, (taskContext, completionSource, operation));
-
-            return completionSource.Task;
-        }
-
+        /// <summary>
+        /// Returns a task that represents an already completed operation without a result.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// The example uses the similarly working <see cref="FromResult{TResult}(TResult,TaskConfig?)">FromResult</see> method.
+        /// </summary>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task"/> that represents the completed operation.</returns>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task FromCompleted(TaskConfig? asyncConfig)
         {
             var taskContext = new TaskContext(asyncConfig);
@@ -923,9 +1331,35 @@ namespace KGySoft.Threading
             return completionSource.Task;
         }
 
+        /// <summary>
+        /// Returns a task that represents an already completed operation with a result.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned by the returned task if the operation has not been canceled.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that represents the completed operation. Its result is <paramref name="result"/> if the operation has not been canceled,
+        /// or the default value of <typeparamref name="TResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<TResult?> FromResult<TResult>(TResult result, TaskConfig? asyncConfig)
             => FromResult(result, default, asyncConfig);
 
+        /// <summary>
+        /// Returns a task that represents an already completed operation with a result.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the result.</typeparam>
+        /// <param name="result">The result to be returned by the returned task if the operation has not been canceled.</param>
+        /// <param name="canceledResult">The result to be returned by the returned task if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> of <paramref name="asyncConfig"/> returns <see langword="false"/>.</param>
+        /// <param name="asyncConfig">The configuration for the asynchronous operation.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that represents the completed operation. Its result is <paramref name="result"/> if the operation has not been canceled,
+        /// or <paramref name="canceledResult"/> if the operation has been canceled
+        /// and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<TResult> FromResult<TResult>(TResult result, TResult canceledResult, TaskConfig? asyncConfig)
         {
             var taskContext = new TaskContext(asyncConfig);
@@ -942,7 +1376,9 @@ namespace KGySoft.Threading
 
             return completionSource.Task;
         }
+
 #endif
+        #endregion
 
         #endregion
     }
