@@ -601,7 +601,7 @@ namespace KGySoft.Threading
                 asyncResult.CompletedSynchronously = true;
             }
             else
-                ThreadPool.QueueUserWorkItem(DoWork!, asyncResult);
+                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, asyncResult);
             return asyncResult;
         }
 
@@ -620,8 +620,7 @@ namespace KGySoft.Threading
                 var context = (AsyncResultContext<TResult>)state;
                 if (context.IsCancellationRequested)
                 {
-                    if (context.ThrowIfCanceled)
-                        context.SetCanceled();
+                    context.SetCanceled();
                     return;
                 }
 
@@ -658,7 +657,7 @@ namespace KGySoft.Threading
                 asyncResult.CompletedSynchronously = true;
             }
             else
-                ThreadPool.QueueUserWorkItem(DoWork!, asyncResult);
+                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, asyncResult);
             return asyncResult;
         }
 
@@ -857,7 +856,7 @@ namespace KGySoft.Threading
                     completionSource.SetResult(canceledResult);
             }
             else
-                ThreadPool.QueueUserWorkItem(DoWork!, (taskContext, completionSource, operation, canceledResult));
+                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, (taskContext, completionSource, operation, canceledResult));
 
             return completionSource.Task;
         }
@@ -907,7 +906,7 @@ namespace KGySoft.Threading
                     completionSource.SetResult(default);
             }
             else
-                ThreadPool.QueueUserWorkItem(DoWork!, (taskContext, completionSource, operation));
+                ThreadPool.UnsafeQueueUserWorkItem(DoWork!, (taskContext, completionSource, operation));
 
             return completionSource.Task;
         }
