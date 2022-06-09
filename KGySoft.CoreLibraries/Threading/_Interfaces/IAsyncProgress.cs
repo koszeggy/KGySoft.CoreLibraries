@@ -28,7 +28,7 @@ using System.Threading.Tasks;
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// Represents a provider for progress updates for asynchronous operations.
+    /// Represents a progress updates provider for asynchronous operations.
     /// It provides methods for updating the progress from concurrent threads.
     /// </summary>
     public interface IAsyncProgress

@@ -1032,7 +1032,10 @@ namespace KGySoft.Threading
                 Throw.ArgumentNullException<string>(Argument.beginMethodName);
 
             var asyncResult = new AsyncResultContext(beginMethodName, null, asyncConfig);
-            asyncResult.SetCompleted();
+            if (asyncResult.IsCancellationRequested)
+                asyncResult.SetCanceled();
+            else
+                asyncResult.SetCompleted();
             asyncResult.CompletedSynchronously = true;
             return asyncResult;
         }
