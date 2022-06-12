@@ -45,6 +45,9 @@ using KGySoft.Serialization.Binary;
 #if !NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 #endif
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 
 #endregion
 
@@ -123,6 +126,15 @@ namespace KGySoft.Collections
     /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> throw a <see cref="NotSupportedException"/> just like for their
     /// owner <see cref="ThreadSafeDictionary{TKey,TValue}"/> instance. In contrast, in case of <see cref="ConcurrentDictionary{TKey,TValue}"/> only the dictionary itself throws an exception
     /// when accessing the <see cref="ICollection.SyncRoot"/>, whereas its keys and values don't.</item>
+    /// </list></para>
+    /// <para><strong>Incompatibilities</strong> with <see cref="Dictionary{TKey,TValue}"/>:
+    /// <list type="bullet">
+    /// <item>Constructor signatures are different, though due to default parameters they are compile-compatible.</item>
+    /// <item>The <see cref="ThreadSafeDictionary{TKey,TValue}"/> does not have an <see cref="Dictionary{TKey,TValue}.EnsureCapacity">EnsureCapacity</see> method.</item>
+    /// <item>The <see cref="GetObjectData">GetObjectData</see> and <see cref="OnDeserialization">OnDeserialization</see> methods are protected rather than public.</item>
+    /// <item>The enumerators of the <see cref="Keys"/> and <see cref="Values"/> properties do not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</item>
+    /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> as well as for the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
+    /// itself throw a <see cref="NotSupportedException"/>.</item>
     /// </list></para>
     /// </remarks>
     /// <seealso cref="ThreadSafeCacheFactory"/>
@@ -332,6 +344,11 @@ namespace KGySoft.Collections
                 return valuesCollection;
             }
         }
+
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        public IEqualityComparer<TKey> Comparer => comparer ?? defaultComparer;
 
         #endregion
 
@@ -699,6 +716,15 @@ namespace KGySoft.Collections
                 }
             }
         }
+
+        /// <summary>
+        /// Tries to remove the value with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// This method just calls the <see cref="TryRemove(TKey)">TryRemove</see> method. It exists just for providing compatibility with the <see cref="Dictionary{TKey,TValue}"/> type.
+        /// </summary>
+        /// <param name="key">Key of the item to remove.</param>
+        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool Remove(TKey key) => TryRemove(key);
 
         /// <summary>
         /// Tries to remove and return the <paramref name="value"/> with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
@@ -1432,8 +1458,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Explicitly Implemented Interface Methods
-
-        bool IDictionary<TKey, TValue>.Remove(TKey key) => TryRemove(key);
 
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
             => ((IDictionary<TKey, TValue>)this).Add(item.Key, item.Value);

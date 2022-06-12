@@ -15,6 +15,12 @@
   - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
     in which case the replacement collection is inserted at the end of the target list.
 
++ KGySoft.Collections namespace:
+================================
++ ThreadSafeDictionary<TKey, TValue> class:
+  + Adding public Comparer property
+  + Turning the IDictionary<TKey, TValue>.Remove implementation public to improve compatibility
+
 + KGySoft.ComponentModel namespace:
 ===================================
 + Command and CommandBindingsCollection classes: Explicitly implemented interface events now can be specified by the
