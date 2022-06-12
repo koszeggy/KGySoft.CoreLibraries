@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// Initializes a new instance of the <see cref="SourceAwareCommand{TEventArgs}"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
@@ -57,7 +57,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// Initializes a new instance of the <see cref="SourceAwareCommand{TEventArgs}"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>

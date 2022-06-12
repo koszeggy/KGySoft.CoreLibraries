@@ -1001,6 +1001,12 @@ You may try to preload its assembly before deserialization or use the unsafe Get
   <data name="ComponentModel_ObservableObjectHasNoDefaultCtorFormat" xml:space="preserve">
     <value>The type has no parameterless constructor and thus cannot be cloned: {0}</value>
   </data>
+  <data name="ComponentModel_CannotCastCommandTargetFormat" xml:space="preserve">
+    <value>Failed to cast the command target '{0}' to type {1}.</value>
+  </data>
+  <data name="ComponentModel_CannotCastCommandParamFormat" xml:space="preserve">
+    <value>Failed to cast the command parameter '{0}' to type {1}.</value>
+  </data>
   <data name="ObjectExtensions_CannotConvertToTypeFormat" xml:space="preserve">
     <value>The specified argument cannot be converted to type {0}.</value>
   </data>

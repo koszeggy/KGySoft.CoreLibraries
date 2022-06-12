@@ -43,7 +43,7 @@ namespace KGySoft.ComponentModel
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// Initializes a new instance of the <see cref="TargetedCommand{TTarget}"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
@@ -56,7 +56,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// Initializes a new instance of the <see cref="TargetedCommand{TTarget}"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
@@ -93,7 +93,19 @@ namespace KGySoft.ComponentModel
             Action<ICommandState, TTarget>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException(name);
-            copy.Invoke(state, (TTarget)target!);
+
+            TTarget typedTarget;
+            try
+            {
+                typedTarget = (TTarget)target!;
+            }
+            catch
+            {
+                Throw.ArgumentException<TTarget>(Res.ComponentModelCannotCastCommandTarget(target, typeof(TTarget)));
+                throw;
+            }
+
+            copy.Invoke(state, typedTarget);
         }
 
         #endregion

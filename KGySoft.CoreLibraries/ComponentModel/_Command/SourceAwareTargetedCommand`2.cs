@@ -95,7 +95,19 @@ namespace KGySoft.ComponentModel
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException(name);
-            copy.Invoke(source, state, (TTarget)target!);
+
+            TTarget typedTarget;
+            try
+            {
+                typedTarget = (TTarget)target!;
+            }
+            catch
+            {
+                Throw.ArgumentException<TTarget>(Res.ComponentModelCannotCastCommandTarget(target, typeof(TTarget)));
+                throw;
+            }
+
+            copy.Invoke(source, state, typedTarget);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -104,7 +116,19 @@ namespace KGySoft.ComponentModel
             Action<ICommandSource<TEventArgs>, ICommandState, TTarget>? copy = callback;
             if (copy == null)
                 Throw.ObjectDisposedException(name);
-            copy.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target!);
+
+            TTarget typedTarget;
+            try
+            {
+                typedTarget = (TTarget)target!;
+            }
+            catch
+            {
+                Throw.ArgumentException<TTarget>(Res.ComponentModelCannotCastCommandTarget(target, typeof(TTarget)));
+                throw;
+            }
+
+            copy.Invoke(source.Cast<TEventArgs>(), state, typedTarget);
         }
 
         #endregion

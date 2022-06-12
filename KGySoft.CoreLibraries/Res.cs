@@ -738,6 +738,12 @@ namespace KGySoft
         /// <summary>The type has no parameterless constructor and thus cannot be cloned: {0}</summary>
         internal static string ComponentModelObservableObjectHasNoDefaultCtor(Type type) => Get("ComponentModel_ObservableObjectHasNoDefaultCtorFormat", type);
 
+        /// <summary>Failed to cast the command target '{0}' to type {1}.</summary>
+        internal static string ComponentModelCannotCastCommandTarget(object? value, Type type) => Get("ComponentModel_CannotCastCommandTargetFormat", value ?? Null, type);
+
+        /// <summary>Failed to cast the command parameter '{0}' to type {1}.</summary>
+        internal static string ComponentModelCannotCastCommandParam(object? value, Type type) => Get("ComponentModel_CannotCastCommandParamFormat", value ?? Null, type);
+
         #endregion
 
         #region Enum
