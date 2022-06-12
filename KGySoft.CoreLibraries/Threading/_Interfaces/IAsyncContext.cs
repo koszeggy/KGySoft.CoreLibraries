@@ -13,12 +13,29 @@
 
 #endregion
 
+#region Usings
+
 using System;
+#if !NET35
+using System.Threading.Tasks;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
+#endregion
 
 namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents the context of a possibly asynchronous operation.
+    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class to see how to create sync and async methods (supporting
+    /// both <see cref="Task"/> and <see cref="IAsyncResult"/> return types) using the same shared implementation with an <see cref="IAsyncContext"/> parameter.
     /// </summary>
     public interface IAsyncContext
     {

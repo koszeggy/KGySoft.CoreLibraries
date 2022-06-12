@@ -58,6 +58,16 @@
 ======================================
 - XmlSerializer class: Fixing an issue regarding DesignerSerializerVisibilityAttribute handling.
 
++ New KGySoft.Threading namespace:
+==================================
++ The WaitHandleExtensions class have been moved here.
++ New AsyncHelper class to be able to provide sync/async (using APM and/or TPL) overloads for optionally parallel
+  operations with cancellation and reporting progress using a single implementation.
++ New ParallelHelper class: Advanced Parallel.For-like methods for all platforms.
++ New AsyncConfigBase, AsyncConfig, ParallelConfig, TaskConfig classes
++ New IAsyncContext, IAsyncProgress interfaces
++ New AsyncProgress<T> struct.
+
 
 ~~~~~~~~~
 - v6.0.2:

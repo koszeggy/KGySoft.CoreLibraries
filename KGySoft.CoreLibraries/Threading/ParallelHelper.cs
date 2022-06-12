@@ -297,13 +297,11 @@ namespace KGySoft.Threading
 #endif
 
         /// <summary>
-        /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>. The call is blocking on the
-        /// caller thread but it might already be a worker thread if <paramref name="context"/> was created by one of the <see cref="AsyncHelper"/> members.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class to see how to create sync and async methods (supporting
-        /// both <see cref="Task"/> and <see cref="IAsyncResult"/> return types) using the same shared implementation with an <see cref="IAsyncContext"/> parameter.
+        /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
-        /// <param name="context">Contains information for asynchronous processing about the current operation.</param>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
         /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> in <paramref name="context"/> is not <see langword="null"/>.
         /// Progress is reported only if this parameter is not <see langword="null"/>.</param>
         /// <param name="fromInclusive">The start index, inclusive.</param>
@@ -311,6 +309,13 @@ namespace KGySoft.Threading
         /// <param name="body">The delegate that is invoked once per iteration.</param>
         /// <returns><see langword="true"/>, if the operation completed successfully.
         /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism, the ability of cancellation and reporting progress depend on how these were configured at the top level method.</para>
+        /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/>
+        /// class for details about how to create a context for possibly async top level methods.</note>
+        /// <note>See the <see cref="For{T}(T, int, int, ParallelConfig?, Action{int})"/> overload for more details about the other parameters.</note>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="body"/> is <see langword="null"/>.</exception>
         public static bool For<T>(IAsyncContext context, T operation, int fromInclusive, int toExclusive, Action<int> body)
         {
