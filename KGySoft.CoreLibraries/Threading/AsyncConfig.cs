@@ -27,7 +27,6 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents asynchronous configuration for <see cref="IAsyncResult"/>-returning methods.
-    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public class AsyncConfig : ParallelConfig
     {

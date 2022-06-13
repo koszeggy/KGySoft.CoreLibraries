@@ -32,6 +32,7 @@ namespace KGySoft.Threading
         /// <summary>
         /// Gets or sets an <see cref="IAsyncProgress"/> instance that can handle progress notifications.
         /// <br/>Default value: <see langword="null"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="IAsyncProgress"/> interface for an example implementation.
         /// </summary>
         public IAsyncProgress? Progress { get; set; }
 

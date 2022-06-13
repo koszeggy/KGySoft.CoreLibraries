@@ -30,7 +30,147 @@ namespace KGySoft.Threading
     /// <summary>
     /// Represents a progress updates provider for asynchronous operations.
     /// It provides methods for updating the progress from concurrent threads.
+    /// <br/>See the <strong>Examples</strong> section for an example implementation.
     /// </summary>
+    /// <example>
+    /// The following example demonstrates how to implement this interface allowing concurrent updates.
+    /// <code lang="C#"><![CDATA[
+    /// #nullable enable
+    /// 
+    /// using System;
+    /// using System.Threading;
+    /// using System.Timers;
+    /// 
+    /// using KGySoft.Threading;
+    /// 
+    /// using Timer = System.Timers.Timer;
+    /// 
+    /// class Example
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var progressTracker = new ProgressTracker();
+    ///         using var progressReporter = new ConsoleProgressReporter(progressTracker);
+    ///         var config = new ParallelConfig { Progress = progressTracker };
+    /// 
+    ///         // imitating some long concurrent task
+    ///         progressReporter.Enabled = true; // starts updating the progress periodically
+    ///         ParallelHelper.For("Some parallel operation", 0, 1000, config,
+    ///             body: i => Thread.Sleep(1));
+    ///         progressReporter.UpdateProgress(); // to show the completed progress.
+    ///         progressReporter.Enabled = false; // stopping the timer
+    ///     }
+    /// 
+    ///     // This IAsyncProgress implementation just provides an always up-to-date Current property.
+    ///     // You can add an event if you want don't want to miss any tiny progress change.
+    ///     private class ProgressTracker : IAsyncProgress
+    ///     {
+    ///         private readonly object syncRoot = new object();
+    ///         private string? currentOperation;
+    ///         private int maximumValue;
+    ///         private int currentValue;
+    /// 
+    ///         public AsyncProgress<string?> Current
+    ///         {
+    ///             get
+    ///             {
+    ///                 lock (syncRoot)
+    ///                     return new AsyncProgress<string?>(currentOperation, maximumValue, currentValue);
+    ///             }
+    ///         }
+    /// 
+    ///         public void Report<T>(AsyncProgress<T> progress)
+    ///         {
+    ///             lock (syncRoot)
+    ///             {
+    ///                 // Converting any T to string (assuming it can be displayed as a text)
+    ///                 currentOperation = progress.OperationType?.ToString();
+    ///                 maximumValue = progress.MaximumValue;
+    ///                 currentValue = progress.CurrentValue;
+    ///             }
+    ///         }
+    /// 
+    ///         public void New<T>(T operationType, int maximumValue = 0, int currentValue = 0)
+    ///             => Report(new AsyncProgress<T>(operationType, maximumValue, currentValue));
+    /// 
+    ///         public void Increment()
+    ///         {
+    ///             lock (syncRoot)
+    ///                 currentValue++;
+    ///         }
+    /// 
+    ///         public void SetProgressValue(int value)
+    ///         {
+    ///             lock (syncRoot)
+    ///                 currentValue = value;
+    ///         }
+    /// 
+    ///         public void Complete()
+    ///         {
+    ///             lock (syncRoot)
+    ///                 currentValue = maximumValue;
+    ///         }
+    ///     }
+    /// 
+    ///     // This class is the one that displays the actual progress. It can be easily adapted to any UI.
+    ///     private class ConsoleProgressReporter : IDisposable
+    ///     {
+    ///         private readonly Timer timer; // using System.Timers.Timer here but you can use UI-specific versions
+    ///         private readonly ProgressTracker progressTracker;
+    /// 
+    ///         // To turn progress reporting on and off. In a UI you can set also some progress bar visibility here.
+    ///         public bool Enabled
+    ///         {
+    ///             get => timer.Enabled;
+    ///             set => timer.Enabled = value;
+    ///         }
+    /// 
+    ///         public ConsoleProgressReporter(ProgressTracker progress)
+    ///         {
+    ///             progressTracker = progress;
+    ///             timer = new Timer { Interval = 100 }; // Displayed progress is updated only in every 100ms.
+    ///             timer.Elapsed += Timer_Elapsed;
+    ///         }
+    /// 
+    ///         // Please note that progress is updated only when the timer ticks so can skip some rapid changes.
+    ///         private void Timer_Elapsed(object? sender, ElapsedEventArgs e) => UpdateProgress();
+    /// 
+    ///         public void UpdateProgress()
+    ///         {
+    ///             // In a UI you can set progress bar value, maximum value and some text here.
+    ///             var current = progressTracker.Current; // a local copy to prevent an inconsistent report.
+    ///             Console.WriteLine($"{current.OperationType}: {current.CurrentValue}/{current.MaximumValue}");
+    ///         }
+    /// 
+    ///         public void Dispose()
+    ///         {
+    ///             timer.Elapsed -= Timer_Elapsed;
+    ///             timer.Dispose();
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// // The example above prints a similar output to this one:
+    /// // Some parallel operation: 56/1000
+    /// // Some parallel operation: 152/1000
+    /// // Some parallel operation: 200/1000
+    /// // Some parallel operation: 248/1000
+    /// // Some parallel operation: 304/1000
+    /// // Some parallel operation: 352/1000
+    /// // Some parallel operation: 408/1000
+    /// // Some parallel operation: 456/1000
+    /// // Some parallel operation: 504/1000
+    /// // Some parallel operation: 560/1000
+    /// // Some parallel operation: 608/1000
+    /// // Some parallel operation: 664/1000
+    /// // Some parallel operation: 712/1000
+    /// // Some parallel operation: 768/1000
+    /// // Some parallel operation: 816/1000
+    /// // Some parallel operation: 864/1000
+    /// // Some parallel operation: 920/1000
+    /// // Some parallel operation: 968/1000
+    /// // Some parallel operation: 1000/1000]]></code>
+    /// </example>
     public interface IAsyncProgress
     {
         #region Methods

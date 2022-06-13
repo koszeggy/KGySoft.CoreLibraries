@@ -36,7 +36,6 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// Represents a configuration for parallel operations.
-    /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
     /// </summary>
     public class ParallelConfig : AsyncConfigBase
     {
