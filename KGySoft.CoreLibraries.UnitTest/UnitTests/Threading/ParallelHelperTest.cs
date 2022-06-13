@@ -120,18 +120,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
         public void BeginForWithCallbackTest()
         {
             var bools = new bool[1000];
-            var syncRoot = new object();
-            bool callbackCalled = false;
-            var asyncConfig = new AsyncConfig(ar =>
-            {
-                lock (syncRoot)
-                    callbackCalled = true;
-            });
+            var callbackCalled = new ManualResetEvent(false);
+            var asyncConfig = new AsyncConfig(ar => callbackCalled.Set());
             IAsyncResult ar = ParallelHelper.BeginFor(0, bools.Length, asyncConfig, i => bools[i] = true);
             ar.AsyncWaitHandle.WaitOne();
             Assert.IsTrue(ar.IsCompleted);
-            lock (syncRoot)
-                Assert.IsTrue(callbackCalled);
+            Assert.IsTrue(callbackCalled.WaitOne());
             bool result = ParallelHelper.EndFor(ar);
             Assert.IsFalse(ar.CompletedSynchronously);
             Assert.IsTrue(result);
@@ -182,7 +176,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             Task<bool> task = ParallelHelper.ForAsync(0, bools.Length, asyncConfig, i => bools[i] = true);
             Assert.IsTrue(task.IsCanceled);
             var ex = Assert.Throws<AggregateException>(() => { var _ = task.Result; });
-            Assert.IsInstanceOf<OperationCanceledException>(ex.InnerExceptions[0]);
+            Assert.IsInstanceOf<OperationCanceledException>(ex!.InnerExceptions[0]);
             Assert.IsTrue(bools.All(b => !b));
         }
 

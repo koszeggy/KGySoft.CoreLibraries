@@ -15,3 +15,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Design", "CA1041:Provide ObsoleteAttribute message", Justification = "In UnitTests applying [Obsolete] just to suppress CS0618 but the tests are needed")]
 [assembly: SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Decided individually")]
 [assembly: SuppressMessage("Performance", "CA1846:Prefer 'AsSpan' over 'Substring'", Justification = "Spans are not supported on every targeted platform")]
+[assembly: SuppressMessage("Style", "IDE0039:Use local function", Justification = "Decided individually")]
+[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "Callers are guarded by #if directives")]

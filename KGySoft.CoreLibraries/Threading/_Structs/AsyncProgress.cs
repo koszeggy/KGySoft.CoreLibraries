@@ -27,6 +27,7 @@ namespace KGySoft.Threading
     /// <summary>
     /// Represents the progress of an operation that can be reported by an <see cref="IAsyncProgress"/> implementation.
     /// </summary>
+    /// <typeparam name="T">The type of the descriptor of the operation returned by the <see cref="OperationType"/> property.</typeparam>
     public readonly struct AsyncProgress<T> : IEquatable<AsyncProgress<T>>
     {
         #region Fields
