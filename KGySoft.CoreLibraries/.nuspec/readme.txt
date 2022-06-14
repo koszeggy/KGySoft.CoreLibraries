@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 7.0.0-preview.1
+Thank you for installing KGy SOFT Core Libraries 7.0.0-preview.2
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 

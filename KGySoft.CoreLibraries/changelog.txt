@@ -9,17 +9,12 @@
 ! v7.0.0:
 ~~~~~~~~~
 
-- KGySoft.CoreLibraries namespace:
-==================================
-- ListExtensions class:
-  - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
-    in which case the replacement collection is inserted at the end of the target list.
-
 + KGySoft.Collections namespace:
 ================================
 + ThreadSafeDictionary<TKey, TValue> class:
   + Adding public Comparer property
-  + Turning the IDictionary<TKey, TValue>.Remove implementation public to improve compatibility
+  + The IDictionary<TKey, TValue>.Remove implementation has been made public to improve the compatibility with the
+    regular Dictionary<TKey, TValue> class (which behaves the same way as the TryRemove method).
 
 + KGySoft.ComponentModel namespace:
 ===================================
@@ -31,6 +26,13 @@
   + Their ToString now reflect the name of the method the commands were created from to make debugging easier.
   + More descriptive error message when command parameters or command targets have invalid types.
 + CommandBinding class: Descriptive ToString implementation to make debugging easier.
+
+! KGySoft.CoreLibraries namespace:
+==================================
+! The WaitHandleExtensions class has been moved to the new KGySoft.Threading namespace.
+- ListExtensions class:
+  - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
+    in which case the replacement collection is inserted at the end of the target list.
 
 ! KGySoft.Reflection namespace:
 ===============================
@@ -67,7 +69,7 @@
 
 + New KGySoft.Threading namespace:
 ==================================
-+ The WaitHandleExtensions class have been moved here.
++ The WaitHandleExtensions class has been moved here.
 + New AsyncHelper class to be able to provide sync/async (using APM and/or TPL) overloads for optionally parallel
   operations with cancellation and reporting progress using a single implementation.
 + New ParallelHelper class: Advanced Parallel.For-like methods for all platforms.

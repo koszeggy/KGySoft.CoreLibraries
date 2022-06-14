@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0</TargetFrameworks>-->
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0</TargetFrameworks>
+    <!--<TargetFrameworks>net6.0</TargetFrameworks>-->
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
@@ -52,17 +52,17 @@
   <!-- .NET Core 2.x only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
     <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0"/>
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
   </ItemGroup>
 
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
-    <PackageReference Include="System.Resources.Extensions" Version="5.0.0"/>
+    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
 
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0'">
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0"/>
+    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 
   <!-- Project references -->

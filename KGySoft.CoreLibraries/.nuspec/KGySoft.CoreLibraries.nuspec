@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>7.0.0-preview.1</version>
+    <version>7.0.0-preview.2</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -36,7 +36,7 @@ Online Documentation: https://docs.kgysoft.net/corelibraries
 Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</description>
     <releaseNotes>See the detailed release notes here: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</releaseNotes>
     <copyright>Copyright © KGy SOFT</copyright>
-    <tags>KGySoft CoreLibraries performance performant collection extension reflection serialization serializer binary xml enum cache resource manager resx dynamic command binding</tags>
+    <tags>KGySoft CoreLibraries performance performant collection extension reflection serialization serializer binary xml enum cache resource manager resx dynamic command binding threads threading</tags>
     <language>en-US</language>
     <repository type="git" url="https://github.com/koszeggy/KGySoft.CoreLibraries" />
     <dependencies>
