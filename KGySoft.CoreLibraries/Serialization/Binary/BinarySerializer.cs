@@ -200,7 +200,9 @@ namespace KGySoft.Serialization.Binary
         public static unsafe byte[] SerializeValueType<T>(in T value) where T : unmanaged
         {
             byte[] result = new byte[sizeof(T)];
-#if NETCOREAPP3_0_OR_GREATER
+#if NET5_0_OR_GREATER
+            Unsafe.As<byte, T>(ref MemoryMarshal.GetArrayDataReference(result)) = value;
+#elif NETCOREAPP3_0_OR_GREATER
             Unsafe.As<byte, T>(ref result[0]) = value;
 #else
             fixed (byte* dst = result)
@@ -256,7 +258,9 @@ namespace KGySoft.Serialization.Binary
 
             int len = sizeof(T) * array.Length;
             byte[] result = new byte[len];
-#if NETCOREAPP3_0_OR_GREATER
+#if NET5_0_OR_GREATER
+            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)), (uint)len);
+#elif NETCOREAPP3_0_OR_GREATER
             Unsafe.CopyBlock(ref result[0], ref Unsafe.As<T, byte>(ref array[0]), (uint)len);
 #else
             fixed (void* src = array)
@@ -375,7 +379,9 @@ namespace KGySoft.Serialization.Binary
             if (data.Length < len)
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NET5_0_OR_GREATER
+            return Unsafe.As<byte, T>(ref MemoryMarshal.GetArrayDataReference(data));
+#elif NETCOREAPP3_0_OR_GREATER
             return Unsafe.As<byte, T>(ref data[0]);
 #else
             fixed (byte* src = data)
@@ -450,12 +456,12 @@ namespace KGySoft.Serialization.Binary
                 return Reflector.EmptyArray<T>();
 
             T[] result = new T[count];
-#if NETCOREAPP3_0_OR_GREATER
-            ref byte src = ref data[offset];
-            if (((nint)Unsafe.AsPointer(ref src) & (IntPtr.Size - 1)) == 0)
-                Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
-            else
-                Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref src, (uint)len);
+#if NET5_0_OR_GREATER
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(result)), ref data[offset], (uint)len);
+#elif NETCOREAPP3_0_OR_GREATER
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref data[offset], (uint)len);
 #else
             fixed (void* dst = result)
                 Marshal.Copy(data, offset, new IntPtr(dst), len);
@@ -482,7 +488,11 @@ namespace KGySoft.Serialization.Binary
         {
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
+#if NET5_0_OR_GREATER
+            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref Unsafe.As<StrongBox<byte>>(obj).Value, (uint)len);
+#else
             Unsafe.CopyBlock(ref result[0], ref Unsafe.As<StrongBox<byte>>(obj).Value, (uint)len);
+#endif
             return result;
         }
 #else
@@ -515,7 +525,7 @@ namespace KGySoft.Serialization.Binary
 #endif
 
         [SecurityCritical]
-        private unsafe static object DeserializeValueTypeRaw(Type type, byte[] data, int offset)
+        private static object DeserializeValueTypeRaw(Type type, byte[] data, int offset)
         {
             Debug.Assert(offset >= 0);
             int len = type.SizeOf();
@@ -529,10 +539,9 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
             ref byte src = ref data[offset];
             ref byte dst = ref Unsafe.As<StrongBox<byte>>(result).Value;
-            if (((nint)Unsafe.AsPointer(ref src) & (IntPtr.Size - 1)) == 0)
-                Unsafe.CopyBlock(ref dst, ref src, (uint)len);
-            else
-                Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);
+            
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);
 
             return result;
 #else
@@ -540,17 +549,20 @@ namespace KGySoft.Serialization.Binary
             TypedReference boxReference = __makeref(result);
             while (true)
             {
-                // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
-                // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
-                byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
-                ref byte rawDataRef = ref *rawData;
-                fixed (byte* pinnedRawData = &rawDataRef)
+                unsafe
                 {
-                    // trying again if object was relocated between first dereferencing and the actual pinning
-                    if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
-                        continue;
+                    // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
+                    // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
+                    byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
+                    ref byte rawDataRef = ref *rawData;
+                    fixed (byte* pinnedRawData = &rawDataRef)
+                    {
+                        // trying again if object was relocated between first dereferencing and the actual pinning
+                        if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
+                            continue;
 
-                    Marshal.Copy(data, offset, (IntPtr)pinnedRawData, len);
+                        Marshal.Copy(data, offset, (IntPtr)pinnedRawData, len);
+                    }
                 }
 
                 return result;
