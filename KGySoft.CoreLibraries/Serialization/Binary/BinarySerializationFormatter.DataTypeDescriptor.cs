@@ -506,6 +506,17 @@ namespace KGySoft.Serialization.Binary
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
+#if NET7_0_OR_GREATER
+                    case DataTypes.Int128:
+                        return Reflector.Int128Type;
+                    case DataTypes.UInt128:
+                        return Reflector.UInt128Type;
+#else
+                    case DataTypes.Int128:
+                    case DataTypes.UInt128:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.Pointer:
                         return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:

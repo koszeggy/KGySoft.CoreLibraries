@@ -63,6 +63,11 @@
 + Reflector class:
   + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 
++ KGySoft.Serialization.Binary namespace:
+=========================================
++ BinarySerializationFormatter class:
+  + Supporting the Int128 and UInt128 types natively (.NET 7.0 and above)
+
 - KGySoft.Serialization.Xml namespace:
 ======================================
 - XmlSerializer class: Fixing an issue regarding DesignerSerializerVisibilityAttribute handling.

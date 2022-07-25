@@ -168,6 +168,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
 #endif
+
+#if NET7_0_OR_GREATER
+                (Int128)1,
+                (UInt128)1,
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -564,6 +569,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new DateOnly[] { DateOnly.FromDateTime(DateTime.Today), DateOnly.MaxValue },
                 new TimeOnly[] { TimeOnly.FromDateTime(DateTime.Now), TimeOnly.MaxValue },
 #endif
+#if NET7_0_OR_GREATER
+                new Int128[] { 1, 2 },
+                new UInt128[] { 1, 2 },
+#endif
             };
 
             ((Array)referenceObjects[4]).SetValue(typeof(int), 0);
@@ -762,6 +771,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 new DateOnly?[] { DateOnly.FromDateTime(DateTime.Today), null },
                 new TimeOnly?[] { TimeOnly.FromDateTime(DateTime.Now), null },
+#endif
+#if NET7_0_OR_GREATER
+                new Int128?[] { 1, null },
+                new UInt128?[] { 1, null },
 #endif
             };
 
@@ -1408,6 +1421,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
+#endif
+
+#if NET7_0_OR_GREATER
+                (Int128)1,
+                (UInt128)1,
 #endif
 
                 // dictionary with any object key and read-only collection value

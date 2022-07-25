@@ -200,6 +200,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
     /// <item><see cref="DateOnly"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="Int128"/> (in .NET 7.0 and above)</item>
+    /// <item><see cref="UInt128"/> (in .NET 7.0 and above)</item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -440,8 +442,10 @@ namespace KGySoft.Serialization.Binary
             Half = 36, // Only in .NET 5 and above
             DateOnly = 37, // Only in .NET 6 and above
             TimeOnly = 38, // Only in .NET 6 and above
+            Int128 = 39, // Only in .NET 7 and above
+            UInt128 = 40, // Only in .NET 7 and above
 
-            // 39-47: reserved
+            // 41-47: reserved
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
             ImpureType = 3 << 4, // caution: 2-bits flag (11000)
@@ -902,7 +906,7 @@ namespace KGySoft.Serialization.Binary
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
             = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
 
-        // including string and the abstract enum and array types
+        // including string and void
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
         {
             { Reflector.BoolType, DataTypes.Bool },
@@ -940,7 +944,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
 #if !NET35
-		    { Reflector.BigIntegerType, DataTypes.BigInteger},
+            { Reflector.BigIntegerType, DataTypes.BigInteger },
 #endif
 #if NETCOREAPP3_0_OR_GREATER
             { Reflector.RuneType, DataTypes.Rune },
@@ -955,6 +959,10 @@ namespace KGySoft.Serialization.Binary
 #if NET6_0_OR_GREATER
             { Reflector.DateOnlyType, DataTypes.DateOnly },
             { Reflector.TimeOnlyType, DataTypes.TimeOnly },
+#endif
+#if NET7_0_OR_GREATER
+            { Reflector.Int128Type, DataTypes.Int128 },
+            { Reflector.UInt128Type, DataTypes.UInt128 },
 #endif
         };
 

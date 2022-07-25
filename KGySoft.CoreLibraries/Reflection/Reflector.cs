@@ -95,6 +95,10 @@ namespace KGySoft.Reflection
         internal static readonly Type DateOnlyType = typeof(DateOnly);
         internal static readonly Type TimeOnlyType = typeof(TimeOnly);
 #endif
+#if NET7_0_OR_GREATER
+        internal static readonly Type Int128Type = typeof(Int128);
+        internal static readonly Type UInt128Type = typeof(UInt128);
+#endif
 
         // ReSharper disable once InconsistentNaming
         internal static readonly Type DBNullType = typeof(DBNull);

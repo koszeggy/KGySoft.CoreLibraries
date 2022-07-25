@@ -15,6 +15,8 @@
 
 #region Usings
 
+using System.Runtime.InteropServices;
+
 #region Used Namespaces
 
 using System;
@@ -296,6 +298,24 @@ namespace KGySoft.Serialization.Binary
 
 #if NET5_0_OR_GREATER
             private static void WriteHalf(BinaryWriter bw, Half value) => bw.Write(Unsafe.As<Half, ushort>(ref value));
+#endif
+
+#if NET7_0_OR_GREATER
+            [SecurityCritical]
+            private unsafe static void WriteInt128(BinaryWriter bw, in Int128 value)
+            {
+                Span<byte> bytes = stackalloc byte[sizeof(Int128)];
+                Unsafe.As<byte, Int128>(ref MemoryMarshal.GetReference(bytes)) = value;
+                bw.Write(bytes);
+            }
+
+            [SecurityCritical]
+            private unsafe static void WriteUInt128(BinaryWriter bw, in UInt128 value)
+            {
+                Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
+                Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes)) = value;
+                bw.Write(bytes);
+            }
 #endif
 
             private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
@@ -781,6 +801,15 @@ namespace KGySoft.Serialization.Binary
                         return;
                     case DataTypes.TimeOnly:
                         bw.Write(((TimeOnly)obj).Ticks);
+                        return;
+#endif
+
+#if NET7_0_OR_GREATER
+                    case DataTypes.Int128:
+                        WriteInt128(bw, (Int128)obj);
+                        return;
+                    case DataTypes.UInt128:
+                        WriteUInt128(bw, (UInt128)obj);
                         return;
 #endif
 

@@ -15,6 +15,8 @@
 
 #region Usings
 
+using System.Runtime.InteropServices;
+
 #region Used Namespaces
 
 using System;
@@ -729,6 +731,24 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 
+#if NET7_0_OR_GREATER
+            [SecurityCritical]
+            private unsafe static Int128 ReadInt128(BinaryReader br)
+            {
+                Span<byte> bytes = stackalloc byte[sizeof(Int128)];
+                br.BaseStream.ReadExactly(bytes);
+                return Unsafe.As<byte, Int128>(ref MemoryMarshal.GetReference(bytes));
+            }
+
+            [SecurityCritical]
+            private unsafe static UInt128 ReadUInt128(BinaryReader br)
+            {
+                Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
+                br.BaseStream.ReadExactly(bytes);
+                return Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes));
+            }
+#endif
+
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
             {
                 if (!usages.CanBeReplaced && origObject != finalObject)
@@ -1354,6 +1374,17 @@ namespace KGySoft.Serialization.Binary
 #else
                         case DataTypes.DateOnly:
                         case DataTypes.TimeOnly:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
+
+#if NET7_0_OR_GREATER
+                        case DataTypes.Int128:
+                            return createdResult = ReadInt128(br);
+                        case DataTypes.UInt128:
+                            return createdResult = ReadUInt128(br);
+#else
+                        case DataTypes.Int128:
+                        case DataTypes.UInt128:
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
