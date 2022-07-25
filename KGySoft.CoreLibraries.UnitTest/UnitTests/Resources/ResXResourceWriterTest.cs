@@ -495,7 +495,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             };
 
-            KGySerializeObjects(referenceObjects, true, false);
+#if !NET7_0_OR_GREATER // TimeOnly fails in compatible mode because of the new TimeOnlyConverter that returns hh:mm only when converting to string
+            KGySerializeObjects(referenceObjects, true, false); 
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
