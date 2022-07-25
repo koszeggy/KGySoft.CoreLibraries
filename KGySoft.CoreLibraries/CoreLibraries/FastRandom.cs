@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Nested structs
 
-        private struct UInt128
+        private struct State
         {
             #region Fields
 
@@ -68,7 +68,7 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
-        private UInt128 state;
+        private State state;
 
         #endregion
 
@@ -85,7 +85,7 @@ namespace KGySoft.CoreLibraries
         /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
         /// </summary>
         /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
-        public FastRandom(int seed) => state = new UInt128
+        public FastRandom(int seed) => state = new State
         {
             // Trying to scatter the seed value so even close seeds generate very different sequences.
             A = (ulong)~seed * 13 << 32 | (uint)seed * 397,
@@ -102,7 +102,7 @@ namespace KGySoft.CoreLibraries
         {
             if (seed == Guid.Empty)
                 Throw.ArgumentException(Argument.seed, Res.ArgumentEmpty);
-            state = *(UInt128*)&seed;
+            state = *(State*)&seed;
         }
 
         #endregion
@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries
         #region Static Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static ulong SampleUInt64(ref UInt128 state)
+        private static ulong SampleUInt64(ref State state)
         {
             // this is the C# version of the XorShift+ algorithm from here: https://en.wikipedia.org/wiki/Xorshift#xorshift+
             ulong t = state.A;
@@ -463,7 +463,7 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe void FillBytes(byte* pBuf, int bufLen)
         {
-            UInt128 stateLocal = state;
+            State stateLocal = state;
 
             // filling up the buffer with 64-bit chunks as long as possible
             int len = bufLen >> 3;
