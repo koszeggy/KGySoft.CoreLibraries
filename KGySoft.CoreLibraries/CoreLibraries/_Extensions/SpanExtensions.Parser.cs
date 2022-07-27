@@ -96,6 +96,10 @@ namespace KGySoft.CoreLibraries
                 { Reflector.DateOnlyType, TryParseDateOnly },
                 { Reflector.TimeOnlyType, TryParseTimeOnly }, 
 #endif
+#if NET7_0_OR_GREATER
+                { Reflector.Int128Type, TryParseInt128 },
+                { Reflector.UInt128Type, TryParseUInt128 }, 
+#endif
             };
 
             #endregion
@@ -319,7 +323,7 @@ namespace KGySoft.CoreLibraries
                     }
                 }
 
-                // Only for BigInteger, allowing float style because the fallback decimal range might not be enough
+                // For BigInteger, allowing float style because the fallback decimal range might not be enough
                 // Unfortunately, this will allow only .0* beyond the decimal range.
                 if (typeof(T) == typeof(BigInteger))
                 {
@@ -493,6 +497,28 @@ namespace KGySoft.CoreLibraries
                 }
 #endif
 
+                #if NET7_0_OR_GREATER
+                // Allowing float style for [U]Int128 because the fallback decimal range might not be enough
+                // Unfortunately, this will allow only .0* beyond the decimal range.
+                if (typeof(T) == typeof(Int128))
+                {
+                    if (Int128.TryParse(s, floatStyle, culture, out Int128 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+
+                if (typeof(T) == typeof(UInt128))
+                {
+                    if (UInt128.TryParse(s, floatStyle, culture, out UInt128 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+#endif
+
                 value = default;
                 return false;
             }
@@ -502,7 +528,11 @@ namespace KGySoft.CoreLibraries
                 // Parsing as an integer type but regular TryParse has been failed: trying also as a decimal and rounding the result if possible.
                 // This is needed to be compatible with general IConvertible behavior, which allows converting fractional numbers
                 TypeCode typeCode = Type.GetTypeCode(type);
-                if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.BigIntegerType))
+                if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.BigIntegerType
+#if NET7_0_OR_GREATER
+                        , Reflector.Int128Type, Reflector.UInt128Type
+#endif
+                    ))
                     && Decimal.TryParse(s, floatStyle, culture, out decimal result))
                 {
                     result = Math.Round(result);
@@ -511,6 +541,26 @@ namespace KGySoft.CoreLibraries
                         value = new BigInteger(result);
                         return true;
                     }
+
+#if NET7_0_OR_GREATER
+                    if (type == Reflector.Int128Type)
+                    {
+                        value = (Int128)result;
+                        return true;
+                    }
+
+                    if (type == Reflector.UInt128Type)
+                    {
+                        if (result < 0m)
+                        {
+                            value = null;
+                            return false;
+                        }
+
+                        value = (UInt128)result;
+                        return true;
+                    }
+#endif
 
                     var rangeInfo = RangeInfo.GetRangeInfo(type);
                     if (result >= rangeInfo.MinValue && result <= rangeInfo.MaxValue)
@@ -650,7 +700,7 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseBigInteger(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
             {
-                // Only for BigInteger, allowing float style because the fallback decimal range might not be enough
+                // For BigInteger, allowing float style because the fallback decimal range might not be enough
                 // Unfortunately, this will allow only .0* beyond the decimal range.
                 if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                 {
@@ -857,6 +907,36 @@ namespace KGySoft.CoreLibraries
 
                 value = result;
                 return true;
+            }
+#endif
+
+#if NET7_0_OR_GREATER
+            private static bool TryParseInt128(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                // Allowing float style for Int128 because the fallback decimal range might not be enough
+                // Unfortunately, this will allow only .0* beyond the decimal range.
+                if (Int128.TryParse(s, floatStyle, culture, out Int128 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseUInt128(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            {
+                // Allowing float style for UInt128 because the fallback decimal range might not be enough
+                // Unfortunately, this will allow only .0* beyond the decimal range.
+                if (UInt128.TryParse(s, floatStyle, culture, out UInt128 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
             }
 #endif
 

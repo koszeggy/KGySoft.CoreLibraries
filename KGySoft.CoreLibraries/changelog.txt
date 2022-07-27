@@ -33,6 +33,12 @@
 - ListExtensions class:
   - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
     in which case the replacement collection is inserted at the end of the target list.
++ StringExtensions class:
+  + [Try]Parse methods:
+    + Natively supporting Int128 and UInt128 types (.NET 7.0 and above)
++ SpanExtensions class:
+  + [Try]Parse methods:
+    + Natively supporting Int128 and UInt128 types (.NET 7.0 and above)
 
 ! KGySoft.Reflection namespace:
 ===============================
