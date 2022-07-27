@@ -381,6 +381,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if !NET35
                 new BigInteger(1),
 #endif
+#if NET7_0_OR_GREATER
+                (Int128)1,
+                (UInt128)1,
+#endif
             };
 
 #if NETFRAMEWORK
@@ -495,9 +499,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             };
 
-#if !NET7_0_OR_GREATER // TimeOnly fails in compatible mode because of the new TimeOnlyConverter that returns hh:mm only when converting to string
             KGySerializeObjects(referenceObjects, true, false); 
-#endif
             KGySerializeObjects(referenceObjects, false);
         }
 

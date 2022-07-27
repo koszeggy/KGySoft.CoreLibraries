@@ -436,10 +436,10 @@ namespace KGySoft.Resources
 #if NETCOREAPP3_0_OR_GREATER
             Reflector.RuneType,
 #endif
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER && !NET7_0_OR_GREATER // starting with .NET 7 there is a HalfConverter
             Reflector.HalfType,
 #endif
-#if NET6_0_OR_GREATER
+#if NET6_0 // only in .NET 6 because starting with .NET 7 there is are DateOnlyConverter and TimeOnlyConverter
             Reflector.DateOnlyType,
             Reflector.TimeOnlyType,
 #endif
