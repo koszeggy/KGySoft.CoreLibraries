@@ -94,6 +94,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", (short)1);
             Test("1", (ushort)1);
             Test("1", 1);
+            Test("1.0", 1);
             Test("1", 1u);
             Test("1", 1L);
             Test("1", (IntPtr)1);
@@ -143,10 +144,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1980-01-01", new DateOnly(1980, 01, 01));
             Test("13:13", new TimeOnly(13, 13));
 #endif
+#if NET7_0_OR_GREATER
+            Test("1", (Int128)1);
+            Test("1.0", (Int128)1);
+            Test("1.1", (Int128)1);
+            Test("1", (UInt128)1);
+            Test("1.0", (UInt128)1);
+            Test("1.1", (UInt128)1);
+#endif
 
             // Registered conversions
 #if !NETCOREAPP3_0_OR_GREATER
-            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+                        typeof(Version).RegisterTypeConverter<VersionConverter>(); 
 #endif
             Test("1.2.3.4", new Version(1, 2, 3, 4));
             Test("alpha", "alpha".AsSegment());
