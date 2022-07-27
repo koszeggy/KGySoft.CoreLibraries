@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries
         //   - Test: SpanExtensionsTest.ParseTest
         // - ResXDataNode.nonCompatibleModeNativeTypes (for compatible format)
         //   - Test: ResXResourceWriterTest
-        // - XmlSerializerBase.GetStringValue (only special cases if needed)
+        // - XmlSerializerBase.GetStringValue (only special cases if needed, escapedNativelySupportedTypes)
         //   - Test: XmlSerializerTest.Tests
         private static readonly HashSet<Type> nativelyParsedTypes =
             new HashSet<Type>
@@ -109,6 +109,10 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                 Reflector.DateOnlyType,
                 Reflector.TimeOnlyType,
+#endif
+#if NET7_0_OR_GREATER
+                Reflector.Int128Type,
+                Reflector.UInt128Type,
 #endif
             };
 

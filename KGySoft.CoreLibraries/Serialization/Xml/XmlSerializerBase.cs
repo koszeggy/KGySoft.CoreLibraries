@@ -115,8 +115,9 @@ namespace KGySoft.Serialization.Xml
             typeof(ConcurrentQueue<>),
             typeof(ConcurrentStack<>),
 #endif
-
         };
+
+        private static readonly Type[] escapedNativelySupportedTypes = { Reflector.StringType, Reflector.CharType, Reflector.RuneType, Reflector.RuntimeType };
 
         private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = ThreadSafeCacheFactory.Create<Type, bool>(IsTypeTrusted, LockFreeCacheOptions.Profile128);
 
@@ -415,12 +416,10 @@ namespace KGySoft.Serialization.Xml
             Type type = value.GetType();
 
             // these types never have to be escaped so we can return a result immediately
-            if (type.IsPrimitive && type != Reflector.CharType || value is DateTime or DateTimeOffset || type.IsEnum)
+            if (type.CanBeParsedNatively() && !type.In(escapedNativelySupportedTypes))
                 return value.ToStringInternal(CultureInfo.InvariantCulture);
-            if (value is Type t)
-                return GetTypeString(t);
 
-            string? result = (value as string) ?? value.ToStringInternal(CultureInfo.InvariantCulture);
+            string? result = (value as string) ?? (value is Type t ? GetTypeString(t) : value.ToStringInternal(CultureInfo.InvariantCulture));
             if (String.IsNullOrEmpty(result))
                 return result;
 

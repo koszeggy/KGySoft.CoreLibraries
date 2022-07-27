@@ -105,6 +105,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
 #endif
+#if NET7_0_OR_GREATER
+                (Int128)1,
+                (UInt128)1,
+#endif
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);

@@ -235,6 +235,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(DateOnly.FromDateTime(now), now.Date);
             Test(TimeOnly.FromDateTime(now), now.TimeOfDay);
 #endif
+#if NET7_0_OR_GREATER
+            Test(1, (Int128)1);
+            Test(1, (UInt128)1);
+#endif
 
             // Registered conversions
             Throws<ArgumentException>(() => Test(now, now.Ticks));
@@ -301,6 +305,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if NET6_0_OR_GREATER
             Test(DateOnly.FromDateTime(DateTime.Today));
             Test(TimeOnly.FromDateTime(DateTime.Now));
+#endif
+#if NET7_0_OR_GREATER
+            Test((Int128)1);
+            Test((UInt128)1);
 #endif
         }
 
