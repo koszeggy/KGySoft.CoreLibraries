@@ -265,6 +265,10 @@ namespace KGySoft.CoreLibraries
                     { Reflector.DateOnlyType, GenerateDateOnly },
                     { Reflector.TimeOnlyType, GenerateTimeOnly },
 #endif
+#if NET7_0_OR_GREATER
+                    { Reflector.Int128Type, GenerateInt128 },
+                    { Reflector.UInt128Type, GenerateUInt128 },
+#endif
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
@@ -1261,6 +1265,11 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
             private static object GenerateDateOnly(ref GeneratorContext context) => DateOnly.FromDateTime((DateTime)GenerateDateTime(ref context));
             private static object GenerateTimeOnly(ref GeneratorContext context) => NextTimeOnly(context.Random);
+#endif
+
+#if NET7_0_OR_GREATER
+            private static object GenerateInt128(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt128() : context.Random.NextInt128(Int128.MaxValue, true);
+            private static object GenerateUInt128(ref GeneratorContext context) => context.Random.SampleUInt128();
 #endif
 
             #endregion

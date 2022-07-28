@@ -887,6 +887,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<DateOnly>();
             Test<TimeOnly>();
 #endif
+#if NET7_0_OR_GREATER
+            Test<Int128>();
+            Test<UInt128>();
+#endif
 
             // enums
             Test<EmptyEnum>();
