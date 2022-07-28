@@ -315,6 +315,92 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         }
 #endif
 
+#if NET7_0_OR_GREATER
+        [Test]
+        public void NextInt128Test()
+        {
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt128(1, 0));
+
+            // no range
+            Int128 result = rnd.NextInt128(0);
+            Assert.AreEqual((Int128)0, result);
+            result = rnd.NextInt128(1, 1);
+            Assert.AreEqual((Int128)1, result);
+
+            // 1 range
+            result = rnd.NextInt128(1);
+            Assert.AreEqual((Int128)0, result);
+            result = rnd.NextInt128(1, 2);
+            Assert.AreEqual((Int128)1, result);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.NextInt128(10);
+                Assert.IsTrue(result >= 0 && result < 10);
+                result = RandomExtensions.NextInt64(rnd, -5, 5);
+                Assert.IsTrue(result >= -5 && result < 5);
+
+                // medium range (UInt64)
+                result = rnd.NextInt128(Int64.MaxValue + (Int128)5);
+                Assert.IsTrue(result >= 0 && result < Int64.MaxValue + (Int128)5);
+                result = rnd.NextInt128(-5, Int64.MaxValue);
+                Assert.IsTrue(result >= -5 && result < Int64.MaxValue);
+
+                // big range
+                result = rnd.NextInt128(UInt64.MaxValue + (Int128)5, true);
+                Assert.IsTrue(result >= 0 && result <= UInt64.MaxValue + (Int128)5);
+                result = rnd.NextInt128(-1, Int128.MaxValue, true);
+                Assert.IsTrue(result >= -1);
+            }
+        }
+
+        [Test]
+        public void NextUInt128Test()
+        {
+            var rnd = new Random();
+
+            // min > max
+            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt128(1, 0));
+
+            // no range
+            UInt128 result = rnd.NextUInt128(0);
+            Assert.AreEqual((UInt128)0, result);
+            result = rnd.NextUInt128(1, 1);
+            Assert.AreEqual((UInt128)1, result);
+
+            // 1 range
+            result = rnd.NextUInt128(1);
+            Assert.AreEqual((UInt128)0, result);
+            result = rnd.NextUInt128(1, 2);
+            Assert.AreEqual((UInt128)1, result);
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                // small range
+                result = rnd.NextUInt128(0, 10);
+                Assert.IsTrue(result < (UInt128)10);
+                result = rnd.NextUInt128(5, 15);
+                Assert.IsTrue(result >= (UInt128)5 && result < (UInt128)15);
+
+                // medium range (UInt64)
+                result = rnd.NextUInt128(Int64.MaxValue + (UInt128)5);
+                Assert.IsTrue(result < Int64.MaxValue + (UInt128)5);
+                result = rnd.NextUInt128(5, Int64.MaxValue + (UInt128)15);
+                Assert.IsTrue(result >= (UInt128)5 && result < Int64.MaxValue + (UInt128)15);
+
+                // big range
+                result = rnd.NextUInt128(UInt64.MaxValue + (UInt128)5, true);
+                Assert.IsTrue(result <= UInt64.MaxValue + (UInt128)5);
+                result = rnd.NextUInt128(5, Int64.MaxValue + (UInt128)15, true);
+                Assert.IsTrue(result >= (UInt128)5 && result <= Int64.MaxValue + (UInt128)15);
+            }
+        }
+#endif
+
         [Test]
         public void NextDoubleTest()
         {

@@ -957,6 +957,243 @@ namespace KGySoft.CoreLibraries
 #endif
         #endregion
 
+        #region Int128
+#if NET7_0_OR_GREATER
+
+        /// <summary>
+        /// Returns a random <see cref="Int128"/> that can have any value.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 128-bit signed integer that is greater than or equal to <see cref="Int128.MinValue">Int128.MinValue</see> and less or equal to <see cref="Int128.MaxValue">Int128.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Int128 SampleInt128(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return (Int128)GenerateSampleUInt128(random);
+        }
+
+        /// <summary>
+        /// Returns a non-negative random 128-bit signed integer that is less than <see cref="Int128.MaxValue">Int128.MaxValue</see>.
+        /// To return any <see cref="Int128"/> use the <see cref="SampleInt128">SampleInt128</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 128-bit signed integer that is greater than or equal to 0 and less than <see cref="Int128.MaxValue">Int128.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Int128 NextInt128(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            Int128 result;
+            do
+            {
+                result = (Int128)GenerateSampleUInt128(random) & Int128.MaxValue;
+            } while (result == Int128.MaxValue);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a non-negative random 128-bit signed integer that is within the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A 128-bit signed integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
+        public static Int128 NextInt128(this Random random, Int128 maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue < 0L)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+
+            // fallback for 64-bit range
+            if (maxValue <= UInt64.MaxValue)
+                return random.NextUInt64((ulong)maxValue, inclusiveUpperBound);
+
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == Int128.MaxValue)
+                    return (Int128)GenerateSampleUInt128(random) & Int128.MaxValue;
+                maxValue += 1;
+            }
+
+            UInt128 mask = ((UInt128)maxValue).GetBitMask();
+            UInt128 result;
+            do
+                result = GenerateSampleUInt128(random) & mask;
+            while (result >= (UInt128)maxValue);
+
+            return (Int128)result;
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="Int128"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A 128-bit signed integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        public static Int128 NextInt128(this Random random, Int128 minValue, Int128 maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            UInt128 range = (UInt128)(maxValue - minValue);
+
+            // fallback for 64-bit range
+            if (range <= UInt64.MaxValue)
+                return random.NextUInt64((ulong)range, inclusiveUpperBound) + minValue;
+
+            if (inclusiveUpperBound)
+            {
+                if (range == UInt128.MaxValue)
+                    return (Int128)GenerateSampleUInt128(random);
+                range += 1;
+            }
+
+            UInt128 mask = range.GetBitMask();
+            UInt128 result;
+            do
+                result = GenerateSampleUInt128(random) & mask;
+            while (result >= range);
+
+            return (Int128)result + minValue;
+        }
+
+#endif
+        #endregion
+
+        #region UInt128
+
+        /// <summary>
+        /// Returns a random <see cref="UInt128"/> that can have any value.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 128-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt128.MaxValue">UInt128.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static UInt128 SampleUInt128(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            return GenerateSampleUInt128(random);
+        }
+
+        /// <summary>
+        /// Returns a random 128-bit unsigned integer that is less than <see cref="UInt128.MaxValue">UInt64.MaxValue</see>.
+        /// To return any <see cref="UInt128"/> use the <see cref="SampleUInt128">SampleUInt128</see> method instead.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A 128-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt128.MaxValue">UInt128.MaxValue</see>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static UInt128 NextUInt128(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            UInt128 result;
+            do
+            {
+                result = GenerateSampleUInt128(random);
+            } while (result == UInt128.MaxValue);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a random 128-bit unsigned integer that is within the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A 128-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
+        public static UInt128 NextUInt128(this Random random, UInt128 maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            // fallback for 64-bit range
+            if (maxValue <= UInt64.MaxValue)
+                return random.NextUInt64((ulong)maxValue, inclusiveUpperBound);
+
+            if (inclusiveUpperBound)
+            {
+                if (maxValue == UInt128.MaxValue)
+                    return GenerateSampleUInt128(random);
+                maxValue += 1;
+            }
+
+            UInt128 mask = maxValue.GetBitMask();
+            UInt128 result;
+            do
+                result = GenerateSampleUInt128(random) & mask;
+            while (result >= maxValue);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a random 128-bit unsigned integer that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A 128-bit unsigned integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [CLSCompliant(false)]
+        public static UInt128 NextUInt128(this Random random, UInt128 minValue, UInt128 maxValue, bool inclusiveUpperBound = false)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+
+            UInt128 range = maxValue - minValue;
+
+            // fallback for 64-bit range
+            if (range <= UInt64.MaxValue)
+                return random.NextUInt64((ulong)range, inclusiveUpperBound) + minValue;
+
+            if (inclusiveUpperBound)
+            {
+                if (range == UInt128.MaxValue)
+                    return GenerateSampleUInt128(random);
+                range += 1;
+            }
+
+            UInt128 mask = range.GetBitMask();
+            UInt128 result;
+            do
+                result = GenerateSampleUInt128(random) & mask;
+            while (result >= range);
+
+            return result + minValue;
+        }
+
+        #endregion
+
         #endregion
 
         #region Floating-point Types
@@ -2271,6 +2508,17 @@ namespace KGySoft.CoreLibraries
                 return *(ulong*)p;
 #endif
         }
+
+#if NET7_0_OR_GREATER
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe UInt128 GenerateSampleUInt128(Random random)
+        {
+            Span<byte> bytes = stackalloc byte[16];
+            random.NextBytes(bytes);
+            return Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes));
+        }
+#endif
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         private static BigInteger DoGenerateBigInteger(Random random, BigInteger maxValue)
