@@ -143,6 +143,9 @@ namespace KGySoft.Collections
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [Serializable]
     public partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, ISerializable, IDeserializationCallback
+#if !(NET35 || NET40)
+        , IReadOnlyDictionary<TKey, TValue>
+#endif
         where TKey : notnull
     {
         #region Constants
@@ -316,15 +319,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TKey> Keys
-        {
-            get
-            {
-                if (keysCollection == null)
-                    Interlocked.CompareExchange(ref keysCollection, new KeysCollection(this), null);
-                return keysCollection;
-            }
-        }
+        public ICollection<TKey> Keys => KeysInternal;
 
         /// <summary>
         /// Gets a collection reflecting the values stored in this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
@@ -335,7 +330,28 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TValue> Values
+        public ICollection<TValue> Values => ValuesInternal;
+
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// </summary>
+        public IEqualityComparer<TKey> Comparer => comparer ?? defaultComparer;
+
+        #endregion
+
+        #region Private Properties
+
+        private KeysCollection KeysInternal
+        {
+            get
+            {
+                if (keysCollection == null)
+                    Interlocked.CompareExchange(ref keysCollection, new KeysCollection(this), null);
+                return keysCollection;
+            }
+        }
+
+        private ValuesCollection ValuesInternal
         {
             get
             {
@@ -345,20 +361,17 @@ namespace KGySoft.Collections
             }
         }
 
-        /// <summary>
-        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
-        /// </summary>
-        public IEqualityComparer<TKey> Comparer => comparer ?? defaultComparer;
-
         #endregion
 
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => KeysInternal;
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => ValuesInternal;
         bool IDictionary.IsFixedSize => false;
         bool IDictionary.IsReadOnly => false;
-        ICollection IDictionary.Keys => new KeysCollection(this);
-        ICollection IDictionary.Values => new ValuesCollection(this);
+        ICollection IDictionary.Keys => KeysInternal;
+        ICollection IDictionary.Values => ValuesInternal;
         bool ICollection.IsSynchronized => false;
         object ICollection.SyncRoot => Throw.NotSupportedException<object>();
 
