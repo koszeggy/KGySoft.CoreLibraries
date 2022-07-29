@@ -77,6 +77,9 @@ namespace KGySoft.Collections
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
     public class LockingCollection<T> : ICollection<T>
+#if !(NET35 || NET40)
+        , IReadOnlyCollection<T>
+#endif
     {
         #region Fields
 

@@ -15,7 +15,10 @@
   + Adding public Comparer property
   + The IDictionary<TKey, TValue>.Remove implementation has been made public to improve the compatibility with the
     regular Dictionary<TKey, TValue> class (which behaves the same way as the TryRemove method).
-  + Implements also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
+  + Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
++ LockingCollection<T>: Implementing also IReadOnlyCollection<T> (.NET Framework 4.5 and above)
++ LockingList<T>: Implementing also IReadOnlyList<T> (.NET Framework 4.5 and above)
++ LockingDictionary<T>: Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
 
 + KGySoft.ComponentModel namespace:
 ===================================

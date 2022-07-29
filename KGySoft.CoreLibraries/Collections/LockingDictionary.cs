@@ -99,11 +99,16 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     public class LockingDictionary<TKey, TValue> : LockingCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
+#if !(NET35 || NET40)
+        , IReadOnlyDictionary<TKey, TValue>
+#endif
         where TKey : notnull // actually depends on the wrapped implementation but is definitely true for the default constructor
     {
         #region Properties and Indexers
 
         #region Properties
+        
+        #region Public Properties
 
         /// <summary>
         /// Gets an <see cref="ICollection{T}" /> containing the keys of the <see cref="LockingDictionary{TKey,TValue}" />.
@@ -156,6 +161,15 @@ namespace KGySoft.Collections
                 }
             }
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+
+        #endregion
 
         #endregion
 

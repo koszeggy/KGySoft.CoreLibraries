@@ -36,9 +36,6 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if NET35 || NET40
-#pragma warning disable CS1574 // the documentation contains types that are not available in every target
-#endif
 #if NET40 || NET45 || NET472 || NETSTANDARD
 #pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
 #endif
@@ -282,7 +279,7 @@ namespace KGySoft.Collections
         /// <para>This property is ignored if a value is accessed in the fast-accessing storage including removing and adding values of keys that have already been merged to the lock-free storage.</para>
         /// <note>Some operations (such as enumerating the <see cref="ThreadSafeDictionary{TKey,TValue}"/> or its <see cref="Keys"/> and <see cref="Values"/>,
         /// calling the <see cref="ToArray">ToArray</see> or the <see cref="ICollection.CopyTo">ICollection.CopyTo</see> implementations) as well as serializing the dictionary may trigger a merging
-        /// regardless the value of this property.</note>
+        /// operation regardless the value of this property.</note>
         /// </remarks>
         public TimeSpan MergeInterval
         {
@@ -366,8 +363,10 @@ namespace KGySoft.Collections
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+#if !(NET35 || NET40)
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => KeysInternal;
         IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => ValuesInternal;
+#endif
         bool IDictionary.IsFixedSize => false;
         bool IDictionary.IsReadOnly => false;
         ICollection IDictionary.Keys => KeysInternal;
@@ -1261,9 +1260,10 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Returns an enumerator that iterates through the keys and values of this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>
-        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="Cache{TKey,TValue}"/>.
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </returns>
         /// <remarks>
         /// <para>The enumerator returned from the dictionary is safe to use concurrently with reads and writes to the dictionary; however, it does not represent a moment-in-time snapshot of the dictionary.
