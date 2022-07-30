@@ -35,6 +35,8 @@ namespace KGySoft.Collections
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
+    /// <note>Use this class only if you want to wrap a generic <see cref="ICollection{T}"/> instance to make it thread-safe.
+    /// If you want to use a thread-safe hash set optimized for concurrent operations consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
     /// <para>Type safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
     /// This does not solve every issue of multi-threading automatically. Consider the following example:
     /// <code lang="C#"><![CDATA[
@@ -67,10 +69,13 @@ namespace KGySoft.Collections
     /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
     /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
-    /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note></para>
+    /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
+    /// <note type="tip">To use a thread-safe hash set without wrapping any <see cref="ICollection{T}"/> instance consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
+    /// </para>
     /// </remarks>
     /// <threadsafety instance="true"/>
     /// <seealso cref="ICollection{T}" />
+    /// <seealso cref="ThreadSafeHashSet{T}" />
     /// <seealso cref="LockingList{T}" />
     /// <seealso cref="LockingDictionary{TKey,TValue}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]

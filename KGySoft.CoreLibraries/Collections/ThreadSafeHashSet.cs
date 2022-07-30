@@ -17,6 +17,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -44,6 +47,63 @@ using KGySoft.Serialization.Binary;
 
 namespace KGySoft.Collections
 {
+    /// <summary>
+    /// Implements a thread-safe hash set, which has similar characteristics to <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
+    /// It can be a good alternative for <see cref="HashSet{T}"/>, <see cref="LockingCollection{T}"/>, or when one would use
+    /// a <see cref="ConcurrentDictionary{TKey,TValue}"/> with ignored values.
+    /// <br/>See the <strong>Remarks</strong> section for details.
+    /// </summary>
+    /// <typeparam name="T">Type of the items stored in the <see cref="ThreadSafeHashSet{T}"/>.</typeparam>
+    /// <remarks>
+    /// <note type="tip">If you want to wrap any <see cref="ICollection{T}"/> into a thread-safe wrapper without copying the actual items, then you can also use <see cref="LockingCollection{T}"/>.</note>
+    /// <para><see cref="ThreadSafeHashSet{T}"/> uses a very similar approach to <see cref="ThreadSafeDictionary{TKey,TValue}"/>. It uses two separate
+    /// internal storage: new items are added to a temporary storage using a single lock, which might regularly be merged into a faster lock-free storage,
+    /// depending on the value of the <see cref="MergeInterval"/> property. Once the items are merged, their access
+    /// (both read and write) becomes lock free. Even deleting and re-adding an item becomes faster after it has been merged into the lock-free storage.
+    /// <note>Therefore, <see cref="ThreadSafeHashSet{T}"/> is not always a good alternative of <see cref="LockingCollection{T}"/>,
+    /// or even a <see cref="ConcurrentDictionary{TKey,TValue}"/> with ignored values. If new items are continuously added, then always a shared lock is used,
+    /// in which case <see cref="ConcurrentDictionary{TKey,TValue}"/> might perform better, unless you need to use
+    /// some members, which are very slow in <see cref="ConcurrentDictionary{TKey,TValue}"/> (see the performance comparison table at the <strong>Remarks</strong>
+    /// section of the <see cref="ThreadSafeDictionary{TKey,TValue}"/> class). If the newly added elements are regularly removed, make sure
+    /// the <see cref="PreserveMergedItems"/> property is <see langword="false"/>; otherwise, the already merged items are just marked deleted when removed from
+    /// the <see cref="ThreadSafeHashSet{T}"/> or when you call the <see cref="Clear">Clear</see> method. To remove even the merged items you must call
+    /// the <see cref="Reset">Reset</see> method, or to remove the deleted items only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
+    /// <h1 class="heading">Comparison with other thread-safe collections.</h1>
+    /// <para><strong>When to prefer</strong>&#160;<see cref="ThreadSafeHashSet{T}"/> over <see cref="ConcurrentDictionary{TKey,TValue}"/>:
+    /// <list type="bullet">
+    /// <item>If you would use only the keys, without any value.</item>
+    /// <item>If it is known that a fixed number of items will be used, or <see cref="Contains">Contains</see> will be used much more often than <see cref="Add">Add</see>,
+    /// in which case <see cref="ThreadSafeHashSet{T}"/> may become mainly lock-free.</item>
+    /// <item>If the same set of items are deleted and re-added again and again. In this case consider to set the <see cref="PreserveMergedItems"/>
+    /// to <see langword="true"/>, so it is not checked whether a cleanup should be performed due to many deleted items.</item>
+    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or you need to call <see cref="ToArray">ToArray</see>,
+    /// which are particularly slow in case of <see cref="ConcurrentDictionary{TKey,TValue}"/>.</item>
+    /// <item>If it is expected that there will be many hash collisions.</item>
+    /// <item>If the collection is needed to be serialized.</item>
+    /// </list>
+    /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+    /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
+    /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
+    /// platforms where default string hashing is not randomized (eg. .NET Framework 3.5).</note></para>
+    /// <para><strong>When to prefer</strong>&#160;<see cref="LockingCollection{T}"/> over <see cref="ThreadSafeHashSet{T}"/>:
+    /// <list type="bullet">
+    /// <item>If you just need a wrapper for an already existing <see cref="ICollection{T}"/> without copying the actual items.</item>
+    /// <item>If you just need a simple thread-safe solution without additional allocations (unless if you enumerate the collection)
+    /// and it's not a problem if it cannot scale well for high concurrency.</item>
+    /// </list></para>
+    /// <para><strong>Incompatibilities</strong> with <see cref="HashSet{T}"/>:
+    /// <list type="bullet">
+    /// <item>Some of the constructors have different parameters.</item>
+    /// <item><see cref="ThreadSafeHashSet{T}"/> does not implement the <see cref="ISet{T}"/> interface because most of its members
+    /// make little sense when the instance is used concurrently.</item>
+    /// <item>It has no public <c>CopyTo</c> methods. The <see cref="ICollection{T}.CopyTo">ICollection&lt;T>.CopyTo</see> method
+    /// is implemented explicitly, though it is not recommended to use it because when elements are added or removed during the operation
+    /// you cannot tell how many elements were actually copied. Use the <see cref="ToArray">ToArray</see> method instead, which works in all circumstances.</item>
+    /// </list></para>
+    /// </remarks>
+    /// <threadsafety instance="true"/>
+    /// <seealso cref="LockingCollection{T}"/>
+    /// <seealso cref="ThreadSafeDictionary{TKey,TValue}"/>
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]

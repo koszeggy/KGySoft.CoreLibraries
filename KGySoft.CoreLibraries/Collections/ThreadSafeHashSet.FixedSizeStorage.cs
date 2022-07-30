@@ -256,7 +256,7 @@ namespace KGySoft.Collections
 
             #region Public Methods
 
-            public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
+            public bool TryGetValue(T equalValue, [MaybeNullWhen(false)]out T actualValue)
                 => TryGetValueInternal(equalValue, GetHashCode(equalValue), out actualValue) == true;
 
             public bool Contains(T item) => ContainsInternal(item, GetHashCode(item)) == true;

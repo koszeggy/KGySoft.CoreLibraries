@@ -65,7 +65,7 @@ namespace KGySoft.Collections
     /// <item>If you want to wrap any <see cref="IDictionary{TKey,TValue}"/> into a thread-safe wrapper without copying the actual items, then you can also use <see cref="LockingDictionary{TKey,TValue}"/>.</item>
     /// </list></note>
     /// <para>The purpose of <see cref="ThreadSafeDictionary{TKey,TValue}"/> is similar to <see cref="ConcurrentDictionary{TKey,TValue}"/> but its approach is somewhat different.
-    /// While <see cref="ConcurrentDictionary{TKey,TValue}"/> uses a group of locks to perform modifications (their amount can be configured or depends on the number of CPU cores);
+    /// The <see cref="ConcurrentDictionary{TKey,TValue}"/> uses a group of locks to perform modifications (their amount can be configured or depends on the number of CPU cores);
     /// on the other hand, <see cref="ThreadSafeDictionary{TKey,TValue}"/> uses two separate internal storage: items with new keys are added to a temporary storage using a single lock,
     /// which might regularly be merged into a faster lock-free storage, depending on the value of the <see cref="MergeInterval"/> property. Once the items are merged, their access
     /// (both read and write) becomes lock free. Even deleting and re-adding a value for the same key becomes faster after the key is merged into the lock-free storage.
@@ -79,7 +79,7 @@ namespace KGySoft.Collections
     /// <para><strong>When to use</strong>&#160;<see cref="ThreadSafeDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
-    /// or even deleted and re-added with any value. In this case consider to set the <see cref="PreserveMergedKeys"/> to <see langword="true"/> so it is not checked whether
+    /// or even deleted and re-added with any value. In this case consider to set the <see cref="PreserveMergedKeys"/> to <see langword="true"/>, so it is not checked whether
     /// a cleanup should be performed due to many deleted items.</item>
     /// <item>If you access mainly existing keys by the <see cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</see> methods,
     /// which are separate try get/add/update operations at <see cref="ConcurrentDictionary{TKey,TValue}"/> but are optimized at <see cref="ThreadSafeDictionary{TKey,TValue}"/> to avoid
@@ -134,8 +134,10 @@ namespace KGySoft.Collections
     /// itself throw a <see cref="NotSupportedException"/>.</item>
     /// </list></para>
     /// </remarks>
+    /// <threadsafety instance="true"/>
     /// <seealso cref="ThreadSafeCacheFactory"/>
     /// <seealso cref="LockingDictionary{TKey,TValue}"/>
+    /// <seealso cref="ThreadSafeHashSet{T}"/>
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [Serializable]

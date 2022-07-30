@@ -11,6 +11,7 @@
 
 + KGySoft.Collections namespace:
 ================================
++ New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>
 + ThreadSafeDictionary<TKey, TValue> class:
   + Adding public Comparer property
   + The IDictionary<TKey, TValue>.Remove implementation has been made public to improve the compatibility with the
