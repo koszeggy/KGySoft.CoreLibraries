@@ -9,14 +9,15 @@
 ! v7.0.0:
 ~~~~~~~~~
 
-+ KGySoft.Collections namespace:
+* KGySoft.Collections namespace:
 ================================
 + New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>
-+ ThreadSafeDictionary<TKey, TValue> class:
+* ThreadSafeDictionary<TKey, TValue> class:
   + Adding public Comparer property
   + The IDictionary<TKey, TValue>.Remove implementation has been made public to improve the compatibility with the
     regular Dictionary<TKey, TValue> class (which behaves the same way as the TryRemove method).
   + Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
+  * Better chance to initialize immediately in the lock-free storage when created from another collection.
 + LockingCollection<T>: Implementing also IReadOnlyCollection<T> (.NET Framework 4.5 and above)
 + LockingList<T>: Implementing also IReadOnlyList<T> (.NET Framework 4.5 and above)
 + LockingDictionary<T>: Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
@@ -93,7 +94,7 @@
 ==================================
 + The WaitHandleExtensions class has been moved here.
 + New AsyncHelper class to be able to provide sync/async (using APM and/or TPL) overloads for optionally parallel
-  operations with cancellation and reporting progress using a single implementation.
+  operations with cancellation and reporting progress using a single shared implementation.
 + New ParallelHelper class: Advanced Parallel.For-like methods for all platforms.
 + New AsyncConfigBase, AsyncConfig, ParallelConfig, TaskConfig classes
 + New IAsyncContext, IAsyncProgress interfaces

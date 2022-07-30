@@ -282,15 +282,24 @@ namespace KGySoft.Collections
 
             #region Static Methods
 
-            internal static bool TryInitialize(ICollection<KeyValuePair<TKey, TValue>> collection, bool isAndHash, IEqualityComparer<TKey>? comparer, out FixedSizeStorage result)
+            internal static bool TryInitialize(IEnumerable<KeyValuePair<TKey, TValue>> collection, bool isAndHash, IEqualityComparer<TKey>? comparer, out FixedSizeStorage result)
             {
-                // initialization may fail if collection.Count changes during the process
-                result = new FixedSizeStorage(collection.Count, isAndHash, comparer);
-                return result.TryInitialize(collection);
+                if (!collection.TryGetCount(out int count))
+                {
+                    result = Empty;
+                    return false;
+                }
+
+                // initialization may fail if collection length changes during the process
+                result = new FixedSizeStorage(count, isAndHash, comparer);
+                bool success = result.TryInitialize(collection);
+                if (!success)
+                    result = Empty;
+                return success;
             }
 
             #endregion
-            
+
             #region Instance Methods
 
             #region Public Methods
@@ -1087,7 +1096,7 @@ namespace KGySoft.Collections
                 return true;
             }
 
-            private bool TryInitialize(ICollection<KeyValuePair<TKey, TValue>> collection)
+            private bool TryInitialize(IEnumerable<KeyValuePair<TKey, TValue>> collection)
                 => comparer == null ? TryInitializeDefault(collection) : TryInitializeByComparer(collection);
 
             private bool TryInitializeDefault(IEnumerable<KeyValuePair<TKey, TValue>> collection)
