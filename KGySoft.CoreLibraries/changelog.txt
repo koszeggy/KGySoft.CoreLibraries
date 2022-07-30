@@ -9,6 +9,10 @@
 ! v7.0.0:
 ~~~~~~~~~
 
++ Assembly changes:
+===================
++ Targeting also .NET 7.0.
+
 * KGySoft.Collections namespace:
 ================================
 + New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>
