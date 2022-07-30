@@ -349,7 +349,8 @@ namespace KGySoft.Collections
             {
                 Entry[] items = entries;
                 int index;
-                // Here existing key was not found
+
+                // Here existing item was not found
                 bool fromDeleted = deletedCount > 0;
 
                 // re-using the removed entries if possible

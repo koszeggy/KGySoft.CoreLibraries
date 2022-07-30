@@ -22,6 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -185,7 +186,7 @@ namespace KGySoft.Collections
                 if (removeDeletedKeys)
                 {
                     // Possible endless retries are prevented by WaitWhileMerging (this method is called with isMerging=true)
-                    // Data loss is prevented by the retry mechanisms in ThreadSafeHashSet.AddInternal/Remove.
+                    // Data loss is prevented by the retry mechanisms in ThreadSafeHashSet.Add/Remove.
                     while (!TryInitialize(other, mergeWith))
                     {
                     }
@@ -243,11 +244,20 @@ namespace KGySoft.Collections
 
             #region Static Methods
 
-            internal static bool TryInitialize(ICollection<T> collection, bool isAndHash, IEqualityComparer<T>? comparer, out FixedSizeStorage result)
+            internal static bool TryInitialize(IEnumerable<T> collection, bool isAndHash, IEqualityComparer<T>? comparer, out FixedSizeStorage result)
             {
-                // initialization may fail if collection.Count changes during the process
-                result = new FixedSizeStorage(collection.Count, isAndHash, comparer);
-                return result.TryInitialize(collection);
+                if (!collection.TryGetCount(out int count))
+                {
+                    result = Empty;
+                    return false;
+                }
+
+                // initialization may fail if collection length changes during the process
+                result = new FixedSizeStorage(count, isAndHash, comparer);
+                bool success = result.TryInitialize(collection);
+                if (!success)
+                    result = Empty;
+                return success;
             }
 
             #endregion
@@ -290,7 +300,7 @@ namespace KGySoft.Collections
 
                     // item found: returning whether is not deleted.
                     if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, item))
-                        return Volatile.Read(ref entryRef.IsDeleted) != 0;
+                        return Volatile.Read(ref entryRef.IsDeleted) == 0;
 
                     i = entryRef.Next;
                 }
@@ -352,13 +362,12 @@ namespace KGySoft.Collections
                     }
 
                     // already added
-                    if (Volatile.Read(ref entryRef.IsDeleted) == 0)
+                    if (Interlocked.Exchange(ref entryRef.IsDeleted, 0) == 0)
                         return false;
 
-                    Volatile.Write(ref entryRef.IsDeleted, 1);
+                    // re-added successfully
                     Interlocked.Decrement(ref deletedCount);
                     return true;
-
                 }
 
                 // not found
@@ -513,12 +522,7 @@ namespace KGySoft.Collections
                     ref Entry newItemRef = ref items[index];
                     newItemRef.Hash = oldItemRef.Hash;
                     newItemRef.Value = oldItemRef.Value;
-#if NET35 || NET40
-                    newItemRef.IsDeleted = oldItemRef.IsDeleted;
-#else
                     newItemRef.IsDeleted = Volatile.Read(ref oldItemRef.IsDeleted);
-#endif
-
 
                     // assuming other was already consistent so not checking for duplicates by the comparer
                     ref int bucketRef = ref localBuckets[GetBucketIndex(newItemRef.Hash)];

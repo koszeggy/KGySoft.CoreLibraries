@@ -470,6 +470,7 @@ namespace KGySoft.Collections
         /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
         /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
         /// </remarks>
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "TryInitialize will not enumerate when multiple enumeration could be a problem")]
         public ThreadSafeHashSet(IEnumerable<T> collection, IEqualityComparer<T>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
             : this(defaultCapacity, comparer, strategy)
         {
@@ -478,12 +479,11 @@ namespace KGySoft.Collections
 
             // trying to initialize directly in the fixed storage
 #pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, this is the constructor so there are no other threads at this point
-            if (collection is ICollection<T> c && FixedSizeStorage.TryInitialize(c, bitwiseAndHash, comparer, out fixedSizeStorage))
+            if (FixedSizeStorage.TryInitialize(collection, bitwiseAndHash, comparer, out fixedSizeStorage))
                 return;
 #pragma warning restore CS0420
 
             // initializing in the expando storage (no locking is needed here as we are in the constructor)
-            fixedSizeStorage = FixedSizeStorage.Empty;
             expandableStorage = new TempStorage(collection, comparer, bitwiseAndHash);
             nextMerge = TimeHelper.GetTimeStamp() + mergeInterval;
         }
