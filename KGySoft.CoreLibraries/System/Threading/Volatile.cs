@@ -10,6 +10,7 @@ namespace System.Threading
         internal static int Read(ref int location) => Thread.VolatileRead(ref location);
         internal static long Read(ref long location) => Thread.VolatileRead(ref location);
 
+        internal static void Write(ref int location, int value) => Thread.VolatileWrite(ref location, value);
         internal static void Write(ref long location, long value) => Thread.VolatileWrite(ref location, value);
 
         #endregion

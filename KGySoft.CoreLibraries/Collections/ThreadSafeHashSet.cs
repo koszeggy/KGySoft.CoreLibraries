@@ -1,0 +1,964 @@
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ThreadSafeHashSet.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2022 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution.
+//
+//  Please refer to the LICENSE file if you want to use this source code.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Security;
+using System.Threading;
+
+using KGySoft.CoreLibraries;
+using KGySoft.Diagnostics;
+using KGySoft.Serialization.Binary;
+
+#endregion
+
+#region Suppressions
+
+#if NET40 || NET45 || NET472 || NETSTANDARD
+#pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
+#endif
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
+#endregion
+
+namespace KGySoft.Collections
+{
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
+    [Serializable]
+    public partial class ThreadSafeHashSet<T> : ICollection<T>, ICollection, ISerializable, IDeserializationCallback
+#if !(NET35 || NET40)
+        , IReadOnlyCollection<T>
+#endif
+
+    {
+        #region Enumerator class
+
+        private sealed class Enumerator : IEnumerator<T>
+        {
+            #region Enumerations
+
+            private enum State
+            {
+                NotStarted,
+                Enumerating,
+                Finished
+            }
+
+            #endregion
+
+            #region Fields
+
+            private readonly ThreadSafeHashSet<T> owner;
+
+            private State state;
+            private FixedSizeStorage.InternalEnumerator wrappedEnumerator;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public T Current => wrappedEnumerator.Current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    // the non-generic IEnumerable.Current should throw an exception when used improperly
+                    if (state != State.Enumerating)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return Current!;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(ThreadSafeHashSet<T> owner) => this.owner = owner;
+
+            #endregion
+
+            #region Methods
+
+            public bool MoveNext()
+            {
+                switch (state)
+                {
+                    case State.NotStarted:
+                        owner.EnsureMerged();
+                        wrappedEnumerator = owner.fixedSizeStorage.GetInternalEnumerator();
+                        state = State.Enumerating;
+                        goto case State.Enumerating;
+
+                    case State.Enumerating:
+                        if (wrappedEnumerator.MoveNext())
+                            return true;
+
+                        wrappedEnumerator = default;
+                        state = State.Finished;
+                        return false;
+
+                    default:
+                        return false;
+                }
+            }
+
+            public void Reset()
+            {
+                wrappedEnumerator = default;
+                state = State.NotStarted;
+            }
+
+            public void Dispose()
+            {
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Constants
+
+        private const int defaultCapacity = 4;
+
+        #endregion
+
+        #region Fields
+
+        #region Static Fields
+
+        private static readonly IEqualityComparer<T> defaultComparer = ComparerHelper<T>.EqualityComparer;
+
+        #endregion
+
+        #region Instance Fields
+
+        private readonly object syncRoot = new object();
+
+        private IEqualityComparer<T>? comparer;
+        private int initialLockingCapacity;
+        private bool bitwiseAndHash;
+        private volatile bool preserveMergedItems;
+        private volatile bool isMerging;
+        private long mergeInterval = TimeHelper.GetInterval(100);
+        private long nextMerge;
+        /// <summary>
+        /// Items here are accessed without locking.
+        /// Once a new item is added, it is never removed anymore even when they are deleted
+        /// </summary>
+        private volatile FixedSizeStorage fixedSizeStorage;
+        /// <summary>
+        /// A temporary storage for new values. It is regularly merged with fixedSizeStorage into a new fixed size instance.
+        /// </summary>
+        private volatile TempStorage? expandableStorage;
+        private SerializationInfo? deserializationInfo;
+
+        #endregion
+
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets the number of elements contained in this <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        public int Count
+        {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            get
+            {
+                if (expandableStorage == null)
+                    return fixedSizeStorage.Count;
+
+                lock (syncRoot)
+                {
+                    TempStorage? lockingValues = expandableStorage;
+
+                    // lost race
+                    if (lockingValues == null)
+                        return fixedSizeStorage.Count;
+
+                    int result = fixedSizeStorage.Count + lockingValues.Count;
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets whether this <see cref="ThreadSafeHashSet{T}"/> is empty.
+        /// </summary>
+        public bool IsEmpty
+        {
+            get
+            {
+                // Note: here we access even expandableStorage without locking. Though expandableStorage.Count returns an
+                // expression where both operands are mutable we can accept it because we don't expect multiple changes at
+                // once (changes are in locks) and expandableStorage is volatile so Count will see valid values.
+                return fixedSizeStorage.Count == 0 && (expandableStorage?.Count ?? 0) == 0;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether items that have already been merged into the faster lock-free storage are preserved even when they are deleted.
+        /// <br/>Default value: <see langword="false"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>If the possible number of items in this <see cref="ThreadSafeHashSet{T}"/> is known to be a limited value, then this property
+        /// can be set to <see langword="true"/>, so once the items have been merged into the faster lock-free storage, their entry is not removed anymore even if they
+        /// are deleted. This ensures that removing and re-adding an item again and again remains a lock-free operation.
+        /// <note>Do not set this property to <see langword="true"/>, if the number of the possibly added items is not limited.</note></para>
+        /// <para>This property can be set to <see langword="true"/>&#160;even if items are never removed so it is not checked before a merge operation whether
+        /// the amount of deleted items exceeds a specific limit.</para>
+        /// <para>If this property is <see langword="true"/>, then the already merged items are not removed even when calling the <see cref="Clear">Clear</see> method.
+        /// The memory of the deleted entries can be freed by explicitly calling the <see cref="TrimExcess">TrimExcess</see> method,
+        /// whereas to remove all allocated entries you can call the <see cref="Reset">Reset</see> method.</para>
+        /// <para>Even if this property is <see langword="false"/>, the removed items are not dropped immediately. Unused items are removed during a merge operation and only
+        /// when their number exceeds a specific limit. You can call the <see cref="TrimExcess">TrimExcess</see> method to force removing unused items on demand.</para>
+        /// </remarks>
+        public bool PreserveMergedItems
+        {
+            get => preserveMergedItems;
+            set => preserveMergedItems = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the minimum lifetime for the temporarily created internal locking storage when adding new items to the <see cref="ThreadSafeHashSet{T}"/>.
+        /// <br/>Default value: 100 milliseconds.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>When adding new items, they will be put in a temporary locking storage first.
+        /// Whenever the locking storage is accessed, it will be checked whether the specified time interval has been expired since its creation. If so, then
+        /// it will be merged with the previous content of the fast non-locking storage into a new one.
+        /// If new items are typically added together, rarely or periodically, then it is recommended to set some small positive value (up to a few seconds).</para>
+        /// <para>Even if the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, adding new items are not necessarily merged immediately
+        /// to the fast-accessing storage. Depending on the targeted platform a minimum 15 ms delay is possible. Setting <see cref="TimeSpan.Zero">TimeSpan.Zero</see>
+        /// is not recommended though, unless new items are almost never added at the same time.</para>
+        /// <para>When the value of this property is negative (eg. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
+        /// automatically with the lock-free storage. You still can call the <see cref="EnsureMerged">EnsureMerged</see> method to perform a merge explicitly.</para>
+        /// <para>This property is ignored if an item is accessed in the fast-accessing storage including removing and adding items that have already been merged to the lock-free storage.</para>
+        /// <note>Some operations (such as enumerating the <see cref="ThreadSafeHashSet{T}"/>, calling the <see cref="ToArray">ToArray</see>
+        /// or the <see cref="ICollection.CopyTo">ICollection.CopyTo</see> implementations) as well as serialization may trigger a merging operation
+        /// regardless the value of this property.</note>
+        /// </remarks>
+        public TimeSpan MergeInterval
+        {
+            get => TimeHelper.GetTimeSpan(Volatile.Read(ref mergeInterval));
+            set
+            {
+                lock (syncRoot)
+                {
+                    long interval = TimeHelper.GetInterval(value);
+
+                    // adjusting to prevent immediate merging for nonzero value
+                    if (interval == 0L && value != TimeSpan.Zero)
+                        interval = value < TimeSpan.Zero ? -1L : 1L;
+
+                    if (interval == mergeInterval)
+                        return;
+
+                    mergeInterval = interval;
+
+                    if (expandableStorage == null || interval < 0L)
+                        return;
+
+                    nextMerge = TimeHelper.GetTimeStamp() + interval;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of items for this <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        public IEqualityComparer<T> Comparer => comparer ?? defaultComparer;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool ICollection<T>.IsReadOnly => false;
+
+        bool ICollection.IsSynchronized => false;
+
+        object ICollection.SyncRoot => Throw.NotSupportedException<object>();
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        #region Public Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class that is empty
+        /// and uses the default comparer and <see cref="HashingStrategy.Auto"/> hashing strategy.
+        /// </summary>
+        public ThreadSafeHashSet() : this(defaultCapacity, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class that is empty
+        /// and uses the default comparer and the specified hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for new items.
+        /// If 0, then a default capacity is used.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        public ThreadSafeHashSet(int capacity, HashingStrategy strategy = HashingStrategy.Auto)
+            : this(capacity, null, strategy)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class that is empty
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
+        public ThreadSafeHashSet(IEqualityComparer<T>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
+            : this(defaultCapacity, comparer, strategy)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class that is empty
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for new items.
+        /// If 0, then a default capacity is used.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
+        public ThreadSafeHashSet(int capacity, IEqualityComparer<T>? comparer, HashingStrategy strategy = HashingStrategy.Auto)
+        {
+            if (!strategy.IsDefined())
+                Throw.EnumArgumentOutOfRange(Argument.strategy, strategy);
+            if (capacity <= 0)
+            {
+                if (capacity < 0)
+                    Throw.ArgumentOutOfRangeException(Argument.capacity, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                capacity = defaultCapacity;
+            }
+
+            fixedSizeStorage = FixedSizeStorage.Empty;
+            initialLockingCapacity = capacity;
+            bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
+            this.comparer = ComparerHelper<T>.GetSpecialDefaultEqualityComparerOrNull(comparer);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class from the specified <paramref name="collection"/>
+        /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
+        /// </summary>
+        /// <param name="collection">The collection whose elements are coped to the new <see cref="ThreadSafeHashSet{T}"/>.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
+        /// <remarks>
+        /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
+        /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.</note>
+        /// </remarks>
+        public ThreadSafeHashSet(IEnumerable<T> collection, IEqualityComparer<T>? comparer = null, HashingStrategy strategy = HashingStrategy.Auto)
+            : this(defaultCapacity, comparer, strategy)
+        {
+            if (collection == null!)
+                Throw.ArgumentNullException(Argument.dictionary);
+
+            // trying to initialize directly in the fixed storage
+#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, this is the constructor so there are no other threads at this point
+            if (collection is ICollection<T> c && FixedSizeStorage.TryInitialize(c, bitwiseAndHash, comparer, out fixedSizeStorage))
+                return;
+#pragma warning restore CS0420
+
+            // initializing in the expando storage (no locking is needed here as we are in the constructor)
+            fixedSizeStorage = FixedSizeStorage.Empty;
+            expandableStorage = new TempStorage(collection, comparer, bitwiseAndHash);
+            nextMerge = TimeHelper.GetTimeStamp() + mergeInterval;
+        }
+
+        #endregion
+
+        #region Protected Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class from serialized data.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this deserialization.</param>
+        /// <remarks><note type="inherit">If an inherited type serializes data, which may affect the hashes of the keys, then override
+        /// the <see cref="OnDeserialization">OnDeserialization</see> method and use that to restore the data of the derived instance.</note></remarks>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable. - the fields will be initialized in IDeserializationCallback.OnDeserialization
+        protected ThreadSafeHashSet(SerializationInfo info, StreamingContext context)
+#pragma warning restore CS8618
+        {
+            // deferring the actual deserialization until all objects are finalized and hashes do not change anymore
+            deserializationInfo = info;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Adds the specified <paramref name="item"/> to the <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        /// <param name="item">The element to add to the set.</param>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> was added to the <see cref="ThreadSafeHashSet{T}"/>;
+        /// <see langword="false"/>&#160;if the element is already present judged by the <see cref="Comparer"/>.</returns>
+        public bool Add(T item)
+        {
+            uint hashCode = GetHashCode(item);
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                bool? success = lockFreeValues.TryAddInternal(item, hashCode);
+                if (success == true)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return true;
+                    continue;
+                }
+
+                // duplicate item
+                if (success == false)
+                    return false;
+
+                lock (syncRoot)
+                {
+                    TempStorage lockingValues = GetCreateLockingStorage();
+                    bool result = lockingValues.AddInternal(item, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tries to get the actual stored item for the specified <paramref name="equalValue"/> in the <see cref="ThreadSafeHashSet{T}"/>.
+        /// It can be useful to obtain the actually stored reference when the <see cref="Comparer"/> can consider different instances equal.
+        /// </summary>
+        /// <returns><see langword="true"/>&#160;if an item equal to <paramref name="equalValue"/> was found in the <see cref="ThreadSafeHashSet{T}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <param name="equalValue">The item to search for.</param>
+        /// <param name="actualValue">When this method returns, the actually stored value, if the <paramref name="equalValue"/> is present in
+        /// the <see cref="ThreadSafeHashSet{T}"/> judged by the current <see cref="Comparer"/>; otherwise, the default value for the type <typeparamref name="T"/>. This parameter is passed uninitialized.</param>
+        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
+        {
+            uint hashCode = GetHashCode(equalValue);
+            bool? success = fixedSizeStorage.TryGetValueInternal(equalValue, hashCode, out actualValue);
+            if (success.HasValue)
+                return success.Value;
+
+            if (expandableStorage == null)
+                return false;
+
+            lock (syncRoot)
+            {
+                TempStorage? lockingValues = expandableStorage;
+
+                // lost race
+                if (lockingValues == null)
+                    return false;
+
+                bool result = lockingValues.TryGetValueInternal(equalValue, hashCode, out actualValue);
+                MergeIfExpired();
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="ThreadSafeHashSet{T}"/> contains the specified <paramref name="item"/>.
+        /// </summary>
+        /// <param name="item">The element to locate in the <see cref="ThreadSafeHashSet{T}"/>.</param>
+        /// <returns><see langword="true"/> if the <see cref="ThreadSafeHashSet{T}"/> contains the specified <paramref name="item"/>; otherwise, <see langword="false"/>.</returns>
+        public bool Contains(T item)
+        {
+            uint hashCode = GetHashCode(item);
+            bool? success = fixedSizeStorage.ContainsInternal(item, hashCode);
+            if (success.HasValue)
+                return success.Value;
+
+            if (expandableStorage == null)
+                return false;
+
+            lock (syncRoot)
+            {
+                TempStorage? lockingValues = expandableStorage;
+
+                // lost race
+                if (lockingValues == null)
+                    return false;
+
+                bool result = lockingValues.ContainsInternal(item, hashCode);
+                MergeIfExpired();
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Tries to remove the specified <paramref name="item"/> from the <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        /// <param name="item">The element to remove.</param>
+        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        public bool Remove(T item)
+        {
+            uint hashCode = GetHashCode(item);
+            bool removed = false;
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                bool? success = lockFreeValues.TryRemoveInternal(item, hashCode);
+
+                // making sure that correct result is returned even if multiple tries are necessary due to merging
+                if (success == true)
+                    removed = true;
+
+                // successfully removed from fixed-size storage (now, or in a previous attempt)
+                if (removed)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return true;
+
+                    continue;
+                }
+
+                // item was already deleted (if we removed it in a previous attempt, then true is returned above)
+                if (success == false)
+                    return false;
+
+                if (expandableStorage == null)
+                    return false;
+
+                lock (syncRoot)
+                {
+                    TempStorage? lockingValues = expandableStorage;
+
+                    // lost race
+                    if (lockingValues == null)
+                        return false;
+
+                    bool result = lockingValues.TryRemoveInternal(item, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="ThreadSafeHashSet{T}"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="PreserveMergedItems"/> is <see langword="true"/>, or when the amount of removed items does not exceed a limit, then
+        /// This method is an O(n) operation where n is the number of elements present in the inner lock-free storage. Otherwise,
+        /// this method calls the <see cref="Reset">Reset</see> method, which frees up all the allocated entries.</para>
+        /// <note>Note that if <see cref="PreserveMergedItems"/> is <see langword="true"/>, then though this method marks all items deleted in
+        /// the <see cref="ThreadSafeHashSet{T}"/>, it never actually removes the items that are already merged into the faster lock-free storage.
+        /// This ensures that re-adding a previously removed item will always be a fast, lock-free operation.
+        /// To actually remove all items use the <see cref="Reset">Reset</see> method instead.</note>
+        /// </remarks>
+        /// <seealso cref="Reset"/>
+        public void Clear()
+        {
+            if (!preserveMergedItems && fixedSizeStorage.Capacity > 16)
+            {
+                Reset();
+                return;
+            }
+
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                lockFreeValues.Clear();
+                if (!IsUpToDate(lockFreeValues))
+                    continue;
+
+                // It is not a problem if a merge has been started before this line because it will nullify expandableStorage in the end anyway.
+                expandableStorage = null;
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="ThreadSafeHashSet{T}"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Clear">Clear</see> method for details.
+        /// </summary>
+        /// <seealso cref="Clear"/>
+        public void Reset()
+        {
+            // We can't use a loop with IsUpToDate here because we replace fixedSizeStorage reference
+            // but the lock waits also for possible concurrent merges to finish
+            lock (syncRoot)
+            {
+                fixedSizeStorage = FixedSizeStorage.Empty;
+                expandableStorage = null;
+            }
+        }
+
+        /// <summary>
+        /// Ensures that all elements in this <see cref="ThreadSafeHashSet{T}"/> are merged into the faster lock-free storage.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="MergeInterval"/> property for details.
+        /// </summary>
+        public void EnsureMerged()
+        {
+            if (expandableStorage == null)
+                return;
+
+            lock (syncRoot)
+            {
+                TempStorage? lockingValues = expandableStorage;
+
+                // lost race
+                if (lockingValues == null)
+                    return;
+
+                DoMerge(!preserveMergedItems && fixedSizeStorage.IsCleanupLimitReached);
+            }
+        }
+
+        /// <summary>
+        /// Forces to perform a merge while removing all possibly allocated but already deleted entries from the lock-free storage,
+        /// even if the <see cref="PreserveMergedItems"/> property is <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="PreserveMergedItems"/> property for details.
+        /// </summary>
+        public void TrimExcess()
+        {
+            while (true)
+            {
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                TempStorage? lockingValues = expandableStorage;
+
+                if (lockingValues == null && lockFreeValues.DeletedCount == 0)
+                {
+                    // this is just needed for awaiting a possible concurrent merge session
+                    if (IsUpToDate(lockFreeValues))
+                        return;
+                    continue;
+                }
+
+                lock (syncRoot)
+                {
+                    lockFreeValues = fixedSizeStorage;
+                    lockingValues = expandableStorage;
+
+                    if (lockingValues?.Count > 0)
+                    {
+                        DoMerge(true);
+                        return;
+                    }
+
+                    // lost race
+                    if (lockFreeValues.DeletedCount == 0)
+                        return;
+
+                    // special merge: just removing deleted entries from fixedSizeStorage
+                    // As we set isMerging it is guaranteed that concurrent updates will wait in IsUpToDate after up to one update attempt
+                    isMerging = true;
+                    try
+                    {
+                        fixedSizeStorage = new FixedSizeStorage(lockFreeValues);
+                    }
+                    finally
+                    {
+                        isMerging = false;
+                    }
+
+                    expandableStorage = null;
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the items of this <see cref="ThreadSafeHashSet{T}"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="ThreadSafeHashSet{T}"/>.
+        /// </returns>
+        /// <remarks>
+        /// <para>The returned enumerator is safe to use concurrently with reads and writes to the <see cref="ThreadSafeHashSet{T}"/>; however,
+        /// it does not represent a moment-in-time snapshot. The contents exposed through the enumerator may contain modifications made to the <see cref="ThreadSafeHashSet{T}"/>
+        /// after <see cref="GetEnumerator">GetEnumerator</see> was called.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        public IEnumerator<T> GetEnumerator() => new Enumerator(this);
+
+        /// <summary>
+        /// Copies the items stored in the <see cref="ThreadSafeHashSet{T}"/> to a new array.
+        /// </summary>
+        /// <returns>A new array containing a snapshot of items copied from the <see cref="ThreadSafeHashSet{T}"/>.</returns>
+        public T[] ToArray()
+        {
+            EnsureMerged();
+            return fixedSizeStorage.ToArray();
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// In a derived class populates a <see cref="SerializationInfo" /> with the additional data of the derived type needed to serialize the target object.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> to populate with data.</param>
+        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
+        [SecurityCritical]
+        protected virtual void GetObjectData(SerializationInfo info, StreamingContext context) { }
+
+        /// <summary>
+        /// In a derived class restores the state the deserialized instance.
+        /// </summary>
+        /// <param name="info">The <see cref="SerializationInfo" /> that stores the data.</param>
+        [SecurityCritical]
+        protected virtual void OnDeserialization(SerializationInfo info) { }
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private uint GetHashCode(T item)
+        {
+            if (item == null)
+                return 0U;
+            IEqualityComparer<T>? comp = comparer;
+            return (uint)(comp == null ? item.GetHashCode() : comp.GetHashCode(item));
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private TempStorage GetCreateLockingStorage()
+        {
+            TempStorage? result = expandableStorage;
+            if (result != null)
+                return result;
+            result = expandableStorage = new TempStorage(initialLockingCapacity, comparer, bitwiseAndHash);
+            long interval = mergeInterval;
+            if (interval >= 0L)
+                nextMerge = TimeHelper.GetTimeStamp() + interval;
+            return result;
+        }
+
+        private void MergeIfExpired()
+        {
+            // must be called in lock
+            if (mergeInterval >= 0L && TimeHelper.GetTimeStamp() > nextMerge)
+                DoMerge(!preserveMergedItems && fixedSizeStorage.IsCleanupLimitReached);
+        }
+
+        private void DoMerge(bool removeDeletedItems)
+        {
+            // Must be in a lock to work properly!
+            Debug.Assert(!isMerging || expandableStorage != null, "Make sure caller is in a lock");
+
+            TempStorage lockingValues = expandableStorage!;
+            if (lockingValues.Count != 0 || removeDeletedItems)
+            {
+                // Indicating that from this point fixedSizeStorage cannot be considered safe even though its reference is not replaced yet.
+                // Note: we could spare the flag if we just nullified fixedSizeStorage before merging but this way can prevent that items in the
+                // fixed-size storage reappear in the locking one.
+                isMerging = true;
+                try
+                {
+                    fixedSizeStorage = new FixedSizeStorage(fixedSizeStorage, lockingValues, removeDeletedItems);
+                }
+                finally
+                {
+                    // now we can reset the flag because an outdated storage reference can be detected safely
+                    isMerging = false;
+                }
+            }
+
+            expandableStorage = null;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private bool IsUpToDate(FixedSizeStorage lockFreeValues)
+        {
+            // fixed-size storage has been replaced
+            if (lockFreeValues != fixedSizeStorage)
+                return false;
+
+            if (!isMerging)
+                return true;
+
+            // a merge has been started, values from lockFreeValues storage might be started to be copied:
+            // preventing current thread from consuming CPU until merge is finished
+            WaitWhileMerging();
+            return false;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private void WaitWhileMerging()
+        {
+            var wait = new SpinWait();
+            while (isMerging)
+                wait.SpinOnce();
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        void ICollection<T>.Add(T item) => Add(item);
+
+        void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+        {
+            if (array == null!)
+                Throw.ArgumentNullException(Argument.array);
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+            int length = array.Length;
+            if (length - arrayIndex < Count)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+
+            EnsureMerged();
+            FixedSizeStorage.InternalEnumerator enumerator = fixedSizeStorage.GetInternalEnumerator();
+            while (enumerator.MoveNext())
+            {
+                // if elements were added concurrently
+                if (arrayIndex == length)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                array[arrayIndex] = enumerator.Current;
+                arrayIndex += 1;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            if (array == null!)
+                Throw.ArgumentNullException(Argument.array);
+            if (index < 0 || index > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            int length = array.Length;
+            if (length - index < Count)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+            if (array.Rank != 1)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+            switch (array)
+            {
+                case T[] keyValuePairs:
+                    ((ICollection<T>)this).CopyTo(keyValuePairs, index);
+                    return;
+
+                case object?[] objectArray:
+                    EnsureMerged();
+                    var enumerator = fixedSizeStorage.GetInternalEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        // if elements were added concurrently
+                        if (index == length)
+                            Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                        objectArray[index] = enumerator.Current;
+                        index += 1;
+                    }
+
+                    return;
+
+                default:
+                    Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+                    return;
+            }
+        }
+
+        [SecurityCritical]
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null!)
+                Throw.ArgumentNullException(Argument.info);
+
+            info.AddValue(nameof(initialLockingCapacity), initialLockingCapacity);
+            info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
+            info.AddValue(nameof(comparer), comparer);
+            info.AddValue(nameof(mergeInterval), mergeInterval);
+            info.AddValue("items", ToArray());
+
+            // custom data of a derived class
+            GetObjectData(info, context);
+        }
+
+        [SecuritySafeCritical]
+        void IDeserializationCallback.OnDeserialization(object? sender)
+        {
+            SerializationInfo? info = deserializationInfo;
+
+            // may occur with remoting, which calls OnDeserialization twice.
+            if (info == null)
+                return;
+
+            initialLockingCapacity = info.GetInt32(nameof(initialLockingCapacity));
+            bitwiseAndHash = info.GetBoolean(nameof(bitwiseAndHash));
+            comparer = (IEqualityComparer<T>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<T>));
+            mergeInterval = info.GetInt64(nameof(mergeInterval));
+#pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, deserialization is a single threaded-access
+            FixedSizeStorage.TryInitialize(info.GetValueOrDefault<T[]>("items"), bitwiseAndHash, comparer, out fixedSizeStorage);
+#pragma warning restore CS0420
+
+            OnDeserialization(info);
+
+            deserializationInfo = null;
+        }
+
+        #endregion
+
+        #endregion
+    }
+}
