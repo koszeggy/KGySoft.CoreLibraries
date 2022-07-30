@@ -166,8 +166,10 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Properties
 
+#if !(NET35 || NET40)
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
         IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+#endif
 
         #endregion
 

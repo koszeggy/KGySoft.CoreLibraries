@@ -1077,6 +1077,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region UInt128
+#if NET7_0_OR_GREATER
 
         /// <summary>
         /// Returns a random <see cref="UInt128"/> that can have any value.
@@ -1192,6 +1193,7 @@ namespace KGySoft.CoreLibraries
             return result + minValue;
         }
 
+#endif
         #endregion
 
         #endregion

@@ -117,7 +117,13 @@ namespace KGySoft.Serialization.Xml
 #endif
         };
 
-        private static readonly Type[] escapedNativelySupportedTypes = { Reflector.StringType, Reflector.CharType, Reflector.RuneType, Reflector.RuntimeType };
+        private static readonly Type[] escapedNativelySupportedTypes = 
+        {
+            Reflector.StringType, Reflector.CharType, Reflector.RuntimeType,
+#if NETCOREAPP3_0_OR_GREATER
+            Reflector.RuneType  
+#endif
+        };
 
         private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = ThreadSafeCacheFactory.Create<Type, bool>(IsTypeTrusted, LockFreeCacheOptions.Profile128);
 
