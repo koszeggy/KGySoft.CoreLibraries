@@ -17,14 +17,19 @@
 
 using System.Runtime.CompilerServices;
 
+using KGySoft.Collections.ObjectModel;
+using KGySoft.ComponentModel;
+
 #endregion
 
 namespace KGySoft.Collections
 {
     /// <summary>
     /// Contains generic collections.
-    /// Some of them are fully compatible with already existing collections in the .NET framework but provide better performance in several cases (such as <see cref="CircularList{T}"/>, <see cref="CircularSortedList{TKey,TValue}"/>
+    /// Some of them are fully compatible with already existing collections in the .NET Framework but provide better performance in several cases (such as <see cref="CircularList{T}"/>, <see cref="CircularSortedList{TKey,TValue}"/>
     /// or <see cref="ThreadSafeDictionary{TKey,TValue}"/>), while others provide new functionality, such as <see cref="Cache{TKey,TValue}"/> or <see cref="ThreadSafeCacheFactory"/>.
+    /// <br/>See also <see cref="N:KGySoft.ComponentModel">KGySoft.ComponentModel</see> and <see cref="N:KGySoft.Collections.ObjectModel">KGySoft.Collections.ObjectModel</see> namespaces for some further collections
+    /// such as <see cref="SortableBindingList{T}"/> or <see cref="FastLookupCollection{T}"/>.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc
