@@ -77,7 +77,7 @@ namespace KGySoft.Serialization.Binary
     /// For such cases there are more possible solutions:
     /// <list type="bullet">
     /// <item>In best cases it is enough to use the <see cref="BinarySerializationFormatter"/> both for serializing and deserializing without any surrogate selector.
-    /// It natively supports <see cref="Type"/> instances in all platforms.</item>
+    /// It natively supports <see cref="Type"/> instances on all platforms.</item>
     /// <item>When serializing by <see cref="CustomSerializerSurrogateSelector"/> you can set the <see cref="IgnoreISerializable"/> property
     /// to force serializing the object by fields. If the fields are the same on the deserializing side, then the object will be deserializable
     /// by using the <see cref="CustomSerializerSurrogateSelector"/> on both sides with the same settings.</item>
@@ -90,7 +90,7 @@ namespace KGySoft.Serialization.Binary
     /// many core collections and simple types. These types are always encoded in a platform-independent way, which is also very compact.</item>
     /// <item>You can serialize the types using the <see cref="ForwardedTypesSerializationBinder"/> with setting the <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/>
     /// property to <see langword="true"/>&#160;to use assembly identities of the .NET Framework for most public types. These types can be resolved
-    /// in all platforms. This solution works even with <see cref="BinaryFormatter"/>.</item>
+    /// on all platforms. This solution works even with <see cref="BinaryFormatter"/>.</item>
     /// <item>Alternatively, you can use the <see cref="BinarySerializationFormatter"/> with the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>,
     /// or the <see cref="WeakAssemblySerializationBinder"/> (works also with <see cref="BinaryFormatter"/>) to allow to omit assembly identities in the
     /// serialized stream. Such a stream can be deserialized if all the assemblies that contain the types to be deserialized are already loaded and the

@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
-    /// but <see cref="StringSegment"/> can be used in all platforms in the same way and is optimized for some dedicated string operations.
+    /// but <see cref="StringSegment"/> can be used on all platforms in the same way and is optimized for some dedicated string operations.
     /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>

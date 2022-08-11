@@ -51,7 +51,7 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents a string keyed dictionary that can be queried also by <see cref="StringSegment"/>
-    /// and <see cref="ReadOnlySpan{T}"/> (in .NET Core 3.0/.NET Standard 2.1 and above) instances.
+    /// and <see cref="ReadOnlySpan{T}"/> (in .NET Core 2.1/.NET Standard 2.1 and above) instances.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
@@ -60,7 +60,7 @@ namespace KGySoft.Collections
     /// the <see cref="StringKeyedDictionary{TValue}"/> class can be populated by keys and values as any regular dictionary.
     /// However, as it implements also the <see cref="IStringKeyedDictionary{TValue}"/> interface, it allows accessing its values
     /// by using <see cref="StringSegment"/> (supported on every platform) and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
-    /// (in .NET Core 3.0/.NET Standard 2.1 and above) instances.</para>
+    /// (in .NET Core 2.1/.NET Standard 2.1 and above) instances.</para>
     /// <para>The <see cref="StringKeyedDictionary{TValue}"/> class uses a custom hashing, which usually makes it faster
     /// than a regular <see cref="Dictionary{TKey,TValue}"/> with <see cref="string">string</see> key.
     /// <note type="security">Without specifying a comparer, the <see cref="StringKeyedDictionary{TValue}"/> class
