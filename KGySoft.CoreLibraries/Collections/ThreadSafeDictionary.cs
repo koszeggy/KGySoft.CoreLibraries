@@ -119,7 +119,7 @@ namespace KGySoft.Collections
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>
     /// <item>The <see cref="Keys"/> and <see cref="Values"/> property of <see cref="ThreadSafeDictionary{TKey,TValue}"/> return wrappers for the current keys and values
-    /// (enumerating the same instance again and again may yield different items), whereas <see cref="ConcurrentDictionary{TKey,TValue}"/> return a snapshot for these properties.</item>
+    /// (enumerating the same instance again and again may yield different items), whereas <see cref="ConcurrentDictionary{TKey,TValue}"/> returns a snapshot for these properties.</item>
     /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> throw a <see cref="NotSupportedException"/> just like for their
     /// owner <see cref="ThreadSafeDictionary{TKey,TValue}"/> instance. In contrast, in case of <see cref="ConcurrentDictionary{TKey,TValue}"/> only the dictionary itself throws an exception
     /// when accessing the <see cref="ICollection.SyncRoot"/>, whereas its keys and values don't.</item>
@@ -131,7 +131,7 @@ namespace KGySoft.Collections
     /// <item>The <see cref="GetObjectData">GetObjectData</see> and <see cref="OnDeserialization">OnDeserialization</see> methods are protected rather than public.</item>
     /// <item>The enumerators of the <see cref="Keys"/> and <see cref="Values"/> properties do not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</item>
     /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> as well as for the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
-    /// itself throw a <see cref="NotSupportedException"/>.</item>
+    /// itself throws a <see cref="NotSupportedException"/>.</item>
     /// </list></para>
     /// </remarks>
     /// <threadsafety instance="true"/>
