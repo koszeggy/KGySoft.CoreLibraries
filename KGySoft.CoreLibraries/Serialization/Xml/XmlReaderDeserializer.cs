@@ -251,11 +251,14 @@ namespace KGySoft.Serialization.Xml
                                 continue;
                             }
 
-                            object? existingValue = members != null ? null : property != null
-                                ? property.Get(obj)
+                            object? existingValue = members != null ? null
+                                : property is not null ? !property.CanWrite || itemType?.CanBeCreatedWithoutParameters() != true ? property.Get(obj) : null
                                 : field!.Get(obj);
-                            if (!TryDeserializeByConverter(member, itemType!, () => ReadStringValue(reader), out object? result) && !TryDeserializeObject(itemType, reader, existingValue, out result))
+                            if (!TryDeserializeByConverter(member, itemType!, () => ReadStringValue(reader), out object? result)
+                                && !TryDeserializeObject(itemType, reader, existingValue, out result))
+                            {
                                 Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType!));
+                            }
 
                             // 1.c.) Processing result
                             HandleDeserializedMember(obj, member, result, existingValue, members);

@@ -873,6 +873,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
         #endregion
 
+        #region ValueWithStaticMember class
+
+        class ValueWithStaticMember
+        {
+            #region Properties
+
+            #region Static Properties
+
+            public static ValueWithStaticMember Predefined = new ValueWithStaticMember { Value = nameof(Predefined) };
+
+            #endregion
+
+            #region Instance Properties
+
+            public string Value { get; set; }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region PreInitializedProperty class
+
+        class PreInitializedProperties
+        {
+            #region Properties
+
+            public ValueWithStaticMember PreInitializedProperty { get; set; } = ValueWithStaticMember.Predefined;
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Nested structs

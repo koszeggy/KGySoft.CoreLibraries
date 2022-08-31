@@ -1294,6 +1294,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         }
 
         [Test]
+        public void UsePropertySetterIfPossibleTest()
+        {
+            string referenceValue = ValueWithStaticMember.Predefined.Value;
+            Assert.AreEqual(nameof(ValueWithStaticMember.Predefined), referenceValue);
+
+            object[] referenceObjects =
+            {
+                new PreInitializedProperties { PreInitializedProperty = new ValueWithStaticMember { Value = "Custom value" } }
+            };
+
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+
+            Assert.AreEqual(referenceValue, ValueWithStaticMember.Predefined.Value, "Deserialization has overwritten an existing instance with read-write property");
+        }
+
+        [Test]
         public void SafeModeTypeResolveTest()
         {
             var xml = @"<object type=""MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""></object>";
