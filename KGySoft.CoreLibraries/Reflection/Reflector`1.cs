@@ -16,10 +16,13 @@
 #region Usings
 
 using System;
-using System.Security;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
 using System.Runtime.CompilerServices;
 #endif
+#if !NETCOREAPP3_0_OR_GREATER
+using System.Security;
+#endif
+
 
 #if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.CoreLibraries;
@@ -140,6 +143,13 @@ namespace KGySoft.Reflection
             IsManagedCache.Value;
 #else
             RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+#endif
+
+#if NET6_0_OR_GREATER
+        internal static int MaxArrayLength => Array.MaxLength;
+#else
+        // Based on the internal Array.MaxArrayLength and MaxByteArrayLength constants
+        internal static int MaxArrayLength { get; } = typeof(T) == Reflector.ByteType ? 0x7FFFFFC7 : 0x7FEFFFFF;
 #endif
 
         #endregion

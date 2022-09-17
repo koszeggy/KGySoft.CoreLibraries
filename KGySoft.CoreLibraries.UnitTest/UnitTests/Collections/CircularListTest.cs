@@ -1233,6 +1233,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ilist.Add(1);
         }
 
+        [Test]
+        public void EnsureCapacityTest()
+        {
+            var list = new CircularList<int>();
+            Assert.AreEqual(0, list.Capacity);
+            Assert.AreEqual(0, list.EnsureCapacity(0));
+            Assert.AreEqual(4, list.EnsureCapacity(1));
+            Assert.AreEqual(4, list.EnsureCapacity(4));
+            Assert.AreEqual(8, list.EnsureCapacity(5));
+            Assert.AreEqual(100, list.EnsureCapacity(100));
+        }
+
         #endregion
 
         #endregion

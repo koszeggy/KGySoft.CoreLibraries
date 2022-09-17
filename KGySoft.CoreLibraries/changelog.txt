@@ -15,6 +15,7 @@
 
 * KGySoft.Collections namespace:
 ================================
++ CircularList<T> class: New public EnsureCapacity method
 + New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>
 * ThreadSafeDictionary<TKey, TValue> class:
   + Adding public Comparer property

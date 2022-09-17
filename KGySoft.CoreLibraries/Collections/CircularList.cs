@@ -122,7 +122,7 @@ namespace KGySoft.Collections
 
             private int index;
             private int steps;
-            [AllowNull]private T current = default!;
+            private T current = default!;
 
             #endregion
 
@@ -184,7 +184,7 @@ namespace KGySoft.Collections
                 }
 
                 steps = list.size + 1;
-                current = default(T);
+                current = default!;
                 return false;
             }
 
@@ -195,7 +195,7 @@ namespace KGySoft.Collections
 
                 index = list.startIndex;
                 steps = 0;
-                current = default(T);
+                current = default!;
             }
 
             #endregion
@@ -218,7 +218,7 @@ namespace KGySoft.Collections
             private readonly int version;
 
             private int index;
-            [AllowNull]private T current = default!;
+            private T current = default!;
 
             #endregion
 
@@ -275,7 +275,7 @@ namespace KGySoft.Collections
                 }
 
                 index = list.size + 1;
-                current = default(T);
+                current = default!;
                 return false;
             }
 
@@ -285,7 +285,7 @@ namespace KGySoft.Collections
                     Throw.InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = 0;
-                current = default(T);
+                current = default!;
             }
 
             #endregion
@@ -351,7 +351,7 @@ namespace KGySoft.Collections
                 capacity = list.items.Length;
                 count = list.size;
                 steps = 0;
-                current = default(T);
+                current = default!;
             }
 
             #endregion
@@ -509,7 +509,7 @@ namespace KGySoft.Collections
                     startIndex = 0;
                 }
                 else
-                    items = Reflector.EmptyArray<T>();
+                    items = Reflector<T>.EmptyArray;
             }
         }
 
@@ -660,6 +660,36 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
+        #region Allocate
+
+        /// <summary>
+        /// Ensures that the <see cref="Capacity"/> of the <see cref="CircularList{T}"/> is at least the specified <paramref name="capacity"/>.
+        /// </summary>
+        /// <param name="capacity">The minimum capacity to ensure.</param>
+        /// <returns>The new capacity of the <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>
+        /// <para>If the specified <paramref name="capacity"/> is less than or equal to the current <see cref="Capacity"/>, then the <see cref="Capacity"/> is left unchanged.</para>
+        /// <para>If the specified <paramref name="capacity"/> is less than twice of the current <see cref="Capacity"/>, then current <see cref="Capacity"/> is doubled.</para>
+        /// <para>If the specified <paramref name="capacity"/> is at least twice of the current <see cref="Capacity"/>, then <see cref="Capacity"/> is set to the specified <paramref name="capacity"/>.</para>
+        /// <para>If capacity is changed, then this method is an O(n) operation where n is <see cref="Count"/>. If capacity is not changed, then this method is an O(1) operation.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must not be negative.</exception>
+        public int EnsureCapacity(int capacity)
+        {
+            if (capacity < 0)
+                Throw.ArgumentOutOfRangeException(Argument.capacity, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+
+            if (items.Length < capacity)
+            {
+                DoEnsureCapacity(capacity);
+                version += 1;
+            }
+
+            return items.Length;
+        }
+
+        #endregion
+
         #region Add
 
         /// <summary>
@@ -693,7 +723,7 @@ namespace KGySoft.Collections
         public void AddLast(T item)
         {
             if (size == items.Length)
-                EnsureCapacity(size + 1);
+                DoEnsureCapacity(size + 1);
 
             if (startIndex == 0)
                 items[size] = item;
@@ -727,7 +757,7 @@ namespace KGySoft.Collections
         public void AddFirst(T item)
         {
             if (size == items.Length)
-                EnsureCapacity(size + 1);
+                DoEnsureCapacity(size + 1);
 
             if (startIndex == 0)
             {
@@ -2243,7 +2273,7 @@ namespace KGySoft.Collections
             if (collectionSize == 0)
                 return;
 
-            EnsureCapacity(size + collectionSize);
+            DoEnsureCapacity(size + collectionSize);
 
             // calculating insert position
             int pos = startIndex + size;
@@ -2285,7 +2315,7 @@ namespace KGySoft.Collections
             if (collectionSize == 0)
                 return;
 
-            EnsureCapacity(size + collectionSize);
+            DoEnsureCapacity(size + collectionSize);
 
             // calculating insert position
             int pos = startIndex - collectionSize;
@@ -2371,15 +2401,16 @@ namespace KGySoft.Collections
             version += 1;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void EnsureCapacity(int min)
+        private void DoEnsureCapacity(int minCapacity)
         {
-            if (items.Length >= min)
+            if (items.Length >= minCapacity)
                 return;
 
             int newCapacity = items.Length == 0 ? defaultCapacity : items.Length << 1;
-            if (newCapacity < min)
-                newCapacity = min;
+            if ((uint)newCapacity > Reflector<T>.MaxArrayLength)
+                newCapacity = Reflector<T>.MaxArrayLength;
+            if (newCapacity < minCapacity)
+                newCapacity = minCapacity;
             Capacity = newCapacity;
         }
 
@@ -2455,6 +2486,7 @@ namespace KGySoft.Collections
             items = newItems;
             size = newSize;
             startIndex = 0;
+            version += 1;
         }
 
         private void IncreaseCapacityWithInsert(int index, ICollection<T> collection)
@@ -2758,7 +2790,7 @@ namespace KGySoft.Collections
         /// </summary>
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
             // Since result is handled as an interface, returning a reference type enumerator to avoid boxing
-            => startIndex == 0 ? (IEnumerator<T>)new SimpleEnumeratorAsReference(this) : new EnumeratorAsReference(this);
+            => startIndex == 0 ? new SimpleEnumeratorAsReference(this) : new EnumeratorAsReference(this);
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
 
