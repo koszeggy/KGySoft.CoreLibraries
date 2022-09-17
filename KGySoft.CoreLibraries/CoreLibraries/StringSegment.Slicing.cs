@@ -764,9 +764,8 @@ namespace KGySoft.CoreLibraries
             if (result != null)
                 return result;
 
-            // null or empty string separator: returning whole string (compatibility with String.Split)
             if (separator.length == 0)
-                return new[] { this };
+                return new[] { options.IsTrim ? Trim() : this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -847,7 +846,7 @@ namespace KGySoft.CoreLibraries
             while (!rest.IsNull && result.Count < limit)
             {
                 StringSegment segment = GetNextSegment(ref rest, separators);
-                if (trim && segment.length != 0 && segment.length != length) // trimming only if split occurred (compatibility with String.Split)
+                if (trim && segment.length != 0)
                     segment = segment.Trim();
                 if (segment.length != 0 || !removeEmptyEntries)
                     result.Add(segment);
@@ -925,9 +924,8 @@ namespace KGySoft.CoreLibraries
             if (result != null)
                 return result;
 
-            // null or empty string separator: returning whole string (compatibility with String.Split)
             if (String.IsNullOrEmpty(separator))
-                return new[] { this };
+                return new[] { options.IsTrim ? Trim() : this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -1008,7 +1006,7 @@ namespace KGySoft.CoreLibraries
             while (!rest.IsNull && result.Count < limit)
             {
                 StringSegment segment = GetNextSegment(ref rest, separators);
-                if (trim && segment.length != 0 && segment.length != length) // trimming only if split occurred (compatibility with String.Split)
+                if (trim && segment.length != 0)
                     segment = segment.Trim();
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
@@ -1087,9 +1085,8 @@ namespace KGySoft.CoreLibraries
             if (result != null)
                 return result;
 
-            // empty string separator: returning whole string (compatibility with String.Split)
             if (separator.IsEmpty)
-                return new[] { this };
+                return new[] { options.IsTrim ? Trim() : this };
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -1167,8 +1164,7 @@ namespace KGySoft.CoreLibraries
                 if (maxLength < 0)
                     Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
                 return maxLength == 0 ? Reflector.EmptyArray<StringSegment>()
-                    : options.IsTrim ? new[] { Trim() }
-                    : new[] { this };
+                    : new[] { options.IsTrim ? Trim() : this };
             }
 
             if (length == 0)

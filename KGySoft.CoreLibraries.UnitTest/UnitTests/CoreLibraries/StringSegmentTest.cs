@@ -227,23 +227,26 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("alpha,", ",")]
         [TestCase(",alpha", ",")]
         [TestCase(",alpha,", ",")]
+        [TestCase(",,alpha", ",")]
         [TestCase("  ,,  ", null)]
         [TestCase("  ,,  ", "")]
         [TestCase("  ,,  ", " ")]
         [TestCase("  ,,  ", "  ")]
         [TestCase("  ,,  ", ",")]
         [TestCase("  ,,  ", ",,")]
+        [TestCase("  ,,  ", "x")]
+
         public void SplitTest(string s, string separator)
         {
             static string[] SystemSplit(string s, string[] separators, StringSegmentSplitOptions options)
             {
-#if NET
+#if NET7_0_OR_GREATER // TrimEntries exists since .NET 5 but it worked incorrectly before .NET 7: https://github.com/dotnet/runtime/issues/73194
                 return s.Split(separators, (StringSplitOptions)options);
 #else
                 var sso = (StringSplitOptions)options;
                 sso &= (StringSplitOptions)~StringSegmentSplitOptions.TrimEntries;
                 string[] result = s.Split(separators, sso);
-                if (options.IsTrim && separators?.All(String.IsNullOrEmpty) != true)
+                if (options.IsTrim)
                     result = result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
                 return result;
 #endif
@@ -347,11 +350,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("  ,,  ", "  ")]
         [TestCase("  ,,  ", ",")]
         [TestCase("  ,,  ", ",,")]
+        [TestCase("  ,,  ", "x")]
         public void SplitTestWithLength(string s, string separator)
         {
             static string[] SystemSplit(string s, string[] separators, int count, StringSegmentSplitOptions options)
             {
-#if NET
+#if NET7_0_OR_GREATER // TrimEntries exists since .NET 5 but it worked incorrectly before .NET 7: https://github.com/dotnet/runtime/issues/73194
                 return s.Split(separators, count, (StringSplitOptions)options);
 #else
                 var sso = (StringSplitOptions)options;
@@ -362,11 +366,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                         ? result[0].Trim() is { } trimmed && options.IsRemoveEmpty && trimmed.Length == 0
                             ? Reflector.EmptyArray<string>()
                             : new[] { result[0].Trim() }
-                        : separators?.All(String.IsNullOrEmpty) == true
-                            ? result
-                            : separators == null && result.Length == count
-                                ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Concat(new[] { result[result.Length - 1] }).ToArray()
-                                : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
+                        : separators == null && result.Length == count
+                            ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Concat(new[] { result[result.Length - 1] }).ToArray()
+                            : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
 
                 return result;
 #endif

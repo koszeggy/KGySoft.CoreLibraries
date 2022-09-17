@@ -39,6 +39,11 @@
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
+! StringSegment struct:
+  ! Split methods: they were compatible with String.Split methods, which might have ignored the TrimEntries flag if
+    no split occurred. This turned out to be a bug fixed in .NET 7 (https://github.com/dotnet/runtime/issues/73194).
+    The fixed behavior in StringSegment is applied to all targets not just .NET 7 or above so this is considered as
+    a breaking change.
 ! The WaitHandleExtensions class has been moved to the new KGySoft.Threading namespace.
 - ListExtensions class:
   - ReplaceRange<T> method: Allowing index parameter to be equal to target.Count if the count parameter is 0,
@@ -88,9 +93,13 @@
 + BinarySerializationFormatter class:
   + Supporting the Int128 and UInt128 types natively (.NET 7.0 and above)
 
-* KGySoft.Serialization.Xml namespace:
+! KGySoft.Serialization.Xml namespace:
 ======================================
-* XmlSerializer class:
+! XmlSerializer class:
+  ! When deserializing a type that has pre-initialized properties not using the existing value if the property can
+    be set and a new instance can be created by a parameterless constructor. Though this might be a breaking change
+    it actually fixes some issues if the property was initialized by a static member that is not expected to be
+    mutated.
   + Supporting the Int128 and UInt128 types natively (.NET 7.0 and above)
   - Fixing an issue regarding DesignerSerializerVisibilityAttribute handling.
 
