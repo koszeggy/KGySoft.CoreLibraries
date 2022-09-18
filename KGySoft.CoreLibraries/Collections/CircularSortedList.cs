@@ -1007,6 +1007,8 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
+        #region Capacity
+
         /// <summary>
         /// Ensures that the <see cref="Capacity"/> of the <see cref="CircularSortedList{TKey,TValue}"/> is at least the specified <paramref name="capacity"/>.
         /// </summary>
@@ -1025,6 +1027,28 @@ namespace KGySoft.Collections
             return values.EnsureCapacity(capacity);
         }
 
+        /// <summary>
+        /// Sets the capacity to the actual number of elements in the <see cref="CircularSortedList{TKey,TValue}"/>, if that number is less than 90 percent of current capacity.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection. The cost of reallocating and
+        /// copying a large <see cref="CircularSortedList{TKey,TValue}"/> can be considerable, however, so the TrimExcess method does nothing if the list is at more
+        /// than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para>To reset a <see cref="CircularSortedList{TKey,TValue}"/> to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
+        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see>> is an O(n) operation. Trimming an empty <see cref="CircularSortedList{TKey,TValue}"/> sets the capacity of the list to 0.</para>
+        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
+        /// </remarks>
+        public void TrimExcess()
+        {
+            keys.TrimExcess();
+            values.TrimExcess();
+        }
+
+        #endregion
+
+        #region Add/Update
+        
         /// <summary>
         /// Adds an element with the provided key and value to the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
@@ -1060,6 +1084,69 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Sets the value of an element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the value to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
+        public void SetValueAtIndex(int index, TValue value) => values[index] = value;
+
+        #endregion
+
+        #region Lookup
+
+        /// <summary>
+        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <remarks>This method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
+        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
+
+        /// <summary>
+        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains a specific value.
+        /// </summary>
+        /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
+        /// <returns><see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        /// </remarks>
+        public bool ContainsValue(TValue value) => values.IndexOf(value) >= 0;
+
+        /// <summary>
+        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
+        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <para>If the <paramref name="key"/> is not found, then the value parameter gets the appropriate default value for the value type <typeparamref name="TValue"/>;
+        /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
+        /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+        {
+            int index = IndexOfKey(key);
+            if (index >= 0)
+            {
+                value = values[index];
+                return true;
+            }
+
+            value = default(TValue);
+            return false;
+        }
+
+        /// <summary>
         /// Searches for the specified <paramref name="key"/> and returns the zero-based index within the entire <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
@@ -1074,18 +1161,6 @@ namespace KGySoft.Collections
             int index = keys.InternalBinarySearch(0, keys.Count, key, comparer);
             return index >= 0 ? index : -1;
         }
-
-        /// <summary>
-        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains a specific value.
-        /// </summary>
-        /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
-        /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
-        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
-        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
-        /// </remarks>
-        public bool ContainsValue(TValue value) => values.IndexOf(value) >= 0;
 
         /// <summary>
         /// Searches for the specified value and returns the zero-based index of the first occurrence within the entire <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1105,22 +1180,44 @@ namespace KGySoft.Collections
         public int IndexOfValue(TValue value) => values.IndexOf(value);
 
         /// <summary>
-        /// Sets the capacity to the actual number of elements in the <see cref="CircularSortedList{TKey,TValue}"/>, if that number is less than 90 percent of current capacity.
+        /// Gets a <see cref="KeyValuePair{TKey,TValue}"/> of the <typeparamref name="TKey"/> and <typeparamref name="TValue"/> elements
+        /// at the specified <paramref name="index"/>.
         /// </summary>
+        /// <param name="index">The zero-based index of the element to get.</param>
+        /// <returns>The element at the specified <paramref name="index"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
+        public KeyValuePair<TKey, TValue> ElementAt(int index) => new KeyValuePair<TKey, TValue>(keys[index], values[index]);
+
+        /// <summary>
+        /// Gets the key of an element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the key to get.</param>
+        /// <returns>The key at the specified <paramref name="index"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
+        public TKey GetKeyAtIndex(int index) => keys[index];
+
+        /// <summary>
+        /// Gets the value of an element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the value to get.</param>
+        /// <returns>The value at the specified <paramref name="index"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
+        public TValue GetValueAtIndex(int index) => values[index];
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection in the order of the sorted keys.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
+        /// </returns>
         /// <remarks>
-        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection. The cost of reallocating and
-        /// copying a large <see cref="CircularSortedList{TKey,TValue}"/> can be considerable, however, so the TrimExcess method does nothing if the list is at more
-        /// than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para>To reset a <see cref="CircularSortedList{TKey,TValue}"/> to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
-        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see>> is an O(n) operation. Trimming an empty <see cref="CircularSortedList{TKey,TValue}"/> sets the capacity of the list to 0.</para>
-        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public void TrimExcess()
-        {
-            keys.TrimExcess();
-            values.TrimExcess();
-        }
+        public Enumerator GetEnumerator() => new Enumerator(this);
+
+        #endregion
+
+        #region Remove
 
         /// <summary>
         /// Removes all items from the <see cref="CircularSortedList{TKey,TValue}"/> and resets the <see cref="Capacity"/> to 0.
@@ -1136,37 +1233,6 @@ namespace KGySoft.Collections
             keys.Reset();
             values.Reset();
         }
-
-        /// <summary>
-        /// Gets a <see cref="KeyValuePair{TKey,TValue}"/> of the <typeparamref name="TKey"/> and <typeparamref name="TValue"/> elements
-        /// at the specified <paramref name="index"/>.
-        /// </summary>
-        /// <param name="index">The zero-based index of the element to get or set.</param>
-        /// <returns>The element at the specified index.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/></exception>
-        public KeyValuePair<TKey, TValue> ElementAt(int index) => new KeyValuePair<TKey, TValue>(keys[index], values[index]);
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection in the order of the sorted keys.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
-        /// </returns>
-        /// <remarks>
-        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
-        /// </remarks>
-        public Enumerator GetEnumerator() => new Enumerator(this);
-
-        /// <summary>
-        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <remarks>This method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
-        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
 
         /// <summary>
         /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1187,34 +1253,6 @@ namespace KGySoft.Collections
 
             RemoveAt(index);
             return true;
-        }
-
-        /// <summary>
-        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key whose value to get.</param>
-        /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
-        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <remarks>
-        /// <para>If the <paramref name="key"/> is not found, then the value parameter gets the appropriate default value for the value type <typeparamref name="TValue"/>;
-        /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
-        /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
-        {
-            int index = IndexOfKey(key);
-            if (index >= 0)
-            {
-                value = values[index];
-                return true;
-            }
-
-            value = default(TValue);
-            return false;
         }
 
         /// <summary>
@@ -1244,6 +1282,8 @@ namespace KGySoft.Collections
             keys.Clear();
             values.Clear();
         }
+
+        #endregion
 
         #endregion
 

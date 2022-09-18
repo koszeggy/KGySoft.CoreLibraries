@@ -23,7 +23,9 @@
   + Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
   * Better chance to initialize immediately in the lock-free storage when created from another collection.
 + CircularList<T> class: New public EnsureCapacity method
-+ CircularSortedList<TKey, TValue> class: New public EnsureCapacity method
++ CircularSortedList<TKey, TValue> class:
+  + New EnsureCapacity method
+  + New GetKeyAtIndex/GetValueAtIndex/SetValueAtIndex methods
 + LockingCollection<T>: Implementing also IReadOnlyCollection<T> (.NET Framework 4.5 and above)
 + LockingList<T>: Implementing also IReadOnlyList<T> (.NET Framework 4.5 and above)
 + LockingDictionary<T>: Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)

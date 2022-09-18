@@ -565,17 +565,13 @@ namespace KGySoft.Collections
         {
             get
             {
-                // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
-                    // the getter is 2.5x times faster if the throw expression is in another method
                     Throw.ArgumentOutOfRangeException(Argument.index);
 
-                // even inlining the rest or just calling ElementAt are slower than this solution
                 return startIndex == 0 ? items[index] : ElementAtNonZeroStart(index);
             }
             set
             {
-                // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
                     Throw.ArgumentOutOfRangeException(Argument.index);
 
@@ -660,7 +656,7 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        #region Allocate
+        #region Capacity
 
         /// <summary>
         /// Ensures that the <see cref="Capacity"/> of the <see cref="CircularList{T}"/> is at least the specified <paramref name="capacity"/>.
@@ -686,6 +682,25 @@ namespace KGySoft.Collections
             }
 
             return items.Length;
+        }
+
+        /// <summary>
+        /// Sets the capacity to the actual number of elements in the list, if that number (<see cref="Count"/>) is less than the 90 percent of <see cref="Capacity"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection.
+        /// The cost of reallocating and copying a large list can be considerable, however, so the <see cref="TrimExcess">TrimExcess</see> method does nothing if the list is
+        /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para>To reset a list to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
+        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
+        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
+        /// </remarks>
+        public void TrimExcess()
+        {
+            int threshold = (int)(items.Length * 0.9);
+            if (size < threshold)
+                Capacity = size;
         }
 
         #endregion
@@ -1100,25 +1115,6 @@ namespace KGySoft.Collections
             size = 0;
             startIndex = 0;
             version += 1;
-        }
-
-        /// <summary>
-        /// Sets the capacity to the actual number of elements in the list, if that number (<see cref="Count"/>) is less than the 90 percent of <see cref="Capacity"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection.
-        /// The cost of reallocating and copying a large list can be considerable, however, so the <see cref="TrimExcess">TrimExcess</see> method does nothing if the list is
-        /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para>To reset a list to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
-        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
-        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
-        /// </remarks>
-        public void TrimExcess()
-        {
-            int threshold = (int)(items.Length * 0.9);
-            if (size < threshold)
-                Capacity = size;
         }
 
         /// <summary>
