@@ -65,32 +65,43 @@
 
 ! KGySoft.Reflection namespace:
 ===============================
+! Reflector class:
+  ! New SetProperty/TrySetProperty/GetProperty/InvokeMethod overloads to be able to ignore the member name case.
+    These changes are considered breaking because it is possible that one of the new overloads are picked after
+    recompiling an existing code. This may happen if the last params argument was called with a single bool element.
+    For example: Reflector.SetProperty(instance, name, true, true) was resolved as
+    Reflector.SetProperty(instance, name, value: true, indexParameters: new object[] { true }), whereas from now on
+    it is resolved as Reflector.SetProperty(instance, name, ignoreCase: true, value: true, indexParameters: null).
+    Similarly, Reflector.InvokeMethod(instance, name, true) was resolved as
+    Reflector.InvokeMethod(instance, name, parameters: new object[] { true }), whereas from now on it is resolved as
+    Reflector.InvokeMethod(instance, name, ignoreCase: true, parameters: null).
+  + New TryGetProperty/TryInvokeMethod/SetField/TrySetField/GetField/TryGetField overloads to be able to ignore the
+    member name case. These new overloads never cause a breaking change.
+  + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 ! PropertyAccessor class:
-  ! Get/Set methods now do argument validation so throwing ArgumentNullException and ArgumentException instead of
+  ! Get/Set methods now do argument validation, throwing ArgumentNullException and ArgumentException instead of
     letting the InvalidCastException, NullReferenceException or IndexOutOfRangeException to be thrown. The
     validation is performed only when an exception occurs to prevent performance degradation on the hot path.
   + New generic GetStaticValue/SetStaticValue and GetInstanceValue/SetInstanceValue methods for better performance
     when the type of the property (and declaring type, index parameter when applicable) are known at compile time.
 ! FieldAccessor class:
-  ! Get/Set methods now do argument validation so throwing ArgumentNullException and ArgumentException instead of
+  ! Get/Set methods now do argument validation, throwing ArgumentNullException and ArgumentException instead of
     letting the InvalidCastException or NullReferenceException to be thrown. The validation is performed only when
     an exception occurs to prevent performance degradation on the hot path.
   + New generic GetStaticValue/SetStaticValue and GetInstanceValue/SetInstanceValue methods for better performance
     when the type of the field (and declaring type for instance fields) are known at compile time.
 ! MethodAccessor class:
-  ! The Invoke method now does argument validation so throwing ArgumentNullException and ArgumentException instead
+  ! The Invoke method now does argument validation, throwing ArgumentNullException and ArgumentException instead
     of letting the InvalidCastException, NullReferenceException or IndexOutOfRangeException to be thrown. The
     validation is performed only when an exception occurs to prevent performance degradation on the hot path.
   + New generic InvokeStaticAction/InvokeStaticFunction and InvokeInstanceAction/InvokeInstanceFunction methods for
     better performance when the type of the parameters and return value are known at compile time.
 ! CreateInstanceAccessor class:
-  ! The CreateInstance method now does argument validation so throwing ArgumentNullException and ArgumentException
+  ! The CreateInstance method now does argument validation, throwing ArgumentNullException and ArgumentException
     instead of letting the InvalidCastException, NullReferenceException or IndexOutOfRangeException to be thrown.
     The validation is performed only when an exception occurs to prevent performance degradation on the hot path.
   + New generic CreateInstance methods for better performance when the type of the instance and the parameters are
     known at compile time.
-+ Reflector class:
-  + New IsExplicitInterfaceImplementation overloads for events, and to get also the corresponding interface member.
 
 + KGySoft.Serialization.Binary namespace:
 =========================================

@@ -477,6 +477,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, nameof(TestClass.TestAction), parameters);
             Assert.AreEqual(arg1, test.IntProp);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(test, nameof(TestClass.TestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, test.IntProp);
         }
 
         [Test]
@@ -522,6 +528,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestAction), parameters);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
         }
 
         [Test]
@@ -560,6 +572,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.InvokeMethod(test, nameof(TestClass.ComplexTestAction), parameters);
             Assert.AreEqual(args[0], test.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(test, nameof(TestClass.ComplexTestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
         }
 
         [Test]
@@ -596,6 +615,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(TestClass.StaticComplexTestAction), parameters);
+            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(testType, nameof(TestClass.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
             Assert.AreEqual(args[0], TestClass.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -653,6 +679,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.InvokeMethod(test, nameof(TestClass.TestFunction), parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, test.IntProp);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestClass.TestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, test.IntProp);
         }
 
         [Test]
@@ -705,6 +738,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestFunction), parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(testType, nameof(TestClass.StaticTestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestClass.StaticIntProp);
         }
 
         [Test]
@@ -747,6 +787,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], test.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestClass.ComplexTestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(args[0], result);
+            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
         }
 
         [Test]
@@ -786,6 +834,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(testType, nameof(TestClass.StaticComplexTestFunction), parameters);
+            Assert.AreEqual(args[0], result);
+            Assert.AreEqual(args[0], TestClass.StaticIntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(testType, nameof(TestClass.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], TestClass.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -845,6 +901,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(test, nameof(TestStruct.TestAction), parameters);
             Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(test, nameof(TestStruct.TestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
         }
 
         [Test]
@@ -890,6 +952,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(TestStruct.StaticTestAction), parameters);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(testType, nameof(TestStruct.StaticTestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
         }
 
         [Test]
@@ -928,6 +996,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.InvokeMethod(test, nameof(TestStruct.ComplexTestAction), parameters);
             Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(test, nameof(TestStruct.ComplexTestAction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
         }
 
         [Test]
@@ -964,6 +1039,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(TestStruct.StaticComplexTestAction), parameters);
+            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
+
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            Reflector.InvokeMethod(testType, nameof(TestStruct.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -1021,6 +1103,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.InvokeMethod(test, nameof(TestStruct.TestFunction), parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestStruct.TestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
         }
 
         [Test]
@@ -1073,6 +1162,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.InvokeMethod(testType, nameof(TestStruct.StaticTestFunction), parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestStruct.StaticIntProp);
+
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(testType, nameof(TestStruct.StaticTestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg1, result);
+            Assert.AreEqual(arg1, TestStruct.StaticIntProp);
         }
 
         [Test]
@@ -1113,6 +1209,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             result = Reflector.InvokeMethod(test, nameof(TestStruct.ComplexTestFunction), parameters);
+            Assert.AreEqual(args[0], result);
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestStruct.ComplexTestFunction).ToLowerInvariant(), true, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -1160,9 +1264,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
 
-            args = new object[] { "10", null };
-            Reflector.InvokeMethod(typeof(Int32), nameof(Int32.TryParse), args);
-            Assert.AreEqual(10, args[1]);
+            TestStruct.StaticIntProp = 0;
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(testType, nameof(TestStruct.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(args[0], result);
+            Assert.AreEqual(args[0], TestStruct.StaticIntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
         }
 
         #endregion
@@ -1224,6 +1332,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetProperty(test, nameof(TestClass.IntProp), value);
             result = Reflector.GetProperty(test, nameof(TestClass.IntProp));
             Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestClass.IntProp).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestClass.IntProp).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestClass.IntProp), value), Res.ArgumentNull);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestClass.IntProp), null), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestClass.IntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.IntProp), typeof(object)));
@@ -1277,6 +1388,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             Reflector.SetProperty(testType, nameof(TestClass.StaticIntProp), value);
             result = Reflector.GetProperty(testType, nameof(TestClass.StaticIntProp));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(testType, nameof(TestClass.StaticIntProp).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(testType, nameof(TestClass.StaticIntProp).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(type: null!, nameof(TestClass.StaticIntProp), value), Res.ArgumentNull);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(testType, nameof(TestClass.StaticIntProp), null), Res.NotAnInstanceOfType(value.GetType()));
@@ -1442,6 +1556,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetProperty(test, nameof(TestStruct.IntProp), value);
             result = Reflector.GetProperty(test, nameof(TestStruct.IntProp));
             Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestStruct.IntProp).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestStruct.IntProp).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestStruct.IntProp), value), Res.ArgumentNull);
             Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestStruct.IntProp)), Res.ArgumentNull);
 #if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
@@ -1498,6 +1615,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             Reflector.SetProperty(testType, nameof(TestStruct.StaticIntProp), value);
             result = Reflector.GetProperty(testType, nameof(TestStruct.StaticIntProp));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(testType, nameof(TestStruct.StaticIntProp).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(testType, nameof(TestStruct.StaticIntProp).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(type:null!, nameof(TestStruct.StaticIntProp), value), Res.ArgumentNull);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(testType, nameof(TestStruct.StaticIntProp), null), Res.NotAnInstanceOfType(value.GetType()));
@@ -1661,6 +1781,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestClass.ReadOnlyValueField), value);
             result = Reflector.GetField(test, nameof(TestClass.ReadOnlyValueField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestClass.ReadOnlyValueField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestClass.ReadOnlyValueField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
@@ -1716,10 +1839,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestClass.ReadOnlyValueField), value);
             result = Reflector.GetField(test, nameof(TestClass.ReadOnlyValueField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestClass.ReadOnlyValueField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestClass.ReadOnlyValueField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
-        public void ClassInstanceReadOnlyRefFieldAccess()
+        public void ClassInstanceReadOnlyReferenceFieldAccess()
         {
             var test = new TestClass(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestClass.ReadOnlyReferenceField));
@@ -1770,6 +1896,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestClass.ReadOnlyReferenceField), value);
             result = Reflector.GetField(test, nameof(TestClass.ReadOnlyReferenceField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestClass.ReadOnlyReferenceField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestClass.ReadOnlyReferenceField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
@@ -1814,6 +1943,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             Reflector.SetField(testType, nameof(TestClass.StaticIntField), value);
             result = Reflector.GetField(testType, nameof(TestClass.StaticIntField));
+            Assert.AreEqual(value, result);
+            Reflector.SetField(testType, nameof(TestClass.StaticIntField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(testType, nameof(TestClass.StaticIntField).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
         }
 
@@ -1872,6 +2004,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestStruct.IntField), value);
             result = Reflector.GetField(test, nameof(TestStruct.IntField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestStruct.IntField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestStruct.IntField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
@@ -1925,10 +2060,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestStruct.ReadOnlyValueField), value);
             result = Reflector.GetField(test, nameof(TestStruct.ReadOnlyValueField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestStruct.ReadOnlyValueField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestStruct.ReadOnlyValueField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
-        public void StructInstanceReadOnlyRefFieldAccess()
+        public void StructInstanceReadOnlyReferenceFieldAccess()
         {
             object test = new TestStruct(0);
             FieldInfo fi = test.GetType().GetField(nameof(TestStruct.ReadOnlyReferenceField));
@@ -1977,6 +2115,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(test, nameof(TestStruct.ReadOnlyReferenceField), value);
             result = Reflector.GetField(test, nameof(TestStruct.ReadOnlyReferenceField));
             Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(TestStruct.ReadOnlyReferenceField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(TestStruct.ReadOnlyReferenceField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
         }
 
         [Test]
@@ -2021,6 +2162,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Reflector (by name)...");
             Reflector.SetField(testType, nameof(TestStruct.StaticIntField), value);
             result = Reflector.GetField(testType, nameof(TestStruct.StaticIntField));
+            Assert.AreEqual(value, result);
+            Reflector.SetField(testType, nameof(TestStruct.StaticIntField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(testType, nameof(TestStruct.StaticIntField).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
         }
 
