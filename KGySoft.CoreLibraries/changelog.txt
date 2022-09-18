@@ -15,7 +15,6 @@
 
 * KGySoft.Collections namespace:
 ================================
-+ CircularList<T> class: New public EnsureCapacity method
 + New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>
 * ThreadSafeDictionary<TKey, TValue> class:
   + Adding public Comparer property
@@ -23,6 +22,8 @@
     regular Dictionary<TKey, TValue> class (which behaves the same way as the TryRemove method).
   + Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)
   * Better chance to initialize immediately in the lock-free storage when created from another collection.
++ CircularList<T> class: New public EnsureCapacity method
++ CircularSortedList<TKey, TValue> class: New public EnsureCapacity method
 + LockingCollection<T>: Implementing also IReadOnlyCollection<T> (.NET Framework 4.5 and above)
 + LockingList<T>: Implementing also IReadOnlyList<T> (.NET Framework 4.5 and above)
 + LockingDictionary<T>: Implementing also IReadOnlyDictionary<TKey, TValue> (.NET Framework 4.5 and above)

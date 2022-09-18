@@ -290,7 +290,7 @@ namespace KGySoft.Collections
                 {
                     if (steps == 0 || steps > list.Count)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return isGeneric ? (object)current : new DictionaryEntry(current.Key, current.Value);
+                    return isGeneric ? current : new DictionaryEntry(current.Key, current.Value);
                 }
             }
 
@@ -976,7 +976,7 @@ namespace KGySoft.Collections
         /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
         /// Otherwise it is an O(n*n) operation.</para>
         /// </remarks>
-        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey>? comparer = null)
             : this(dictionary?.Count ?? 0, comparer)
         {
@@ -1006,6 +1006,24 @@ namespace KGySoft.Collections
         #region Instance Methods
 
         #region Public Methods
+
+        /// <summary>
+        /// Ensures that the <see cref="Capacity"/> of the <see cref="CircularSortedList{TKey,TValue}"/> is at least the specified <paramref name="capacity"/>.
+        /// </summary>
+        /// <param name="capacity">The minimum capacity to ensure.</param>
+        /// <returns>The new capacity of the <see cref="CircularSortedList{TKey,TValue}"/>.</returns>
+        /// <remarks>
+        /// <para>If the specified <paramref name="capacity"/> is less than or equal to the current <see cref="Capacity"/>, then the <see cref="Capacity"/> is left unchanged.</para>
+        /// <para>If the specified <paramref name="capacity"/> is less than twice of the current <see cref="Capacity"/>, then current <see cref="Capacity"/> is doubled.</para>
+        /// <para>If the specified <paramref name="capacity"/> is at least twice of the current <see cref="Capacity"/>, then <see cref="Capacity"/> is set to the specified <paramref name="capacity"/>.</para>
+        /// <para>If capacity is changed, then this method is an O(n) operation where n is <see cref="Count"/>. If capacity is not changed, then this method is an O(1) operation.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must not be negative.</exception>
+        public int EnsureCapacity(int capacity)
+        {
+            keys.EnsureCapacity(capacity);
+            return values.EnsureCapacity(capacity);
+        }
 
         /// <summary>
         /// Adds an element with the provided key and value to the <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1354,7 +1372,7 @@ namespace KGySoft.Collections
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
             => keys.StartIndex == 0
-                ? (IEnumerator<KeyValuePair<TKey, TValue>>)new SimpleEnumeratorAsReference(this)
+                ? new SimpleEnumeratorAsReference(this)
                 : new EnumeratorAsReference(this, true);
 
         /// <summary>
