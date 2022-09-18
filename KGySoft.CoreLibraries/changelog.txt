@@ -36,6 +36,12 @@
   original event name. This allows using myBindings.Add(myCommand).AddSource(source, nameof(IMyInterface.EventName))
   instead of myBindings.Add(myCommand).AddSource(source, "MyNamespace.IMyInterface.EventName") even if the event is
   implemented explicitly.
++ Command class:
+  + New CreateTwoWayPropertyBinding methods
+  + New CreatePropertyChangedHandlerBinding methods
++ CommandBindingsCollection class:
+  + New AddTwoWayPropertyBinding method
+  + New AddPropertyChangedHandlerBinding methods
 + SimpleCommand, TargetedCommand, SourceAwareCommand, SourceAwareTargetedCommand classes:
   + Their ToString now reflect the name of the method the commands were created from to make debugging easier.
   + More descriptive error message when command parameters or command targets have invalid types.

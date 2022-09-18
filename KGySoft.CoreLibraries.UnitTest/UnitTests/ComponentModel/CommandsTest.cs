@@ -105,7 +105,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             #region Methods
 
-            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = null)
                 => propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
             #endregion
@@ -178,8 +178,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new TestClass();
             var bindings = new CommandBindingsCollection();
             ICommandBinding binding = bindings.Add(LogPropChangeCommand)
-                    .AddSource(test, nameof(test.PropertyChanged))
-                    .AddTarget(Console.Out);
+                .AddSource(test, nameof(test.PropertyChanged))
+                .AddTarget(Console.Out);
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.StringProp = "Alpha";
@@ -204,8 +204,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new TestClass();
             var state = new CommandState { Enabled = false };
             ICommandBinding binding = LogPropChangeCommand.CreateBinding(state)
-                    .AddSource(test, nameof(test.PropertyChanged))
-                    .AddTarget(Console.Out);
+                .AddSource(test, nameof(test.PropertyChanged))
+                .AddTarget(Console.Out);
 
             // Disabled command is not executed
             Assert.IsFalse(state.ContainsKey("TriggerCount"));
@@ -228,9 +228,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             var test = new TestClass();
             ICommandBinding binding = LogPropChangeCommand.CreateBinding()
-                    .AddSource(test, nameof(test.PropertyChanged))
-                    .AddTarget(Console.Out)
-                    .AddStateUpdater(PropertyCommandStateUpdater.Updater);
+                .AddSource(test, nameof(test.PropertyChanged))
+                .AddTarget(Console.Out)
+                .AddStateUpdater(PropertyCommandStateUpdater.Updater);
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
@@ -244,8 +244,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             var test = new TestClass();
             ICommandBinding binding = LogPropChangeCommand.CreateBinding()
-                    .AddSource(test, nameof(test.PropertyChanged))
-                    .AddTarget(() => Console.Out);
+                .AddSource(test, nameof(test.PropertyChanged))
+                .AddTarget(() => Console.Out);
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
@@ -365,6 +365,54 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             // triggering command
             test.StringProp = "Alpha";
             Assert.IsTrue(executed);
+        }
+
+        [Test]
+        public void TwoWayPropertyBindingTest()
+        {
+            var source = new TestClass { StringProp = "Alpha" };
+            var target = new TestClassExplicit { TestProp = "Beta" };
+
+            Assert.AreNotEqual(source.StringProp, target.TestProp);
+
+            // they are synced immediately
+            ICommandBinding[] bindings = source.CreateTwoWayPropertyBinding(nameof(source.StringProp), target, nameof(target.TestProp));
+            Assert.AreEqual(source.StringProp, target.TestProp);
+
+            // or when source changes
+            source.StringProp = "Gamma";
+            Assert.AreEqual(source.StringProp, target.TestProp);
+
+            // or when target changes
+            source.StringProp = "Delta";
+            Assert.AreEqual(source.StringProp, target.TestProp);
+
+            // but only until the bindings are disposed
+            bindings.ForEach(b => b.Dispose());
+            source.StringProp = "Epsilon";
+            Assert.AreNotEqual(source.StringProp, target.TestProp);
+        }
+
+        [Test]
+        public void PropertyChangedHandlerTest()
+        {
+            var test = new TestClass();
+
+            bool invoked = false;
+            ICommandBinding binding = test.CreatePropertyChangedHandlerBinding(() => invoked = true, nameof(test.IntProp));
+
+            // only the specified property invokes the handler
+            Assert.IsFalse(invoked);
+            test.StringProp = "Alpha";
+            Assert.IsFalse(invoked);
+            test.IntProp = 42;
+            Assert.IsTrue(invoked);
+
+            // but only until binding is disposed
+            invoked = false;
+            binding.Dispose();
+            test.IntProp = 1;
+            Assert.IsFalse(invoked);
         }
 
         #endregion
