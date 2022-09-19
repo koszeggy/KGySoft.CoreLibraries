@@ -564,7 +564,7 @@ namespace KGySoft.ComponentModel
                 case Action handler:
                     handler.Invoke();
                     break;
-                case Action<string> handler:
+                case Action<string?> handler:
                     handler.Invoke(source.EventArgs.PropertyName);
                     break;
                 default:

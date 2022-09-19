@@ -16,9 +16,21 @@
 #region Usings
 
 using System;
+#if !(NET35 || NETSTANDARD2_0)
 using System.Globalization;
+#endif
 using System.Security;
+#if NETFRAMEWORK && !NET35
 using System.Text;
+#endif
+
+#endregion
+
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER && NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#endif
 
 #endregion
 
@@ -215,7 +227,7 @@ namespace KGySoft.CoreLibraries
                 separator = EnumExtensions.DefaultFormatSeparator;
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator!.Length * (origRawValue.GetFlagsCount() - 1));
+            string result = new String('\0', resultLength + separator.Length * (origRawValue.GetFlagsCount() - 1));
 
             fixed (char* pinnedResult = result)
             {
@@ -462,7 +474,7 @@ namespace KGySoft.CoreLibraries
             }
 
             // Building result. Mutating a preallocated string is much faster than StringBuilder.
-            string result = new String('\0', resultLength + separator!.Length * (resultsCount - 1));
+            string result = new String('\0', resultLength + separator.Length * (resultsCount - 1));
             fixed (char* pinnedResult = result)
             {
                 var sb = new MutableStringBuilder(pinnedResult, result.Length);
@@ -694,8 +706,8 @@ namespace KGySoft.CoreLibraries
         }
 
         private static bool TryFormatNumericString(ulong value, Span<char> destination, out int charsWritten) => underlyingInfo.IsSigned
-            ? ToSigned(value).TryFormat(destination, out charsWritten)
-            : value.TryFormat(destination, out charsWritten);
+            ? ToSigned(value).TryFormat(destination, out charsWritten, provider: CultureInfo.InvariantCulture)
+            : value.TryFormat(destination, out charsWritten, provider: CultureInfo.InvariantCulture);
 #endif
 
         private static int GetStringLength(ulong value)
