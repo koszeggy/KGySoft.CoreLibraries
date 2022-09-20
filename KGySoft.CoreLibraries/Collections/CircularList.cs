@@ -36,7 +36,6 @@ namespace KGySoft.Collections
     /// <summary>
     /// Implements an <see cref="IList{T}"/> where inserting/removing at the beginning/end position are O(1) operations.
     /// <see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/> but has a better performance in several cases.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
@@ -369,7 +368,7 @@ namespace KGySoft.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -712,7 +711,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
-        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/>&#160;as a valid value for reference and nullable types and allows duplicate elements.</para>
+        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
         /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
         /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
@@ -727,7 +726,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
-        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/>&#160;as a valid value for reference and nullable types and allows duplicate elements.</para>
+        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
         /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
         /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
@@ -760,7 +759,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
-        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/>&#160;as a valid value for reference and nullable types and allows duplicate elements.</para>
+        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array,
         /// and the existing elements are copied to the new array before the new element is added.</para>
         /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
@@ -922,7 +921,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="CircularList{T}"/>.</param>
         /// <returns>
-        /// <see langword="true"/>&#160;if <paramref name="item"/> was successfully removed from the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
         /// This method also returns false if <paramref name="item"/> is not found in the original list.
         /// </returns>
         /// <remarks>
@@ -1045,7 +1044,7 @@ namespace KGySoft.Collections
         /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the elements to remove.</param>
         /// <returns>The number of elements removed from the list.</returns>
         /// <remarks>
-        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <see langword="true"/>&#160;if the object passed to it matches the conditions defined in the delegate.
+        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <see langword="true"/> if the object passed to it matches the conditions defined in the delegate.
         /// The elements of the current <see cref="CircularList{T}"/> are individually passed to the <see cref="Predicate{T}"/> delegate, and the elements that match the conditions
         /// are removed from the list.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation, where n is <see cref="Count"/>.</para>
@@ -1209,7 +1208,7 @@ namespace KGySoft.Collections
         /// Determines whether the list contains the specific <paramref name="item"/>.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/>&#160;if <paramref name="item"/> is found in the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if <paramref name="item"/> is found in the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
@@ -1224,7 +1223,7 @@ namespace KGySoft.Collections
         /// </returns>
         /// <remarks>
         /// <para>The list is searched forward starting at the first element and ending at the last element.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>
@@ -1259,7 +1258,7 @@ namespace KGySoft.Collections
         /// that extends from index to the last element, if found; otherwise, –1.
         /// </returns>
         /// <para>The list is searched forward starting at <paramref name="index"/> and ending at the last element.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int IndexOf(T item, int index) => IndexOf(item, index, size - index);
@@ -1277,7 +1276,7 @@ namespace KGySoft.Collections
         /// </returns>
         /// <para>The list is searched forward starting at <paramref name="index"/> and ending at <paramref name="index"/> plus <paramref name="count"/> minus 1,
         /// if <paramref name="count"/> is greater than 0.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int IndexOf(T item, int index, int count)
@@ -1328,7 +1327,7 @@ namespace KGySoft.Collections
         /// The index of the last occurrence of the <paramref name="item"/> if found in the list; otherwise, -1.
         /// </returns>
         /// <para>The list is searched backward starting at the last element and ending at the first element.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int LastIndexOf(T item)
@@ -1366,7 +1365,7 @@ namespace KGySoft.Collections
         /// The zero-based index of the last occurrence of <paramref name="item"/> within the range of elements in the list that extends from the first element to <paramref name="index"/>, if found; otherwise, –1.
         /// </returns>
         /// <para>The list is searched backward starting at <paramref name="index"/> and ending at the first element.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int LastIndexOf(T item, int index) => LastIndexOf(item, index, index + 1);
@@ -1382,7 +1381,7 @@ namespace KGySoft.Collections
         /// The zero-based index of the last occurrence of <paramref name="item"/> within the range of elements in the list that contains <paramref name="count"/> number of elements and ends at <paramref name="item"/>, if found; otherwise, –1.
         /// </returns>
         /// <para>The list is searched backward starting at the last element and ending at the first element.</para>
-        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type.
+        /// <para>Only in .NET Framework, this method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type.
         /// Otherwise, the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> will be used.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int LastIndexOf(T item, int index, int count)
@@ -1571,7 +1570,7 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="CircularList{T}"/> contains elements that match the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">The delegate that defines the conditions of the elements to search for.</param>
-        /// <returns><see langword="true"/>&#160;if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <see langword="false"/>.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
         public bool Exists(Predicate<T> match) => FindIndex(match) != -1;
 
@@ -1677,7 +1676,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Searches the entire sorted list for an element using the default comparer and returns the zero-based index of the element.
         /// </summary>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
         /// <returns>The zero-based index of <paramref name="item"/> in the sorted <see cref="CircularList{T}"/>, if <paramref name="item"/> is found; otherwise, a negative number
         /// that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
         /// <remarks>
@@ -1688,7 +1687,7 @@ namespace KGySoft.Collections
         /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
         /// throws an <see cref="InvalidOperationException"/>.</para>
         /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>Comparing <see langword="null"/>&#160;with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/>&#160;is considered to be less than any other object.</para>
+        /// <para>Comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
         /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
         /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
         /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
@@ -1699,8 +1698,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Searches the entire sorted <see cref="CircularList{T}"/> for an element using the specified comparer and returns the zero-based index of the element.
         /// </summary>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;to use the <see cref="EnumComparer{TEnum}.Comparer"/> for <see langword="enum"/>&#160;element types, or the default comparer <see cref="Comparer{T}.Default"/> for other element types.</param>
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the <see cref="EnumComparer{TEnum}.Comparer"/> for <see langword="enum"/> element types, or the default comparer <see cref="Comparer{T}.Default"/> for other element types.</param>
         /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement
         /// of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
         /// <remarks>
@@ -1713,7 +1712,7 @@ namespace KGySoft.Collections
         /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
         /// throws an <see cref="InvalidOperationException"/>.</para>
         /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/>&#160;with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/>&#160;is considered to be less than any other object.</para>
+        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
         /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
         /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
         /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
@@ -1726,9 +1725,9 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The zero-based starting index of the range to search.</param>
         /// <param name="count">The length of the range to search.</param>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;to use the
-        /// <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> for <see langword="enum"/>&#160;element types, or the default comparer
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the
+        /// <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> for <see langword="enum"/> element types, or the default comparer
         /// <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other element types.</param>
         /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement
         /// of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
@@ -1742,7 +1741,7 @@ namespace KGySoft.Collections
         /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
         /// throws an <see cref="InvalidOperationException"/>.</para>
         /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/>&#160;with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/>&#160;is considered to be less than any other object.</para>
+        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
         /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
         /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
         /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
@@ -1976,7 +1975,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Sorts the elements in the entire <see cref="CircularList{T}"/> using the specified <paramref name="comparer"/>.
         /// </summary>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> 
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
         /// <exception cref="ArgumentException">The implementation of <paramref name="comparer"/> caused an error during the sort.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/>
@@ -2018,7 +2017,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The zero-based starting index of the range to sort.</param>
         /// <param name="count">The length of the range to sort.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> 
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0.
         /// <br/>-or-<br/><paramref name="count"/> is less than 0.</exception>
@@ -2194,7 +2193,7 @@ namespace KGySoft.Collections
         /// Determines whether every element in the <see cref="CircularList{T}"/> matches the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions to check against the elements.</param>
-        /// <returns><see langword="true"/>&#160;if every element in the list matches the conditions defined by the specified predicate; otherwise, <see langword="false"/>.
+        /// <returns><see langword="true"/> if every element in the list matches the conditions defined by the specified predicate; otherwise, <see langword="false"/>.
         /// If the list has no elements, the return value is <see langword="true"/>.</returns>
         public bool TrueForAll(Predicate<T> match)
         {

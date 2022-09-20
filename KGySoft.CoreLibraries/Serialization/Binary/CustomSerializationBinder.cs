@@ -26,7 +26,6 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// Provides a very simple customizable <see cref="SerializationBinder"/> that can convert <see cref="Type"/> to and from <see cref="string">string</see>
     /// by using assignable delegate properties.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>When serializing, you can assign the <see cref="AssemblyNameResolver"/> and <see cref="TypeNameResolver"/> properties to customize
@@ -35,7 +34,7 @@ namespace KGySoft.Serialization.Binary
     /// <para>If the properties above are not assigned or when they return <see langword="null"/>, then the consumer <see cref="IFormatter"/> instance will use its internal resolve logic.</para>
     /// <note type="security"><para>If <see cref="TypeResolver"/> is not assigned or can return <see langword="null"/>, then the consumer <see cref="IFormatter"/> instance
     /// may load assemblies during the deserialization. If the deserialization stream is not from a trusted source, then you should
-    /// never return <see langword="null"/>&#160;from the assigned delegate of the <see cref="TypeResolver"/> property. Instead, throw an
+    /// never return <see langword="null"/> from the assigned delegate of the <see cref="TypeResolver"/> property. Instead, throw an
     /// exception if a type could not be resolved.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// </remarks>
@@ -62,20 +61,20 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets the custom assembly name resolver logic. It is invoked by the <see cref="BindToName">BindToName</see> method.
-        /// If returns a non-<see langword="null"/>&#160;value, then it will be stored as the custom assembly name for the <see cref="Type"/> specified by the delegate argument.
+        /// If returns a non-<see langword="null"/> value, then it will be stored as the custom assembly name for the <see cref="Type"/> specified by the delegate argument.
         /// </summary>
         public Func<Type, string?>? AssemblyNameResolver { get; set; }
 
         /// <summary>
         /// Gets or sets the custom type name resolver logic. It is invoked by the <see cref="BindToName">BindToName</see> method.
-        /// If returns a non-<see langword="null"/>&#160;value, then it will be stored as the custom full type name (without the assembly name) for the <see cref="Type"/> specified by the delegate argument.
+        /// If returns a non-<see langword="null"/> value, then it will be stored as the custom full type name (without the assembly name) for the <see cref="Type"/> specified by the delegate argument.
         /// </summary>
         public Func<Type, string?>? TypeNameResolver { get; set; }
 
         /// <summary>
         /// Gets or sets the custom <see cref="Type"/> resolver logic. It is invoked by the <see cref="BindToType">BindToType</see> method
         /// passing the stored assembly and type names in the delegate arguments, respectively.
-        /// If returns <see langword="null"/>&#160;the formatter will attempt to resolve the names by its default logic.
+        /// If returns <see langword="null"/> the formatter will attempt to resolve the names by its default logic.
         /// </summary>
         public Func<string, string, Type?>? TypeResolver { get; set; }
 
@@ -90,9 +89,9 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="serializedType">The type of the object the formatter creates a new instance of.</param>
         /// <param name="assemblyName">The <see cref="string">string</see>, which will represent the <see cref="Assembly"/> name in the serialized data.
-        /// Can return <see langword="null"/>&#160;to provide a default name.</param>
+        /// Can return <see langword="null"/> to provide a default name.</param>
         /// <param name="typeName">The <see cref="string">string</see>, which will represent the <see cref="Type"/> name in the serialized data.
-        /// Can return <see langword="null"/>&#160;to provide a default name.</param>
+        /// Can return <see langword="null"/> to provide a default name.</param>
 #if !NET35
         override
 #endif
@@ -108,7 +107,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
-        /// <returns>The <see cref="Type"/> to be created by the formatter or <see langword="null"/>&#160;to use the default binding logic.</returns>
+        /// <returns>The <see cref="Type"/> to be created by the formatter or <see langword="null"/> to use the default binding logic.</returns>
         public override Type? BindToType(string assemblyName, string typeName)
             => TypeResolver?.Invoke(assemblyName, typeName);
 

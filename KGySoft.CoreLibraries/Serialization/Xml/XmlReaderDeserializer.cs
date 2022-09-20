@@ -227,7 +227,7 @@ namespace KGySoft.Serialization.Xml
         /// Deserializes the members and elements of <paramref name="objRealType"/>.
         /// Type of <paramref name="obj"/> can be different of <paramref name="objRealType"/> if a proxy collection object is populated for initialization.
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
-        /// <paramref name="collectionElementType"/> is <see langword="null"/>&#160;only if <paramref name="objRealType"/> is not a supported collection.
+        /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
         private void DeserializeMembersAndElements(XmlReader reader, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {

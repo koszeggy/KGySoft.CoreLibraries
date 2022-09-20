@@ -33,7 +33,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents the states of a command for a specific command binding.
-    /// <br/>See the <see cref="ICommandState"/> interface for details and the <strong>Remarks</strong> section of <see cref="ICommand"/> for some examples.
+    /// <br/>See the <see cref="ICommandState"/> interface for details and the <strong>Remarks</strong> section of <see cref="ICommand"/> interface for some examples.
     /// </summary>
     /// <seealso cref="ICommand" />
     /// <seealso cref="ICommandState" />
@@ -111,7 +111,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets whether the command is enabled in the current binding.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if the command enabled and can be executed; otherwise, <see langword="false" />.</value>
+        /// <value><see langword="true"/> if the command enabled and can be executed; otherwise, <see langword="false" />.</value>
         public bool Enabled
         {
             get => (bool)this[nameof(Enabled)]!;
@@ -212,7 +212,7 @@ namespace KGySoft.ComponentModel
         /// Determines whether the <see cref="CommandState" /> contains an element with the specified <paramref name="key"/>.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="CommandState" />.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="CommandState" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if the <see cref="CommandState" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
         public bool ContainsKey(string key) => stateProperties.ContainsKey(key);
 
         /// <summary>
@@ -232,7 +232,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter. This parameter is passed uninitialized.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="CommandState"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false" />.
+        /// <returns><see langword="true"/> if the <see cref="CommandState"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false" />.
         /// </returns>
         public bool TryGetValue(string key, out object? value) => stateProperties.TryGetValue(key, out value);
 

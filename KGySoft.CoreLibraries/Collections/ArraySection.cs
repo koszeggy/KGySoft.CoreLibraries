@@ -51,7 +51,6 @@ namespace KGySoft.Collections
     /// Represents a one dimensional array or a section of an array.
     /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way
     /// and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
@@ -63,9 +62,9 @@ namespace KGySoft.Collections
     /// <note>An <see cref="ArraySection{T}"/> instance that was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see> must be released by calling the <see cref="Release">Release</see>
     /// method when it is not used anymore. The <see cref="ArraySection{T}"/> type does not implement <see cref="IDisposable"/> because releasing is not required when <see cref="ArraySection{T}"/> is created
     /// from an existing array but not calling it when it would be needed may lead to decreased application performance.</note></para>
-    /// <para>Though <see cref="ArraySection{T}"/> is practically immutable (has only <see langword="readonly"/>&#160;fields) it is not marked as <c>readonly</c>,
+    /// <para>Though <see cref="ArraySection{T}"/> is practically immutable (has only <see langword="readonly"/> fields) it is not marked as <c>readonly</c>,
     /// which is needed for the <see cref="Release">Release</see> method to work properly. As <see cref="ArraySection{T}"/> is a
-    /// non-<c>readonly</c>&#160;<see langword="struct"/>&#160;it is not recommended to use it as a <c>readonly</c> field; otherwise,
+    /// non-<c>readonly</c>&#160;<see langword="struct"/> it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the pre-C# 8.0 compilers to create defensive copies, which leads to a slight performance degradation.</para>
     /// </remarks>
     [Serializable]
@@ -167,13 +166,13 @@ namespace KGySoft.Collections
         public readonly int Length => length;
 
         /// <summary>
-        /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/>&#160;array.
-        /// <br/>Please note that the <see cref="ToArray">ToArray</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
+        /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/> array.
+        /// <br/>Please note that the <see cref="ToArray">ToArray</see> method returns <see langword="null"/> when this property returns <see langword="true"/>.
         /// </summary>
         public readonly bool IsNull => array == null;
 
         /// <summary>
-        /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty array section or a <see langword="null"/>&#160;array.
+        /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty array section or a <see langword="null"/> array.
         /// </summary>
         public readonly bool IsNullOrEmpty => length == 0;
 
@@ -324,7 +323,7 @@ namespace KGySoft.Collections
         /// by the <see cref="Release">Release</see> method if it is not used anymore.
         /// </summary>
         /// <param name="length">The length of the <see cref="ArraySection{T}"/> to be created.</param>
-        /// <param name="assureClean"><see langword="true"/>&#160;to make sure the allocated array is zero-initialized;
+        /// <param name="assureClean"><see langword="true"/> to make sure the allocated array is zero-initialized;
         /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -452,9 +451,9 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="ArraySection{T}"/>.
-        /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/>&#160;statement.
+        /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/> statement.
         /// </summary>
-        /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/>&#160;if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
+        /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/> if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
         public readonly ref T GetPinnableReference()
         {
             if (IsNullOrEmpty)
@@ -478,7 +477,7 @@ namespace KGySoft.Collections
         /// Copies the elements of this <see cref="ArraySection{T}"/> to a new array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="ArraySection{T}"/>,
-        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[]? ToArray()
         {
             if (length == 0)
@@ -541,7 +540,7 @@ namespace KGySoft.Collections
         /// Determines whether this <see cref="ArraySection{T}"/> contains the specific <paramref name="item"/>.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/>&#160;if <paramref name="item"/> is found in this <see cref="ArraySection{T}"/>; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if <paramref name="item"/> is found in this <see cref="ArraySection{T}"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="item">The object to locate in this <see cref="ArraySection{T}"/>.</param>
         public readonly bool Contains(T item) => IndexOf(item) >= 0;
@@ -611,7 +610,7 @@ namespace KGySoft.Collections
         /// Indicates whether the current <see cref="ArraySection{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public readonly bool Equals(ArraySection<T> other)
             => array == other.array && offset == other.offset && length == other.length;
 
@@ -619,7 +618,7 @@ namespace KGySoft.Collections
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public readonly override bool Equals(object? obj)
             => obj == null ? IsNull
                 : obj is ArraySection<T> other ? Equals(other)

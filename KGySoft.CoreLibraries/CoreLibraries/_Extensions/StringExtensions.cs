@@ -124,7 +124,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="separator">A separator delimiting the hex values. If <see langword="null"/>, then <paramref name="s"/> is parsed as a continuous hex stream.</param>
         /// <returns>A byte array containing the hex values as bytes.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;or empty, and <paramref name="s"/> does not consist of event number of hex digits,
+        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/> or empty, and <paramref name="s"/> does not consist of event number of hex digits,
         /// or parsing failed.</exception>
         public static byte[] ParseHexBytes(this string s, string? separator)
         {
@@ -183,7 +183,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="separator">A separator delimiting the values.</param>
         /// <returns>A byte array containing the decimal values as bytes.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/> or empty.</exception>
         /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
         /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
         public static byte[] ParseDecimalBytes(this string s, string separator)
@@ -216,7 +216,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The <see cref="string">string</see> to convert.</param>
         /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
         /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
-        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        /// <returns>A non-<see langword="null"/> value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this string? s, bool definedOnly = false)
             where TEnum : struct, Enum
         {
@@ -236,13 +236,13 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the return value.</typeparam>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>An instance of <typeparamref name="T"/>, which is the result of the parsing. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <typeparamref name="T"/> is a reference or nullable type.</returns>
+        /// <returns>An instance of <typeparamref name="T"/>, which is the result of the parsing. A <see langword="null"/> reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <typeparamref name="T"/> is a reference or nullable type.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method.</para>
         /// <para>Natively parsed types:
         /// <list type="bullet">
         /// <item><description><see cref="System.Enum"/> based types</description></item>
@@ -271,7 +271,7 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="Half"/> (.NET 5.0 and above)</description></item>
         /// <item><description><see cref="DateOnly"/> (.NET 6.0 and above)</description></item>
         /// <item><description><see cref="TimeOnly"/> (.NET 6.0 and above)</description></item>
-        /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/>&#160;or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
+        /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// </list>
         /// </para>
         /// </remarks>
@@ -291,11 +291,11 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> overload for details.
         /// </summary>
         /// <returns>An object of <paramref name="type"/>, which is the result of the parsing.</returns>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>
         /// <param name="type">The desired type of the return value.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>The parsed value. A <see langword="null"/>&#160;reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
+        /// <returns>The parsed value. A <see langword="null"/> reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         [return:NotNullIfNotNull("s")]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
@@ -312,10 +312,10 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
-        /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
+        /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse<T>(this string? s, CultureInfo? culture, out T? value)
@@ -328,9 +328,9 @@ namespace KGySoft.CoreLibraries
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
-        /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
+        /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse<T>(this string? s, out T? value) => TryParse(s, null, out value);
@@ -341,11 +341,11 @@ namespace KGySoft.CoreLibraries
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
         /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
-        /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
+        /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this string? s, Type type, CultureInfo? culture, out object? value)
@@ -357,10 +357,10 @@ namespace KGySoft.CoreLibraries
         /// then the type converter or conversion will be used.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
         /// </summary>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
         /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.
-        /// It can be <see langword="null"/>&#160;even if <paramref name="s"/> is <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
+        /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this string? s, Type type, out object? value)
@@ -383,7 +383,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">A <see cref="string"/> instance in which <paramref name="value"/> is searched.</param>
         /// <param name="value">The <see cref="string"/> to seek.</param>
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> contains <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="value"/> is <see langword="null"/>.</exception>
@@ -405,7 +405,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         public static bool EqualsAny(this string? s, params string?[]? set)
         {
             int length;
@@ -427,7 +427,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparer">A <see cref="StringComparer"/> that checks the equality.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="comparer"/> is <see langword="null"/>.</exception>
         public static bool EqualsAny(this string? s, StringComparer comparer, params string?[]? set)
         {
@@ -443,7 +443,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
         public static bool EqualsAny(this string? s, StringComparison comparison, params string?[]? set)
         {
@@ -463,7 +463,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
         public static int IndexOfAny(this string s, params string[] set)
             => IndexOfAny(s, StringComparison.Ordinal, set);
 
@@ -479,7 +479,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
         public static int IndexOfAny(this string s, StringComparison comparison, params string[] set)
         {
             if (s == null!)
@@ -529,11 +529,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">A string array</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
         public static bool ContainsAny(this string s, params string[] set)
             => ContainsAny(s, StringComparison.Ordinal, set);
 
@@ -543,12 +543,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">A string array</param>
-        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
         public static bool ContainsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))

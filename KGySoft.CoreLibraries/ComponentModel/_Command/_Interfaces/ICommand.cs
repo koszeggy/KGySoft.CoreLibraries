@@ -22,7 +22,6 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents a command, which can be used to create a binding between an event of one or more sources and zero or more target objects. Can be used easily to bind
     /// events with targets with any technology.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>Unlike the <see cref="System.Windows.Input.ICommand">System.Windows.Input.ICommand</see> type, this <see cref="ICommand"/> represents a stateless
@@ -156,9 +155,9 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="source">An <see cref="ICommandSource"/> object containing information about the source of the command.</param>
         /// <param name="state">An <see cref="ICommandState"/> instance containing the state of the current command binding. The state can be changed during the execution.</param>
-        /// <param name="target">The target of the execution. Can be <see langword="null"/>&#160;if the binding has no targets.
+        /// <param name="target">The target of the execution. Can be <see langword="null"/> if the binding has no targets.
         /// If the command binding has multiple targets the <see cref="Execute">Execute</see> method will be invoked multiple times.</param>
-        /// <param name="parameter">The parameter of the command. Can be <see langword="null"/>&#160;if the binding has no parameter.
+        /// <param name="parameter">The parameter of the command. Can be <see langword="null"/> if the binding has no parameter.
         /// Evaluated once per triggering the command. Even if the binding has multiple targets the <see cref="Execute">Execute</see> method
         /// is invoked with the same <paramref name="parameter"/> value for each target.</param>
         void Execute(ICommandSource source, ICommandState state, object? target, object? parameter);

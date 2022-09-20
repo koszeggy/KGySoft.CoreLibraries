@@ -24,7 +24,6 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Makes possible quick and compact custom serialization of a class by <see cref="BinarySerializer"/> and <see cref="BinarySerializationFormatter"/>.
-    /// <br/>See the <strong>Remarks</strong> section for examples and details.
     /// </summary>
     /// <remarks>
     /// <para>By this interface a class can be serialized into a compact byte array. Unlike in case of system serialization and <see cref="ISerializable"/> implementations, saved data

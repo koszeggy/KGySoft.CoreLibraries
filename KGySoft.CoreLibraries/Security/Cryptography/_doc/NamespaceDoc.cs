@@ -24,8 +24,8 @@ using System.Security.Cryptography;
 namespace KGySoft.Security.Cryptography
 {
     /// <summary>
-    /// Contains the <see cref="Crc32"/> as a <see cref="HashAlgorithm"/> implementation, and the <see cref="SecureRandom"/> class,
-    /// which is capable of producing cryptographically secure random numbers in a compatible manner with the <see cref="Random"/> class.
+    /// The <see cref="N:KGySoft.Security.Cryptography"/> namespace contains the <see cref="Crc32"/> as a <see cref="HashAlgorithm"/> implementation,
+    /// and the <see cref="SecureRandom"/> class, which is capable of producing cryptographically secure random numbers in a compatible manner with the <see cref="Random"/> class.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

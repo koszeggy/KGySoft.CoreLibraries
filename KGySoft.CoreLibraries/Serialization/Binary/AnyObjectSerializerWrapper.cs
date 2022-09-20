@@ -44,7 +44,6 @@ namespace KGySoft.Serialization.Binary
     /// that are not marked by the <see cref="SerializableAttribute"/>, or which are not supported by <see cref="BinaryFormatter"/>.
     /// Can be useful when a <see cref="BinarySerializationFormatter"/> payload cannot be used, so a <see cref="BinaryFormatter"/>-compatible stream must be produced.
     /// When this object is deserialized, the clone of the wrapped original object is returned.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <note type="security">
@@ -88,11 +87,11 @@ namespace KGySoft.Serialization.Binary
         /// Creates a new instance of <see cref="AnyObjectSerializerWrapper"/> with
         /// the provided object to be serialized.
         /// </summary>
-        /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/>&#160;instances are supported, too.</param>
+        /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/> instances are supported, too.</param>
         /// <param name="useWeakAssemblyBinding">When <see langword="true"/>, the assembly versions of types do not need to match on deserialization.
         /// This makes possible to deserialize objects stored in different versions of the original assembly.</param>
-        /// <param name="forceSerializationByFields"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
-        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead performing a forced
+        /// <param name="forceSerializationByFields"><see langword="true"/> to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
+        /// as well as serialization constructors and serializing methods; <see langword="false"/> to consider all of these techniques instead performing a forced
         /// field-based serialization. Can be useful for types that implement <see cref="ISerializable"/> but the implementation throws a <see cref="PlatformNotSupportedException"/>
         /// (on .NET Core, for example). It still does not guarantee that the object will be deserializable on another platform. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>

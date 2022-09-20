@@ -50,7 +50,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses <see cref="object.Equals(object,object)">Object.Equals</see> method to compare the items.
@@ -73,12 +73,11 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
-        /// <br/>See the <strong>Examples</strong> section for an example.
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
@@ -129,7 +128,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
@@ -158,7 +157,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="item">The item to search for in the results of <paramref name="set"/>.</param>
         /// <param name="set">The set of delegates, whose results are checked whether they are equal to the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the results of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the results of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
@@ -191,7 +190,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="item">The item to search for in the results of <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         public static bool In<T>(this T item, IEnumerable<T>? set)
         {
             if (set == null)
@@ -209,12 +208,11 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Clones an object by deep cloning.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">Type of the object</typeparam>
         /// <param name="obj">The object to clone.</param>
-        /// <param name="ignoreCustomSerialization"><see langword="true"/>&#160;to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
-        /// as well as serialization constructors and serializing methods; <see langword="false"/>&#160;to consider all of these techniques instead of performing a forced
+        /// <param name="ignoreCustomSerialization"><see langword="true"/> to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
+        /// as well as serialization constructors and serializing methods; <see langword="false"/> to consider all of these techniques instead of performing a forced
         /// field-based serialization. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
@@ -267,12 +265,11 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Clones an object by deep cloning.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">Type of the object</typeparam>
         /// <param name="obj">The object to clone.</param>
         /// <param name="customClone">An optional delegate that can be used to customize the cloning of individual instances.
-        /// If specified, then it is always called with a non-<see langword="null"/>&#160;instance.
+        /// If specified, then it is always called with a non-<see langword="null"/> instance.
         /// If it returns <see langword="null"/>, then the input object will be cloned by using the default logic.</param>
         /// <returns>The clone of the object.</returns>
         /// <remarks>
@@ -285,7 +282,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="TTarget">The desired type of the return value.</typeparam>
         /// <param name="obj">The object to convert.</param>
@@ -296,8 +292,8 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;extension method.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><typeparamref name="TTarget"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
@@ -414,7 +410,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
@@ -434,12 +430,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TTarget">The desired type of the returned <paramref name="value"/>.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -461,12 +457,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TTarget">The desired type of the returned <paramref name="value"/>.</typeparam>
         /// <param name="obj">The object to convert.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -478,12 +474,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">The object to convert.</param>
         /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
@@ -496,12 +492,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="obj">The object to convert.</param>
         /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible. As an ultimate fallback, the <see cref="string"/> type is attempted to be used as intermediate conversion.</para>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;extension methods.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>

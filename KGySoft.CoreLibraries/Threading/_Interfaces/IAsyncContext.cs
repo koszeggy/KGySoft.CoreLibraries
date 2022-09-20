@@ -57,7 +57,7 @@ namespace KGySoft.Threading
         bool CanBeCanceled { get; }
 
         /// <summary>
-        /// Gets an <see cref="IAsyncProgress"/> instance that can be used to report progress, or <see langword="null"/>&#160;if
+        /// Gets an <see cref="IAsyncProgress"/> instance that can be used to report progress, or <see langword="null"/> if
         /// no progress reporter belongs to the current operation.
         /// </summary>
         IAsyncProgress? Progress { get; }

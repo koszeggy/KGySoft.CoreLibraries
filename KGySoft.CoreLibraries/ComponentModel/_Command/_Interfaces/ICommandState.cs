@@ -28,7 +28,6 @@ namespace KGySoft.ComponentModel
     /// <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
     /// For example, if the command sources are UI elements (eg. a button and a menu item), then the <see cref="Enabled"/>
     /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources as properties.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>The <see cref="Enabled"/> state, which is also predefined as a property, has a special function. By setting the <see cref="Enabled"/> property
@@ -51,7 +50,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets whether the command is enabled in the current binding.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if the command enabled and can be executed; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/> if the command enabled and can be executed; otherwise, <see langword="false"/>.</value>
         bool Enabled { get; set; }
 
 #if !NET35

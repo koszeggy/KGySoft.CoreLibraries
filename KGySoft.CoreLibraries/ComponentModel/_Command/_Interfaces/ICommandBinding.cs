@@ -25,7 +25,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents a binding for a command.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>Whereas an <see cref="ICommand"/> is a static logic without state, the created binding is a dynamic entity: it has a state,
@@ -57,7 +56,7 @@ namespace KGySoft.ComponentModel
         /// Occurs when an exception is thrown during the command execution.
         /// The <see cref="CommandBindingErrorEventArgs.Error"/> property returns the <see cref="Exception"/>,
         /// which is about to be thrown, and the <see cref="CommandBindingErrorEventArgs.Context"/> property gets a hint about
-        /// the source of the error. You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// the source of the error. You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// suppress the error, but critical exceptions (<see cref="OutOfMemoryException"/>, <see cref="StackOverflowException"/>) cannot be handled by this event.
         /// </summary>
         event EventHandler<CommandBindingErrorEventArgs>? Error;
@@ -70,7 +69,7 @@ namespace KGySoft.ComponentModel
         /// Gets the managed set of states of this <see cref="ICommandBinding"/> instance. Whenever a new source is added or an entry of
         /// the returned <see cref="ICommandState"/> is changed, and at least one <see cref="ICommandStateUpdater"/> is added to this <see cref="ICommandBinding"/>,
         /// then the entries are applied for all of the sources of the binding.
-        /// <br/>See the <strong>Remarks</strong> section if the <see cref="ICommandState"/> interface for details.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommandState"/> interface for details.
         /// </summary>
         /// <value>
         /// An <see cref="ICommandState"/> instance that represents the managed states of the binding. Can be also used as a dynamic object
@@ -115,7 +114,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Adds the target to this <see cref="ICommandBinding"/> instance. The underlying <see cref="ICommand"/> will be invoked for each added target.
-        /// If no targets are added the command will be invoked with a <see langword="null"/>&#160;target.
+        /// If no targets are added the command will be invoked with a <see langword="null"/> target.
         /// </summary>
         /// <param name="target">The target of the command to add. If the command is a <see cref="TargetedCommand{TTarget}"/> or <see cref="SourceAwareTargetedCommand{TEventArgs,TTarget}"/>,
         /// then the type of <paramref name="target"/> must match <em>TTarget</em>.</param>
@@ -134,7 +133,7 @@ namespace KGySoft.ComponentModel
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommandStateUpdater"/> interface for details.
         /// </summary>
         /// <param name="updater">The updater to add.</param>
-        /// <param name="updateSources"><see langword="true"/>&#160;to update the sources immediately; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <param name="updateSources"><see langword="true"/> to update the sources immediately; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources = false);

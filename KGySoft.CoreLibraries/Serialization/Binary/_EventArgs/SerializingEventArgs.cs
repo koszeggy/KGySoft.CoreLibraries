@@ -41,7 +41,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets the empty <see cref="System.Runtime.Serialization.SerializationInfo"/> of the <see cref="Object"/> being serialized.
-        /// <br/>If you populate it manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>If you populate it manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default serialization logic.
         /// </summary>
         public SerializationInfo SerializationInfo { get; }
@@ -51,7 +51,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>To completely omit the default serialization logic set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;to serialize the <see cref="Object"/> by fields even if it implements <see cref="ISerializable"/>;
+        /// <see langword="true"/> to serialize the <see cref="Object"/> by fields even if it implements <see cref="ISerializable"/>;
         /// otherwise, <see langword="false"/>.
         /// </value>
         public bool IgnoreISerializable { get; set; }

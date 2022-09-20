@@ -28,7 +28,6 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to the <see cref="PersistableObjectBase"/> class.
     /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>An object derived from <see cref="UndoableObjectBase"/> continuously tracks the property changes of properties, which are set through the <see cref="IPersistableObject"/> implementation
@@ -171,7 +170,7 @@ namespace KGySoft.ComponentModel
         /// <see cref="CanUndo"/> and <see cref="CanRedo"/> properties.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
-        /// <returns><see langword="true"/>&#160;if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
         protected override bool AffectsModifiedState(string propertyName) =>
             base.AffectsModifiedState(propertyName) && !propertyName.In(ignoreModifiedProperties);
 

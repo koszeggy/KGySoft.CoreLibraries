@@ -37,7 +37,6 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
-    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
@@ -244,7 +243,7 @@ namespace KGySoft.Resources
     /// // Key: item
     /// // Value: This is a duplicate for key 'item'.</code>
     /// </example>
-    /// <h1 class="heading">Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h1>
+    /// <h2>Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h2>
     /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class,
     /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
@@ -275,7 +274,7 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item><term>Lazy processing</term>
     /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
-    /// <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>. If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>&#160;and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
+    /// <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>. If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/> and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
     /// <item><term>Handling duplicates</term>
     /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, every occurrence of a duplicated name is returned by the enumerators. Otherwise, only the last occurrence of
     /// a name is returned.</description></item>
@@ -728,7 +727,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If an element is defined more than once and <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>,
         /// then the enumeration returns every occurrence of the entries with identical names.
-        /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>&#160;the enumeration returns always the last occurrence of the entries with identical names.</para>
+        /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/> the enumeration returns always the last occurrence of the entries with identical names.</para>
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
         /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
         /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
@@ -890,7 +889,7 @@ namespace KGySoft.Resources
         /// Releases all resources used by the <see cref="ResXResourceReader"/>.
         /// </summary>
         /// <remarks>
-        /// If the <see cref="ResXResourceReader"/> is initialized in a <see langword="using"/>&#160;statement, it is not needed to call this method explicitly.
+        /// If the <see cref="ResXResourceReader"/> is initialized in a <see langword="using"/> statement, it is not needed to call this method explicitly.
         /// </remarks>
         public void Close() => ((IDisposable)this).Dispose();
 

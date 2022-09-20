@@ -54,7 +54,6 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for setting and getting field values via dynamically created delegates.
-    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
@@ -165,7 +164,7 @@ namespace KGySoft.Reflection
         /// Gets whether the field is read-only.
         /// </summary>
         /// <remarks>
-        /// <note>Even if this property returns <see langword="true"/>&#160;the <see cref="FieldAccessor"/>
+        /// <note>Even if this property returns <see langword="true"/> the <see cref="FieldAccessor"/>
         /// is able to set the field, except if the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is used,
         /// which throws a <see cref="PlatformNotSupportedException"/> in that case.</note>
         /// </remarks>
@@ -243,9 +242,8 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the field.
         /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
+        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/> for static fields.</param>
         /// <param name="value">The value to set.</param>
         /// <remarks>
         /// <para>Setting the field for the first time is slower than the <see cref="FieldInfo.SetValue(object,object)">System.Reflection.FieldInfo.SetValue</see>
@@ -286,9 +284,8 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the value of the field.
         /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
+        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/> for static fields.</param>
         /// <returns>The value of the field.</returns>
         /// <remarks>
         /// <para>Getting the field for the first time is slower than the <see cref="FieldInfo.GetValue">System.Reflection.FieldInfo.GetValue</see>

@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Serialization.Xml
 {
     /// <summary>
-    /// Contains types for XML serialization.
+    /// The <see cref="N:KGySoft.Serialization.Xml"/> namespace contains types for XML serialization.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

@@ -630,8 +630,8 @@ namespace KGySoft.CoreLibraries
         /// See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to specify that comparison operations be case-insensitive;
-        /// <see langword="false"/>&#160;to specify that comparison operations be case-sensitive.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to specify that comparison operations be case-insensitive;
+        /// <see langword="false"/> to specify that comparison operations be case-sensitive.</param>
         /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
         /// the <paramref name="culture"/> parameter and the case rule specified by the <paramref name="ignoreCase"/> parameter.</returns>
         /// <remarks>
@@ -762,7 +762,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="x">A <see cref="StringSegment"/> to compare to <paramref name="y"/>.</param>
         /// <param name="y">A <see cref="StringSegment"/> to compare to <paramref name="x"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
         public abstract bool Equals(StringSegment x, StringSegment y);
 
         /// <summary>
@@ -793,7 +793,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="x">A <see cref="string">string</see> to compare to <paramref name="y"/>.</param>
         /// <param name="y">A <see cref="string">string</see> to compare to <paramref name="x"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
         public abstract bool Equals(string? x, string? y);
 
         /// <summary>
@@ -824,7 +824,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="x">An object to compare to <paramref name="y"/>.</param>
         /// <param name="y">An object to compare to <paramref name="x"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> refer to the same object, or <paramref name="x"/> and <paramref name="y"/> are both
+        /// <returns><see langword="true"/> if <paramref name="x"/> and <paramref name="y"/> refer to the same object, or <paramref name="x"/> and <paramref name="y"/> are both
         /// the same type of object and those objects are equal, or both <paramref name="x"/> and <paramref name="y"/> are <see langword="null"/>; otherwise, <see langword="false"/>.</returns>
         public new bool Equals(object? x, object? y)
         {
@@ -921,7 +921,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="x">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="y"/>.</param>
         /// <param name="y">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare to <paramref name="x"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="x"/> and <paramref name="y"/> are equal; otherwise, <see langword="false"/>.</returns>
         public abstract bool Equals(ReadOnlySpan<char> x, ReadOnlySpan<char> y);
 
         /// <summary>

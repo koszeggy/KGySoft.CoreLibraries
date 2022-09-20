@@ -116,7 +116,6 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Serializes a <see cref="ValueType"/> into a byte array. If the type of the specified instance contains any references,
         /// then it is tried to be serialized by marshaling as a fallback option.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <returns>The byte array representation of the <see cref="ValueType"/> object.</returns>
@@ -183,14 +182,13 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Serializes the specified <paramref name="value"/> into a byte array.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the object to serialize. It must be a value type that does not contain references.</typeparam>
         /// <param name="value">The value to serialize.</param>
         /// <returns>The byte array representation of the specified <paramref name="value"/>.</returns>
         /// <remarks>
         /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
-        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/>&#160;constraint,
+        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/> constraint,
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
         /// For performance reasons this method does not check if <typeparamref name="T"/> has references
         /// but you can call the <see cref="TrySerializeValueType{T}"/> method that performs the check.</note>
@@ -236,14 +234,13 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Serializes an <see cref="Array"/> of <see cref="ValueType"/> elements into a byte array.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="array">The array to serialize.</param>
         /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/> that has no references.</typeparam>
         /// <returns>The byte array representation of the <paramref name="array"/>.</returns>
         /// <remarks>
         /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
-        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/>&#160;constraint,
+        /// When using this library with a compiler that recognizes the <see langword="unmanaged"/> constraint,
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
         /// For performance reasons this method does not check if <typeparamref name="T"/> has references
         /// but you can call the <see cref="TrySerializeValueArray{T}"/> method that performs the check.</note>

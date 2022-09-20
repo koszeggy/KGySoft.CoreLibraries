@@ -39,12 +39,11 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for invoking methods via dynamically created delegates.
-    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
     /// <para>The <see cref="Invoke">Invoke</see> method can be used to invoke the method. It can be used even for methods with parameters passed by reference.
-    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/>&#160;parameters, pass a preallocated array to the <see cref="Invoke">Invoke</see> method.
+    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="Invoke">Invoke</see> method.
     /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
     /// <para>If you know the parameter types at compile time (and the return type for function methods), then you can use
     /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>
@@ -180,14 +179,13 @@ namespace KGySoft.Reflection
         #region Public Methods
 
         /// <summary>
-        /// Invokes the method. The return value of <see langword="void"/>&#160;methods is always <see langword="null"/>.
+        /// Invokes the method. The return value of <see langword="void"/> methods is always <see langword="null"/>.
         /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/>&#160;for static methods.</param>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.
         /// If the method has ref/out parameters the corresponding array elements are assigned back with the results.</param>
-        /// <returns>The return value of the method, or <see langword="null"/>&#160;for <see langword="void"/>&#160;methods.</returns>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
         /// <remarks>
         /// <para>Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
         /// method but further calls are much faster.</para>

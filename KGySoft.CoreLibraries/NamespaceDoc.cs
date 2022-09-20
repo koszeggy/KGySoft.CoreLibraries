@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft
 {
     /// <summary>
-    /// Contains two public classes: the <see cref="LanguageSettings"/>, by which you can configure how the language resources should be handled in your library or application;
+    /// The root <see cref="N:KGySoft"/> namespace contains two public classes: the <see cref="LanguageSettings"/>, by which you can configure how the language resources should be handled in your library or application;
     /// and the <see cref="PublicResources"/> class, which contains some public string resources that can be used in any project.
     /// </summary>
     /// <remarks>

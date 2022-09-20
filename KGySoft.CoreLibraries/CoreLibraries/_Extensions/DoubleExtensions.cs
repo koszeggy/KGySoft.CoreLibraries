@@ -83,7 +83,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value to be check.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="value"/> can be considered zero using the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="value"/> can be considered zero using the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static bool TolerantIsZero(this double value, double tolerance = defaultTolerance) => Math.Abs(value) <= tolerance;
 

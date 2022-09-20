@@ -28,7 +28,6 @@ namespace KGySoft.Collections
     /// <summary>
     /// Provides a simple wrapper for an <see cref="IList{T}"/> where all members are thread-safe.
     /// This only means that the inner state of the wrapped list remains always consistent and not that all of the multi-threading concerns can be ignored.
-    /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the list.</typeparam>
     /// <remarks>

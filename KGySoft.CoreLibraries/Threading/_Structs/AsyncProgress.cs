@@ -62,7 +62,7 @@ namespace KGySoft.Threading
         /// </summary>
         /// <param name="left">The <see cref="AsyncProgress{T}"/> instance that is to the left of the equality operator.</param>
         /// <param name="right">The <see cref="AsyncProgress{T}"/> instance that is to the right of the equality operator.</param>
-        /// <returns><see langword="true"/>&#160;if the two <see cref="AsyncProgress{T}"/> structures are equal; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the two <see cref="AsyncProgress{T}"/> structures are equal; otherwise, <see langword="false"/>.</returns>
         public static bool operator ==(AsyncProgress<T> left, AsyncProgress<T> right) => left.Equals(right);
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace KGySoft.Threading
         /// </summary>
         /// <param name="left">The <see cref="AsyncProgress{T}"/> instance that is to the left of the inequality operator.</param>
         /// <param name="right">The <see cref="AsyncProgress{T}"/> instance that is to the right of the inequality operator.</param>
-        /// <returns><see langword="true"/>&#160;if the two <see cref="AsyncProgress{T}"/> structures are different; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the two <see cref="AsyncProgress{T}"/> structures are different; otherwise, <see langword="false"/>.</returns>
         public static bool operator !=(AsyncProgress<T> left, AsyncProgress<T> right) => !(left == right);
 
         #endregion
@@ -103,7 +103,7 @@ namespace KGySoft.Threading
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
         public override bool Equals(object? obj) => obj is AsyncProgress<T> asyncProgress && Equals(asyncProgress);
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace KGySoft.Threading
         /// Indicates whether the this <see cref="AsyncProgress{T}"/> is equal to another one.
         /// </summary>
         /// <param name="other">A <see cref="AsyncProgress{T}"/> instance to compare with this one.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/>&#160;<see cref="AsyncProgress{T}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/>&#160;<see cref="AsyncProgress{T}"/>; otherwise, <see langword="false"/>.</returns>
         public bool Equals(AsyncProgress<T> other)
             => operationComparer.Equals(OperationType, other.OperationType) && MaximumValue == other.MaximumValue && CurrentValue == other.CurrentValue;
 

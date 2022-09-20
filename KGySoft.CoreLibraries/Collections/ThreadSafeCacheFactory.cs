@@ -36,7 +36,6 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Creates a thread safe cache instance that can be accessed as an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="TKey">The type of the key in the cache.</typeparam>
         /// <typeparam name="TValue">The type of the value in the cache.</typeparam>

@@ -31,8 +31,8 @@ namespace KGySoft.Serialization.Binary
     /// <para>The default value of the <see cref="HandledEventArgs.Handled"/> property is <see langword="true"/>, if the field is marked by <see cref="NonSerializedAttribute"/>
     /// and the value of <see cref="CustomSerializerSurrogateSelector.IgnoreNonSerializedAttribute"/> property is <see langword="false"/>;
     /// otherwise, <see langword="false"/>.</para>
-    /// <para>You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to prevent saving the current field,
-    /// or you can set it to <see langword="false"/>&#160;to force saving even non-serialized fields.</para>
+    /// <para>You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to prevent saving the current field,
+    /// or you can set it to <see langword="false"/> to force saving even non-serialized fields.</para>
     /// </remarks>
     public class GettingFieldEventArgs : HandledEventArgs
     {
@@ -50,7 +50,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets the <see cref="System.Runtime.Serialization.SerializationInfo"/> of the <see cref="Object"/> being serialized.
-        /// If you add the data manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// If you add the data manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default serialization logic.
         /// </summary>
         public SerializationInfo SerializationInfo { get; }
@@ -62,23 +62,23 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets the name of the entry to be stored in the serialization stream.
-        /// <br/>Setting it to <see langword="null"/>&#160;will cause an <see cref="ArgumentNullException"/> from <see cref="SerializationInfo"/>.
-        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>Setting it to <see langword="null"/> will cause an <see cref="ArgumentNullException"/> from <see cref="SerializationInfo"/>.
+        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default serialization logic.
         /// </summary>
         public string Name { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the value to be stored in the serialization stream.
-        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default serialization logic.
         /// </summary>
         public object? Value { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Type"/> to be stored in the serialization stream.
-        /// <br/>Setting <see langword="null"/>&#160;will cause an <see cref="ArgumentNullException"/> from <see cref="SerializationInfo"/>.
-        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>Setting <see langword="null"/> will cause an <see cref="ArgumentNullException"/> from <see cref="SerializationInfo"/>.
+        /// <br/>To prevent storing any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default serialization logic.
         /// </summary>
         public Type Type { get; set; } = default!;

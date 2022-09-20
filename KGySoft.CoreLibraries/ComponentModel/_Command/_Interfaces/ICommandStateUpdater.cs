@@ -25,7 +25,6 @@ namespace KGySoft.ComponentModel
     /// Represents an updater for the <see cref="ICommandState"/> entries that apply the state values on the command source instances.
     /// For example, if the command source is a UI element such as a button or menu item, then the <see cref="ICommandState.Enabled"/> property
     /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>If a binding has no updaters, then the states are not synchronized back to the sources.</para>
@@ -50,7 +49,7 @@ namespace KGySoft.ComponentModel
         /// <param name="commandSource">The command source, whose state should be applied.</param>
         /// <param name="stateName">Name of the state. The default updater handles it as a property on the <paramref name="commandSource"/>.</param>
         /// <param name="value">The new value of the state to be applied.</param>
-        /// <returns><see langword="true"/>&#160;if the state was applied successfully; <see langword="false"/>&#160;if other possibly chained updaters or the
+        /// <returns><see langword="true"/> if the state was applied successfully; <see langword="false"/> if other possibly chained updaters or the
         /// default updater can try to apply the new state.</returns>
         bool TryUpdateState(object commandSource, string stateName, object? value);
 

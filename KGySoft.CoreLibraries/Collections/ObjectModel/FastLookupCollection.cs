@@ -95,8 +95,8 @@ namespace KGySoft.Collections.ObjectModel
         /// Initializes a new instance of the <see cref="FastLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
         /// </summary>
         /// <param name="list">The list that is wrapped by the new collection.</param>
-        /// <param name="checkConsistency"><see langword="true"/>&#160;to keep checking consistency of the wrapped <paramref name="list"/> and the inner storage;
-        /// <see langword="false"/>&#160;to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/>&#160;if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
+        /// <param name="checkConsistency"><see langword="true"/> to keep checking consistency of the wrapped <paramref name="list"/> and the inner storage;
+        /// <see langword="false"/> to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/> if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
         public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list) => CheckConsistency = checkConsistency;
@@ -128,13 +128,13 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>
         /// Gets the zero-based index of the first of the specified <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="FastLookupCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <param name="item">The object to locate in the <see cref="FastLookupCollection{T}"/>. The value can be <see langword="null"/> for reference types.</param>
         /// <returns>
         /// The zero-based index of the found occurrence of <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>, if found; otherwise, <c>-1</c>.
         /// </returns>
         /// <remarks>
         /// <para>In <see cref="FastLookupCollection{T}"/> this method has an O(n) cost for the first time or then the internal mapping has to be rebuilt (because,
-        /// for example, <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is detected); otherwise, it has an O(1) cost.
+        /// for example, <see cref="CheckConsistency"/> is <see langword="true"/> and inconsistency is detected); otherwise, it has an O(1) cost.
         /// Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
         /// </remarks>
         protected override int GetItemIndex(T item) => DoGetItemIndex(item, true);

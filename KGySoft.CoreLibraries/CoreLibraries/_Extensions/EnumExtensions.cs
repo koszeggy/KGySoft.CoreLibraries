@@ -49,13 +49,13 @@ namespace KGySoft.CoreLibraries
         #region Public methods
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> value specified in the <paramref name="value"/> parameter.
         /// </summary>
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="format">Formatting option. This parameter is optional.
         /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
-        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
+        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
@@ -70,7 +70,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
+        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString<TEnum>(this TEnum value, string? separator)
             where TEnum : struct, Enum
@@ -83,7 +83,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The enum value whose name is required.</param>
-        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
+        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
         public static string? GetName<TEnum>(this TEnum value)
             where TEnum : struct, Enum
         {
@@ -95,7 +95,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
             where TEnum : struct, Enum
         {
@@ -154,8 +154,8 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="flags"/>.</typeparam>
         /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues"><see langword="true"/>&#160;to return only flags that are defined in <typeparamref name="TEnum"/>;
-        /// <see langword="false"/>&#160;to return also undefined flags. This parameter is optional.
+        /// <param name="onlyDefinedValues"><see langword="true"/> to return only flags that are defined in <typeparamref name="TEnum"/>;
+        /// <see langword="false"/> to return also undefined flags. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
         /// <remarks>
@@ -184,7 +184,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <see langword="enum"/> type of <paramref name="flags"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the <see langword="enum"/> type of <paramref name="flags"/>.
         /// </summary>
-        /// <param name="flags">The <see langword="enum"/>&#160;value.</param>
+        /// <param name="flags">The <see langword="enum"/> value.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         /// <remarks><note>For better performance use the generic <see cref="AllFlagsDefined{TEnum}">AllFlagsDefined</see> overload whenever it is possible.</note></remarks>

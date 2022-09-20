@@ -52,7 +52,6 @@ namespace KGySoft.Collections
     /// <summary>
     /// Represents a string keyed dictionary that can be queried also by <see cref="StringSegment"/>
     /// and <see cref="ReadOnlySpan{T}"/> (in .NET Core 2.1/.NET Standard 2.1 and above) instances.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <remarks>
@@ -67,7 +66,7 @@ namespace KGySoft.Collections
     /// does not use randomized hashing for keys no longer than 32 characters. If you want to want to expose a <see cref="StringKeyedDictionary{TValue}"/>
     /// to a public service, then make sure you use it with a randomized hash comparer (eg. with <see cref="StringSegmentComparer.OrdinalRandomized"/>).</note></para>
     /// <para>Depending on the context, the <see cref="StringKeyedDictionary{TValue}"/> can return either a value type or reference type enumerator.
-    /// When used in a C# <see langword="foreach"/>&#160;statement directly, the public <see cref="Enumerator"/> type is used, which is a value type
+    /// When used in a C# <see langword="foreach"/> statement directly, the public <see cref="Enumerator"/> type is used, which is a value type
     /// (this behavior is similar to the regular <see cref="Dictionary{TKey,TValue}"/> class). But when the enumerator is obtained via the <see cref="IEnumerable{T}"/> interface
     /// (occurs when using LINQ or extension methods), then the <see cref="StringKeyedDictionary{TValue}"/> returns a reference type to avoid boxing and to provide a better performance.</para>
     /// <para>To use custom string comparison you can pass a <see cref="StringSegmentComparer"/> instance to the constructors. It allows string comparisons
@@ -188,7 +187,7 @@ namespace KGySoft.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -651,7 +650,7 @@ namespace KGySoft.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -982,8 +981,8 @@ namespace KGySoft.Collections
         /// using the specified <paramref name="capacity"/> and an ordinal comparer that satisfies the specified parameters.
         /// </summary>
         /// <param name="capacity">The initial capacity that the <see cref="StringKeyedDictionary{TValue}"/> can contain.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
-        /// <param name="useRandomizedHash"><see langword="true"/>&#160;to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
+        /// <param name="useRandomizedHash"><see langword="true"/> to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         public StringKeyedDictionary(int capacity, bool ignoreCase, bool useRandomizedHash = false) : this(capacity)
             => comparer = ignoreCase
@@ -994,8 +993,8 @@ namespace KGySoft.Collections
         /// Initializes a new instance of the <see cref="StringKeyedDictionary{TValue}"/> class
         /// that uses an ordinal comparer that satisfies the specified parameters.
         /// </summary>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
-        /// <param name="useRandomizedHash"><see langword="true"/>&#160;to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case when comparing keys; otherwise, <see langword="false"/>.</param>
+        /// <param name="useRandomizedHash"><see langword="true"/> to use a comparer that generates randomized hash codes for any string length; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         public StringKeyedDictionary(bool ignoreCase, bool useRandomizedHash = false) : this(0, ignoreCase, useRandomizedHash)
         {
@@ -1065,7 +1064,7 @@ namespace KGySoft.Collections
         /// Adds an element with the provided key and value to the <see cref="StringKeyedDictionary{TValue}"/>.
         /// </summary>
         /// <param name="key">The key of the element to add.</param>
-        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="StringKeyedDictionary{TValue}"/>.</exception>
         /// <remarks>
@@ -1089,7 +1088,7 @@ namespace KGySoft.Collections
         /// Removes the value with the specified <paramref name="key"/> from the <see cref="StringKeyedDictionary{TValue}"/>.
         /// </summary>
         /// <param name="key">Key of the item to remove.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>. This method also returns <see langword="false"/>&#160;if key was not found in the dictionary.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>. This method also returns <see langword="false"/> if key was not found in the dictionary.</returns>
         /// <remarks><para>If the <see cref="StringKeyedDictionary{TValue}"/> does not contain an element with the specified key, the dictionary remains unchanged. No exception is thrown.</para>
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
@@ -1133,7 +1132,7 @@ namespace KGySoft.Collections
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <remarks>
         /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
-        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
+        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1225,7 +1224,7 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="StringKeyedDictionary{TValue}"/> contains a specific key.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="StringKeyedDictionary{TValue}"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="StringKeyedDictionary{TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the <see cref="StringKeyedDictionary{TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool ContainsKey(string key) => GetItemIndex(key) >= 0;
@@ -1242,10 +1241,10 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="StringKeyedDictionary{TValue}"/> contains a specific value.
         /// </summary>
         /// <param name="value">The value to locate in the <see cref="StringKeyedDictionary{TValue}"/>.
-        /// The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="StringKeyedDictionary{TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the <see cref="StringKeyedDictionary{TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>

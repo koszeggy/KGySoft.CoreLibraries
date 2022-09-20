@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// Converts the byte array to string of hexadecimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/>&#160;or empty, the hex stream will be continuous. This parameter is optional.
+        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continuous. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
@@ -91,7 +91,7 @@ namespace KGySoft.CoreLibraries
         /// Converts the byte array to string of hexadecimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/>&#160;or empty, the hex stream will be continuous.</param>
+        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continuous.</param>
         /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines.</param>
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies. This parameter is optional.
         /// <br/>Default value: <c>0</c></param>
@@ -324,7 +324,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
         /// <param name="password">Password of encryption.</param>
-        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")] 
@@ -355,7 +355,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="password">Password of encryption.</param>
-        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Encrypt(this byte[] bytes, string password, string? salt)
         {
@@ -467,7 +467,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
@@ -498,7 +498,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Decrypt(this byte[] bytes, string password, string? salt)
         {

@@ -95,7 +95,7 @@ namespace KGySoft.Collections
         /// Advances the enumerator to the next element of the collection.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
+        /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
         /// </returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public bool MoveNext()

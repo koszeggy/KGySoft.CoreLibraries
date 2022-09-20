@@ -79,7 +79,7 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Gets whether an item can be set through the <see cref="P:KGySoft.Collections.ObjectModel.VirtualCollection`1.Item(System.Int32)">indexer</see>.
-        /// <br/>The base implementation returns <see langword="true"/>&#160;if <see cref="IsReadOnly"/> returns <see langword="false"/>&#160;or when the wrapped collection is a one dimensional zero based array of <typeparamref name="T"/>;
+        /// <br/>The base implementation returns <see langword="true"/> if <see cref="IsReadOnly"/> returns <see langword="false"/> or when the wrapped collection is a one dimensional zero based array of <typeparamref name="T"/>;
         /// otherwise, returns <see langword="false"/>.
         /// </summary>
         /// <seealso cref="IsReadOnly"/>
@@ -282,7 +282,7 @@ namespace KGySoft.Collections.ObjectModel
         /// Searches for the specified object and returns the zero-based index of an occurrence within the entire <see cref="VirtualCollection{T}"/>.
         /// <br/>Calls the overridable <see cref="GetItemIndex">GetItemIndex</see> method.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/> for reference types.</param>
         /// <returns>The zero-based index of the found occurrence of <paramref name="item" /> within the entire <see cref="VirtualCollection{T}"/>, if found; otherwise, <c>-1</c>.</returns>
         public int IndexOf(T item) => GetItemIndex(item);
 
@@ -290,8 +290,8 @@ namespace KGySoft.Collections.ObjectModel
         /// Determines whether an element is in the <see cref="VirtualCollection{T}"/>.
         /// <br/>Calls the overridable <see cref="ContainsItem">ContainsItem</see> method.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
+        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
         public bool Contains(T item) => ContainsItem(item);
 
         /// <summary>
@@ -338,7 +338,7 @@ namespace KGySoft.Collections.ObjectModel
         /// Gets the zero-based index of an occurrence of the specified <paramref name="item"/> within the <see cref="VirtualCollection{T}"/>.
         /// <br/>The base implementation calls the <see cref="IList{T}.IndexOf">IndexOf</see> method of the underlying collection.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/> for reference types.</param>
         /// <returns>The zero-based index of the found occurrence of <paramref name="item" /> within the <see cref="VirtualCollection{T}"/>, if found; otherwise, <c>-1</c>.</returns>
         protected virtual int GetItemIndex(T item) => items.IndexOf(item);
 
@@ -346,8 +346,8 @@ namespace KGySoft.Collections.ObjectModel
         /// Gets whether the specified <paramref name="item"/> is in the <see cref="VirtualCollection{T}"/>.
         /// <br/>The base implementation calls the <see cref="GetItemIndex">GetItemIndex</see> method.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
+        /// <param name="item">The object to locate in the <see cref="VirtualCollection{T}"/>. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if <paramref name="item" /> is found in the <see cref="VirtualCollection{T}"/>; otherwise, <see langword="false" />.</returns>
         protected virtual bool ContainsItem(T item) => GetItemIndex(item) >= 0;
 
         /// <summary>

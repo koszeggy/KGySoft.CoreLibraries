@@ -41,7 +41,6 @@ namespace KGySoft.CoreLibraries
     /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used on all platforms in the same way and is optimized for some dedicated string operations.
     /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension methods.</para>
@@ -252,7 +251,7 @@ namespace KGySoft.CoreLibraries
             /// Advances the <see cref="Enumerator"/> to the next character of the <see cref="StringSegment"/>.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next character; <see langword="false"/>&#160;if the enumerator has passed the end of the <see cref="StringSegment"/>.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next character; <see langword="false"/> if the enumerator has passed the end of the <see cref="StringSegment"/>.
             /// </returns>
             public bool MoveNext()
             {
@@ -340,7 +339,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether this <see cref="StringSegment"/> instance was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
-        /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/>&#160;when this property returns <see langword="true"/>.
+        /// <br/>Please note that the <see cref="ToString">ToString</see> method returns <see langword="null"/> when this property returns <see langword="true"/>.
         /// </summary>
         public bool IsNull => str == null;
 
@@ -350,7 +349,7 @@ namespace KGySoft.CoreLibraries
         public bool IsNullOrEmpty => length == 0;
 
         /// <summary>
-        /// Gets whether this <see cref="StringSegment"/> instance represents a <see langword="null"/>&#160;or empty <see cref="string">string</see>, or contains only whitespace characters.
+        /// Gets whether this <see cref="StringSegment"/> instance represents a <see langword="null"/> or empty <see cref="string">string</see>, or contains only whitespace characters.
         /// </summary>
         public bool IsNullOrWhiteSpace => length == 0 || TrimStart().length == 0;
 

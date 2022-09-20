@@ -26,7 +26,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents an object with validating capabilities by adding <see cref="IValidatingObject"/> implementation to the <see cref="PersistableObjectBase"/> class.
-    /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <seealso cref="IValidatingObject" />
     /// <seealso cref="IDataErrorInfo" />
@@ -38,7 +37,7 @@ namespace KGySoft.ComponentModel
     /// <remarks>
     /// <para>In a derived class the <see cref="DoValidation">DoValidation</see> method must be overridden.</para>
     /// <para>Validation is automatically performed when the <see cref="IsValid"/> or <see cref="ValidationResults"/> property is accessed or when the object is accessed by the standard <see cref="IDataErrorInfo"/> interface.</para>
-    /// <para><see cref="IsValid"/> returns <see langword="true"/>&#160;if <see cref="ValidationResults"/> does not contain any entries with <see cref="ValidationSeverity.Error"/> severity.</para>
+    /// <para><see cref="IsValid"/> returns <see langword="true"/> if <see cref="ValidationResults"/> does not contain any entries with <see cref="ValidationSeverity.Error"/> severity.</para>
     /// <para><strong>Differences between <see cref="ObservableObjectBase.CanGetProperty">CanGetProperty</see>/<see cref="ObservableObjectBase.CanSetProperty">CanSetProperty</see> methods and <see cref="IsValid"/>/<see cref="ValidationResults"/> properties</strong>:
     /// <list type="bullet">
     /// <item>When <see cref="ObservableObjectBase.CanGetProperty">CanGetProperty</see> and <see cref="ObservableObjectBase.CanSetProperty">CanSetProperty</see> methods return <see langword="false"/>, then an exception will be thrown
@@ -106,7 +105,7 @@ namespace KGySoft.ComponentModel
         /// Gets whether this instance is valid. That is, if <see cref="ValidationResults"/> property does not return any entries where
         /// the value of <see cref="ValidationResult.Severity"/> is <see cref="ValidationSeverity.Error"/>.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if this instance is valid; otherwise, <see langword="false"/>.
+        /// <value><see langword="true"/> if this instance is valid; otherwise, <see langword="false"/>.
         /// </value>
         public bool IsValid
         {
@@ -210,7 +209,7 @@ namespace KGySoft.ComponentModel
         /// <br />The <see cref="EditableObjectBase" /> implementation excludes the <see cref="ObservableObjectBase.IsModified"/>, <see cref="IsValid"/> and <see cref="ValidationResults"/> properties.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
-        /// <returns><see langword="true"/>&#160;if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
         protected override bool AffectsModifiedState(string propertyName) => base.AffectsModifiedState(propertyName) && !propertyName.In(nameof(IsValid), nameof(ValidationResults));
 
         #endregion

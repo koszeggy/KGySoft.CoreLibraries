@@ -338,12 +338,11 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to get the typed value from a <see cref="string">string</see>-<see cref="object">object</see>&#160;<paramref name="dictionary"/> for the given key.
-        /// <br/>See the <strong>Examples</strong> section for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/> This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <br/>Default value: <see langword="null"/> if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <example>
@@ -429,7 +428,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/> This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <br/>Default value: <see langword="null"/> if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TActualValue">The type of the value with the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
@@ -471,15 +470,15 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
         /// <param name="dictionary">The target dictionary.</param>
         /// <param name="item">The <see cref="KeyValuePair{TKey,TValue}"/> to add to the <paramref name="dictionary"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> was added to the <paramref name="dictionary"/> successfully;
-        /// <see langword="false"/>&#160;if the key already exists or when <see cref="ICollection{T}.IsReadOnly"/> returns <see langword="true"/>&#160;for <paramref name="dictionary"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> was added to the <paramref name="dictionary"/> successfully;
+        /// <see langword="false"/> if the key already exists or when <see cref="ICollection{T}.IsReadOnly"/> returns <see langword="true"/> for <paramref name="dictionary"/>.</returns>
         /// <remarks>
         /// <para>The <see cref="System.Collections.Generic.CollectionExtensions"/> class in .NET Core 2.0 and above also has
         /// a <see cref="System.Collections.Generic.CollectionExtensions.TryAdd{TKey,TValue}">TryAdd</see> method that behaves somewhat differently.
         /// To avoid ambiguity with that method this one has a <see cref="KeyValuePair{TKey,TValue}"/> parameter.</para>
         /// <para>Unlike the <see cref="System.Collections.Generic.CollectionExtensions.TryAdd{TKey,TValue}">CollectionExtensions.TryAdd</see> method, this one
         /// is thread safe when used with <see cref="ConcurrentDictionary{TKey,TValue}"/>, <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="LockingDictionary{TKey,TValue}"/> instances.
-        /// Additionally, this one returns <see langword="false"/>&#160;if <paramref name="dictionary"/> is read-only instead of throwing an exception.</para>
+        /// Additionally, this one returns <see langword="false"/> if <paramref name="dictionary"/> is read-only instead of throwing an exception.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="item"/> has a <see langword="null"/> key.</exception>
@@ -543,7 +542,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">The key of the item to replace.</param>
         /// <param name="newValue">The replacement value of <paramref name="key"/> if its value equals to <paramref name="originalValue"/>.</param>
         /// <param name="originalValue">The expected original value of the stored item with the associated <paramref name="key"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="dictionary"/> is not read-only and the value with <paramref name="key"/>
+        /// <returns><see langword="true"/> if <paramref name="dictionary"/> is not read-only and the value with <paramref name="key"/>
         /// was equal to <paramref name="originalValue"/> and was replaced with <paramref name="newValue"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> or <paramref name="key"/> is <see langword="null"/>.</exception>
         public static bool TryUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue newValue, TValue originalValue)
@@ -1077,7 +1076,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
         /// <param name="dictionary">The target dictionary.</param>
         /// <param name="key">Key of the item to remove.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="dictionary"/> is not read-only and the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="dictionary"/> is not read-only and the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public static bool TryRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
@@ -1099,7 +1098,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Key of the item to remove.</param>
         /// <param name="value">When this method returns, contains the value removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>,
         /// or the default value of the <typeparamref name="TValue"/> type if <paramref name="dictionary"/> is read-only or <paramref name="key"/> does not exist.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> or <paramref name="key"/> is <see langword="null"/>.</exception>
         public static bool TryRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, [MaybeNullWhen(false)]out TValue value)
             where TKey : notnull

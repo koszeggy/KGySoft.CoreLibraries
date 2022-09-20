@@ -271,7 +271,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Creates a <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="seed"/> value.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <returns>A <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="seed"/> value.</returns>
@@ -283,7 +282,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Creates a <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="factory"/> in each thread the result is accessed from.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="factory">A delegate that will be invoked once in each thread the created instance is used from.</param>
         /// <returns>A <see cref="ThreadSafeRandom"/> instance using the specified <paramref name="factory"/> in each thread the result is accessed from.</returns>
@@ -428,7 +426,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Releases the resources used by this <see cref="ThreadSafeRandom"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
+        /// <param name="disposing"><see langword="true"/> if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)

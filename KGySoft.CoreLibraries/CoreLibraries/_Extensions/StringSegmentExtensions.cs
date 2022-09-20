@@ -324,7 +324,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The <see cref="StringSegment"/> to convert.</param>
         /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
         /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
-        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        /// <returns>A non-<see langword="null"/> value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this StringSegment s, bool definedOnly = false)
             where TEnum : struct, Enum
         {

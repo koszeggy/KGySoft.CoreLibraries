@@ -23,8 +23,9 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for different kind of business object models (such as the <see cref="ModelBase"/> class),
-    /// and types for command binding, which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface for details and examples).
+    /// The <see cref="N:KGySoft.ComponentModel"/> namespace contains <see cref="TypeConverter"/> implementations for several types as well
+    /// as base classes for different kind of business object models (such as the <see cref="ModelBase"/> class), and types for command binding,
+    /// which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface for details and examples).
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

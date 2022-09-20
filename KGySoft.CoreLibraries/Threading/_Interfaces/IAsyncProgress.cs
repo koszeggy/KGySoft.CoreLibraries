@@ -30,7 +30,6 @@ namespace KGySoft.Threading
     /// <summary>
     /// Represents a progress updates provider for asynchronous operations.
     /// It provides methods for updating the progress from concurrent threads.
-    /// <br/>See the <strong>Examples</strong> section for an example implementation.
     /// </summary>
     /// <example>
     /// The following example demonstrates how to implement this interface allowing concurrent updates.

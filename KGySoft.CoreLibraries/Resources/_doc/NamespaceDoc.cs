@@ -27,12 +27,11 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Resources
 {
     /// <summary>
-    /// Contains classes for resource management, which support read-write access directly to .resx files (<see cref="ResXResourceManager"/>) or even combined access to compiled and .resx resources
-    /// (<see cref="HybridResourceManager"/>, <see cref="DynamicResourceManager"/>).
-    /// <br/>See the <strong>Remarks</strong> section to see when to use the difference classes of this namespace.
+    /// The <see cref="N:KGySoft.Resources"/> namespace contains classes for resource management, which support read-write access directly to .resx files (<see cref="ResXResourceManager"/>)
+    /// or even combined access to compiled and .resx resources (<see cref="HybridResourceManager"/>, <see cref="DynamicResourceManager"/>).
     /// </summary>
     /// <remarks>
-    /// The <see cref="N:KGySoft.Resources"/> namespace contains several classes, which can handle resources from XML sources (.resx files).
+    /// There are numerous classes in the <see cref="N:KGySoft.Resources"/> that can handle resources from XML sources (.resx files).
     /// The table below can help you to choose the best one for your needs.
     /// <list type="table">
     /// <listheader><term>Class</term><term>When to choose this one; added functionality compared to previous levels.</term></listheader>

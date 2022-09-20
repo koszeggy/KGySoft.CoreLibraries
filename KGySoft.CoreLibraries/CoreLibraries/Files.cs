@@ -70,7 +70,7 @@ namespace KGySoft.CoreLibraries
         /// Tries to create a file of the specified <paramref name="path"/> along with possibly non-existing parent directories.
         /// </summary>
         /// <param name="path">The name of the file to be created with path.</param>
-        /// <param name="overwriteIfExists"><see langword="true"/>&#160;to allow an already existing file to be overwritten; otherwise, <see langword="false"/>.</param>
+        /// <param name="overwriteIfExists"><see langword="true"/> to allow an already existing file to be overwritten; otherwise, <see langword="false"/>.</param>
         /// <returns>A <see cref="FileStream"/> instance if the file could be created or overwritten; otherwise, <see langword="null"/>.</returns>
         public static FileStream? TryCreateWithPath(string path, bool overwriteIfExists = true)
         {
@@ -162,8 +162,8 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="target">The target file or directory name. Can be either an absolute path or a relative one to current directory.</param>
         /// <param name="baseDirectory">The base directory to which the relative <paramref name="target" /> path should be determined.</param>
-        /// <param name="isCaseSensitive"><see langword="true"/>&#160;to perform a case-sensitive comparison;
-        /// <see langword="false"/>&#160;to perform a case-insensitive comparison.</param>
+        /// <param name="isCaseSensitive"><see langword="true"/> to perform a case-sensitive comparison;
+        /// <see langword="false"/> to perform a case-insensitive comparison.</param>
         /// <returns>The relative path of <paramref name="target" /> from <paramref name="baseDirectory" />, or the absolute path of <paramref name="target" /> if there is no relative path between them.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="baseDirectory"/> is <see langword="null"/>.</exception>
         /// <returns>The relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.</returns>

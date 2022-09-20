@@ -79,19 +79,19 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if this instance has errors; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/> if this instance has errors; otherwise, <see langword="false"/>.</value>
         public bool HasErrors => Errors.Count > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has warnings.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if this instance has warnings; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/> if this instance has warnings; otherwise, <see langword="false"/>.</value>
         public bool HasWarnings => Warnings.Count > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has information entries.
         /// </summary>
-        /// <value><see langword="true"/>&#160;if this instance has information entries; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/> if this instance has information entries; otherwise, <see langword="false"/>.</value>
         public bool HasInfos => Infos.Count > 0;
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace KGySoft.ComponentModel
         /// Gets the validation results for the specified <paramref name="propertyName"/> and <paramref name="severity"/>.
         /// </summary>
         /// <param name="propertyName">Name of the property to get the validation results.</param>
-        /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities.</param>
+        /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/> to get results of any severities.</param>
         public ValidationResultsCollection this[string propertyName, ValidationSeverity? severity]
         {
             get
@@ -231,7 +231,7 @@ namespace KGySoft.ComponentModel
         /// Gets the first <see cref="ValidationResult"/> with highest severity, optionally using the specified <paramref name="propertyName"/>,
         /// or <see langword="null"/>, if no such <see cref="ValidationResult"/> exists.
         /// </summary>
-        /// <param name="propertyName">An optional property name to get the result for a specific property, or <see langword="null"/>&#160;to get the
+        /// <param name="propertyName">An optional property name to get the result for a specific property, or <see langword="null"/> to get the
         /// highest severity <see cref="ValidationResult"/> for any property.</param>
         /// <returns>The first <see cref="ValidationResult"/> with highest severity using the specified <paramref name="propertyName"/>, or <see langword="null"/>,
         /// if no such <see cref="ValidationResult"/> exists.</returns>

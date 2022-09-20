@@ -50,13 +50,13 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Commits all changes of all editing levels.
         /// </summary>
-        /// <returns><see langword="true"/>&#160;if <see cref="EditLevel"/> was greater than 0 before the call; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <see cref="EditLevel"/> was greater than 0 before the call; otherwise, <see langword="false"/>.</returns>
         bool TryCommitAllEdits();
 
         /// <summary>
         /// Reverts all changes of all editing levels.
         /// </summary>
-        /// <returns><see langword="true"/>&#160;if <see cref="EditLevel"/> was greater than 0 before the call; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <see cref="EditLevel"/> was greater than 0 before the call; otherwise, <see langword="false"/>.</returns>
         bool TryRevertAllEdits();
 
         #endregion

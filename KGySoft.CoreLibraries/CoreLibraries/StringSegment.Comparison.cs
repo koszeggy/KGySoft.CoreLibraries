@@ -59,7 +59,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="b">The second <see cref="StringSegment"/> to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="StringSegment"/> instances are equal; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified <see cref="StringSegment"/> instances are equal; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public static bool Equals(StringSegment a, StringSegment b, StringComparison comparison = StringComparison.Ordinal)
             => comparison switch
@@ -106,7 +106,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="a">The first string to compare.</param>
         /// <param name="b">The second string to compare.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case during the comparison; otherwise, <see langword="false"/>.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case during the comparison; otherwise, <see langword="false"/>.</param>
         /// <param name="culture">An object that supplies culture-specific comparison information.
         /// if <see langword="null"/>, then <see cref="CultureInfo.CurrentCulture">CultureInfo.CurrentCulture</see> will be used.</param>
         /// <returns>A 32-bit signed integer that indicates the lexical relationship between the specified <see cref="StringSegment"/> instances.</returns>
@@ -153,7 +153,7 @@ namespace KGySoft.CoreLibraries
         /// Indicates whether the current <see cref="StringSegment"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">A <see cref="StringSegment"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public bool Equals(StringSegment other)
         {
@@ -182,7 +182,7 @@ namespace KGySoft.CoreLibraries
         /// Indicates whether the current <see cref="StringSegment"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">A <see cref="StringSegment"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public bool Equals(string? other)
         {
             if (ReferenceEquals(str, other) && offset == 0)
@@ -210,7 +210,7 @@ namespace KGySoft.CoreLibraries
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
         /// <param name="obj">A <see cref="StringSegment"/> or <see cref="string">string</see> object to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj)
             => obj == null ? IsNull
             : obj is StringSegment other ? Equals(other)

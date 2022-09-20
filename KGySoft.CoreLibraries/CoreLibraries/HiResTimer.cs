@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;if enabled; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if enabled; otherwise, <see langword="false"/>.
         /// </value>
         public bool Enabled
         {

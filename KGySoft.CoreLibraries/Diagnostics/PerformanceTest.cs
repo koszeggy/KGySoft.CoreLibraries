@@ -23,7 +23,6 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a class for performance tests of <see cref="Action"/> delegate test cases.
-    /// <br/>See the <strong>Examples</strong> section for some examples.
     /// </summary>
     /// <example>
     /// <para>The following example shows the simplest usage for timed tests.

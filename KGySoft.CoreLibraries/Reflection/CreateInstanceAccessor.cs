@@ -30,14 +30,13 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for creating objects via dynamically created delegates.
-    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="CreateInstanceAccessor"/> instance by the static <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.GetAccessor">GetAccessor</see> methods.
     /// There are two overloads of them: <see cref="GetAccessor(Type)"/> can be used for types with parameterless constructors and for creating value types without a constructor,
     /// and the <see cref="GetAccessor(ConstructorInfo)"/> overload is for creating an instance by a specified constructor (with or without parameters).</para>
     /// <para>The <see cref="CreateInstance">CreateInstance</see> method can be used to create an actual instance of an object. It can be used even for constructors with parameters passed by reference.
-    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/>&#160;parameters, pass a preallocated array to the <see cref="CreateInstance">CreateInstance</see> method.
+    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="CreateInstance">CreateInstance</see> method.
     /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
     /// <para>If you know the created instance type and the parameter types at compile time, then you can use the
     /// generic <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> methods for better performance. These strongly typed methods can be used as
@@ -223,7 +222,6 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates a new instance by the associated <see cref="ConstructorInfo"/> or <see cref="Type"/>.
         /// For types and parameterless constructors the <paramref name="parameters"/> parameter is omitted.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="parameters">The parameters for parameterized constructors.</param>
         /// <returns>The created instance.</returns>

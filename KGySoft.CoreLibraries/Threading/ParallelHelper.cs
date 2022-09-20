@@ -66,7 +66,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Executes an indexed loop synchronously, in which iterations may run in parallel.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
@@ -111,7 +110,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Executes an indexed loop synchronously, in which iterations may run in parallel and the execution can be configured.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/>.
@@ -147,7 +145,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Begins to execute an indexed loop asynchronously, in which iterations may run in parallel.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
@@ -182,7 +179,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Begins to execute an indexed loop asynchronously, in which iterations may run in parallel and the execution can be configured.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.
@@ -228,7 +224,6 @@ namespace KGySoft.Threading
 #if !NET35
         /// <summary>
         /// Executes an indexed loop asynchronously, in which iterations may run in parallel.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="fromInclusive">The start index, inclusive.</param>
         /// <param name="toExclusive">The end index, exclusive.</param>
@@ -264,7 +259,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Executes an indexed loop asynchronously, in which iterations may run in parallel and the execution can be configured.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="operation">The operation to be reported when <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/>.
@@ -298,7 +292,6 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>

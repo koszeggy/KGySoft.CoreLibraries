@@ -26,10 +26,9 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Specifies options for applicable <see cref="O:KGySoft.CoreLibraries.StringSegment.Split">StringSegment.Split</see> method overloads,
     /// such as whether to omit empty substrings from the returned array or trim whitespace from segments.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
-    /// <para>The <see cref="StringSegmentSplitOptions"/> is specified as a <see langword="struct"/>&#160;rather than an <see langword="enum"/>,
+    /// <para>The <see cref="StringSegmentSplitOptions"/> is specified as a <see langword="struct"/> rather than an <see langword="enum"/>,
     /// so it can be compatible both with <see cref="StringSplitOptions"/> and the old <see cref="O:KGySoft.CoreLibraries.StringSegment.Split">StringSegment.Split</see>
     /// methods that defined a simple <see cref="bool">bool</see>&#160;<c>removeEmptyEntries</c> parameter as options.</para>
     /// <para>Unlike <see cref="StringSplitOptions"/>, this struct defines the <see cref="TrimEntries"/> option for all platform targets.</para>
@@ -139,7 +138,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>This member is obsolete and is specified to provide compatibility with the old <see cref="O:KGySoft.CoreLibraries.StringSegment.Split">StringSegment.Split</see> overloads,
         /// which used to specify a boolean <paramref name="removeEmptyEntries"/> argument in place of the new <see cref="StringSegmentSplitOptions"/> type.
         /// </summary>
-        /// <param name="removeEmptyEntries"><see langword="true"/>&#160;to return <see cref="RemoveEmptyEntries"/>; <see langword="false"/>&#160;to return <see cref="None"/>.</param>
+        /// <param name="removeEmptyEntries"><see langword="true"/> to return <see cref="RemoveEmptyEntries"/>; <see langword="false"/> to return <see cref="None"/>.</param>
         /// <returns>
         /// A <see cref="StringSegmentSplitOptions"/> instance that represents the value of the specified <paramref name="removeEmptyEntries"/> parameter.
         /// </returns>
@@ -203,14 +202,14 @@ namespace KGySoft.CoreLibraries
         /// Indicates whether the current <see cref="StringSegmentSplitOptions"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="StringSegmentSplitOptions"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public bool Equals(StringSegmentSplitOptions other) => value == other.value;
 
         /// <summary>
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj) => obj is StringSegmentSplitOptions other && Equals(other);
 
         /// <summary>

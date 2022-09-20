@@ -41,9 +41,9 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="serializedType">The type of the object the formatter creates a new instance of.</param>
         /// <param name="assemblyName">The <see cref="string">string</see>, which will represent the <see cref="Assembly"/> name in the serialized data.
-        /// Can return <see langword="null"/>&#160;to provide a default name.</param>
+        /// Can return <see langword="null"/> to provide a default name.</param>
         /// <param name="typeName">The <see cref="string">string</see>, which will represent the <see cref="Type"/> name in the serialized data.
-        /// Can return <see langword="null"/>&#160;to provide a default name.</param>
+        /// Can return <see langword="null"/> to provide a default name.</param>
         void BindToName(Type serializedType, out string? assemblyName, out string? typeName);
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
-        /// <returns>The <see cref="Type"/> to be created by the formatter or <see langword="null"/>&#160;to use the default binding logic.</returns>
+        /// <returns>The <see cref="Type"/> to be created by the formatter or <see langword="null"/> to use the default binding logic.</returns>
         Type? BindToType(string assemblyName, string typeName);
 
         #endregion

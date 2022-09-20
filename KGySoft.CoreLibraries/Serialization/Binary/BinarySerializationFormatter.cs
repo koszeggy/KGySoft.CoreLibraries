@@ -101,7 +101,6 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Serializes and deserializes objects in binary format.
-    /// <br/>See the <strong>Remarks</strong> section for details and for the differences to <see cref="BinaryFormatter"/>.
     /// </summary>
     /// <seealso cref="BinarySerializer"/>
     /// <seealso cref="BinarySerializationOptions"/>
@@ -129,10 +128,10 @@ namespace KGySoft.Serialization.Binary
     /// <para>Please also note that if the <see cref="Binder"/> property is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
     /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
     /// type resolving, such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
-    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/> to prevent loading assemblies by the binders themselves.</para>
     /// <para>Similarly, if the <see cref="SurrogateSelector"/> property is set, then they provide a custom serialization even for types that are not serializable. The surrogate selectors in this library,
     /// such as the <see cref="CustomSerializerSurrogateSelector"/> and <see cref="NameInvariantSurrogateSelector"/> types have their own <c>SafeMode</c> property.
-    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/>&#160;to prevent deserializing non-serializable types.</para></note>
+    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/> to prevent deserializing non-serializable types.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
@@ -164,10 +163,10 @@ namespace KGySoft.Serialization.Binary
     /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), and also there are some others, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
     /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
-    /// <h1 class="heading">Natively supported simple types</h1>
+    /// <h2>Natively supported simple types</h2>
     /// <para>Following types are natively supported. When these types are serialized, no recursive traversal of the fields occurs:
     /// <list type="bullet">
-    /// <item><see langword="null"/>&#160;reference</item>
+    /// <item><see langword="null"/> reference</item>
     /// <item>Non-derived <see cref="object"/> instances.</item>
     /// <item><see cref="DBNull"/></item>
     /// <item><see cref="bool"/></item>
@@ -217,7 +216,7 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// </note>
     /// </para>
-    /// <h1 class="heading">Natively supported generic collections</h1>
+    /// <h2>Natively supported generic collections</h2>
     /// <para>Following generic collections are natively supported. When their generic arguments are one of the simple types or other supported collections, then no recursive traversal of the fields occurs:
     /// <list type="bullet">
     /// <item><see cref="Array"/> of element types above or compound of other supported collections</item>
@@ -248,8 +247,8 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// </note>
     /// </para>
-    /// <note type="tip">The shortest result can be achieved by using <see langword="sealed"/>&#160;classes or value types as array base types and generic parameters.</note>
-    /// <h1 class="heading">Natively supported non-generic collections</h1>
+    /// <note type="tip">The shortest result can be achieved by using <see langword="sealed"/> classes or value types as array base types and generic parameters.</note>
+    /// <h2>Natively supported non-generic collections</h2>
     /// <para>Following non-generic collections are natively supported. When they contain only other natively supported elements, then no recursive traversal of the fields occurs:
     /// <list type="table">
     /// <listheader><term>Collection type</term><description>Used element type</description></listheader>
@@ -276,7 +275,7 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// </note>
     /// </para>
-    /// <h1 class="heading">Serialization events</h1>
+    /// <h2>Serialization events</h2>
     /// <para><see cref="BinarySerializationFormatter"/> supports calling methods decorated by <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>,
     /// <see cref="OnDeserializingAttribute"/> and <see cref="OnDeserializedAttribute"/> as well as calling <see cref="IDeserializationCallback.OnDeserialization">IDeserializationCallback.OnDeserialization</see> method.
     /// Attributes should be used on methods that have a single <see cref="StreamingContext"/> parameter.
@@ -1035,7 +1034,6 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets the <see cref="SerializationBinder"/> that performs type conversions to and from <see cref="string">string</see>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>By default, the binder is not called for natively supported types.</para>
@@ -1053,7 +1051,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="security"><para>If you use binders for deserialization, then setting the <see cref="BinarySerializationOptions.SafeMode"/> flag in the <see cref="Options"/>
         /// cannot prevent loading assemblies by the binder itself. The binders in this library that can perform automatic type resolving,
         /// such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
-        /// Make sure to set them to <see langword="true"/>&#160;to prevent loading assemblies by the binders themselves.</para>
+        /// Make sure to set them to <see langword="true"/> to prevent loading assemblies by the binders themselves.</para>
         /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
         /// </remarks>
         public SerializationBinder? Binder { get; set; }

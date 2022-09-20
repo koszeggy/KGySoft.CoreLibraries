@@ -41,11 +41,10 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
-    /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
-    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types by the fallback logic.</para>
+    /// to <see langword="true"/> to prevent loading assemblies when resolving types by the fallback logic.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
@@ -138,7 +137,6 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets whether a legacy assembly identity is tried to be written on serializing.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <note>In Framework .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
@@ -254,8 +252,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">If <see cref="WriteLegacyIdentity"/> is <see langword="true"/>, then tries to return an old assembly identity for <paramref name="serializedType"/>.
         /// If at least one <see cref="AssemblyName"/> was specified for the type by the <see cref="AddType">AddType</see> method, then the firstly specified name will be used.
         /// Otherwise, if the type has a <see cref="TypeForwardedFromAttribute"/> is specified for the type, its value will be used.
-        /// Otherwise, returns <see langword="null"/>&#160;so the formatter will emit a default identity.</param>
-        /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/>&#160;when this method returns, then contains the full name of the <paramref name="serializedType"/>,
+        /// Otherwise, returns <see langword="null"/> so the formatter will emit a default identity.</param>
+        /// <param name="typeName">If <paramref name="assemblyName"/> is not <see langword="null"/> when this method returns, then contains the full name of the <paramref name="serializedType"/>,
         /// otherwise, returns <see langword="null"/>.</param>
         /// <remarks>
         /// <note>In .NET Framework 3.5 this method does not exist in the base <see cref="SerializationBinder"/> and is called only if the consumer

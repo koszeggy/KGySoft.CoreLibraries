@@ -39,7 +39,6 @@ namespace KGySoft.Collections
     /// <summary>
     /// Provides a simple wrapper for an <see cref="IDictionary{TKey,TValue}"/> where all members are thread-safe.
     /// This only means that the inner state of the wrapped dictionary remains always consistent and not that all of the multi-threading concerns can be ignored.
-    /// <br/>See the <strong>Remarks</strong> section for details and some examples.
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
@@ -239,7 +238,7 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="LockingDictionary{TKey,TValue}" />.</param>
-        /// <returns><see langword="true" />&#160;if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
         public bool ContainsKey(TKey key)
         {
             Lock();
@@ -275,8 +274,8 @@ namespace KGySoft.Collections
         /// Removes the element with the specified key from the <see cref="LockingDictionary{TKey,TValue}" />.
         /// </summary>
         /// <param name="key">The key of the element to remove.</param>
-        /// <returns><see langword="true" />&#160;if the element is successfully removed; otherwise, <see langword="false" />.
-        /// This method also returns <see langword="false" />&#160;if <paramref name="key" /> was not found in the original <see cref="LockingDictionary{TKey,TValue}" />.
+        /// <returns><see langword="true" /> if the element is successfully removed; otherwise, <see langword="false" />.
+        /// This method also returns <see langword="false" /> if <paramref name="key" /> was not found in the original <see cref="LockingDictionary{TKey,TValue}" />.
         /// </returns>
         public bool Remove(TKey key)
         {
@@ -297,7 +296,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter.
         /// This parameter is passed uninitialized.</param>
-        /// <returns><see langword="true" />&#160;if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
             Lock();

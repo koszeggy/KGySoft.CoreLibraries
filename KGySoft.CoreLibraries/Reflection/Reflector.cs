@@ -262,7 +262,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -318,7 +318,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
@@ -365,7 +365,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -411,7 +411,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -467,7 +467,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
@@ -514,7 +514,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -869,7 +869,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns>The value of the property.</returns>
@@ -919,7 +919,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns>The value of the property.</returns>
         /// <remarks>
@@ -960,7 +960,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns>The value of the property.</returns>
@@ -1006,8 +1006,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
@@ -1035,7 +1035,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
@@ -1056,8 +1056,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
         /// <remarks>
@@ -1077,7 +1077,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
         /// <remarks>
@@ -1097,8 +1097,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
@@ -1124,7 +1124,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the property.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
@@ -1256,7 +1256,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value returned by the indexable object.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value returned by the indexable object.</param>
         /// <param name="indexParameters">The index parameters.</param>
         /// <returns><see langword="true"/>, if the indexed member could be read; <see langword="false"/>, if a matching property or array getter could not be found.</returns>
         /// <remarks>
@@ -1284,7 +1284,7 @@ namespace KGySoft.Reflection
         /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value returned by the indexable object.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value returned by the indexable object.</param>
         /// <param name="indexParameters">The index parameters.</param>
         /// <returns><see langword="true"/>, if the indexed member could be read; <see langword="false"/>, if a matching property or array getter could not be found.</returns>
         /// <remarks>
@@ -1503,7 +1503,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1559,7 +1559,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1606,7 +1606,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1653,7 +1653,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
         /// <remarks>
@@ -1698,7 +1698,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1752,7 +1752,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1797,7 +1797,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1842,7 +1842,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
         /// <remarks>
@@ -1885,10 +1885,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -1919,7 +1919,7 @@ namespace KGySoft.Reflection
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -1941,9 +1941,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -1966,7 +1966,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -1988,9 +1988,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2013,7 +2013,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2035,8 +2035,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2058,7 +2058,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2080,10 +2080,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2113,7 +2113,7 @@ namespace KGySoft.Reflection
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2134,9 +2134,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2158,7 +2158,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2179,9 +2179,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2203,7 +2203,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2224,8 +2224,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2246,7 +2246,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the return value of the method.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
         /// <remarks>
@@ -2447,7 +2447,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
@@ -2465,7 +2465,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
@@ -2479,7 +2479,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
@@ -2492,7 +2492,7 @@ namespace KGySoft.Reflection
         /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
@@ -2752,7 +2752,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>.</returns>
         /// <remarks>
@@ -2776,7 +2776,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>.</returns>
         /// <remarks>
@@ -2793,7 +2793,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="parameters"/>.</returns>
         /// <remarks>
@@ -2809,7 +2809,7 @@ namespace KGySoft.Reflection
         /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
-        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the created instance of <paramref name="type"/>.</param>
         /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="parameters"/>.</returns>
         /// <remarks>
@@ -2955,7 +2955,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3008,7 +3008,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3058,7 +3058,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3109,7 +3109,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3237,7 +3237,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns>The value of the field.</returns>
@@ -3284,7 +3284,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns>The value of the field.</returns>
@@ -3330,8 +3330,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
@@ -3357,7 +3357,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">An instance whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
@@ -3375,8 +3375,8 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="ignoreCase"><see langword="true"/>&#160;to ignore case; <see langword="false"/>&#160;to regard case.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
@@ -3401,7 +3401,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
         /// <param name="fieldName">The name of the field to get.</param>
-        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
@@ -3514,9 +3514,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
-        /// <param name="matchBySimpleName"><see langword="true"/>&#160;to ignore version, culture and public key token information differences;
-        /// <see langword="false"/>&#160;to allow only an exact match with the provided information.</param>
-        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// <param name="matchBySimpleName"><see langword="true"/> to ignore version, culture and public key token information differences;
+        /// <see langword="false"/> to allow only an exact match with the provided information.</param>
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/> if
         /// <paramref name="assemblyName"/> could not be resolved by the provided arguments.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
@@ -3532,7 +3532,7 @@ namespace KGySoft.Reflection
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="options">The options for resolving the assembly. This parameter is optional.
         /// <br/>Default value: <see cref="ResolveAssemblyOptions.TryToLoadAssembly"/>, <see cref="ResolveAssemblyOptions.AllowPartialMatch"/>.</param>
-        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/> if
         /// the <see cref="ResolveAssemblyOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="assemblyName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
@@ -3553,7 +3553,7 @@ namespace KGySoft.Reflection
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="options">The options for resolving the assembly. This parameter is optional.
         /// <br/>Default value: <see cref="ResolveAssemblyOptions.TryToLoadAssembly"/>, <see cref="ResolveAssemblyOptions.AllowPartialMatch"/>.</param>
-        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/>&#160;if
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/> if
         /// the <see cref="ResolveAssemblyOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="assemblyName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
@@ -3580,18 +3580,18 @@ namespace KGySoft.Reflection
         /// When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
         /// <param name="typeName">The type name as a string representation with or without assembly name.</param>
-        /// <param name="tryLoadAssemblies"><see langword="true"/>&#160;to try loading assemblies present in <paramref name="typeName"/> if they are not loaded already;
-        /// <see langword="false"/>&#160;to locate assemblies among the loaded ones only.</param>
-        /// <param name="allowPartialAssemblyMatch"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring
+        /// <param name="tryLoadAssemblies"><see langword="true"/> to try loading assemblies present in <paramref name="typeName"/> if they are not loaded already;
+        /// <see langword="false"/> to locate assemblies among the loaded ones only.</param>
+        /// <param name="allowPartialAssemblyMatch"><see langword="true"/> to allow resolving assembly names by simple assembly name, and ignoring
         /// version, culture and public key token information even if they present in <paramref name="typeName"/>;
-        /// <see langword="false"/>&#160;to consider every provided information in assembly names. This parameter is optional.
+        /// <see langword="false"/> to consider every provided information in assembly names. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by the
         /// <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> extension method.</para>
-        /// <note>If <paramref name="tryLoadAssemblies"/> is <see langword="true"/>&#160;and <paramref name="allowPartialAssemblyMatch"/> is <see langword="false"/>, then
+        /// <note>If <paramref name="tryLoadAssemblies"/> is <see langword="true"/> and <paramref name="allowPartialAssemblyMatch"/> is <see langword="false"/>, then
         /// it can happen that the assembly of a different version will be loaded and the method returns <see langword="null"/>.</note>
         /// </remarks>
         [Obsolete("This overload is obsolete. Use the overloads with ResolveTypeOptions instead.")]
@@ -3607,7 +3607,7 @@ namespace KGySoft.Reflection
         /// <param name="typeName">The type name as a string representation with or without assembly name.</param>
         /// <param name="options">The options for resolving the type. This parameter is optional.
         /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
-        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
         /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <remarks>
@@ -3653,11 +3653,11 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="typeName">The type name as a string representation.</param>
         /// <param name="typeResolver">If not <see langword="null"/>, then will be called for every generic type definition and ultimate element types
-        /// occur in <paramref name="typeName"/>. The passed <see cref="AssemblyName"/> argument can be <see langword="null"/>&#160;if no assembly is
-        /// specified for the type to resolve. Can return <see langword="null"/>&#160;to let the default resolve logic take over based on <paramref name="options"/>.</param>
+        /// occur in <paramref name="typeName"/>. The passed <see cref="AssemblyName"/> argument can be <see langword="null"/> if no assembly is
+        /// specified for the type to resolve. Can return <see langword="null"/> to let the default resolve logic take over based on <paramref name="options"/>.</param>
         /// <param name="options">The options for resolving the type. This parameter is optional.
         /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
-        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
         /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <remarks>
@@ -3679,7 +3679,7 @@ namespace KGySoft.Reflection
         /// <param name="typeName">The type name as a string representation.</param>
         /// <param name="options">The options for resolving the type. This parameter is optional.
         /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
-        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
         /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <remarks>
@@ -3737,7 +3737,7 @@ namespace KGySoft.Reflection
         /// ]]></code></example>
         /// <note>
         /// Accessing a method by the delegate cast is usually faster than using this method. However, you must have an instance to
-        /// access instance methods. That means that you cannot use the <see langword="default"/>&#160;operator for reference types
+        /// access instance methods. That means that you cannot use the <see langword="default"/> operator for reference types
         /// to access their instance methods. If the constructor of such a type is slow, then using this method can be
         /// more effective to access an instance method.
         /// </note>

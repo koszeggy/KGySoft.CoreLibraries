@@ -38,7 +38,6 @@ namespace KGySoft
     /// Represents the language settings of the current thread. Use this class also when you want to be notified on
     /// language changes and to control the behavior of those <see cref="DynamicResourceManager"/> instances,
     /// which are configured to use centralized settings.
-    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <seealso cref="PublicResources"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
@@ -289,7 +288,7 @@ namespace KGySoft
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;if system regional settings should be captured; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if system regional settings should be captured; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
         /// <note>This property is available only for the .NET Framework packages.
@@ -321,7 +320,7 @@ namespace KGySoft
         /// <br/>Default value: <see cref="ResourceManagerSources.CompiledOnly"/>
         /// </summary>
         /// <remarks>Considering that the default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
-        /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <see langword="true"/>&#160;value, will work fully compatible with the <see cref="ResourceManager"/>
+        /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <see langword="true"/> value, will work fully compatible with the <see cref="ResourceManager"/>
         /// class by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
         /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting this property either to
         /// <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
@@ -349,7 +348,7 @@ namespace KGySoft
         /// <br/>Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
         /// </summary>
         /// <remarks>Considering that the default value of the <see cref="DynamicResourceManagersSource"/> property is <see cref="ResourceManagerSources.CompiledOnly"/>,
-        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/>&#160;will
+        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/> will
         /// auto save their content by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
         /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting the <see cref="DynamicResourceManagersSource"/> property
         /// either to <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
@@ -378,7 +377,7 @@ namespace KGySoft
         /// <br/>Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <remarks>Considering that the default value of the <see cref="DynamicResourceManagersSource"/> property is <see cref="ResourceManagerSources.CompiledOnly"/>,
-        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/>&#160;will
+        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/> will
         /// auto append their content by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
         /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting the <see cref="DynamicResourceManagersSource"/> property
         /// either to <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
@@ -402,14 +401,13 @@ namespace KGySoft
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// If <see langword="null"/>, then even the centralized <see cref="DynamicResourceManager"/> instances may use individual path settings.
         /// <br/>Default value: <see langword="null"/>
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>Due to compatibility reasons the .resx resources path can be handled individually for all <see cref="DynamicResourceManager"/> instances,
         /// even if their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>. To opt-in using a centralized path,
-        /// set this property to a non-<see langword="null"/>&#160;value.</para>
-        /// <para>Setting this property to a non-<see langword="null"/>&#160;value overwrites the <see cref="HybridResourceManager.ResXResourcesDir"/> property
-        /// of all centralized <see cref="DynamicResourceManager"/> instances so setting it to <see langword="null"/>&#160;again will not make them switch back
+        /// set this property to a non-<see langword="null"/> value.</para>
+        /// <para>Setting this property to a non-<see langword="null"/> value overwrites the <see cref="HybridResourceManager.ResXResourcesDir"/> property
+        /// of all centralized <see cref="DynamicResourceManager"/> instances so setting it to <see langword="null"/> again will not make them switch back
         /// to their previous value.</para>
         /// <note>Changing this property does not trigger any auto save or release operation.
         /// To save the possible changes regarding to the original path you need to call the <see cref="SavePendingResources">SavePendingResources</see> method
@@ -478,7 +476,6 @@ namespace KGySoft
         /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings load or generate the resource sets
         /// for the current <see cref="DisplayLanguage"/>. This method affects all <see cref="DynamicResourceManager"/> instances in
         /// the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <note>This method is similar to <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> but it skips
@@ -501,7 +498,6 @@ namespace KGySoft
         /// Ensures that all invariant resource entries in all <see cref="DynamicResourceManager"/> instances with centralized settings are
         /// merged for the current <see cref="DisplayLanguage"/>. This method affects all <see cref="DynamicResourceManager"/> instances in
         /// the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <note>This method is similar to <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> but it forces a new merge even
@@ -520,7 +516,6 @@ namespace KGySoft
         /// <summary>
         /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings save all pending changes. This method affects
         /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read
         /// by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
@@ -540,7 +535,6 @@ namespace KGySoft
         /// <summary>
         /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings release all loaded resource sets without saving. This method affects
         /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to drop all currently loaded resource sets.</para>

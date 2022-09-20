@@ -38,7 +38,6 @@ namespace KGySoft.Serialization.Binary
     /// An <see cref="ISurrogateSelector"/> implementation that makes possible to serialize and deserialize any objects,
     /// including non-serializable ones by an <see cref="IFormatter"/> such as <see cref="BinarySerializationFormatter"/>
     /// or the legacy <see cref="BinaryFormatter"/>.
-    /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>Do no use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
@@ -55,7 +54,7 @@ namespace KGySoft.Serialization.Binary
     /// <code lang="C#"><![CDATA[
     /// var formatter = new BinaryFormatter { SurrogateSelector = new CustomSerializerSurrogateSelector() };
     /// formatter.Serialize(stream, myObject);]]></code></para>
-    /// <h1 class="heading">Solving compatibility issues between different platforms</h1>
+    /// <h2>Solving compatibility issues between different platforms</h2>
     /// <note>Some types that are serializable in .NET Framework are not serializable in .NET Core/.NET Standard.
     /// This class can be a solution also for this problem. However, the solution is not always as simple as assigning
     /// a <see cref="CustomSerializerSurrogateSelector"/> instance to the <see cref="IFormatter.SurrogateSelector"/> property.
@@ -89,7 +88,7 @@ namespace KGySoft.Serialization.Binary
     /// <item>You use <see cref="BinarySerializationFormatter"/> instead of <see cref="BinaryFormatter"/>. It supports many types natively, including
     /// many core collections and simple types. These types are always encoded in a platform-independent way, which is also very compact.</item>
     /// <item>You can serialize the types using the <see cref="ForwardedTypesSerializationBinder"/> with setting the <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/>
-    /// property to <see langword="true"/>&#160;to use assembly identities of the .NET Framework for most public types. These types can be resolved
+    /// property to <see langword="true"/> to use assembly identities of the .NET Framework for most public types. These types can be resolved
     /// on all platforms. This solution works even with <see cref="BinaryFormatter"/>.</item>
     /// <item>Alternatively, you can use the <see cref="BinarySerializationFormatter"/> with the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>,
     /// or the <see cref="WeakAssemblySerializationBinder"/> (works also with <see cref="BinaryFormatter"/>) to allow to omit assembly identities in the
@@ -100,7 +99,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><term>Deserializing refactored types</term><description>If the object was serialized by fields but the field names have been
     /// refactored since then, then you can handle the <see cref="SettingField"/> event where you can either lookup and set the appropriate
     /// <see cref="SettingFieldEventArgs.Field"/> or do whatever custom processing and set the <see cref="HandledEventArgs.Handled"/> property
-    /// to <see langword="true"/>&#160;to indicate that you processed the entry manually. If you can initialize the complete object by yourself
+    /// to <see langword="true"/> to indicate that you processed the entry manually. If you can initialize the complete object by yourself
     /// based on the serialized <see cref="SerializationInfo"/>, then you can handle the <see cref="Deserializing"/> event and set
     /// the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.
     /// <code lang="C#"><![CDATA[
@@ -158,7 +157,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Occurs when an object is being serialized, before saving its inner content.
         /// <br/>If you populate the <see cref="SerializingEventArgs.SerializationInfo"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
-        /// property to <see langword="true"/>&#160;to omit the default serialization logic.
+        /// property to <see langword="true"/> to omit the default serialization logic.
         /// </summary>
         public event EventHandler<SerializingEventArgs>? Serializing
         {
@@ -179,7 +178,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Occurs when an object is being deserialized.
         /// <br/>If you initialize the <see cref="SerializingEventArgs.Object"/> manually make sure you set the <see cref="HandledEventArgs.Handled"/>
-        /// property to <see langword="true"/>&#160;to omit the default deserialization logic.
+        /// property to <see langword="true"/> to omit the default deserialization logic.
         /// </summary>
         public event EventHandler<DeserializingEventArgs>? Deserializing
         {
@@ -200,8 +199,8 @@ namespace KGySoft.Serialization.Binary
         /// Occurs when a field value is about to be retrieved on serialization.
         /// You can adjust the <see cref="GettingFieldEventArgs.Name"/>, <see cref="GettingFieldEventArgs.Value"/> and <see cref="GettingFieldEventArgs.Type"/>
         /// of the entry to be stored, or set the <see cref="HandledEventArgs.Handled"/>
-        /// property to <see langword="true"/>&#160;to prevent storing any value for the current <see cref="GettingFieldEventArgs.Field"/>.
-        /// The <see cref="HandledEventArgs.Handled"/> property might be initialized to <see langword="true"/>&#160;for fields that are marked
+        /// property to <see langword="true"/> to prevent storing any value for the current <see cref="GettingFieldEventArgs.Field"/>.
+        /// The <see cref="HandledEventArgs.Handled"/> property might be initialized to <see langword="true"/> for fields that are marked
         /// by the <see cref="NonSerializedAttribute"/>.
         /// </summary>
         public event EventHandler<GettingFieldEventArgs>? GettingField
@@ -213,7 +212,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Occurs when a field value is about to be set on deserialization.
         /// You can adjust the associated <see cref="SettingFieldEventArgs.Field"/> and its desired <see cref="SettingFieldEventArgs.Value"/> to be set
-        /// or you can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to prevent setting any field by the default logic.
+        /// or you can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to prevent setting any field by the default logic.
         /// </summary>
         public event EventHandler<SettingFieldEventArgs>? SettingField
         {
@@ -231,7 +230,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;to serialize objects by fields even if it implements <see cref="ISerializable"/>;
+        /// <see langword="true"/> to serialize objects by fields even if it implements <see cref="ISerializable"/>;
         /// otherwise, <see langword="false"/>.
         /// </value>
         public bool IgnoreISerializable { get; set; }
@@ -242,7 +241,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;to serialize fields even if they are marked by <see cref="NonSerializedAttribute"/>;
+        /// <see langword="true"/> to serialize fields even if they are marked by <see cref="NonSerializedAttribute"/>;
         /// otherwise, <see langword="false"/>.
         /// </value>
         public bool IgnoreNonSerializedAttribute { get; set; }

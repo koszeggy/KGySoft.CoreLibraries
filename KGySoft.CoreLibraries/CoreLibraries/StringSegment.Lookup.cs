@@ -626,7 +626,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The string to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(string value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (comparison != StringComparison.Ordinal)
@@ -653,7 +653,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The <see cref="StringSegment"/> to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
@@ -676,7 +676,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether this <see cref="StringSegment"/> instance starts with the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The character to compare.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(char value) => length > 0 && GetCharInternal(0) == value;
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -687,7 +687,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> begins with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool StartsWith(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
         {
             CheckComparison(comparison);
@@ -716,7 +716,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The <see cref="StringSegment"/> to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(StringSegment value, StringComparison comparison = StringComparison.Ordinal)
         {
             if (value.IsNull)
@@ -739,7 +739,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether this <see cref="StringSegment"/> instance ends with the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The character to compare.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(char value) => length > 0 && GetCharInternal(length - 1) == value;
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -750,7 +750,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> to compare.</param>
         /// <param name="comparison">A <see cref="StringComparison"/> value that specifies how to perform the comparison. This parameter is optional.
         /// <br/>Default value: <see cref="StringComparison.Ordinal"/>.</param>
-        /// <returns><see langword="true"/>&#160;if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> ends with <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public bool EndsWith(ReadOnlySpan<char> value, StringComparison comparison = StringComparison.Ordinal)
         {
             CheckComparison(comparison);

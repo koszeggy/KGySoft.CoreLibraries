@@ -22,8 +22,8 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
-    /// Contains classes that can be used as collections in the object model of a reusable library.
-    /// You can use these classes when properties or methods return collections.
+    /// The <see cref="N:KGySoft.Collections.ObjectModel"/> namespace contains classes that can be used as collections
+    /// in the object model of a reusable library. You can use these classes when properties or methods return collections.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

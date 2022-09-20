@@ -35,7 +35,7 @@ using KGySoft.Collections;
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// Contains the static <see cref="AsyncHelper"/> class that makes possible to implement sync and async versions of a possibly parallel operation
+    /// The <see cref="N:KGySoft.Threading"/> namespace contains the static <see cref="AsyncHelper"/> class that makes possible to implement sync and async versions of a possibly parallel operation
     /// supporting cancellation and reporting progress using a single shared implementation. One built-in example is the <see cref="ParallelHelper"/> class
     /// (which is basically a target platform independent advanced version of <see cref="Parallel.For(int,int,System.Action{int})">Parallel.For</see>)
     /// but you can find many examples in other dependent libraries such as the <a href="https://www.nuget.org/packages/KGySoft.Drawing.Core/" target="_blank">KGySoft.Drawing.Core</a> package

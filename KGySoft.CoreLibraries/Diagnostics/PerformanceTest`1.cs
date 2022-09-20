@@ -23,7 +23,6 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a class for performance tests of <see cref="Func{TResult}"/> delegate test cases (tests with a return value).
-    /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
     /// <example>

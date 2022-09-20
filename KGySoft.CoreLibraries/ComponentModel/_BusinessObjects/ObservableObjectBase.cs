@@ -35,7 +35,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a base class for component model classes, which can notify their consumer about property changes.
-    /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <remarks>
     /// <para>Implementers can use the <see cref="Get{T}(T,string)">Get</see> and <see cref="Set">Set</see> methods in the property accessors to manage event raising automatically.</para>
@@ -177,7 +176,6 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets whether this instance has already been disposed.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>Properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
@@ -267,7 +265,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Sets the modified state of this <see cref="ObservableObjectBase"/> instance represented by the <see cref="IsModified"/> property.
         /// </summary>
-        /// <param name="value"><see langword="true"/>&#160;to mark the object as modified; <see langword="false"/>&#160;to mark it unmodified.</param>
+        /// <param name="value"><see langword="true"/> to mark the object as modified; <see langword="false"/> to mark it unmodified.</param>
         public void SetModified(bool value)
         {
             if (isModified == value)
@@ -281,7 +279,7 @@ namespace KGySoft.ComponentModel
         /// Creates a new object that is a copy of the current instance.
         /// <br/>The base implementation clones the internal property storage, the <see cref="IsModified" /> property and if <paramref name="clonePropertyChanged"/> is <see langword="true"/>, then also the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
-        /// <param name="clonePropertyChanged"><see langword="true"/>&#160;to clone also the subscribers of the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <param name="clonePropertyChanged"><see langword="true"/> to clone also the subscribers of the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>
         /// A new object that is a copy of this instance.
@@ -430,7 +428,7 @@ namespace KGySoft.ComponentModel
         /// <param name="invokeChangedEvent">If <see langword="true"/>, and the <paramref name="value"/> is different from the previously stored value, then invokes the <see cref="PropertyChanged"/> event.</param>
         /// <param name="propertyName">Name of the property to set. This parameter is optional.
         /// <br/>Default value: The name of the caller member.</param>
-        /// <returns><see langword="true"/>&#160;if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be set.
         /// <br/>-or-
@@ -474,8 +472,8 @@ namespace KGySoft.ComponentModel
         /// Resets the property of the specified name, meaning, it will be removed from the underlying storage so the getter methods will return the default value again.
         /// </summary>
         /// <param name="propertyName">The name of the property to reset.</param>
-        /// <param name="invokeChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
-        /// <returns><see langword="true"/>&#160;if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
+        /// <param name="invokeChangedEvent"><see langword="true"/> to allow raising the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <returns><see langword="true"/> if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
         protected bool ResetProperty(string propertyName, bool invokeChangedEvent = true)
         {
             if (propertyName == null!)
@@ -525,7 +523,7 @@ namespace KGySoft.ComponentModel
         /// <br/>The <see cref="ObservableObjectBase"/> implementation excludes the <see cref="IsModified"/> property itself.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
-        /// <returns><see langword="true"/>&#160;if changing of the specified <paramref name="propertyName"/> affects the value of the <see cref="IsModified"/> property; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName"/> affects the value of the <see cref="IsModified"/> property; otherwise, <see langword="false"/>.</returns>
         protected virtual bool AffectsModifiedState(string propertyName) => propertyName != nameof(IsModified);
 
         /// <summary>
@@ -534,7 +532,7 @@ namespace KGySoft.ComponentModel
         /// If the overridden method disposes properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods,
         /// then check the <see cref="IsDisposed"/> property first and call the base method as the last step to prevent <see cref="ObjectDisposedException"/>.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
+        /// <param name="disposing"><see langword="true"/> if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (isDisposed)

@@ -37,7 +37,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets the <see cref="Exception"/> occurred while attempting to execute the binding.
-        /// You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// You can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// suppress the error. Critical exceptions (<see cref="OutOfMemoryException"/>, <see cref="StackOverflowException"/>)
         /// cannot be handled by the <see cref="ICommandBinding.Error">ICommandBinding.Error</see> event.
         /// </summary>

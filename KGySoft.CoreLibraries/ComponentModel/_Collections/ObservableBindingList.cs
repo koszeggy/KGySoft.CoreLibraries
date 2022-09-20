@@ -37,7 +37,6 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a class that combines the features of an <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>. Unlike <see cref="ObservableCollection{T}"/>, can raise the <see cref="CollectionChanged"/> event also when a property
     /// of a contained element changes.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <seealso cref="ObservableCollection{T}" />
@@ -87,13 +86,13 @@ namespace KGySoft.ComponentModel
     /// </list></item>
     /// <item><see cref="IBindingList.AllowNew"/>:
     /// <list type="bullet">
-    /// <item>Returns <see langword="false"/>&#160;if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowNew"/> returns <see langword="false"/>.</item>
-    /// <item>Otherwise, returns the lastly set value. Or, if was never set, returns <see langword="true"/>&#160;if <typeparamref name="T"/> is a value type or has a parameterless constructor, and the underlying collection is not read-only.</item>
+    /// <item>Returns <see langword="false"/> if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowNew"/> returns <see langword="false"/>.</item>
+    /// <item>Otherwise, returns the lastly set value. Or, if was never set, returns <see langword="true"/> if <typeparamref name="T"/> is a value type or has a parameterless constructor, and the underlying collection is not read-only.</item>
     /// </list></item>
     /// <item><see cref="IBindingList.AllowEdit"/> and <see cref="IBindingList.AllowRemove"/>:
     /// <list type="bullet">
-    /// <item>Both return <see langword="false"/>&#160;if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowEdit"/>/<see cref="IBindingList.AllowRemove"/> return <see langword="false"/>.</item>
-    /// <item>Otherwise, they return the lastly set value. Or, if they were never set, they return <see langword="true"/>&#160;if the underlying collection is not read-only.</item>
+    /// <item>Both return <see langword="false"/> if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowEdit"/>/<see cref="IBindingList.AllowRemove"/> return <see langword="false"/>.</item>
+    /// <item>Otherwise, they return the lastly set value. Or, if they were never set, they return <see langword="true"/> if the underlying collection is not read-only.</item>
     /// </list></item>
     /// <item><see cref="IBindingList.SupportsChangeNotification"/>: returns always <see langword="true"/>.</item>
     /// <item><see cref="IBindingList.SupportsSearching"/>, <see cref="IBindingList.SupportsSorting"/> and <see cref="IBindingList.IsSorted"/>: If the underlying list implements <see cref="IBindingList"/>, then the values of the underlying
@@ -253,10 +252,10 @@ namespace KGySoft.ComponentModel
         /// Otherwise, the default value is <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>Setting this property to <see langword="false"/>&#160;can result in better performance if the underlying list has a poor lookup performance.
+        /// <para>Setting this property to <see langword="false"/> can result in better performance if the underlying list has a poor lookup performance.
         /// <note>If the <see cref="ObservableBindingList{T}"/> is initialized by its default constructor, then the element lookup has O(1) cost.</note>
         /// </para>
-        /// <para>This property returns always <see langword="false"/>&#160;if <typeparamref name="T"/> does not implement the <see cref="INotifyPropertyChanged"/> interface.</para>
+        /// <para>This property returns always <see langword="false"/> if <typeparamref name="T"/> does not implement the <see cref="INotifyPropertyChanged"/> interface.</para>
         /// <para><see cref="ListChanged"/> is invoked only if <see cref="RaiseListChangedEvents"/> is <see langword="true"/>; and <see cref="CollectionChanged"/> is raised only
         /// if <see cref="RaiseCollectionChangedEvents"/> is <see langword="true"/>.</para>
         /// </remarks>
@@ -279,7 +278,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets or sets whether new items can be added to the list by the <see cref="AddNew">AddNew</see> method.
         /// <br/>If the underlying list implements <see cref="IBindingList"/> and its <see cref="IBindingList.AllowNew"/> returns <see langword="false"/>, then this property returns also <see langword="false"/>.
-        /// Otherwise, the default value is <see langword="true"/>&#160;if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
+        /// Otherwise, the default value is <see langword="true"/> if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
         /// </summary>
         public virtual bool AllowNew
         {
@@ -603,7 +602,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Releases the resources used by this <see cref="ObservableBindingList{T}"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
+        /// <param name="disposing"><see langword="true"/> if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing || disposed)
@@ -709,7 +708,7 @@ namespace KGySoft.ComponentModel
         /// Removes the element at the specified <paramref name="index" /> from the <see cref="ObservableBindingList{T}" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/>&#160;and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/> and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
         /// <remarks>
         /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>
         /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Remove"/>.</para>
@@ -839,7 +838,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <returns>An <see cref="IDisposable"/> instance that can be used to create a block of protected scope.</returns>
         /// <remarks>
-        /// Typical usage is to wrap event invocations with a <see langword="using"/>&#160;scope:
+        /// Typical usage is to wrap event invocations with a <see langword="using"/> scope:
         /// <code lang="C#">
         /// using (BlockReentrancy())
         /// {

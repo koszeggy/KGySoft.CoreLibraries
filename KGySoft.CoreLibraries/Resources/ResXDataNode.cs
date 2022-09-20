@@ -55,7 +55,6 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
-    /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
@@ -234,7 +233,7 @@ namespace KGySoft.Resources
     /// //   Raw value:   Meta String
     /// //   Real value:  Meta String (System.String) </code>
     /// </example>
-    /// <h1 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h1>
+    /// <h2 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h2>
     /// <para>
     /// If instantiated from a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
     /// instance, an internal conversion into <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> and <see cref="ResXFileRef">KGySoft.Resources.ResXFileRef</see> automatically occurs.
@@ -904,7 +903,7 @@ namespace KGySoft.Resources
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
         /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><see langword="true"/>&#160;to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
@@ -929,7 +928,7 @@ namespace KGySoft.Resources
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
         /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><see langword="true"/>&#160;to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>

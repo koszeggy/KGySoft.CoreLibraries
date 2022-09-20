@@ -214,7 +214,7 @@ namespace KGySoft.Reflection
         /// Determines whether the specified <see cref="object"/> is equal to the current <see cref="MemberAccessor"/>.
         /// </summary>
         /// <param name="obj">The object to compare with the current <see cref="MemberAccessor"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the specified object is equal to the current <see cref="MemberAccessor"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified object is equal to the current <see cref="MemberAccessor"/>; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj) => obj is MemberAccessor other && Equals(other.MemberInfo, MemberInfo);
 
         /// <summary>

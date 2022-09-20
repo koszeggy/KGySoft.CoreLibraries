@@ -110,14 +110,14 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets or sets the chance of generating a <see langword="null"/>&#160;value when the type is compatible with <see langword="null"/>.
+        /// Gets or sets the chance of generating a <see langword="null"/> value when the type is compatible with <see langword="null"/>.
         /// <br/>Default value: <c>0.0</c>.
         /// </summary>
         /// <value>
         /// A floating point number between 0.0 and 1.0.
         /// </value>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is smaller than 0.0 or greater than 1.0.</exception>
-        /// <remarks><note>If a reference type cannot be instantiated by the current settings a <see langword="null"/>&#160;value will be created even if the value of this property is <c>0.0</c>.</note></remarks>
+        /// <remarks><note>If a reference type cannot be instantiated by the current settings a <see langword="null"/> value will be created even if the value of this property is <c>0.0</c>.</note></remarks>
         public float ChanceOfNull
         {
             get => chanceOfNull;
@@ -130,7 +130,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets or sets the strategy for generating strings. Set <see langword="null"/>&#160;to auto select strategy by member name.
+        /// Gets or sets the strategy for generating strings. Set <see langword="null"/> to auto select strategy by member name.
         /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a valid value of <see cref="StringCreation"/>.</exception>
@@ -224,7 +224,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         /// <value>
-        /// The <see cref="Type"/> to be used to generate <see cref="object"/> instances or <see langword="null"/>&#160;for not using a substitution.
+        /// The <see cref="Type"/> to be used to generate <see cref="object"/> instances or <see langword="null"/> for not using a substitution.
         /// </value>
         /// <remarks>
         /// <para>Specifying a substitution for the <see cref="object"/> type can be useful for non-generic collections or when it is known that <see cref="object"/> type

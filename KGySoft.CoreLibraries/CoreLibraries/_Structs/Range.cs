@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Range{T}"/>&#160;<see langword="struct"/>&#160;between the default value of <typeparamref name="T"/> and
+        /// Initializes a new instance of the <see cref="Range{T}"/>&#160;<see langword="struct"/> between the default value of <typeparamref name="T"/> and
         /// the specified <paramref name="upperBound"/>.
         /// </summary>
         /// <param name="upperBound">The upper bound. Whether this is an exclusive or inclusive bound, it depends on the context it is used in.</param>
@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Range{T}"/>&#160;<see langword="struct"/>&#160;between the specified <paramref name="lowerBound"/> and <paramref name="upperBound"/>.
+        /// Initializes a new instance of the <see cref="Range{T}"/>&#160;<see langword="struct"/> between the specified <paramref name="lowerBound"/> and <paramref name="upperBound"/>.
         /// </summary>
         /// <param name="lowerBound">The lower bound.</param>
         /// <param name="upperBound">The upper bound. Whether this is an exclusive or inclusive bound, it depends on the context it is used in.</param>
@@ -143,14 +143,14 @@ namespace KGySoft.CoreLibraries
         /// Indicates whether the current <see cref="Range{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="Range{T}"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true" />&#160;if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
         public bool Equals(Range<T> other) => comparer.Equals(other.LowerBound, LowerBound) && comparer.Equals(other.UpperBound, UpperBound);
 
         /// <summary>
         /// Determines whether the specified <see cref="object" /> is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj) => obj is Range<T> range && Equals(range);
 
         /// <summary>

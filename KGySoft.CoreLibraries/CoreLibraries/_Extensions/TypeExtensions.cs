@@ -157,7 +157,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <param name="value">The value, whose compatibility with the <paramref name="type"/> is checked.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="value"/> can be an instance of <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="value"/> can be an instance of <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         /// <remarks>
         /// <para><paramref name="type"/> can be a <see cref="Nullable{T}"/> type.</para>
@@ -221,7 +221,7 @@ namespace KGySoft.CoreLibraries
         /// Determines whether the specified <paramref name="type"/> is an <see cref="Enum">enum</see> and <see cref="FlagsAttribute"/> is defined on it.
         /// </summary>
         /// <param name="type">The type to check.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a flags <see cref="Enum">enum</see>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="type"/> is a flags <see cref="Enum">enum</see>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsFlagsEnum(this Type type)
         {
@@ -234,7 +234,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether the specified <paramref name="type"/> is a delegate.
         /// </summary>
         /// <param name="type">The type to check.</param>
-        /// <returns><see langword="true"/>&#160;if the specified type is a delegate; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified type is a delegate; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
         {
@@ -248,7 +248,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <param name="genericTypeDefinition">The generic type definition.</param>
-        /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
         public static bool IsGenericTypeOf(this Type type, Type genericTypeDefinition)
         {
@@ -264,7 +264,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <param name="genericTypeDefinition">The generic type definition.</param>
-        /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
         public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition) => IsImplementationOfGenericType(type, genericTypeDefinition, out var _);
 
@@ -274,7 +274,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to check.</param>
         /// <param name="genericTypeDefinition">The generic type definition.</param>
         /// <param name="genericType">When this method returns <see langword="true"/>, then this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
         public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, [MaybeNullWhen(false)]out Type genericType)
         {
@@ -395,13 +395,12 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets the name of the <paramref name="type"/> by the specified <paramref name="kind"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The type whose name is to be obtained.</param>
         /// <param name="kind">The formatting kind for the name to be retrieved.</param>
         /// <returns>The name of the <paramref name="type"/> by the specified <paramref name="kind"/>.</returns>
         /// <remarks>
-        /// <para>See the values of the <see cref="TypeNameKind"/>&#160;<see langword="enum"/>&#160;for the detailed differences
+        /// <para>See the values of the <see cref="TypeNameKind"/>&#160;<see langword="enum"/> for the detailed differences
         /// from <see cref="Type"/> members such as <see cref="MemberInfo.Name"/>, <see cref="Type.FullName"/> and <see cref="Type.AssemblyQualifiedName"/>.</para>
         /// <para>Unlike the <see cref="Type"/> properties, the names produced by this method are never <see langword="null"/> for runtime types.</para>
         /// <para>This method always provides parseable type names by using the <see cref="TypeNameKind.AssemblyQualifiedName"/> kind.
@@ -460,7 +459,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether <paramref name="type"/> is supported collection to populate by reflection.
-        /// If <see langword="true"/>&#160;is returned one of the constructors are not <see langword="null"/>&#160;or <paramref name="type"/> is an array or a value type.
+        /// If <see langword="true"/> is returned one of the constructors are not <see langword="null"/> or <paramref name="type"/> is an array or a value type.
         /// If default constructor is used the collection still can be read-only or fixed size.
         /// </summary>
         /// <param name="type">The type to check.</param>
@@ -468,7 +467,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="collectionCtor">The constructor to be initialized by collection or <see langword="null"/>. Can accept list, array or dictionary of element type.</param>
         /// <param name="elementType">The element type. For non-generic collections it is <see cref="object"/>.</param>
         /// <param name="isDictionary"><see langword="true"/>&#160;<paramref name="type"/> is a dictionary.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
         internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, [MaybeNullWhen(false)]out Type elementType, out bool isDictionary)
         {
             defaultCtor = null;
@@ -522,7 +521,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Creates an initializer collection for types for which <see cref="IsSupportedCollectionForReflection"/> returns <see langword="true"/>&#160;and returns a non-<see langword="null"/>&#160;collection initializer constructor.
+        /// Creates an initializer collection for types for which <see cref="IsSupportedCollectionForReflection"/> returns <see langword="true"/> and returns a non-<see langword="null"/> collection initializer constructor.
         /// After the collection is populated call <see cref="EnumerableExtensions.AdjustInitializerCollection"/> before calling the constructor.
         /// </summary>
         internal static IEnumerable CreateInitializerCollection(this Type collectionElementType, bool isDictionary)
@@ -550,7 +549,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to test</param>
         /// <param name="instance">The object instance to test</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <see langword="false"/>.</returns>
         internal static bool IsReadWriteCollection(this Type type, object? instance)
         {
             if (instance == null)

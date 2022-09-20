@@ -365,7 +365,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Removes all leading and trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
         /// </summary>
-        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/> or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start and end of the current <see cref="StringSegment"/>.</returns>
         public StringSegment Trim(params char[]? trimChars)
@@ -389,7 +389,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Removes all leading occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
         /// </summary>
-        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/> or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the start of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimStart(params char[]? trimChars)
@@ -409,7 +409,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Removes all trailing occurrences of a set of characters specified in an array from the current <see cref="StringSegment"/>.
         /// </summary>
-        /// <param name="trimChars">The characters to remove. If <see langword="null"/>&#160;or empty, then whitespace characters will be removed.</param>
+        /// <param name="trimChars">The characters to remove. If <see langword="null"/> or empty, then whitespace characters will be removed.</param>
         /// <returns>A <see cref="StringSegment"/> that represents the string that remains after all occurrences of the characters
         /// in the <paramref name="trimChars"/> parameter are removed from the end of the current <see cref="StringSegment"/>.</returns>
         public StringSegment TrimEnd(params char[]? trimChars)
@@ -658,7 +658,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
         /// then the split operation will use whitespace separators.</param>
         /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
@@ -725,7 +725,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
         /// then the split operation will use whitespace separators.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
@@ -737,7 +737,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, char[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
+        /// <param name="separators">An array of characters that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
         /// then the split operation will use whitespace separators.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
@@ -748,7 +748,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment)"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or empty, then no splitting will occur.</param>
         /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries. This parameter is optional.
@@ -805,7 +805,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment)"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="separator">A <see cref="StringSegment"/> that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or empty, then no splitting will occur.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
@@ -816,8 +816,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries. This parameter is optional.
@@ -885,8 +885,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
@@ -897,8 +897,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, StringSegment[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of <see cref="StringSegment"/> instances that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(params StringSegment[]? separators) => Split(separators, default, default);
@@ -908,7 +908,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string)"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or empty, then no splitting will occur.</param>
         /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries. This parameter is optional.
@@ -965,7 +965,7 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string)"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or empty, then no splitting will occur.</param>
+        /// <param name="separator">A string that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or empty, then no splitting will occur.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separator"/>.</returns>
@@ -976,8 +976,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <param name="maxLength">The maximum number of segments to return. If <see langword="null"/>, then the whole string is processed represented by this <see cref="StringSegment"/>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries. This parameter is optional.
@@ -1045,8 +1045,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <param name="options">A <see cref="StringSegmentSplitOptions"/> value that specifies whether to trim segments and remove empty entries.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
@@ -1057,8 +1057,8 @@ namespace KGySoft.CoreLibraries
         /// Alternatively, you can use the <see cref="StringSegmentExtensions.ReadToSeparator(ref StringSegment, string[])"/> extension method.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="StringSegment"/> type for details and some examples.
         /// </summary>
-        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/>&#160;or contains no elements,
-        /// then the split operation will use whitespace separators. If contains only <see langword="null"/>&#160;or empty elements, then no splitting will occur.</param>
+        /// <param name="separators">An array of strings that delimits the segments in this <see cref="StringSegment"/>. If <see langword="null"/> or contains no elements,
+        /// then the split operation will use whitespace separators. If contains only <see langword="null"/> or empty elements, then no splitting will occur.</param>
         /// <returns>A list of <see cref="StringSegment"/> instances, whose elements contain the substrings in this <see cref="StringSegment"/> that are
         /// delimited by <paramref name="separators"/>.</returns>
         public IList<StringSegment> Split(params string?[]? separators) => Split(separators, default, default);

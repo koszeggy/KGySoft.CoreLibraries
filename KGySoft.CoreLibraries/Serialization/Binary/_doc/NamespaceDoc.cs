@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Serialization.Binary
 {
     /// <summary>
-    /// Contains types for binary serialization (<see cref="BinarySerializer"/>, <see cref="BinarySerializationFormatter"/>)
+    /// The <see cref="N:KGySoft.Serialization.Binary"/> namespace contains types for binary serialization (<see cref="BinarySerializer"/>, <see cref="BinarySerializationFormatter"/>)
     /// as well as other binary serialization related classes including serialization binders and surrogate selectors.
     /// </summary>
     [CompilerGenerated]

@@ -48,25 +48,24 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Provides an efficient <see cref="IEqualityComparer{T}"/> and <see cref="IComparer{T}"/> implementation for <see cref="Enum"/> types.
-    /// Can be used for example in <see cref="Dictionary{TKey,TValue}"/>, <see cref="SortedList{TKey,TValue}"/> or <see cref="Cache{TKey,TValue}"/> instances with <see langword="enum"/>&#160;key,
-    /// or as a comparer for <see cref="List{T}.Sort(IComparer{T})"><![CDATA[List<T>.Sort(IComparer<T>)]]></see> method to sort <see langword="enum"/>&#160;elements.
-    /// <br/>See the <strong>Remarks</strong> section for details.
+    /// Can be used for example in <see cref="Dictionary{TKey,TValue}"/>, <see cref="SortedList{TKey,TValue}"/> or <see cref="Cache{TKey,TValue}"/> instances with <see langword="enum"/> key,
+    /// or as a comparer for <see cref="List{T}.Sort(IComparer{T})"><![CDATA[List<T>.Sort(IComparer<T>)]]></see> method to sort <see langword="enum"/> elements.
     /// </summary>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     /// <remarks>
-    /// Using dictionaries with <see langword="enum"/>&#160;key and finding elements in an <see langword="enum"/>&#160;array works without using <see cref="EnumComparer{TEnum}"/>, too.
-    /// But unlike <see cref="int"/> or the other possible underlying types, <see langword="enum"/>&#160;types does not implement the generic <see cref="IEquatable{T}"/> and
-    /// <see cref="IComparable{T}"/> interfaces. This causes that using an <see langword="enum"/>&#160;as key in a dictionary, for example, can be very ineffective (depends on the used framework, see the note below)
+    /// Using dictionaries with <see langword="enum"/> key and finding elements in an <see langword="enum"/> array works without using <see cref="EnumComparer{TEnum}"/>, too.
+    /// But unlike <see cref="int"/> or the other possible underlying types, <see langword="enum"/> types does not implement the generic <see cref="IEquatable{T}"/> and
+    /// <see cref="IComparable{T}"/> interfaces. This causes that using an <see langword="enum"/> as key in a dictionary, for example, can be very ineffective (depends on the used framework, see the note below)
     /// due to heavy boxing and unboxing to and from <see cref="object"/> type. This comparer generates the type specific <see cref="IEqualityComparer{T}.Equals(T,T)"><![CDATA[IEqualityComparer<TEnum>.Equals]]></see>,
-    /// <see cref="IEqualityComparer{T}.GetHashCode(T)"><![CDATA[IEqualityComparer<T>.GetHashCode]]></see> and <see cref="IComparer{T}.Compare"><![CDATA[IComparer<T>.Compare]]></see> methods for any <see langword="enum"/>&#160;type.
+    /// <see cref="IEqualityComparer{T}.GetHashCode(T)"><![CDATA[IEqualityComparer<T>.GetHashCode]]></see> and <see cref="IComparer{T}.Compare"><![CDATA[IComparer<T>.Compare]]></see> methods for any <see langword="enum"/> type.
     /// <note>
-    /// The optimization of <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> instances for <see langword="enum"/>&#160;types may differ in different target frameworks.
+    /// The optimization of <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> instances for <see langword="enum"/> types may differ in different target frameworks.
     /// <list type="bullet">
     /// <item>In .NET Framework 3.5 and earlier versions they are not optimized at all.</item>
     /// <item>In .NET 4.0 Framework <see cref="EqualityComparer{T}"/> was optimized for <see cref="int"/>-based <see langword="enum"/>s. (Every .NET 4.0 assembly is executed on the latest 4.x runtime though, so this is might be relevant
     /// only on Windows XP where no newer than the 4.0 runtime can be installed.)</item>
-    /// <item>In latest .NET 4.x Framework versions <see cref="EqualityComparer{T}"/> is optimized for any <see langword="enum"/>&#160;type but <see cref="Comparer{T}"/> is not.</item>
-    /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/>&#160;types
+    /// <item>In latest .NET 4.x Framework versions <see cref="EqualityComparer{T}"/> is optimized for any <see langword="enum"/> type but <see cref="Comparer{T}"/> is not.</item>
+    /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/> types
     /// so the performance benefit of using <see cref="EnumComparer{TEnum}"/> in .NET Core is negligible.</item>
     /// </list>
     /// </note>
@@ -353,7 +352,7 @@ namespace KGySoft.CoreLibraries
         /// Determines whether the specified <paramref name="obj"/> is the same type of <see cref="EnumComparer{TEnum}"/> as the current instance.
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj) => obj is EnumComparer<TEnum>;
 
         /// <summary>
@@ -368,7 +367,7 @@ namespace KGySoft.CoreLibraries
         /// Determines whether two <typeparamref name="TEnum"/> instances are equal.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/>&#160;if the specified values are equal; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> if the specified values are equal; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="x">The first <typeparamref name="TEnum"/> value to compare.</param>
         /// <param name="y">The second <typeparamref name="TEnum"/> value to compare.</param>
@@ -381,7 +380,7 @@ namespace KGySoft.CoreLibraries
         /// A hash code for the specified <typeparamref name="TEnum"/> instance.
         /// </returns>
         /// <param name="obj">The <typeparamref name="TEnum"/> for which a hash code is to be returned.</param>
-        /// <remarks>Returned hash code is not necessarily equals with own hash code of an <see langword="enum"/>&#160;value but provides a fast and well-spread value.</remarks>
+        /// <remarks>Returned hash code is not necessarily equals with own hash code of an <see langword="enum"/> value but provides a fast and well-spread value.</remarks>
         public abstract int GetHashCode(TEnum obj);
 
         /// <summary>

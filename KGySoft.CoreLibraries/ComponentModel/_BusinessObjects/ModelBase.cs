@@ -27,7 +27,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a base object for model classes or business objects, which can validate their state, have undo/redo capability and can support committable/revertible editing.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <note>This class unifies the capabilities of <see cref="ValidatingObjectBase"/>, <see cref="EditableObjectBase"/> and <see cref="UndoableObjectBase"/> classes.
@@ -200,7 +199,7 @@ namespace KGySoft.ComponentModel
         /// <see cref="UndoCapacity"/>, <see cref="CanUndo"/> and <see cref="CanRedo"/> properties.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
-        /// <returns><see langword="true"/>&#160;if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
         protected override bool AffectsModifiedState(string propertyName) =>
             base.AffectsModifiedState(propertyName) && !propertyName.In(ignoreModifiedProperties);
 

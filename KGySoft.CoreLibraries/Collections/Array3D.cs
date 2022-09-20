@@ -44,7 +44,6 @@ namespace KGySoft.Collections
     /// Represents a cubic array, whose indexer access is faster than a regular 3D array.
     /// It supports accessing its planes as <see cref="Array2D{T}"/> instances, or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
@@ -145,14 +144,14 @@ namespace KGySoft.Collections
 #endif
 
         /// <summary>
-        /// Gets whether this <see cref="Array3D{T}"/> instance represents a <see langword="null"/>&#160;array.
+        /// Gets whether this <see cref="Array3D{T}"/> instance represents a <see langword="null"/> array.
         /// <br/>Please note that the <see cref="ToArray">ToArray</see>/<see cref="To3DArray">To3DArray</see>/<see cref="ToJaggedArray">ToJaggedArray</see> methods
-        /// return <see langword="null"/>&#160;when this property returns <see langword="true"/>.
+        /// return <see langword="null"/> when this property returns <see langword="true"/>.
         /// </summary>
         public readonly bool IsNull => buffer.IsNull;
 
         /// <summary>
-        /// Gets whether this <see cref="Array3D{T}"/> instance represents an empty or a <see langword="null"/>&#160;array.
+        /// Gets whether this <see cref="Array3D{T}"/> instance represents an empty or a <see langword="null"/> array.
         /// </summary>
         public readonly bool IsNullOrEmpty => buffer.IsNullOrEmpty;
 
@@ -385,23 +384,23 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="Array3D{T}"/>.
-        /// This makes possible to use the <see cref="Array3D{T}"/> in a <see langword="fixed"/>&#160;statement.
+        /// This makes possible to use the <see cref="Array3D{T}"/> in a <see langword="fixed"/> statement.
         /// </summary>
-        /// <returns>A reference to the first element in this <see cref="Array3D{T}"/>, or <see langword="null"/>&#160;if <see cref="Length"/> is zero.</returns>
+        /// <returns>A reference to the first element in this <see cref="Array3D{T}"/>, or <see langword="null"/> if <see cref="Length"/> is zero.</returns>
         public readonly ref T GetPinnableReference() => ref buffer.GetPinnableReference();
 
         /// <summary>
         /// Indicates whether the current <see cref="Array3D{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// </summary>
         /// <param name="other">An <see cref="Array3D{T}"/> instance to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public readonly bool Equals(Array3D<T> other) => width == other.width && height == other.height && depth == other.depth && buffer.Equals(other.buffer);
 
         /// <summary>
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
         /// </summary>
         /// <param name="obj">The object to compare with this instance.</param>
-        /// <returns><see langword="true"/>&#160;if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public readonly override bool Equals(object? obj) => obj is Array3D<T> other && Equals(other);
 
         /// <summary>
@@ -427,14 +426,14 @@ namespace KGySoft.Collections
         /// Copies the elements of this <see cref="Array3D{T}"/> to a new single dimensional array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
-        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[]? ToArray() => buffer.ToArray();
 
         /// <summary>
         /// Copies the elements of this <see cref="Array3D{T}"/> to a new three dimensional array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
-        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[,,]? To3DArray()
         {
             if (buffer.IsNull)
@@ -461,7 +460,7 @@ namespace KGySoft.Collections
         /// Copies the elements of this <see cref="Array3D{T}"/> to a new jagged array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array3D{T}"/>,
-        /// or <see langword="null"/>&#160;if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[][][]? ToJaggedArray()
         {
             if (buffer.IsNull)

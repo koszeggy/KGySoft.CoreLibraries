@@ -31,13 +31,13 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values specifies the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used.</param>
+        /// <param name="separator">In case of more values specifies the separator among the values. If <see langword="null"/> or is empty, then comma (<c>,</c>) separator is used.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, string? separator, bool ignoreCase, out TEnum result)
         {
@@ -99,33 +99,33 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values specifies the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="separator">In case of more values specifies the separator among the values. If <see langword="null"/> or is empty, then comma (<c>,</c>) separator is used.</param>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, string? separator, out TEnum result) => TryParse(value, separator, false, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
-        /// <param name="result"><see langword="null"/>&#160;if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result"><see langword="null"/> if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="string">string</see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
 
@@ -133,11 +133,11 @@ namespace KGySoft.CoreLibraries
         /// Converts the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
-        /// <param name="separator">In case of more values specified the separator among the values. If <see langword="null"/>&#160;or is empty, then comma (<c>,</c>) separator is used. This parameter is optional.
+        /// <param name="separator">In case of more values specified the separator among the values. If <see langword="null"/> or is empty, then comma (<c>,</c>) separator is used. This parameter is optional.
         /// <br/>Default value: <c>,</c></param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, string? separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
@@ -152,7 +152,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The <see cref="string">string</see> representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, bool ignoreCase)
@@ -168,13 +168,13 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values specifies the separator among the values. If <see cref="StringSegment.Null"/> or <see cref="StringSegment.Empty"/>, then comma (<c>,</c>) separator is used.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool TryParse(StringSegment value, StringSegment separator, bool ignoreCase, out TEnum result)
         {
@@ -236,33 +236,33 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool TryParse(StringSegment value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values specifies the separator among the values. If <see cref="StringSegment.Null"/> or <see cref="StringSegment.Empty"/>, then comma (<c>,</c>) separator is used.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool TryParse(StringSegment value, StringSegment separator, out TEnum result) => TryParse(value, separator, false, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool TryParse(StringSegment value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
 
@@ -274,7 +274,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="StringSegment.Null"/>.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(StringSegment value, StringSegment separator = default, bool ignoreCase = false)
@@ -289,7 +289,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(StringSegment value, bool ignoreCase)
@@ -306,13 +306,13 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values specifies the separator among the values. If empty, then comma (<c>,</c>) separator is used.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         public static bool TryParse(ReadOnlySpan<char> value, ReadOnlySpan<char> separator, bool ignoreCase, out TEnum result)
         {
             // simple name match test (always case-sensitive)
@@ -369,31 +369,31 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         public static bool TryParse(ReadOnlySpan<char> value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values specifies the separator among the values. If empty, then comma (<c>,</c>) separator is used.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         public static bool TryParse(ReadOnlySpan<char> value, ReadOnlySpan<char> separator, out TEnum result) => TryParse(value, separator, false, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <see langword="true"/>&#160;and parsed <see langword="enum"/>&#160;is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
-        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/>&#160;value.</param>
-        /// <returns><see langword="false"/>&#160;if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
+        /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if the <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         public static bool TryParse(ReadOnlySpan<char> value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
 
         /// <summary>
@@ -404,7 +404,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="ReadOnlySpan{T}.Empty"><![CDATA[ReadOnlySpan<char>.Empty]]></see></param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(ReadOnlySpan<char> value, ReadOnlySpan<char> separator = default, bool ignoreCase = false)
         {
@@ -418,7 +418,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The string representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(ReadOnlySpan<char> value, bool ignoreCase)
         {

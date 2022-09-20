@@ -65,7 +65,7 @@ namespace KGySoft.ComponentModel
         /// <param name="context">In this type converter this parameter is ignored.</param>
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
-        /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
             => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
 
@@ -75,7 +75,7 @@ namespace KGySoft.ComponentModel
         /// <param name="context">In this type converter this parameter is ignored.</param>
         /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
-        /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true"/> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
             => sourceType.In(supportedTypes) || base.CanConvertFrom(context, sourceType);
 

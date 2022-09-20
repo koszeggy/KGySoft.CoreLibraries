@@ -37,7 +37,6 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a base class for performance tests.
-    /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <typeparam name="TDelegate">The delegate type of the test cases.</typeparam>
     /// <typeparam name="TResult">The type of the result.</typeparam>
@@ -467,7 +466,7 @@ namespace KGySoft.Diagnostics
         /// Invokes the specified delegate.
         /// </summary>
         /// <param name="del">The delegate to invoke.</param>
-        /// <returns>A <typeparamref name="TResult"/> instance returned by the specified delegate. Returns <see langword="null"/>&#160;for <see langword="void"/>&#160;delegate types.</returns>
+        /// <returns>A <typeparamref name="TResult"/> instance returned by the specified delegate. Returns <see langword="null"/> for <see langword="void"/> delegate types.</returns>
         protected abstract TResult Invoke(TDelegate del);
 
         /// <summary>

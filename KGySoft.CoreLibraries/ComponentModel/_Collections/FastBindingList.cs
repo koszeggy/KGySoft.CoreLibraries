@@ -42,7 +42,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a generic list that is able to notify its consumer about changes and supports data binding.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to the <see cref="BindingList{T}"/> class.
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
@@ -50,7 +49,7 @@ namespace KGySoft.ComponentModel
     /// in <see cref="FastBindingList{T}"/> is an O(1) operation. In contrast, element lookup in <see cref="BindingList{T}"/> is an O(n) operation, which makes
     /// <see cref="BindingList{T}.AddNew"><![CDATA[BindingList<T>.AddNew]]></see> and <see cref="BindingList{T}.ListChanged"><![CDATA[BindingList<T>.ListChanged]]></see> invocation (when an element is changed)
     /// slow because they call the <see cref="Collection{T}.IndexOf"><![CDATA[Collection{T}.IndexOf]]></see> method to determine the position of the added or changed element.</note>
-    /// <h1 class="heading">Comparison with <see cref="BindingList{T}"/></h1>
+    /// <h2>Comparison with <see cref="BindingList{T}"/></h2>
     /// <para><strong>Incompatibility</strong> with <see cref="BindingList{T}"/>:
     /// <list type="bullet">
     /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
@@ -58,11 +57,11 @@ namespace KGySoft.ComponentModel
     /// <item><see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event has <see cref="AddingNewEventHandler"/> type, which uses <see cref="AddingNewEventArgs"/>,
     /// whereas in <see cref="FastBindingList{T}"/> the <see cref="AddingNew"/> event has <see cref="EventHandler{TEventArgs}"/> type where <em>TEventArgs</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
     /// that the latter is generic.</item>
-    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowRemove"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only.
-    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="true"/>&#160;by default.</item>
-    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only, or when <typeparamref name="T"/> is not a value type and has no parameterless constructor.
+    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowRemove"/> property is initialized to <see langword="false"/> if the wrapped list is read-only.
+    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="true"/> by default.</item>
+    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/> property is initialized to <see langword="false"/> if the wrapped list is read-only, or when <typeparamref name="T"/> is not a value type and has no parameterless constructor.
     /// The return value of <see cref="AllowNew"/> does not change when <see cref="AddingNew"/> event is subscribed and setting <see cref="AllowNew"/> does not reset the list.
-    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="false"/>&#160;if <typeparamref name="T"/> is not a primitive type and has no public parameterless constructor.
+    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="false"/> if <typeparamref name="T"/> is not a primitive type and has no public parameterless constructor.
     /// However, return value of <see cref="BindingList{T}.AllowNew"><![CDATA[BindingList<T>.AllowNew]]></see> can change when <see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event is subscribed,
     /// and setting the <see cref="BindingList{T}.AllowNew"><![CDATA[BindingList<T>.AllowNew]]></see> property resets the list.</item>
     /// <item>Calling <see cref="AddNew">AddNew</see> throws <see cref="InvalidOperationException"/> if <see cref="AllowNew"/> is <see langword="false"/>.</item>
@@ -156,7 +155,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets or sets whether new items can be added to the list by the <see cref="AddNew">AddNew</see> method.
-        /// <br/>Default value: <see langword="true"/>&#160;if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
+        /// <br/>Default value: <see langword="true"/> if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
         /// </summary>
         public virtual bool AllowNew
         {
@@ -192,7 +191,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets or sets whether items can be removed from the list by the <see cref="VirtualCollection{T}.Remove">Remove</see>, <see cref="VirtualCollection{T}.RemoveAt">RemoveAt</see> and <see cref="VirtualCollection{T}.Clear">Clear</see> methods.
-        /// <br/>Default value: <see langword="true"/>&#160;if the wrapped list is not read-only; otherwise, <see langword="false"/>.
+        /// <br/>Default value: <see langword="true"/> if the wrapped list is not read-only; otherwise, <see langword="false"/>.
         /// </summary>
         public virtual bool AllowRemove
         {
@@ -213,17 +212,17 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <remarks>
         /// <para>This property returns the value of the overridable <see cref="IsSortedCore"/> property.</para>
-        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/> for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
         public bool IsSorted => IsSortedCore;
 
         /// <summary>
-        /// Gets a <see cref="PropertyDescriptor" /> that is being used for sorting. Returns <see langword="null"/>&#160;if the list is not sorted or
+        /// Gets a <see cref="PropertyDescriptor" /> that is being used for sorting. Returns <see langword="null"/> if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
         /// </summary>
         /// <remarks>
         /// <para>This property returns the value of the overridable <see cref="SortPropertyCore"/> property.</para>
-        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/> for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
         public PropertyDescriptor? SortProperty => SortPropertyCore;
 
@@ -271,17 +270,17 @@ namespace KGySoft.ComponentModel
         /// <br/>The base implementation returns <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/> for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
         protected virtual bool IsSortedCore => false;
 
         /// <summary>
-        /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/>&#160;if the list is not sorted or
+        /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/> if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
         /// <br/>The base implementation returns <see langword="null"/>.
         /// </summary>
         /// <remarks>
-        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/> for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
         /// </remarks>
         protected virtual PropertyDescriptor? SortPropertyCore => null;
 
@@ -736,7 +735,7 @@ namespace KGySoft.ComponentModel
         /// Removes the element at the specified <paramref name="index" /> from the <see cref="FastBindingList{T}" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/>&#160;and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/> and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
         /// <remarks>
         /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
         /// </remarks>
@@ -797,7 +796,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Releases the resources used by this <see cref="FastBindingList{T}"/> instance.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
+        /// <param name="disposing"><see langword="true"/> if this method is being called due to a call to <see cref="Dispose()"/>; otherwise, <see langword="false"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing || disposed)

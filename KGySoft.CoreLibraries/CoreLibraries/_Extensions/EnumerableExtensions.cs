@@ -88,12 +88,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
         /// <param name="collection">The collection to add the <paramref name="item"/> to.</param>
         /// <param name="item">The item to add.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt adding the element without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt adding the element without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found add method; <see langword="false"/> to suppress the exceptions thrown by the found add method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an adding method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the adding method threw an exception.</returns>
+        /// <returns><see langword="true"/> if an adding method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the adding method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be added to the <paramref name="collection"/> if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// </remarks>
@@ -138,12 +138,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="collection">The collection to add the <paramref name="item"/> to.</param>
         /// <param name="item">The item to add.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt adding the element without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt adding the element without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found add method; <see langword="false"/> to suppress the exceptions thrown by the found add method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an adding method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the adding method threw an exception.</returns>
+        /// <returns><see langword="true"/> if an adding method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the adding method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be added to the <paramref name="collection"/> if that is either an <see cref="IList"/>, <see cref="IDictionary"/> (when <paramref name="item"/> is a <see cref="DictionaryEntry"/> instance),
         /// <see cref="ICollection{T}"/> or <see cref="IProducerConsumerCollection{T}"/> implementation.</para>
@@ -241,9 +241,9 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the collections.</typeparam>
         /// <param name="target">The target collection.</param>
         /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only; <see langword="false"/>&#160;to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only; <see langword="false"/> to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found add method; <see langword="false"/> to suppress the exceptions thrown by the found add method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -281,9 +281,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="target">The target collection.</param>
         /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only; <see langword="false"/>&#160;to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only; <see langword="false"/> to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found add method; <see langword="false"/> to suppress the exceptions thrown by the found add method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -340,12 +340,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
         /// <param name="collection">The collection to clear.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt the clearing without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt the clearing without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the matching clear method; <see langword="false"/>&#160;to suppress inner exceptions and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the matching clear method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a clear method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the clear method threw an exception.</returns>
+        /// <returns><see langword="true"/> if a clear method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the clear method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="collection"/> can be cleared if that is either an <see cref="ICollection{T}"/>, <see cref="IList"/> or <see cref="IDictionary"/> implementation.</para>
         /// </remarks>
@@ -387,12 +387,12 @@ namespace KGySoft.CoreLibraries
         /// Tries to remove all elements from the <paramref name="collection"/>.
         /// </summary>
         /// <param name="collection">The collection to clear.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt the clearing without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt the clearing without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the matching clear method; <see langword="false"/>&#160;to suppress inner exceptions and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the matching clear method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a clear method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the clear method threw an exception.</returns>
+        /// <returns><see langword="true"/> if a clear method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the clear method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="collection"/> can be cleared if that is either an <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="ICollection{T}"/> interface, then for better performance use the generic <see cref="TryClear{T}"><![CDATA[TryClear<T>]]></see> overload if possible.</note>
@@ -446,12 +446,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to insert the <paramref name="item"/> into.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">The item to be inserted.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found insert method; <see langword="false"/> to suppress the exceptions thrown by the found insert method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an inserting method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the inserting method threw an exception.</returns>
+        /// <returns><see langword="true"/> if an inserting method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the inserting method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be inserted into the <paramref name="collection"/> if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// </remarks>
@@ -492,12 +492,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to insert the <paramref name="item"/> into.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">The item to be inserted.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found insert method; <see langword="false"/> to suppress the exceptions thrown by the found insert method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an inserting method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the inserting method threw an exception.</returns>
+        /// <returns><see langword="true"/> if an inserting method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the inserting method threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be inserted into the <paramref name="collection"/> if that is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TryInsert{T}"><![CDATA[TryInsert<T>]]></see> overload if possible.</note>
@@ -582,9 +582,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="target">The target collection.</param>
         /// <param name="index">The zero-based index at which the <paramref name="collection"/> should be inserted.</param>
         /// <param name="collection">The collection to insert into the <paramref name="target"/>.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found insert method; <see langword="false"/> to suppress the exceptions thrown by the found insert method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -623,9 +623,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="target">The target collection.</param>
         /// <param name="index">The zero-based index at which the <paramref name="collection"/> should be inserted.</param>
         /// <param name="collection">The collection to insert into the <paramref name="target"/>.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found insert method; <see langword="false"/> to suppress the exceptions thrown by the found insert method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -693,12 +693,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
         /// <param name="collection">The collection to remove the <paramref name="item"/> from.</param>
         /// <param name="item">The item to be removed.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt removing the element without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt removing the element without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> could be successfully removed; <see langword="false"/>&#160;if a removing method was not found or the <paramref name="item"/> could not be removed, <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// <paramref name="throwError"/> is <see langword="false"/>&#160;and the removing method threw an exception, or the removing method returned <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> could be successfully removed; <see langword="false"/> if a removing method was not found or the <paramref name="item"/> could not be removed, <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// <paramref name="throwError"/> is <see langword="false"/> and the removing method threw an exception, or the removing method returned <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="ICollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// </remarks>
@@ -740,12 +740,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="collection">The collection to remove the <paramref name="item"/> from.</param>
         /// <param name="item">The item to be removed.</param>
-        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only; <see langword="false"/>&#160;to attempt removing the element without checking the read-only state. This parameter is optional.
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt removing the element without checking the read-only state. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> could be successfully removed; <see langword="false"/>&#160;if a removing method was not found or the <paramref name="item"/> could not be removed, <paramref name="checkReadOnly"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// <paramref name="throwError"/> is <see langword="false"/>&#160;and the removing method threw an exception, or the removing method returned <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> could be successfully removed; <see langword="false"/> if a removing method was not found or the <paramref name="item"/> could not be removed, <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// <paramref name="throwError"/> is <see langword="false"/> and the removing method threw an exception, or the removing method returned <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList"/> or <see cref="ICollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="ICollection{T}"/> interface, then for better performance use the generic <see cref="TryRemove{T}"><![CDATA[TryRemove<T>]]></see> overload if possible.</note>
@@ -825,12 +825,12 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
         /// <param name="collection">The collection to remove the item from.</param>
         /// <param name="index">The zero-based index of the item to be removed.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt removing the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt removing the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a remove method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the removing method threw an exception.</returns>
+        /// <returns><see langword="true"/> if a remove method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the removing method threw an exception.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// </remarks>
@@ -870,12 +870,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="collection">The collection to remove the item from.</param>
         /// <param name="index">The zero-based index of the item to be removed.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt removing the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt removing the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a remove method could be successfully called; <see langword="false"/>&#160;if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the removing method threw an exception.</returns>
+        /// <returns><see langword="true"/> if a remove method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the removing method threw an exception.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TryRemoveAt{T}"><![CDATA[TryRemoveAt<T>]]></see> overload if possible.</note>
@@ -932,9 +932,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to remove the elements from.</param>
         /// <param name="index">The zero-based index of the first item to remove.</param>
         /// <param name="count">The number of items to remove.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -979,9 +979,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to remove the elements from.</param>
         /// <param name="index">The zero-based index of the first item to remove.</param>
         /// <param name="count">The number of items to remove.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found remove method; <see langword="false"/> to suppress the exceptions thrown by the found remove method and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -1048,12 +1048,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to set the <paramref name="item"/> in.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be set.</param>
         /// <param name="item">The item to be set.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt setting the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt setting the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found setting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found setting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found setting member; <see langword="false"/> to suppress the exceptions thrown by the found setting member and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a setting member could be successfully called; <see langword="false"/>&#160;if such member was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the setting member threw an exception.</returns>
+        /// <returns><see langword="true"/> if a setting member could be successfully called; <see langword="false"/> if such member was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the setting member threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be set in the <paramref name="collection"/> if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// </remarks>
@@ -1094,16 +1094,16 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to set the <paramref name="item"/> in.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be set.</param>
         /// <param name="item">The item to be set.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt setting the element without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt setting the element without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found setting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found setting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found setting member; <see langword="false"/> to suppress the exceptions thrown by the found setting member and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if a setting member could be successfully called; <see langword="false"/>&#160;if such member was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/>&#160;and the collection was read-only,
-        /// or <paramref name="throwError"/> is <see langword="false"/>&#160;and the setting member threw an exception.</returns>
+        /// <returns><see langword="true"/> if a setting member could be successfully called; <see langword="false"/> if such member was not found, or <paramref name="checkReadOnlyAndBounds"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the setting member threw an exception.</returns>
         /// <remarks>
         /// <para>The <paramref name="item"/> can be set in the <paramref name="collection"/> if that is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TrySetElementAt{T}"><![CDATA[TrySetElementAt<T>]]></see> overload if possible.</note>
-        /// <note>This method returns <see langword="false"/>&#160;also for multidimensional arrays.</note>
+        /// <note>This method returns <see langword="false"/> also for multidimensional arrays.</note>
         /// </remarks>
         public static bool TrySetElementAt([NoEnumeration]this IEnumerable collection, int index, object? item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
@@ -1200,9 +1200,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="index">The zero-based index of the first item to remove and also the index at which <paramref name="collection"/> items should be inserted.</param>
         /// <param name="count">The number of items to remove.</param>
         /// <param name="collection">The collection to insert into the <paramref name="target"/> list.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the used modifier members; <see langword="false"/> to suppress the exceptions thrown by the used members and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -1270,9 +1270,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="index">The zero-based index of the first item to remove and also the index at which <paramref name="collection"/> items should be inserted.</param>
         /// <param name="count">The number of items to remove.</param>
         /// <param name="collection">The collection to insert into the <paramref name="target"/> list.</param>
-        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/> to return <see langword="false"/> if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/> to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the used modifier members; <see langword="false"/> to suppress the exceptions thrown by the used members and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
@@ -1342,10 +1342,10 @@ namespace KGySoft.CoreLibraries
         #region Lookup
 
         /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
         /// </summary>
         /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullOrEmpty(this IEnumerable? source)
         {
             if (source == null)
@@ -1370,11 +1370,11 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
         {
             if (source == null)
@@ -1515,14 +1515,14 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to retrieve the <paramref name="item"/> from.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be returned.</param>
         /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item. This parameter is passed uninitialized.</param>
-        /// <param name="checkBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
+        /// <param name="checkBounds"><see langword="true"/> to return <see langword="false"/> if the <paramref name="index"/> is invalid; <see langword="false"/> to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found getting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found getting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found getting member; <see langword="false"/> to suppress the exceptions thrown by the found getting member and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> could be retrieved; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> could be retrieved; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>If <paramref name="collection"/> is neither an <see cref="IList{T}"/>, <see cref="IReadOnlyList{T}"/>, nor an <see cref="IList"/> implementation, then the <paramref name="collection"/> will be iterated.
-        /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/>&#160;if the <paramref name="index"/> is invalid.</para>
+        /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/> if the <paramref name="index"/> is invalid.</para>
         /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see> method.
         /// The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of <typeparamref name="T"/>, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
@@ -1593,14 +1593,14 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to retrieve the <paramref name="item"/> from.</param>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be returned.</param>
         /// <param name="item">If this method returns <see langword="true"/>, then this parameter contains the found item. This parameter is passed uninitialized.</param>
-        /// <param name="checkBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
+        /// <param name="checkBounds"><see langword="true"/> to return <see langword="false"/> if the <paramref name="index"/> is invalid; <see langword="false"/> to attempt getting the element via the possible interfaces without checking bounds. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found getting member; <see langword="false"/>&#160;to suppress the exceptions thrown by the found getting member and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by a found getting member; <see langword="false"/> to suppress the exceptions thrown by the found getting member and return <see langword="false"/> on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> could be retrieved; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> could be retrieved; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>If <paramref name="collection"/> is neither an <see cref="IList{T}"/> of objects, <see cref="IReadOnlyList{T}"/> of objects, nor an <see cref="IList"/> implementation, then the <paramref name="collection"/> will be iterated.
-        /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/>&#160;if the <paramref name="index"/> is invalid.</para>
+        /// In this case the <paramref name="checkBounds"/> argument is ignored and the method returns <see langword="false"/> if the <paramref name="index"/> is invalid.</para>
         /// <note>This method is similar to the <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see> method.
         /// The main difference is that if <see cref="Enumerable.ElementAtOrDefault{TSource}(IEnumerable{TSource},int)">Enumerable.ElementAtOrDefault</see>
         /// returns the default value of the element type, then it cannot be known whether the returned item existed in the collection at the specified position.</note>
@@ -1815,7 +1815,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="string">string</see> from.</param>
-        /// <param name="separator">The separator to be used between the items. If <see langword="null"/>&#160;or empty, then the result will be concatenated without using separators.</param>
+        /// <param name="separator">The separator to be used between the items. If <see langword="null"/> or empty, then the result will be concatenated without using separators.</param>
         /// <returns>A <see cref="string">string</see> that consists of the elements of the <paramref name="source"/> collection delimited by the specified <paramref name="separator"/>.</returns>
         public static string Join<T>(this IEnumerable<T> source, string? separator)
         {
@@ -1964,7 +1964,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
-        /// <param name="defaultIfEmpty">If <see langword="true"/>&#160;and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
@@ -1977,7 +1977,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
-        /// <param name="defaultIfEmpty">If <see langword="true"/>&#160;and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from the <paramref name="source"/>.</returns>

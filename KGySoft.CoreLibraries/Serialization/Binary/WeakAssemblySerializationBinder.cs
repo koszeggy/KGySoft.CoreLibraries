@@ -32,11 +32,10 @@ namespace KGySoft.Serialization.Binary
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
     /// It also can make any <see cref="IFormatter"/> safe in terms of prohibiting loading assemblies during the deserialization if the <see cref="SafeMode"/>
     /// property is <see langword="true"/>.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
-    /// to <see langword="true"/>&#160;to prevent loading assemblies when resolving types.</para>
+    /// to <see langword="true"/> to prevent loading assemblies when resolving types.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <note>This binder does not use exact type mapping just tries to resolve type information automatically.
     /// To customize type mapping or use a custom resolve logic you can use the <see cref="ForwardedTypesSerializationBinder"/>
@@ -45,7 +44,7 @@ namespace KGySoft.Serialization.Binary
     /// or by completely ignoring assembly information (if <see cref="IgnoreAssemblyNameOnResolve"/> property is <see langword="true"/>.)</para>
     /// <para>It also makes possible to prevent loading assembles during deserialization if the <see cref="SafeMode"/> property is <see langword="true"/>.
     /// <note type="tip">You can make even a <see cref="BinaryFormatter"/> safe by assigning a <see cref="WeakAssemblySerializationBinder"/>
-    /// with <see cref="SafeMode"/> = <see langword="true"/>&#160;to its <see cref="IFormatter.Binder"/> property so it cannot resolve any type
+    /// with <see cref="SafeMode"/> = <see langword="true"/> to its <see cref="IFormatter.Binder"/> property so it cannot resolve any type
     /// whose assembly is not already loaded.
     /// </note></para>
     /// <para>If <see cref="WeakAssemblySerializationBinder"/> is used on serialization, then it can omit assembly information from the serialization stream
@@ -69,7 +68,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
+        /// <see langword="true"/> to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
         /// <note>In .NET Framework 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
@@ -91,7 +90,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If the value of this property is <see langword="true"/>&#160;and the type cannot be resolved from an assembly on deserialization,
+        /// <para>If the value of this property is <see langword="true"/> and the type cannot be resolved from an assembly on deserialization,
         /// then the type is tried to be resolved from any loaded assemblies. The effect is similar as if the
         /// <see cref="OmitAssemblyNameOnSerialize"/> property was used on serialization, except that the type is tried to be resolved
         /// from the provided assembly in the first place.</para>
@@ -120,7 +119,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
-        /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating that the original
+        /// Otherwise, returns <see langword="null"/> for both assembly and type names, indicating that the original
         /// names should be used.
         /// </summary>
         /// <param name="serializedType">The type of the object that is being serialized.</param>

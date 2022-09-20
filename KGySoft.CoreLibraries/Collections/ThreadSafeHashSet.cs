@@ -51,7 +51,6 @@ namespace KGySoft.Collections
     /// Implements a thread-safe hash set, which has similar characteristics to <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
     /// It can be a good alternative for <see cref="HashSet{T}"/>, <see cref="LockingCollection{T}"/>, or when one would use
     /// a <see cref="ConcurrentDictionary{TKey,TValue}"/> with ignored values.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">Type of the items stored in the <see cref="ThreadSafeHashSet{T}"/>.</typeparam>
     /// <remarks>
@@ -68,7 +67,7 @@ namespace KGySoft.Collections
     /// the <see cref="PreserveMergedItems"/> property is <see langword="false"/>; otherwise, the already merged items are just marked deleted when removed from
     /// the <see cref="ThreadSafeHashSet{T}"/> or when you call the <see cref="Clear">Clear</see> method. To remove even the merged items you must call
     /// the <see cref="Reset">Reset</see> method, or to remove the deleted items only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
-    /// <h1 class="heading">Comparison with other thread-safe collections.</h1>
+    /// <h2>Comparison with other thread-safe collections.</h2>
     /// <para><strong>When to prefer</strong>&#160;<see cref="ThreadSafeHashSet{T}"/> over <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If you would use only the keys, without any value.</item>
@@ -295,14 +294,13 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether items that have already been merged into the faster lock-free storage are preserved even when they are deleted.
         /// <br/>Default value: <see langword="false"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>If the possible number of items in this <see cref="ThreadSafeHashSet{T}"/> is known to be a limited value, then this property
         /// can be set to <see langword="true"/>, so once the items have been merged into the faster lock-free storage, their entry is not removed anymore even if they
         /// are deleted. This ensures that removing and re-adding an item again and again remains a lock-free operation.
         /// <note>Do not set this property to <see langword="true"/>, if the number of the possibly added items is not limited.</note></para>
-        /// <para>This property can be set to <see langword="true"/>&#160;even if items are never removed so it is not checked before a merge operation whether
+        /// <para>This property can be set to <see langword="true"/> even if items are never removed so it is not checked before a merge operation whether
         /// the amount of deleted items exceeds a specific limit.</para>
         /// <para>If this property is <see langword="true"/>, then the already merged items are not removed even when calling the <see cref="Clear">Clear</see> method.
         /// The memory of the deleted entries can be freed by explicitly calling the <see cref="TrimExcess">TrimExcess</see> method,
@@ -319,7 +317,6 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets the minimum lifetime for the temporarily created internal locking storage when adding new items to the <see cref="ThreadSafeHashSet{T}"/>.
         /// <br/>Default value: 100 milliseconds.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>When adding new items, they will be put in a temporary locking storage first.
@@ -411,7 +408,7 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -431,7 +428,7 @@ namespace KGySoft.Collections
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for new items.
         /// If 0, then a default capacity is used.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -462,7 +459,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="collection">The collection whose elements are coped to the new <see cref="ThreadSafeHashSet{T}"/>.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -519,8 +516,8 @@ namespace KGySoft.Collections
         /// Adds the specified <paramref name="item"/> to the <see cref="ThreadSafeHashSet{T}"/>.
         /// </summary>
         /// <param name="item">The element to add to the set.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> was added to the <see cref="ThreadSafeHashSet{T}"/>;
-        /// <see langword="false"/>&#160;if the element is already present judged by the <see cref="Comparer"/>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> was added to the <see cref="ThreadSafeHashSet{T}"/>;
+        /// <see langword="false"/> if the element is already present judged by the <see cref="Comparer"/>.</returns>
         public bool Add(T item)
         {
             uint hashCode = GetHashCode(item);
@@ -553,7 +550,7 @@ namespace KGySoft.Collections
         /// Tries to get the actual stored item for the specified <paramref name="equalValue"/> in the <see cref="ThreadSafeHashSet{T}"/>.
         /// It can be useful to obtain the actually stored reference when the <see cref="Comparer"/> can consider different instances equal.
         /// </summary>
-        /// <returns><see langword="true"/>&#160;if an item equal to <paramref name="equalValue"/> was found in the <see cref="ThreadSafeHashSet{T}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if an item equal to <paramref name="equalValue"/> was found in the <see cref="ThreadSafeHashSet{T}"/>; otherwise, <see langword="false"/>.</returns>
         /// <param name="equalValue">The item to search for.</param>
         /// <param name="actualValue">When this method returns, the actually stored value, if the <paramref name="equalValue"/> is present in
         /// the <see cref="ThreadSafeHashSet{T}"/> judged by the current <see cref="Comparer"/>; otherwise, the default value for the type <typeparamref name="T"/>. This parameter is passed uninitialized.</param>
@@ -614,7 +611,7 @@ namespace KGySoft.Collections
         /// Tries to remove the specified <paramref name="item"/> from the <see cref="ThreadSafeHashSet{T}"/>.
         /// </summary>
         /// <param name="item">The element to remove.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         public bool Remove(T item)
         {
             uint hashCode = GetHashCode(item);
@@ -661,7 +658,6 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Removes all items from the <see cref="ThreadSafeHashSet{T}"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="PreserveMergedItems"/> is <see langword="true"/>, or when the amount of removed items does not exceed a limit, then
@@ -786,7 +782,6 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Returns an enumerator that iterates through the items of this <see cref="ThreadSafeHashSet{T}"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>
         /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="ThreadSafeHashSet{T}"/>.

@@ -45,7 +45,6 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a sortable generic list that is able to notify its consumer about changes and supports data binding.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
@@ -175,7 +174,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets whether the <see cref="SortableBindingList{T}"/> should be immediately re-sorted when an item changes or a new item is added.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
-        /// <remarks><para>Setting this property to <see langword="true"/>&#160;may cause re-sorting the <see cref="SortableBindingList{T}"/> immediately.</para></remarks>
+        /// <remarks><para>Setting this property to <see langword="true"/> may cause re-sorting the <see cref="SortableBindingList{T}"/> immediately.</para></remarks>
         public bool SortOnChange
         {
             get => sortOnChange;
@@ -192,7 +191,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets or sets the direction of the sort. Returns <see langword="null"/>, if the list is not sorted
         /// (that is, when <see cref="FastBindingList{T}.IsSorted"/> returns <see langword="false"/>).
-        /// Setting <see langword="null"/>&#160;removes sorting. To change also the <see cref="FastBindingList{T}.SortProperty"/>
+        /// Setting <see langword="null"/> removes sorting. To change also the <see cref="FastBindingList{T}.SortProperty"/>
         /// call the <see cref="FastBindingList{T}.ApplySort(PropertyDescriptor, ListSortDirection)"/> method instead.
         /// </summary>
         public ListSortDirection? SortDirection
@@ -225,7 +224,7 @@ namespace KGySoft.ComponentModel
         protected override bool IsSortedCore => sortDirection != null;
 
         /// <summary>
-        /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/>&#160;if the list is not sorted or
+        /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/> if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
         /// </summary>
         protected override PropertyDescriptor? SortPropertyCore => sortProperty;
@@ -442,7 +441,7 @@ namespace KGySoft.ComponentModel
         /// <para><see cref="SetItem">SetItem</see> performs the following operations:
         /// <list type="number">
         /// <item>Raises a <see cref="FastBindingList{T}.ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> indicating the index of the item that was set.</item>
-        /// <item>If both <see cref="FastBindingList{T}.IsSorted"/> and <see cref="SortOnChange"/> properties are <see langword="true"/>&#160;and the position of the new item would break the sort order, then a new sort is immediately applied,
+        /// <item>If both <see cref="FastBindingList{T}.IsSorted"/> and <see cref="SortOnChange"/> properties are <see langword="true"/> and the position of the new item would break the sort order, then a new sort is immediately applied,
         /// which raises a <see cref="FastBindingList{T}.ListChanged"/> event of type <see cref="ListChangedType.Reset"/>.</item>
         /// </list>
         /// </para>
@@ -518,7 +517,7 @@ namespace KGySoft.ComponentModel
         /// <item>Calls <see cref="EndNew(int)">EndNew</see> to commit the last possible uncommitted item added by the <see cref="FastBindingList{T}.AddNew">AddNew</see> method.</item>
         /// <item>Inserts the item at the specified index.</item>
         /// <item>Raises a <see cref="FastBindingList{T}.ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> indicating the index of the item that was inserted.</item>
-        /// <item>If both <see cref="FastBindingList{T}.IsSorted"/> and <see cref="SortOnChange"/> properties are <see langword="true"/>&#160;and the position of the new item would break the sort order, then a new sort is immediately applied,
+        /// <item>If both <see cref="FastBindingList{T}.IsSorted"/> and <see cref="SortOnChange"/> properties are <see langword="true"/> and the position of the new item would break the sort order, then a new sort is immediately applied,
         /// which raises a <see cref="FastBindingList{T}.ListChanged"/> event of type <see cref="ListChangedType.Reset"/>.</item>
         /// </list>
         /// </para>

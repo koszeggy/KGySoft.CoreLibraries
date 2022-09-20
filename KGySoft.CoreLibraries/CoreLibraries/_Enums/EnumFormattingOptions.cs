@@ -33,7 +33,7 @@ namespace KGySoft.CoreLibraries
         Auto,
 
         /// <summary>
-        /// The <see langword="enum"/>&#160;value is forced to be treated as a non-flags value. If there is no defined name for the current value, then a number is returned.
+        /// The <see langword="enum"/> value is forced to be treated as a non-flags value. If there is no defined name for the current value, then a number is returned.
         /// This result is always parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method.
         /// </summary>
         NonFlags,
@@ -47,7 +47,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// The result can contain either defined names (including compound ones, which do not represent single bits) or a single numeric value. This behavior is similar to the <see cref="Enum.ToString()">Enum.ToString</see> method
-        /// for a <see cref="FlagsAttribute">Flags</see>&#160;<see langword="enum"/>&#160;and the result is always parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method as long as the separator is the comma character.
+        /// for a <see cref="FlagsAttribute">Flags</see>&#160;<see langword="enum"/> and the result is always parseable by the <see cref="Enum.Parse(Type,string)">System.Enum.Parse(Type, string)</see> method as long as the separator is the comma character.
         /// </summary>
         CompoundFlagsOrNumber,
 

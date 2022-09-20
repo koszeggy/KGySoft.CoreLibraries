@@ -49,8 +49,8 @@ namespace KGySoft.ComponentModel
         /// <param name="command">The command to bind.</param>
         /// <param name="initialState">The initial state of the binding. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="disposeCommand"><see langword="true"/>&#160;to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/>&#160;to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
-        /// Use <see langword="true"/>&#160;only if the command will not be re-used elsewhere. This parameter is optional.
+        /// <param name="disposeCommand"><see langword="true"/> to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/> to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
+        /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
@@ -155,7 +155,7 @@ namespace KGySoft.ComponentModel
         /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
         /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
         /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
-        /// <param name="awaitCompletion"><see langword="true"/>&#160;to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
+        /// <param name="awaitCompletion"><see langword="true"/> to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
         /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
         /// method on the result <see cref="ICommandBinding"/> instance.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
@@ -182,7 +182,7 @@ namespace KGySoft.ComponentModel
         /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
         /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
         /// <param name="format">If not <see langword="null"/>, then can be used to format the value to be set in the <paramref name="targets"/>.</param>
-        /// <param name="awaitCompletion"><see langword="true"/>&#160;to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
+        /// <param name="awaitCompletion"><see langword="true"/> to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
         /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
         /// method on the result <see cref="ICommandBinding"/> instance.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
@@ -645,7 +645,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Releases every binding in this <see cref="CommandBindingsCollection"/>.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;if this method is being called due to explicit disposing, <see langword="false"/>&#160;if finalizing the object.</param>
+        /// <param name="disposing"><see langword="true"/> if this method is being called due to explicit disposing, <see langword="false"/> if finalizing the object.</param>
         protected virtual void Dispose(bool disposing) => ClearItems();
 
         #endregion

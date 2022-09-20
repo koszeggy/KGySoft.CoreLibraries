@@ -130,8 +130,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
-        /// <param name="value">The <see langword="enum"/>&#160;value whose name is required.</param>
-        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
+        /// <param name="value">The <see langword="enum"/> value whose name is required.</param>
+        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
         public static string? GetName(TEnum value)
         {
             ValueNamePairs.TryGetValue(value, out string? result);
@@ -142,7 +142,7 @@ namespace KGySoft.CoreLibraries
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value of the required field.</param>
-        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
+        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
         public static string? GetName(long value)
         {
             if (value < underlyingInfo.MinValue
@@ -157,7 +157,7 @@ namespace KGySoft.CoreLibraries
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value of the required field.</param>
-        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
+        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
         [CLSCompliant(false)]
         public static string? GetName(ulong value) => value > underlyingInfo.MaxValue ? null : TryGetNameByValue(value);
 
@@ -165,14 +165,14 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(TEnum value) => ValueNamePairs.ContainsKey(value);
 
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <see cref="string"/> value representing a field name in the enumeration.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool IsDefined(string value)
         {
@@ -185,7 +185,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
         public static bool IsDefined(StringSegment value)
         {
@@ -199,7 +199,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(ReadOnlySpan<char> value) => NameValuePairs.ContainsKey(value);
 #endif
 
@@ -207,7 +207,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(long value)
         {
             if (value < underlyingInfo.MinValue
@@ -222,7 +222,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
-        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         [CLSCompliant(false)]
         public static bool IsDefined(ulong value)
         {
@@ -236,7 +236,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
-        /// <param name="flags">A flags <see langword="enum"/>&#160;value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <see langword="false"/>.</returns>
@@ -354,7 +354,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
         /// or, when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
         /// </summary>
-        /// <param name="flags">A flags <see langword="enum"/>&#160;value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
@@ -419,10 +419,10 @@ namespace KGySoft.CoreLibraries
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
         /// where each flags are returned as distinct values.
         /// </summary>
-        /// <param name="flags">A flags <see langword="enum"/>&#160;value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues"><see langword="true"/>&#160;to return only flags that are defined in <typeparamref name="TEnum"/>;
-        /// <see langword="false"/>&#160;to return also undefined flags. This parameter is optional.
+        /// <param name="onlyDefinedValues"><see langword="true"/> to return only flags that are defined in <typeparamref name="TEnum"/>;
+        /// <see langword="false"/> to return also undefined flags. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
         /// <remarks>

@@ -31,7 +31,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets the uninitialized object that is being deserialized.
-        /// <br/>If you initialize it manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>If you initialize it manually make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default deserialization logic.
         /// </summary>
         public object Object { get; }
@@ -51,7 +51,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>To completely omit the default deserialization logic set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>.
         /// </summary>
         /// <value>
-        /// <see langword="true"/>&#160;to deserialize the <see cref="Object"/> by fields even if it implements <see cref="ISerializable"/>;
+        /// <see langword="true"/> to deserialize the <see cref="Object"/> by fields even if it implements <see cref="ISerializable"/>;
         /// otherwise, <see langword="false"/>.
         /// </value>
         public bool IgnoreISerializable { get; set; }

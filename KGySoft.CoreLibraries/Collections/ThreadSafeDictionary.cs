@@ -53,7 +53,6 @@ namespace KGySoft.Collections
     /// <summary>
     /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET Framework 3.5),
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
-    /// <br/>See the <strong>Remarks</strong> section for details and for a comparison between <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="ConcurrentDictionary{TKey,TValue}"/>.
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the dictionary.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the dictionary.</typeparam>
@@ -75,7 +74,7 @@ namespace KGySoft.Collections
     /// make sure the <see cref="PreserveMergedKeys"/> property is <see langword="false"/>; otherwise, the already merged keys are not removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
     /// even if they are deleted or when you call the <see cref="Clear">Clear</see> method. To remove even the merged keys you must call the <see cref="Reset">Reset</see> method,
     /// or to remove the deleted keys only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
-    /// <h1 class="heading">Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h1>
+    /// <h2>Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h2>
     /// <para><strong>When to use</strong>&#160;<see cref="ThreadSafeDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
@@ -242,14 +241,13 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether keys of entries that have already been merged into the faster lock-free storage are preserved even when their value is removed.
         /// <br/>Default value: <see langword="false"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>If the possible number of keys in this <see cref="ThreadSafeDictionary{TKey,TValue}"/> is known to be a limited value, then this property
         /// can be set to <see langword="true"/>, so once the values have been merged into the faster lock-free storage, their entry is not removed anymore even if the
         /// corresponding value is deleted. This ensures that removing and re-adding a value with the same key again and again remains a lock-free operation.
         /// <note>Do not set this property to <see langword="true"/>, if the number of the possibly added keys is not limited.</note></para>
-        /// <para>This property can be set to <see langword="true"/>&#160;even if keys are never removed so it is not checked before a merge operation whether
+        /// <para>This property can be set to <see langword="true"/> even if keys are never removed so it is not checked before a merge operation whether
         /// the amount of deleted items exceeds a specific limit.</para>
         /// <para>If this property is <see langword="true"/>, then the already merged keys are not removed even when calling the <see cref="Clear">Clear</see> method.
         /// The memory of the deleted entries can be freed by explicitly calling the <see cref="TrimExcess">TrimExcess</see> method,
@@ -266,7 +264,6 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets the minimum lifetime for the temporarily created internal locking storage when adding new keys to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// <br/>Default value: 100 milliseconds.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>When adding items with new keys, they will be put in a temporary locking storage first.
@@ -467,7 +464,7 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -487,7 +484,7 @@ namespace KGySoft.Collections
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for values with new keys.
         /// If 0, then a default capacity is used.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -518,7 +515,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="collection">The collection whose elements are coped to the new <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -575,12 +572,12 @@ namespace KGySoft.Collections
         /// Adds an element with the provided key and value to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">The key of the element to add.</param>
-        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
         /// <remarks>
         /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
         /// In contrast, using the setter of the <see cref="this">indexer</see> property replaces the old value with the new one.</para>
         /// <para>If multiple values are added to this <see cref="ThreadSafeDictionary{TKey,TValue}"/> concurrently, then you should use
-        /// the <see cref="TryAdd">TryAdd</see> method instead, which simply returns <see langword="false"/>&#160;if the <paramref name="key"/>
+        /// the <see cref="TryAdd">TryAdd</see> method instead, which simply returns <see langword="false"/> if the <paramref name="key"/>
         /// to add already exists in the dictionary.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -598,9 +595,9 @@ namespace KGySoft.Collections
         /// Tries to add the specified <paramref name="key"/> and <paramref name="value"/> to the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">The key of the element to add.</param>
-        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference types.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="key"/> and <paramref name="value"/> was added to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> successfully;
-        /// <see langword="false"/>&#160;if the key already exists.</returns>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if <paramref name="key"/> and <paramref name="value"/> was added to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> successfully;
+        /// <see langword="false"/> if the key already exists.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary`2.GetOrAdd">GetOrAdd</seealso>
         /// <seealso cref="O:KGySoft.Collections.ThreadSafeDictionary`2.AddOrUpdate">AddOrUpdate</seealso>
@@ -614,7 +611,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Tries to get the value associated with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
-        /// <returns><see langword="true"/>&#160;if the key was found in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the key was found in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>; otherwise, <see langword="false"/>.</returns>
         /// <param name="key">The key of the value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
@@ -644,7 +641,7 @@ namespace KGySoft.Collections
         /// <param name="value">The value to locate in the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.</param>
         /// <returns><see langword="true"/> if the <see cref="ThreadSafeDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>
@@ -681,7 +678,7 @@ namespace KGySoft.Collections
         /// Tries to remove the value with the specified <paramref name="key"/> from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">Key of the item to remove.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryRemove(TKey key)
         {
@@ -736,7 +733,7 @@ namespace KGySoft.Collections
         /// This method just calls the <see cref="TryRemove(TKey)">TryRemove</see> method. It exists just for providing compatibility with the <see cref="Dictionary{TKey,TValue}"/> type.
         /// </summary>
         /// <param name="key">Key of the item to remove.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool Remove(TKey key) => TryRemove(key);
 
@@ -746,7 +743,7 @@ namespace KGySoft.Collections
         /// <param name="key">Key of the item to remove.</param>
         /// <param name="value">When this method returns, contains the value removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>,
         /// or the default value of the <typeparamref name="TValue"/> type if <paramref name="key"/> does not exist.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryRemove(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
@@ -797,7 +794,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="key">The key of the item to remove.</param>
         /// <param name="value">The value of the item to remove.</param>
-        /// <returns><see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         [CLSCompliant(false)]
         public bool TryRemove(TKey key, TValue value)
@@ -849,7 +846,6 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Removes all items from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="PreserveMergedKeys"/> is <see langword="true"/>, or when the amount of removed items does not exceed a limit, then
@@ -905,7 +901,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the item to replace.</param>
         /// <param name="newValue">The replacement value of <paramref name="key"/> if its value equals to <paramref name="originalValue"/>.</param>
         /// <param name="originalValue">The expected original value of the stored item with the associated <paramref name="key"/>.</param>
-        /// <returns><see langword="true"/>&#160;if the value with <paramref name="key"/> was equal to <paramref name="originalValue"/>
+        /// <returns><see langword="true"/> if the value with <paramref name="key"/> was equal to <paramref name="originalValue"/>
         /// and was replaced with <paramref name="newValue"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool TryUpdate(TKey key, TValue newValue, TValue originalValue)
@@ -1262,7 +1258,6 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Returns an enumerator that iterates through the keys and values of this <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>
         /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="ThreadSafeDictionary{TKey,TValue}"/>.

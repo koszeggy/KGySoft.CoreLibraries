@@ -22,7 +22,8 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Diagnostics
 {
     /// <summary>
-    /// Contains diagnostic tools such as the <see cref="Profiler"/> and <see cref="PerformanceTest"/> classes along with some generic debugger views.
+    /// The <see cref="N:KGySoft.Diagnostics"/> namespace contains diagnostic tools such as the <see cref="Profiler"/>
+    /// and <see cref="PerformanceTest"/> classes along with some generic debugger views.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

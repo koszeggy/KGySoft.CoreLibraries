@@ -30,7 +30,6 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a link to an external resource.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
@@ -46,7 +45,7 @@ namespace KGySoft.Resources
     /// <item>Call the <see cref="DynamicResourceManager.SetObject">HybridResourceManager.SetObject(string, object, CultureInfo)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance and then save the <see cref="DynamicResourceManager"/> instance.</item>
     /// </list>
     /// </para>
-    /// <h1 class="heading">Comparison with System.Resources.ResXFileRef<a name="comparison">&#160;</a></h1>
+    /// <h2>Comparison with System.Resources.ResXFileRef<a name="comparison">&#160;</a></h2>
     /// <note>The compatibility with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
     /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>,
     /// <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
@@ -325,8 +324,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="s">The string representation of the file reference to convert.</param>
         /// <param name="result">When this method returns, contains a <see cref="ResXFileRef"/> instance that represents the file reference specified in <paramref name="s"/>,
-        /// if the conversion succeeded, or <see langword="null"/>&#160;if the conversion failed.</param>
-        /// <returns><see langword="true"/>&#160;if <paramref name="s"/> was converted successfully; otherwise, <see langword="false"/>.</returns>
+        /// if the conversion succeeded, or <see langword="null"/> if the conversion failed.</param>
+        /// <returns><see langword="true"/> if <paramref name="s"/> was converted successfully; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse(string? s, [MaybeNullWhen(false)]out ResXFileRef result)
         {
             string[]? fileRefDetails = Converter.ParseResXFileRefString(s);

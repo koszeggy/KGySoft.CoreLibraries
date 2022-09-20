@@ -51,9 +51,9 @@ namespace KGySoft.Serialization.Binary
         public SerializationEntry Entry { get; }
 
         /// <summary>
-        /// Gets or sets the field to be set. If <see langword="null"/>&#160;and <see cref="CustomSerializerSurrogateSelector.IgnoreNonExistingFields"/>
+        /// Gets or sets the field to be set. If <see langword="null"/> and <see cref="CustomSerializerSurrogateSelector.IgnoreNonExistingFields"/>
         /// is <see langword="false"/>, then a <see cref="SerializationException"/> will be thrown.
-        /// You may either set this property by the matching field or set the <see cref="HandledEventArgs.Handled"/> to <see langword="true"/>&#160;to
+        /// You may either set this property by the matching field or set the <see cref="HandledEventArgs.Handled"/> to <see langword="true"/> to
         /// skip the default processing.
         /// <br/>Default value: The field identified as the matching field, or <see langword="null"/>, if such field was not found.
         /// </summary>
@@ -61,7 +61,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets the value to set.
-        /// <br/>To prevent setting any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/>&#160;to
+        /// <br/>To prevent setting any value make sure you set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to
         /// omit the default deserialization logic.
         /// </summary>
         public object? Value { get; set; }

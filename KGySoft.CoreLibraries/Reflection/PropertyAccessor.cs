@@ -39,7 +39,6 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for setting and getting property values via dynamically created delegates.
-    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
@@ -229,9 +228,8 @@ namespace KGySoft.Reflection
         /// Sets the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
         /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <remarks>
@@ -262,9 +260,8 @@ namespace KGySoft.Reflection
         /// Gets the value of the property.
         /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
         /// If the property is not an indexer, then <paramref name="indexParameters"/> parameter is omitted.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/>&#160;for static properties.</param>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
         /// <param name="indexParameters">The parameters if the property is an indexer.</param>
         /// <returns>The value of the property.</returns>
         /// <remarks>

@@ -132,7 +132,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="info">The <see cref="SerializationInfo"/> to retrieve the value from.</param>
         /// <param name="name">The name of the value to be retrieved.</param>
         /// <param name="defaultValue">The default value to return if <paramref name="name"/> was not found. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
+        /// <br/>Default value: <see langword="null"/> if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
         /// <typeparam name="T">The type of the value with the corresponding <paramref name="name"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="name"/> was not found or its value cannot be cast to <typeparamref name="T"/>.</returns>
         public static T GetValueOrDefault<T>(this SerializationInfo info, string name, T defaultValue = default!)
@@ -143,7 +143,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> to check.</param>
         /// <param name="name">The name of the value to be searched for.</param>
-        /// <returns><see langword="true"/>&#160;if the <see cref="SerializationInfo"/> contains an entry with the specified <paramref name="name"/>;
+        /// <returns><see langword="true"/> if the <see cref="SerializationInfo"/> contains an entry with the specified <paramref name="name"/>;
         /// otherwise, <see langword="false"/>.</returns>
         public static bool ContainsName(this SerializationInfo info, string name)
         {
@@ -158,7 +158,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> to remove the value from.</param>
         /// <param name="name">The name of the entry to remove.</param>
-        /// <returns><see langword="true"/>&#160;if an entry with the specified name existed in the <see cref="SerializationInfo"/>
+        /// <returns><see langword="true"/> if an entry with the specified name existed in the <see cref="SerializationInfo"/>
         /// and has been removed; otherwise, <see langword="false"/>.</returns>
         public static bool RemoveValue(this SerializationInfo info, string name)
         {
@@ -194,8 +194,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="value">The new value to be set.</param>
         /// <param name="type">The type of the value to be added. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an update occurred (the <see cref="SerializationInfo"/> already contained an entry with the specified <paramref name="name"/>);
-        /// <see langword="false"/>&#160;if the value has just been added as a new value.</returns>
+        /// <returns><see langword="true"/> if an update occurred (the <see cref="SerializationInfo"/> already contained an entry with the specified <paramref name="name"/>);
+        /// <see langword="false"/> if the value has just been added as a new value.</returns>
         public static bool UpdateValue(this SerializationInfo info, string name, object? value, Type? type = null)
         {
             if (info == null!)
@@ -231,7 +231,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="value">The new value to be set.</param>
         /// <param name="type">The type of the value to be added. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns><see langword="true"/>&#160;if an entry with the specified old name existed in the <see cref="SerializationInfo"/>
+        /// <returns><see langword="true"/> if an entry with the specified old name existed in the <see cref="SerializationInfo"/>
         /// and the replace has been performed; otherwise, <see langword="false"/>.</returns>
         public static bool ReplaceValue(this SerializationInfo info, string oldName, string newName, object? value, Type? type = null)
         {

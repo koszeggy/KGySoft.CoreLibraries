@@ -135,7 +135,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="int"/> can have any value.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 32-bit signed integer that is greater than or equal to <see cref="Int32.MinValue">Int32.MinValue</see> and less or equal to <see cref="Int32.MaxValue">Int32.MaxValue</see>.</returns>
         /// <remarks>
@@ -238,7 +237,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random <see cref="long"/> can have any value.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 64-bit signed integer that is greater than or equal to <see cref="Int64.MinValue">Int64.MinValue</see> and less or equal to <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <remarks>
@@ -251,7 +249,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a non-negative random 64-bit integer that is less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less than <see cref="Int64.MaxValue">Int64.MaxValue</see>.</returns>
         /// <remarks>
@@ -392,7 +389,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random 32-bit unsigned integer that is less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <remarks>
@@ -416,7 +412,6 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a random 64-bit unsigned integer that is less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <remarks>

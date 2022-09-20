@@ -30,7 +30,6 @@ namespace KGySoft.ComponentModel
     /// For example, if a command represents a UI action bound to a menu item or a button (or both), then changing the <see cref="ICommandState.Enabled"/>
     /// property changes the <c>Enabled</c> property of the bound sources as well. You can adjust the text, shortcuts, associated image, checked state, etc. of
     /// the sources similarly.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>A state updater can be added to a binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.</para>

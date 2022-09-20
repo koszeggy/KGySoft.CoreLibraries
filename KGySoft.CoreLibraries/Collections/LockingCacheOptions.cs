@@ -44,7 +44,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether adding the first item to the cache should allocate memory the full cache <see cref="Capacity"/>.
         /// If <see langword="false"/>, then the internal storage is dynamically reallocated while adding new elements until reaching <see cref="Capacity"/>.
-        /// Set it to <see langword="true"/>&#160;if it is almost certain that the cache will be full when using it.
+        /// Set it to <see langword="true"/> if it is almost certain that the cache will be full when using it.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         public bool PreallocateCapacity { get; set; }
@@ -68,8 +68,8 @@ namespace KGySoft.Collections
         /// methods is protected from invoking it concurrently.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
-        /// <value><see langword="true"/>&#160;to protect the item loader delegate (it will not be called concurrently);
-        /// <see langword="false"/>&#160;to allow the item loader delegate to be called concurrently.</value>
+        /// <value><see langword="true"/> to protect the item loader delegate (it will not be called concurrently);
+        /// <see langword="false"/> to allow the item loader delegate to be called concurrently.</value>
         public bool ProtectItemLoader { get; set; }
 
         /// <summary>

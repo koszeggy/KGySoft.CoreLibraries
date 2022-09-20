@@ -32,7 +32,6 @@ namespace KGySoft.Serialization.Binary
     /// <summary>
     /// An <see cref="ISurrogateSelector"/> implementation that makes possible to serialize and deserialize objects by
     /// <see cref="IFormatter"/>s without storing field names. This provides compatibility for obfuscated and non-obfuscated versions of an assembly.
-    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,

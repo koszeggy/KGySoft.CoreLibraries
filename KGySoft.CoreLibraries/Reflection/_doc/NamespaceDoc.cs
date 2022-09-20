@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Contains the static <see cref="Reflector"/> class that provides most of the needed reflection tasks.
+    /// The <see cref="N:KGySoft.Reflection"/> namespace contains the static <see cref="Reflector"/> class that provides most of the needed reflection tasks.
     /// Additionally, contains several classes derived from <see cref="MemberAccessor"/> that can dynamically reflect objects, their members and type information by on-the-fly generated delegates.
     /// </summary>
     [CompilerGenerated]
