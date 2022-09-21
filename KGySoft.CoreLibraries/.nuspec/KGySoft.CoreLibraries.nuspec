@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>7.0.0-preview.3</version>
+    <version>7.0.0-rc.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -56,7 +56,6 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
   </metadata>
   <files>
     <file src="..\..\LICENSE" />
-    <file src="..\Help\KGySoft.CoreLibraries.chm" target="Help" />
     <file src="readme.txt"/>
     <file src="Icon64.png" target="" />
     <file src="..\bin\Release\net35\KGySoft.CoreLibraries.dll" target="lib\net35" />

@@ -1,88 +1,80 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+﻿<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Import the common properties to support NuGet restore -->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <!-- The configuration and platform will be used to determine which
-         assemblies to include from solution and project documentation
-         sources -->
+    <!-- The configuration and platform will be used to determine which assemblies to include from solution and
+				 project documentation sources -->
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{397f6543-1436-4ab8-aa81-162b4c3542c9}</ProjectGuid>
+    <ProjectGuid>{9b26bee6-42cc-47cb-bade-59987af213b8}</ProjectGuid>
     <SHFBSchemaVersion>2017.9.26.0</SHFBSchemaVersion>
-    <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual
-         Studio adds them anyway -->
+    <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual Studio adds them anyway -->
     <AssemblyName>Documentation</AssemblyName>
     <RootNamespace>Documentation</RootNamespace>
     <Name>Documentation</Name>
     <!-- SHFB properties -->
+    <FrameworkVersion>.NET Core/.NET Standard/.NET 5.0+</FrameworkVersion>
     <OutputPath>HelpOut\</OutputPath>
     <HtmlHelpName>KGySoft.CoreLibraries</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
-      <DocumentationSource sourceFile="KGySoft.CoreLibraries.csproj" />
+      <DocumentationSource sourceFile="KGySoft.CoreLibraries.csproj" xmlns="" />
     </DocumentationSources>
-    <HelpFileFormat>HtmlHelp1, Website</HelpFileFormat>
-    <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
-    <IndentHtml>False</IndentHtml>
-    <NamingMethod>MemberName</NamingMethod>
-    <ProjectSummary>
-    </ProjectSummary>
-    <RootNamespaceContainer>False</RootNamespaceContainer>
-    <MissingTags>Summary, Parameter, Returns, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
-    <NamespaceSummaries>
-      <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True" />
-      <NamespaceSummaryItem name="KGySoft.CoreLibraries" isDocumented="True" />
-      <NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
-      <NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True" />
-    </NamespaceSummaries>
+    <HelpFileFormat>Website</HelpFileFormat>
     <SyntaxFilters>Standard</SyntaxFilters>
+    <PresentationStyle>Default2022</PresentationStyle>
     <CleanIntermediates>True</CleanIntermediates>
-    <ApiFilter>
-    </ApiFilter>
-    <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
-    <FrameworkVersion>.NET Core/.NET Standard/.NET 5.0+</FrameworkVersion>
     <KeepLogFile>False</KeepLogFile>
     <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
-    <CppCommentsFixup>False</CppCommentsFixup>
-    <SdkLinkTarget>Blank</SdkLinkTarget>
-    <PresentationStyle>VS2010</PresentationStyle>
-    <Preliminary>False</Preliminary>
-    <ContentPlacement>AboveNamespaces</ContentPlacement>
-    <WebsiteSdkLinkType>Msdn</WebsiteSdkLinkType>
-    <HtmlSdkLinkType>Msdn</HtmlSdkLinkType>
-    <IncludeFavorites>True</IncludeFavorites>
-    <BinaryTOC>True</BinaryTOC>
-    <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
+    <IndentHtml>False</IndentHtml>
+    <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>7.0.0-preview.3</HelpFileVersion>
-    <MaximumGroupParts>2</MaximumGroupParts>
-    <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
-    <HeaderText>
-    </HeaderText>
-    <CopyrightText>Copyright &amp;#169%3b KGy SOFT. All rights reserved.</CopyrightText>
+    <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
+    <HelpFileVersion>7.0.0-rc.1</HelpFileVersion>
+    <NamingMethod>MemberName</NamingMethod>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
+    <RootNamespaceContainer>False</RootNamespaceContainer>
+    <NamespaceGrouping>False</NamespaceGrouping>
+    <MaximumGroupParts>2</MaximumGroupParts>
+    <Preliminary>False</Preliminary>
     <FooterText>Find the complete KGy SOFT Libraries documentation at the &amp;lt%3ba href=&amp;quot%3bhttps://docs.kgysoft.net&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bKGy SOFT Docs&amp;lt%3b/a&amp;gt%3b page.
 &amp;lt%3bbr/&amp;gt%3bProject Site: &amp;lt%3ba href=&amp;quot%3bhttps://kgysoft.net/corelibraries&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bhttps://kgysoft.net/corelibraries/&amp;lt%3b/a&amp;gt%3b
 &amp;lt%3bbr/&amp;gt%3bGitHub Repository: &amp;lt%3ba href=&amp;quot%3bhttps://github.com/koszeggy/KGySoft.CoreLibraries&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bhttps://github.com/koszeggy/KGySoft.CoreLibraries&amp;lt%3b/a&amp;gt%3b
 &amp;lt%3bbr/&amp;gt%3bNuGet: &amp;lt%3ba href=&amp;quot%3bhttps://www.nuget.org/packages/KGySoft.CoreLibraries&amp;quot%3b target=&amp;quot%3b_blank&amp;quot%3b&amp;gt%3bhttps://www.nuget.org/packages/KGySoft.CoreLibraries&amp;lt%3b/a&amp;gt%3b</FooterText>
+    <CopyrightText>Copyright &amp;#169%3b KGy SOFT. All rights reserved.</CopyrightText>
+    <SdkLinkTarget>Blank</SdkLinkTarget>
+    <HtmlSdkLinkType>Msdn</HtmlSdkLinkType>
+    <BinaryTOC>True</BinaryTOC>
+    <IncludeFavorites>True</IncludeFavorites>
+    <WebsiteSdkLinkType>Msdn</WebsiteSdkLinkType>
+    <AppendMarkdownFileExtensionsToUrls>False</AppendMarkdownFileExtensionsToUrls>
+    <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, NonBrowsable</VisibleItems>
     <TransformComponentArguments>
-      <Argument Key="logoFile" Value="logo.png" />
-      <Argument Key="logoHeight" Value="" />
-      <Argument Key="logoWidth" Value="" />
-      <Argument Key="logoAltText" Value="KGy SOFT" />
-      <Argument Key="logoPlacement" Value="above" />
-      <Argument Key="logoAlignment" Value="left" />
-      <Argument Key="logoUrl" Value="https://kgysoft.net/corelibraries" />
-      <Argument Key="maxVersionParts" Value="" />
-      <Argument Key="defaultLanguage" Value="cs" />
-      <Argument Key="includeEnumValues" Value="true" />
-      <Argument Key="baseSourceCodeUrl" Value="" />
-      <Argument Key="requestExampleUrl" Value="" />
+      <Argument Key="RobotsMetadata" Value="" />
+      <Argument Key="BibliographyDataFile" Value="" />
+      <Argument Key="RootBreadcrumbTitleText" Value="Docs" />
+      <Argument Key="CollapsibleSections" Value="True" />
+      <Argument Key="LogoFile" Value="logo.png" />
+      <Argument Key="LogoHeight" Value="" />
+      <Argument Key="LogoWidth" Value="" />
+      <Argument Key="LogoAltText" Value="KGy SOFT" />
+      <Argument Key="LogoPlacement" Value="Above" />
+      <Argument Key="LogoAlignment" Value="Left" />
+      <Argument Key="LogoUrl" Value="https://kgysoft.net/corelibraries" />
+      <Argument Key="MaxVersionParts" Value="" />
+      <Argument Key="DefaultLanguage" Value="cs" />
+      <Argument Key="IncludeEnumValues" Value="True" />
+      <Argument Key="EnumMemberSortOrder" Value="Value" />
+      <Argument Key="FlagsEnumValueFormat" Value="HexValue" />
+      <Argument Key="FlagsEnumSeparatorSize" Value="0" />
+      <Argument Key="BaseSourceCodeUrl" Value="" />
+      <Argument Key="RequestExampleUrl" Value="" />
     </TransformComponentArguments>
   </PropertyGroup>
-  <!-- There are no properties for these groups.  AnyCPU needs to appear in
-       order for Visual Studio to perform the build.  The others are optional
-       common platform types that may appear. -->
+  <!-- There are no properties for these groups.  AnyCPU needs to appear in order for Visual Studio to perform
+			 the build.  The others are optional common platform types that may appear. -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -99,6 +91,10 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
   </PropertyGroup>
+  <!-- Import the common build targets during NuGet restore because before the packages are being installed, $(SHFBROOT) is not set yet -->
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="'$(MSBuildRestoreSessionId)' != ''" />
+  <!-- Import the SHFB build targets during build -->
+  <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" Condition="'$(MSBuildRestoreSessionId)' == ''" />
   <ItemGroup>
     <Folder Include="icons\" />
     <Folder Include="Help\" />
@@ -109,14 +105,6 @@
       <ImageId>ResourceFileProperties_ResXResourceManager</ImageId>
       <AlternateText>Resource File Properties ResXResource Manager</AlternateText>
     </Content>
-    <Content Include="Help\Images\NewResourcesFile.png">
-      <ImageId>NewResourcesFile</ImageId>
-      <AlternateText>New Resources File</AlternateText>
-    </Content>
-    <Content Include="Help\Images\NewConsoleApp.png">
-      <ImageId>NewConsoleApp</ImageId>
-      <AlternateText>New Console App</AlternateText>
-    </Content>
     <Content Include="Help\Images\ResourceFileProperties_HybridResourceManager.png">
       <ImageId>ResourceFileProperties_HybridResourceManager</ImageId>
       <AlternateText>Resource File Properties Hybrid Resource Manager</AlternateText>
@@ -124,6 +112,18 @@
     <Content Include="Help\Images\ResourceFileProperties_DynamicResourceManager.png">
       <ImageId>ResourceFileProperties_DynamicResourceManager</ImageId>
       <AlternateText>Resource File Properties Dynamic Resource Manager</AlternateText>
+    </Content>
+    <Content Include="Help\Images\ProfilerResults.png">
+      <ImageId>ProfilerResults</ImageId>
+      <AlternateText>Profiler Results</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewResourcesFile.png">
+      <ImageId>NewResourcesFile</ImageId>
+      <AlternateText>New Resources File</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewConsoleApp.png">
+      <ImageId>NewConsoleApp</ImageId>
+      <AlternateText>New Console App</AlternateText>
     </Content>
     <Content Include="Help\Images\NewClassLibrary.png">
       <ImageId>NewClassLibrary</ImageId>
@@ -137,10 +137,6 @@
       <ImageId>ComponentModel_BusinessObjects</ImageId>
       <AlternateText>Class diagram of business object base classes and interfaces</AlternateText>
     </Content>
-    <Content Include="Help\Images\ProfilerResults.png">
-      <ImageId>ProfilerResults</ImageId>
-      <AlternateText>Profiler Results</AlternateText>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="icons\logo.png">
@@ -148,6 +144,4 @@
       <AlternateText>logo</AlternateText>
     </Content>
   </ItemGroup>
-  <!-- Import the SHFB build targets -->
-  <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
 </Project>

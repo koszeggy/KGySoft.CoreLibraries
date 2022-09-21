@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 7.0.0-preview.3
+Thank you for installing KGy SOFT Core Libraries 7.0.0-rc.1
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 
@@ -17,8 +17,6 @@ Project Home Page: https://kgysoft.net/corelibraries
 GitHub: https://github.com/koszeggy/KGySoft.CoreLibraries
 
 Online Documentation: https://docs.kgysoft.net/corelibraries
-Offline Documentation: <packages folder>\KGySoft.CoreLibraries.<version>\Help\KGySoft.CoreLibraries.chm
-Download link for the offline documentation: https://github.com/koszeggy/KGySoft.CoreLibraries/raw/master/KGySoft.CoreLibraries/Help/KGySoft.CoreLibraries.chm
 
                                                  ~~*~~
 
