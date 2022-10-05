@@ -30,6 +30,7 @@ using System.Threading;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+using KGySoft.Threading;
 
 #endregion
 
@@ -520,7 +521,7 @@ namespace KGySoft.Diagnostics
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
-        private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value > 0 && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
+        private bool IsValidAffinity() => CpuAffinity > 0 && CpuAffinity < (2L << (ParallelHelper.CoreCount - 1));
 
         [SecuritySafeCritical]
         private void DoTearDown()

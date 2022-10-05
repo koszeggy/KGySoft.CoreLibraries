@@ -56,7 +56,8 @@ namespace KGySoft.Threading
 
         #region Properties
 
-        private static int CoreCount => coreCount ??= Environment.ProcessorCount;
+        internal static int CoreCount => coreCount ??= Environment.ProcessorCount;
+        internal static bool IsSingleCoreCpu => CoreCount == 1;
 
         #endregion
 
@@ -322,7 +323,7 @@ namespace KGySoft.Threading
 
         #endregion
 
-        #region Internal Methods
+        #region Private Methods
 
 #if NET35
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -386,7 +387,7 @@ namespace KGySoft.Threading
             }
 
             // single core or no parallelism: sequential invoke
-            if (CoreCount == 1 || context.MaxDegreeOfParallelism == 1)
+            if (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1)
             {
                 for (int i = fromInclusive; i < toExclusive; i++)
                 {
@@ -547,11 +548,7 @@ namespace KGySoft.Threading
             return !context.IsCancellationRequested;
         }
 
-        #endregion
-
-        #region Private Methods
 #if NET35
-
         private static IEnumerable<(int From, int To)> CreateRanges(int fromInclusive, int toExclusive, int rangeSize)
         {
             for (int i = fromInclusive; i < toExclusive; i += rangeSize)
@@ -566,8 +563,8 @@ namespace KGySoft.Threading
                 yield return (i, Math.Min(toExclusive, i + rangeSize));
             }
         }
-
 #endif
+
         #endregion
 
         #endregion

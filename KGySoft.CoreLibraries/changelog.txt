@@ -68,6 +68,9 @@
   + New SampleInt128 and SampleUInt128 methods (.NET 7.0 and above)
   + New NextInt128 and NextUInt128 methods (.NET 7.0 and above)
   + NextObject methods: supporting Int128 and UInt128 types (.NET 7.0 and above)
+* HiResTimer class:
+  + Allowing Interval change during running also for small values
+  - Fixing single core behavior
 
 ! KGySoft.Reflection namespace:
 ===============================

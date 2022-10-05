@@ -34,7 +34,7 @@ namespace KGySoft.Threading
 
         private const int yieldThreshold = 10;
         private const int maxPower = 12;
-        private const int defaultMaxSpin = 1 << maxPower;
+        private const int defaultMaxSpinWait = 1 << maxPower;
 #if !NET35
         private const int sleep0EveryHowManyYields = 5; 
 #endif
@@ -45,8 +45,6 @@ namespace KGySoft.Threading
         #region Fields
 
         #region Static Fields
-
-        private static readonly bool isSingleProcessor = Environment.ProcessorCount == 1;
 
 #if !NETFRAMEWORK
         private static int? maxSpin;
@@ -66,10 +64,10 @@ namespace KGySoft.Threading
         #region Properties
 
 #if NETFRAMEWORK
-        private static int MaxSpin => defaultMaxSpin;
+        internal static int MaxSpinWait => defaultMaxSpinWait;
 #else
-        private static int MaxSpin => maxSpin
-            ??= Reflector.TryGetProperty(typeof(Thread), "OptimalMaxSpinWaitsPerSpinIteration", out object? value) && value is int i ? i : defaultMaxSpin;
+        internal static int MaxSpinWait => maxSpin
+            ??= Reflector.TryGetProperty(typeof(Thread), "OptimalMaxSpinWaitsPerSpinIteration", out object? value) && value is int i ? i : defaultMaxSpinWait;
 #endif
 
         #endregion
@@ -102,7 +100,7 @@ namespace KGySoft.Threading
 
             // (count & 1) == 0: interleaving spinning and Yield/Sleep(0) because they return immediately when there are no waiting threads.
             // This can prevent also switching threads between each other if there are more threads calling Yield/Sleep(0) at the same time
-            if (count >= yieldThreshold && (count & 1) == 0 || isSingleProcessor)
+            if (count >= yieldThreshold && (count & 1) == 0 || ParallelHelper.IsSingleCoreCpu)
             {
 #if NET35
                 Thread.Sleep(0);
@@ -115,7 +113,7 @@ namespace KGySoft.Threading
 #endif
             }
             else
-                Thread.SpinWait(count <= maxPower ? Math.Min(1 << count, MaxSpin) : MaxSpin);
+                Thread.SpinWait(count <= maxPower ? Math.Min(1 << count, MaxSpinWait) : MaxSpinWait);
 
             count = count == Int32.MaxValue ? yieldThreshold : count + 1;
         }

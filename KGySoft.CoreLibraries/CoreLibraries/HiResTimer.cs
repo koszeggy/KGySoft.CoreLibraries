@@ -19,6 +19,8 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
+using KGySoft.Threading;
+
 #endregion
 
 namespace KGySoft.CoreLibraries
@@ -172,7 +174,7 @@ namespace KGySoft.CoreLibraries
                 return;
 
             isRunning = true;
-            Thread thread = new Thread(ExecuteTimer) { Priority = ThreadPriority.Highest };
+            Thread thread = new Thread(ExecuteTimer) { Priority = ParallelHelper.IsSingleCoreCpu ? ThreadPriority.Normal : ThreadPriority.Highest };
             thread.Start();
         }
 
@@ -211,31 +213,34 @@ namespace KGySoft.CoreLibraries
                     if (diff <= 0f)
                         break;
 
-                    if (diff < 1f)
-                        Thread.SpinWait(10);
-                    else if (diff < 10f)
-                        Thread.SpinWait(100);
-                    else
+                    if (diff >= 16f)
                     {
                         // By default Sleep(1) lasts about 15.5 ms (if not configured otherwise for the application by WinMM, for example)
                         // so not allowing sleeping under 16 ms. Not sleeping for more than 50 ms so interval changes/stopping can be detected.
-                        if (diff >= 16f)
-                            Thread.Sleep(diff >= 100f ? 50 : 1);
-                        else
+                        Thread.Sleep(diff >= 100f ? 50 : 1);
+                    }
+                    else
+                    {
+                        if (!ParallelHelper.IsSingleCoreCpu)
+                            Thread.SpinWait(Math.Min(diff <= 1f ? 10 : diff < 10f ? 100 : 1000, TimedSpinWait.MaxSpinWait));
+                        if (diff > 1f || ParallelHelper.IsSingleCoreCpu)
                         {
-                            Thread.SpinWait(1000);
+#if NET35
                             Thread.Sleep(0);
+#else
+                            Thread.Yield();
+#endif
                         }
+                    }
 
-                        // if we have a larger time to wait, we check if the interval has been changed in the meantime
-                        float newInterval = interval;
+                    // we check if the interval has been changed in the meantime
+                    float newInterval = interval;
 
-                        // ReSharper disable once CompareOfFloatsByEqualityOperator
-                        if (intervalLocal != newInterval)
-                        {
-                            nextTrigger += newInterval - intervalLocal;
-                            intervalLocal = newInterval;
-                        }
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator
+                    if (intervalLocal != newInterval)
+                    {
+                        nextTrigger += newInterval - intervalLocal;
+                        intervalLocal = newInterval;
                     }
 
                     if (!isRunning)
