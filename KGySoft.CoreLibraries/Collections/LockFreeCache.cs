@@ -21,14 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
-
-#endregion
-
-#region Suppressions
-
-#if NET40 || NET45 || NET472 || NETSTANDARD
-#pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
-#endif
+using KGySoft.Threading;
 
 #endregion
 
@@ -181,7 +174,7 @@ namespace KGySoft.Collections
                 return true;
 
             // a merge has been started, values from growingStorage storage might be started to copied: preventing current thread from consuming CPU until merge is finished
-            var wait = new SpinWait();
+            var wait = new TimedSpinWait();
             while (isMerging)
                 wait.SpinOnce();
 

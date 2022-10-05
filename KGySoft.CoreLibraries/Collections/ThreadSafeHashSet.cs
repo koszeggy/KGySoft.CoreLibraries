@@ -31,14 +31,12 @@ using System.Threading;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 using KGySoft.Serialization.Binary;
+using KGySoft.Threading;
 
 #endregion
 
 #region Suppressions
 
-#if NET40 || NET45 || NET472 || NETSTANDARD
-#pragma warning disable CS0436 // Type conflicts with imported type - Using custom SpinWait even if available in some targets
-#endif
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
@@ -901,7 +899,7 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private void WaitWhileMerging()
         {
-            var wait = new SpinWait();
+            var wait = new TimedSpinWait();
             while (isMerging)
                 wait.SpinOnce();
         }
