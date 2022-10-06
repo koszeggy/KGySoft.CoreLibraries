@@ -1185,21 +1185,37 @@ namespace KGySoft.Threading
             // this method is executed on a pool thread
             static void DoWork(object state)
             {
+#if NET
+                var (context, completion, op) = ((TaskContext, TaskCompletionSource, Action<IAsyncContext>))state;
+#else
                 var (context, completion, op) = ((TaskContext, TaskCompletionSource<object?>, Action<IAsyncContext>))state;
+#endif
                 try
                 {
                     op.Invoke(context);
                     if (context.IsCancellationRequested && context.ThrowIfCanceled)
                         completion.SetCanceled();
                     else
+                    {
+#if NET
+                        completion.SetResult();
+#else
                         completion.SetResult(default);
+#endif
+                    }
                 }
                 catch (OperationCanceledException)
                 {
                     if (context.ThrowIfCanceled)
                         completion.SetCanceled();
                     else
+                    {
+#if NET
+                        completion.SetResult();
+#else
                         completion.SetResult(default);
+#endif
+                    }
                 }
                 catch (Exception e)
                 {
@@ -1212,13 +1228,24 @@ namespace KGySoft.Threading
             if (operation == null!)
                 Throw.ArgumentNullException<string>(Argument.operation);
             var taskContext = new TaskContext(asyncConfig);
+#if NET
+            var completionSource = new TaskCompletionSource(taskContext.State);
+#else
             var completionSource = new TaskCompletionSource<object?>(taskContext.State);
+#endif
             if (taskContext.IsCancellationRequested)
             {
                 if (taskContext.ThrowIfCanceled)
                     completionSource.SetCanceled();
                 else
+                {
+#if NET
+                    completionSource.SetResult();
+#else
                     completionSource.SetResult(default);
+#endif
+                }
+
             }
             else
                 ThreadPool.UnsafeQueueUserWorkItem(DoWork!, (taskContext, completionSource, operation));
