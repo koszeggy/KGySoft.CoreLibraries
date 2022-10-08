@@ -70,7 +70,7 @@ namespace KGySoft.Serialization.Xml
     /// then it will be used for serializing its value (see also the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method).</description></item>
     /// </list>
     /// </para>
-    /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/> after creating its parent object, then the returned instance is tried to be re-used on deserialization.
+    /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/> after creating its parent object and the type has no parameterless constructor, then the returned instance is tried to be re-used on deserialization.
     /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> methods into an already existing
     /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> method. When deserializing,
     /// the result object should be created by the caller, and the content can be deserialized by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>

@@ -25,6 +25,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 #if !NET35
 using System.Numerics;
 #endif
@@ -501,6 +502,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             object[] referenceObjects =
             {
                 new EmptyType(),
+                new StrongBox<int?>(5),
+                new StrongBox<int?>(),
                 new BinarySerializableClass { IntProp = 1, StringProp = "alpha", ObjectProp = " . " },
                 new BinarySerializableStruct { IntProp = 2, StringProp = "beta" },
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma" },

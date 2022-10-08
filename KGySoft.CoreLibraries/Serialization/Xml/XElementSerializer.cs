@@ -466,6 +466,7 @@ namespace KGySoft.Serialization.Xml
                 PropertyInfo? property = member.Property;
                 FieldInfo? field = member.Field;
                 Type memberType = property != null ? property.PropertyType : field!.FieldType;
+                memberType = Nullable.GetUnderlyingType(memberType) ?? memberType;
 
                 XElement memberElement = new XElement(member.MemberInfo.Name!);
                 if (member.SpecifyDeclaringType)

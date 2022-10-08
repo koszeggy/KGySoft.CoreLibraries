@@ -130,6 +130,7 @@
     mutated.
   + Supporting the Int128 and UInt128 types natively (.NET 7.0 and above)
   - Fixing an issue regarding DesignerSerializerVisibilityAttribute handling.
+  - Not emitting type names unnecessarily for nullable members.
 
 + New KGySoft.Threading namespace:
 ==================================
