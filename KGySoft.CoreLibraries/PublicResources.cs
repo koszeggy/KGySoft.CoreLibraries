@@ -46,6 +46,10 @@ namespace KGySoft
         /// <returns>A localized string similar to <c>Value cannot be empty.</c></returns>
         public static string ArgumentEmpty => Res.ArgumentEmpty;
 
+        /// <summary>Looks up a localized string similar to <c>The specified argument is invalid.</c></summary>
+        /// <returns>A localized string similar to <c>The specified argument is invalid.</c></returns>
+        public static string ArgumentInvalid => Res.ArgumentInvalid;
+
         /// <summary>Looks up a localized string similar to <c>The collection contains no elements.</c></summary>
         /// <returns>A localized string similar to <c>The collection contains no elements.</c></returns>
         public static string CollectionEmpty => Res.CollectionEmpty;

@@ -13,6 +13,10 @@
 ===================
 + Targeting also .NET 7.0.
 
++ KGySoft namespace
+===================
++ PublicResources class: New ArgumentInvalid property.
+
 * KGySoft.Collections namespace:
 ================================
 + New ThreadSafeHashSet<T> class: a scalable alternative for LockingCollection<T>

@@ -926,6 +926,9 @@ You may try to preload its assembly before deserialization or use the unsafe Get
   <data name="General_ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>
   </data>
+  <data name="General_ArgumentInvalid" xml:space="preserve">
+    <value>The specified argument is invalid.</value>
+  </data>
   <data name="General_CollectionEmpty" xml:space="preserve">
     <value>The collection contains no elements.</value>
   </data>

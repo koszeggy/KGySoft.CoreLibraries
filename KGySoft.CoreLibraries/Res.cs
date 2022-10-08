@@ -70,6 +70,9 @@ namespace KGySoft
         /// <summary>Value cannot be empty.</summary>
         internal static string ArgumentEmpty => Get("General_ArgumentEmpty");
 
+        /// <summary>The specified argument is invalid.</summary>
+        internal static string ArgumentInvalid => Get("General_ArgumentInvalid");
+
         /// <summary>The collection contains no elements.</summary>
         internal static string CollectionEmpty => Get("General_CollectionEmpty");
 
