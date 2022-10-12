@@ -5,13 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "Performance Test .NET 6.0 Launch (console)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/bin/Debug/netcoreapp3.0/KGySoft.CoreLibraries.PerformanceTest.dll",
+            "program": "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/bin/Debug/net6.0/KGySoft.CoreLibraries.PerformanceTest.dll",
             "args": [],
             "cwd": "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "UnitTest .NET 6.0 Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest/bin/Debug/net6.0/KGySoft.CoreLibraries.UnitTest.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest",
             "console": "internalConsole",
             "stopAtEntry": false
         },

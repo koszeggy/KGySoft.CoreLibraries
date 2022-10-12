@@ -94,7 +94,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
         {
             var bools = new bool[1000];
             IAsyncResult ar = ParallelHelper.BeginFor(0, bools.Length, i => bools[i] = true);
-            Assert.IsFalse(ar.IsCompleted);
             bool result = ParallelHelper.EndFor(ar);
             Assert.IsTrue(ar.IsCompleted);
             Assert.IsFalse(ar.CompletedSynchronously);
@@ -162,7 +161,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
         {
             var bools = new bool[1000];
             Task task = ParallelHelper.ForAsync(0, bools.Length, i => bools[i] = true);
-            Assert.IsFalse(task.IsCompleted);
             task.Wait();
             Assert.IsTrue(task.IsCompleted);
             Assert.IsTrue(bools.All(b => b));
