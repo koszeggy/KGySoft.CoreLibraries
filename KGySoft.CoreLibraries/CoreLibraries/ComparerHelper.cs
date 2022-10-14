@@ -27,17 +27,21 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         internal static IEqualityComparer<T> EqualityComparer { get; } =
-#if NETSTANDARD2_0
+#if NETFRAMEWORK
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+#elif NETSTANDARD2_0
             EqualityComparer<T>.Default;
 #else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+            Environment.OSVersion.Platform == PlatformID.Win32NT && typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
 #endif
 
         internal static IComparer<T> Comparer { get; } =
-#if NETSTANDARD2_0
+#if NETFRAMEWORK
+            typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
+#elif NETSTANDARD2_0
             Comparer<T>.Default;
 #else
-            typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
+            Environment.OSVersion.Platform == PlatformID.Win32NT && typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
 #endif
 
         #endregion

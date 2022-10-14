@@ -20,17 +20,17 @@ using System.Collections.Generic;
 #if NET5_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
-#if NET40_OR_GREATER || NETSTANDARD2_0
+#if !NET35
 using System.Linq.Expressions; 
 #endif
 using System.Runtime.Serialization;
 using System.Security;
-#if NET40_OR_GREATER || NETSTANDARD2_0
+#if !NET35
 using System.Threading; 
 #endif
 
 using KGySoft.Collections;
-#if NET40_OR_GREATER || NETSTANDARD2_0
+#if !NET35
 using KGySoft.Reflection;
 #endif
 
@@ -105,7 +105,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region FallbackEnumComparer
-#if NET40_OR_GREATER || NETSTANDARD2_0
+#if !NET35
 
         /// <summary>
         /// A fallback comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/>
@@ -153,7 +153,7 @@ namespace KGySoft.CoreLibraries
             }
 
             /// <summary>
-            /// return (TEnum)value;
+            /// return (long)value;
             /// </summary>
             private static Func<TEnum, long> GenerateToInt64()
             {
@@ -168,7 +168,7 @@ namespace KGySoft.CoreLibraries
             #region Public Methods
 
             public override bool Equals(TEnum x, TEnum y) => EqualityComparer<TEnum>.Default.Equals(x, y);
-            public override int GetHashCode(TEnum obj) => EqualityComparer<TEnum>.Default.GetHashCode(obj);
+            public override int GetHashCode(TEnum obj) => EqualityComparer<TEnum>.Default.GetHashCode(obj!);
             public override int Compare(TEnum x, TEnum y) => Comparer<TEnum>.Default.Compare(x, y);
 
             #endregion
@@ -318,14 +318,20 @@ namespace KGySoft.CoreLibraries
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
         public static EnumComparer<TEnum> Comparer => comparer ??=
-#if NETSTANDARD2_0
-            new FallbackEnumComparer();
-#elif NETFRAMEWORK && !NET35
+#if NET35
+            EnumComparerBuilder.GetComparer<TEnum>();
+#elif NETFRAMEWORK
             EnvironmentHelper.IsPartiallyTrustedDomain
                 ? new PartiallyTrustedEnumComparer()
                 : EnumComparerBuilder.GetComparer<TEnum>();
+#elif NETSTANDARD2_0
+            new FallbackEnumComparer();
 #else
-            EnumComparerBuilder.GetComparer<TEnum>();
+            // NOTE: TypeBuilder.CreateType may throw a BadImageFormat exception on Android, .NET 6.
+            //       And though it works well on Linux (or even on Android with the .NET Standard 2.1 build) not risking using it on non-Windows platforms
+            Environment.OSVersion.Platform == PlatformID.Win32NT
+                ? EnumComparerBuilder.GetComparer<TEnum>()
+                : new FallbackEnumComparer();
 #endif
 
         #endregion
