@@ -32,7 +32,7 @@
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
-    <HelpFileVersion>7.0.0-rc.1</HelpFileVersion>
+    <HelpFileVersion>7.0.0-rc.2</HelpFileVersion>
     <NamingMethod>MemberName</NamingMethod>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <RootNamespaceContainer>False</RootNamespaceContainer>
@@ -50,11 +50,11 @@
     <IncludeFavorites>True</IncludeFavorites>
     <WebsiteSdkLinkType>Msdn</WebsiteSdkLinkType>
     <AppendMarkdownFileExtensionsToUrls>False</AppendMarkdownFileExtensionsToUrls>
-    <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, NonBrowsable</VisibleItems>
+    <VisibleItems>Attributes, InheritedMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <TransformComponentArguments>
       <Argument Key="RobotsMetadata" Value="" />
       <Argument Key="BibliographyDataFile" Value="" />
-      <Argument Key="RootBreadcrumbTitleText" Value="Docs" />
+      <Argument Key="RootBreadcrumbTitleText" Value="KGy SOFT Core Libraries" />
       <Argument Key="CollapsibleSections" Value="True" />
       <Argument Key="LogoFile" Value="logo.png" />
       <Argument Key="LogoHeight" Value="" />
