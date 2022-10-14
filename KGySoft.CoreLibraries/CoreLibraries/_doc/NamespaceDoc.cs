@@ -25,9 +25,9 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// The <see cref="N:KGySoft.CoreLibraries"/> namespace contains general library classes. Some of them are just additions to
-    /// the standard .NET classes providing better performance, such as the generic <see cref="Enum{TEnum}"/> and <see cref="EnumComparer{TEnum}"/> classes.
+    /// the standard .NET classes providing better performance, such as the generic <see cref="Enum{TEnum}"/> and <see cref="FastRandom"/> classes.
     /// Some others provide new functionality, such as the <see cref="HiResTimer"/> class.
-    /// Additionally, contains extensions to numerous classes including the <see cref="Enum"/>, <see cref="Type"/>, <see cref="Random"/>, <see cref="IEnumerable{T}"/>
+    /// Additionally, contains extensions to numerous types including <see cref="Enum"/>, <see cref="Type"/>, <see cref="Random"/>, <see cref="IEnumerable{T}"/>
     /// and many other.
     /// </summary>
     [CompilerGenerated]
