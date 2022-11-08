@@ -273,7 +273,7 @@ Similar to `ConcurrentDictionary` but has a bit different characteristic and can
 
 - #### [`ThreadSafeHashSet<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm):
 
-In .NET still there is no `ConcurrentHashSet<T>` type. One option is to use a `ConcurrentDictionary<TKey, TValue>` with ignored keys. Another option is to use the [`ThreadSafeHashSet<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm) class, which uses a very similar approach to [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm): when used with a limited number of items, or when new items are rarely added compared to a contains check, then it may become practically lock-free.
+In .NET still there is no `ConcurrentHashSet<T>` type. One option is to use a `ConcurrentDictionary<TKey, TValue>` with ignored values. Another option is to use the [`ThreadSafeHashSet<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm) class, which uses a very similar approach to [`ThreadSafeDictionary<TKey, TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm): when used with a limited number of items, or when new items are rarely added compared to a contains check, then it may become practically lock-free.
 
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 

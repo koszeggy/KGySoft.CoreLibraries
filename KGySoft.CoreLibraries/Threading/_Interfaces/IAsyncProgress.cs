@@ -61,7 +61,7 @@ namespace KGySoft.Threading
     ///     }
     /// 
     ///     // This IAsyncProgress implementation just provides an always up-to-date Current property.
-    ///     // You can add an event if you want don't want to miss any tiny progress change.
+    ///     // You can add an event if you don't want to miss any tiny progress change.
     ///     private class ProgressTracker : IAsyncProgress
     ///     {
     ///         private readonly object syncRoot = new object();
