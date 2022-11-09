@@ -1315,7 +1315,7 @@ namespace KGySoft.Collections
         {
             this.itemLoader = itemLoader ?? nullLoader;
             Capacity = capacity;
-            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
         }
 
         /// <summary>
@@ -1342,7 +1342,7 @@ namespace KGySoft.Collections
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
             itemLoader = nullLoader;
-            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
             int count = dictionary.Count;
             if (count == 0)
                 return;
@@ -2199,7 +2199,7 @@ namespace KGySoft.Collections
 
             capacity = info.GetInt32(nameof(capacity));
             ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
-            comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
+            comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
             behavior = (CacheBehavior)info.GetByte(nameof(behavior));
             itemLoader = (Func<TKey, TValue>?)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
             disposeDroppedValues = info.GetBoolean(nameof(disposeDroppedValues));

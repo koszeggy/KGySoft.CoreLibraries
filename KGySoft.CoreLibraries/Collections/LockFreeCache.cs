@@ -102,7 +102,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualToProperty(nameof(options.ThresholdCapacity), nameof(options.InitialCapacity)));
 
             this.itemLoader = itemLoader;
-            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
             nextCapacity = options.InitialCapacity;
             thresholdCapacity = options.ThresholdCapacity;

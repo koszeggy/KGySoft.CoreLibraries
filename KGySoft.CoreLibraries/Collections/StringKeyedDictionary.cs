@@ -1008,7 +1008,7 @@ namespace KGySoft.Collections
         /// <param name="comparer">A <see cref="StringSegmentComparer"/> instance to use when comparing keys.
         /// When <see langword="null"/>, ordinal comparison will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED")]
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED")]
         public StringKeyedDictionary(IDictionary<string, TValue> dictionary, StringSegmentComparer? comparer = null)
             : this(dictionary?.Count ?? 0, comparer)
         {

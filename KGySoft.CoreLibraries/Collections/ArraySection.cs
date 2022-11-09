@@ -355,7 +355,7 @@ namespace KGySoft.Collections
         /// No heap allocation occurs when using this constructor overload.
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
-        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array) : this(array, 0, array?.Length ?? 0)
         {
         }
@@ -391,7 +391,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="array">The array to initialize the new <see cref="ArraySection{T}"/> instance from.</param>
         /// <param name="offset">The index of the first element in the <paramref name="array"/> to include in the new <see cref="ArraySection{T}"/>.</param>
-        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "False alarm, array CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public ArraySection(T[] array, int offset) : this(array, offset, (array?.Length ?? 0) - offset)
         {
         }

@@ -504,7 +504,7 @@ namespace KGySoft.Collections
             fixedSizeStorage = FixedSizeStorage.Empty;
             initialLockingCapacity = capacity;
             bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
-            this.comparer = ComparerHelper<TKey>.GetSpecialDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
         }
 
         /// <summary>

@@ -48,14 +48,7 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        internal static IEqualityComparer<T>? GetSpecialDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer)
-        {
-#if NETSTANDARD2_0
-            return IsDefaultComparer(comparer) ? null : comparer;
-#else
-            return IsDefaultComparer(comparer) ? (typeof(T).IsEnum ? EnumComparer<T>.Comparer : null) : comparer;
-#endif
-        }
+        internal static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
 
         internal static bool IsDefaultComparer(IEqualityComparer<T>? comparer)
             // Last part can be optimized away by JIT but only if we use typeof(string) and not Reflector.StringType
