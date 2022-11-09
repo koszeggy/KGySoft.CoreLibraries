@@ -297,7 +297,7 @@ namespace KGySoft.Reflection
             => GenericInitializer is Func<T1, T2, T3, TInstance> func ? func.Invoke(param1, param2, param3) : ThrowGeneric<TInstance>();
 
         /// <summary>
-        /// Creates a new instance using the associated constructor with three parameters.
+        /// Creates a new instance using the associated constructor with four parameters.
         /// </summary>
         /// <typeparam name="TInstance">The type of the created instance.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>

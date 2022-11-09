@@ -39,8 +39,8 @@ using System.Threading.Tasks;
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// The <see cref="ParallelHelper"/> class contains similar methods than the <see cref="O:System.Threading.Tasks.Parallel.For">Parallel.For</see> overloads
-    /// in .NET Framework 4.0 and later but the ones in this class can be used even on .NET Framework 3.5 and support reporting progress and have async overloads.
+    /// The <see cref="ParallelHelper"/> class contains similar methods to the <see cref="O:System.Threading.Tasks.Parallel.For">Parallel.For</see> overloads
+    /// in .NET Framework 4.0 and later but the ones in this class can be used even on .NET Framework 3.5, support reporting progress and have async overloads.
     /// </summary>
     public static class ParallelHelper
     {
@@ -74,7 +74,7 @@ namespace KGySoft.Threading
         /// <remarks>
         /// <para>This method is functionally the same as <see cref="Parallel.For(int, int, Action{int})">Parallel.For(int, int, Action&lt;int>)</see>
         /// but it can be used even in .NET Framework 3.5.</para>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
         /// <para>This method has no return type because if there was no exception, then the loop is guaranteed to be completed.</para>
         /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation or reporting progress.
         /// Use the <see cref="For{T}(T, int, int, ParallelConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation, report progress;
@@ -124,7 +124,7 @@ namespace KGySoft.Threading
         /// <remarks>
         /// <para>This method is similar to <see cref="Parallel.For(int, int, ParallelOptions, Action{int})">Parallel.For(int, int, ParallelOptions, Action&lt;int>)</see>
         /// but it can be used even in .NET Framework 3.5 and supports reporting progress.</para>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the method returns without performing any iterations.</para>
         /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="configuration"/> and there is at least one iteration,
         /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
         /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>
@@ -154,7 +154,7 @@ namespace KGySoft.Threading
         /// <remarks>
         /// <para>In .NET Framework 4.0 and above you can use also the <see cref="ForAsync(int,int,Action{int})"/> method.</para>
         /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndFor">EndFor</see> method.</para>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <note>This method adjusts the degree of parallelization automatically and does not support cancellation or reporting progress.
         /// Use the <see cref="BeginFor{T}(T, int, int, AsyncConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation, report progress;
         /// or the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> method if you target .NET Framework 4.0 or later.</note>
@@ -192,7 +192,7 @@ namespace KGySoft.Threading
         /// <remarks>
         /// <para>In .NET Framework 4.0 and above you can use also the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> method.</para>
         /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndFor">EndFor</see> method.</para>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
         /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
         /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>
@@ -231,7 +231,7 @@ namespace KGySoft.Threading
         /// <param name="body">The delegate that is invoked once per iteration.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation, which could still be pending.</returns>
         /// <remarks>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <para>The <see cref="Task"/> returned by this method has no result because if there was no exception, then the loop is guaranteed to be completed.</para>
         /// <note>This method adjusts the degree of parallelization automatically and does not support cancellation or reporting progress.
         /// Use the <see cref="ForAsync{T}(T, int, int, TaskConfig?, Action{int})"/> overload to adjust parallelization, set up cancellation or to report progress.</note>
@@ -271,7 +271,7 @@ namespace KGySoft.Threading
         /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
         /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>If <paramref name="fromInclusive"/> is greater or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
+        /// <para>If <paramref name="fromInclusive"/> is greater than or equal to <paramref name="toExclusive"/>, then the operation completes synchronously without performing any iterations.</para>
         /// <para>If <paramref name="operation"/> is not <see langword="null"/>, <see cref="AsyncConfigBase.Progress"/> is set in <paramref name="asyncConfig"/> and there is at least one iteration,
         /// then the <see cref="IAsyncProgress.New{T}">IAsyncProgress.New</see> method will be called before the first iteration passing the specified <paramref name="operation"/> to the <c>operationType</c> parameter.
         /// It will be followed by as many <see cref="IAsyncProgress.Increment">IAsyncProgress.Increment</see> calls as many iterations were completed successfully.</para>

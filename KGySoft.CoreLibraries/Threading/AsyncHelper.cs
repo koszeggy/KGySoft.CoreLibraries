@@ -95,7 +95,7 @@ namespace KGySoft.Threading
     ///     {
     ///         ValidateArguments(count, min, max);
     /// 
-    ///         // Use AsyncContext.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled properly.
+    ///         // Use AsyncHelper.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled properly.
     ///         // To return a Task without a result use AsyncHelper.FromCompleted instead.
     ///         if (count == 0)
     ///             return AsyncHelper.FromResult(Reflector.EmptyArray<double>(), asyncConfig);
@@ -109,7 +109,7 @@ namespace KGySoft.Threading
     ///     {
     ///         ValidateArguments(count, min, max);
     /// 
-    ///         // Use AsyncContext.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled and
+    ///         // Use AsyncHelper.FromResult for immediate return. It handles asyncConfig.ThrowIfCanceled and
     ///         // sets IAsyncResult.CompletedSynchronously. Use AsyncHelper.FromCompleted if the End method has no return value.
     ///         if (count == 0)
     ///             return AsyncHelper.FromResult(Reflector.EmptyArray<double>(), asyncConfig);

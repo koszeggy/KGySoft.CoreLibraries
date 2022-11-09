@@ -196,7 +196,7 @@ namespace KGySoft.Resources
     /// <para><strong>Incompatibility</strong> with <see cref="ResourceManager"/>:
     /// <list type="bullet">
     /// <item>There is no constructor where the type of the resource sets can be specified. As <see cref="HybridResourceManager"/> works with multiple resource types
-    /// you must not rely on the value of the <see cref="ResourceSetType"/> property.</item>
+    /// you must not rely on the value of the <see cref="ResourceManager.ResourceSetType"/> property.</item>
     /// <item>If <see cref="ResourceManager.GetResourceSet">ResourceManager.GetResourceSet</see> method is called with <c>createIfNotExists = false</c> for a culture,
     /// which has a corresponding but not loaded resource file, then a resource set for a parent culture might be cached and on successive calls that cached parent set will be
     /// returned even if the <c>createIfNotExists</c> argument is <see langword="true"/>. In <see cref="HybridResourceManager"/> the corresponding argument of

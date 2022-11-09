@@ -188,7 +188,7 @@ namespace KGySoft.Threading
         /// Indicates that a new progress session is started that consists of <paramref name="maximumValue"/> steps.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operationType"/> parameter.</typeparam>
-        /// <param name="operationType">An instance if <typeparamref name="T"/> that describes the type of the new operation.</param>
+        /// <param name="operationType">An instance of <typeparamref name="T"/> that describes the type of the new operation.</param>
         /// <param name="maximumValue">Specifies the possible maximum steps of the new operation (the <see cref="Increment">Increment</see> method is recommended to be called later on
         /// if a parallel processing does not know or may reorder the current step). 0 means an operation with no separate steps. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
