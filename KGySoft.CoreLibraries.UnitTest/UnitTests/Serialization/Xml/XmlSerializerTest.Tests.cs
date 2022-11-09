@@ -503,7 +503,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             {
                 new EmptyType(),
                 new StrongBox<int?>(5),
-                new StrongBox<int?>(),
+                new StrongBox<int?>(null),
                 new BinarySerializableClass { IntProp = 1, StringProp = "alpha", ObjectProp = " . " },
                 new BinarySerializableStruct { IntProp = 2, StringProp = "beta" },
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma" },
@@ -952,7 +952,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Queue<int>[][] { new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) } },
 #if !NET35
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
-                new ConcurrentBag<int> { 1, 2, 3 },
+#if !NET7_0 // BUG, only in .NET 7: https://github.com/dotnet/runtime/issues/67491
+                new ConcurrentBag<int> { 1, 2, 3 },  
+#endif
 #if !NET40
                 new ArraySegment<int>(new[] { 1, 2, 3 }),
 #endif

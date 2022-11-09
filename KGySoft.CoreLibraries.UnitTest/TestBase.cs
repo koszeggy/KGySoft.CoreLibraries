@@ -175,22 +175,6 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        protected static void CheckTestingFramework()
-        {
-            Console.WriteLine($"Referenced runtime by KGySoft.CoreLibraries: {typeof(PublicResources).Assembly.GetReferencedAssemblies()[0]}");
-#if NET35
-            if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
-                Assert.Inconclusive($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 2.0");
-#elif NET40 || NET45 || NET472
-            if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
-                Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
-#elif NETCOREAPP
-            Console.WriteLine($"Tests executed on .NET Core version {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}");
-#else
-#error unknown .NET version
-#endif
-        }
-
         protected static void CopyContent(object target, object source)
         {
             if (target == null || source == null)

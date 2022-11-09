@@ -786,7 +786,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsFalse(manager.IsModified);
             manager.SetObject(resName, "new string");
             Assert.IsTrue(manager.IsModified);
-            CheckTestingFramework(); // the modified resource sets are searched in ResourceManager.ResourceSets Hashtable in .NET 3.5 and in ResXResourceManager.resourceSets Dictionary above.
             manager = manager.DeepClone();
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));

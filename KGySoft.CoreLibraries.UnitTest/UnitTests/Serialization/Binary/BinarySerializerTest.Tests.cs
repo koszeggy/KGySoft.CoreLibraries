@@ -1044,7 +1044,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
             referenceObjects = new object[]
             {
-                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },
+#if !NET7_0 // BUG, only in .NET 7: https://github.com/dotnet/runtime/issues/67491
+                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },  
+#endif
                 new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>(new[] { 1, 2 }) }, { 2, null } },
                 new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
 
