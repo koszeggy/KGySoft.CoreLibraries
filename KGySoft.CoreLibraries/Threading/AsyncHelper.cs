@@ -19,6 +19,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Threading;
 
 #if !NET35
@@ -876,6 +877,7 @@ namespace KGySoft.Threading
         /// <exception cref="ArgumentNullException"><paramref name="operation"/> or <paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when calling the EndOperation method.")]
+        [SecuritySafeCritical]
         public static IAsyncResult BeginOperation(Action<IAsyncContext> operation, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
         {
             #region Local Methods
@@ -961,6 +963,7 @@ namespace KGySoft.Threading
         /// <exception cref="ArgumentNullException"><paramref name="operation"/> or <paramref name="beginMethodName"/> is <see langword="null"/>.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
                 Justification = "Pool thread exceptions are not suppressed, they will be thrown when calling the EndOperation method.")]
+        [SecuritySafeCritical]
         public static IAsyncResult BeginOperation<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, AsyncConfig? asyncConfig, [CallerMemberName]string beginMethodName = null!)
         {
             #region Local Methods
@@ -1178,6 +1181,7 @@ namespace KGySoft.Threading
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
+        [SecuritySafeCritical]
         public static Task DoOperationAsync(Action<IAsyncContext> operation, TaskConfig? asyncConfig)
         {
             #region Local Methods
@@ -1286,6 +1290,7 @@ namespace KGySoft.Threading
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Pool thread exceptions are not suppressed, they will be thrown when task is awaited or Result is accessed.")]
+        [SecuritySafeCritical]
         public static Task<TResult> DoOperationAsync<TResult>(Func<IAsyncContext, TResult> operation, TResult canceledResult, TaskConfig? asyncConfig)
         {
             #region Local Methods

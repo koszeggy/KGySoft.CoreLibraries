@@ -84,11 +84,9 @@ namespace KGySoft.Collections
                     ? BinarySearchAsComparable(list, index, length, value)
                     : BinarySearchWithComparer(list, index, length, value, comparer);
             }
-#pragma warning disable CA1031 // false alarm, exception is re-thrown
             catch (Exception e)
-#pragma warning restore CA1031 // false alarm, exception is re-thrown
             {
-                return Throw.InvalidOperationException<int>(Res.CircularListComparerFail, e);
+                throw new InvalidOperationException(Res.CircularListComparerFail, e);
             }
         }
 

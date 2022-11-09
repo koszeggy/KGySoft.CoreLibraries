@@ -1412,11 +1412,9 @@ namespace KGySoft.Reflection
                 {
                     method = method.GetGenericMethod(genericParameters);
                 }
-#pragma warning disable CA1031 // false alarm, exception is re-thrown
                 catch (Exception e)
-#pragma warning restore CA1031 // false alarm, exception is re-thrown
                 {
-                    Throw.ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
+                    throw new ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
                 }
             }
 

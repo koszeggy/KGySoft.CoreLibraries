@@ -23,6 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -32,12 +33,6 @@ using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
 using KGySoft.Serialization.Binary;
-
-#endregion
-
-#region Suppressions
-
-#pragma warning disable CA1031 // Do not catch general exception types - Exceptions are re-thrown by Throw but FxCop ignores both [ContractAnnotation] and [DoesNotReturn] attributes
 
 #endregion
 
@@ -433,7 +428,7 @@ namespace KGySoft.Serialization.Xml
                 }
                 catch (Exception e)
                 {
-                    Throw.SerializationException(Res.XmlSerializationBinarySerializationFailed(obj.GetType(), Options, e.Message), e);
+                    throw new SerializationException(Res.XmlSerializationBinarySerializationFailed(obj.GetType(), Options, e.Message), e);
                 }
             }
 
