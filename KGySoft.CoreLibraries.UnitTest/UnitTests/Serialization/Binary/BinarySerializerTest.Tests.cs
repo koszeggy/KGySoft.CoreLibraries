@@ -1182,6 +1182,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if NETFRAMEWORK
         [Test]
+        [SecuritySafeCritical] // because of RemotingSurrogateSelector
         public void SerializeRemoteObjects()
         {
             Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);

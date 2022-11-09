@@ -16,6 +16,11 @@
 #region Usings
 
 using System;
+#if !NETFRAMEWORK
+using System.Drawing;
+using System.IO;
+using System.Text;
+#endif
 
 using NUnit.Framework;
 

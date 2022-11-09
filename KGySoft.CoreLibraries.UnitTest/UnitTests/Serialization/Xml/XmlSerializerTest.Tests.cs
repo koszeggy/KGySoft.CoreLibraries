@@ -502,8 +502,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             object[] referenceObjects =
             {
                 new EmptyType(),
+#if !NET35
                 new StrongBox<int?>(5),
-                new StrongBox<int?>(null),
+                new StrongBox<int?>(), 
+#endif
                 new BinarySerializableClass { IntProp = 1, StringProp = "alpha", ObjectProp = " . " },
                 new BinarySerializableStruct { IntProp = 2, StringProp = "beta" },
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma" },

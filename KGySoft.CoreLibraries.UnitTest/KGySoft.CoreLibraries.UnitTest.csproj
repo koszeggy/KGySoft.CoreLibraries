@@ -5,8 +5,11 @@
     <!--<TargetFrameworks>net6.0</TargetFrameworks>-->
 
     <!--For UnitTesting the .NET Standard versions-->
-    <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
-    <DefineConstants>NETSTANDARD_TEST</DefineConstants>
+    <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <DefineConstants>NETSTANDARD_TEST</DefineConstants>-->
+
+    <!--For testing in a 32-bit process-->
+    <!--<PlatformTarget>x86</PlatformTarget>-->
 
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
 

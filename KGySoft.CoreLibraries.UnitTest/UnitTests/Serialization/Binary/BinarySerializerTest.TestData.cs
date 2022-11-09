@@ -1201,6 +1201,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                         : selfRef.Value;
                 }
 
+                [SecurityCritical]
                 public void GetObjectData(SerializationInfo info, StreamingContext context)
                 {
                     throw new InvalidOperationException("Should not be executed");
@@ -1554,6 +1555,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Methods
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 // by SetType
@@ -1589,6 +1591,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Methods
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 // By string, different assembly name
@@ -1625,6 +1628,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Methods
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 // By string, same name as by SetType
@@ -1659,6 +1663,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Methods
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context) => i switch
             {
                 1 => Singleton1.Instance,
@@ -1666,6 +1671,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 _ => (object)Singleton3.Instance
             };
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context) => throw new NotImplementedException();
 
             #endregion
@@ -1680,6 +1686,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             #region Methods
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context) => null;
 
             #endregion
