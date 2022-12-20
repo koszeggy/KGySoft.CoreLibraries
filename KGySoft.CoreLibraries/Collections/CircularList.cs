@@ -62,7 +62,7 @@ namespace KGySoft.Collections
     /// <para>When a list is populated only by the <see cref="Add">Add</see> method or by the indexer, and then it is never modified, <see cref="List{T}"/> class can have a slightly better
     /// performance. Though when the list is enumerated as an <see cref="IEnumerable{T}"/> implementation (occurs for example, when the list is used in LINQ queries or when used
     /// as an <see cref="IList{T}"/> instance), then <see cref="CircularList{T}"/> can be a better choice than <see cref="List{T}"/> because the enumerator of
-    /// <see cref="List{T}"/> class has worse performance when it boxed into an <see cref="IEnumerator{T}"/> reference. While the <see cref="GetEnumerator">GetEnumerator</see> method of
+    /// <see cref="List{T}"/> class has worse performance when it is boxed into an <see cref="IEnumerator{T}"/> reference. While the <see cref="GetEnumerator">GetEnumerator</see> method of
     /// <see cref="CircularList{T}"/> returns a value type enumerator (similarly to the <see cref="List{T}"/> class), when the enumerator is obtained via the <see cref="IEnumerable{T}"/>
     /// interface, the <see cref="CircularList{T}"/> returns a reference type to avoid boxing and to provide a better performance.
     /// </para>
