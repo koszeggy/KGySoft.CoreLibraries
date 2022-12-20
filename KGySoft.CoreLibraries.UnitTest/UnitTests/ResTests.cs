@@ -110,19 +110,18 @@ namespace KGySoft.CoreLibraries.UnitTests
                 string key = ((string)enumerator.Key).Replace("_", String.Empty);
                 if (key.StartsWith("General", StringComparison.Ordinal))
                     key = key.Substring("General".Length);
-                if (obtainedMembers.Contains(key) || !key.EndsWith("Format", StringComparison.Ordinal))
+                if (key.EndsWith("Format", StringComparison.Ordinal))
+                    key = key.Substring(0, key.Length - "Format".Length);
+                if (obtainedMembers.Contains(key))
                     continue;
-                key = key.Substring(0, key.Length - "Format".Length);
-                if (!obtainedMembers.Contains(key))
-                {
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
-                    // skipping known, platform dependent entries that would be "orphans" otherwise - if they are really orphans the error will come on the affected platform
-                    if (key.StartsWith("SpanExtensions", StringComparison.Ordinal))
-                        continue;
+                // skipping known, platform dependent entries that would be "orphans" otherwise - if they are really orphans the error will come on the affected platform
+                if (key.StartsWith("SpanExtensions", StringComparison.Ordinal))
+                    continue;
 #endif
 
-                    uncovered.Add((string)enumerator.Key);
-                }
+                uncovered.Add((string)enumerator.Key);
             }
 
             Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{uncovered.Join(Environment.NewLine)}");
