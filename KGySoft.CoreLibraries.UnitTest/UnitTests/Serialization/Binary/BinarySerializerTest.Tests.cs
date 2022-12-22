@@ -69,6 +69,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
                 Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted);
 #endif
+
+                // The test below may fail from ConsoleApp run with SecurityRuleSet.Level2 because PermissionSet.FullTrust is needed:
+                // - SerializationManager.WriteCustomObjectGraph: because of ISerializable.GetObjectData, surrogate.GetObjectData and TypeByString usage (for any derived MemberInfo)
+                // - DataTypeDescriptor.DecodeType: because of StoredType property usage
                 var test = new BinarySerializerTest();
                 test.SerializeComplexTypes();
                 test.SerializeComplexGenericCollections();

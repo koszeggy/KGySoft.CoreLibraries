@@ -262,7 +262,6 @@ namespace KGySoft.Serialization.Binary
 #else
             fixed (void* src = array)
                 Marshal.Copy(new IntPtr(src), result, 0, len);
-
 #endif
 
             return result;
