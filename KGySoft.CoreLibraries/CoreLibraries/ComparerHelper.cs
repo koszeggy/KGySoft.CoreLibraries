@@ -27,8 +27,10 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         internal static IEqualityComparer<T> EqualityComparer { get; } =
-#if NETFRAMEWORK
+#if NET35
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+#elif NETFRAMEWORK
+            !EnvironmentHelper.IsPartiallyTrustedDomain && typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
 #elif NETSTANDARD2_0
             EqualityComparer<T>.Default;
 #else
@@ -36,8 +38,10 @@ namespace KGySoft.CoreLibraries
 #endif
 
         internal static IComparer<T> Comparer { get; } =
-#if NETFRAMEWORK
+#if NET35
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
+#elif NETFRAMEWORK
+            !EnvironmentHelper.IsPartiallyTrustedDomain && typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
 #elif NETSTANDARD2_0
             Comparer<T>.Default;
 #else

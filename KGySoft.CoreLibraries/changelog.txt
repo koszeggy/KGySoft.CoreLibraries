@@ -6,6 +6,20 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v7.0.1:
+~~~~~~~~~
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* EnumComparer<T> class: Improving performance from partially trusted domains (.NET Framework 4.x).
+
+- KGySoft.Diagnostics namespace:
+================================
+- PerformanceTestBase<TDelegate, TResult> class:
+  - Fixing possible VerificationException from partially trusted domains created by an assembly
+    with Level2 security (eg. the sandbox domains in .NET Fiddle). Affects .NET Framework 4.x only.
+
+~~~~~~~~~
 ! v7.0.0:
 ~~~~~~~~~
 

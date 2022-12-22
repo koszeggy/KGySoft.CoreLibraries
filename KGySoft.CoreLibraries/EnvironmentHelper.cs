@@ -26,6 +26,7 @@ namespace KGySoft
         #region Fields
         
         private static bool? isMono;
+        private static bool? isWindows;
 
 #if NETFRAMEWORK && !NET35
         private static bool? isPartiallyTrustedDomain;
@@ -40,6 +41,8 @@ namespace KGySoft
 #if NETFRAMEWORK && !NET35
         internal static bool IsPartiallyTrustedDomain => isPartiallyTrustedDomain ??= !AppDomain.CurrentDomain.IsFullyTrusted;
 #endif
+
+        internal static bool IsWindows => isWindows ??= Environment.OSVersion.Platform == PlatformID.Win32NT;
 
         #endregion
     }
