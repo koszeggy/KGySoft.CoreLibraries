@@ -1888,12 +1888,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             CollectionAssert.AreEqual(serialized, reserialized);
         }
 
-        [TestCaseGeneric(TypeArguments = new[] { typeof(bool) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(int) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(decimal) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(LargeUnmanagedStruct) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(KeyValuePair<int, int>) })] // tricky: not unmanaged, still, it works
-        [TestCaseGeneric(TypeArguments = new[] { typeof(ValueTuple<int, int>) })] // tricky: not unmanaged, still, it works
+        [TestCase<bool>]
+        [TestCase<int>]
+        [TestCase<decimal>]
+        [TestCase<LargeUnmanagedStruct>]
+        [TestCase<KeyValuePair<int, int>>] // tricky: not unmanaged, still, it works
+        [TestCase<ValueTuple<int, int>>] // tricky: not unmanaged, still, it works
         public void SerializeValueTypeGenericTest<T>()
             where T : unmanaged
         {
@@ -1909,14 +1909,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             CollectionAssert.AreEqual(serialized, reserialized);
         }
 
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(bool) })]
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(int) })]
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(decimal) })]
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(LargeUnmanagedStruct) })]
-        [TestCaseGeneric(false, TypeArguments = new[] { typeof(LargeStructToBeMarshaled) })]
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(KeyValuePair<int, int>) })]
-        [TestCaseGeneric(false, TypeArguments = new[] { typeof(KeyValuePair<int, string>) })]
-        [TestCaseGeneric(true, TypeArguments = new[] { typeof(ValueTuple<int, int>) })]
+        [TestCase<bool>(true)]
+        [TestCase<int>(true)]
+        [TestCase<decimal>(true)]
+        [TestCase<LargeUnmanagedStruct>(true)]
+        [TestCase<LargeStructToBeMarshaled>(false)]
+        [TestCase<KeyValuePair<int, int>>(true)]
+        [TestCase<KeyValuePair<int, string>>(false)]
+        [TestCase<ValueTuple<int, int>>(true)]
         public void TrySerializeValueTypeGenericTest<T>(bool expectedResult)
             where T : unmanaged
         {
@@ -1931,12 +1931,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Assert.AreEqual(expectedResult, result != null);
         }
 
-        [TestCaseGeneric(TypeArguments = new[] { typeof(bool) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(int) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(decimal) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(LargeUnmanagedStruct) })]
-        [TestCaseGeneric(TypeArguments = new[] { typeof(KeyValuePair<int, int>) })] // tricky: not unmanaged, still, it works
-        [TestCaseGeneric(TypeArguments = new[] { typeof(ValueTuple<int, int>) })] // tricky: not unmanaged, still, it works
+        [TestCase<bool>]
+        [TestCase<int>]
+        [TestCase<decimal>]
+        [TestCase<LargeUnmanagedStruct>]
+        [TestCase<KeyValuePair<int, int>>] // tricky: not unmanaged, still, it works
+        [TestCase<ValueTuple<int, int>>] // tricky: not unmanaged, still, it works
         public void SerializeValueArrayGenericTest<T>()
             where T : unmanaged
         {

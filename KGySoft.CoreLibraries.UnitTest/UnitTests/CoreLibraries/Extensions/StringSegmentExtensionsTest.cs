@@ -297,10 +297,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(expectedResult.AsSegment(), s.AsSegment().RemoveQuotes());
         }
 
-        [TestCaseGeneric(null, null, TypeArguments = new[] { typeof(ConsoleColor) })]
-        [TestCaseGeneric("x", null, TypeArguments = new[] { typeof(ConsoleColor) })]
-        [TestCaseGeneric("Black", ConsoleColor.Black, TypeArguments = new[] { typeof(ConsoleColor) })]
-        [TestCaseGeneric("-1", (ConsoleColor)(-1), TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCase<ConsoleColor>(null, null)]
+        [TestCase<ConsoleColor>("x", null)]
+        [TestCase<ConsoleColor>("Black", ConsoleColor.Black)]
+        [TestCase<ConsoleColor>("-1", (ConsoleColor)(-1))]
         public void ToEnumTest<TEnum>(string s, TEnum? expectedResult)
             where TEnum : struct, Enum
         {

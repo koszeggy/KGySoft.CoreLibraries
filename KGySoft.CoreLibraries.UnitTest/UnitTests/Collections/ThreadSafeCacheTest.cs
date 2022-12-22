@@ -97,9 +97,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         } 
 #endif
 
-        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(int) })]
-        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(string) })]
-        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseSource<int>(nameof(usageTestSource))]
+        [TestCaseSource<string>(nameof(usageTestSource))]
+        [TestCaseSource<ConsoleColor>(nameof(usageTestSource))]
         public void UsageTest<T>(string testName, bool useComparer, ThreadSafeCacheOptionsBase configuration)
             where T : notnull, IConvertible
         {
