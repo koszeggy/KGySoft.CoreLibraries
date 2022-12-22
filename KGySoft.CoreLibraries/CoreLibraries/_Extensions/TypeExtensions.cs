@@ -56,12 +56,12 @@ namespace KGySoft.CoreLibraries
         #region Nested Types
 
         #region SizeOfHelper struct
-        
+
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct SizeOfHelper<T> where T : struct
         {
             #region Fields
-            
+
             public T Item1;
             public T Item2;
 
@@ -603,7 +603,16 @@ namespace KGySoft.CoreLibraries
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
-                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create<Type, int>(GetSize, LockFreeCacheOptions.Profile128), null);
+            {
+                Func<Type, int> itemLoader =
+#if NETFRAMEWORK && !NET35
+                    EnvironmentHelper.IsPartiallyTrustedDomain ? GetSizeFallback : GetSize;
+#else
+                    GetSizeFallback; 
+#endif
+                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create(itemLoader, LockFreeCacheOptions.Profile128), null);
+            }
+
             return sizeOfCache[type];
         }
 
@@ -831,7 +840,7 @@ namespace KGySoft.CoreLibraries
         internal static bool IsDefaultGetHashCode(this Type type)
         {
             #region Local Methods
-            
+
             static bool LoadCacheItem(Type t)
             {
                 if (!t.IsClass || !t.IsSealed)
@@ -955,7 +964,7 @@ namespace KGySoft.CoreLibraries
                 return true;
 
             FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            
+
             // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (var i = 0; i < fields.Length; i++)
             {
