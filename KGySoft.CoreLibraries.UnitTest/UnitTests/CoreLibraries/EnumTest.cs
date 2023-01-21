@@ -152,6 +152,66 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         }
 
         [Test]
+        public void GetDefinedOrDefaultTest()
+        {
+            Assert.AreEqual(TestLongEnum.Gamma, TestLongEnum.Gamma.GetDefinedOrDefault());
+            Assert.AreEqual(TestLongEnum.None, (TestLongEnum.Gamma | TestLongEnum.Min).GetDefinedOrDefault());
+
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrDefault("Gamma"));
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrDefault("Gamma".AsSegment()));
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrDefault("Gamma".AsSpan()));
+#endif
+            Assert.AreEqual(TestLongEnum.None, Enum<TestLongEnum>.GetDefinedOrDefault("Omega"));
+            Assert.AreEqual(TestLongEnum.None, Enum<TestLongEnum>.GetDefinedOrDefault("Omega".AsSegment()));
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            Assert.AreEqual(TestLongEnum.None, Enum<TestLongEnum>.GetDefinedOrDefault("Omega".AsSpan()));
+#endif
+
+            Assert.AreEqual(TestLongEnum.Max, Enum<TestLongEnum>.GetDefinedOrDefault((long)TestLongEnum.Max));
+            Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.GetDefinedOrDefault((long)TestLongEnum.Min));
+            Assert.AreEqual(TestLongEnum.Max, Enum<TestLongEnum>.GetDefinedOrDefault((ulong)TestLongEnum.Max));
+            Assert.AreEqual(TestLongEnum.Negative, Enum<TestLongEnum>.GetDefinedOrDefault(-1));
+            Assert.AreEqual(TestLongEnum.None, Enum<TestLongEnum>.GetDefinedOrDefault(unchecked((ulong)TestLongEnum.Min)));
+            Assert.AreEqual(TestLongEnum.None, Enum<TestLongEnum>.GetDefinedOrDefault(UInt64.MaxValue));
+
+            Assert.AreEqual(TestIntEnum.Risky, TestIntEnum.Risky.GetDefinedOrDefault());
+            Assert.AreEqual(TestIntEnum.Risky, Enum<TestIntEnum>.GetDefinedOrDefault("Risky"));
+            Assert.AreEqual(TestIntEnum.Risky, Enum<TestIntEnum>.GetDefinedOrDefault(1 << 31)); // -2147483648L
+            Assert.AreEqual(TestIntEnum.None, Enum<TestIntEnum>.GetDefinedOrDefault(1U << 31)); // 2147483648L
+        }
+
+        [Test]
+        public void GetDefinedOrNullTest()
+        {
+            Assert.AreEqual(TestLongEnum.Gamma, TestLongEnum.Gamma.GetDefinedOrNull());
+            Assert.IsNull((TestLongEnum.Gamma | TestLongEnum.Min).GetDefinedOrNull());
+
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrNull("Gamma"));
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrNull("Gamma".AsSegment()));
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            Assert.AreEqual(TestLongEnum.Gamma, Enum<TestLongEnum>.GetDefinedOrNull("Gamma".AsSpan()));
+#endif
+            Assert.IsNull(Enum<TestLongEnum>.GetDefinedOrNull("Omega"));
+            Assert.IsNull(Enum<TestLongEnum>.GetDefinedOrNull("Omega".AsSegment()));
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            Assert.IsNull(Enum<TestLongEnum>.GetDefinedOrNull("Omega".AsSpan()));
+#endif
+
+            Assert.AreEqual(TestLongEnum.Max, Enum<TestLongEnum>.GetDefinedOrNull((long)TestLongEnum.Max));
+            Assert.AreEqual(TestLongEnum.Min, Enum<TestLongEnum>.GetDefinedOrNull((long)TestLongEnum.Min));
+            Assert.AreEqual(TestLongEnum.Max, Enum<TestLongEnum>.GetDefinedOrNull((ulong)TestLongEnum.Max));
+            Assert.AreEqual(TestLongEnum.Negative, Enum<TestLongEnum>.GetDefinedOrNull(-1));
+            Assert.IsNull(Enum<TestLongEnum>.GetDefinedOrNull(unchecked((ulong)TestLongEnum.Min)));
+            Assert.IsNull(Enum<TestLongEnum>.GetDefinedOrNull(UInt64.MaxValue));
+
+            Assert.AreEqual(TestIntEnum.Risky, TestIntEnum.Risky.GetDefinedOrNull());
+            Assert.AreEqual(TestIntEnum.Risky, Enum<TestIntEnum>.GetDefinedOrNull("Risky"));
+            Assert.AreEqual(TestIntEnum.Risky, Enum<TestIntEnum>.GetDefinedOrNull(1 << 31)); // -2147483648L
+            Assert.IsNull(Enum<TestIntEnum>.GetDefinedOrNull(1U << 31)); // 2147483648L
+        }
+
+        [Test]
         public void ToStringTest()
         {
             static void Test<TEnum>(string expectedValue, TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto)

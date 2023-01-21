@@ -38,10 +38,10 @@ namespace KGySoft.CoreLibraries
     /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
+    [SuppressMessage("ReSharper", "StaticMemberInGenericType", Justification = "All fields in this class depend on TEnum")]
     public static partial class Enum<TEnum> where TEnum : struct, Enum
     {
         #region Fields
-        // ReSharper disable StaticMemberInGenericType - all fields in this class depend on TEnum
 
         // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
         // but that is alright. Once a field is set no more locks will be requested for it again.
@@ -71,7 +71,6 @@ namespace KGySoft.CoreLibraries
         private static StringKeyedDictionary<ulong>? nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
 
-        // ReSharper restore StaticMemberInGenericType
         #endregion
 
         #region Properties
@@ -102,6 +101,8 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         #region Public Methods
+
+        #region Values and Name(s)
 
         /// <summary>
         /// Retrieves the array of the values of the constants in enumeration <typeparamref name="TEnum"/>.
@@ -161,6 +162,10 @@ namespace KGySoft.CoreLibraries
         [CLSCompliant(false)]
         public static string? GetName(ulong value) => value > underlyingInfo.MaxValue ? null : TryGetNameByValue(value);
 
+        #endregion
+
+        #region IsDefined-like Methods
+
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
@@ -171,12 +176,12 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
-        /// <param name="value">A <see cref="string"/> value representing a field name in the enumeration.</param>
+        /// <param name="value">A <see cref="string">string</see> value representing a field name in the enumeration.</param>
         /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool IsDefined(string value)
         {
-            if (value == null)
+            if (value == null!)
                 Throw.ArgumentNullException(Argument.value);
             return NameValuePairs.ContainsKey(value);
         }
@@ -231,6 +236,164 @@ namespace KGySoft.CoreLibraries
             EnsureRawValueNamePairs();
             return FindIndex(value) >= 0;
         }
+
+        /// <summary>
+        /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined.
+        /// </summary>
+        /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        public static TEnum GetDefinedOrDefault(TEnum value, TEnum defaultValue = default) => IsDefined(value) ? value : defaultValue;
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="string">string</see> value representing a field name in the enumeration.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        public static TEnum GetDefinedOrDefault(string value, TEnum defaultValue = default)
+        {
+            if (value == null!)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.GetValueOrDefault(value, defaultValue);
+        }
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
+        public static TEnum GetDefinedOrDefault(StringSegment value, TEnum defaultValue = default)
+        {
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.GetValueOrDefault(value, defaultValue);
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        public static TEnum GetDefinedOrDefault(ReadOnlySpan<char> value, TEnum defaultValue = default) => NameValuePairs.GetValueOrDefault(value, defaultValue);
+#endif
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in the enumeration;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined.
+        /// </summary>
+        /// <param name="value">A numeric value representing a field value in the enumeration.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        public static TEnum GetDefinedOrDefault(long value, TEnum defaultValue = default) => IsDefined(value) ? converter.ToEnum((ulong)value) : defaultValue;
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in the enumeration;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined.
+        /// </summary>
+        /// <param name="value">A numeric value representing a field value in the enumeration.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        [CLSCompliant(false)]
+        public static TEnum GetDefinedOrDefault(ulong value, TEnum defaultValue = default) => IsDefined(value) ? converter.ToEnum(value) : defaultValue;
+
+        /// <summary>
+        /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, returns <see langword="null"/>.
+        /// </summary>
+        /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
+        /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, <see langword="null"/>.</returns>
+        public static TEnum? GetDefinedOrNull(TEnum value) => IsDefined(value) ? value : null;
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <see langword="null"/>. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="string">string</see> value representing a field name in the enumeration.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <see langword="null"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        public static TEnum? GetDefinedOrNull(string value)
+        {
+            if (value == null!)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.TryGetValue(value, out TEnum result) ? result : null;
+        }
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <see langword="null"/>. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <see langword="null"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
+        public static TEnum? GetDefinedOrNull(StringSegment value)
+        {
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return NameValuePairs.TryGetValue(value, out TEnum result) ? result : null;
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <see langword="null"/>. The search is case-sensitive.
+        /// </summary>
+        /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <see langword="null"/>.</returns>
+        public static TEnum? GetDefinedOrNull(ReadOnlySpan<char> value) => NameValuePairs.TryGetValue(value, out TEnum result) ? result : null;
+#endif
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <see langword="null"/>.
+        /// </summary>
+        /// <param name="value">A numeric value representing a field value in the enumeration.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <see langword="null"/>.</returns>
+        public static TEnum? GetDefinedOrNull(long value) => IsDefined(value) ? converter.ToEnum((ulong)value) : null;
+
+        /// <summary>
+        /// Returns the <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <see langword="null"/>.
+        /// </summary>
+        /// <param name="value">A numeric value representing a field value in the enumeration.</param>
+        /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <see langword="null"/>.</returns>
+        [CLSCompliant(false)]
+        public static TEnum? GetDefinedOrNull(ulong value) => IsDefined(value) ? converter.ToEnum(value) : null;
+
+        #endregion
+
+        #region Flags
 
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
@@ -449,6 +612,10 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        #endregion
+
+        #region Clear
+
         /// <summary>
         /// Clears caches associated with <typeparamref name="TEnum"/> enumeration.
         /// </summary>
@@ -465,6 +632,8 @@ namespace KGySoft.CoreLibraries
                 rawValueNamePairs.Names = null;
             }
         }
+
+        #endregion
 
         #endregion
 

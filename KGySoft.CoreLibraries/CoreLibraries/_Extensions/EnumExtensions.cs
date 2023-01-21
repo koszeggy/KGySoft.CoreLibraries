@@ -103,6 +103,29 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
+        /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined.
+        /// </summary>
+        /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
+        /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
+        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
+        /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
+        /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
+        public static TEnum GetDefinedOrDefault<TEnum>(this TEnum value, TEnum defaultValue = default)
+            where TEnum : struct, Enum
+            => Enum<TEnum>.GetDefinedOrDefault(value, defaultValue);
+
+        /// <summary>
+        /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, returns <see langword="null"/>.
+        /// </summary>
+        /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
+        /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, <see langword="null"/>.</returns>
+        public static TEnum? GetDefinedOrNull<TEnum>(this TEnum value)
+            where TEnum : struct, Enum
+            => Enum<TEnum>.GetDefinedOrNull(value);
+
+        /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
         /// or, when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
         /// </summary>

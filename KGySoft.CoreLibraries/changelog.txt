@@ -6,12 +6,19 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v7.0.1:
+* v7.1.0:
 ~~~~~~~~~
 
 * KGySoft.CoreLibraries namespace:
 ==================================
-* EnumComparer<T> class: Improving performance from partially trusted domains (.NET Framework 4.x).
++ Enum<TEnum> class:
+  + New GetDefinedOrDefault methods.
+  + New GetDefinedOrNull methods.
++ EnumExtensions class:
+  + New GetDefinedOrDefault method.
+  + New GetDefinedOrNull method.
+* EnumComparer<T> class:
+  * Improving performance from partially trusted domains (.NET Framework 4.x).
 
 + KGySoft.ComponentModel namespace:
 ===================================
