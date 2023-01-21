@@ -608,7 +608,7 @@ namespace KGySoft.CoreLibraries
 #if NETFRAMEWORK && !NET35
                     EnvironmentHelper.IsPartiallyTrustedDomain ? GetSizeFallback : GetSize;
 #else
-                    GetSizeFallback; 
+                    GetSize; 
 #endif
                 Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create(itemLoader, LockFreeCacheOptions.Profile128), null);
             }
