@@ -106,6 +106,7 @@ namespace KGySoft.CoreLibraries
         /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, returns <paramref name="defaultValue"/>, even if it is undefined.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
         /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
@@ -119,6 +120,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Returns <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, returns <see langword="null"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>; otherwise, <see langword="null"/>.</returns>
         public static TEnum? GetDefinedOrNull<TEnum>(this TEnum value)
