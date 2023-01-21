@@ -233,7 +233,6 @@ namespace KGySoft.CoreLibraries
         /// Parses an object of type <typeparamref name="T"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
         /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
         /// then the type converter or conversion will be used.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The desired type of the return value.</typeparam>
         /// <param name="s">The string value to parse. If <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type, then the method returns <see langword="null"/>.</param>

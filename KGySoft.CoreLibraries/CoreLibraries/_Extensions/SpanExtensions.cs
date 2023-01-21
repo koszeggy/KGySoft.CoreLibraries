@@ -390,7 +390,8 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="TimeOnly"/> (.NET 6.0 and above)</description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// </list>
-        /// <note>Apart from <see cref="Enum"/> and <see cref="Type"/> types, no string allocation occurs when parsing any of the types above.</note>
+        /// <note>Apart from <see cref="Enum"/> and <see cref="Type"/> types, no string allocation occurs when parsing any of the types above.
+        /// When targeting at least .NET 6.0, no string allocation occurs even for <see cref="Enum"/> types.</note>
         /// </para>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> extension methods.
         /// If a registered conversion can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
