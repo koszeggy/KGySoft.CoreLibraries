@@ -358,7 +358,7 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
         /// and this <see cref="FieldAccessor"/> represents a read-only field.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TField>(TInstance instance, TField value) where TInstance : class
         {
             if (GenericSetter is ReferenceTypeAction<TInstance, TField> action)
@@ -379,7 +379,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TField GetInstanceValue<TInstance, TField>(TInstance instance) where TInstance : class
             => GenericGetter is ReferenceTypeFunction<TInstance, TField> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))

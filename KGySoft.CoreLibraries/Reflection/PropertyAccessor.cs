@@ -330,7 +330,7 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
         {
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty> action)
@@ -353,7 +353,7 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
             => GenericGetter is ReferenceTypeFunction<TInstance, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
@@ -413,7 +413,7 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
         {
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty, TIndex> action)
@@ -439,7 +439,7 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
             => GenericGetter is ReferenceTypeFunction<TInstance, TIndex, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), index)

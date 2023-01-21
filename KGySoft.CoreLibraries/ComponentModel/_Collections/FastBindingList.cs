@@ -244,7 +244,7 @@ namespace KGySoft.ComponentModel
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
-            // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
+            // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract - it CAN be null if an ICustomTypeDescriptor implemented so
             => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
 
         /// <summary>

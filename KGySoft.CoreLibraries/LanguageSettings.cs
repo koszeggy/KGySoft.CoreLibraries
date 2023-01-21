@@ -446,7 +446,7 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
         /// <br/>Default value: <c>[T]</c>
         /// </summary>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UntranslatedResourcePrefix
         {
             get => untranslatedResourcePrefix;
@@ -459,7 +459,7 @@ namespace KGySoft
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to add non existing resources to the invariant resource set.
         /// <br/>Default value: <c>[U]</c>
         /// </summary>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "ReSharper does not recognize [ContractAnnotation] and [DoesNotReturn] attributes")]
         public static string UnknownResourcePrefix
         {
             get => unknownResourcePrefix;

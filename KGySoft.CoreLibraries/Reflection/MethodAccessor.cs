@@ -404,7 +404,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance>(TInstance instance) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance> action)
@@ -426,7 +426,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T>(TInstance instance, T param) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T> action)
@@ -450,7 +450,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2>(TInstance instance, T1 param1, T2 param2) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2> action)
@@ -476,7 +476,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3> action)
@@ -504,7 +504,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
         {
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3, T4> action)
@@ -526,7 +526,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, TResult>(TInstance instance) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
@@ -547,7 +547,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(TInstance instance, T param) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param)
@@ -570,7 +570,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(TInstance instance, T1 param1, T2 param2) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2)
@@ -595,7 +595,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3)
@@ -622,7 +622,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
-        [SuppressMessage("ReSharper", "ConstantNullCoalescingCondition", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
+        [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4)

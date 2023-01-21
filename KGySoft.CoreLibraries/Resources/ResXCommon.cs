@@ -28,14 +28,6 @@ using KGySoft.Reflection;
 
 #endregion
 
-#region Suppressions
-
-#if NETFRAMEWORK
-// ReSharper disable ConstantNullCoalescingCondition - ToString CAN be null
-#endif
-
-#endregion
-
 namespace KGySoft.Resources
 {
     internal static class ResXCommon
