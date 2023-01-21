@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 using KGySoft.ComponentModel;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -36,7 +37,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
         public void AllowNewDefault()
         {
             Assert.IsTrue(new FastBindingList<int>().AllowNew);
-            Assert.IsFalse(new FastBindingList<int>(new ReadOnlyCollection<int>(new int[0])).AllowNew);
+            Assert.IsFalse(new FastBindingList<int>(new ReadOnlyCollection<int>(Reflector.EmptyArray<int>())).AllowNew);
             Assert.IsFalse(new FastBindingList<string>().AllowNew);
         }
 

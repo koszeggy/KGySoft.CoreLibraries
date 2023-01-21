@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if NETCOREAPP3_0_OR_GREATER
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: TestCaseSourceAttribute.cs
@@ -24,3 +25,4 @@ namespace KGySoft.CoreLibraries
         #endregion
     }
 }
+#endif

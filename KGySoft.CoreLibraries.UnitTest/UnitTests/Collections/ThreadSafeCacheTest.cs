@@ -94,12 +94,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             Assert.AreEqual(count, dict.Count);
             Parallel.For(0, count, i => Assert.AreEqual(i, dict[i]));
-        } 
+        }
 #endif
 
+#if NETCOREAPP3_0_OR_GREATER
         [TestCaseSource<int>(nameof(usageTestSource))]
         [TestCaseSource<string>(nameof(usageTestSource))]
         [TestCaseSource<ConsoleColor>(nameof(usageTestSource))]
+#else
+        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(int) })]
+        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(string) })]
+        [TestCaseSourceGeneric(nameof(usageTestSource), TypeArguments = new[] { typeof(ConsoleColor) })]
+#endif
         public void UsageTest<T>(string testName, bool useComparer, ThreadSafeCacheOptionsBase configuration)
             where T : notnull, IConvertible
         {
