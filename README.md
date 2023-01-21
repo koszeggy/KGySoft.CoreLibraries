@@ -42,8 +42,6 @@ However, the preferred way is to install the package in VisualStudio either by l
 
     PM> Install-Package KGySoft.CoreLibraries
 
-Alternatively, you can download the binaries as a .zip file attached to the [releases](https://github.com/koszeggy/KGySoft.CoreLibraries/releases).
-
 ### Demo Applications:
 
 #### KGySoft.ComponentModel Features Demo
