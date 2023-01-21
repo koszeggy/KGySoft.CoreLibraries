@@ -79,8 +79,9 @@ namespace KGySoft.ComponentModel
     /// <para><strong>New features and improvements</strong> compared to <see cref="BindingList{T}"/>:
     /// <list type="bullet">
     /// <item><term>Disposable</term><description>The <see cref="FastBindingList{T}"/> implements the <see cref="IDisposable"/> interface. When an instance is disposed, then both
-    /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed. If the wrapped collection passed
-    /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</description></item>
+    /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed.
+    /// The <see cref="DisposeBehavior"/> property determines how to handle the possibly disposable wrapped collection and the items when disposing
+    /// this <see cref="FastBindingList{T}"/> instance. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</description></item>
     /// <item><term>Overridable properties</term><description>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/>, <see cref="AllowRemove"/>, <see cref="AllowEdit"/>
     /// and <see cref="RaiseListChangedEvents"/> properties are virtual.</description></item>
     /// <item><term>Find support</term><description>In <see cref="FastBindingList{T}"/> the <see cref="IBindingList.Find">IBindingList.Find</see> method is supported.
@@ -119,6 +120,7 @@ namespace KGySoft.ComponentModel
         [NonSerialized]private PropertyDescriptorCollection? propertyDescriptors;
         [NonSerialized]private EventHandler<AddingNewEventArgs<T>>? addingNewHandler;
         [NonSerialized]private ListChangedEventHandler? listChangedHandler;
+        private BindingListDisposeBehavior disposeBehavior;
 
         #endregion
 
@@ -234,6 +236,25 @@ namespace KGySoft.ComponentModel
         {
             get => raiseListChangedEvents;
             set => raiseListChangedEvents = value;
+        }
+
+        /// <summary>
+        /// Specifies the strategy for treating the wrapped <see cref="VirtualCollection{T}.Items"/> and the added values when this instance is disposed.
+        /// <br/>Default value: <see cref="BindingListDisposeBehavior.DisposeCollection"/>.
+        /// </summary>
+        public BindingListDisposeBehavior DisposeBehavior
+        {
+            get => disposeBehavior;
+            set
+            {
+                if (disposeBehavior == value)
+                    return;
+
+                if (!disposeBehavior.IsDefined())
+                    Throw.EnumArgumentOutOfRange(Argument.value, value);
+
+                disposeBehavior = value;
+            }
         }
 
         #endregion
@@ -688,7 +709,7 @@ namespace KGySoft.ComponentModel
             {
                 T originalItem = base.GetItem(index);
                 if (canRaiseItemChange)
-                    UnhookPropertyChanged(originalItem);
+                    UnhookPropertyChanged(originalItem, false);
             }
 
             base.SetItem(index, item);
@@ -750,7 +771,7 @@ namespace KGySoft.ComponentModel
 
             EndNew();
             if (canRaiseItemChange)
-                UnhookPropertyChanged(base.GetItem(index));
+                UnhookPropertyChanged(base.GetItem(index), false);
 
             base.RemoveItemAt(index);
             FireListChanged(ListChangedType.ItemDeleted, index);
@@ -775,7 +796,7 @@ namespace KGySoft.ComponentModel
                 Throw.InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
-            UnhookPropertyChangedAll();
+            UnhookPropertyChangedAll(false);
 
             base.ClearItems();
             FireListChanged(ListChangedType.Reset, -1);
@@ -786,7 +807,7 @@ namespace KGySoft.ComponentModel
         {
             if (CheckConsistency)
             {
-                UnhookPropertyChangedAll();
+                UnhookPropertyChangedAll(false);
                 HookPropertyChangedAll();
             }
 
@@ -803,9 +824,10 @@ namespace KGySoft.ComponentModel
                 return;
 
             raiseListChangedEvents = false;
-            UnhookPropertyChangedAll();
+            UnhookPropertyChangedAll(disposeBehavior == BindingListDisposeBehavior.DisposeCollectionAndItems);
 
-            (Items as IDisposable)?.Dispose();
+            if (disposeBehavior != BindingListDisposeBehavior.KeepAlive)
+                (Items as IDisposable)?.Dispose();
             listChangedHandler = null;
             addingNewHandler = null;
             disposed = true;
@@ -868,8 +890,11 @@ namespace KGySoft.ComponentModel
                 trackedSubscriptions?.Add(item);
         }
 
-        private void UnhookPropertyChanged(T item)
+        private void UnhookPropertyChanged(T item, bool disposeItem)
         {
+            if (disposeItem)
+                (item as IDisposable)?.Dispose();
+
             if (item is not INotifyPropertyChanged notifyPropertyChanged)
                 return;
 
@@ -885,17 +910,17 @@ namespace KGySoft.ComponentModel
                 HookPropertyChanged(item);
         }
 
-        private void UnhookPropertyChangedAll()
+        private void UnhookPropertyChangedAll(bool disposeItems)
         {
             if (!canRaiseItemChange)
                 return;
             foreach (T item in Items)
-                UnhookPropertyChanged(item);
+                UnhookPropertyChanged(item, disposeItems);
             if (trackedSubscriptions?.Count > 0)
             {
                 // ToList is intended because UnhookPropertyChanged changes trackedSubscriptions
                 foreach (T item in trackedSubscriptions.ToList())
-                    UnhookPropertyChanged(item);
+                    UnhookPropertyChanged(item, disposeItems);
             }
         }
 
@@ -921,7 +946,7 @@ namespace KGySoft.ComponentModel
             // item was removed but we still receive events
             if (pos < 0)
             {
-                UnhookPropertyChanged(item);
+                UnhookPropertyChanged(item, false);
                 ResetBindings();
             }
 
