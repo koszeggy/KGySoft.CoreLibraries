@@ -6,6 +6,17 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v7.1.1:
+~~~~~~~~~
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* DictionaryExtensions class: Some GetValueOrDefault overloads that could cause ambiguities were not added to the
+  .NET Core platform targets. Now these are also included also on .NET Core platforms but not as extension methods
+  to prevent ambiguity.
+
+
+~~~~~~~~~
 * v7.1.0:
 ~~~~~~~~~
 

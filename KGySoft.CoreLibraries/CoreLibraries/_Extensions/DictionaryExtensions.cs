@@ -46,7 +46,6 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-#if NETFRAMEWORK || NETSTANDARD2_0 // These methods are not included into .NET Core/Standard versions to prevent conflict with CollectionExtensions
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
@@ -56,8 +55,17 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
-        public static TValue? GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default(TValue)!);
+        /// <remarks>
+        /// <para>This method can be used as an extension method when targeting .NET Framework/.NET Standard 2.0 but is a regular method when targeting .NET Core
+        /// 2.0/.NET Standard 2.1 or later to avoid collision with the similar extension method in .NET Core 2.0 and above.</para>
+        /// </remarks>
+        public static TValue? GetValueOrDefault<TKey, TValue>(
+#if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            IDictionary<TKey, TValue> dictionary,
+#else
+            this IDictionary<TKey, TValue> dictionary,
+#endif
+            TKey key) => GetValueOrDefault(dictionary!, key, default(TValue));
 
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
@@ -69,12 +77,22 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
-        public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+        /// <remarks>
+        /// <para>This method can be used as an extension method when targeting .NET Framework/.NET Standard 2.0 but is a regular method when targeting .NET Core
+        /// 2.0/.NET Standard 2.1 or later to avoid collision with the similar extension method in .NET Core 2.0 and above.</para>
+        /// </remarks>
+        public static TValue GetValueOrDefault<TKey, TValue>(
+#if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            IDictionary<TKey, TValue> dictionary,
+#else
+            this IDictionary<TKey, TValue> dictionary,
+#endif
+            TKey key, TValue defaultValue)
         {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
-            return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
+            return dictionary.TryGetValue(key, out TValue? value) ? value : defaultValue;
         }
 
         /// <summary>
@@ -96,9 +114,8 @@ namespace KGySoft.CoreLibraries
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
 
-            return dictionary.TryGetValue(key, out TValue value) ? value : defaultValueFactory.Invoke();
+            return dictionary.TryGetValue(key, out TValue? value) ? value : defaultValueFactory.Invoke();
         }
-#endif
 
 #if !(NET35 || NET40)
         /// <summary>
@@ -113,7 +130,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
         /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
         public static TValue? GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
-            => GetValueOrDefault(dictionary, key, default(TValue)!);
+            => GetValueOrDefault(dictionary!, key, default(TValue));
 
         /// <summary>
         /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
