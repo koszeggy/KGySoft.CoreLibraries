@@ -57,7 +57,7 @@ namespace KGySoft.Resources
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>:
     /// <list type="bullet">
-    /// <item><term>Parsing</term><description>A string can parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</description></item>
+    /// <item><term>Parsing</term><description>A string can be parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</description></item>
     /// </list></para>
     /// <note type="security">The <see cref="TypeConverter"/> that is assigned to the <see cref="ResXFileRef"/> type may load assemblies when its <see cref="TypeConverter.ConvertFrom(ITypeDescriptorContext,CultureInfo,object)">ConvertFrom</see> method is called.
     /// The recommended way to retrieve a file resource is via the <see cref="ResXDataNode"/> class. Its <see cref="ResXDataNode.GetValueSafe">GetValueSafe</see> method guarantees that no assembly is loaded

@@ -163,7 +163,7 @@ namespace KGySoft.Resources
     ///             }
     ///             catch (Exception e)
     ///             {
-    ///                 Console.WriteLine($"  Safe deserialization of the node thrown an exception: {e.Message}");
+    ///                 Console.WriteLine($"  Safe deserialization of the node threw an exception: {e.Message}");
     ///                 try
     ///                 {
     ///                     var value = node.GetValue();
@@ -171,7 +171,7 @@ namespace KGySoft.Resources
     ///                 }
     ///                 catch (Exception)
     ///                 {
-    ///                     Console.WriteLine($"  Unsafe deserialization of the node thrown an exception: {e.Message}");
+    ///                     Console.WriteLine($"  Unsafe deserialization of the node threw an exception: {e.Message}");
     ///                 }
     ///             }
     ///             Console.WriteLine();
@@ -203,7 +203,7 @@ namespace KGySoft.Resources
     /// //   MIME type:
     /// //   Comment:     When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.
     /// //   Raw value:   Red
-    /// //   Safe deserialization of the node thrown an exception: Type "System.Drawing.Color, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" in the data at line 18, position 4 cannot be resolved.
+    /// //   Safe deserialization of the node threw an exception: Type "System.Drawing.Color, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" in the data at line 18, position 4 cannot be resolved.
     /// // You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.
     /// //   Real value (unsafe):  Color[Red] (System.Drawing.Color)
     /// // 
@@ -221,8 +221,8 @@ namespace KGySoft.Resources
     /// //   MIME type:   application/x-microsoft.net.object.binary.base64
     /// //   Comment:     BinaryFormatter will throw an exception for this invalid content.
     /// //   Raw value:   YmluYXJ5
-    /// //   Safe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
-    /// //   Unsafe deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// //   Safe deserialization of the node threw an exception: End of Stream encountered before parsing was completed.
+    /// //   Unsafe deserialization of the node threw an exception: End of Stream encountered before parsing was completed.
     /// // 
     /// // ____Metadata in .resx:____
     /// // Name: meta string
@@ -233,7 +233,7 @@ namespace KGySoft.Resources
     /// //   Raw value:   Meta String
     /// //   Real value:  Meta String (System.String) </code>
     /// </example>
-    /// <h2 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h2>
+    /// <h2>Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h2>
     /// <para>
     /// If instantiated from a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
     /// instance, an internal conversion into <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> and <see cref="ResXFileRef">KGySoft.Resources.ResXFileRef</see> automatically occurs.

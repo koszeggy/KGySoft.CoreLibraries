@@ -394,8 +394,6 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <note type="caution">Starting with version 6.0.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="NextInt64()"/>
         /// method introduced in .NET 6.0. Cast the result of the <see cref="SampleInt32">SampleInt32</see> method to obtain any <see cref="uint"/> value.</note>
-        /// <para>Unlike the <see cref="RandomExtensions.NextUInt32(Random)">RandomExtensions.NextUInt32(Random)</see> extension method, this one always returns
-        /// values less than <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [CLSCompliant(false)]
@@ -417,8 +415,6 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <note type="caution">Starting with version 6.0.0 the behavior of this method has been changed to be conform with the behavior of the <see cref="NextInt64()"/>
         /// method introduced in .NET 6.0. Cast the result of the <see cref="SampleInt64">SampleInt64</see> method to obtain any <see cref="ulong"/> value.</note>
-        /// <para>Unlike the <see cref="RandomExtensions.NextUInt64(Random)">RandomExtensions.NextUInt64(Random)</see> extension method, this one always returns
-        /// values less than <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [CLSCompliant(false)]
