@@ -681,7 +681,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource.</param>
         /// <param name="fileRef">The file reference.</param>
-        /// <param name="basePath">A default base path for the relative path defined in <paramref name="fileRef"/>. This can be overridden on calling the <see cref="GetValue">GetValue</see> method.
+        /// <param name="basePath">A default base path for the relative path defined in <paramref name="fileRef"/>. This can be overridden on calling the <see cref="GetValue">GetValue</see> method. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="System.ArgumentNullException"><paramref name="name"/> or <paramref name="fileRef"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="name"/> is a string of zero length.</exception>
@@ -898,12 +898,12 @@ namespace KGySoft.Resources
         /// Retrieves the object that is stored by this node.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
-        /// <param name="typeResolver">A custom type resolution service to use for resolving type names.
+        /// <param name="typeResolver">A custom type resolution service to use for resolving type names. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
-        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
+        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
@@ -923,12 +923,12 @@ namespace KGySoft.Resources
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
-        /// <param name="typeResolver">A custom type resolution service to use for resolving type names.
+        /// <param name="typeResolver">A custom type resolution service to use for resolving type names. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
-        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
+        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
@@ -939,7 +939,7 @@ namespace KGySoft.Resources
         /// To allow loading assemblies use the <see cref="GetValue">GetValue</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
         /// <para>If the resource is a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to open the file and deserialize its content.
-        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
+        /// The deserialization will fail if the assembly of the type to create is not loaded yet.</para>
         /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
         /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
         /// </remarks>

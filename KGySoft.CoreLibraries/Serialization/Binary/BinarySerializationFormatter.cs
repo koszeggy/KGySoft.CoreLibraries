@@ -120,7 +120,7 @@ namespace KGySoft.Serialization.Binary
     /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against the known security issues
     /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
     /// <para>Please also note that <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent deserializing invalid content if a serializable type does not implement <see cref="ISerializable"/>
-    /// and does it not validate the incoming <see cref="SerializationInfo"/> in its serialization constructor. All serializable types that can have an invalid state regarding the field values
+    /// and it does not validate the incoming <see cref="SerializationInfo"/> in its serialization constructor. All serializable types that can have an invalid state regarding the field values
     /// should implement <see cref="ISerializable"/> and should throw a <see cref="SerializationException"/> from their serialization constructor if validation fails.
     /// Other exceptions thrown by the constructor will be wrapped into a <see cref="SerializationException"/>.</para>
     /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
