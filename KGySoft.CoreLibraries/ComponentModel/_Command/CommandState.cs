@@ -83,7 +83,8 @@ namespace KGySoft.ComponentModel
 
         #region Fields
 
-        private readonly ThreadSafeDictionary<string, object?> stateProperties = new ThreadSafeDictionary<string, object?>(StringSegmentComparer.Ordinal) { [nameof(Enabled)] = true };
+        private readonly ThreadSafeDictionary<string, object?> stateProperties =
+            new(new[] { new KeyValuePair<string, object?>(nameof(Enabled), true) }, StringSegmentComparer.Ordinal);
 
         #endregion
 
@@ -114,7 +115,7 @@ namespace KGySoft.ComponentModel
         /// <value><see langword="true"/> if the command enabled and can be executed; otherwise, <see langword="false" />.</value>
         public bool Enabled
         {
-            get => (bool)this[nameof(Enabled)]!;
+            get => stateProperties.GetValueOrDefault(nameof(Enabled), true);
             set => this[nameof(Enabled)] = value;
         }
 
@@ -298,7 +299,8 @@ namespace KGySoft.ComponentModel
 
         void ICollection<KeyValuePair<string, object?>>.Clear()
         {
-            // not calling PropertyChanged because a removed property has no effect on update
+            // Not calling PropertyChanged because a removed property has no effect on update
+            // Not an issue that the following operations are not atomic because Enabled getter has GetValueOrDefault
             stateProperties.Clear();
             Enabled = true; // this may call PropertyChanged though
         }
