@@ -38,12 +38,6 @@ namespace KGySoft.CoreLibraries
     public readonly struct Range<T> : IEquatable<Range<T>>
         where T : IComparable<T>
     {
-        #region Fields
-
-        private static readonly IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
-
-        #endregion
-
         #region Properties
 
         /// <summary>
@@ -144,7 +138,15 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="other">An <see cref="Range{T}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
-        public bool Equals(Range<T> other) => comparer.Equals(other.LowerBound, LowerBound) && comparer.Equals(other.UpperBound, UpperBound);
+        public bool Equals(Range<T> other)
+        {
+#if NET5_0_OR_GREATER
+            if (typeof(T).IsValueType)
+                return EqualityComparer<T>.Default.Equals(other.LowerBound, LowerBound) && EqualityComparer<T>.Default.Equals(other.UpperBound, UpperBound);
+#endif
+            var comparer = ComparerHelper<T>.EqualityComparer;
+            return comparer.Equals(other.LowerBound, LowerBound) && comparer.Equals(other.UpperBound, UpperBound);
+        }
 
         /// <summary>
         /// Determines whether the specified <see cref="object" /> is equal to this instance.

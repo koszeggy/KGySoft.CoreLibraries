@@ -31,10 +31,8 @@ namespace KGySoft.CoreLibraries
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
 #elif NETFRAMEWORK
             !EnvironmentHelper.IsPartiallyTrustedDomain && typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
-#elif NETSTANDARD2_0
-            EqualityComparer<T>.Default;
 #else
-            Environment.OSVersion.Platform == PlatformID.Win32NT && typeof(T).IsEnum ? EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+            EqualityComparer<T>.Default;
 #endif
 
         internal static IComparer<T> Comparer { get; } =
@@ -42,21 +40,38 @@ namespace KGySoft.CoreLibraries
             typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
 #elif NETFRAMEWORK
             !EnvironmentHelper.IsPartiallyTrustedDomain && typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
-#elif NETSTANDARD2_0
-            Comparer<T>.Default;
 #else
-            Environment.OSVersion.Platform == PlatformID.Win32NT && typeof(T).IsEnum ? EnumComparer<T>.Comparer : Comparer<T>.Default;
+            Comparer<T>.Default;
 #endif
 
         #endregion
 
         #region Methods
 
-        internal static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
+        #region Internal Methods
+
+#if NET5_0_OR_GREATER
+        internal static IEqualityComparer<T>? GetEqualityComparer(IEqualityComparer<T>? comparer) =>
+            typeof(T).IsValueType ? GetNonDefaultEqualityComparerOrNull(comparer) : comparer ?? EqualityComparer;
+#else
+        internal static IEqualityComparer<T> GetEqualityComparer(IEqualityComparer<T>? comparer) => comparer ?? EqualityComparer;
+#endif
+
 
         internal static bool IsDefaultComparer(IEqualityComparer<T>? comparer)
-            // Last part can be optimized away by JIT but only if we use typeof(string) and not Reflector.StringType
-            => comparer == null || comparer == EqualityComparer || typeof(T) == typeof(string) && comparer == StringComparer.Ordinal;
+            => comparer == null
+                || ReferenceEquals(comparer, EqualityComparer)
+                // Left part can be optimized away by JIT but only if we use typeof(string) and not Reflector.StringType
+                || typeof(T) == typeof(string) && ReferenceEquals(comparer, StringComparer.Ordinal);
+
+        #endregion
+
+        #region Private Methods
+
+        [Obsolete("Marked as obsolete until can be made private. Use GetEqualityComparerOrDefault instead.")] // TODO: to private, only .NET 5 or greater
+        internal static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
+        
+        #endregion
 
         #endregion
     }

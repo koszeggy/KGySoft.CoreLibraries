@@ -423,8 +423,6 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
-        private static readonly Type typeOfT = typeof(T);
-
         private static BinarySearchHelper<T>? binarySearchHelper;
 
         #endregion
@@ -454,9 +452,9 @@ namespace KGySoft.Collections
             {
                 if (binarySearchHelper == null)
                 {
-                    if (typeof(IComparable<T>).IsAssignableFrom(typeOfT))
+                    if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                     {
-                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).GetGenericType(typeOfT);
+                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).GetGenericType(typeof(T));
                         binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true)!;
                     }
                     else
@@ -595,7 +593,7 @@ namespace KGySoft.Collections
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT));
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
                 }
             }
         }
@@ -2798,7 +2796,7 @@ namespace KGySoft.Collections
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT));
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
             }
 
             return size - 1;
@@ -2817,7 +2815,7 @@ namespace KGySoft.Collections
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT));
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
             }
         }
 
@@ -2830,7 +2828,7 @@ namespace KGySoft.Collections
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT));
+                Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)));
             }
         }
 

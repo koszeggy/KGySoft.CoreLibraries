@@ -63,17 +63,7 @@ namespace KGySoft.Collections
 
             #region Static Fields
 
-            #region Internal Fields
-
             internal static readonly ReadOnlyDictionary Empty = new ReadOnlyDictionary();
-
-            #endregion
-
-            #region Private Fields
-
-            private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
-
-            #endregion
 
             #endregion
 
@@ -100,7 +90,7 @@ namespace KGySoft.Collections
             #region Internal Constructors
 
             internal ReadOnlyDictionary(int maxCapacity, GrowOnlyDictionary primaryValues, ReadOnlyDictionary additionalValues)
-                : this(primaryValues.IsAndHash, primaryValues.Comparer, Math.Min(maxCapacity, primaryValues.Count + additionalValues.Count))
+                : this(primaryValues.IsAndHash, primaryValues.InternalComparer, Math.Min(maxCapacity, primaryValues.Count + additionalValues.Count))
             {
                 int[] localBuckets = buckets;
                 Entry[] items = entries;
@@ -155,6 +145,7 @@ namespace KGySoft.Collections
             {
                 this.isAndHash = isAndHash;
                 this.comparer = comparer;
+                Debug.Assert(comparer != null || typeof(TKey).IsValueType && ComparerHelper<TKey>.IsDefaultComparer(comparer));
 
                 uint bucketSize;
                 if (isAndHash)
@@ -178,23 +169,44 @@ namespace KGySoft.Collections
             #region Internal Methods
 
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)] out TValue value)
+            internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-
                 int i = bucketsLocal[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
-                {
-                    ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
-                    {
-                        value = entryRef.Value;
-                        return true;
-                    }
 
-                    i = entryRef.Next;
+#if NET5_0_OR_GREATER
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(TKey).IsValueType && comparer == null)
+                {
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && EqualityComparer<TKey>.Default.Equals(entryRef.Key, key))
+                        {
+                            value = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<TKey> comp = comparer!;
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
+                        {
+                            value = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
                 }
 
                 value = default;

@@ -146,20 +146,11 @@ namespace KGySoft.Collections
 
             #region Fields
 
-            #region Static Fields
-
-            private static readonly IEqualityComparer<TKey> defaultComparer = ComparerHelper<TKey>.EqualityComparer;
-
-            #endregion
-
-            #region Instance Fields
-
             private readonly Bucket[] buckets;
+            private readonly IEqualityComparer<TKey>? comparer;
 
             private uint hashingOperand; // buckets.Length - 1 for AND hashing, buckets.Length for MOD hashing
             private int count;
-
-            #endregion
 
             #endregion
 
@@ -167,9 +158,25 @@ namespace KGySoft.Collections
 
             #region Properties
 
-            internal IEqualityComparer<TKey>? Comparer { get; }
+            #region Internal Properties
+            
+            internal IEqualityComparer<TKey>? InternalComparer => comparer;
             internal int Count => Volatile.Read(ref count);
             internal bool IsAndHash { get; }
+
+            #endregion
+
+            #region Private Properties
+
+#if NET5_0_OR_GREATER
+            private IEqualityComparer<TKey> Comparer => typeof(TKey).IsValueType
+                ? comparer ?? ComparerHelper<TKey>.EqualityComparer
+                : comparer!;
+#else
+            private IEqualityComparer<TKey> Comparer => comparer!;
+#endif
+
+            #endregion
 
             #endregion
 
@@ -194,7 +201,8 @@ namespace KGySoft.Collections
 
             internal GrowOnlyDictionary(int capacity, IEqualityComparer<TKey>? comparer, bool isAndHash)
             {
-                this.Comparer = comparer;
+                this.comparer = comparer;
+                Debug.Assert(comparer != null || typeof(TKey).IsValueType && ComparerHelper<TKey>.IsDefaultComparer(comparer));
                 IsAndHash = isAndHash;
                 buckets = new Bucket[GetBucketSize(capacity)];
             }
@@ -240,7 +248,7 @@ namespace KGySoft.Collections
                 }
 
                 // iterating through the entries until we find key or the end of the list
-                IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 Entry entry = bucketRef.First!;
                 while (true)
                 {
@@ -265,13 +273,31 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
-                IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
-                for (Entry? entry = buckets[GetBucketIndex(hashCode)].First; entry != null; entry = entry.Next)
+#if NET5_0_OR_GREATER
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(TKey).IsValueType && comparer == null)
                 {
-                    if (entry.Hash == hashCode && comp.Equals(key, entry.Key))
+                    for (Entry? entry = buckets[GetBucketIndex(hashCode)].First; entry != null; entry = entry.Next)
                     {
-                        value = entry.Value;
-                        return true;
+                        if (entry.Hash == hashCode && EqualityComparer<TKey>.Default.Equals(key, entry.Key))
+                        {
+                            value = entry.Value;
+                            return true;
+                        }
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<TKey> comp = comparer!;
+                    for (Entry? entry = buckets[GetBucketIndex(hashCode)].First; entry != null; entry = entry.Next)
+                    {
+                        if (entry.Hash == hashCode && comp.Equals(key, entry.Key))
+                        {
+                            value = entry.Value;
+                            return true;
+                        }
                     }
                 }
 
@@ -299,8 +325,35 @@ namespace KGySoft.Collections
                 }
 
                 // iterating through the entries until we find key or the end of the list
-                IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
                 Entry entry = bucketRef.First!;
+
+#if NET5_0_OR_GREATER
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(TKey).IsValueType && comparer == null)
+                {
+                    while (true)
+                    {
+                        // item found
+                        if (entry.Hash == hashCode && EqualityComparer<TKey>.Default.Equals(key, entry.Key))
+                            return entry.Value;
+
+                        // last item in the bucket: trying to chain the new one
+                        if (entry.Next == null)
+                        {
+                            if (Interlocked.CompareExchange(ref entry.Next, newEntry ??= new Entry(hashCode, key, itemLoader.Invoke(key)), null) == null)
+                            {
+                                Interlocked.Increment(ref count);
+                                return newEntry.Value;
+                            }
+                        }
+
+                        entry = entry.Next;
+                    }
+                }
+#endif
+
+                IEqualityComparer<TKey> comp = comparer!;
                 while (true)
                 {
                     // item found
@@ -341,8 +394,35 @@ namespace KGySoft.Collections
                 }
 
                 // iterating through the entries until we find key or the end of the list
-                IEqualityComparer<TKey> comp = Comparer ?? defaultComparer;
                 Entry entry = bucketRef.First!;
+
+#if NET5_0_OR_GREATER
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(TKey).IsValueType && comparer == null)
+                {
+                    while (true)
+                    {
+                        // item found
+                        if (entry.Hash == hashCode && EqualityComparer<TKey>.Default.Equals(key, entry.Key))
+                            return entry.Value;
+
+                        // last item in the bucket: trying to chain the new one
+                        if (entry.Next == null)
+                        {
+                            if (Interlocked.CompareExchange(ref entry.Next, newEntry ??= new Entry(hashCode, key, value), null) == null)
+                            {
+                                Interlocked.Increment(ref count);
+                                return newEntry.Value;
+                            }
+                        }
+
+                        entry = entry.Next;
+                    }
+                }
+#endif
+
+                IEqualityComparer<TKey> comp = comparer!;
                 while (true)
                 {
                     // item found
@@ -392,8 +472,17 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             private uint GetHashCode(TKey key)
             {
-                IEqualityComparer<TKey>? comp = Comparer;
-                return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+#if NET5_0_OR_GREATER
+                if (typeof(TKey).IsValueType)
+                {
+                    IEqualityComparer<TKey>? comp = comparer;
+                    return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+                }
+
+                return (uint)comparer!.GetHashCode(key);
+#else
+                return (uint)comparer!.GetHashCode(key);
+#endif
             }
 
             #endregion

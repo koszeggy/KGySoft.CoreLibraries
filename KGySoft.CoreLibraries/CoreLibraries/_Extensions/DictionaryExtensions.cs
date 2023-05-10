@@ -157,11 +157,24 @@ namespace KGySoft.CoreLibraries
                     return dict.TryGetValue(key, out value) ? value : defaultValue;
                 default:
                 {
-                    IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
-                    foreach (KeyValuePair<TKey, TValue> item in dictionary)
+#if NET5_0_OR_GREATER
+                    if (typeof(TKey).IsValueType)
                     {
-                        if (comparer.Equals(item.Key, key))
-                            return item.Value;
+                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                        {
+                            if (EqualityComparer<TKey>.Default.Equals(item.Key, key))
+                                return item.Value;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                        {
+                            if (comparer.Equals(item.Key, key))
+                                return item.Value;
+                        }
                     }
 
                     return defaultValue;
@@ -198,11 +211,24 @@ namespace KGySoft.CoreLibraries
                     return dict.TryGetValue(key, out value) ? value : defaultValueFactory.Invoke();
                 default:
                     {
-                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
-                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+#if NET5_0_OR_GREATER
+                        if (typeof(TKey).IsValueType)
                         {
-                            if (comparer.Equals(item.Key, key))
-                                return item.Value;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                if (EqualityComparer<TKey>.Default.Equals(item.Key, key))
+                                    return item.Value;
+                            }
+                        }
+                        else
+#endif
+                        {
+                            IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                if (comparer.Equals(item.Key, key))
+                                    return item.Value;
+                            }
                         }
 
                         return defaultValueFactory.Invoke();
@@ -290,12 +316,26 @@ namespace KGySoft.CoreLibraries
                     }
                 default:
                     {
-                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
-                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+#if NET5_0_OR_GREATER
+                        if (typeof(TKey).IsValueType)
                         {
-                            // allowing multiple keys with different type of values
-                            if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
-                                return actualValue;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                // allowing multiple keys with different type of values
+                                if (EqualityComparer<TKey>.Default.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                    return actualValue;
+                            }
+                        }
+                        else
+#endif
+                        {
+                            IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                // allowing multiple keys with different type of values
+                                if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                    return actualValue;
+                            }
                         }
 
                         return defaultValue;
@@ -339,12 +379,26 @@ namespace KGySoft.CoreLibraries
                     }
                 default:
                     {
-                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
-                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+#if NET5_0_OR_GREATER
+                        if (typeof(TKey).IsValueType)
                         {
-                            // allowing multiple keys with different type of values
-                            if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
-                                return actualValue;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                // allowing multiple keys with different type of values
+                                if (EqualityComparer<TKey>.Default.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                    return actualValue;
+                            }
+                        }
+                        else
+#endif
+                        {
+                            IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                            foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                            {
+                                // allowing multiple keys with different type of values
+                                if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                    return actualValue;
+                            }
                         }
 
                         return defaultValueFactory.Invoke();
@@ -571,7 +625,11 @@ namespace KGySoft.CoreLibraries
             {
                 if (dictionary.IsReadOnly
                     || !dictionary.TryGetValue(key, out TValue? oldValue)
+#if NETFRAMEWORK
                     || !ComparerHelper<TValue>.EqualityComparer.Equals(oldValue, originalValue))
+#else
+                    || !EqualityComparer<TValue>.Default.Equals(oldValue, originalValue))
+#endif
                 {
                     return false;
                 }

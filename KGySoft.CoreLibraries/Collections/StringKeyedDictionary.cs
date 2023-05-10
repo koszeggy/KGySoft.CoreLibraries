@@ -1264,6 +1264,18 @@ namespace KGySoft.Collections
                 return false;
             }
 
+#if NET5_0_OR_GREATER
+            if (typeof(TValue).IsValueType)
+            {
+                for (int i = 0; i < usedCount; i++)
+                {
+                    if (EqualityComparer<TValue>.Default.Equals(value, entries[i].Value))
+                        return true;
+                }
+
+                return false;
+            }
+#endif
             IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
             for (int i = 0; i < usedCount; i++)
             {

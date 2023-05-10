@@ -1471,14 +1471,30 @@ namespace KGySoft.CoreLibraries
                 case IList list:
                     return list.IndexOf(element);
                 default:
-                    var comparer = ComparerHelper<T>.EqualityComparer;
                     var index = 0;
-                    foreach (T item in source)
-                    {
-                        if (comparer.Equals(item, element))
-                            return index;
 
-                        index += 1;
+#if NET5_0_OR_GREATER
+                    if (typeof(T).IsValueType)
+                    {
+                        foreach (T item in source)
+                        {
+                            if (EqualityComparer<T>.Default.Equals(item, element))
+                                return index;
+
+                            index += 1;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        var comparer = ComparerHelper<T>.EqualityComparer;
+                        foreach (T item in source)
+                        {
+                            if (comparer.Equals(item, element))
+                                return index;
+
+                            index += 1;
+                        }
                     }
 
                     return -1;

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -156,7 +157,19 @@ namespace KGySoft.Collections
             #region Internal Properties
 
             internal bool IsAndHash => isAndHash;
-            internal IEqualityComparer<TKey>? Comparer => comparer;
+            internal IEqualityComparer<TKey>? InternalComparer => comparer;
+
+            #endregion
+
+            #region Private Properties
+
+#if NET5_0_OR_GREATER
+            private IEqualityComparer<TKey> Comparer => typeof(TKey).IsValueType
+                ? comparer ?? ComparerHelper<TKey>.EqualityComparer
+                : comparer!;
+#else
+            private IEqualityComparer<TKey> Comparer => comparer!;
+#endif
 
             #endregion
 
@@ -186,6 +199,7 @@ namespace KGySoft.Collections
                 Debug.Assert(capacity > 0, "Nonzero initial capacity is expected in CustomDictionary");
                 this.isAndHash = isAndHash;
                 this.comparer = comparer;
+                Debug.Assert(this.comparer != null || typeof(TKey).IsValueType && ComparerHelper<TKey>.IsDefaultComparer(comparer));
                 Initialize(capacity);
             }
 
@@ -279,29 +293,76 @@ namespace KGySoft.Collections
             internal bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
-
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
-                {
-                    ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
-                    {
-                        value = entryRef.Value;
-                        return true;
-                    }
 
-                    i = entryRef.Next;
+#if NET5_0_OR_GREATER
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(TKey).IsValueType && comparer == null)
+                {
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && EqualityComparer<TKey>.Default.Equals(entryRef.Key, key))
+                        {
+                            value = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<TKey> comp = comparer!;
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Key, key))
+                        {
+                            value = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
                 }
 
                 value = default;
                 return false;
             }
 
+            internal bool ContainsValue(TValue value)
+            {
+                InternalEnumerator enumerator = GetInternalEnumerator();
+#if NET5_0_OR_GREATER
+                if (typeof(TValue).IsValueType)
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        if (EqualityComparer<TValue>.Default.Equals(value, enumerator.Current.Value))
+                            return true;
+                    }
+
+                    return false;
+                }
+#endif
+
+                IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
+                while (enumerator.MoveNext())
+                {
+                    if (valueComparer.Equals(value, enumerator.Current.Value))
+                        return true;
+                }
+
+                return false;
+            }
+
             internal bool TryInsertInternal(TKey key, TValue value, uint hashCode, DictionaryInsertion behavior)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -333,7 +394,8 @@ namespace KGySoft.Collections
             internal bool TryReplaceInternal(TKey key, TValue newValue, TValue originalValue, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
+                IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
 
                 // searching for an existing key
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
@@ -363,7 +425,7 @@ namespace KGySoft.Collections
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 int previous = -1;
                 ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
                 int i = bucketRef - 1;
@@ -407,7 +469,7 @@ namespace KGySoft.Collections
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 int previous = -1;
                 ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
                 int i = bucketRef - 1;
@@ -454,7 +516,8 @@ namespace KGySoft.Collections
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
+                IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
                 int previous = -1;
                 ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
                 int i = bucketRef - 1;
@@ -501,7 +564,7 @@ namespace KGySoft.Collections
             internal TValue AddOrUpdate(TKey key, TValue addValue, TValue updateValue, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -527,7 +590,7 @@ namespace KGySoft.Collections
             internal TValue AddOrUpdate(TKey key, TValue addValue, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -553,7 +616,7 @@ namespace KGySoft.Collections
             internal TValue AddOrUpdate(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, TValue> updateValueFactory, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -581,7 +644,7 @@ namespace KGySoft.Collections
                 TArg factoryArgument, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -608,7 +671,7 @@ namespace KGySoft.Collections
             internal TValue GetOrAdd(TKey key, TValue addValue, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -629,7 +692,7 @@ namespace KGySoft.Collections
             internal TValue GetOrAdd(TKey key, Func<TKey, TValue> addValueFactory, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -651,7 +714,7 @@ namespace KGySoft.Collections
             internal TValue GetOrAdd<TArg>(TKey key, Func<TKey, TArg, TValue> addValueFactory, TArg factoryArgument, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<TKey> comp = comparer ?? defaultComparer;
+                IEqualityComparer<TKey> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -672,7 +735,7 @@ namespace KGySoft.Collections
 
             internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);
 
-            #endregion
+#endregion
 
             #region Private Methods
 
@@ -711,8 +774,17 @@ namespace KGySoft.Collections
             [MethodImpl(MethodImpl.AggressiveInlining)]
             private uint GetHashCode(TKey key)
             {
-                IEqualityComparer<TKey>? comp = comparer;
-                return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+#if NET5_0_OR_GREATER
+                if (typeof(TKey).IsValueType)
+                {
+                    IEqualityComparer<TKey>? comp = comparer;
+                    return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+                }
+
+                return (uint)comparer!.GetHashCode(key);
+#else
+                return (uint)comparer!.GetHashCode(key);
+#endif
             }
 
             private void AddAsNew(TKey key, TValue value, uint hashCode, ref int bucketRef)
@@ -774,7 +846,7 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #endregion
+#endregion
         }
     }
 }

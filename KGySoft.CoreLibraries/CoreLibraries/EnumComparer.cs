@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
     /// The optimization of <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> instances for <see langword="enum"/> types may differ in different target frameworks.
     /// <list type="bullet">
     /// <item>In .NET Framework 3.5 and earlier versions they are not optimized at all.</item>
-    /// <item>In .NET 4.0 Framework <see cref="EqualityComparer{T}"/> was optimized for <see cref="int"/>-based <see langword="enum"/>s. (Every .NET 4.0 assembly is executed on the latest 4.x runtime though, so this is might be relevant
+    /// <item>In .NET 4.0 Framework <see cref="EqualityComparer{T}"/> was optimized for <see cref="int"/>-based <see langword="enum"/>s. (Every .NET 4.0 assembly is executed on the latest 4.x runtime though, so this might be relevant
     /// only on Windows XP where no newer than the 4.0 runtime can be installed.)</item>
     /// <item>In latest .NET 4.x Framework versions <see cref="EqualityComparer{T}"/> is optimized for any <see langword="enum"/> type but <see cref="Comparer{T}"/> is not.</item>
     /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/> types

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -151,8 +152,19 @@ namespace KGySoft.Collections
             #region Internal Properties
 
             internal bool IsAndHash => isAndHash;
-            internal IEqualityComparer<T>? Comparer => comparer;
+            internal IEqualityComparer<T>? InternalComparer => comparer;
 
+            #endregion
+
+            #region Private Properties
+
+#if NET5_0_OR_GREATER
+            private IEqualityComparer<T> Comparer => typeof(T).IsValueType
+                ? comparer ?? ComparerHelper<T>.EqualityComparer
+                : comparer!;
+#else
+            private IEqualityComparer<T> Comparer => comparer!;
+#endif
             #endregion
 
             #endregion
@@ -164,6 +176,7 @@ namespace KGySoft.Collections
                 Debug.Assert(capacity > 0, "Nonzero initial capacity is expected in CustomDictionary");
                 this.isAndHash = isAndHash;
                 this.comparer = comparer;
+                Debug.Assert(this.comparer != null || typeof(T).IsValueType && ComparerHelper<T>.IsDefaultComparer(comparer));
                 Initialize(capacity);
             }
 
@@ -195,38 +208,77 @@ namespace KGySoft.Collections
             internal bool ContainsInternal(T item, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
-
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
-                {
-                    ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, item))
-                        return true;
 
-                    i = entryRef.Next;
+#if NETCOREAPP
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(T).IsValueType && comparer == null)
+                {
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && EqualityComparer<T>.Default.Equals(entryRef.Value, item))
+                            return true;
+
+                        i = entryRef.Next;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<T> comp = comparer!;
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, item))
+                            return true;
+
+                        i = entryRef.Next;
+                    }
                 }
 
                 return false;
             }
 
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal bool TryGetValueInternal(T equalValue, uint hashCode, [MaybeNullWhen(false)] out T actualValue)
+            internal bool TryGetValueInternal(T equalValue, uint hashCode, [MaybeNullWhen(false)]out T actualValue)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
-
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
-                {
-                    ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, equalValue))
-                    {
-                        actualValue = entryRef.Value;
-                        return true;
-                    }
 
-                    i = entryRef.Next;
+#if NETCOREAPP
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(T).IsValueType && comparer == null)
+                {
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && EqualityComparer<T>.Default.Equals(entryRef.Value, equalValue))
+                        {
+                            actualValue = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<T> comp = comparer!;
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, equalValue))
+                        {
+                            actualValue = entryRef.Value;
+                            return true;
+                        }
+
+                        i = entryRef.Next;
+                    }
                 }
 
                 actualValue = default;
@@ -236,7 +288,7 @@ namespace KGySoft.Collections
             internal bool AddInternal(T item, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
+                IEqualityComparer<T> comp = Comparer;
                 ref int bucketRef = ref buckets[GetBucketIndex(hashCode)];
                 int index = bucketRef - 1;
 
@@ -260,7 +312,7 @@ namespace KGySoft.Collections
             {
                 int[] bucketsLocal = buckets;
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
+                IEqualityComparer<T> comp = Comparer;
                 int previous = -1;
                 ref int bucketRef = ref bucketsLocal[GetBucketIndex(hashCode)];
                 int i = bucketRef - 1;

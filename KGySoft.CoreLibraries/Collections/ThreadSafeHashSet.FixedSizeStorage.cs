@@ -171,6 +171,18 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Private Properties
+
+#if NET5_0_OR_GREATER
+            private IEqualityComparer<T> Comparer => typeof(T).IsValueType
+                ? comparer ?? ComparerHelper<T>.EqualityComparer
+                : comparer!;
+#else
+            private IEqualityComparer<T> Comparer => comparer!;
+#endif
+
+            #endregion
+
             #endregion
 
             #region Constructors
@@ -181,7 +193,7 @@ namespace KGySoft.Collections
             {
                 // isAndHash and comparer are not taken from other because it can be Empty
                 isAndHash = mergeWith.IsAndHash;
-                comparer = mergeWith.Comparer;
+                comparer = mergeWith.InternalComparer;
 
                 if (removeDeletedKeys)
                 {
@@ -232,6 +244,7 @@ namespace KGySoft.Collections
             {
                 this.isAndHash = isAndHash;
                 this.comparer = comparer;
+                Debug.Assert(this.comparer != null || typeof(T).IsValueType && ComparerHelper<T>.IsDefaultComparer(comparer));
                 buckets = new int[GetBucketSize(capacity)];
                 entries = new Entry[capacity];
             }
@@ -291,18 +304,37 @@ namespace KGySoft.Collections
             internal bool? ContainsInternal(T item, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
-
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
+#if NETCOREAPP
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(T).IsValueType && comparer == null)
                 {
-                    ref Entry entryRef = ref items[i];
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
 
-                    // item found: returning whether is not deleted.
-                    if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, item))
-                        return Volatile.Read(ref entryRef.IsDeleted) == 0;
+                        // item found: returning whether is not deleted.
+                        if (entryRef.Hash == hashCode && EqualityComparer<T>.Default.Equals(entryRef.Value, item))
+                            return Volatile.Read(ref entryRef.IsDeleted) == 0;
 
-                    i = entryRef.Next;
+                        i = entryRef.Next;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<T> comp = comparer!;
+                    while (i >= 0)
+                    {
+                        ref Entry entryRef = ref items[i];
+
+                        // item found: returning whether is not deleted.
+                        if (entryRef.Hash == hashCode && comp.Equals(entryRef.Value, item))
+                            return Volatile.Read(ref entryRef.IsDeleted) == 0;
+
+                        i = entryRef.Next;
+                    }
                 }
 
                 // not found
@@ -313,29 +345,60 @@ namespace KGySoft.Collections
             internal bool? TryGetValueInternal(T equalValue, uint hashCode, out T? actualValue)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
-
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
-                while (i >= 0)
+
+#if NETCOREAPP
+                // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+                // See https://github.com/dotnet/runtime/issues/10050
+                if (typeof(T).IsValueType && comparer == null)
                 {
-                    ref Entry entryRef = ref items[i];
-                    if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Value, equalValue))
+                    while (i >= 0)
                     {
-                        i = entryRef.Next;
-                        continue;
-                    }
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash != hashCode || !EqualityComparer<T>.Default.Equals(entryRef.Value, equalValue))
+                        {
+                            i = entryRef.Next;
+                            continue;
+                        }
 
-                    // item found: returning actual value if not deleted
-                    if (Volatile.Read(ref entryRef.IsDeleted) == 0)
+                        // item found: returning actual value if not deleted
+                        if (Volatile.Read(ref entryRef.IsDeleted) == 0)
+                        {
+                            // works without locking because the value never changes
+                            actualValue = entryRef.Value;
+                            return true;
+                        }
+
+                        // deleted
+                        actualValue = default;
+                        return false;
+                    }
+                }
+                else
+#endif
+                {
+                    IEqualityComparer<T> comp = comparer!;
+                    while (i >= 0)
                     {
-                        // works without locking because the value never changes
-                        actualValue = entryRef.Value;
-                        return true;
-                    }
+                        ref Entry entryRef = ref items[i];
+                        if (entryRef.Hash != hashCode || !comp.Equals(entryRef.Value, equalValue))
+                        {
+                            i = entryRef.Next;
+                            continue;
+                        }
 
-                    // deleted
-                    actualValue = default;
-                    return false;
+                        // item found: returning actual value if not deleted
+                        if (Volatile.Read(ref entryRef.IsDeleted) == 0)
+                        {
+                            // works without locking because the value never changes
+                            actualValue = entryRef.Value;
+                            return true;
+                        }
+
+                        // deleted
+                        actualValue = default;
+                        return false;
+                    }
                 }
 
                 // not found
@@ -349,7 +412,7 @@ namespace KGySoft.Collections
             internal bool? TryAddInternal(T item, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
+                IEqualityComparer<T> comp = Comparer;
 
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
@@ -377,7 +440,7 @@ namespace KGySoft.Collections
             internal bool? TryRemoveInternal(T item, uint hashCode)
             {
                 Entry[] items = entries;
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
+                IEqualityComparer<T> comp = Comparer;
 
                 int i = buckets[GetBucketIndex(hashCode)] - 1;
                 while (i >= 0)
@@ -473,7 +536,7 @@ namespace KGySoft.Collections
 
             private bool TryInitialize(IEnumerable<T> collection)
             {
-                IEqualityComparer<T> comp = comparer ?? defaultComparer;
+                IEqualityComparer<T> comp = Comparer;
                 int index = 0;
                 int[] localBuckets = buckets;
                 Entry[] items = entries;

@@ -63,7 +63,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             Assert.IsTrue(ThreadSafeHashSet<string>.FixedSizeStorage.TryInitialize(
                     new HashSet<string> { "alpha", "beta", "gamma" },
-                    default, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, out var set));
+                    default, ignoreCase ? StringComparer.OrdinalIgnoreCase : ComparerHelper<string>.EqualityComparer, out var set));
 
             Assert.AreEqual(3, set.Count);
 
@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [TestCase(true)]
         public void TempStorageUsageTest(bool ignoreCase)
         {
-            var set = new ThreadSafeHashSet<string>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
+            var set = new ThreadSafeHashSet<string>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : ComparerHelper<string>.EqualityComparer, default);
 
             // Add
             Assert.IsTrue(set.Add("alpha"));

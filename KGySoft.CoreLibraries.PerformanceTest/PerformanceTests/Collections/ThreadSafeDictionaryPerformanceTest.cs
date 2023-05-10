@@ -23,9 +23,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
-#if !(NET35 || NET40)
-using System.Threading; 
-#endif
 #if !NET35
 using System.Threading.Tasks;
 #endif
@@ -126,23 +123,30 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
             var gDict = new LockFreeCache<int, object>.GrowOnlyDictionary(count, null, true);
+            var tmpDict = new ThreadSafeDictionary<int, object>.TempStorage(dict, null, true);
+            var fDict = new ThreadSafeDictionary<int, object>.FixedSizeStorage(ThreadSafeDictionary<int, object>.FixedSizeStorage.Empty, tmpDict, false);
+
             for (int i = 0; i < count; i++)
                 gDict[i] = null;
 
-            new IteratorPerformanceTest<object> { Iterations = count, Repeat = 5, TestName = "Sequential" }
+            new IteratorPerformanceTest<object> { Iterations = count, Repeat = 5, TestName = "Int keys, Sequential" }
                 .AddCase(i => lDict[i], "LockingDictionary")
 #if !NET35
                 .AddCase(i => cDict[i], "ConcurrentDictionary")
 #endif
+                //.AddCase(i => tmpDict[i], "TempStorage (not applicable, should be in a lock)")
+                .AddCase(i => fDict[i], "FixedSizeStorage")
                 .AddCase(i => tDict[i], "ThreadSafeDictionary")
                 .AddCase(i => gDict[i], "GrowOnlyDictionary")
                 .DoTest()
                 .DumpResults(Console.Out);
 
 #if !NET35
-            new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "Parallel" }
+            new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "Int keys, Parallel" }
                 .AddCase(() => Parallel.For(0, count, i => { var _ = lDict[i]; }), "LockingDictionary")
                 .AddCase(() => Parallel.For(0, count, i => { var _ = cDict[i]; }), "ConcurrentDictionary")
+                //.AddCase(() => Parallel.For(0, count, i => { var _ = tmpDict[i]; }), "TempStorage (not applicable, should be in a lock)")
+                .AddCase(() => Parallel.For(0, count, i => { var _ = fDict[i]; }), "FixedSizeStorage")
                 .AddCase(() => Parallel.For(0, count, i => { var _ = tDict[i]; }), "ThreadSafeDictionary")
                 .AddCase(() => Parallel.For(0, count, i => { var _ = gDict[i]; }), "GrowOnlyDictionary")
                 .DoTest()
@@ -163,22 +167,22 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
             var tDictSsc = new ThreadSafeDictionary<string, int>(dict, StringSegmentComparer.Ordinal);
 
-            new IteratorPerformanceTest<int> { Iterations = count, Repeat = 5, TestName = "Sequential" }
+            new IteratorPerformanceTest<int> { Iterations = count, Repeat = 5, TestName = "String keys, Sequential" }
                 .AddCase(i => lDict[i.ToString(CultureInfo.InvariantCulture)], "LockingDictionary")
 #if !NET35
                 .AddCase(i => cDict[i.ToString(CultureInfo.InvariantCulture)], "ConcurrentDictionary")
 #endif
                 .AddCase(i => tDict[i.ToString(CultureInfo.InvariantCulture)], "ThreadSafeDictionary")
-                .AddCase(i => tDictSsc[i.ToString(CultureInfo.InvariantCulture)], "ThreadSafeDictionary (StringSegmentComparer.Ordinal)")
+                //.AddCase(i => tDictSsc[i.ToString(CultureInfo.InvariantCulture)], "ThreadSafeDictionary (StringSegmentComparer.Ordinal)")
                 .DoTest()
                 .DumpResults(Console.Out);
 
 #if !NET35
-            new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "Parallel" }
+            new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "String keys, Parallel" }
                 .AddCase(() => Parallel.For(0, count, i => { var _ = lDict[i.ToString(CultureInfo.InvariantCulture)]; }), "LockingDictionary")
                 .AddCase(() => Parallel.For(0, count, i => { var _ = cDict[i.ToString(CultureInfo.InvariantCulture)]; }), "ConcurrentDictionary")
                 .AddCase(() => Parallel.For(0, count, i => { var _ = tDict[i.ToString(CultureInfo.InvariantCulture)]; }), "ThreadSafeDictionary")
-                .AddCase(() => Parallel.For(0, count, i => { var _ = tDictSsc[i.ToString(CultureInfo.InvariantCulture)]; }), "ThreadSafeDictionary (StringSegmentComparer.Ordinal)")
+                //.AddCase(() => Parallel.For(0, count, i => { var _ = tDictSsc[i.ToString(CultureInfo.InvariantCulture)]; }), "ThreadSafeDictionary (StringSegmentComparer.Ordinal)")
                 .DoTest()
                 .DumpResults(Console.Out);
 #endif

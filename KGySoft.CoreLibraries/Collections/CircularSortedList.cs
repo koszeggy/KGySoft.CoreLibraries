@@ -101,7 +101,7 @@ namespace KGySoft.Collections
     /// a <see cref="NotSupportedException"/> for <see cref="CircularSortedList{TKey,TValue}"/>, as the position of an element cannot be set directly, it always depends on the comparer implementation.</para>
     /// <para><see cref="CircularSortedList{TKey,TValue}"/> requires a comparer implementation to sort and to perform comparisons.
     /// If comparer is not defined when <see cref="CircularSortedList{TKey,TValue}"/> is instantiated by one of the constructors, the comparer will be chosen automatically.
-    /// When <typeparamref name="TKey"/> is en <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
+    /// Only when targeting the .NET Framework, if <typeparamref name="TKey"/> is an <see langword="enum"/> type, then the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
     /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen. The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
     /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>. If the key type <typeparamref name="TKey"/> does not implement
     /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
@@ -629,15 +629,6 @@ namespace KGySoft.Collections
 
         #region Fields
 
-        #region Static Fields
-
-        private static readonly Type typeKey = typeof(TKey);
-        private static readonly Type typeValue = typeof(TValue);
-
-        #endregion
-
-        #region Instance Fields
-
         private readonly CircularList<TKey> keys;
         private readonly CircularList<TValue> values;
         private readonly IComparer<TKey> comparer;
@@ -645,8 +636,6 @@ namespace KGySoft.Collections
         [NonSerialized]private IList<TKey>? keysList;
         [NonSerialized]private IList<TValue>? valuesList;
         [NonSerialized]private object? syncRoot;
-
-        #endregion
 
         #endregion
 
@@ -874,12 +863,12 @@ namespace KGySoft.Collections
                     }
                     catch (InvalidCastException)
                     {
-                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
                 }
             }
         }
@@ -908,7 +897,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
-        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
+        /// <para>Only when targeting the .NET Framework, if <typeparamref name="TKey"/> is an <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
         /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen.
         /// The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
         /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>.
@@ -925,8 +914,8 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/>.
         /// </summary>
         /// <param name="capacity">The initial number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can contain.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types when targeting the .NET Framework, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
@@ -948,8 +937,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Creates a new instance of <see cref="CircularSortedList{TKey,TValue}"/> with empty capacity, that uses the specified <paramref name="comparer"/>.
         /// </summary>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types when targeting the .NET Framework, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> in other cases.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// </remarks>
@@ -963,8 +952,8 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/>.
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey,TValue}"/> whose elements are copied to the new S<see cref="CircularSortedList{TKey,TValue}"/>.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types when targeting the .NET Framework, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
@@ -1111,8 +1100,8 @@ namespace KGySoft.Collections
         /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
         /// <returns><see langword="true"/> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
-        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when targeting the .NET Framework and <typeparamref name="TValue"/> is an <see langword="enum"/> type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>
         public bool ContainsValue(TValue value) => values.IndexOf(value) >= 0;
@@ -1168,8 +1157,8 @@ namespace KGySoft.Collections
         /// The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
         /// <returns>The zero-based index of the first occurrence of value within the entire <see cref="CircularSortedList{TKey,TValue}"/>, if found; otherwise, -1.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
-        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when targeting the .NET Framework and <typeparamref name="TValue"/> is an <see langword="enum"/> type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases.
         /// <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> checks whether the value type <typeparamref name="TValue"/> implements <see cref="IEquatable{T}"/> and uses
         /// that implementation, if available. If not, <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> uses <see cref="object.Equals(object)">Object.Equals</see>.
         /// </para>
@@ -1359,7 +1348,11 @@ namespace KGySoft.Collections
             if (index < 0)
                 return index;
 
+#if NETFRAMEWORK
             return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values.ElementAt(index)) ? index : -1;
+#else
+            return EqualityComparer<TValue>.Default.Equals(item.Value, values.ElementAt(index)) ? index : -1;
+#endif
         }
 
         private bool Remove(KeyValuePair<TKey, TValue> item)
@@ -1368,8 +1361,14 @@ namespace KGySoft.Collections
             if (index < 0)
                 return false;
 
+#if NETFRAMEWORK
             if (!ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values.ElementAt(index)))
+#else
+            if (!EqualityComparer<TValue>.Default.Equals(item.Value, values.ElementAt(index)))
+#endif
+            {
                 return false;
+            }
 
             RemoveAt(index);
             return true;
@@ -1438,12 +1437,12 @@ namespace KGySoft.Collections
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeValue));
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
                 }
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
             }
         }
 
@@ -1525,12 +1524,12 @@ namespace KGySoft.Collections
                     }
                     catch (InvalidCastException)
                     {
-                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeof(TValue)));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeof(TKey)));
                 }
             }
 
@@ -1559,12 +1558,12 @@ namespace KGySoft.Collections
                     }
                     catch (InvalidCastException)
                     {
-                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeof(TValue)));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeof(TKey)));
                 }
             }
 
@@ -1596,12 +1595,12 @@ namespace KGySoft.Collections
                     }
                     catch (InvalidCastException)
                     {
-                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeValue));
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(entry.Value, typeof(TValue)));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeKey));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(entry.Key, typeof(TKey)));
                 }
             }
         }

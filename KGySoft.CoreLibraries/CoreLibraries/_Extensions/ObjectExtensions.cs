@@ -110,11 +110,24 @@ namespace KGySoft.CoreLibraries
             if (set == null || (length = set.Length) == 0)
                 return false;
 
-            var comparer = ComparerHelper<T>.EqualityComparer;
-            for (int i = 0; i < length; i++)
+#if NET5_0_OR_GREATER
+            if (typeof(T).IsValueType)
             {
-                if (comparer.Equals(item, set[i]))
-                    return true;
+                for (int i = 0; i < length; i++)
+                {
+                    if (EqualityComparer<T>.Default.Equals(item, set[i]))
+                        return true;
+                }
+            }
+            else
+#endif
+            {
+                var comparer = ComparerHelper<T>.EqualityComparer;
+                for (int i = 0; i < length; i++)
+                {
+                    if (comparer.Equals(item, set[i]))
+                        return true;
+                }
             }
 
             return false;
@@ -138,13 +151,28 @@ namespace KGySoft.CoreLibraries
         {
             if (set.Length == 0)
                 return false;
-            var comparer = ComparerHelper<T>.EqualityComparer;
 
-            // ReSharper disable once ForCanBeConvertedToForeach - performance
-            for (int i = 0; i < set.Length; i++)
+#if NET5_0_OR_GREATER
+            if (typeof(T).IsValueType)
             {
-                if (comparer.Equals(item, set[i]))
-                    return true;
+                // ReSharper disable once ForCanBeConvertedToForeach - performance
+                for (int i = 0; i < set.Length; i++)
+                {
+                    if (EqualityComparer<T>.Default.Equals(item, set[i]))
+                        return true;
+                }
+            }
+            else
+#endif
+            {
+                var comparer = ComparerHelper<T>.EqualityComparer;
+
+                // ReSharper disable once ForCanBeConvertedToForeach - performance
+                for (int i = 0; i < set.Length; i++)
+                {
+                    if (comparer.Equals(item, set[i]))
+                        return true;
+                }
             }
 
             return false;
@@ -196,11 +224,24 @@ namespace KGySoft.CoreLibraries
             if (set == null)
                 return false;
 
-            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
-            foreach (T element in set)
+#if NET5_0_OR_GREATER
+            if (typeof(T).IsValueType)
             {
-                if (comparer.Equals(item, element))
-                    return true;
+                foreach (T element in set)
+                {
+                    if (EqualityComparer<T>.Default.Equals(item, element))
+                        return true;
+                }
+            }
+            else
+#endif
+            {
+                IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+                foreach (T element in set)
+                {
+                    if (comparer.Equals(item, element))
+                        return true;
+                }
             }
 
             return false;

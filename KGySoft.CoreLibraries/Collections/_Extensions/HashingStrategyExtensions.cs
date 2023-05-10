@@ -34,7 +34,7 @@ namespace KGySoft.Collections
             Type keyType = typeof(TKey);
             return strategy == HashingStrategy.And
                 || (strategy == HashingStrategy.Auto
-                    && (keyType == Reflector.StringType || (comparer == null && keyType.IsDefaultGetHashCode())));
+                    && (keyType == Reflector.StringType || ((comparer == null || ReferenceEquals(comparer, EqualityComparer<TKey>.Default)) && keyType.IsDefaultGetHashCode())));
         }
 
         #endregion

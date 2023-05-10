@@ -102,12 +102,13 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Argument.options, Res.PropertyMustBeGreaterThanOrEqualToProperty(nameof(options.ThresholdCapacity), nameof(options.InitialCapacity)));
 
             this.itemLoader = itemLoader;
-            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetEqualityComparer(comparer);
             bitwiseAndHash = options.HashingStrategy.PreferBitwiseAndHash(comparer);
             nextCapacity = options.InitialCapacity;
             thresholdCapacity = options.ThresholdCapacity;
             mergeInterval = options.MergeInterval.HasValue ? TimeHelper.GetInterval(options.MergeInterval.Value) : -1L;
             readOnlyStorage = ReadOnlyDictionary.Empty;
+            Debug.Assert(this.comparer != null || typeof(TKey).IsValueType && ComparerHelper<TKey>.IsDefaultComparer(comparer));
         }
 
         #endregion
@@ -184,8 +185,17 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         protected uint GetHashCode(TKey key)
         {
-            IEqualityComparer<TKey>? comp = comparer;
-            return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+#if NET5_0_OR_GREATER
+            if (typeof(TKey).IsValueType)
+            {
+                IEqualityComparer<TKey>? comp = comparer;
+                return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
+            }
+
+            return (uint)comparer!.GetHashCode(key);
+#else
+            return (uint)comparer!.GetHashCode(key);
+#endif
         }
 
         #endregion

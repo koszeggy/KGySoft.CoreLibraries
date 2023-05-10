@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -68,7 +67,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 ["alpha"] = 1,
                 ["beta"] = 2,
                 ["gamma"] = 3,
-            }, default, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, out var dict));
+            }, default, ignoreCase ? StringComparer.OrdinalIgnoreCase : ComparerHelper<string>.EqualityComparer, out var dict));
 
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
@@ -135,7 +134,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [TestCase(true)]
         public void TempStorageUsageTest(bool ignoreCase)
         {
-            var dict = new ThreadSafeDictionary<string, int>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : null, default);
+            var dict = new ThreadSafeDictionary<string, int>.TempStorage(2, ignoreCase ? StringComparer.OrdinalIgnoreCase : ComparerHelper<string>.EqualityComparer, default);
 
             // Add
             dict.Add("alpha", 1);
@@ -195,7 +194,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [TestCaseSource(nameof(usageTestSource))]
-        public void UsageTest(string testName, IEqualityComparer<string> comparer, int strategy, TimeSpan mergeInterval)
+        public void UsageTestRefType(string testName, IEqualityComparer<string> comparer, HashingStrategy strategy, TimeSpan mergeInterval)
         {
             Console.WriteLine(testName);
 
@@ -206,7 +205,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 ["gamma"] = 3,
             };
 
-            var dict = new ThreadSafeDictionary<string, int>(initialValues, comparer, (HashingStrategy)strategy) { MergeInterval = mergeInterval };
+            var dict = new ThreadSafeDictionary<string, int>(initialValues, comparer, strategy) { MergeInterval = mergeInterval };
 
             Assert.AreEqual(3, dict.Count);
             Assert.AreEqual(1, dict["alpha"]);
@@ -279,6 +278,99 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(4, dict.Count);
             Assert.AreEqual(43, dict["alpha"]);
             Assert.AreEqual(13, dict["delta"]);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        [TestCase(null)]
+        public void UsageTestValueType(bool? customComparer)
+        {
+            var initialValues = new Dictionary<ConsoleColor, string>
+            {
+                [ConsoleColor.Red] = "Red",
+                [ConsoleColor.Green] = "Green",
+                [ConsoleColor.Blue] = "Blue",
+            };
+
+            IEqualityComparer<ConsoleColor> comparer = customComparer switch
+            {
+                true => EnumComparer<ConsoleColor>.Comparer,
+                false => EqualityComparer<ConsoleColor>.Default,
+                _ => null,
+            };
+            var dict = new ThreadSafeDictionary<ConsoleColor, string>(initialValues, comparer);
+
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual("Red", dict[ConsoleColor.Red]);
+
+            // TryAdd
+            Assert.IsFalse(dict.TryAdd(ConsoleColor.Red, "red"));
+            Assert.IsTrue(dict.TryAdd(ConsoleColor.Cyan, "Cyan")); // to locking
+            Assert.AreEqual(4, dict.Count);
+
+            // Update
+            dict[ConsoleColor.Red] = "red"; // in non-locking
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("red", dict[ConsoleColor.Red]);
+            dict[ConsoleColor.Cyan] = "cyan"; // maybe in locking
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("cyan", dict[ConsoleColor.Cyan]);
+
+            // Remove
+            Assert.IsFalse(dict.TryRemove(ConsoleColor.Red, "Red"));
+            Assert.IsTrue(dict.TryRemove(ConsoleColor.Red, out string value));
+            Assert.AreEqual("red", value);
+            Assert.AreEqual(3, dict.Count);
+            Assert.IsFalse(dict.TryRemove(ConsoleColor.Red, out value));
+            Assert.AreEqual(null, value);
+            Assert.IsFalse(dict.TryRemove(ConsoleColor.Cyan, "Cyan"));
+            Assert.IsTrue(dict.TryRemove(ConsoleColor.Cyan)); // maybe from locking
+            Assert.AreEqual(2, dict.Count);
+
+            // Re-add
+            Assert.IsTrue(dict.TryAdd(ConsoleColor.Red, "RED")); // in non-locking
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual("RED", dict[ConsoleColor.Red]);
+            Assert.IsTrue(dict.TryAdd(ConsoleColor.Cyan, "CYAN")); // maybe in locking unless already merged
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("CYAN", dict[ConsoleColor.Cyan]);
+
+            // Replace
+            Assert.IsFalse(dict.TryUpdate(ConsoleColor.Red, "Red", "red"));
+            Assert.IsTrue(dict.TryUpdate(ConsoleColor.Red, "Red", "RED")); // in non-locking
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("Red", dict[ConsoleColor.Red]);
+            Assert.IsTrue(dict.TryUpdate(ConsoleColor.Cyan, "Cyan", "CYAN")); // maybe in locking
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("Cyan", dict[ConsoleColor.Cyan]);
+
+            // Clear
+            dict.Clear();
+            Assert.AreEqual(0, dict.Count);
+            Assert.IsTrue(dict.TryAdd(ConsoleColor.Red, "reD")); // in non-locking, even after clear
+            Assert.AreEqual("reD", dict[ConsoleColor.Red]);
+            Assert.AreEqual(1, dict.Count);
+            Assert.IsTrue(dict.TryAdd(ConsoleColor.Cyan, "cyan")); // maybe in locking unless already merged
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual("cyan", dict[ConsoleColor.Cyan]);
+
+            // GetOrAdd
+            Assert.AreEqual("reD", dict.GetOrAdd(ConsoleColor.Red, "red"));
+            Assert.AreEqual(2, dict.Count);
+            Assert.AreEqual("green", dict.GetOrAdd(ConsoleColor.Green, "green")); // maybe in locking
+            Assert.AreEqual(3, dict.Count);
+
+            // AddOrUpdate
+            Assert.AreEqual("Der", dict.AddOrUpdate(ConsoleColor.Red, "Red", (_, v) => new String(v.Reverse().ToArray()))); // in non-locking
+            Assert.AreEqual(3, dict.Count);
+            Assert.AreEqual("Blue", dict.AddOrUpdate(ConsoleColor.Blue, "Blue", (_, v) => new String(v.Reverse().ToArray()))); // maybe in locking
+            Assert.AreEqual(4, dict.Count);
+
+            // Forcing merge
+            dict.EnsureMerged();
+            Assert.AreEqual(4, dict.Count);
+            Assert.AreEqual("Der", dict[ConsoleColor.Red]);
+            Assert.AreEqual("cyan", dict[ConsoleColor.Cyan]);
         }
 
         [Test]
@@ -415,6 +507,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 y => results[y] = dict.ContainsKey(key));
 
             CollectionAssert.DoesNotContain(results, false);
+        }
+
+        [Test]
+        public void InsertRaceConditionTest()
+        {
+            const string key = "Key";
+
+            // Initializing without passing a collection to the constructor and then adding one element: it will be in the temp locking storage
+            var dict = new ThreadSafeDictionary<string, object> { [key] = true };
+
+            // Waiting for the merge timeout
+            Thread.Sleep(dict.MergeInterval);
+
+            bool[] results = new bool[100];
+            ParallelHelper.For(0, results.Length,
+                y => results[y] = dict.TryAdd(key, false));
+
+            CollectionAssert.DoesNotContain(results, true);
+        }
+
+        [Test]
+        public void ReplaceRaceConditionTest()
+        {
+            const string key = "Key";
+
+            // Initializing without passing a collection to the constructor and then adding one element: it will be in the temp locking storage
+            var dict = new ThreadSafeDictionary<string, object> { [key] = true };
+
+            // Waiting for the merge timeout
+            Thread.Sleep(dict.MergeInterval);
+
+            bool[] results = new bool[100];
+            ParallelHelper.For(0, results.Length,
+                y => results[y] = dict.TryUpdate(key, true, false));
+
+            CollectionAssert.DoesNotContain(results, true);
         }
 
         #endregion

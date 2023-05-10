@@ -213,14 +213,6 @@ namespace KGySoft.Collections
 
         #region Fields
 
-        #region Static Fields
-
-        private static readonly IEqualityComparer<T> defaultComparer = ComparerHelper<T>.EqualityComparer;
-
-        #endregion
-
-        #region Instance Fields
-
         private readonly object syncRoot = new object();
 
         private IEqualityComparer<T>? comparer;
@@ -240,8 +232,6 @@ namespace KGySoft.Collections
         /// </summary>
         private volatile TempStorage? expandableStorage;
         private SerializationInfo? deserializationInfo;
-
-        #endregion
 
         #endregion
 
@@ -360,7 +350,13 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of items for this <see cref="ThreadSafeHashSet{T}"/>.
         /// </summary>
-        public IEqualityComparer<T> Comparer => comparer ?? defaultComparer;
+#if NET5_0_OR_GREATER
+        public IEqualityComparer<T> Comparer => typeof(T).IsValueType
+            ? comparer ?? ComparerHelper<T>.EqualityComparer
+            : comparer!;
+#else
+        public IEqualityComparer<T> Comparer => comparer!;
+#endif
 
         #endregion
 
@@ -405,8 +401,8 @@ namespace KGySoft.Collections
         /// Initializes a new instance of the <see cref="ThreadSafeHashSet{T}"/> class that is empty
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. If <see langword="null"/>, then <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> item types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -425,8 +421,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="capacity">Specifies the initial minimum capacity of the internal temporal storage for new items.
         /// If 0, then a default capacity is used.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> item types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -447,8 +443,9 @@ namespace KGySoft.Collections
 
             fixedSizeStorage = FixedSizeStorage.Empty;
             initialLockingCapacity = capacity;
-            bitwiseAndHash = strategy.PreferBitwiseAndHash(comparer);
-            this.comparer = ComparerHelper<T>.GetNonDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<T>.GetEqualityComparer(comparer);
+            bitwiseAndHash = strategy.PreferBitwiseAndHash(this.comparer);
+            Debug.Assert(this.comparer != null || typeof(T).IsValueType && ComparerHelper<T>.IsDefaultComparer(comparer));
         }
 
         /// <summary>
@@ -456,8 +453,8 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
         /// <param name="collection">The collection whose elements are coped to the new <see cref="ThreadSafeHashSet{T}"/>.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> item types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing items. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> item types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeHashSet{T}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
@@ -474,12 +471,12 @@ namespace KGySoft.Collections
 
             // trying to initialize directly in the fixed storage
 #pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, this is the constructor so there are no other threads at this point
-            if (FixedSizeStorage.TryInitialize(collection, bitwiseAndHash, comparer, out fixedSizeStorage))
+            if (FixedSizeStorage.TryInitialize(collection, bitwiseAndHash, this.comparer, out fixedSizeStorage))
                 return;
 #pragma warning restore CS0420
 
             // initializing in the expando storage (no locking is needed here as we are in the constructor)
-            expandableStorage = new TempStorage(collection, comparer, bitwiseAndHash);
+            expandableStorage = new TempStorage(collection, this.comparer, bitwiseAndHash);
             nextMerge = TimeHelper.GetTimeStamp() + mergeInterval;
         }
 
@@ -530,12 +527,16 @@ namespace KGySoft.Collections
                     continue;
                 }
 
-                // duplicate item
+                // Duplicate item. No up-to-date check is needed here because in this case there was no change.
                 if (success == false)
                     return false;
 
                 lock (syncRoot)
                 {
+                    // lost race: must check the lock free values again to prevent possible duplicate items
+                    if (!IsUpToDateInLock(lockFreeValues))
+                        continue;
+
                     TempStorage lockingValues = GetCreateLockingStorage();
                     bool result = lockingValues.AddInternal(item, hashCode);
                     MergeIfExpired();
@@ -552,27 +553,32 @@ namespace KGySoft.Collections
         /// <param name="equalValue">The item to search for.</param>
         /// <param name="actualValue">When this method returns, the actually stored value, if the <paramref name="equalValue"/> is present in
         /// the <see cref="ThreadSafeHashSet{T}"/> judged by the current <see cref="Comparer"/>; otherwise, the default value for the type <typeparamref name="T"/>. This parameter is passed uninitialized.</param>
-        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
+        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)]out T actualValue)
         {
             uint hashCode = GetHashCode(equalValue);
-            bool? success = fixedSizeStorage.TryGetValueInternal(equalValue, hashCode, out actualValue);
-            if (success.HasValue)
-                return success.Value;
 
-            if (expandableStorage == null)
-                return false;
-
-            lock (syncRoot)
+            while (true)
             {
-                TempStorage? lockingValues = expandableStorage;
-
-                // lost race
-                if (lockingValues == null)
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                bool? success = lockFreeValues.TryGetValueInternal(equalValue, hashCode, out actualValue);
+             
+                // we don't need to make sure we are up-to-date here because we don't modify anything
+                if (success.HasValue)
+                    return success.Value;
+                if (expandableStorage == null)
                     return false;
 
-                bool result = lockingValues.TryGetValueInternal(equalValue, hashCode, out actualValue);
-                MergeIfExpired();
-                return result;
+                lock (syncRoot)
+                {
+                    // lost race: we need to check the fixed storage again
+                    if (!IsUpToDateInLock(lockFreeValues))
+                        continue;
+
+                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
+                    bool result = expandableStorage!.TryGetValueInternal(equalValue, hashCode, out actualValue);
+                    MergeIfExpired();
+                    return result;
+                }
             }
         }
 
@@ -584,25 +590,29 @@ namespace KGySoft.Collections
         public bool Contains(T item)
         {
             uint hashCode = GetHashCode(item);
-            FixedSizeStorage lockFreeValues = fixedSizeStorage;
-            bool? success = lockFreeValues.ContainsInternal(item, hashCode);
-            if (success.HasValue)
-                return success.Value;
 
-            if (expandableStorage == null && IsUpToDate(lockFreeValues))
-                return false;
-
-            lock (syncRoot)
+            while (true)
             {
-                TempStorage? lockingValues = expandableStorage;
+                FixedSizeStorage lockFreeValues = fixedSizeStorage;
+                bool? success = lockFreeValues.ContainsInternal(item, hashCode);
+           
+                // we don't need to make sure we are up-to-date here because we don't modify anything
+                if (success.HasValue)
+                    return success.Value;
+                if (expandableStorage == null)
+                    return false;
 
-                // lost race: we need to check the fixed storage again
-                if (lockingValues == null)
-                    return fixedSizeStorage.ContainsInternal(item, hashCode) == true;
+                lock (syncRoot)
+                {
+                    // lost race: we need to check the fixed storage again
+                    if (!IsUpToDateInLock(lockFreeValues))
+                        continue;
 
-                bool result = lockingValues.ContainsInternal(item, hashCode);
-                MergeIfExpired();
-                return result;
+                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
+                    bool result = expandableStorage!.ContainsInternal(item, hashCode);
+                    MergeIfExpired();
+                    return result;
+                }
             }
         }
 
@@ -642,13 +652,12 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    TempStorage? lockingValues = expandableStorage;
-
                     // lost race
-                    if (lockingValues == null)
-                        return false;
+                    if (!IsUpToDateInLock(lockFreeValues))
+                        continue;
 
-                    bool result = lockingValues.TryRemoveInternal(item, hashCode);
+                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
+                    bool result = expandableStorage!.TryRemoveInternal(item, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -748,29 +757,29 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    lockFreeValues = fixedSizeStorage;
-                    lockingValues = expandableStorage;
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues))
+                        continue;
 
-                    if (lockingValues?.Count > 0)
+                    if (expandableStorage?.Count > 0)
                     {
                         DoMerge(true);
                         return;
                     }
 
-                    // lost race
-                    if (lockFreeValues.DeletedCount == 0)
-                        return;
-
-                    // special merge: just removing deleted entries from fixedSizeStorage
-                    // As we set isMerging it is guaranteed that concurrent updates will wait in IsUpToDate after up to one update attempt
-                    isMerging = true;
-                    try
+                    if (lockFreeValues.DeletedCount > 0)
                     {
-                        fixedSizeStorage = new FixedSizeStorage(lockFreeValues);
-                    }
-                    finally
-                    {
-                        isMerging = false;
+                        // special merge: just removing deleted entries from fixedSizeStorage
+                        // As we set isMerging it is guaranteed that concurrent updates will wait in IsUpToDate after up to one update attempt
+                        isMerging = true;
+                        try
+                        {
+                            fixedSizeStorage = new FixedSizeStorage(lockFreeValues);
+                        }
+                        finally
+                        {
+                            isMerging = false;
+                        }
                     }
 
                     expandableStorage = null;
@@ -831,8 +840,17 @@ namespace KGySoft.Collections
         {
             if (item == null)
                 return 0U;
-            IEqualityComparer<T>? comp = comparer;
-            return (uint)(comp == null ? item.GetHashCode() : comp.GetHashCode(item));
+#if NET5_0_OR_GREATER
+            if (typeof(T).IsValueType)
+            {
+                IEqualityComparer<T>? comp = comparer;
+                return (uint)(comp == null ? item.GetHashCode() : comp.GetHashCode(item));
+            }
+
+            return (uint)comparer!.GetHashCode(item);
+#else
+            return (uint)comparer!.GetHashCode(item);
+#endif
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -895,6 +913,13 @@ namespace KGySoft.Collections
             // preventing current thread from consuming CPU until merge is finished
             WaitWhileMerging();
             return false;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private bool IsUpToDateInLock(FixedSizeStorage lockFreeValues)
+        {
+            Debug.Assert(!isMerging);
+            return lockFreeValues == fixedSizeStorage;
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -981,7 +1006,7 @@ namespace KGySoft.Collections
 
             info.AddValue(nameof(initialLockingCapacity), initialLockingCapacity);
             info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
-            info.AddValue(nameof(comparer), comparer);
+            info.AddValue(nameof(comparer), ComparerHelper<T>.IsDefaultComparer(comparer) ? null : comparer);
             info.AddValue(nameof(mergeInterval), mergeInterval);
             info.AddValue("items", ToArray());
 
@@ -1000,7 +1025,7 @@ namespace KGySoft.Collections
 
             initialLockingCapacity = info.GetInt32(nameof(initialLockingCapacity));
             bitwiseAndHash = info.GetBoolean(nameof(bitwiseAndHash));
-            comparer = (IEqualityComparer<T>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<T>));
+            comparer = ComparerHelper<T>.GetEqualityComparer((IEqualityComparer<T>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<T>)));
             mergeInterval = info.GetInt64(nameof(mergeInterval));
 #pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, deserialization is a single threaded-access
             FixedSizeStorage.TryInitialize(info.GetValueOrDefault<T[]>("items"), bitwiseAndHash, comparer, out fixedSizeStorage);

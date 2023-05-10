@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v7.1.1:
+* v7.2.0:
 ~~~~~~~~~
 
 * KGySoft.CoreLibraries namespace:
@@ -14,6 +14,18 @@
 * DictionaryExtensions class: Some GetValueOrDefault overloads that could cause ambiguities were not added to the
   .NET Core platform targets. Now these are also included also on .NET Core platforms but not as extension methods
   to prevent ambiguity.
+
+* KGySoft.Collections namespace:
+================================
+* Common changes collections in general:
+  * Improving performance if the generic argument is a value type
+
++ Cache<TKey, TValue>:
+  + New Comparer property
+* ThreadSafeDictionary<TKey, TValue> class:
+  * Improved race condition handling when merging elements into the lock-free storage.
+* ThreadSafeHashSet<T> class:
+  * Improved race condition handling when merging elements into the lock-free storage.
 
 
 ~~~~~~~~~

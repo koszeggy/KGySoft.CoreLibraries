@@ -300,7 +300,7 @@ namespace KGySoft.Collections
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     if (isGeneric)
                         return current;
-                    return new DictionaryEntry(current.Key!, current.Value);
+                    return new DictionaryEntry(current.Key, current.Value);
                 }
             }
 
@@ -310,7 +310,7 @@ namespace KGySoft.Collections
                 {
                     if (index == -1 || index == cache.usedCount)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return new DictionaryEntry(current.Key!, current.Value);
+                    return new DictionaryEntry(current.Key, current.Value);
                 }
             }
 
@@ -852,9 +852,6 @@ namespace KGySoft.Collections
         /// <seealso cref="Behavior"/>
         private static readonly Func<TKey, TValue> nullLoader = _ => Throw.KeyNotFoundException<TValue>(Res.CacheNullLoaderInvoke);
 
-        private static readonly Type typeKey = typeof(TKey);
-        private static readonly Type typeValue = typeof(TValue);
-
         #endregion
 
         #region Instance Fields
@@ -1050,6 +1047,17 @@ namespace KGySoft.Collections
             set => disposeDroppedValues = value;
         }
 
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for this <see cref="Cache{TKey,TValue}"/>.
+        /// </summary>
+#if NET5_0_OR_GREATER
+        public IEqualityComparer<TKey> Comparer => typeof(TKey).IsValueType
+            ? comparer ?? ComparerHelper<TKey>.EqualityComparer
+            : comparer!;
+#else
+        public IEqualityComparer<TKey> Comparer => comparer!;
+#endif
+
         #endregion
 
         #region Explicitly Implemented Interface Properties
@@ -1131,7 +1139,7 @@ namespace KGySoft.Collections
                 }
 
                 TValue newItem = itemLoader.Invoke(key);
-                Insert(key!, newItem, false);
+                Insert(key, newItem, false);
                 return newItem;
             }
             set
@@ -1154,7 +1162,7 @@ namespace KGySoft.Collections
                 if (!CanAcceptKey(key))
                     return null;
 
-                return TryGetValue((TKey)key, out TValue? value) ? (object)value! : null;
+                return TryGetValue((TKey)key, out TValue? value) ? value! : null;
             }
             set
             {
@@ -1171,12 +1179,12 @@ namespace KGySoft.Collections
                     }
                     catch (InvalidCastException)
                     {
-                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value!, typeValue));
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value!, typeof(TValue)));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
                 }
             }
         }
@@ -1212,8 +1220,8 @@ namespace KGySoft.Collections
         /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with specified <paramref name="capacity"/> capacity and <paramref name="comparer"/> and no item loader.
         /// </summary>
         /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
@@ -1238,8 +1246,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with the specified <paramref name="comparer"/>, default capacity of 128 and no item loader.
         /// </summary>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
@@ -1261,9 +1269,8 @@ namespace KGySoft.Collections
         /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by reading the
         /// <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see>.
         /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
@@ -1289,8 +1296,8 @@ namespace KGySoft.Collections
         /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
         /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>). This parameter is optional.
         /// <br/>Default value: <c>128</c>.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
@@ -1315,7 +1322,7 @@ namespace KGySoft.Collections
         {
             this.itemLoader = itemLoader ?? nullLoader;
             Capacity = capacity;
-            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetEqualityComparer(comparer);
         }
 
         /// <summary>
@@ -1323,8 +1330,8 @@ namespace KGySoft.Collections
         /// The <see cref="Capacity"/> will be initialized to the number of elements in <paramref name="dictionary"/>.
         /// </summary>
         /// <param name="dictionary">The dictionary whose elements are added to the <see cref="Cache{TKey,TValue}"/>.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
@@ -1342,7 +1349,7 @@ namespace KGySoft.Collections
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
             itemLoader = nullLoader;
-            this.comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull(comparer);
+            this.comparer = ComparerHelper<TKey>.GetEqualityComparer(comparer);
             int count = dictionary.Count;
             if (count == 0)
                 return;
@@ -1485,11 +1492,24 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
-            for (int i = first; i != -1; i = entries[i].NextInOrder)
+#if NET5_0_OR_GREATER
+            if (typeof(TValue).IsValueType)
             {
-                if (valueComparer.Equals(value, entries[i].Value))
-                    return true;
+                for (int i = first; i != -1; i = entries[i].NextInOrder)
+                {
+                    if (EqualityComparer<TValue>.Default.Equals(value, entries[i].Value))
+                        return true;
+                }
+            }
+            else
+#endif
+            {
+                IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
+                for (int i = first; i != -1; i = entries[i].NextInOrder)
+                {
+                    if (valueComparer.Equals(value, entries[i].Value))
+                        return true;
+                }
             }
 
             return false;
@@ -1674,7 +1694,7 @@ namespace KGySoft.Collections
         {
             if (syncRootForThreadSafeAccessor == null)
                 Interlocked.CompareExchange(ref syncRootForThreadSafeAccessor, new object(), null);
-            return protectItemLoader ? (IThreadSafeCacheAccessor<TKey, TValue>)new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
+            return protectItemLoader ? new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
         }
 
         #endregion
@@ -1733,18 +1753,22 @@ namespace KGySoft.Collections
 
             uint hashCode;
             Entry[] items = entries!;
-            IEqualityComparer<TKey>? comp = comparer;
-            if (comp == null)
+#if NET5_0_OR_GREATER
+            // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+            // See https://github.com/dotnet/runtime/issues/10050
+            if (typeof(TKey).IsValueType && comparer == null)
             {
                 hashCode = (uint)key.GetHashCode();
                 for (int i = bucketsLocal[hashCode % (uint)bucketsLocal.Length] - 1; i >= 0; i = items[i].NextInBucket)
                 {
-                    if (items[i].Hash == hashCode && ComparerHelper<TKey>.EqualityComparer.Equals(items[i].Key, key))
+                    if (items[i].Hash == hashCode && EqualityComparer<TKey>.Default.Equals(items[i].Key, key))
                         return i;
                 }
             }
             else
+#endif
             {
+                IEqualityComparer<TKey> comp = comparer!;
                 hashCode = (uint)comp.GetHashCode(key);
                 for (int i = bucketsLocal[hashCode % (uint)bucketsLocal.Length] - 1; i >= 0; i = items[i].NextInBucket)
                 {
@@ -1788,17 +1812,11 @@ namespace KGySoft.Collections
             if (bucketsLocal == null)
                 return false;
 
-            IEqualityComparer<TKey>? comp = comparer;
+            IEqualityComparer<TKey> comp = Comparer;
+            IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
             Entry[] items = entries!;
 
-            uint hashCode;
-            if (comp == null)
-            {
-                hashCode = (uint)key.GetHashCode();
-                comp = ComparerHelper<TKey>.EqualityComparer;
-            }
-            else
-                hashCode = (uint)comp.GetHashCode(key);
+            uint hashCode = (uint)comp.GetHashCode(key);
             uint bucket = hashCode % (uint)bucketsLocal.Length;
             int prevInBucket = -1;
             for (int i = bucketsLocal[bucket] - 1; i >= 0; prevInBucket = i, i = items[i].NextInBucket)
@@ -1807,7 +1825,7 @@ namespace KGySoft.Collections
                 if (itemRef.Hash != hashCode || !comp.Equals(itemRef.Key, key))
                     continue;
 
-                if (checkValue && !ComparerHelper<TValue>.EqualityComparer.Equals(itemRef.Value, value))
+                if (checkValue && !valueComparer.Equals(itemRef.Value, value))
                     return false;
 
                 // removing entry from the original bucket
@@ -1855,7 +1873,7 @@ namespace KGySoft.Collections
             Debug.Assert(first != -1, "first is -1 in DropFirst");
             if (disposeDroppedValues && entries![first].Value is IDisposable disposable)
                 disposable.Dispose();
-            InternalRemove(entries![first].Key!, default, false);
+            InternalRemove(entries![first].Key, default, false);
         }
 
         private void DropItems(int amount)
@@ -2013,7 +2031,7 @@ namespace KGySoft.Collections
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
             }
         }
 
@@ -2028,7 +2046,7 @@ namespace KGySoft.Collections
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
             }
         }
 
@@ -2089,12 +2107,12 @@ namespace KGySoft.Collections
                 }
                 catch (InvalidCastException)
                 {
-                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value!, typeValue));
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value!, typeof(TValue)));
                 }
             }
             catch (InvalidCastException)
             {
-                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeKey));
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
             }
         }
 
@@ -2128,7 +2146,7 @@ namespace KGySoft.Collections
                 case DictionaryEntry[] dictionaryEntries:
                     for (int i = first; i != -1; i = entries[i].NextInOrder)
                     {
-                        dictionaryEntries[index] = new DictionaryEntry(entries![i].Key!, entries[i].Value);
+                        dictionaryEntries[index] = new DictionaryEntry(entries![i].Key, entries[i].Value);
                         index += 1;
                     }
 
@@ -2199,7 +2217,7 @@ namespace KGySoft.Collections
 
             capacity = info.GetInt32(nameof(capacity));
             ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
-            comparer = ComparerHelper<TKey>.GetNonDefaultEqualityComparerOrNull((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
+            comparer = ComparerHelper<TKey>.GetEqualityComparer((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
             behavior = (CacheBehavior)info.GetByte(nameof(behavior));
             itemLoader = (Func<TKey, TValue>?)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
             disposeDroppedValues = info.GetBoolean(nameof(disposeDroppedValues));
@@ -2212,7 +2230,7 @@ namespace KGySoft.Collections
             {
                 Initialize(ensureCapacity ? capacity : count);
                 for (int i = 0; i < count; i++)
-                    Insert(keys[i]!, values[i], true);
+                    Insert(keys[i], values[i], true);
             }
 
             version = info.GetInt32(nameof(version));
