@@ -19,9 +19,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
+using KGySoft.Threading;
 
 using NUnit.Framework;
 
@@ -395,6 +397,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             dict.TrimExcess();
             Assert.AreEqual(0, ((ThreadSafeDictionary<int, string>.FixedSizeStorage)Reflector.GetField(dict, "fixedSizeStorage"))!.DeletedCount);
             Assert.AreEqual(count / 2, dict.Count);
+        }
+
+        [Test]
+        public void LookupMergeRaceConditionTest()
+        {
+            const string key = "Key";
+
+            // Initializing without passing a collection to the constructor and then adding one element: it will be in the temp locking storage
+            var dict = new ThreadSafeDictionary<string, object> { [key] = true };
+
+            // Waiting for the merge timeout
+            Thread.Sleep(dict.MergeInterval);
+
+            bool[] results = new bool[100];
+            ParallelHelper.For(0, results.Length,
+                y => results[y] = dict.ContainsKey(key));
+
+            CollectionAssert.DoesNotContain(results, false);
         }
 
         #endregion

@@ -1303,22 +1303,21 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool TryGetValueInternal(TKey key, uint hashCode, [MaybeNullWhen(false)]out TValue value)
         {
-            bool? success = fixedSizeStorage.TryGetValueInternal(key, hashCode, out value);
+            FixedSizeStorage lockFreeValues = fixedSizeStorage;
+            bool? success = lockFreeValues.TryGetValueInternal(key, hashCode, out value);
             if (success.HasValue)
                 return success.Value;
 
-            if (expandableStorage == null)
+            if (expandableStorage == null && IsUpToDate(lockFreeValues))
                 return false;
 
             lock (syncRoot)
             {
-                TempStorage? lockingValues = expandableStorage;
+                // lost race: we need to check the fixed storage again
+                if (expandableStorage == null)
+                    return fixedSizeStorage.TryGetValueInternal(key, hashCode, out value) == true;
 
-                // lost race
-                if (lockingValues == null)
-                    return false;
-
-                bool result = lockingValues.TryGetValueInternal(key, hashCode, out value);
+                bool result = expandableStorage.TryGetValueInternal(key, hashCode, out value);
                 MergeIfExpired();
                 return result;
             }

@@ -584,20 +584,21 @@ namespace KGySoft.Collections
         public bool Contains(T item)
         {
             uint hashCode = GetHashCode(item);
-            bool? success = fixedSizeStorage.ContainsInternal(item, hashCode);
+            FixedSizeStorage lockFreeValues = fixedSizeStorage;
+            bool? success = lockFreeValues.ContainsInternal(item, hashCode);
             if (success.HasValue)
                 return success.Value;
 
-            if (expandableStorage == null)
+            if (expandableStorage == null && IsUpToDate(lockFreeValues))
                 return false;
 
             lock (syncRoot)
             {
                 TempStorage? lockingValues = expandableStorage;
 
-                // lost race
+                // lost race: we need to check the fixed storage again
                 if (lockingValues == null)
-                    return false;
+                    return fixedSizeStorage.ContainsInternal(item, hashCode) == true;
 
                 bool result = lockingValues.ContainsInternal(item, hashCode);
                 MergeIfExpired();
