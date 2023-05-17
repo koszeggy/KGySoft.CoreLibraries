@@ -1213,10 +1213,30 @@ namespace KGySoft.CoreLibraries
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
 
+#if !NET7_0_OR_GREATER
+            Half one = (Half)1;
+#endif
+
 #if NET6_0_OR_GREATER
-            return (Half)random.NextSingle();
+            while (true)
+            {
+                Half result = (Half)random.NextDouble();
+#if NET7_0_OR_GREATER
+                if (result < Half.One)
 #else
-            return (Half)random.NextDouble();
+                if (result < one)
+#endif
+                {
+                    return result;
+                }
+            }
+#else
+            while (true)
+            {
+                Half result = (Half)random.NextDouble();
+                if (result < one)
+                    return result;
+            }
 #endif
         }
 
@@ -1229,8 +1249,8 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
         /// <returns>A half-precision floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
-        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as using very small ranges close to the limits of <see cref="Half"/>.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then always the <see cref="FloatScale.ForceLinear"/> option is used.</para>
         /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
@@ -1254,7 +1274,7 @@ namespace KGySoft.CoreLibraries
             if (Half.IsNaN(maxValue))
                 Throw.ArgumentOutOfRangeException(Argument.maxValue);
 
-            return (Half)DoGetNextDouble(random, Half.IsPositiveInfinity(maxValue) ? (double)Half.MaxValue : (double)maxValue, scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
+            return (Half)DoGetNextSingle(random, Half.IsPositiveInfinity(maxValue) ? (float)Half.MaxValue : (float)maxValue, scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
         }
 
         /// <summary>
@@ -1268,8 +1288,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A half-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="Half"/> type.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="Half"/> type.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used.</para>
         /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
         /// </remarks>
@@ -1292,7 +1311,7 @@ namespace KGySoft.CoreLibraries
             if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
-            return (Half)DoGetNextDouble(random, (double)AdjustValue(minValue), (double)AdjustValue(maxValue), scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
+            return (Half)DoGetNextSingle(random, (float)AdjustValue(minValue), (float)AdjustValue(maxValue), scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
         }
 
 #endif
@@ -1312,9 +1331,20 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.random);
 
 #if NET6_0_OR_GREATER
-            return random.NextSingle();
+            while (true)
+            {
+                // Just a guard against trivial NextSingle implementations including .NET up to 7.0: https://github.com/dotnet/runtime/issues/85016#issuecomment-1521415863
+                float result = random.NextSingle();
+                if (result < 1f)
+                    return result;
+            }
 #else
-            return (float)random.NextDouble();
+            while (true)
+            {
+                float result = (float)random.NextDouble();
+                if (result < 1f)
+                    return result;
+            }
 #endif
         }
 
@@ -1327,8 +1357,8 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
-        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as using very small ranges close to the limits of <see cref="float"/>.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
         /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
@@ -1353,7 +1383,7 @@ namespace KGySoft.CoreLibraries
             if (Single.IsNaN(maxValue))
                 Throw.ArgumentOutOfRangeException(Argument.maxValue);
 
-            return (float)DoGetNextDouble(random, Single.IsPositiveInfinity(maxValue) ? Single.MaxValue : maxValue, scale);
+            return DoGetNextSingle(random, Single.IsPositiveInfinity(maxValue) ? Single.MaxValue : maxValue, scale);
         }
 
         /// <summary>
@@ -1367,8 +1397,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A single-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="float"/> type.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="float"/> type.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
         /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
@@ -1394,7 +1423,7 @@ namespace KGySoft.CoreLibraries
             if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
-            return (float)DoGetNextDouble(random, AdjustValue(minValue), AdjustValue(maxValue), scale);
+            return DoGetNextSingle(random, AdjustValue(minValue), AdjustValue(maxValue), scale);
         }
 
         #endregion
@@ -1410,8 +1439,8 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
         /// <returns>A double-precision floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
-        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as using very small ranges close to the limits of <see cref="double"/>.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
         /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
@@ -1450,8 +1479,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A double-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
         /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
@@ -1572,8 +1600,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A decimal floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="DecimalExtensions.Epsilon"/>.
-        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="DecimalExtensions.Epsilon"/>.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
         /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
@@ -2742,6 +2769,96 @@ namespace KGySoft.CoreLibraries
         {
             double sample = random.NextDouble();
             double result = (maxValue * sample) + (minValue * (1d - sample));
+
+            // protecting ourselves against inaccurate calculations; occurs only near MaxValue.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static float DoGetNextSingle(Random random, float maxValue, FloatScale scale)
+        {
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16
+                || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
+            {
+                return random.NextSingle() * maxValue;
+            }
+
+            // Possible float exponents are -126..127 but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
+            float minExponent = -16f;
+            float maxExponent = MathF.Log(maxValue, 2f);
+
+            // We decrease exponents only if the given range is already small. Even lower than -126 is no problem, the result may be 0
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            float result = MathF.Pow(2f, NextSingleLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
+
+        [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator", Justification = "In this method this is intended")]
+        private static float DoGetNextSingle(Random random, float minValue, float maxValue, FloatScale scale)
+        {
+            if (minValue == maxValue)
+                return minValue;
+
+            bool posAndNeg = minValue < 0f && maxValue > 0f;
+            float minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
+            float maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
+            {
+                return NextSingleLinear(random, minValue, maxValue);
+            }
+
+            int sign;
+            if (!posAndNeg)
+                sign = minValue < 0f ? -1 : 1;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                float sample = random.NextSingle();
+                float rate = minAbs / maxAbs;
+                float absMinValue = Math.Abs(minValue);
+                bool isNeg = absMinValue <= maxValue
+                    ? rate / 2f > sample
+                    : rate / 2f < sample;
+                sign = isNeg ? -1 : 1;
+
+                // now adjusting the limits for 0..[selected range]
+                minAbs = 0f;
+                maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
+            }
+
+            // Possible float exponents are -126..127 but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
+            float minExponent = minAbs == 0f ? -16f : MathF.Log(minAbs, 2f);
+            float maxExponent = MathF.Log(maxAbs, 2f);
+            if (minExponent == maxExponent)
+                return minValue;
+
+            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            float result = sign * MathF.Pow(2f, NextSingleLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static float NextSingleLinear(Random random, float minValue, float maxValue)
+        {
+            float sample = random.NextSingle();
+            float result = (maxValue * sample) + (minValue * (1f - sample));
 
             // protecting ourselves against inaccurate calculations; occurs only near MaxValue.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);

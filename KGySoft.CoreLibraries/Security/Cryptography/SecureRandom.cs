@@ -43,7 +43,10 @@ namespace KGySoft.Security.Cryptography
     {
         #region Constants
 
-        private const double normalizationFactor = 1d / (1L << 53);
+#if NET6_0_OR_GREATER
+        private const float normalizationFactorFloat = 1f / (1L << 24);
+#endif
+        private const double normalizationFactorDouble = 1d / (1L << 53);
 
         #endregion
 
@@ -112,7 +115,7 @@ namespace KGySoft.Security.Cryptography
         /// Returns a random floating-point number that is greater than or equal to 0.0, and less than 1.0.
         /// </summary>
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0, and less than 1.0.</returns>
-        public override float NextSingle() => (float)SampleDouble();
+        public override float NextSingle() => SampleSingle();
 #endif
 
         /// <summary>
@@ -335,9 +338,16 @@ namespace KGySoft.Security.Cryptography
         }
 
         private double SampleDouble()
-            // double has 53 significant bits and 11 bit exponent so using a [0..2^53) sample
-            // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format) 
-            => (SampleUInt64() >> 11) * normalizationFactor;
+            // double has 53 significant bits and so using a [0..2^53) sample (64-11)
+            // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+            => (SampleUInt64() >> 11) * normalizationFactorDouble;
+
+#if NET6_0_OR_GREATER
+        private float SampleSingle()
+            // float has 24 significant bits and so using a [0..2^24) sample (32-8)
+            // (see https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
+            => (SampleUInt32() >> 8) * normalizationFactorFloat;
+#endif
 
         #endregion
 

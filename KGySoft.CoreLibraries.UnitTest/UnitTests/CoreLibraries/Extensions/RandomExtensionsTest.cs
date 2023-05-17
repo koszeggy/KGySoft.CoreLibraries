@@ -491,6 +491,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(rnd, 0, Single.Epsilon);
             Test(rnd, Single.MaxValue, Single.PositiveInfinity);
             Test(rnd, Single.NegativeInfinity, Single.PositiveInfinity);
+            Test(rnd, 1L << 24, (1L << 24) + 2);
+            Test(rnd, 1L << 23, 1L << 24);
         }
 
 #if NET5_0_OR_GREATER

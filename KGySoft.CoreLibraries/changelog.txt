@@ -13,19 +13,30 @@
 ==================================
 * DictionaryExtensions class: Some GetValueOrDefault overloads that could cause ambiguities were not added to the
   .NET Core platform targets. Now these are also included also on .NET Core platforms but not as extension methods
-  to prevent ambiguity.
+  to prevent ambiguity with the extension methods of the same name under .NET Core and .NET.
+- FastRandom class:
+  - NextSingle method: it guarantees returning less than 1.0.
+- RandomExtensions class:
+  - NextSingle(Random) method: it guarantees returning less than 1.0 even if the passed Random instance has a poor
+    NextSingle implementation including System.Random in .NET <= 7.0: https://github.com/dotnet/runtime/issues/85016
+  - NextHalf(Random) method: it guarantees returning less than 1.0. (.NET 5.0 and above)
 
 * KGySoft.Collections namespace:
 ================================
-* Common changes collections in general:
-  * Improving performance if the generic argument is a value type
+* Common collection changes in general:
+  * Improving lookup performance if the generic argument is a value type
 
-+ Cache<TKey, TValue>:
++ Cache<TKey, TValue> class:
   + New Comparer property
 * ThreadSafeDictionary<TKey, TValue> class:
   * Improved race condition handling when merging elements into the lock-free storage.
 * ThreadSafeHashSet<T> class:
   * Improved race condition handling when merging elements into the lock-free storage.
+
+- KGySoft.Security.Cryptography namespace:
+==========================================
+- SecureRandom class:
+  - NextSingle method: it guarantees returning less than 1.0. (.NET 6.0 and above)
 
 
 ~~~~~~~~~

@@ -62,7 +62,8 @@ namespace KGySoft.CoreLibraries
 
         #region Constants
 
-        private const double normalizationFactor = 1d / (1L << 53);
+        private const float normalizationFactorFloat = 1f / (1L << 24);
+        private const double normalizationFactorDouble = 1d / (1L << 53);
 
         #endregion
 
@@ -347,7 +348,7 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
         override
 #endif
-        public float NextSingle() => (float)SampleDouble();
+        public float NextSingle() => SampleSingle();
 
         #endregion
 
@@ -446,9 +447,14 @@ namespace KGySoft.CoreLibraries
         #region Private Methods
 
         private double SampleDouble()
-            // double has 53 significant bits and 11 bit exponent so using a [0..2^53) sample
-            // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format) 
-            => (SampleUInt64(ref state) >> 11) * normalizationFactor;
+            // double has 53 significant bits and so using a [0..2^53) sample (64-11)
+            // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+            => (SampleUInt64(ref state) >> 11) * normalizationFactorDouble;
+
+        private float SampleSingle()
+            // float has 24 significant bits and so using a [0..2^24) sample (64-40)
+            // (see https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
+            => (SampleUInt64(ref state) >> 40) * normalizationFactorFloat;
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]

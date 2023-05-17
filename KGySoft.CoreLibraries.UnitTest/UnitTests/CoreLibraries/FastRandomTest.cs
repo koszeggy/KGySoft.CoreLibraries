@@ -121,6 +121,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             }
         }
 
+        [Test]
+        public void NextSingleTest()
+        {
+            var rnd = new FastRandom();
+
+            for (int i = 0; i < 10_000; i++)
+            {
+                float result = rnd.NextSingle();
+                Assert.GreaterOrEqual(result, 0f);
+                Assert.Less(result, 1f);
+            }
+        }
+
         #endregion
     }
 }
