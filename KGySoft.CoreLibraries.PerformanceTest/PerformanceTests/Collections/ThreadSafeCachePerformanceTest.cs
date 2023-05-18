@@ -117,7 +117,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             const int capacity = 10_000;
             const int count = capacity - 1;
 
-            new PerformanceTest { TestName = "Sequential Populate", Iterations = 1_000 }
+            new PerformanceTest { TestName = "Sequential Populate", Iterations = 1_000, Repeat = 5 }
                 .AddCase(() =>
                 {
                     var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity });
@@ -205,7 +205,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             const int capacity = 10_000;
             const int count = capacity - 1;
 
-            new PerformanceTest { TestName = "Parallel Populate", Iterations = 1_000, CpuAffinity = null }
+            new PerformanceTest { TestName = "Parallel Populate", Iterations = 1_000, Repeat = 5 }
                 .AddCase(() =>
                 {
                     var cache = ThreadSafeCacheFactory.Create<int, int>(Load, new LockFreeCacheOptions { ThresholdCapacity = capacity });
@@ -312,7 +312,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
             }
 
-            new PerformanceTest { TestName = "Sequential Access", Iterations = 10_000 }
+            new PerformanceTest { TestName = "Sequential Access", Iterations = 10_000, Repeat = 5}
                 .AddCase(() =>
                 {
                     for (int i = 0; i < capacity; i++)
@@ -378,7 +378,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 _ = cDict[i];
             }
 
-            new PerformanceTest { TestName = "Parallel Access", Iterations = 10_000, CpuAffinity = null }
+            new PerformanceTest { TestName = "Parallel Access", Iterations = 10_000, Repeat = 5 }
                 .AddCase(() =>
                 {
                     Parallel.For(0, capacity, i =>
@@ -435,7 +435,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cDict = new ConcurrentDictionaryBasedCache<int, int>(Load, capacity);
 #endif
 
-            new RandomizedPerformanceTest<int> { TestName = "Sequential Access", Iterations = 10_000_000 }
+            new RandomizedPerformanceTest<int> { TestName = "Sequential Access", Iterations = 10_000_000, TestTime = 5000, Repeat = 5 }
                 .AddCase(rnd => lockFreeMod[rnd.Next(range)], "LockFree, MOD hashing")
                 .AddCase(rnd => lockFreeAnd[rnd.Next(range)], "LockFree, AND hashing")
                 .AddCase(rnd => lockingOldest[rnd.Next(range)], "Locking, Remove Oldest")
@@ -465,7 +465,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             var rnd = ThreadSafeRandom.Instance;
 
-            new PerformanceTest { TestName = "Parallel Access", Iterations = 1, CpuAffinity = null }
+            new PerformanceTest { TestName = "Parallel Access", Iterations = 1, Repeat = 5 }
                 .AddCase(() =>
                 {
                     Parallel.For(0, iterations, i =>

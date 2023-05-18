@@ -123,7 +123,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 #endif
             var tDict = new ThreadSafeDictionary<int, object>(dict, strategy: HashingStrategy.And);
             var gDict = new LockFreeCache<int, object>.GrowOnlyDictionary(count, null, true);
-            var tmpDict = new ThreadSafeDictionary<int, object>.TempStorage(dict, null, true);
+            var tmpDict = new ThreadSafeDictionary<int, object>.TempStorage(dict, ComparerHelper<int>.GetEqualityComparer(null), true);
             var fDict = new ThreadSafeDictionary<int, object>.FixedSizeStorage(ThreadSafeDictionary<int, object>.FixedSizeStorage.Empty, tmpDict, false);
 
             for (int i = 0; i < count; i++)
@@ -185,6 +185,56 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 //.AddCase(() => Parallel.For(0, count, i => { var _ = tDictSsc[i.ToString(CultureInfo.InvariantCulture)]; }), "ThreadSafeDictionary (StringSegmentComparer.Ordinal)")
                 .DoTest()
                 .DumpResults(Console.Out);
+#endif
+        }
+
+        [Test]
+        public void AccessEnumKeysTest()
+        {
+            const int count = 1_000_000;
+            var seq = Enumerable.Range(0, count);
+            var dict = seq.ToDictionary(i => (ConsoleColor)i, i => Enum<ConsoleColor>.ToString((ConsoleColor)i));
+            var lDict = new LockingDictionary<ConsoleColor, string>(new Dictionary<ConsoleColor, string>(dict));
+#if !NET35
+            var cDict = new ConcurrentDictionary<ConsoleColor, string>(dict);
+#endif
+            var tDict = new ThreadSafeDictionary<ConsoleColor, string>(dict, strategy: HashingStrategy.And);
+            var gDict = new LockFreeCache<ConsoleColor, string>.GrowOnlyDictionary(count, null, true);
+#if NET5_0_OR_GREATER
+            var fDictNull = new ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage(ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage.Empty, new ThreadSafeDictionary<ConsoleColor, string>.TempStorage(dict, null, true), false);
+#endif
+            var fDictSystem = new ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage(ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage.Empty, new ThreadSafeDictionary<ConsoleColor, string>.TempStorage(dict, EqualityComparer<ConsoleColor>.Default, true), false);
+            var fDictKGySoft = new ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage(ThreadSafeDictionary<ConsoleColor, string>.FixedSizeStorage.Empty, new ThreadSafeDictionary<ConsoleColor, string>.TempStorage(dict, EnumComparer<ConsoleColor>.Comparer, true), false);
+
+            for (int i = 0; i < count; i++)
+                gDict[(ConsoleColor)i] = null;
+
+            new IteratorPerformanceTest<string> { Iterations = count, Repeat = 5, TestName = "ConsoleColor keys, Sequential" }
+                //.AddCase(i => lDict[(ConsoleColor)i], "LockingDictionary")
+#if !NET35
+                .AddCase(i => cDict[(ConsoleColor)i], "ConcurrentDictionary")
+#endif
+                //.AddCase(i => tmpDict[(ConsoleColor)i], "TempStorage (not applicable, should be in a lock)")
+#if NET5_0_OR_GREATER
+                .AddCase(i => fDictNull[(ConsoleColor)i], "FixedSizeStorage(comparer:null)")
+#endif
+                .AddCase(i => fDictSystem[(ConsoleColor)i], "FixedSizeStorage(comparer:EqualityComparer<T>)")
+                .AddCase(i => fDictKGySoft[(ConsoleColor)i], "FixedSizeStorage(comparer:EnumComparer<TEnum>)")
+                .AddCase(i => tDict[(ConsoleColor)i], "ThreadSafeDictionary")
+                //.AddCase(i => gDict[(ConsoleColor)i], "GrowOnlyDictionary")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+#if !NET35
+            //new PerformanceTest { Iterations = 1, Repeat = 5, CpuAffinity = null, TestName = "ConsoleColor keys, Parallel" }
+            //    .AddCase(() => Parallel.For(0, count, i => { var _ = lDict[i]; }), "LockingDictionary")
+            //    .AddCase(() => Parallel.For(0, count, i => { var _ = cDict[i]; }), "ConcurrentDictionary")
+            //    //.AddCase(() => Parallel.For(0, count, i => { var _ = tmpDict[i]; }), "TempStorage (not applicable, should be in a lock)")
+            //    .AddCase(() => Parallel.For(0, count, i => { var _ = fDict[i]; }), "FixedSizeStorage")
+            //    .AddCase(() => Parallel.For(0, count, i => { var _ = tDict[i]; }), "ThreadSafeDictionary")
+            //    .AddCase(() => Parallel.For(0, count, i => { var _ = gDict[i]; }), "GrowOnlyDictionary")
+            //    .DoTest()
+            //    .DumpResults(Console.Out);
 #endif
         }
 

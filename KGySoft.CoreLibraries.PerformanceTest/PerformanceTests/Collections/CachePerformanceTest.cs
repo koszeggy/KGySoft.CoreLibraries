@@ -53,7 +53,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cacheRemoveLeastRecent = new Cache<int, string>(dictionary);
 
             // Dictionary expected to be the fastest one, Cache with RemoveLeastRecentUsedElement has the most overhead
-            new IteratorPerformanceTest<string> { TestName = "Indexer access test", Iterations = count }
+            new IteratorPerformanceTest<string> { TestName = "Indexer access test (int keys)", Iterations = count, Repeat = 5, TestTime = 5000 }
                 .AddCase(i => dictionary[i], "Dictionary read")
                 .AddCase(i => cacheRemoveOldest[i], "Cache read (RemoveOldestElement)")
                 .AddCase(i => cacheRemoveLeastRecent[i], "Cache read (RemoveLeastRecentUsedElement)")
@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             var dict = new Dictionary<int, string>(count);
             var cache = new Cache<int, string>(count);
-            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count }
+            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count, Repeat = 5, TestTime = 5000 }
                 .AddCase(i => dict[i] = i.ToString(CultureInfo.InvariantCulture), "Dictionary")
                 .AddCase(i => cache[i] = i.ToString(CultureInfo.InvariantCulture), "Cache")
                 .DoTest()
@@ -78,7 +78,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cacheRemoveLeastRecent = new Cache<string, int>(dictionary);
 
             // Dictionary expected to be the fastest one, Cache with RemoveLeastRecentUsedElement has the most overhead
-            new IteratorPerformanceTest<int> { TestName = "Indexer access test", Iterations = count }
+            new IteratorPerformanceTest<int> { TestName = "Indexer access test (string keys)", Iterations = count, Repeat = 5 , TestTime = 5000 }
                 .AddCase(i => dictionary[i.ToString(CultureInfo.InvariantCulture)], "Dictionary read")
                 .AddCase(i => cacheRemoveOldest[i.ToString(CultureInfo.InvariantCulture)], "Cache read (RemoveOldestElement)")
                 .AddCase(i => cacheRemoveLeastRecent[i.ToString(CultureInfo.InvariantCulture)], "Cache read (RemoveLeastRecentUsedElement)")
@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 
             var dict = new Dictionary<string, int>(count);
             var cache = new Cache<string, int>(count);
-            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count }
+            new IteratorPerformanceTest { TestName = "Populate test", Iterations = count, Repeat = 5, TestTime = 5000 }
                 .AddCase(i => dict[i.ToString(CultureInfo.InvariantCulture)] = i, "Dictionary")
                 .AddCase(i => cache[i.ToString(CultureInfo.InvariantCulture)] = i, "Cache")
                 .DoTest()
