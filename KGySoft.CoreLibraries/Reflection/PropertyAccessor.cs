@@ -51,7 +51,7 @@ namespace KGySoft.Reflection
     /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
-    /// <note>If you want to access a property by name rather then by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
+    /// <note>If you want to access a property by name rather than by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetProperty">GetProperty</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
     /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Set">Set</see> method throws a <see cref="PlatformNotSupportedException"/>
     /// if the property is an instance member of a value type (<see langword="struct"/>).

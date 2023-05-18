@@ -28,7 +28,6 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Represents a thread-safe wrapper for random number generators.
     /// You can use the static <see cref="O:KGySoft.CoreLibraries.ThreadSafeRandom.Create">Create</see> methods to create a customized instance
-    /// (eg. you can wrap a <see cref="SecureRandom"/> instance to generate cryptographically safe random numbers in a thread-safe way),
     /// or just use the static <see cref="Instance"/> property for a fast shared instance (which uses <see cref="FastRandom"/> internally).
     /// </summary>
     /// <seealso cref="Random" />
@@ -225,8 +224,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <remarks>
         /// <note>This property returns a <see cref="ThreadSafeRandom"/> instance, which generates pseudo random numbers using <see cref="FastRandom"/> internally.
-        /// To produce cryptographically secure random numbers use the <see cref="Create(Func{Random})"/> method instead, and initialize it by a delegate,
-        /// which returns <see cref="SecureRandom"/> instances.</note>
+        /// To produce cryptographically secure random numbers use the <see cref="SecureRandom.Instance">SecureRandom.Instance</see> property instead.</note>
+        /// <note type="caution">Starting with .NET 6.0 the base <see cref="Random"/> class has a <see cref="Random.Shared"/> property, which is accessible
+        /// also from the <see cref="ThreadSafeRandom"/> class, though it uses a somewhat slower algorithm internally.</note>
         /// </remarks>
         public static ThreadSafeRandom Instance => staticInstance ??= new ThreadSafeRandomDefault();
 

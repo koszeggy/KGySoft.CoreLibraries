@@ -45,7 +45,7 @@ namespace KGySoft.Threading
 
         /// <summary>
         /// Gets or sets whether an <see cref="OperationCanceledException"/> should be thrown when ending or awaiting a canceled async operation.
-        /// If the value of this property is <see langword="false"/>, then canceled operations with a return value, which is usually the default value of their return type.
+        /// If the value of this property is <see langword="false"/>, then canceled non-void operations will return some value, which is usually the default value of their return type.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         public bool ThrowIfCanceled { get; set; } = true;

@@ -36,7 +36,7 @@ namespace KGySoft.CoreLibraries
     // This class implements the 128-bit XorShift+ algorithm. See https://en.wikipedia.org/wiki/Xorshift#xorshift+
     /// <summary>
     /// Represents a pseudo random number generator, which is functionally compatible
-    /// with the <see cref="Random"/> class but is significantly faster than that.
+    /// with the <see cref="Random"/> class but is significantly faster than that, especially when used with a specific seed.
     /// For cryptographically secure random numbers use the <see cref="SecureRandom"/> class instead.
     /// </summary>
     public sealed class FastRandom : Random
@@ -96,7 +96,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
         /// </summary>
-        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <param name="seed">A non-empty <see cref="Guid"/> value used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <exception cref="ArgumentException"><paramref name="seed"/> is <see cref="Guid.Empty"/>.</exception>
         [SecuritySafeCritical]
         public unsafe FastRandom(Guid seed)
@@ -447,12 +447,12 @@ namespace KGySoft.CoreLibraries
         #region Private Methods
 
         private double SampleDouble()
-            // double has 53 significant bits and so using a [0..2^53) sample (64-11)
+            // double has 53 significant bits so using a [0..2^53) sample (64 - 11 bits)
             // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
             => (SampleUInt64(ref state) >> 11) * normalizationFactorDouble;
 
         private float SampleSingle()
-            // float has 24 significant bits and so using a [0..2^24) sample (64-40)
+            // float has 24 significant bits so using a [0..2^24) sample (64 - 40 bits)
             // (see https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
             => (SampleUInt64(ref state) >> 40) * normalizationFactorFloat;
 
