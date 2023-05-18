@@ -53,7 +53,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void GrowOnlyDictionaryTest()
         {
-            var dict = new LockFreeCache<int, object>.GrowOnlyDictionary(16, null, true);
+            var dict = new LockFreeCache<int, object>.GrowOnlyDictionary(16, ComparerHelper<int>.GetEqualityComparer(null), true);
             Assert.AreEqual(0, dict.Count);
 
             // Adding new
@@ -89,7 +89,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             const int capacity = 1024;
             const int count = 10_000;
-            var dict = new LockFreeCache<int, object>.GrowOnlyDictionary(capacity, null, true);
+            var dict = new LockFreeCache<int, object>.GrowOnlyDictionary(capacity, ComparerHelper<int>.GetEqualityComparer(null), true);
             Parallel.For(0, count, i => Assert.IsTrue(dict.TryAdd(i, i)));
 
             Assert.AreEqual(count, dict.Count);
