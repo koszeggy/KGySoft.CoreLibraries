@@ -33,9 +33,10 @@
 * ThreadSafeHashSet<T> class:
   * Improved race condition handling when merging elements into the lock-free storage.
 
-- KGySoft.Security.Cryptography namespace:
+* KGySoft.Security.Cryptography namespace:
 ==========================================
-- SecureRandom class:
+* SecureRandom class:
+  + New static Instance property to obtain a shared instance
   - NextSingle method: it guarantees returning less than 1.0. (.NET 6.0 and above)
 
 

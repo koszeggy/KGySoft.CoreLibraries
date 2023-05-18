@@ -31,16 +31,65 @@ namespace KGySoft.Security.Cryptography
 {
     /// <summary>
     /// Represents a secure random number generator, which uses a <see cref="RandomNumberGenerator"/> instance to produce
-    /// cryptographically secure random numbers.
-    /// This class is functionally compatible with the <see cref="Random"/> and <see cref="FastRandom"/> classes.
+    /// cryptographically secure random numbers. You can use the static <see cref="Instance"/> property to use a thread safe shared instance.
+    /// This class is functionally compatible with the <see cref="Random"/> and <see cref="FastRandom"/> classes so you can use all the extensions
+    /// for it that are exposed by the <see cref="RandomExtensions"/> class.
     /// </summary>
     /// <remarks>
-    /// <note>Please note that <see cref="SecureRandom"/> class implements the <see cref="IDisposable"/> interface
-    /// so make sure you dispose it (or use it in a <see langword="using"/> block) if not used in a static context.</note>
+    /// <note>Please note that <see cref="SecureRandom"/> class implements the <see cref="IDisposable"/> interface. If you use a custom instance
+    /// instead of the static <see cref="Instance"/> property make sure you dispose it if it's not used anymore.</note>
     /// </remarks>
     /// <seealso cref="FastRandom"/>
     public class SecureRandom : Random, IDisposable
     {
+        #region SecureRandomInstance class
+
+        /// <summary>
+        /// The singleton instance for the Instance property.
+        /// It can be this simple because RNGCryptoServiceProvider.GetBytes is thread safe according to the documentation
+        /// and also the RandomNumberGenerator.Create instance returns a singleton instance.
+        /// </summary>
+        private sealed class SecureRandomInstance : SecureRandom
+        {
+            #region Methods
+
+            #region Public Methods
+            // Just some overrides to provide a slightly better performance by the static members of RandomNumberGenerator where available.
+            // Otherwise, the base implementation will use virtual method calls on the provider instance.
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override void NextBytes(Span<byte> buffer) => RandomNumberGenerator.Fill(buffer);
+
+            public override void NextBytes(byte[] buffer)
+            {
+                if (buffer == null!)
+                    Throw.ArgumentNullException(Argument.buffer);
+                RandomNumberGenerator.Fill(buffer);
+            }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override int Next() => RandomNumberGenerator.GetInt32(Int32.MaxValue);
+            public override int Next(int maxValue) => RandomNumberGenerator.GetInt32(maxValue);
+            public override int Next(int minValue, int maxValue) => RandomNumberGenerator.GetInt32(minValue, maxValue);
+#endif
+
+            #endregion
+
+            #region Protected Methods
+
+            protected override void Dispose(bool disposing)
+            {
+                // not calling base so the provider field will not be accidentally disposed.
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
         #region Constants
 
 #if NET6_0_OR_GREATER
@@ -56,7 +105,20 @@ namespace KGySoft.Security.Cryptography
 
         #endregion
 
-        #region Methods
+        #region Properties
+
+        /// <summary>
+        /// Gets a <see cref="SecureRandom"/> instance that can be used from any threads concurrently.
+        /// </summary>
+        /// <remarks>
+        /// <note type="caution">Starting with .NET 6.0 the base <see cref="Random"/> class has a <see cref="Random.Shared"/> property, which is accessible
+        /// also from the <see cref="SecureRandom"/> class, though it returns a <see cref="Random"/> instance, which is not cryptographically secure.</note>
+        /// </remarks>
+        public static SecureRandom Instance { get; } = new SecureRandomInstance();
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
@@ -82,6 +144,10 @@ namespace KGySoft.Security.Cryptography
 #endif
         {
         }
+
+        #endregion
+
+        #region Methods
 
         #region Public Methods
 
@@ -338,13 +404,13 @@ namespace KGySoft.Security.Cryptography
         }
 
         private double SampleDouble()
-            // double has 53 significant bits and so using a [0..2^53) sample (64-11)
+            // double has 53 significant bits so using a [0..2^53) sample (64 - 11 bits)
             // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
             => (SampleUInt64() >> 11) * normalizationFactorDouble;
 
 #if NET6_0_OR_GREATER
         private float SampleSingle()
-            // float has 24 significant bits and so using a [0..2^24) sample (32-8)
+            // float has 24 significant bits so using a [0..2^24) sample (32 - 8 bits)
             // (see https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
             => (SampleUInt32() >> 8) * normalizationFactorFloat;
 #endif
