@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 #if !NETFRAMEWORK
@@ -151,7 +152,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // Since no duplicates are not allowed, this reads now the whole xml.
             // BUG in WinForms version: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
-            var enumerator = reader.GetEnumerator(); // this reads now the whole xml
+            IDictionaryEnumerator enumerator = reader.GetEnumerator(); // this reads now the whole xml
             while (enumerator.MoveNext())
             {
                 try
@@ -164,6 +165,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if !NETFRAMEWORK
                     if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
+                        continue;
+#endif
+#if NET8_0_OR_GREATER
+                    if (e is NotSupportedException nse && nse.Message.Contains("BinaryFormatter"))
                         continue;
 #endif
                     throw;
@@ -185,6 +190,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Throws<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
         }
 
-        #endregion
+#endregion
     }
 }

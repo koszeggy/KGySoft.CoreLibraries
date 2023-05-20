@@ -280,7 +280,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 #endif
 
-        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
+        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
         {
             Console.WriteLine($"------------------KGySoft ResXResourceWriter (Items Count: {referenceObjects.Length}; Compatibility mode: {compatibilityMode})--------------------");
             StringBuilder sb = new StringBuilder();
@@ -393,7 +393,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // preloading BigInteger original identity for safe deserialization in compatibility mode
             Reflector.ResolveAssembly("System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089");
 #endif
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -425,7 +427,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, false);
         }
 
         [Test]
@@ -534,7 +537,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, false);
 
             // system serializer fails here
             referenceObjects = new object[]
@@ -580,7 +584,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, false);
 
             // These strings cannot be (de)serialized with system serializer
             referenceObjects = new string[]
@@ -589,7 +594,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 "🏯" + "🏯"[0].ToString(null) + " b 🏯 " + "🏯"[1].ToString(null) + "\xffff \0 <>'\"&" // string containing unpaired surrogates
             };
 
-            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true);
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -603,7 +608,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Rune.GetRuneAt("🏯", 0)
             };
 
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 #endif
@@ -695,7 +702,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Reflector.ResolveAssembly("System");
 #endif
 
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -721,12 +730,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-#if !NETCOREAPP3_0
-            KGySerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, false);
-#else // .NET Core 3.0 fails to deserialize empty byte array - returns null instead
-            KGySerializeObjects(referenceObjects, checkCompatibleEquality: false);
+#if NETCOREAPP3_0 // .NET Core 3.0 fails to deserialize empty byte array - returns null instead
+            KGySerializeObjects(referenceObjects, true, false);
             KGySerializeObjects(referenceObjects, false, false);
+#else
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
+            KGySerializeObjects(referenceObjects, false);
 #endif
         }
 
@@ -746,7 +757,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
 
             // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
@@ -819,7 +832,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // To be able to resolve HashSet in safe mode
             Reflector.ResolveAssembly("System.Core");
 #endif
-            KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing 
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -831,10 +846,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new NonSerializableClass(),
             };
 
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects));
+#if !NET8_0_OR_GREATER
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, true));
+#endif
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false));
 
-            KGySerializeObjects(referenceObjects, safeMode: false);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
+#endif
             KGySerializeObjects(referenceObjects, false, safeMode: false);
         }
 
@@ -860,7 +879,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
 
             referenceObjects = new object[]
@@ -873,7 +894,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             };
 
-            KGySerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true);
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -890,7 +911,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects);
+#if !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true);
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -922,7 +945,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
+#if !NET8_0_OR_GREATER
             KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);
+#endif
             KGySerializeObjects(referenceObjects, false, true, typeNameConverter, typeResolver);
         }
 

@@ -339,17 +339,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var rs = new ResXResourceSet();
             rs.SetObject("x", new NonSerializableClass { Prop = 1 });
+            StringBuilder sb;
+            ResXResourceSet rsCheck;
 
+#if !NET8_0_OR_GREATER
             // compatible format
-            var sb = new StringBuilder();
+            sb = new StringBuilder();
             rs.Save(new StringWriter(sb), true);
-            var rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
-            
+            rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
+
             rsCheck.SafeMode = true;
             Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe());
 
             rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));
+#endif
 
             // non-compatible format
             sb = new StringBuilder();

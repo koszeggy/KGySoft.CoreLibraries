@@ -2045,16 +2045,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void NullReferenceSerializerTest()
         {
             var referenceObject = new NullReference();
+            byte[] raw;
+            object result;
 
-            BinaryFormatter bf = new BinaryFormatter();
-            BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
-
+#if !NET8_0_OR_GREATER
             Console.WriteLine("------------------System BinaryFormatter--------------------");
-            byte[] raw = SerializeObject(referenceObject, bf);
-            object result = DeserializeObject(raw, bf);
-            Assert.IsNull(result);
+            BinaryFormatter bf = new BinaryFormatter();
+            raw = SerializeObject(referenceObject, bf);
+            result = DeserializeObject(raw, bf);
+            Assert.IsNull(result); 
+#endif
 
             Console.WriteLine($"------------------KGy SOFT BinarySerializer--------------------");
+            BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
             raw = SerializeObject(referenceObject, bsf);
             result = DeserializeObject(raw, bsf);
             Assert.IsNull(result);

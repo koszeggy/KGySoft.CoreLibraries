@@ -383,6 +383,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region Static Methods
 
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, formatter is not necessarily a BinaryFormatter
         private static void DoTest(IFormatter formatter, ISurrogateSelector surrogate, object obj, bool throwError, bool forWriting, bool forReading)
         {
             Console.Write($"{obj} by {formatter.GetType().Name}: ");
@@ -391,7 +392,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             try
             {
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, formatter is not necessarily a BinaryFormatter
                 using (var ms = new MemoryStream())
                 {
                     try
@@ -426,13 +426,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                             throw;
                     }
                 }
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
             }
             finally
             {
                 context?.Dispose();
             }
         }
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
 
         #endregion
 
@@ -441,7 +441,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [TestCaseSource(nameof(testCases))]
         public void BaselineTestWithoutUsingSurrogate(object obj)
         {
+#if !NET8_0_OR_GREATER
             DoTest(new BinaryFormatter(), null, obj, false, false, false);
+#endif
             DoTest(new BinarySerializationFormatter(), null, obj, true, false, false);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), null, obj, true, false, false);
         }
@@ -451,7 +453,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
+#if !NET8_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, true, true);
+#endif
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, true);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, true, true);
         }
@@ -462,7 +466,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
+#if !NET8_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, false, true);
+#endif
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, false, true);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
@@ -472,7 +478,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
+#if !NET8_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, true, false);
+#endif
             DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, false);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
@@ -482,15 +490,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             object obj = new ConflictNameChild(1, 2, 3, "Public Base", "Protected Base", "Private Base");
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
+#if !NET8_0_OR_GREATER
             var bf = new BinaryFormatter();
+#endif
             var bsf = new BinarySerializationFormatter();
 
             // not using surrogate: tests if the formatter can handle the situation internally
+#if !NET8_0_OR_GREATER
             DoTest(bf, null, obj, false, false, false);
+#endif
             DoTest(bsf, null, obj, true, false, false);
 
             // using surrogate for both ways
+#if !NET8_0_OR_GREATER
             DoTest(bf, surrogate, obj, false, true, true);
+#endif
             DoTest(bsf, surrogate, obj, true, true, true);
 
             // default serialization by surrogate: the formatter must add unique names to the serialization info
@@ -576,7 +590,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             surrogate.GettingField += GettingField;
             surrogate.Deserializing += Deserializing;
             surrogate.SettingField += SettingField;
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
             var bf = new BinaryFormatter();
+#pragma warning restore SYSLIB0011 // Type or member is obsolete
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType | BinarySerializationOptions.IgnoreSerializationMethods);
 
             DoTest(bf, surrogate, obj, false, true, true);
@@ -619,25 +635,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void SafeModeTest()
         {
+#if !NET8_0_OR_GREATER
             var bf = new BinaryFormatter();
+#endif
             var bsf = new BinarySerializationFormatter();
             using var surrogate = new CustomSerializerSurrogateSelector();
             var obj = new NonSerializableClass { IntProp = 42 };
 
             // in non-safe mode everything works
+#if !NET8_0_OR_GREATER
             DoTest(bf, surrogate, obj, true, true, true);
+#endif
             DoTest(bsf, surrogate, obj, true, true, true);
 
             surrogate.SafeMode = true; // so the surrogate denies support
             bsf.Options |= BinarySerializationOptions.SafeMode; // so even the formatter denies support
 
             // in safe mode SerializationException should be thrown
+#if !NET8_0_OR_GREATER
             Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true));
+#endif
             Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true));
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -17,9 +17,13 @@
 
 using System;
 using System.Collections.Generic;
+#if !NET8_0_OR_GREATER
 using System.IO;
+#endif
 using System.Linq;
+#if !NET8_0_OR_GREATER
 using System.Runtime.Serialization.Formatters.Binary;
+#endif
 
 using KGySoft.Collections;
 
@@ -134,6 +138,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(dict.Count, clone.Count);
             CollectionAssert.AreEqual(dict, clone);
 
+#if !NET8_0_OR_GREATER
             // By BinaryFormatter
             var formatter = new BinaryFormatter();
             using var ms = new MemoryStream();
@@ -141,6 +146,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ms.Position = 0;
             clone = (StringKeyedDictionary<int>)formatter.Deserialize(ms);
             CollectionAssert.AreEqual(dict, clone);
+#endif
         }
 
         #endregion

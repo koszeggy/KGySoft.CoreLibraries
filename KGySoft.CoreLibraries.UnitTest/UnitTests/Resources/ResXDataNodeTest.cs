@@ -32,7 +32,7 @@ using NUnit.Framework;
 #region Suppressions
 
 #if NET
-#if NET5_0 || NET6_0 || NET7_0
+#if NET5_0 || NET6_0 || NET7_0 || NET8_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
 #else
@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(node.FileRef);
 
             var sb = new StringBuilder();
-            var writer = new ResXResourceWriter(new StringWriter(sb));
+            var writer = new ResXResourceWriter(new StringWriter(sb)) { CompatibleFormat = false };
             writer.AddResource(node);
 
             // serializing generates the .resx info - int: type and ValueData
@@ -160,6 +160,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NET35
             if (compatibleFormat)
                 Assert.Inconclusive("In .NET 3.5 cannot create the hacked payload in compatible format because SerializationBinder.BindToName method is not supported");
+#elif NET8_0_OR_GREATER
+            if (compatibleFormat)
+                Assert.Inconclusive("Cannot test compatible format in .NET 8.0 and above because BinaryFormatter is no longer supported");
 #endif
             const string asmName = "DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
             const string typeName = "MyNamespace.DangerousType";
