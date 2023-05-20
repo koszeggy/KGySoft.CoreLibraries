@@ -559,16 +559,22 @@ namespace KGySoft.CoreLibraries
             StringSegment rest = this;
             limit -= 1; // so the last segment is not searched if there are too many of them
             bool removeEmptyEntries = options.IsRemoveEmpty;
+            bool trim = options.IsTrim;
 
             while (!rest.IsNull && result.Count < limit)
             {
                 StringSegment segment = GetNextSegment(ref rest);
+                if (trim && segment.length != 0)
+                    segment = segment.Trim();
                 if (segment.length > 0 || !removeEmptyEntries)
                     result.Add(segment);
             }
 
             if (!rest.IsNull)
             {
+                if (trim && rest.length != 0)
+                    rest = rest.Trim();
+
                 // if we reached limit but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0 && Char.IsWhiteSpace(rest[0]))

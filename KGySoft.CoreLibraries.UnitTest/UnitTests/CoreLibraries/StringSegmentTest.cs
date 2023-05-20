@@ -355,7 +355,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             static string[] SystemSplit(string s, string[] separators, int count, StringSegmentSplitOptions options)
             {
-#if NET7_0_OR_GREATER // TrimEntries exists since .NET 5 but it worked incorrectly before .NET 7: https://github.com/dotnet/runtime/issues/73194
+                // TrimEntries exists since .NET 5 but it worked incorrectly before .NET 7: https://github.com/dotnet/runtime/issues/73194
+                // And in .NET 7 String.Split with no separators (splitting by whitespace) was still wrong
+#if NET8_0_OR_GREATER 
                 return s.Split(separators, count, (StringSplitOptions)options);
 #else
                 var sso = (StringSplitOptions)options;
@@ -366,9 +368,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                         ? result[0].Trim() is { } trimmed && options.IsRemoveEmpty && trimmed.Length == 0
                             ? Reflector.EmptyArray<string>()
                             : new[] { result[0].Trim() }
-                        : separators == null && result.Length == count
-                            ? result.Take(count - 1).Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).Concat(new[] { result[result.Length - 1] }).ToArray()
-                            : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
+                        : result.Select(s => s.Trim()).Where(s => !options.IsRemoveEmpty || s.Length != 0).ToArray();
 
                 return result;
 #endif
