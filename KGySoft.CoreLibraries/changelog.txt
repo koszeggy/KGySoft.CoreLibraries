@@ -30,8 +30,10 @@
   + New Comparer property
 * ThreadSafeDictionary<TKey, TValue> class:
   * Improved race condition handling when merging elements into the lock-free storage.
+  - [Try]Remove methods: Could return true in race conditions when the winner actually was another thread.
 * ThreadSafeHashSet<T> class:
   * Improved race condition handling when merging elements into the lock-free storage.
+  - Remove method: Could return true in race conditions when the winner actually was another thread.
 
 * KGySoft.Security.Cryptography namespace:
 ==========================================

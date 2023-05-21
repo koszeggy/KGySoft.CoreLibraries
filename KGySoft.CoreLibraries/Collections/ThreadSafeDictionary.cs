@@ -646,11 +646,14 @@ namespace KGySoft.Collections
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool found = lockFreeValues.ContainsValue(value);
 
-                // we don't need to make sure we are up-to-date here because we don't modify anything
                 if (found)
                     return true;
                 if (expandableStorage == null)
-                    return false;
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return false;
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -678,31 +681,23 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
 
             uint hashCode = GetHashCode(key);
-            bool removed = false;
             while (true)
             {
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode);
 
-                // making sure that correct result is returned even if multiple tries are necessary due to merging
-                if (success == true)
-                    removed = true;
-
-                // successfully removed from fixed-size storage (now, or in a previous attempt)
-                if (removed)
-                {
-                    if (IsUpToDate(lockFreeValues))
-                        return true;
-
-                    continue;
-                }
-
-                // item was already deleted (if we removed it in a previous attempt, then true is returned above)
+                // found as already deleted: quick return with no change like in TryGetValueInternal
                 if (success == false)
                     return false;
 
-                if (expandableStorage == null)
-                    return false;
+                // just removed from fixed-size storage, or not found (success == null) and there is no locking storage
+                if (success == true || expandableStorage == null)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return success.GetValueOrDefault();
+
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -746,23 +741,18 @@ namespace KGySoft.Collections
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, hashCode, out value);
 
-                // making sure that removed entry is returned even if multiple tries are necessary due to merging
-                if (success == true)
-                {
-                    if (IsUpToDate(lockFreeValues))
-#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition. - false alarm, TryRemoveInternal returned true
-                        return true;
-#pragma warning restore CS8762
-
-                    continue;
-                }
-
-                // item was already deleted
+                // found as already deleted: quick return with no change like in TryGetValueInternal
                 if (success == false)
                     return false;
 
-                if (expandableStorage == null)
-                    return false;
+                // just removed from fixed-size storage, or not found (success == null) and there is no locking storage
+                if (success == true || expandableStorage == null)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return success.GetValueOrDefault();
+
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -791,31 +781,23 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
 
             uint hashCode = GetHashCode(key);
-            bool removed = false;
             while (true)
             {
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryRemoveInternal(key, value, hashCode);
 
-                // making sure that correct result is returned even if multiple tries are necessary due to merging
-                if (success == true)
-                    removed = true;
-
-                // successfully removed from fixed-size storage (now, or in a previous attempt)
-                if (removed)
-                {
-                    if (IsUpToDate(lockFreeValues))
-                        return true;
-
-                    continue;
-                }
-
-                // item was already deleted (if we removed it in a previous attempt, then true is returned above)
+                // found as already deleted: quick return with no change like in TryGetValueInternal
                 if (success == false)
                     return false;
 
-                if (expandableStorage == null)
-                    return false;
+                // just removed from fixed-size storage, or not found (success == null) and there is no locking storage
+                if (success == true || expandableStorage == null)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return success.GetValueOrDefault();
+
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -1324,11 +1306,17 @@ namespace KGySoft.Collections
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryGetValueInternal(key, hashCode, out value);
 
-                // we don't need to make sure we are up-to-date here because we don't modify anything
+                // We don't need to make sure we are up-to-date here because we don't modify anything
                 if (success.HasValue)
                     return success.Value;
+
+                // Not found: we need to check the locking storage. We try to do it without locking first.
                 if (expandableStorage == null)
-                    return false;
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return false;
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -1381,18 +1369,18 @@ namespace KGySoft.Collections
             {
                 FixedSizeStorage lockFreeValues = fixedSizeStorage;
                 bool? success = lockFreeValues.TryReplaceInternal(key, newValue, originalValue, hashCode);
-                if (success == true)
-                {
-                    if (IsUpToDate(lockFreeValues))
-                        return true;
-                    continue;
-                }
-
+                
                 // Already deleted or originalValue does not match. Immediate return because in this case there was no change.
                 if (success == false)
                     return false;
-                if (expandableStorage == null)
-                    return false;
+
+                // replaced in the fixed-size storage, or not found (success == null) and there is no locking storage
+                if (success == true || expandableStorage == null)
+                {
+                    if (IsUpToDate(lockFreeValues))
+                        return success.GetValueOrDefault();
+                    continue;
+                }
 
                 lock (syncRoot)
                 {
@@ -1469,6 +1457,10 @@ namespace KGySoft.Collections
             expandableStorage = null;
         }
 
+        /// <summary>
+        /// Checks if the lock free storage is still up-to-date. If returns false, the <see cref="fixedSizeStorage"/> field must be re-checked.
+        /// Should be used outside of a lock. If a merge operation is in progress, it blocks the current thread without locking until the merge is finished.
+        /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool IsUpToDate(FixedSizeStorage lockFreeValues)
         {
@@ -1479,12 +1471,16 @@ namespace KGySoft.Collections
             if (!isMerging)
                 return true;
 
-            // a merge has been started, values from lockFreeValues storage might be started to be copied:
-            // preventing current thread from consuming CPU until merge is finished
+            // A merge has been started, values from lockFreeValues storage might be started to be copied:
+            // preventing the current thread from checking the lock free storage again and again until the operation is finished.
             WaitWhileMerging();
             return false;
         }
 
+        /// <summary>
+        /// Checks if the lock free storage is still up-to-date. Should be used inside of a lock.
+        /// If returns false, the lock block must be left immediately and the <see cref="fixedSizeStorage"/> field must be re-checked.
+        /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool IsUpToDateInLock(FixedSizeStorage lockFreeValues)
         {
