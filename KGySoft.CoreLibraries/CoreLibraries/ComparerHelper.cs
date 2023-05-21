@@ -68,8 +68,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-        [Obsolete("Marked as obsolete until can be made private. Use GetEqualityComparerOrDefault instead.")] // TODO: to private, only .NET 5 or greater
-        internal static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
+        private static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
         
         #endregion
 

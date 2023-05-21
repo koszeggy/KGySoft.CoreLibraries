@@ -69,7 +69,7 @@ namespace KGySoft.Collections
 
                 #region Properties
 
-                private object? DebugValue => Value == null ? "<Deleted>" : Value.Value;
+                private readonly object? DebugValue => Value == null ? "<Deleted>" : Value.Value;
 
                 #endregion
             }

@@ -3945,7 +3945,9 @@ namespace KGySoft.Reflection
             // - Then we get the address of the raw data itself, which points to the method table pointer.
             //   We do not dereference this one but adding an offset to return the address of the first field
             // See more details in my SO answer here: https://stackoverflow.com/a/55552250/5114784
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             return *(byte**)((IntPtr*)&typedRef)[typedReferenceValueIndex] + referenceRawDataOffset;
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
         }
 
         /// <summary>
@@ -3964,13 +3966,17 @@ namespace KGySoft.Reflection
             // - As a pointer array, selecting the element, which contains the pointer to the value.
             //   If it was always the first item, we could just return *(byte**)&typedRef but it wouldn't work on Mono.
             // - And this pointer is the address of the raw data itself, which is simply returned as byte*
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex];
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
         }
 
         [SecurityCritical]
         private unsafe static bool InitTypedReferenceUsage()
         {
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             int typedRefSize = sizeof(TypedReference);
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
             // Regular TypedReference: we assume that its first field is IntPtr Value
             // (.NET Core 3.0 and above: ByReference<byte>), and the second one is IntPtr Type
