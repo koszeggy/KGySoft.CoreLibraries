@@ -900,6 +900,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_MimeTypeNotSupportedFormat" xml:space="preserve">
     <value>Unsupported mime type "{0}" at line {1}, position {2}.</value>
   </data>
+  <data name="Resources_BinaryFormatterNotSupportedFormat" xml:space="preserve">
+    <value>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") is no longer supported. Line {1}, position {2}.</value>
+  </data>
   <data name="Resources_ResXReaderNotSupportedFormat" xml:space="preserve">
     <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>
   </data>
@@ -955,6 +958,9 @@ You may try to preload its assembly before deserialization or use the unsafe Get
   </data>
   <data name="Resources_FileRefFileNotFoundFormat" xml:space="preserve">
     <value>File in ResX file reference cannot be found: {0}. Is base path set correctly?</value>
+  </data>
+  <data name="Resources_CompatibleFormatNotSupportedFormat" xml:space="preserve">
+    <value>Saving a resource of type "{0}" is not supported in compatible format because BinaryFormatter is not supported in .NET 8 and above. Either apply the TypeConverterAttribute for type "{0}" that can convert to and from byte array or string, or disable compatible format.</value>
   </data>
   <data name="ByteArrayExtensions_SeparatorInvalidHex" xml:space="preserve">
     <value>The separator contains invalid characters. Hex digits are not allowed in separator.</value>

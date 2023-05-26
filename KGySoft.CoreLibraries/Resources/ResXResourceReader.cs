@@ -297,7 +297,7 @@ namespace KGySoft.Resources
     /// <item><term>New MIME type</term>
     /// <description>A new MIME type <c>text/kgysoft.net/object.binary.base64</c> is supported, indicating that an object is serialized by <see cref="BinarySerializationFormatter"/> instead of <see cref="BinaryFormatter"/>.
     /// The <see cref="ResXResourceWriter"/> can produce such .resx content if <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> is <see langword="false"/>.</description></item>
-    /// <item><term>Soap formatter support</term>
+    /// <item><term>Soap formatter support (.NET Framework only)</term>
     /// <description>The Soap formatter support is provided without referencing the <c>System.Runtime.Serialization.Formatters.Soap.dll</c> assembly. If the assembly cannot be loaded from the GAC (platform dependent),
     /// then a <see cref="NotSupportedException"/> will be thrown.</description></item>
     /// <item><term>Type resolving</term>

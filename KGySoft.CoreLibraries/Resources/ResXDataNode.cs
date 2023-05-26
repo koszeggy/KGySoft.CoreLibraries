@@ -19,7 +19,6 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -40,13 +39,9 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if NET
 #if NET5_0 || NET6_0 || NET7_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses IFormatter implementations for compatibility reasons
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
-#else
-#error Check whether IFormatter is still available in this .NET version
-#endif
 #endif
 
 #endregion
@@ -286,10 +281,10 @@ namespace KGySoft.Resources
     /// instances stored internally and deserialization occurs only when a resource is actually accessed.</description></item>
     /// <item><term>Support of non-serializable types</term>
     /// <description>When serializing an object, the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type
-    /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types even if compatibility mode is used
-    /// (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods).
-    /// In compatibility mode this is achieved by wrapping the non-serializable types into an <see cref="AnyObjectSerializerWrapper"/> instance so the <see cref="BinaryFormatter"/> will
-    /// able to handle them, too.</description></item>
+    /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types (though their deserialization will not be allowed in safe mode).
+    /// If compatibility mode is used (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and
+    /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods), this is achieved by wrapping the non-serializable types into an <see cref="AnyObjectSerializerWrapper"/>
+    /// instance so the <see cref="BinaryFormatter"/> will able to handle them, too (only up to .NET 7). In order to serialize any object in .NET 8 or later, compatible mode must be disabled.</description></item>
     /// <item><term>Support of generics</term>
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
     /// </list></para>
@@ -848,7 +843,8 @@ namespace KGySoft.Resources
             return result;
         }
 
-        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, [MaybeNullWhen(false)]out object result)
+#if NETFRAMEWORK
+        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, [MaybeNullWhen(false)] out object result)
         {
             string text = dataNodeInfo.ValueData ?? String.Empty;
             byte[] serializedData = FromBase64WrappedString(text);
@@ -869,6 +865,7 @@ namespace KGySoft.Resources
             result = null;
             return false;
         }
+#endif
 
         #endregion
 
@@ -1180,7 +1177,8 @@ namespace KGySoft.Resources
             }
 
             // 2.) byte[] (should not be checked by as cast because due to the CLR behavior that would allow sbyte[] as well)
-            if (cachedValue!.GetType() == Reflector.ByteArrayType)
+            Type type = cachedValue!.GetType();
+            if (type == Reflector.ByteArrayType)
             {
                 byte[] bytes = (byte[])cachedValue;
                 nodeInfo!.ValueData = ResXCommon.ToBase64(bytes);
@@ -1211,7 +1209,6 @@ namespace KGySoft.Resources
             }
 
             // 5.) to string by TypeConverter
-            Type type = cachedValue.GetType();
             TypeConverter tc = TypeDescriptor.GetConverter(type);
             bool toString = tc.CanConvertTo(Reflector.StringType);
             bool fromString = tc.CanConvertFrom(Reflector.StringType);
@@ -1248,11 +1245,15 @@ namespace KGySoft.Resources
                 return;
             }
 
-            // 7.) to byte[] by system BinaryFormatter
             nodeInfo!.TypeName = null;
             nodeInfo.AssemblyAliasValue = null;
+
+            // 7.) to byte[] by system BinaryFormatter
             if (compatibleFormat)
             {
+#if NET8_0_OR_GREATER
+                Throw.NotSupportedException(Res.ResourcesCompatibleFormatNotSupported(type));
+#else
                 var binaryFormatter = new BinaryFormatter();
                 if (typeNameConverter != null)
                     binaryFormatter.Binder = new ResXSerializationBinder(typeNameConverter, true);
@@ -1278,6 +1279,7 @@ namespace KGySoft.Resources
                 nodeInfo.MimeType = ResXCommon.DefaultSerializedObjectMimeType;
                 nodeInfo.CompatibleFormat = true;
                 return;
+#endif
             }
 
             // 8.) to byte[] by KGySoft BinarySerializationFormatter
@@ -1450,6 +1452,10 @@ namespace KGySoft.Resources
             // 1.) BinaryFormatter
             if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
             {
+#if NET8_0_OR_GREATER
+                Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+                Throw.NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+#else
                 byte[] serializedData = FromBase64WrappedString(text);
                 using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
 #if !NETFRAMEWORK
@@ -1476,6 +1482,7 @@ namespace KGySoft.Resources
                 }
 
                 return result;
+#endif
             }
 
             // 2.) By TypeConverter from byte[]
@@ -1547,8 +1554,10 @@ namespace KGySoft.Resources
             }
 
             // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.
+#if NETFRAMEWORK
             if (!safeMode && mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object? value))
                 return value;
+#endif
 
             Throw.NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
             return null;

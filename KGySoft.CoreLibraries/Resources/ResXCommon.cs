@@ -19,7 +19,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+#if NETFRAMEWORK
 using System.Runtime.Serialization;
+#endif
 using System.Xml;
 
 using KGySoft.CoreLibraries;
@@ -83,10 +85,13 @@ namespace KGySoft.Resources
 
         private const string beta2CompatSerializedObjectMimeType = "text/microsoft-urt/psuedoml-serialized/base64";
         private const string compatBinSerializedObjectMimeType = "text/microsoft-urt/binary-serialized/base64";
+
+#if NETFRAMEWORK
         private const string soapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
         private const string compatSoapSerializedObjectMimeType = "text/microsoft-urt/soap-serialized/base64";
 
         private const string soapFormatterTypeName = "System.Runtime.Serialization.Formatters.Soap.SoapFormatter, System.Runtime.Serialization.Formatters.Soap";
+#endif
 
         #endregion
 
@@ -97,13 +102,18 @@ namespace KGySoft.Resources
         #region Internal Fields
 
         internal static readonly string[] BinSerializedMimeTypes = { BinSerializedObjectMimeType, beta2CompatSerializedObjectMimeType, compatBinSerializedObjectMimeType };
+
+#if NETFRAMEWORK
         internal static readonly string[] SoapSerializedMimeTypes = { soapSerializedObjectMimeType, compatSoapSerializedObjectMimeType };
+#endif
 
         #endregion
 
         #region Private Fields
 
+#if NETFRAMEWORK
         private static IFormatter? soapFormatter;
+#endif
 
         #endregion
 
@@ -171,6 +181,7 @@ namespace KGySoft.Resources
         internal static XmlException CreateXmlException(string message, int line, int pos, Exception? innerException = null)
             => new XmlException(message, innerException, line, pos);
 
+#if NETFRAMEWORK
         internal static IFormatter? GetSoapFormatter()
         {
             if (soapFormatter == null)
@@ -191,6 +202,7 @@ namespace KGySoft.Resources
 
             return soapFormatter;
         }
+#endif
 
         internal static MemoryStream? ToMemoryStream(string name, object? value, bool safeMode)
         {

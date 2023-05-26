@@ -979,6 +979,9 @@ namespace KGySoft
         /// <summary>Unsupported mime type "{0}" at line {1}, position {2}.</summary>
         internal static string ResourcesMimeTypeNotSupported(string mimeType, int line, int pos) => Get("Resources_MimeTypeNotSupportedFormat", mimeType, line, pos);
 
+        /// <summary>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") is no longer supported. Line {1}, position {2}.</summary>
+        internal static string ResourcesBinaryFormatterNotSupported(string mimeType, int line, int pos) => Get("Resources_BinaryFormatterNotSupportedFormat", mimeType, line, pos);
+
         /// <summary>Unsupported ResX reader "{0}" at line {1}, position {2}.</summary>
         internal static string ResourcesResXReaderNotSupported(string reader, int line, int pos) => Get("Resources_ResXReaderNotSupportedFormat", reader, line, pos);
 
@@ -1019,6 +1022,9 @@ namespace KGySoft
 
         /// <summary>File in ResX file reference cannot be found: {0}. Is base path set correctly?</summary>
         internal static string ResourcesFileRefFileNotFound(string path) => Get("Resources_FileRefFileNotFoundFormat", path);
+
+        /// <summary>Saving a resource of type "{0}" is not supported in compatible format because BinaryFormatter is not supported in .NET 8 and above. Either apply the TypeConverterAttribute for type "{0}" that can convert to and from byte array or string, or disable compatible format.</summary>
+        internal static string ResourcesCompatibleFormatNotSupported(Type type) => Get("Resources_CompatibleFormatNotSupportedFormat", type);
 
         #endregion
 
