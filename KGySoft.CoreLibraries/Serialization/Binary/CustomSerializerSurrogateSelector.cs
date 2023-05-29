@@ -137,6 +137,10 @@ namespace KGySoft.Serialization.Binary
     /// </remarks>
     /// <seealso cref="NameInvariantSurrogateSelector" />
     /// <seealso cref="BinarySerializationFormatter" />
+#if NET8_0_OR_GREATER
+    [Obsolete("It is not recommended to use this class because it's basically used for solving BinaryFormatter incompatibility issues between different platforms. " +
+        "For KGy SOFT's BinarySerializationFormatter this class is not really needed. Or if so, it's a sign that binary serialization is not used in a secure way.")]
+#endif
     public sealed class CustomSerializerSurrogateSelector : ISurrogateSelector, ISerializationSurrogate, IDisposable
     {
         #region Fields

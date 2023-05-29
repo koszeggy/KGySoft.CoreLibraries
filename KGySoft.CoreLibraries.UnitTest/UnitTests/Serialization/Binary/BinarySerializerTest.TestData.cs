@@ -34,6 +34,15 @@ using KGySoft.Serialization.Binary;
 
 #endregion
 
+#region Suppressions
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // Type or member is obsolete - BinarySerializationFormatter uses the IFormatter infrastructure
+#pragma warning disable SYSLIB0051 // Type or member is obsolete - as above
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
     partial class BinarySerializerTest

@@ -730,8 +730,14 @@ namespace KGySoft.Reflection
 
         #region SerializationInfo
 
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // IFormatterConverter is obsolete 
+#endif
         internal static IFormatterConverter GetConverter(this SerializationInfo info)
             => GetFieldValueOrDefault<SerializationInfo, IFormatterConverter>(info, () => new FormatterConverter());
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0050 // IFormatterConverter is obsolete 
+#endif
 
         #endregion
 

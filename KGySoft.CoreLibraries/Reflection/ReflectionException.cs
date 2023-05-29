@@ -20,6 +20,14 @@ using System.Runtime.Serialization;
 
 #endregion
 
+#region Suppressions
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0051 // Exception(SerializationInfo, StreamingContext) is obsolete - maintained for compatibility reasons and because of supporting pre .NET 8 targets
+#endif
+
+#endregion
+
 namespace KGySoft.Reflection
 {
     /// <summary>

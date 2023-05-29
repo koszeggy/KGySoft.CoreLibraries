@@ -30,6 +30,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // SerializationInfo(Type, IFormatterConverter) is obsolete - NOT removing serilizability because older frameworks are still supported and the replacement BinarySerializationFormatter still supports the original infrastructure
+#endif
+
+#endregion
+
 namespace KGySoft.Serialization.Binary
 {
     /// <summary>

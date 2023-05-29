@@ -14,6 +14,14 @@
 ! ResXDataNode class:
   ! Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
 
+! KGySoft.Serialization.Binary namespace:
+=========================================
+! BinarySerializer class:
+  ! CreateFormatter method: Return type has been changed to BinarySerializationFormatter from IFormatter to avoid
+    SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
+* CustomSerializerSurrogateSelector class: The class has been made obsolete
+* NameInvariantSurrogateSelector class: The class has been made obsolete
+
 
 ~~~~~~~~~
 * v7.2.0:

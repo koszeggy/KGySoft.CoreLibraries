@@ -36,13 +36,12 @@ using NUnit.Framework.Internal;
 
 #pragma warning disable 162 // Unreachable code may occur depending on values of constant fields
 
-#if NET
 #if NET5_0_OR_GREATER
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
-#else
-#error Check whether IFormatter is still available in this .NET version
 #endif
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // Type or member is obsolete - BinarySerializationFormatter uses the IFormatter infrastructure
 #endif
 
 #endregion

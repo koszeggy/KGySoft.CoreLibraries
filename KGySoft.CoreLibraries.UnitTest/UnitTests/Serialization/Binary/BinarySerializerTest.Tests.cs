@@ -1369,6 +1369,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+        [Obsolete]
         public void SerializationSurrogateTest()
         {
             object[] referenceObjects =
@@ -1506,6 +1507,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+        [Obsolete]
         public void NameInvariantSurrogateSelectorTest()
         {
             object[] referenceObjects =
@@ -1604,6 +1606,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+        [Obsolete]
         public void CustomSerializerSurrogateSelectorTest()
         {
             var referenceObjects = new List<object>

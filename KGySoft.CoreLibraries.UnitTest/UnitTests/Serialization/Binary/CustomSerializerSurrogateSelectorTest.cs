@@ -36,6 +36,7 @@ using NUnit.Framework.Internal;
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
     [TestFixture]
+    [Obsolete]
     public class CustomSerializerSurrogateSelectorTest : TestBase
     {
         #region Nested classes
@@ -383,7 +384,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region Static Methods
 
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - false alarm, formatter is not necessarily a BinaryFormatter
         private static void DoTest(IFormatter formatter, ISurrogateSelector surrogate, object obj, bool throwError, bool forWriting, bool forReading)
         {
             Console.Write($"{obj} by {formatter.GetType().Name}: ");
@@ -432,7 +432,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 context?.Dispose();
             }
         }
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
 
         #endregion
 
@@ -590,9 +589,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             surrogate.GettingField += GettingField;
             surrogate.Deserializing += Deserializing;
             surrogate.SettingField += SettingField;
-#pragma warning disable SYSLIB0011 // Type or member is obsolete
             var bf = new BinaryFormatter();
-#pragma warning restore SYSLIB0011 // Type or member is obsolete
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType | BinarySerializationOptions.IgnoreSerializationMethods);
 
             DoTest(bf, surrogate, obj, false, true, true);

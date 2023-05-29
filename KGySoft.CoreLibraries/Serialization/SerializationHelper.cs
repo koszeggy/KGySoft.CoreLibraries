@@ -32,6 +32,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // Type.IsSerializable/FieldInfo.IsNotSerialized is obsolete - required by BinarySerializationFormatter, which still supports the original infrastructure
+#endif
+
+#endregion
+
 namespace KGySoft.Serialization
 {
     internal static class SerializationHelper

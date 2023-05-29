@@ -58,7 +58,9 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 #pragma warning disable CS8605 // Unboxing a possibly null value. - false alarm for iterating through a non-generic dictionary
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type. - dictionary key/value pairs are never null
 #endif
-
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // ISurrogateSelector/ISerializationSurrogate/Type.IsSerializable/FormatterConverter/SerializationInfo is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
+#endif
 #endregion
 
 namespace KGySoft.Serialization.Binary

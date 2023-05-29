@@ -41,6 +41,9 @@ using KGySoft.Reflection;
 #if NETCOREAPP3_0_OR_GREATER
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes). - Equals/Compare parameters are never null in this class but the constraint is checked in ctor  
 #endif
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // IObjectReference is obsolete - NOT removing serilizability because older frameworks are still supported and the replacement BinarySerializationFormatter still supports the original infrastructure
+#endif
 
 #endregion
 

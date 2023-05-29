@@ -45,6 +45,7 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="WeakAssemblySerializationBinder" />
     /// <seealso cref="CustomSerializerSurrogateSelector" />
     /// <seealso cref="BinarySerializationFormatter" />
+    [Obsolete("It's not recommended to use this class. To make different kinds of builds of an assembly binary serialization-compatible is a sign that binary serialization is used in an insecure way.")]
     public class NameInvariantSurrogateSelector : ISurrogateSelector, ISerializationSurrogate
     {
         #region Fields

@@ -56,6 +56,14 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 
 #endregion
 
+#region Suppressions
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // ISurrogateSelector/ISerializationSurrogate is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
+#endif
+
+#endregion
+
 namespace KGySoft.Serialization.Binary
 {
     public sealed partial class BinarySerializationFormatter

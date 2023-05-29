@@ -35,7 +35,15 @@ using KGySoft.Serialization.Binary;
 
 #endregion
 
+#region Suppressions
+
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode() - test types
+
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0051 // Type or member is obsolete - The tester should contain obsolete binary serialization tests, too
+#endif
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 {

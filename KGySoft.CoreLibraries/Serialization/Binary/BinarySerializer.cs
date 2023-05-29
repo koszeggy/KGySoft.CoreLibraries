@@ -469,10 +469,10 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Creates a formatter that can be used for serialization and deserialization with given <paramref name="options"/>.
         /// </summary>
-        /// <returns>An <see cref="IFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>.</returns>
+        /// <returns>A <see cref="BinarySerializationFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>.</returns>
         /// <param name="options">Options for the created formatter. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static IFormatter CreateFormatter(BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options);
+        public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options);
 
         #endregion
 

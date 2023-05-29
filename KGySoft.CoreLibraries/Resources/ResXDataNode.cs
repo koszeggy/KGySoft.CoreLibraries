@@ -1155,7 +1155,7 @@ namespace KGySoft.Resources
             static void SurrogateSelectorGettingFieldMemoryStream(object? sender, GettingFieldEventArgs e)
             {
                 // Special handling for non-derived MemoryStream, which used to be serializable so we must provide compatibility for it
-                // because the designer may produce embdedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
+                // because the designer may produce embedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
                 // So we just skip skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
                 // Note: In .NET Core 2.x MemoryStream was already non-serializable but the Task field still had the [NonSerialized] property
                 Debug.Assert(e.Object.GetType() == typeof(MemoryStream));

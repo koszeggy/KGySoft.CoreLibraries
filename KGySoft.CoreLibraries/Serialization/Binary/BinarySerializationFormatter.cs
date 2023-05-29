@@ -50,6 +50,10 @@ using KGySoft.Serialization.Xml;
 #if NET5_0_OR_GREATER
 #pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
 #endif
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0011 // BinaryFormatter serialization is obsolete and should not be used - false alarm, not using BinaryFormatter but implementeding IFormatter in BinarySerializationFormatter, which is a safer replacement of BinaryFormatter
+#pragma warning disable SYSLIB0050 // ISurrogateSelector/StreamingContext/StreamingContextStates is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
+#endif
 
 #endregion
 
