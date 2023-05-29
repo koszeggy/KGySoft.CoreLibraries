@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.IO;
 
 using KGySoft.Reflection;
 
@@ -70,7 +71,9 @@ namespace KGySoft.Resources
         internal void DetectCompatibleFormat()
         {
             CompatibleFormat = MimeType != ResXCommon.KGySoftSerializedObjectMimeType
-                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)));
+                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal)
+                && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)
+                && TypeName != typeof(MemoryStream).FullName)); // MemoryStream is also not compatible because we use an internal TypeConverter for it
         }
 
         #endregion

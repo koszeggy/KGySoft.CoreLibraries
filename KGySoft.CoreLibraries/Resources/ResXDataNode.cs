@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -30,7 +31,7 @@ using System.Xml;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-#if !NETFRAMEWORK
+#if !NETFRAMEWORK && !NET8_0_OR_GREATER
 using KGySoft.Serialization;
 #endif
 using KGySoft.Serialization.Binary;
@@ -299,6 +300,8 @@ namespace KGySoft.Resources
     [Serializable]
     public sealed class ResXDataNode : ISerializable, ICloneable
     {
+        #region Nested Types
+        
         #region ResXSerializationBinder class
 
         /// <summary>
@@ -411,6 +414,41 @@ namespace KGySoft.Resources
 
             #endregion
         }
+
+        #endregion
+
+        #region MemoryStreamConverter class
+
+        private sealed class MemoryStreamConverter : TypeConverter
+        {
+            #region Fields
+
+            internal static MemoryStreamConverter? singletonInstance;
+
+            #endregion
+
+            #region Properties
+
+            internal static MemoryStreamConverter Instance => singletonInstance ??= new MemoryStreamConverter();
+
+            #endregion
+
+            #region Methods
+
+            public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) => destinationType == Reflector.ByteArrayType;
+            public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) => sourceType == Reflector.ByteArrayType;
+
+            public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
+                => destinationType == Reflector.ByteArrayType && value is MemoryStream ms ? ms.ToArray() : base.ConvertTo(context, culture, value, destinationType);
+
+            public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
+                // should not be checked by as cast because due to the CLR behavior that would allow sbyte[] as well
+                => value?.GetType() == Reflector.ByteArrayType ? new MemoryStream((byte[])value!) : base.ConvertFrom(context, culture, value!);
+
+            #endregion
+        }
+
+        #endregion
 
         #endregion
 
@@ -1151,10 +1189,10 @@ namespace KGySoft.Resources
         {
             #region Local Methods
 
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD
+#if NETSTANDARD || (NETCOREAPP3_0_OR_GREATER && !NET8_0_OR_GREATER)
             static void SurrogateSelectorGettingFieldMemoryStream(object? sender, GettingFieldEventArgs e)
             {
-                // Special handling for non-derived MemoryStream, which used to be serializable so we must provide compatibility for it
+                // Special handling for non-derived MemoryStream in compatible format by BinaryFormatter, which used to be serializable so we must provide compatibility for it
                 // because the designer may produce embedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
                 // So we just skip skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
                 // Note: In .NET Core 2.x MemoryStream was already non-serializable but the Task field still had the [NonSerialized] property
@@ -1209,7 +1247,7 @@ namespace KGySoft.Resources
             }
 
             // 5.) to string by TypeConverter
-            TypeConverter tc = TypeDescriptor.GetConverter(type);
+            TypeConverter tc = !compatibleFormat && type == typeof(MemoryStream) ? MemoryStreamConverter.Instance : TypeDescriptor.GetConverter(type);
             bool toString = tc.CanConvertTo(Reflector.StringType);
             bool fromString = tc.CanConvertFrom(Reflector.StringType);
             try
@@ -1286,15 +1324,8 @@ namespace KGySoft.Resources
             var serializer = new BinarySerializationFormatter();
             if (typeNameConverter != null)
                 serializer.Binder = new ResXSerializationBinder(typeNameConverter, false);
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD
-            // Special handling for MemoryStream. See SurrogateSelectorGettingFieldMemoryStream for details.
-            if (type == typeof(MemoryStream))
-            {
-                var surrogate = new CustomSerializerSurrogateSelector();
-                serializer.SurrogateSelector = surrogate;
-                surrogate.GettingField += SurrogateSelectorGettingFieldMemoryStream;
-            }
-#endif
+
+            Debug.Assert(type != typeof(MemoryStream), "Non-compatible MemoryStream saving must be handled by TypeConverter");
             nodeInfo.ValueData = ResXCommon.ToBase64(serializer.Serialize(cachedValue));
             nodeInfo.MimeType = ResXCommon.KGySoftSerializedObjectMimeType;
             nodeInfo.CompatibleFormat = false;
@@ -1454,7 +1485,6 @@ namespace KGySoft.Resources
             {
 #if NET8_0_OR_GREATER
                 Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
-                Throw.NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
 #else
                 byte[] serializedData = FromBase64WrappedString(text);
                 using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
@@ -1502,7 +1532,7 @@ namespace KGySoft.Resources
                     Throw.TypeLoadException(newMessage, xml);
                 }
 
-                TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
+                TypeConverter byteArrayConverter = type == typeof(MemoryStream) ? MemoryStreamConverter.Instance : TypeDescriptor.GetConverter(type);
                 if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
                 {
                     string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
@@ -1528,15 +1558,8 @@ namespace KGySoft.Resources
             if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
             {
                 byte[] serializedData = FromBase64WrappedString(text);
-                using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
-#if !NETFRAMEWORK
-                // Supporting MemoryStream even where it is not serializable anymore
-                if (safeMode)
-                    surrogate.IsTypeSupported = t => t == typeof(MemoryStream) || SerializationHelper.IsSafeType(t);
-#endif
                 var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {
-                    SurrogateSelector = surrogate,
                     Binder = typeResolver != null
                         ? new ResXSerializationBinder(typeResolver, safeMode)
                         : new WeakAssemblySerializationBinder { SafeMode = safeMode }
