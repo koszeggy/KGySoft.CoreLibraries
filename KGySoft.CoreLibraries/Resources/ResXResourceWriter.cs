@@ -21,6 +21,9 @@ using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -504,11 +507,14 @@ namespace KGySoft.Resources
         /// <item><description>The <c>reader</c> and <c>writer</c> attributes in <c>resheader</c> elements.</description></item>
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/> references.</description></item>
-        /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/>.</description></item>
+        /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute):
+        /// <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="Type"/>, <see cref="BigInteger"/> and <see cref="Rune"/>.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
         /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <see langword="false"/>, these objects are
         /// serialized by <see cref="BinarySerializationFormatter"/>, which provides a much more compact result than the default <see cref="BinaryFormatter"/>.</description></item>
         /// </list>
+        /// <note type="caution">When the value of this property is <see langword="true"/>, then adding non-natively supported entries may cause
+        /// a <see cref="NotSupportedException"/> on .NET 8.0 and above where <see cref="BinaryFormatter"/> is no longer supported.</note>
         /// </remarks>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the creation of the .resx file content has already been started.</exception>
         public bool CompatibleFormat

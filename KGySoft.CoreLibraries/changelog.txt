@@ -13,11 +13,7 @@
 ==============================
 ! ResXDataNode class:
   ! Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
-
-! KGySoft.Resources namespace:
-==============================
-! ResXDataNode class:
-  ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized steram.
+  ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized stream.
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================

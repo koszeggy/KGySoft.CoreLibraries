@@ -25,7 +25,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Represents the options for creating a thread-safe accessor by the
     /// <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see> methods
-    /// <br/>To see when to use <see cref="LockFreeCacheOptions"/> or <see cref="LockingCacheOptions"/> see the <strong>Remarks</strong> section.
+    /// <br/>To see when to use <see cref="LockFreeCacheOptions"/> or <see cref="LockingCacheOptions"/> see the <strong>Remarks</strong> section
     /// of the <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> method.
     /// </summary>
     /// <seealso cref="ThreadSafeCacheFactory" />
@@ -42,7 +42,7 @@ namespace KGySoft.Collections
         public int Capacity { get; set; } = 1024;
 
         /// <summary>
-        /// Gets or sets whether adding the first item to the cache should allocate memory the full cache <see cref="Capacity"/>.
+        /// Gets or sets whether adding the first item to the cache should allocate memory for the full cache <see cref="Capacity"/>.
         /// If <see langword="false"/>, then the internal storage is dynamically reallocated while adding new elements until reaching <see cref="Capacity"/>.
         /// Set it to <see langword="true"/> if it is almost certain that the cache will be full when using it.
         /// <br/>Default value: <see langword="false"/>.
@@ -65,7 +65,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether the item loader delegate that is specified by the
         /// <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see>
-        /// methods is protected from invoking it concurrently.
+        /// methods should be protected from invoking it concurrently.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value><see langword="true"/> to protect the item loader delegate (it will not be called concurrently);
@@ -75,12 +75,12 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets an expiration time for the values to be stored in the cache. If <see langword="null"/>, then the values will not expire.
         /// <br/>Default value: <see langword="null"/>.
+        /// </summary>
         /// <remarks>
         /// <para>Even if this property is <see langword="null"/>, values might be reloaded from time to time because if the cache is full (see <see cref="Capacity"/>)
         /// oldest or least recent used elements (see <see cref="Behavior"/>) are dropped from the cache.</para>
         /// <para>Depending on the targeted platform it is possible that values will not expire for at least 15 milliseconds.</para>
         /// </remarks>
-        /// </summary>
         public TimeSpan? Expiration { get; set; }
 
         #endregion

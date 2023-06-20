@@ -361,7 +361,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             object[] referenceObjects =
             {
                 null,
-                new object(),
                 true,
                 (sbyte)1,
                 (byte)1,
@@ -380,6 +379,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new UIntPtr(1),
 #if !NET35
                 new BigInteger(1),
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+                Rune.GetRuneAt("🙂", 0),
+#endif
+#if NET5_0_OR_GREATER
+                (Half)1,
+#endif
+#if NET5_0_OR_GREATER
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
 #endif
 #if NET7_0_OR_GREATER
                 (Int128)1,
@@ -475,7 +484,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly
+            KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly on older platforms
             KGySerializeObjects(referenceObjects, false);
         }
 

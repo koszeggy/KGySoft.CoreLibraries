@@ -25,7 +25,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Represents the options for creating a fast, lock-free, thread safe cache by the
     /// <see cref="O:KGySoft.Collections.ThreadSafeCacheFactory.Create"><![CDATA[ThreadSafeCacheFactory.Create<TKey, TValue>]]></see> methods.
-    /// <br/>To see when to use <see cref="LockFreeCacheOptions"/> or <see cref="LockingCacheOptions"/> see the <strong>Remarks</strong> section.
+    /// <br/>To see when to use <see cref="LockFreeCacheOptions"/> or <see cref="LockingCacheOptions"/> see the <strong>Remarks</strong> section
     /// of the <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> method.
     /// </summary>
     /// <seealso cref="ThreadSafeCacheFactory" />
