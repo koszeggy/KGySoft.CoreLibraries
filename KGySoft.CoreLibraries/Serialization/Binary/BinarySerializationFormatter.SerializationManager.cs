@@ -1859,8 +1859,8 @@ namespace KGySoft.Serialization.Binary
             private bool WriteId(BinaryWriter bw, object? data)
             {
                 static bool IsComparedByValue(Type t) =>
-                    t.IsPrimitive || t.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
-                    t.In(Reflector.StringType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType, Reflector.DateTimeOffsetType, Reflector.GuidType);
+                    t.IsPrimitive || t == Reflector.StringType || t.BaseType == Reflector.EnumType // always instance so can be used than the slower IsEnum
+                    || t.IsValueType && (supportedNonPrimitiveElementTypes.ContainsKey(t) /*TODO: || t.GenericDef genDef is not KVP && supportedCollections.ContainsKey(genDef)) - NOTE: KVP/Tuple is not allowed because T can have special Equals that can consider different instances equal but other known value type collections are safe to compare by value*/);
 
                 // null is always known.
                 if (data == null)
@@ -1872,7 +1872,7 @@ namespace KGySoft.Serialization.Binary
 
                 Type type = data.GetType();
 
-                // some dedicated immutable type are compared by value
+                // some dedicated immutable types are compared by value
                 if (IsComparedByValue(type))
                 {
                     if (idCacheByValue == null)
