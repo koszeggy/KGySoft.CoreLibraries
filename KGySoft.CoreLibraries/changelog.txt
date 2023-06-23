@@ -20,6 +20,8 @@
 ! BinarySerializer class:
   ! CreateFormatter method: Return type has been changed to BinarySerializationFormatter from IFormatter to avoid
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
++ BinarySerializationFormatter class:
+  + Supporting the Complex type natively (.NET Framework 4.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
 

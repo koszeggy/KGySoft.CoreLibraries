@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region Constants
 
-        private const bool dumpDetails = false;
+        private const bool dumpDetails = true;
         private const bool dumpSerContent = false;
 
         #endregion
@@ -134,6 +134,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new StringBuilder("alpha"),
 #if !NET35
                 new BigInteger(1),
+                new Complex(1.2, 2.3),
 #endif
             };
 
@@ -539,7 +540,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitArray[] { new BitArray(new[] { true, false, true }), null },
                 new StringBuilder[] { new StringBuilder("alpha"), null },
 #if !NET35
-                new BigInteger[] { 1, 2 }
+                new BigInteger[] { 1, 2 },
+                new Complex[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8) },
 #endif
             };
 
@@ -746,6 +748,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if !NET35
                 new BigInteger?[] { 1, null },
+                new Complex?[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), null },
 #endif
             };
 
@@ -1412,6 +1415,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if !NET35
                 new BigInteger(1),
+                new Complex(1.2, 3.4),
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER

@@ -27,6 +27,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
+using Newtonsoft.Json.Linq;
+
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -56,6 +58,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         private class TestWriter : BinaryWriter
         {
+            #region Constants
+
+            private const uint extended = 0b10000000;
+            private const uint simpleTypesLow = 0b00111111;
+            private const uint extendedSimpleType = 47;
+            private const uint collectionTypesLow = 0b00111111_00000000;
+            private const uint extendedCollectionType = 31 << 8;
+
+            #endregion
+
             #region Fields
 
             private readonly bool log;
@@ -95,7 +107,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     var frames = new StackTrace().GetFrames();
                     string name = frames[1].GetMethod().Name;
                     if (name == "WriteDataType")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)value)}]";
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (uint)value)}]";
                     else if (name == "WriteTypeAttributes")
                         valueStr += $" [{Reflector.InvokeMethod(typeof(Enum<>).MakeGenericType(typeof(BinarySerializationFormatter).GetNestedType("TypeAttributes", BindingFlags.NonPublic)), "ToString", (int)value, " | ")}]";
                     Console.WriteLine($"byte: {value} ({valueStr}) - {GetStack()}");
@@ -115,7 +127,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 Advance(count);
                 if (log)
-                    Console.WriteLine($"{count} bytes: {buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString()} ({buffer.Skip(index).Take(count).ToArray().ToHexValuesString(",")}) - {GetStack()}");
+                {
+                    string valueStr = buffer.Skip(index).Take(count).ToArray().ToHexValuesString(",");
+                    var frames = new StackTrace().GetFrames();
+                    string name = frames.First(f => !f.GetMethod()!.DeclaringType!.IsInstanceOfType(this)).GetMethod()!.Name; // because can be called from Write(ReadOnlySpan<byte>)
+                    if (name == "WriteDataType")
+                    {
+                        int i = index;
+                        uint value = buffer[i++];
+                        if ((value & extended) != 0u)
+                            value |= (uint)buffer[i++] << 8;
+                        if ((value & simpleTypesLow) == extendedSimpleType)
+                            value |= (uint)buffer[i++] << 16;
+                        if ((value & collectionTypesLow) == extendedCollectionType)
+                            value |= buffer[i];
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (uint)value)}]";
+                    }
+                    Console.WriteLine($"{count} bytes: {buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString()} ({valueStr}) - {GetStack()}");
+                }
+
                 base.Write(buffer, index, count);
             }
 
@@ -211,7 +241,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 Advance(4);
                 if (log)
-                    Console.WriteLine($"uint: {value} ({value:X8}) - {GetStack()}");
+                {
+                    var frames = new StackTrace().GetFrames();
+                    string name = frames[1].GetMethod().Name;
+                    string valueStr = value.ToString("X8");
+                    if (name == "WriteDataType")
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", value)}]";
+                    Console.WriteLine($"uint: {value} ({valueStr}) - {GetStack()}");
+                }
+
                 base.Write(value);
             }
 
@@ -232,10 +270,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     string name = frames[1].GetMethod().Name;
                     string valueStr = value.ToString("X4");
                     if (name == "WriteDataType")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)value)}]";
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (uint)value)}]";
                     Console.WriteLine($"ushort: {value} ({valueStr}) - {GetStack()}");
                 }
                 base.Write(value);
+            }
+
+            public override void Write(Half value)
+            {
+                throw new NotImplementedException("Half");
+                base.Write(value);
+            }
+
+            // NOTE: Do not override so the base falls back to byte[]
+            //public override void Write(ReadOnlySpan<byte> buffer)
+            //{
+            //    throw new NotImplementedException("ReadOnlySpan<byte>");
+            //    base.Write(buffer);
+            //}
+
+            public override void Write(ReadOnlySpan<char> chars)
+            {
+                throw new NotImplementedException("ReadOnlySpan<char>");
+                base.Write(chars);
             }
 
             public override string ToString() => $"Position: {pos:X8}";
@@ -264,11 +321,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         private class TestReader : BinaryReader
         {
+            #region Constants
+
+            private const uint extended = 0b10000000;
+            private const uint simpleTypesLow = 0b00111111;
+            private const uint extendedSimpleType = 47;
+            private const uint collectionTypesLow = 0b00111111_00000000;
+            private const uint extendedCollectionType = 31 << 8;
+
+            #endregion
+
             #region Fields
 
             private readonly bool log;
+            private readonly Queue<byte> nextBytes = new();
+
             private long pos;
-            private bool extendedDataType;
 
             #endregion
 
@@ -326,8 +394,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             public override byte ReadByte()
             {
-                var result = base.ReadByte();
-                Advance(1);
+                // we already read, advances and dumped the upcoming bytes
+                if (nextBytes.TryDequeue(out byte result))
+                    return result;
+                result = base.ReadByte();
                 if (log)
                 {
                     string valueStr = result.ToString("X2");
@@ -335,21 +405,49 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     string name = frames[1].GetMethod().Name;
                     if (name == "ReadDataType")
                     {
-                        int dataType = result;
-                        if (extendedDataType)
+                        uint dataType = result;
+                        int len = 1;
+                        if ((dataType & extended) != 0)
                         {
-                            dataType <<= 8;
-                            extendedDataType = false;
+                            dataType |= (uint)base.ReadByte() << 8;
+                            len++;
+                            nextBytes.Enqueue((byte)(dataType >> 8));
                         }
-                        else
-                            extendedDataType = (result & 128) != 0;
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", dataType)}]";
-                    }
-                    else if (name == "EnsureAttributes")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(Enum<>).MakeGenericType(typeof(BinarySerializationFormatter).GetNestedType("TypeAttributes", BindingFlags.NonPublic)), "ToString", (int)result, " | ")}]";
 
+                        if ((dataType & simpleTypesLow) == extendedSimpleType)
+                        {
+                            dataType |= (uint)base.ReadByte() << 16;
+                            len++;
+                            nextBytes.Enqueue((byte)(dataType >> 16));
+                        }
+
+                        if ((dataType & collectionTypesLow) == extendedCollectionType)
+                        {
+                            dataType |= (uint)base.ReadByte() << 24;
+                            len++;
+                            nextBytes.Enqueue((byte)(dataType >> 24));
+                        }
+
+                        var bytes = new[] { result }.Concat(nextBytes).ToArray();
+
+                        if (len > 1)
+                            valueStr = bytes.ToHexValuesString(",");
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", dataType)}]";
+
+                        if (len > 1)
+                        {
+                            Advance(len);
+                            Console.WriteLine($"{len} bytes: {bytes.ToDecimalValuesString()} ({valueStr}) - {GetStack()}");
+                            return result;
+                        }
+                    }
+
+                    Advance(1);
+                    if (name == "EnsureAttributes")
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(Enum<>).MakeGenericType(typeof(BinarySerializationFormatter).GetNestedType("TypeAttributes", BindingFlags.NonPublic)), "ToString", (int)result, " | ")}]";
                     Console.WriteLine($"byte: {result} ({valueStr}) - {GetStack()}");
                 }
+
                 return result;
             }
 
@@ -477,6 +575,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (log)
                     Console.WriteLine($"ulong: {result} ({result:X16}) - {GetStack()}");
                 return result;
+            }
+
+            public override Half ReadHalf()
+            {
+                throw new NotImplementedException("Half");
+                return base.ReadHalf();
+            }
+
+            public override int Read(Span<byte> buffer)
+            {
+                throw new NotImplementedException("Span<byte>");
+                return base.Read(buffer);
+            }
+
+            public override int Read(Span<char> buffer)
+            {
+                throw new NotImplementedException("Span<char>");
+                return base.Read(buffer);
             }
 
             public override string ToString() => $"Position: {pos:X8}";

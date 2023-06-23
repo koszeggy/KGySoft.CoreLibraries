@@ -51,7 +51,7 @@ using KGySoft.Serialization.Xml;
 #pragma warning disable CS8768 // Nullability of return type does not match implemented member - BinarySerializationFormatter supports de/serializing null
 #endif
 #if NET8_0_OR_GREATER
-#pragma warning disable SYSLIB0011 // BinaryFormatter serialization is obsolete and should not be used - false alarm, not using BinaryFormatter but implementeding IFormatter in BinarySerializationFormatter, which is a safer replacement of BinaryFormatter
+#pragma warning disable SYSLIB0011 // BinaryFormatter serialization is obsolete and should not be used - false alarm, not using BinaryFormatter but implementing IFormatter in BinarySerializationFormatter, which is a safer replacement of BinaryFormatter
 #pragma warning disable SYSLIB0050 // ISurrogateSelector/StreamingContext/StreamingContextStates is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
 #endif
 
@@ -62,7 +62,7 @@ using KGySoft.Serialization.Xml;
  *
  * I. Adding a simple type
  * ~~~~~~~~~~~~~~~~~~~~~~~
- * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
+ * 1. Add type to DataTypes bits 0..5 (adjust free places in comments) or to bits 16..23 (Extended)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
  * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
@@ -197,6 +197,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
     /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="Complex"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
@@ -372,12 +373,12 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         [Flags]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
-        private enum DataTypes : ushort
+        private enum DataTypes : uint
         {
-            // ===== LOW BYTE =====
+            // ===== BYTE 0. =====
 
             // ----- simple/element types: -----
-            SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
+            SimpleTypesLow = 0b00111111, // bits 0-5 (6 bits - up to 64 types) - see also SimpleTypesExtended
 
             // ..... pure types (they are unambiguous without a type name): .....
             //PureTypes = 0x3F, // bits 0-5 but never 11xxx, see also ImpureType ('5.5 bits' - up to 48 types)
@@ -448,10 +449,17 @@ namespace KGySoft.Serialization.Binary
             Int128 = 39, // Only in .NET 7 and above
             UInt128 = 40, // Only in .NET 7 and above
 
-            // 41-47: reserved
+            // 41-47: 7 reserved values
+            // TODO: Some candidates:
+            //Int256 = 41, UInt256 = 42, // https://github.com/dotnet/runtime/issues/80663
+            //Decimal32 = 43, Decimal64 = 44, Decimal128 = 45, // https://github.com/dotnet/runtime/issues/81376
+            //Quadruple = 46, // float128 - https://github.com/dotnet/csharplang/issues/1252
+            //Float8 = 31, // if it will be added, better to add to non-extended types due to its small size - https://github.com/dotnet/runtime/issues/25004
+
+            ExtendedSimpleType = 47, // Indicates that byte 2. is also included. It allows additional 255 simple types (excluding zero).
 
             // ..... impure types (their type cannot be determined purely by a DataType) .....
-            ImpureType = 3 << 4, // caution: 2-bits flag (11000)
+            ImpureType = 0b00110000, // caution: 2-bits flag
 
             // 48: Reserved (though it would have the same value as the ImpureType flag)
 
@@ -460,21 +468,23 @@ namespace KGySoft.Serialization.Binary
             ByRef = 51, // Followed by DataTypes. Cannot be combined.
 
             // 52-59: 8 reserved values
+            // TODO: Some candidates:
+            // Tuple, ValueTuple
 
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
             RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections.
             RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined.
-            // 63: Reserved (though it would have has the same value as the SimpleTypes mask)
+            // 63: Reserved (though it would have has the same value as the SimpleTypes mask or ExtendedSimpleType | ImpureType that can indicate extended impure types if running out of reserved values)
 
             // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // On serialization indicates that high byte also is used.
+            Extended = 1 << 7, // On serialization it indicates that byte 1. also is used.
 
-            // ===== HIGH BYTE =====
+            // ===== BYTE 1. =====
 
             // ----- collection types: -----
-            CollectionTypes = 0x3F00, // 8-13 bits (6 bits - up to 64 types)
+            CollectionTypesLow = 0b00111111_00000000, // 8-13 bits (6 bits - up to 64 types)
 
             // ..... generic collections: .....
             Array = 1 << 8, // actually not a generic type but can be encoded the same way
@@ -495,7 +505,9 @@ namespace KGySoft.Serialization.Binary
             QueueNonGeneric = 17 << 8,
             StackNonGeneric = 18 << 8,
             StringCollection = 19 << 8,
-            // 20-31 << 8: 12 reserved non-generic collection
+            // 20-30 << 8: 11 reserved non-generic collection
+
+            ExtendedCollectionType = 31 << 8, // Indicates that byte 3. is also included
 
             // ...... generic dictionaries:
             Dictionary = 32 << 8, // Represents both the generic Dictionary type and a flag (1 << 13) for all dictionaries
@@ -506,7 +518,7 @@ namespace KGySoft.Serialization.Binary
             // 37-45 << 8 : 9 reserved generic dictionaries
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
-            KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of the previous one.
+            KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of KeyValuePair.
 
             // ...... non-generic dictionaries:
             Hashtable = 48 << 8,
@@ -518,12 +530,46 @@ namespace KGySoft.Serialization.Binary
             // 54-60 << 8 : 7 reserved non-generic dictionaries
 
             DictionaryEntry = 61 << 8, // Could be a simple type but keeping consistency with KeyValuePair
-            DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of the previous one.
+            DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of DictionaryEntry.
             // 63 << 8: Reserved (though it would have has the same value as the CollectionTypes mask)
 
             // ------ flags
             Enum = 1 << 14,
-            Nullable = 1 << 15 // Can be combined with simple types. Nullable collections are separate items.
+            Nullable = 1 << 15, // Can be combined with simple types. Nullable collections are separate items.
+
+            // ===== BYTE 2. =====
+
+            SimpleTypesExtended = 0b11111111_00000000_00000000U, // bits 16-23 - up to 255 types without zero
+            SimpleTypesAll = SimpleTypesLow | SimpleTypesExtended,
+
+            // ..... pure types (they are unambiguous without a type name): .....
+            //PureTypesExtended = (0b01111111 << 16) | PureTypes, // bits 16-22 - up to 127 values
+
+            Complex = 1 << 16, // Only in .NET Framework 4.0 and above
+            // Vector2, Vector3, Vector4, Quaternion, Plane, Matrix3x2, Matrix4x4 // .NET 4.6+
+            //BigNumber, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace
+            //BigDecimal, // https://github.com/dotnet/runtime/issues/20681
+
+            // ..... impure types (they are ambiguous without a type name): - only if needed in the future .....
+            //ImpureTypeExtended = 0b10000000 << 16
+
+            // MyNewExtendedImpureType1 = (128 << 16) | ImpureType, // and 129, 130, etc.
+
+            // ===== BYTE 3. =====
+
+            // ----- collection types: ----- // 24-30 bits (7 bits - up to 127 types without zero)
+            CollectionTypesExtended = 0b11111111u << 24, // NOTE: covers also the NullableExtendedCollection flag
+            CollectionTypesAll = CollectionTypesLow | CollectionTypesExtended,
+
+            // ..... generic collections: .....
+            ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
+            // ArraySegment, ArraySection, Array2D, Array3D, Vector, Vector64, Vector128, Vector256, Immutable*, Frozen* // TODO: add value types to IsComparedByValue
+
+            // ...... generic dictionaries:
+            // Immutable*, Frozen*
+
+            // ----- flags: -----
+            NullableExtendedCollection = 1u << 31, // Only for extended collections. For non-extended ones (KeyValuePair, DictionaryEntry) nullable types are separate items for compatibility reasons
         }
 
         /// <summary>
@@ -619,7 +665,6 @@ namespace KGySoft.Serialization.Binary
             CustomSerialized = 1 << 4,
             BinarySerializable = 1 << 5,
             RawStruct = 1 << 6,
-
         }
 
         #endregion
@@ -948,6 +993,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
 #if !NET35
             { Reflector.BigIntegerType, DataTypes.BigInteger },
+            { typeof(Complex), DataTypes.Complex },
 #endif
 #if NETCOREAPP3_0_OR_GREATER
             { Reflector.RuneType, DataTypes.Rune },
@@ -1091,20 +1137,20 @@ namespace KGySoft.Serialization.Binary
 
         #region Static Methods
 
-        private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
-        private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
-        private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
-        private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null ? dt & DataTypes.CollectionTypes : dt & ~DataTypes.CollectionTypes;
-        private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypes) != DataTypes.Null;
-        private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypes) != DataTypes.Null;
+        private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypesAll;
+        private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypesAll;
+        private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypesAll;
+        private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;
+        private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypesAll) != DataTypes.Null;
+        private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null;
         private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null || dt is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
-        private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
+        private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypesLow) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => !IsEnum(dt) && (dt & DataTypes.ImpureType) != DataTypes.ImpureType;
-        private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.SimpleTypes | DataTypes.Nullable)) == dt && (dt & DataTypes.SimpleTypes) < DataTypes.ImpureType;
-        private static bool IsDictionary(DataTypes dt) => (dt & DataTypes.Dictionary) != DataTypes.Null;
-        private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypes) is DataTypes.RecursiveObjectGraph or DataTypes.BinarySerializable or DataTypes.Object;
+        private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.SimpleTypesAll | DataTypes.Nullable)) == dt && IsPureType(dt);
+        private static bool IsDictionary(DataTypes dt) => (dt & (DataTypes.Dictionary | DataTypes.ExtendedDictionary)) != DataTypes.Null;
+        private static bool CanHaveRecursion(DataTypes dt) => (dt & DataTypes.SimpleTypesLow) is DataTypes.RecursiveObjectGraph or DataTypes.BinarySerializable or DataTypes.Object;
         private static bool CanBeEncoded(DataTypes dt) => IsCollectionType(dt) || dt is DataTypes.Pointer or DataTypes.ByRef;
         private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) == DataTypes.ImpureType;
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
@@ -1178,7 +1224,7 @@ namespace KGySoft.Serialization.Binary
 
         private static void WriteDataType(BinaryWriter bw, DataTypes dataType)
         {
-            // using the low byte only
+            // using the lowest byte only
             if ((dataType & (DataTypes)0xFF) == dataType)
             {
                 Debug.Assert(!IsExtended(dataType));
@@ -1186,8 +1232,55 @@ namespace KGySoft.Serialization.Binary
                 return;
             }
 
-            // writing the whole word
-            bw.Write((ushort)(dataType | DataTypes.Extended));
+            if ((dataType & DataTypes.SimpleTypesExtended) != DataTypes.Null)
+            {
+                Debug.Assert((dataType & DataTypes.SimpleTypesLow) == DataTypes.Null);
+                dataType |= DataTypes.ExtendedSimpleType;
+            }
+
+            if ((dataType & DataTypes.CollectionTypesExtended) != DataTypes.Null)
+            {
+                Debug.Assert((dataType & DataTypes.CollectionTypesLow) == DataTypes.Null);
+                dataType |= DataTypes.ExtendedCollectionType;
+            }
+
+            if (((uint)dataType & 0xFF00u) != 0u)
+                dataType |= DataTypes.Extended;
+
+            // writing the low half
+            if ((dataType & (DataTypes)0xFFFF) == dataType)
+            {
+                bw.Write((ushort)dataType);
+                return;
+            }
+
+            // writing all 4 bytes (eg. extended collection with extended nullable element)
+            if (((uint)dataType & 0xFF00u) != 0u && ((uint)dataType & 0xFF0000u) != 0u && ((uint)dataType & 0xFF000000u) != 0u)
+            {
+                bw.Write((uint)dataType);
+                return;
+            }
+
+            // writing the lowest byte along with nonzero higher bytes
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            Span<byte> buffer = stackalloc byte[3];
+#else
+            var buffer = new byte[3];
+#endif
+            int len = 1;
+            buffer[0] = (byte)dataType;
+            if (((uint)dataType & 0xFF00u) != 0u)
+                buffer[len++] = (byte)((uint)dataType >> 8);
+            if (((uint)dataType & 0xFF0000u) != 0u)
+                buffer[len++] = (byte)((uint)dataType >> 16);
+            if (((uint)dataType & 0xFF000000u) != 0u)
+                buffer[++len] = (byte)((uint)dataType >> 24);
+            Debug.Assert(len is > 1 and < 4);
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            bw.Write(buffer.Slice(0, len));
+#else
+            bw.Write(buffer, 0, len);
+#endif
         }
 
         private static DataTypes ReadDataType(BinaryReader br)
@@ -1197,6 +1290,18 @@ namespace KGySoft.Serialization.Binary
             {
                 result |= (DataTypes)(br.ReadByte() << 8);
                 result &= ~DataTypes.Extended;
+            }
+
+            if ((result & DataTypes.SimpleTypesLow) == DataTypes.ExtendedSimpleType)
+            {
+                result |= (DataTypes)(br.ReadByte() << 16);
+                result &= ~DataTypes.ExtendedSimpleType;
+            }
+
+            if ((result & DataTypes.CollectionTypesLow) == DataTypes.ExtendedCollectionType)
+            {
+                result |= (DataTypes)(br.ReadByte() << 24);
+                result &= ~DataTypes.ExtendedCollectionType;
             }
 
             return result;
@@ -1209,7 +1314,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         private static string DataTypeToString(DataTypes dataType)
         {
-            if (dataType.In(DataTypes.Null, DataTypes.SimpleTypes, DataTypes.CollectionTypes))
+            if (dataType is DataTypes.Null or DataTypes.SimpleTypesLow or DataTypes.SimpleTypesAll or DataTypes.CollectionTypesLow or DataTypes.CollectionTypesAll)
                 return dataType.ToString<DataTypes>();
 
             StringBuilder result = new StringBuilder();

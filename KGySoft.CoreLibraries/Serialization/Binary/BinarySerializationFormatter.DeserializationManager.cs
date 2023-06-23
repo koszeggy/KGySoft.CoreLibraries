@@ -1342,10 +1342,14 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.RuntimeType:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
 
-                        case DataTypes.BigInteger:
 #if !NET35
+                        case DataTypes.BigInteger:
                             return createdResult = new BigInteger(br.ReadBytes(Read7BitInt(br)));
+                        case DataTypes.Complex:
+                            return createdResult = new Complex(br.ReadDouble(), br.ReadDouble());
 #else
+                        case DataTypes.BigInteger:
+                        case DataTypes.Complex:
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 

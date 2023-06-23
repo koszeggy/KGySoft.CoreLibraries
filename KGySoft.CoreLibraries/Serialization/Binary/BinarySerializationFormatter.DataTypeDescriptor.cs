@@ -18,12 +18,15 @@
 using System;
 using System.Collections;
 #if !NET35
-using System.Collections.Concurrent; 
+using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -463,10 +466,14 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.RuntimeType:
                         return Reflector.RuntimeType;
 
-                    case DataTypes.BigInteger:
 #if !NET35
+                    case DataTypes.BigInteger:
                         return Reflector.BigIntegerType;
+                    case DataTypes.Complex:
+                        return typeof(Complex);
 #else
+                    case DataTypes.BigInteger:
+                    case DataTypes.Complex:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 

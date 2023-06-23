@@ -286,6 +286,12 @@ namespace KGySoft.Serialization.Binary
                 Write7BitInt(bw, bytes.Length);
                 bw.Write(bytes);
             }
+
+            private static void WriteComplex(BinaryWriter bw, Complex value)
+            {
+                bw.Write(value.Real);
+                bw.Write(value.Imaginary);
+            }
 #endif
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
@@ -367,7 +373,7 @@ namespace KGySoft.Serialization.Binary
                 // b.) Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
                 {
-                    WriteSimpleObject(bw, obj, dataType, true);
+                    WritePureObjectOrEnum(bw, obj, dataType, true);
                     return;
                 }
 
@@ -408,7 +414,7 @@ namespace KGySoft.Serialization.Binary
                 // Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
                 {
-                    WriteSimpleObject(bw, obj, dataType, false);
+                    WritePureObjectOrEnum(bw, obj, dataType, false);
                     return;
                 }
 
@@ -562,7 +568,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteSimpleObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
+            private void WritePureObjectOrEnum(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
                 if (IsCompressible(dataType))
                 {
@@ -773,6 +779,9 @@ namespace KGySoft.Serialization.Binary
 #if !NET35
                     case DataTypes.BigInteger:
                         WriteBigInteger(bw, (BigInteger)obj);
+                        return;
+                    case DataTypes.Complex:
+                        WriteComplex(bw, (Complex)obj);
                         return;
 #endif
 
