@@ -62,6 +62,12 @@ using KGySoft.Serialization.Xml;
  *
  * I. Adding a simple type
  * ~~~~~~~~~~~~~~~~~~~~~~~
+ * When NOT to add:
+ * - If contains a delegate
+ * - If may contain a pointer or may require unmanaged preallocated memory
+ * When to add with special care and only if really justified
+ * - If type is abstract, non-sealed or internal (eg. object, RuntimeType)
+ * - If type is impure or may contain elements that make safe deserialization impossible (eg. tuples)
  * 1. Add type to DataTypes bits 0..5 (adjust free places in comments) or to bits 16..23 (Extended)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
@@ -79,11 +85,18 @@ using KGySoft.Serialization.Xml;
  *
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * 1. Add type to DataTypes 8-13 bits (adjust free places in comments)
- *    - 0..15 << 8: Generic collections
+ * When NOT to add
+ * - If may contain a delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
+ * - If may contain a wrapped collection of any type (eg. Collection<T>, locking collections, BlockingCollection<T>)
+ * When to add with special care and only if really justified
+ * - If type is abstract, non-sealed or internal (eg. frozen collections)
+ * 1. Add type to DataTypes 8-13 bits (adjust free places in comments) or to bits 24..30 (Extended)
+ *    - 1..15 << 8: Generic collections
  *    - 16..31 << 8: Non-generic collections
- *    - 32..47 << 8: Generic dictionaries
+ *    - 32..47 << 8: Generic/specialized dictionaries
  *    - 48..63 << 8: Non-generic dictionaries
+ *    - 1..63 << 24: Generic collections (extended). If value type, must be here to use NullableExtendedCollection.
+ *    - 64..127 << 24: Generic dictionaries (extended). If value type, must be here to use NullableExtendedCollection.
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. Add type to supportedCollections
@@ -435,7 +448,7 @@ namespace KGySoft.Serialization.Binary
 
             RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
 
-            // 31: reserved
+            // 31: reserved - TODO: StringSegment
 
             // . . . Non-primitive, platform-dependent pure types (32-48 - up to 16 types) . . .
 
@@ -453,8 +466,7 @@ namespace KGySoft.Serialization.Binary
             // TODO: Some candidates:
             //Int256 = 41, UInt256 = 42, // https://github.com/dotnet/runtime/issues/80663
             //Decimal32 = 43, Decimal64 = 44, Decimal128 = 45, // https://github.com/dotnet/runtime/issues/81376
-            //Quadruple = 46, // float128 - https://github.com/dotnet/csharplang/issues/1252
-            //Float8 = 31, // if it will be added, better to add to non-extended types due to its small size - https://github.com/dotnet/runtime/issues/25004
+            //Float8 = 46, // if it will be added, better to add to non-extended types due to its small size - https://github.com/dotnet/runtime/issues/25004
 
             ExtendedSimpleType = 47, // Indicates that byte 2. is also included. It allows additional 255 simple types (excluding zero).
 
@@ -475,7 +487,7 @@ namespace KGySoft.Serialization.Binary
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
             RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections.
             RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined.
-            // 63: Reserved (though it would have has the same value as the SimpleTypes mask or ExtendedSimpleType | ImpureType that can indicate extended impure types if running out of reserved values)
+            // 63: Reserved (though it would have has the same value as the SimpleTypesLow mask or ExtendedSimpleType | ImpureType that can indicate extended impure types if running out of reserved values)
 
             // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
@@ -494,12 +506,14 @@ namespace KGySoft.Serialization.Binary
             Queue = 5 << 8,
             Stack = 6 << 8,
             CircularList = 7 << 8,
-            SortedSet = 8 << 8,
-            ConcurrentBag = 9 << 8,
-            ConcurrentQueue = 10 << 8,
-            ConcurrentStack = 11 << 8,
+            SortedSet = 8 << 8, // Only in .NET Framework 4.0 and above
+            ConcurrentBag = 9 << 8, // Only in .NET Framework 4.0 and above
+            ConcurrentQueue = 10 << 8, // Only in .NET Framework 4.0 and above
+            ConcurrentStack = 11 << 8, // Only in .NET Framework 4.0 and above
             // 12-15 << 8: 4 reserved generic collections
-
+            // TODO Candidates:
+            // ThreadSafeHashSet
+            
             // ...... non-generic collections:
             ArrayList = 16 << 8,
             QueueNonGeneric = 17 << 8,
@@ -514,13 +528,16 @@ namespace KGySoft.Serialization.Binary
             SortedList = 33 << 8,
             SortedDictionary = 34 << 8,
             CircularSortedList = 35 << 8,
-            ConcurrentDictionary = 36 << 8,
+            ConcurrentDictionary = 36 << 8, // Only in .NET Framework 4.0 and above
             // 37-45 << 8 : 9 reserved generic dictionaries
+            // TODO Candidates:
+            // ThreadSafeDictionary
+            // AllowNullDictionary - if will be public
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
             KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of KeyValuePair.
 
-            // ...... non-generic dictionaries:
+            // ...... non-generic or (partly) specialized dictionaries:
             Hashtable = 48 << 8,
             SortedListNonGeneric = 49 << 8,
             ListDictionary = 50 << 8,
@@ -528,6 +545,8 @@ namespace KGySoft.Serialization.Binary
             OrderedDictionary = 52 << 8,
             StringDictionary = 53 << 8,
             // 54-60 << 8 : 7 reserved non-generic dictionaries
+            // TODO Candidates:
+            // StringKeyedDictionary
 
             DictionaryEntry = 61 << 8, // Could be a simple type but keeping consistency with KeyValuePair
             DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of DictionaryEntry.
@@ -535,7 +554,7 @@ namespace KGySoft.Serialization.Binary
 
             // ------ flags
             Enum = 1 << 14,
-            Nullable = 1 << 15, // Can be combined with simple types. Nullable collections are separate items.
+            Nullable = 1 << 15, // Can be combined with simple types. Nullable collections are separate items or have their extended flag on byte 3.
 
             // ===== BYTE 2. =====
 
@@ -546,7 +565,9 @@ namespace KGySoft.Serialization.Binary
             //PureTypesExtended = (0b01111111 << 16) | PureTypes, // bits 16-22 - up to 127 values
 
             Complex = 1 << 16, // Only in .NET Framework 4.0 and above
+            // TODO Candidates:
             // Vector2, Vector3, Vector4, Quaternion, Plane, Matrix3x2, Matrix4x4 // .NET 4.6+
+            //Quadruple = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
             //BigNumber, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace
             //BigDecimal, // https://github.com/dotnet/runtime/issues/20681
 
@@ -562,11 +583,29 @@ namespace KGySoft.Serialization.Binary
             CollectionTypesAll = CollectionTypesLow | CollectionTypesExtended,
 
             // ..... generic collections: .....
-            ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
-            // ArraySegment, ArraySection, Array2D, Array3D, Vector, Vector64, Vector128, Vector256, Immutable*, Frozen* // TODO: add value types to IsComparedByValue
+            // TODO Candidates:
+            // ArraySegment, ArraySection, Array2D, Array3D - must be here as they are value types so can be combined with NullableExtendedCollection
+            // Vector, Vector64, Vector128, Vector256 - special cases: these are not IEnumerable (similarly to KVP) but can be encoded better as collections
+            // ImmutableArray, ImmutableArrayBuilder,
+            // ImmutableList,
+            // ImmutableListBuilder,
+            // ImmutableHashSet
+            // ImmutableHashSetBuilder,
+            // ImmutableSortedSet, ImmutableSortedSetBuilder,
+            // ImmutableQueue
+            // ImmutableQueueBuilder,
+            // ImmutableStack
+            // ImmutableStackBuilder,
+            // FrozenSet* // NOTE: special case(s) because FrozenSet is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
             // ...... generic dictionaries:
-            // Immutable*, Frozen*
+            ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
+            // TODO Candidates:
+            // ImmutableDictionary = 37 << 8,
+            // ImmutableSortedDictionary = 38 << 8,
+            // ImmutableDictionaryBuilder,
+            // ImmutableSortedDictionaryBuilder,
+            // FrozenDictionary* // NOTE: special case(s) because FrozenDictionary is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
             // ----- flags: -----
             NullableExtendedCollection = 1u << 31, // Only for extended collections. For non-extended ones (KeyValuePair, DictionaryEntry) nullable types are separate items for compatibility reasons
@@ -628,12 +667,12 @@ namespace KGySoft.Serialization.Binary
             IsSingleElement = 1 << 8,
 
             /// <summary>
-            /// Indicates that <see cref="EnumComparer{TEnum}"/> is the default for enum element types.
+            /// Indicates that the default comparer is determined by <see cref="ComparerHelper{T}"/>. The result can be different for enums on different platforms.
             /// </summary>
-            DefaultEnumComparer = 1 << 9,
+            UsesComparerHelper = 1 << 9,
 
             /// <summary>
-            /// Indicates that even default comparer cannot be null.
+            /// Indicates that even default comparer cannot be null (only for ConcurrentDictionary in .NET Framework)
             /// </summary>
             NonNullDefaultComparer = 1 << 10,
         }
@@ -886,7 +925,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.CircularSortedList, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.UsesComparerHelper,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },

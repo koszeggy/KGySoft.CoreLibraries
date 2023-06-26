@@ -109,7 +109,7 @@ namespace KGySoft.Serialization.Binary
             private bool HasAnyComparer => HasEqualityComparer || (Info & CollectionInfo.HasComparer) == CollectionInfo.HasComparer;
             private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
             private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
-            private bool DefaultEnumComparer => (Info & CollectionInfo.DefaultEnumComparer) == CollectionInfo.DefaultEnumComparer;
+            private bool UsesComparerHelper => (Info & CollectionInfo.UsesComparerHelper) == CollectionInfo.UsesComparerHelper;
             private bool IsNonNullDefaultComparer => (Info & CollectionInfo.NonNullDefaultComparer) == CollectionInfo.NonNullDefaultComparer;
 
             #endregion
@@ -273,8 +273,8 @@ namespace KGySoft.Serialization.Binary
                     return HasEqualityComparer ? null : Comparer.Default;
 
                 Type elementType = type.GetGenericArguments()[0];
-                if (DefaultEnumComparer && elementType.IsEnum)
-                    return typeof(EnumComparer<>).GetPropertyValue(elementType, nameof(EnumComparer<_>.Comparer));
+                if (UsesComparerHelper)
+                    return typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<_>.Comparer));
                 return HasEqualityComparer
                     ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<_>.Default))
                     : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
