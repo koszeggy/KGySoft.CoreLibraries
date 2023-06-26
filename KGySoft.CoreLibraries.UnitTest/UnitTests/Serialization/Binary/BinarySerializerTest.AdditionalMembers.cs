@@ -27,8 +27,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
-using Newtonsoft.Json.Linq;
-
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -276,11 +274,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 base.Write(value);
             }
 
+#if NET6_0_OR_GREATER
             public override void Write(Half value)
             {
                 throw new NotImplementedException("Half");
                 base.Write(value);
             }
+#endif
 
             // NOTE: Do not override so the base falls back to byte[]
             //public override void Write(ReadOnlySpan<byte> buffer)
@@ -289,11 +289,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //    base.Write(buffer);
             //}
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override void Write(ReadOnlySpan<char> chars)
             {
                 throw new NotImplementedException("ReadOnlySpan<char>");
                 base.Write(chars);
             }
+#endif
 
             public override string ToString() => $"Position: {pos:X8}";
 
@@ -395,9 +397,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             public override byte ReadByte()
             {
                 // we already read, advances and dumped the upcoming bytes
-                if (nextBytes.TryDequeue(out byte result))
-                    return result;
-                result = base.ReadByte();
+                if (nextBytes.Count > 0)
+                    return nextBytes.Dequeue();
+                byte result = base.ReadByte();
                 if (log)
                 {
                     string valueStr = result.ToString("X2");
@@ -577,12 +579,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 return result;
             }
 
+#if NET6_0_OR_GREATER
             public override Half ReadHalf()
             {
                 throw new NotImplementedException("Half");
                 return base.ReadHalf();
             }
+#endif
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int Read(Span<byte> buffer)
             {
                 throw new NotImplementedException("Span<byte>");
@@ -594,6 +599,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 throw new NotImplementedException("Span<char>");
                 return base.Read(buffer);
             }
+#endif
 
             public override string ToString() => $"Position: {pos:X8}";
 
