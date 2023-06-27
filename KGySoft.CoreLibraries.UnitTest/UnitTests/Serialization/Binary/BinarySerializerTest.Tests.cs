@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #region Constants
 
-        private const bool dumpDetails = true;
+        private const bool dumpDetails = false;
         private const bool dumpSerContent = false;
 
         #endregion
@@ -825,6 +825,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new CircularList<int>(new[] { 1, 2, 3 }),
                 new CircularList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+
+                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2),
+                new ArraySegment<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
 
 #if !NET35
                 new SortedSet<int>(new[] { 1, 2, 3 }),

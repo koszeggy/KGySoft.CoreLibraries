@@ -449,7 +449,7 @@ namespace KGySoft.Serialization.Binary
                     current = -1;
 
                     // it is always safe to allocate by rank because it cannot be > 32 when obtained by a type
-                    int rank = descriptor.Type!.GetArrayRank();
+                    int rank = descriptor.IsArray ? descriptor.Type!.GetArrayRank() : 1; // IsArray is false for array backed collections
                     lengths = new int[rank];
                     lowerBounds = new int[rank];
                     TotalLength = 1;
@@ -830,7 +830,11 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.IsArray)
                     return CreateArray(br, addToCache, descriptor);
 
-                // 3/b.) non-array collection or key-value
+                // 3/b.) array-backed collection
+                if (descriptor.HasBackingArray)
+                    return CreateArrayBackingCollection(br, addToCache, descriptor);
+
+                // 3/c.) non-array collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1051,7 +1055,11 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.IsArray)
                     return CreateArray(br, addToCache, descriptor);
 
-                // 3/b.) non-array collection or key-value
+                // 3/b.) array-backed collection
+                if (descriptor.HasBackingArray)
+                    return CreateArrayBackingCollection(br, addToCache, descriptor);
+
+                // 3/c.) non-array collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1128,6 +1136,67 @@ namespace KGySoft.Serialization.Binary
                     ObjectsBeingDeserialized.Remove(arrayProxy);
                 }
 
+                return result;
+            }
+
+            [SecurityCritical]
+            private object CreateArrayBackingCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            {
+                Type type = descriptor.GetTypeToCreate();
+                Debug.Assert(type.IsValueType);
+                object result;
+
+                // special case: backing array is null so creating a default instance
+                if (!br.ReadBoolean())
+                {
+                    result = Activator.CreateInstance(type);
+                    if (addToCache)
+                        AddObjectToCache(result);
+                    return result;
+                }
+
+                // using a builder to prevent possible OutOfMemoryException attacks in SafeMode
+                var builder = new ArrayBuilder(br, descriptor, SafeMode);
+                object resultProxy = builder.ArrayProxy;
+
+                // the references of the result must be tracked because it will be replaced in the end
+                var usages = new UsageReferences();
+                ObjectsBeingDeserialized.Add(resultProxy, usages);
+                builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
+
+                int id = 0;
+                if (addToCache)
+                    AddObjectToCache(resultProxy, out id);
+
+                Array backingArray;
+
+                // primitive array and the builder allocated the final capacity
+                if (builder.TryReadPrimitive())
+                    backingArray = builder.ToArray();
+                else
+                {
+                    // non-primitive array or cannot read at once in safe mode
+                    for (int i = 0; i < builder.TotalLength; i++)
+                    {
+                        object? value = ReadElement(br, descriptor.ElementDescriptor!);
+                        builder.Add(value);
+                    }
+
+                    backingArray = builder.ToArray();
+                }
+
+                // creating the actual result
+                result = serializationInfo[descriptor.CollectionDataType].CreateInstanceFromArray is Func<BinaryReader, Array, object> callback
+                    ? callback.Invoke(br, backingArray)
+                    : CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!).CreateInstance(backingArray);
+
+                // actualizing references to the actual result if needed
+                ApplyPendingUsages(usages, resultProxy, result);
+
+                if (addToCache)
+                    ReplaceObjectInCache(id, result);
+
+                ObjectsBeingDeserialized.Remove(resultProxy);
                 return result;
             }
 

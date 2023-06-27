@@ -53,6 +53,7 @@ namespace KGySoft.Serialization.Binary
             private bool? isGenericCollection;
 #endif
             private bool? isSingleElement;
+            private bool? hasBackingArray;
 
             private DataTypes dataType;
 
@@ -74,6 +75,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsReadOnly { get; set; }
             internal bool IsSingleElement => isSingleElement ??= serializationInfo[CollectionDataType].IsSingleElement;
             internal bool IsNullable { get; private set; }
+            internal bool HasBackingArray => hasBackingArray ??= serializationInfo[CollectionDataType].GetBackingArray != null;
 
             /// <summary>
             /// Decoded type of self descriptor
@@ -251,6 +253,9 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.KeyValuePairNullable:
                         return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
 
+                    case DataTypes.ArraySegment:
+                        return typeof(ArraySegment<>);
+
 #if NET35
                     case DataTypes.ConcurrentDictionary:
                     case DataTypes.SortedSet:
@@ -261,6 +266,7 @@ namespace KGySoft.Serialization.Binary
 #endif
 
                     default:
+                        // TODO: nullable, see GetElementType
                         return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
                 }
             }
@@ -347,20 +353,10 @@ namespace KGySoft.Serialization.Binary
                 return ((OrderedDictionary)collection).AsReadOnly();
             }
 
-            /// <summary>
-            /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here
-            /// </summary>
             internal Type GetTypeToCreate()
             {
                 Debug.Assert(Type != null);
-                switch (CollectionDataType)
-                {
-                    case DataTypes.DictionaryEntryNullable:
-                    case DataTypes.KeyValuePairNullable:
-                        return Nullable.GetUnderlyingType(Type!)!;
-                    default:
-                        return Type!;
-                }
+                return IsNullable(CollectionDataType) ? Nullable.GetUnderlyingType(Type!)! : Type!;
             }
 
             internal void ApplyAttributes(TypeAttributes attr)

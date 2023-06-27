@@ -88,6 +88,7 @@ using KGySoft.Serialization.Xml;
  * When NOT to add
  * - If may contain a delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
  * - If may contain a wrapped collection of any type (eg. Collection<T>, locking collections, BlockingCollection<T>)
+ * - If may contain a pointer or a dependency (eg. Memory<T>)
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (eg. frozen collections)
  * 1. Add type to DataTypes 8-13 bits (adjust free places in comments) or to bits 24..30 (Extended)
@@ -95,8 +96,8 @@ using KGySoft.Serialization.Xml;
  *    - 16..31 << 8: Non-generic collections
  *    - 32..47 << 8: Generic/specialized dictionaries
  *    - 48..63 << 8: Non-generic dictionaries
- *    - 1..63 << 24: Generic collections (extended). If value type, must be here to use NullableExtendedCollection.
- *    - 64..127 << 24: Generic dictionaries (extended). If value type, must be here to use NullableExtendedCollection.
+ *    - 1..63 << 24: Extended collections. If value type, must be here to use NullableExtendedCollection.
+ *    - 64..127 << 24: Extended dictionaries. If value type, must be here to use NullableExtendedCollection.
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. Add type to supportedCollections
@@ -104,12 +105,15 @@ using KGySoft.Serialization.Xml;
  * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
  * 7. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
- *    then handle it in AddCollectionElement
+ *    then handle it in AddCollectionElement/AddDictionaryElement. Add new usage reference if needed.
  * 8. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
+ *    - SerializeNullableArrays (value types)
  *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
+ *   [- SerializeCircularReferences - if new usage reference is added in 7. add it to TestData.Box<T>, too]
+ *   [- SerializeCircularReferencesBySurrogateSelector - if new usage reference is added in 7. add it to TestData.Box<T>, too]
  * 9. Add type to description - Collections
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
@@ -584,7 +588,8 @@ namespace KGySoft.Serialization.Binary
 
             // ..... generic collections: .....
             // TODO Candidates:
-            // ArraySegment, ArraySection, Array2D, Array3D - must be here as they are value types so can be combined with NullableExtendedCollection
+            ArraySegment = 1 << 24,
+            // ArraySection, Array2D, Array3D - must be here as they are value types so can be combined with NullableExtendedCollection
             // Vector, Vector64, Vector128, Vector256 - special cases: these are not IEnumerable (similarly to KVP) but can be encoded better as collections
             // ImmutableArray, ImmutableArrayBuilder,
             // ImmutableList,
@@ -787,9 +792,10 @@ namespace KGySoft.Serialization.Binary
         private static readonly Type binarySerializableType = typeof(IBinarySerializable);
         private static readonly Type genericMethodDefinitionPlaceholderType = typeof(GenericMethodDefinitionPlaceholder);
 
-        private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(EnumComparer<DataTypes>.Comparer)
+        private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(ComparerHelper<DataTypes>.EqualityComparer)
         {
-            // generic collections
+            #region Generic collections (DataTypes 1..15 << 8)
+
             { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
             {
                 DataTypes.List, new CollectionSerializationInfo
@@ -870,9 +876,12 @@ namespace KGySoft.Serialization.Binary
                     SpecificAddMethod = nameof(ConcurrentStack<_>.Push)
                 }
             },
-#endif
 
-            // non-generic collections
+#endif
+            #endregion
+
+            #region Non-generic collections (DataTypes 16..31 << 8)
+
             {
                 DataTypes.ArrayList, new CollectionSerializationInfo
                 {
@@ -898,7 +907,10 @@ namespace KGySoft.Serialization.Binary
             },
             { DataTypes.StringCollection, CollectionSerializationInfo.Default },
 
-            // generic dictionaries
+            #endregion
+
+            #region Generic dictionaries (DataTypes 32..47 << 8)
+
             {
                 DataTypes.Dictionary, new CollectionSerializationInfo
                 {
@@ -943,7 +955,10 @@ namespace KGySoft.Serialization.Binary
             },
 #endif
 
-            // non-generic dictionaries
+            #endregion
+
+            #region Non-generic dictionaries (DataTypes 48..63 << 8)
+
             {
                 DataTypes.Hashtable, new CollectionSerializationInfo
                 {
@@ -987,7 +1002,39 @@ namespace KGySoft.Serialization.Binary
                 }
             },
             { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } }
+            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+
+            #endregion
+
+            #region Extended collections (DataTypes 1..63 << 24)
+
+            {
+                DataTypes.ArraySegment, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    GetBackingArray = o => (Array)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array))!,
+                    WriteSpecificParametersForBackingArray = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Count))!);
+                    },
+                    CreateInstanceFromArray = (br, a) =>
+                    {
+                        Type arrayType = a.GetType();
+                        Type[] args = { arrayType, Reflector.IntType, Reflector.IntType };
+                        ConstructorInfo ctor = typeof(ArraySegment<>).GetGenericType(arrayType.GetElementType()!).GetConstructor(args)!;
+                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
+
+            #endregion
+
+            #region Extended dictionaries (DataTypes 64..127 << 24)
+
+            // TODO
+
+            #endregion
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
@@ -1091,6 +1138,8 @@ namespace KGySoft.Serialization.Binary
 
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
             { Reflector.DictionaryEntryType, DataTypes.DictionaryEntry },
+
+            { typeof(ArraySegment<>), DataTypes.ArraySegment },
         };
 
         #endregion
@@ -1182,7 +1231,7 @@ namespace KGySoft.Serialization.Binary
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypesAll) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null;
-        private static bool IsNullable(DataTypes dt) => (dt & DataTypes.Nullable) != DataTypes.Null || dt is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
+        private static bool IsNullable(DataTypes dt) => (dt & (DataTypes.Nullable | DataTypes.NullableExtendedCollection)) != DataTypes.Null || dt is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypesLow) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
@@ -1313,7 +1362,7 @@ namespace KGySoft.Serialization.Binary
             if (((uint)dataType & 0xFF0000u) != 0u)
                 buffer[len++] = (byte)((uint)dataType >> 16);
             if (((uint)dataType & 0xFF000000u) != 0u)
-                buffer[++len] = (byte)((uint)dataType >> 24);
+                buffer[len++] = (byte)((uint)dataType >> 24);
             Debug.Assert(len is > 1 and < 4);
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             bw.Write(buffer.Slice(0, len));

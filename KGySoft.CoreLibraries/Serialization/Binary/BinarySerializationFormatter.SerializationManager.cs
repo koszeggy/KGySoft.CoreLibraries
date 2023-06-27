@@ -195,6 +195,7 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.QueueNonGeneric:
                         case DataTypes.StackNonGeneric:
                         case DataTypes.StringCollection:
+                        case DataTypes.ArraySegment:
                             if (IsElementType(dataType))
                                 skipLevel -= 1;
                             break;
@@ -1110,57 +1111,38 @@ namespace KGySoft.Serialization.Binary
 
                 DataTypes dataType = collectionDataTypes.Current;
                 DataTypes collectionDataType = GetCollectionDataType(dataType);
-                Type type = obj.GetType();
-                Type elementType, dictionaryValueType;
 
-                // array
+                // I. Array
                 if (collectionDataType == DataTypes.Array)
                 {
-                    Array array = (Array)obj;
-
-                    // 1. Dimensions
-                    for (int i = 0; i < array.Rank; i++)
-                    {
-                        if (i != 0 || !type.IsZeroBasedArray())
-                            Write7BitInt(bw, array.GetLowerBound(i));
-                        Write7BitInt(bw, array.GetLength(i));
-                    }
-
-                    // 2. Write elements
-                    elementType = type.GetElementType()!;
-
-                    // 2.a.) Primitive array
-                    if (elementType.IsPrimitive)
-                    {
-                        if (array is not byte[] rawData)
-                        {
-                            rawData = new byte[Buffer.ByteLength(array)];
-                            Buffer.BlockCopy(array, 0, rawData, 0, rawData.Length);
-                        }
-
-                        bw.Write(rawData);
-                        return;
-                    }
-
-                    // 2.b.) Complex array
-                    if (elementType.IsPointer)
-                        Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
-                    collectionDataTypes.MoveNextExtracted();
-                    WriteCollectionElements(bw, array, collectionDataTypes, elementType);
+                    WriteArray(bw, (Array)obj, collectionDataTypes);
                     return;
                 }
 
-                // other collections
+                // II. Array backed value types
                 CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
-                var enumerable = obj as IEnumerable;
-               
-                // as object[] for DictionaryEntry and KeyValuePair
-                IEnumerable collection = enumerable ?? new[] { obj };
-                
-                // 1. Write specific properties
+                if (serInfo.GetBackingArray is Func<object, Array?> getBackingArray)
+                {
+                    Debug.Assert(obj.GetType().IsValueType, "Array backed types are expected to be value types");
+                    Array? array = getBackingArray.Invoke(obj);
+                    bw.Write(array != null);
+                    if (array != null)
+                        WriteArray(bw, array, collectionDataTypes);
+                    serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
+                    return;
+                }
+
+                // III. Other collections
+                // 1. Obtaining the elements to write. Handles special cases such as DictionaryEntry, KeyValuePair, ArraySegment, etc.
+                IEnumerable collection = serInfo.GetCollectionToSerialize(obj);
+
+                // 2. Write specific properties
                 serInfo.WriteSpecificProperties(bw, collection, this);
 
-                // 2. Stack: reversing elements
+                Type type = obj.GetType();
+                Type elementType, dictionaryValueType;
+
+                // cannot be in GetCollectionToSerialize because the reverse iterator has no Count
                 if (serInfo.ReverseElements)
                     collection = collection.Cast<object>().Reverse();
 
@@ -1208,6 +1190,42 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Throw.InternalError("A supported collection expected here but other type found: " + collection.GetType());
+            }
+
+            private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes)
+            {
+                var type = array.GetType();
+
+                // 1. Dimensions
+                for (int i = 0; i < array.Rank; i++)
+                {
+                    if (i != 0 || !type.IsZeroBasedArray())
+                        Write7BitInt(bw, array.GetLowerBound(i));
+                    Write7BitInt(bw, array.GetLength(i));
+                }
+
+                // 2. Write elements
+                Type elementType = type.GetElementType()!;
+
+                // 2.a.) Primitive array
+                if (elementType.IsPrimitive)
+                {
+                    if (array is not byte[] rawData)
+                    {
+                        // TODO: potentially big allocation. Use chunks.
+                        rawData = new byte[Buffer.ByteLength(array)];
+                        Buffer.BlockCopy(array, 0, rawData, 0, rawData.Length);
+                    }
+
+                    bw.Write(rawData);
+                    return;
+                }
+
+                // 2.b.) Complex array
+                if (elementType.IsPointer)
+                    Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
+                collectionDataTypes.MoveNextExtracted();
+                WriteCollectionElements(bw, array, collectionDataTypes, elementType);
             }
 
             [SecurityCritical]

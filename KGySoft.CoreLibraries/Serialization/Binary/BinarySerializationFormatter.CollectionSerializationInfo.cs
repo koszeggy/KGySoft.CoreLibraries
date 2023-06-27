@@ -88,17 +88,29 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal string? SpecificAddMethod { get; set; }
 
+            /// <summary>
+            /// Should be specified if the collection is a value type and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment)
+            /// </summary>
+            internal Func<object, Array?>? GetBackingArray { get; set; }
+
+            /// <summary>
+            /// Should be specified for any custom data for array backed collections.
+            /// If specified, <see cref="CtorArguments"/> should be null and <see cref="CreateInstanceFromArray"/> should also be specified.
+            /// </summary>
+            internal Action<BinaryWriter, object>? WriteSpecificParametersForBackingArray { get; set; }
+            internal Func<BinaryReader, Array, object>? CreateInstanceFromArray { get; set; }
+
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
 #endif
             internal bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;
-            internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
             internal bool IsNonGenericCollection => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
             internal bool IsNonGenericDictionary => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
             internal bool IsGenericCollection => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
             internal bool IsGenericDictionary => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
             internal bool IsDictionary => (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
             internal bool IsSingleElement => (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement;
+            internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
 
             #endregion
 
@@ -125,6 +137,13 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Internal Methods
+
+            internal IEnumerable GetCollectionToSerialize(object obj)
+            {
+                if (IsSingleElement)
+                    return new[] { obj };
+                return (IEnumerable)obj;
+            } 
 
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
@@ -174,6 +193,10 @@ namespace KGySoft.Serialization.Binary
                     if (!isDefaultComparer)
                         manager.WriteNonRoot(bw, comparer!);
                 }
+
+                // TODO: delete
+                //// 6.) Any specific constructor parameters
+                //SpecificCtorParametersWriter?.Invoke(bw, collection);
             }
 
             /// <summary>

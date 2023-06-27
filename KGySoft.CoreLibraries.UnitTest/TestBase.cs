@@ -126,6 +126,16 @@ namespace KGySoft.CoreLibraries
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
         /// If the root objects can be simple objects use the <see cref="AssertDeepEquals"/> instead.
         /// </summary>
+        protected static void AssertMembersEqual(object reference, object check)
+        {
+            var errors = new List<string>();
+            AssertResult(CheckMembersEqual(reference, check, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
+        }
+
+        /// <summary>
+        /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
+        /// If the root objects can be simple objects use the <see cref="AssertDeepEquals"/> instead.
+        /// </summary>
         protected static void AssertMembersAndItemsEqual(object reference, object check)
         {
             var errors = new List<string>();
@@ -354,6 +364,9 @@ namespace KGySoft.CoreLibraries
                     return result;
                 }
 
+                if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)))
+                    // ignoring items and checking members only because of the backing array that can be larger than the segment
+                    return CheckMembersEqual(reference, check, errors, checkedObjects);
 
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
@@ -377,7 +390,9 @@ namespace KGySoft.CoreLibraries
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
                 if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
                     || !simpleEquals && !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
+                {
                     return CheckMembersAndItemsEqual(reference, check, errors, checkedObjects);
+                }
 
                 // Equals as fallback
                 return Check(Equals(reference, check), $"Equality check failed at type {typeRef.GetName(TypeNameKind.ShortName)}: {reference} <-> {check}", errors);
@@ -442,7 +457,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        private static bool CheckMembersAndItemsEqual(object reference, object check, List<string> errors, HashSet<object> checkedObjects)
+        private static bool CheckMembersEqual(object reference, object check, List<string> errors, HashSet<object> checkedObjects)
         {
             if (reference == null && check == null)
                 return true;
@@ -464,6 +479,14 @@ namespace KGySoft.CoreLibraries
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
                 result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
+
+            return result;
+        }
+
+        private static bool CheckMembersAndItemsEqual(object reference, object check, List<string> errors, HashSet<object> checkedObjects)
+        {
+            // members
+            bool result = CheckMembersEqual(reference, check, errors, checkedObjects);
 
             // collection elements
             if (reference is IEnumerable collSrc && check is IEnumerable collTarget && !(reference is string || check is string))
