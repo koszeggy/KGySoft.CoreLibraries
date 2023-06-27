@@ -372,6 +372,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(DictionaryEntry?),
                 typeof(KeyValuePair<int, string>?),
                 typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
+                typeof(ArraySegment<int>?[]),
+                typeof(ArraySegment<int?>?[]),
 
                 // Generic Type Definitions
                 typeof(List<>), // List`1, supported generic type definition
@@ -743,6 +745,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?, int?>(1, 2), new KeyValuePair<int?, int?>(2, null), null }, // 28
                 new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>?[] { new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>(new KeyValuePair<int?, string>(1, "alpha"), new KeyValuePair<int?, string>(2, "beta")),  }, // 28
 
+                new ArraySegment<int>?[] { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
+                new ArraySegment<int?>?[] { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
+
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
 
@@ -828,7 +833,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2),
                 new ArraySegment<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
-
+                new ArraySegment<int>(),
+                new ArraySegment<Complex>(new[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), default }, 1, 2),
 #if !NET35
                 new SortedSet<int>(new[] { 1, 2, 3 }),
                 new SortedSet<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
@@ -1006,6 +1012,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, Queue<int>> { { 1, new Queue<int>(new[] { 1, 2 }) }, { 2, null } }, // Queue
                 new Dictionary<int, Stack<int>> { { 1, new Stack<int>(new[] { 1, 2 }) }, { 2, null } }, // Stack
                 new Dictionary<int, CircularList<int>> { { 1, new CircularList<int> { 1, 2 } }, { 2, null } }, // CircularList
+                new Dictionary<int, ArraySegment<int>> { { 1, new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new ArraySegment<int>() } }, // ArraySegment
+                new Dictionary<int, ArraySegment<int?>?> { { 1, new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new ArraySegment<int?>() }, { 3, null } }, // ArraySegment?
 #if !NET35
                 new Dictionary<int, SortedSet<int>> { { 1, new SortedSet<int> { 1, 2 } }, { 2, null } }, // SortedSet
 #endif
@@ -1082,6 +1090,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of byte arrays
                 new List<Array> { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } }, // list of any arrays
                 new List<Array[]> { null, new Array[] { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } } }, // list of array of any arrays
+                new List<ArraySegment<int>?> { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
+                new List<ArraySegment<int?>?> { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
 
                 // a single key-value pair with a dictionary somewhere in value
                 new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string> { { "alpha", "beta" } })),
@@ -1460,6 +1470,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
 
                 // lists with binary serializable elements
+                new List<ArraySegment<int>> { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>() },
+                new List<ArraySegment<int?>?> { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
                 new List<BinarySerializableStruct> { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, default(BinarySerializableStruct) },
                 new List<BinarySerializableStruct?> { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, default(BinarySerializableStruct?) },
                 new List<BinarySerializableClass> { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass(2, "beta"), null },

@@ -138,7 +138,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                         if ((value & simpleTypesLow) == extendedSimpleType)
                             value |= (uint)buffer[i++] << 16;
                         if ((value & collectionTypesLow) == extendedCollectionType)
-                            value |= buffer[i];
+                            value |= (uint)buffer[i] << 24;
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (uint)value)}]";
                     }
                     Console.WriteLine($"{count} bytes: {buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString()} ({valueStr}) - {GetStack()}");

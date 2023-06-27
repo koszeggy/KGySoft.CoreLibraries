@@ -1186,7 +1186,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // creating the actual result
-                result = serializationInfo[descriptor.CollectionDataType].CreateInstanceFromArray is Func<BinaryReader, Array, object> callback
+                result = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateInstanceFromArray is Func<BinaryReader, Array, object> callback
                     ? callback.Invoke(br, backingArray)
                     : CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!).CreateInstance(backingArray);
 

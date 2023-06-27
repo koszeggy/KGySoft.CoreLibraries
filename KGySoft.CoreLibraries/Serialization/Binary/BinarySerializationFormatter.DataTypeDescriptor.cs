@@ -65,17 +65,18 @@ namespace KGySoft.Serialization.Binary
             internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
             internal DataTypes CollectionDataType => GetCollectionDataType(dataType);
+            internal DataTypes UnderlyingCollectionDataType => GetUnderlyingCollectionDataType(dataType);
             internal bool IsCollection => IsCollectionType(dataType);
             internal bool IsArray => CollectionDataType == DataTypes.Array;
-            internal bool IsDictionary => isDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary;
+            internal bool IsDictionary => isDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[UnderlyingCollectionDataType].IsDictionary;
 #if NET35
             internal bool IsGenericDictionary => isGenericDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
             internal bool IsGenericCollection => isGenericCollection ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGeneric;
 #endif
             internal bool IsReadOnly { get; set; }
-            internal bool IsSingleElement => isSingleElement ??= serializationInfo[CollectionDataType].IsSingleElement;
+            internal bool IsSingleElement => isSingleElement ??= serializationInfo[UnderlyingCollectionDataType].IsSingleElement;
             internal bool IsNullable { get; private set; }
-            internal bool HasBackingArray => hasBackingArray ??= serializationInfo[CollectionDataType].GetBackingArray != null;
+            internal bool HasBackingArray => hasBackingArray ??= serializationInfo[UnderlyingCollectionDataType].GetBackingArray != null;
 
             /// <summary>
             /// Decoded type of self descriptor
@@ -178,102 +179,6 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Methods
-
-            #region Static Methods
-
-            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-            private static Type GetCollectionType(DataTypes collectionDataType)
-            {
-                switch (collectionDataType)
-                {
-                    case DataTypes.List:
-                        return Reflector.ListGenType;
-                    case DataTypes.LinkedList:
-                        return typeof(LinkedList<>);
-                    case DataTypes.HashSet:
-                        return typeof(HashSet<>);
-                    case DataTypes.Queue:
-                        return typeof(Queue<>);
-                    case DataTypes.Stack:
-                        return typeof(Stack<>);
-                    case DataTypes.CircularList:
-                        return typeof(CircularList<>);
-#if !NET35
-                    case DataTypes.SortedSet:
-                        return typeof(SortedSet<>);
-                    case DataTypes.ConcurrentBag:
-                        return typeof(ConcurrentBag<>);
-                    case DataTypes.ConcurrentQueue:
-                        return typeof(ConcurrentQueue<>);
-                    case DataTypes.ConcurrentStack:
-                        return typeof(ConcurrentStack<>);
-#endif
-
-                    case DataTypes.ArrayList:
-                        return typeof(ArrayList);
-                    case DataTypes.Hashtable:
-                        return typeof(Hashtable);
-                    case DataTypes.QueueNonGeneric:
-                        return typeof(Queue);
-                    case DataTypes.StackNonGeneric:
-                        return typeof(Stack);
-                    case DataTypes.StringCollection:
-                        return Reflector.StringCollectionType;
-
-                    case DataTypes.Dictionary:
-                        return Reflector.DictionaryGenType;
-                    case DataTypes.SortedList:
-                        return typeof(SortedList<,>);
-                    case DataTypes.SortedDictionary:
-                        return typeof(SortedDictionary<,>);
-                    case DataTypes.CircularSortedList:
-                        return typeof(CircularSortedList<,>);
-#if !NET35
-                    case DataTypes.ConcurrentDictionary:
-                        return typeof(ConcurrentDictionary<,>); 
-#endif
-
-                    case DataTypes.SortedListNonGeneric:
-                        return typeof(SortedList);
-                    case DataTypes.ListDictionary:
-                        return typeof(ListDictionary);
-                    case DataTypes.HybridDictionary:
-                        return typeof(HybridDictionary);
-                    case DataTypes.OrderedDictionary:
-                        return typeof(OrderedDictionary);
-                    case DataTypes.StringDictionary:
-                        return typeof(StringDictionary);
-
-                    case DataTypes.DictionaryEntry:
-                        return Reflector.DictionaryEntryType;
-                    case DataTypes.DictionaryEntryNullable:
-                        return typeof(DictionaryEntry?);
-                    case DataTypes.KeyValuePair:
-                        return Reflector.KeyValuePairType;
-                    case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
-
-                    case DataTypes.ArraySegment:
-                        return typeof(ArraySegment<>);
-
-#if NET35
-                    case DataTypes.ConcurrentDictionary:
-                    case DataTypes.SortedSet:
-                    case DataTypes.ConcurrentBag:
-                    case DataTypes.ConcurrentQueue:
-                    case DataTypes.ConcurrentStack:
-                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
-#endif
-
-                    default:
-                        // TODO: nullable, see GetElementType
-                        return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
-                }
-            }
-
-            #endregion
-
-            #region Instance Methods
 
             #region Public Methods
 
@@ -551,7 +456,102 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
-            #endregion
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
+            private Type GetCollectionType(DataTypes collectionDataType)
+            {
+                switch (collectionDataType)
+                {
+                    case DataTypes.List:
+                        return Reflector.ListGenType;
+                    case DataTypes.LinkedList:
+                        return typeof(LinkedList<>);
+                    case DataTypes.HashSet:
+                        return typeof(HashSet<>);
+                    case DataTypes.Queue:
+                        return typeof(Queue<>);
+                    case DataTypes.Stack:
+                        return typeof(Stack<>);
+                    case DataTypes.CircularList:
+                        return typeof(CircularList<>);
+#if !NET35
+                    case DataTypes.SortedSet:
+                        return typeof(SortedSet<>);
+                    case DataTypes.ConcurrentBag:
+                        return typeof(ConcurrentBag<>);
+                    case DataTypes.ConcurrentQueue:
+                        return typeof(ConcurrentQueue<>);
+                    case DataTypes.ConcurrentStack:
+                        return typeof(ConcurrentStack<>);
+#endif
+
+                    case DataTypes.ArrayList:
+                        return typeof(ArrayList);
+                    case DataTypes.Hashtable:
+                        return typeof(Hashtable);
+                    case DataTypes.QueueNonGeneric:
+                        return typeof(Queue);
+                    case DataTypes.StackNonGeneric:
+                        return typeof(Stack);
+                    case DataTypes.StringCollection:
+                        return Reflector.StringCollectionType;
+
+                    case DataTypes.Dictionary:
+                        return Reflector.DictionaryGenType;
+                    case DataTypes.SortedList:
+                        return typeof(SortedList<,>);
+                    case DataTypes.SortedDictionary:
+                        return typeof(SortedDictionary<,>);
+                    case DataTypes.CircularSortedList:
+                        return typeof(CircularSortedList<,>);
+#if !NET35
+                    case DataTypes.ConcurrentDictionary:
+                        return typeof(ConcurrentDictionary<,>);
+#endif
+
+                    case DataTypes.SortedListNonGeneric:
+                        return typeof(SortedList);
+                    case DataTypes.ListDictionary:
+                        return typeof(ListDictionary);
+                    case DataTypes.HybridDictionary:
+                        return typeof(HybridDictionary);
+                    case DataTypes.OrderedDictionary:
+                        return typeof(OrderedDictionary);
+                    case DataTypes.StringDictionary:
+                        return typeof(StringDictionary);
+
+                    case DataTypes.DictionaryEntry:
+                        return Reflector.DictionaryEntryType;
+                    case DataTypes.DictionaryEntryNullable:
+                        return typeof(DictionaryEntry?);
+                    case DataTypes.KeyValuePair:
+                        return Reflector.KeyValuePairType;
+                    case DataTypes.KeyValuePairNullable:
+                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
+
+                    case DataTypes.ArraySegment:
+                        return typeof(ArraySegment<>);
+
+#if NET35
+                    case DataTypes.ConcurrentDictionary:
+                    case DataTypes.SortedSet:
+                    case DataTypes.ConcurrentBag:
+                    case DataTypes.ConcurrentQueue:
+                    case DataTypes.ConcurrentStack:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+                    default:
+                        // nullable
+                        if (IsNullable(collectionDataType))
+                        {
+                            IsNullable = true;
+                            Type underlyingType = GetCollectionType(collectionDataType & ~DataTypes.NullableExtendedCollection);
+                            return Reflector.NullableType.GetGenericType(underlyingType);
+                        }
+
+                        return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
+                }
+            }
 
             #endregion
 

@@ -1010,6 +1010,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly LinkedList<T> valueLinkedList;
             private readonly HashSet<T> valueHashSet;
             private readonly OrderedDictionary valueOrderedDictionary;
+            private readonly ArraySegment<T> valueArraySegment;
 
             #endregion
 
@@ -1030,6 +1031,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 valueLinkedList = new LinkedList<T>(new[] { value });
                 valueHashSet = new HashSet<T> { value };
                 valueOrderedDictionary = new OrderedDictionary { { value, value } };
+                valueArraySegment = new ArraySegment<T>(new[] { value });
             }
 
             #endregion
@@ -1041,6 +1043,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 && Equals(Value, other.Value)
                 && Equals(valueArray[0], other.valueArray[0])
                 && Equals(valueList[0], other.valueList[0])
+                && Equals(valueArraySegment.Array![0], other.valueArraySegment.Array![0])
                 && Equals(keyValueUsageDictionary[Value], other.keyValueUsageDictionary[Value])
                 && Equals(keyUsageDictionary[Value], other.keyUsageDictionary[Value])
                 && Equals(valueUsageDictionary[Value.ToString()], other.valueUsageDictionary[Value.ToString()])

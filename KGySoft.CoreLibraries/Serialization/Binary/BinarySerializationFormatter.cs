@@ -248,6 +248,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="HashSet{T}"/></item>
     /// <item><see cref="Queue{T}"/></item>
     /// <item><see cref="Stack{T}"/></item>
+    /// <item><see cref="ArraySegment{T}"/></item>
     /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
@@ -1226,6 +1227,7 @@ namespace KGySoft.Serialization.Binary
         #region Static Methods
 
         private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypesAll;
+        private static DataTypes GetUnderlyingCollectionDataType(DataTypes dt) => dt & (DataTypes.CollectionTypesAll & ~DataTypes.NullableExtendedCollection);
         private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypesAll;
         private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypesAll;
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;

@@ -464,10 +464,25 @@ namespace KGySoft.Serialization.Binary
                         }
 
                         result = GetDataType(t.GetGenericArguments()[0]);
-                        if (IsElementType(result) && IsPureType(result))
+                        if (IsElementType(result))
                         {
                             result |= DataTypes.Nullable;
                             return true;
+                        }
+
+                        // result is now the result of the recursive call
+                        switch (result)
+                        {
+                            case DataTypes.DictionaryEntry:
+                                result = DataTypes.DictionaryEntryNullable;
+                                return true;
+                            case DataTypes.KeyValuePair:
+                                result = DataTypes.KeyValuePairNullable;
+                                return true;
+                            default:
+                                Debug.Assert((result & DataTypes.CollectionTypesExtended) != DataTypes.Null);
+                                result |= DataTypes.NullableExtendedCollection;
+                                return true;
                         }
                     }
 
@@ -497,24 +512,6 @@ namespace KGySoft.Serialization.Binary
                         if (isNullable)
                             result |= DataTypes.Nullable;
                         return true;
-                    }
-
-                    // Non-primitive nullable
-                    if (isNullable)
-                    {
-                        // result is now the result of the recursive call
-                        switch (result)
-                        {
-                            case DataTypes.DictionaryEntry:
-                                result = DataTypes.DictionaryEntryNullable;
-                                return true;
-                            case DataTypes.KeyValuePair:
-                                result = DataTypes.KeyValuePairNullable;
-                                return true;
-                            default:
-                                result |= DataTypes.Nullable;
-                                return true;
-                        }
                     }
 
                     // Natively supported non-primitive type
@@ -1127,8 +1124,11 @@ namespace KGySoft.Serialization.Binary
                     Array? array = getBackingArray.Invoke(obj);
                     bw.Write(array != null);
                     if (array != null)
+                    {
                         WriteArray(bw, array, collectionDataTypes);
-                    serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
+                        serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
+                    }
+
                     return;
                 }
 

@@ -318,6 +318,10 @@ namespace KGySoft.CoreLibraries
             checkedObjects.Add(reference);
             try
             {
+                if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)))
+                    // ignoring items and checking members only because of the backing array that can be larger than the segment
+                    return CheckMembersEqual(reference, check, errors, checkedObjects);
+
                 if (!(reference is string || reference is StringSegment) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
                         ? CheckMembersAndItemsEqual(enumerable, check, errors, checkedObjects)
@@ -363,10 +367,6 @@ namespace KGySoft.CoreLibraries
 
                     return result;
                 }
-
-                if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)))
-                    // ignoring items and checking members only because of the backing array that can be larger than the segment
-                    return CheckMembersEqual(reference, check, errors, checkedObjects);
 
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
@@ -423,8 +423,7 @@ namespace KGySoft.CoreLibraries
                 targetObjects = targetObjects.Convert<List<KeyValuePair<object, object>>>().OrderBy(i => i.Key.ToString()).ToList();
             }
 #endif
-
-
+            
             IEnumerator enumRef = referenceObjects.GetEnumerator();
             IEnumerator enumChk = targetObjects.GetEnumerator();
 
