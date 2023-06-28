@@ -9,6 +9,11 @@
 ! v8.0.0:
 ~~~~~~~~~
 
+- KGySoft.CoreLibraries namespace:
+==================================
+- ByteArrayExtensions class:
+  - ToDecimalValuesString method: Fixing result for empty string input.
+
 ! KGySoft.Resources namespace:
 ==============================
 ! ResXDataNode class:

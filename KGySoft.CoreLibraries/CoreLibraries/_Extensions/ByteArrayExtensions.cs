@@ -152,6 +152,9 @@ namespace KGySoft.CoreLibraries
             if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
                 Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidDec);
 
+            if (bytes.Length == 0)
+                return String.Empty;
+
             var buf = new ArraySection<char>(bytes.Length * (3 + separator.Length), false);
             try
             {
