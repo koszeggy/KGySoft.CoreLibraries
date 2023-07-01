@@ -235,7 +235,7 @@ namespace KGySoft.CoreLibraries
 
 #if NETCOREAPP3_0_OR_GREATER
                 return compareInfo.GetHashCode(obj.AsSpan, options);
-#elif NET472 || NETCOREAPP || NETSTANDARD
+#elif NET46_OR_GREATER || NETCOREAPP || NETSTANDARD
                 return compareInfo.GetHashCode(obj.ToString()!, options);
 #else
                 return stringComparer.GetHashCode(obj.ToString()!);

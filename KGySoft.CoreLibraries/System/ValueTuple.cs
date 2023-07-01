@@ -1,4 +1,4 @@
-﻿#if NET35 || NET40 || NET45
+﻿#if NETFRAMEWORK && !NET47_OR_GREATER
 // ReSharper disable NonReadonlyMemberInGetHashCode
 // ReSharper disable FieldCanBeMadeReadOnly.Global
 using System.Collections.Generic;

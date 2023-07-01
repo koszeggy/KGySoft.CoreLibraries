@@ -415,7 +415,7 @@ namespace KGySoft.Collections
         {
             if (buffer.IsNull)
                 return 0;
-#if NETFRAMEWORK && !NET472_OR_GREATER
+#if NETFRAMEWORK && !NET47_OR_GREATER
             return (buffer, (width, height, depth)).GetHashCode();
 #else
             return (buffer, width, height, depth).GetHashCode();
