@@ -35,6 +35,7 @@ namespace KGySoft.Serialization.Binary
             private readonly IList<DataTypes> dataTypes;
             private DataTypes current;
             private int index;
+            private Stack<(DataTypes, int)>? restorePoints;
 
             #endregion
 
@@ -92,6 +93,7 @@ namespace KGySoft.Serialization.Binary
                 return current != DataTypes.Null || MoveNext();
             }
 
+            [System.Obsolete]
             internal DataTypesEnumerator Clone() =>
                 new DataTypesEnumerator(dataTypes)
                 {
@@ -99,36 +101,50 @@ namespace KGySoft.Serialization.Binary
                     index = index
                 };
 
+
             internal void Reset()
             {
                 index = 0;
                 current = DataTypes.Null;
             }
 
-            internal void MoveToFirst()
+            internal void Save()
             {
-                Reset();
-                MoveNext();
+                restorePoints ??= new Stack<(DataTypes, int)>();
+                restorePoints.Push((current, index));
             }
 
-            internal IList<DataTypes> GetCurrentSegment()
+            internal void Restore()
             {
-                int end = index - 1;
+                if (restorePoints is { Count: > 0 } stack)
+                    (current, index) = stack.Pop();
+                else
+                    Throw.InvalidOperationException(Res.InternalError("Restore without Save"));
+            }
+
+            internal IList<DataTypes> ExtractCurrentSegment()
+            {
+                Save();
+                var result = ReadToNextSegment();
+                Restore();
+                return result.dataTypes; // TODO: just result
+            }
+
+            internal DataTypesEnumerator ReadToNextSegment()
+            {
+                Debug.Assert(current != DataTypes.Null || index < dataTypes.Count, "Enumeration is already finished");
+                var result = new List<DataTypes>(dataTypes.Count - index + 1);
                 int skip = 1;
                 do
                 {
-                    DataTypes dt = dataTypes[end];
-                    end += 1;
-                    if (IsDictionary(dt))
-                    {
-                        if (!IsElementType(dt))
-                            skip += 1;
-                    }
-                    else if (IsElementType(dt))
-                        skip -= 1;
-                } while (skip > 0);
+                    result.Add(current);
+                    skip += IsCollectionType(current)
+                        ? GetNumberOfElementTypes(current) - (GetElementDataType(current) == DataTypes.Null ? 1 : 2)
+                        : -1;
+                } while (MoveNext() && skip > 0);
 
-                return new ListSegment<DataTypes>(dataTypes, index - 1, end - index + 1);
+                Debug.Assert(skip == 0, "Failed to read current segment");
+                return new DataTypesEnumerator(result, true);
             }
 
             #endregion

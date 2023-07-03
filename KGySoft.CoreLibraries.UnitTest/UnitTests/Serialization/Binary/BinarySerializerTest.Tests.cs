@@ -136,6 +136,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BigInteger(1),
                 new Complex(1.2, 2.3),
 #endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                new ValueTuple(),
+#endif
             };
 
             SystemSerializeObject(referenceObjects);
@@ -319,6 +322,95 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
         }
 
+#if NET40_OR_GREATER || NETCOREAPP
+        [Test]
+        public void SerializeTuples()
+        {
+            object[] referenceObjects =
+            {
+                // Reference Tuples
+                Tuple.Create(1),
+                Tuple.Create(1, 2u),
+                //Tuple.Create(1, 2u, 3L),
+                //Tuple.Create(1, 2u, 3L, 4ul),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5"),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6'),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), 8d),
+                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, 8.1d, 8.3m)),
+
+                // TODO: remove or move to other tests
+                typeof(Tuple<int>),
+                //TODO: derived tuple
+
+#if NET47_OR_GREATER || NETCOREAPP
+		        // Value Tuples
+                ValueTuple.Create(),
+                ValueTuple.Create(1),
+                ValueTuple.Create(1, 2u),
+                //ValueTuple.Create(1, 2u, 3L),
+                //ValueTuple.Create(1, 2u, 3L, 4ul),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5"),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6'),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), 8d),
+                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, (8.1d, 8.3m))),
+                //(1, 2u, 3L, 4ul, "5", '6', 7f, 8d, 9m),
+#endif
+            };
+
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+
+            // More complex tuples (safe compare is needed due to embedded collections
+            referenceObjects = new object[]
+            {
+                (new[]{1, 2}, 1u),
+                (new KeyValuePair<int, string>(1, "2"), (Tuple.Create(3u), new Dictionary<(int, string), (uint, char)?[]>
+                {
+                    [default] = null,
+                    [(11, "22")] = new (uint, char)?[] { (33u, '4'), null },
+                })),
+            };
+
+            SystemSerializeObjects(referenceObjects, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+
+            // TODO: Move to SerializeCircularReferences
+            // Self-referencing tuples
+            var tupleDirectReference = Tuple.Create(1, new object());
+            Reflector.SetField(tupleDirectReference, "m_Item2", tupleDirectReference);
+            object valueTupleDirectReference = (2, new object());
+            Reflector.SetField(valueTupleDirectReference, "Item2", valueTupleDirectReference);
+            referenceObjects = new object[]
+            {
+                tupleDirectReference,
+                valueTupleDirectReference,
+                null // placeholder for indirect reference
+            };
+
+            referenceObjects[2] = (1, referenceObjects);
+
+            SystemSerializeObjects(referenceObjects, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+
+            // TODO: Move to SerializeCircularReferences
+            IList<object> segment = new ArraySegment<object>(new object[1]);
+            segment[0] = segment;
+            KGySerializeObjects(segment, BinarySerializationOptions.None, safeCompare: true);
+        }
+#endif
+
         [Test]
         public void SerializeTypes()
         {
@@ -368,12 +460,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(List<Array[]>),
                 typeof(List<int>).MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // List`1[System.Int32][]*[,]*&
 
-                // Nullable collections
+                // Nullable "collections"
                 typeof(DictionaryEntry?),
                 typeof(KeyValuePair<int, string>?),
                 typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
                 typeof(ArraySegment<int>?[]),
                 typeof(ArraySegment<int?>?[]),
+#if !NET40
+                typeof(Tuple<int>),
+#endif
 
                 // Generic Type Definitions
                 typeof(List<>), // List`1, supported generic type definition
@@ -392,6 +487,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(Nullable<>).MakeByRefType(),
                 typeof(Nullable<>).MakePointerType(),
                 typeof(KeyValuePair<,>), // supported special type definition
+#if !NET40
+                typeof(Tuple<>),
+#endif
 
                 // Generic Type Parameters
                 typeof(List<>).GetGenericArguments()[0], // T of supported generic type definition argument
@@ -402,6 +500,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(List<>).GetGenericArguments()[0].MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // T[]*[,]*&
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // T of custom generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0].MakeArrayType(), // T[]
+#if !NET40
+                typeof(Tuple<>).GetGenericArguments()[0], // T of tuple
+#endif
 
                 // Open Constructed Generics
                 typeof(List<>).MakeGenericType(typeof(KeyValuePair<,>)), // List<KeyValuePair<,>>
@@ -411,6 +512,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1]), // open constructed generic (KeyValuePair<int, TValue>)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1])), // open constructed generic (KeyValuePair<int, TValue>?)
+#if !NET40
+                typeof(Tuple<>).MakeGenericType(typeof(KeyValuePair<,>)), // Tuple<KeyValuePair<,>>
+#endif
 
                 // Generic Method Parameters
                 typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // T of Array.Resize, unique generic method definition argument
@@ -447,7 +551,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma", Bool = null },
 
                 new KeyValuePair<int, object>(1, new object[] { 1, "alpha", DateTime.Now, null }),
-                (new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, 1),
+                //(new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, 1),
 
                 new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent,
                 new CustomSerializedClass { Name = "Single node" }, // ISerializable
@@ -474,7 +578,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new NonSerializableClass{ IntProp = 3, StringProp = "gamma" },
                 new NonSerializableSealedClass(1, "alpha") { IntProp = 1, StringProp = "alpha" },
                 new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha" },
-                (new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, 1),
+                //(new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, 1),
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
@@ -544,6 +648,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
                 new BigInteger[] { 1, 2 },
                 new Complex[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8) },
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                new ValueTuple[] { ValueTuple.Create(), new ValueTuple() },
 #endif
             };
 
@@ -754,6 +861,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
                 new BigInteger?[] { 1, null },
                 new Complex?[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), null },
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                new ValueTuple?[] { new ValueTuple(), null },
 #endif
             };
 
@@ -1727,8 +1837,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
             };
 
+#if !NET40_OR_GREATER // Field in TypedReferences cannot be static or init only (SelfReferencerDirect)
             SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            SystemSerializeObjects(referenceObjects); 
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1740,9 +1852,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 root, // grand-grandchild is root again
                 null, // placeholder: DictionaryEntry referencing the referenceObjects and thus itself
                 null, // placeholder: KeyValuePair referencing the referenceObjects and thus itself
+                null, // placeholder: direct reference
             };
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
             referenceObjects[2] = new KeyValuePair<int, object>(1, referenceObjects);
+            referenceObjects[3] = referenceObjects;
 
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);

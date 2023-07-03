@@ -67,7 +67,7 @@ using KGySoft.Serialization.Xml;
  * - If may contain a pointer or may require unmanaged preallocated memory
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (eg. object, RuntimeType)
- * - If type is impure or may contain elements that make safe deserialization impossible (eg. tuples)
+ * - If type is impure (ambiguous without extra info) or may contain elements that make safe deserialization impossible
  * 1. Add type to DataTypes bits 0..5 (adjust free places in comments) or to bits 16..23 (Extended)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
@@ -103,6 +103,7 @@ using KGySoft.Serialization.Xml;
  * 3. Add type to supportedCollections
  * 4. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
  * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
+ *    - If collection has a known fixed size, then FixedItemsSize might be needed to adjusted, too.
  * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
  * 7. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
  *    then handle it in AddCollectionElement/AddDictionaryElement. Add new usage reference if needed.
@@ -466,6 +467,7 @@ namespace KGySoft.Serialization.Binary
             TimeOnly = 38, // Only in .NET 6 and above
             Int128 = 39, // Only in .NET 7 and above
             UInt128 = 40, // Only in .NET 7 and above
+            ValueTuple0 = 41, // Only in .NET Standard 2.0 and above - note: generic value tuples are on byte 3. as special collections
 
             // 41-47: 7 reserved values
             // TODO: Some candidates:
@@ -484,9 +486,7 @@ namespace KGySoft.Serialization.Binary
             Pointer = 50, // Followed by DataTypes. Cannot be combined.
             ByRef = 51, // Followed by DataTypes. Cannot be combined.
 
-            // 52-59: 8 reserved values
-            // TODO: Some candidates:
-            // Tuple, ValueTuple
+            // 54-59: 6 reserved values
 
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
@@ -517,6 +517,7 @@ namespace KGySoft.Serialization.Binary
             ConcurrentStack = 11 << 8, // Only in .NET Framework 4.0 and above
             // 12-15 << 8: 4 reserved generic collections
             // TODO Candidates:
+            // StrongBox
             // ThreadSafeHashSet
             
             // ...... non-generic collections:
@@ -524,7 +525,20 @@ namespace KGySoft.Serialization.Binary
             QueueNonGeneric = 17 << 8,
             StackNonGeneric = 18 << 8,
             StringCollection = 19 << 8,
-            // 20-30 << 8: 11 reserved non-generic collection
+            
+            // 20 << 8: reserved
+
+            // ...... tuples: - note: ValueTuples are on byte 3 because they can be nullable
+            Tuple1 = 21 << 8,
+            Tuple2 = 22 << 8,
+            Tuple3 = 23 << 8,
+            Tuple4 = 24 << 8,
+            Tuple5 = 25 << 8,
+            Tuple6 = 26 << 8,
+            Tuple7 = 27 << 8,
+            Tuple8 = 28 << 8,
+
+            // 29-30 << 2: reserved types
 
             ExtendedCollectionType = 31 << 8, // Indicates that byte 3. is also included
 
@@ -587,9 +601,20 @@ namespace KGySoft.Serialization.Binary
             CollectionTypesExtended = 0b11111111u << 24, // NOTE: covers also the NullableExtendedCollection flag
             CollectionTypesAll = CollectionTypesLow | CollectionTypesExtended,
 
-            // ..... generic collections: .....
+            // ..... value tuples: .....
+            ValueTuple1 = 1 << 24,
+            ValueTuple2 = 2 << 24,
+            ValueTuple3 = 3 << 24,
+            ValueTuple4 = 4 << 24,
+            ValueTuple5 = 5 << 24,
+            ValueTuple6 = 6 << 24,
+            ValueTuple7 = 7 << 24,
+            ValueTuple8 = 8 << 24,
+
+            // ..... further generic collections: .....
+            ArraySegment = 9 << 24,
+
             // TODO Candidates:
-            ArraySegment = 1 << 24,
             // ArraySection, Array2D, Array3D - must be here as they are value types so can be combined with NullableExtendedCollection
             // Vector, Vector64, Vector128, Vector256 - special cases: these are not IEnumerable (similarly to KVP) but can be encoded better as collections
             // ImmutableArray, ImmutableArrayBuilder,
@@ -681,6 +706,21 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that even default comparer cannot be null (only for ConcurrentDictionary in .NET Framework)
             /// </summary>
             NonNullDefaultComparer = 1 << 10,
+
+            /// <summary>
+            /// Indicates that backing array can be null (eg. ArraySegment)
+            /// </summary>
+            BackingArrayCanBeNull = 1 << 11,
+
+            /// <summary>
+            /// Indicates that backing array has a known size (eg. Vector*)
+            /// </summary>
+            BackingArrayHasKnownSize = 1 << 12,
+
+            /// <summary>
+            /// Indicates that the collection is a tuple
+            /// </summary>
+            IsTuple = 1 << 13,
         }
 
         /// <summary>
@@ -881,7 +921,7 @@ namespace KGySoft.Serialization.Binary
 #endif
             #endregion
 
-            #region Non-generic collections (DataTypes 16..31 << 8)
+            #region Non-generic or special collections (DataTypes 16..31 << 8)
 
             {
                 DataTypes.ArrayList, new CollectionSerializationInfo
@@ -907,6 +947,16 @@ namespace KGySoft.Serialization.Binary
                 }
             },
             { DataTypes.StringCollection, CollectionSerializationInfo.Default },
+#if !NET35
+            { DataTypes.Tuple1, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple2, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple3, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple4, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple5, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple6, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple7, CollectionSerializationInfo.Tuple },
+            { DataTypes.Tuple8, CollectionSerializationInfo.Tuple },
+#endif
 
             #endregion
 
@@ -1009,21 +1059,30 @@ namespace KGySoft.Serialization.Binary
 
             #region Extended collections (DataTypes 1..63 << 24)
 
+#if NET47_OR_GREATER || !NETFRAMEWORK
+            { DataTypes.ValueTuple1, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple2, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple3, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple4, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple5, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple6, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple7, CollectionSerializationInfo.Tuple },
+            { DataTypes.ValueTuple8, CollectionSerializationInfo.Tuple }, 
+#endif
             {
                 DataTypes.ArraySegment, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric,
-                    GetBackingArray = o => (Array)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array))!,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array)),
                     WriteSpecificParametersForBackingArray = (bw, o) =>
                     {
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Offset))!);
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Count))!);
                     },
-                    CreateInstanceFromArray = (br, a) =>
+                    CreateInstanceFromArray = (br, t, a) =>
                     {
-                        Type arrayType = a.GetType();
-                        Type[] args = { arrayType, Reflector.IntType, Reflector.IntType };
-                        ConstructorInfo ctor = typeof(ArraySegment<>).GetGenericType(arrayType.GetElementType()!).GetConstructor(args)!;
+                        Type[] args = { a.GetType(), Reflector.IntType, Reflector.IntType };
+                        ConstructorInfo ctor = t.GetConstructor(args)!;
                         return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br), Read7BitInt(br));
                     }
                 }
@@ -1082,6 +1141,9 @@ namespace KGySoft.Serialization.Binary
             { Reflector.BigIntegerType, DataTypes.BigInteger },
             { typeof(Complex), DataTypes.Complex },
 #endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+            { typeof(ValueTuple), DataTypes.ValueTuple0 },
+#endif
 #if NETCOREAPP3_0_OR_GREATER
             { Reflector.RuneType, DataTypes.Rune },
 #endif
@@ -1137,10 +1199,31 @@ namespace KGySoft.Serialization.Binary
             { typeof(OrderedDictionary), DataTypes.OrderedDictionary },
             { typeof(StringDictionary), DataTypes.StringDictionary },
 
+            { typeof(ArraySegment<>), DataTypes.ArraySegment },
+
+            // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of keys values
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
             { Reflector.DictionaryEntryType, DataTypes.DictionaryEntry },
-
-            { typeof(ArraySegment<>), DataTypes.ArraySegment },
+#if !NET35
+            { typeof(Tuple<>), DataTypes.Tuple1 },
+            { typeof(Tuple<,>), DataTypes.Tuple2 },
+            { typeof(Tuple<,,>), DataTypes.Tuple3 },
+            { typeof(Tuple<,,,>), DataTypes.Tuple4 },
+            { typeof(Tuple<,,,,>), DataTypes.Tuple5 },
+            { typeof(Tuple<,,,,,>), DataTypes.Tuple6 },
+            { typeof(Tuple<,,,,,,>), DataTypes.Tuple7 },
+            { typeof(Tuple<,,,,,,,>), DataTypes.Tuple8 },
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+            { typeof(ValueTuple<>), DataTypes.ValueTuple1 },
+            { typeof(ValueTuple<,>), DataTypes.ValueTuple2 },
+            { typeof(ValueTuple<,,>), DataTypes.ValueTuple3 },
+            { typeof(ValueTuple<,,,>), DataTypes.ValueTuple4 },
+            { typeof(ValueTuple<,,,,>), DataTypes.ValueTuple5 },
+            { typeof(ValueTuple<,,,,,>), DataTypes.ValueTuple6 },
+            { typeof(ValueTuple<,,,,,,>), DataTypes.ValueTuple7 },
+            { typeof(ValueTuple<,,,,,,,>), DataTypes.ValueTuple8 },
+#endif
         };
 
         #endregion
@@ -1245,6 +1328,25 @@ namespace KGySoft.Serialization.Binary
         private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) == DataTypes.ImpureType;
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
+        private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+
+        private static int GetNumberOfTupleElements(DataTypes dt) => GetUnderlyingCollectionDataType(dt) switch
+        {
+            DataTypes.Tuple1 or DataTypes.ValueTuple1 => 1,
+            DataTypes.Tuple2 or DataTypes.ValueTuple2 => 2,
+            DataTypes.Tuple3 or DataTypes.ValueTuple3 => 3,
+            DataTypes.Tuple4 or DataTypes.ValueTuple4 => 4,
+            DataTypes.Tuple5 or DataTypes.ValueTuple5 => 5,
+            DataTypes.Tuple6 or DataTypes.ValueTuple6 => 6,
+            DataTypes.Tuple7 or DataTypes.ValueTuple7 => 7,
+            DataTypes.Tuple8 or DataTypes.ValueTuple8 => 8,
+            _ => 0,
+        };
+
+        private static int GetNumberOfElementTypes(DataTypes dt) => IsDictionary(dt) ? 2
+            : IsTuple(dt) ? GetNumberOfTupleElements(dt)
+            : IsCollectionType(dt) ? 1
+            : 0;
 
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
@@ -1396,6 +1498,25 @@ namespace KGySoft.Serialization.Binary
 
             return result;
         }
+
+#if !NET35
+        private static Array TupleToArray(object tuple)
+        {
+            FieldInfo[] fields = SerializationHelper.GetSerializableFields(tuple.GetType());
+            var result = new object?[fields.Length];
+            for (int i = 0; i < fields.Length; i++)
+                result[i] = fields[i].Get(tuple);
+            return result;
+        }
+
+        private static object ArrayToTuple(BinaryReader _, Type type, Array array)
+        {
+            if (array is not object?[] elements)
+                return Throw.InvalidOperationException<object>(Res.InternalError($"object[] expected but {array.GetType().GetName(TypeNameKind.ShortName)} was passed"));
+            ConstructorInfo ctor = type.GetConstructor(type.GetGenericArguments())!;
+            return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(elements);
+        }
+#endif
 
         /// <summary>
         /// Converts a <see cref="DataTypes"/> enumeration into the corresponding string representation.

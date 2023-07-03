@@ -525,7 +525,7 @@ namespace KGySoft.Serialization.Binary
                         return true;
                     }
 
-                    // supported collection
+                    // supported collection (including some some special types such as KeyValuePair or tuples)
                     Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
                         : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType!
                         : t;
@@ -772,6 +772,9 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.Void:
                     case DataTypes.DBNull:
                     case DataTypes.Object:
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                    case DataTypes.ValueTuple0:
+#endif
                         return;
 
 #if !NET35
@@ -877,7 +880,7 @@ namespace KGySoft.Serialization.Binary
 
                 // stepping to the fist element again and writing collection
                 enumerator.Reset();
-                enumerator.MoveToFirst();
+                enumerator.MoveNext();
                 WriteCollection(bw, enumerator, data);
             }
 
@@ -887,20 +890,18 @@ namespace KGySoft.Serialization.Binary
                 Type? type = null;
                 DataTypes knownElementDataType = (knownElementType.DataTypes?.CurrentSeparated).GetValueOrDefault();
                 bool canUseKnown = dataType == knownElementDataType
-                    || dataType == DataTypes.DictionaryEntry && knownElementDataType == DataTypes.DictionaryEntryNullable
-                    || dataType == DataTypes.KeyValuePair && knownElementDataType == DataTypes.KeyValuePairNullable;
+                    || IsNullable(knownElementDataType) && dataType == GetUnderlyingCollectionDataType(knownElementDataType);
 
                 // omitting type if collection is a struct element of a parent collection
                 IList<DataTypes>? collectionType = null;
                 if (knownElementType.Type?.IsSealed != true)
                 {
-                    collectionType = (canUseKnown ? knownElementType.DataTypes?.GetCurrentSegment() : null)
+                    collectionType = (canUseKnown ? knownElementType.DataTypes?.ExtractCurrentSegment() : null)
                         ?? EncodeDataType(type = data.GetType(), dataType);
                     WriteType(bw, type ?? data.GetType(), collectionType);
                 }
 
-                // Reusing enumerator of parent collection type if possible by creating a lightweight clone at the current position.
-                DataTypesEnumerator collectionDataTypes = (canUseKnown ? knownElementType.DataTypes?.Clone() : null)
+                DataTypesEnumerator collectionDataTypes = (canUseKnown ? knownElementType.DataTypes : null)
                     ?? new DataTypesEnumerator(collectionType ?? EncodeDataType(data.GetType(), dataType), true);
 
                 WriteCollection(bw, collectionDataTypes, data);
@@ -1059,46 +1060,52 @@ namespace KGySoft.Serialization.Binary
                 Type elementType = args[0];
                 DataTypes elementDataType = GetDataType(elementType);
 
-                // generics with 1 argument
-                if (args.Length == 1)
+                switch (args.Length)
                 {
-                    if (IsElementType(elementDataType))
-                        return new CircularList<DataTypes> { collectionType | elementDataType };
+                    // generics with 1 argument
+                    case 1:
+                        if (IsElementType(elementDataType))
+                            return new CircularList<DataTypes> { collectionType | elementDataType };
 
-                    Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
-                    CircularList<DataTypes> innerType = EncodeDataType(elementType, elementDataType);
-                    innerType.AddFirst(collectionType);
-                    return innerType;
+                        Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
+                        CircularList<DataTypes> innerType = EncodeDataType(elementType, elementDataType);
+                        innerType.AddFirst(collectionType);
+                        return innerType;
+
+                    // dictionaries, KeyValuePair, 2-tuples
+                    case 2:
+                        Type valueType = args[1];
+                        DataTypes valueDataType = GetDataType(valueType);
+
+                        CircularList<DataTypes> keyTypes;
+                        CircularList<DataTypes> valueTypes;
+
+                        // key
+                        if (IsElementType(elementDataType))
+                            keyTypes = new CircularList<DataTypes> { collectionType | elementDataType };
+                        else
+                        {
+                            Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
+                            keyTypes = EncodeDataType(elementType, elementDataType);
+                            keyTypes.AddFirst(collectionType);
+                        }
+
+                        // value
+                        if (IsElementType(valueDataType))
+                            valueTypes = new CircularList<DataTypes> { valueDataType };
+                        else
+                        {
+                            Debug.Assert(IsCollectionType(valueDataType), $"Not a collection data type: {valueDataType}");
+                            valueTypes = EncodeDataType(valueType, valueDataType);
+                        }
+
+                        keyTypes.AddRange(valueTypes);
+                        return keyTypes;
+
+                    // n-tuples
+                    default:
+                        throw new NotImplementedException("EncodeGenericCollection for n-tuples");
                 }
-
-                // dictionaries
-                Type valueType = args[1];
-                DataTypes valueDataType = GetDataType(valueType);
-
-                CircularList<DataTypes> keyTypes;
-                CircularList<DataTypes> valueTypes;
-
-                // key
-                if (IsElementType(elementDataType))
-                    keyTypes = new CircularList<DataTypes> { collectionType | elementDataType };
-                else
-                {
-                    Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
-                    keyTypes = EncodeDataType(elementType, elementDataType);
-                    keyTypes.AddFirst(collectionType);
-                }
-
-                // value
-                if (IsElementType(valueDataType))
-                    valueTypes = new CircularList<DataTypes> { valueDataType };
-                else
-                {
-                    Debug.Assert(IsCollectionType(valueDataType), $"Not a collection data type: {valueDataType}");
-                    valueTypes = EncodeDataType(valueType, valueDataType);
-                }
-
-                keyTypes.AddRange(valueTypes);
-                return keyTypes;
             }
 
             [SecurityCritical]
@@ -1107,27 +1114,32 @@ namespace KGySoft.Serialization.Binary
                 Debug.Assert(collectionDataTypes.Current != DataTypes.Null, "Type description is invalid");
 
                 DataTypes dataType = collectionDataTypes.Current;
-                DataTypes collectionDataType = GetCollectionDataType(dataType);
+                DataTypes collectionDataType = GetUnderlyingCollectionDataType(dataType);
 
                 // I. Array
                 if (collectionDataType == DataTypes.Array)
                 {
-                    WriteArray(bw, (Array)obj, collectionDataTypes);
+                    WriteArray(bw, (Array)obj, collectionDataTypes, true);
                     return;
                 }
 
-                // II. Array backed value types
                 CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
+                Type type = obj.GetType();
+
+                // II. Array backed types
                 if (serInfo.GetBackingArray is Func<object, Array?> getBackingArray)
                 {
-                    Debug.Assert(obj.GetType().IsValueType, "Array backed types are expected to be value types");
                     Array? array = getBackingArray.Invoke(obj);
-                    bw.Write(array != null);
-                    if (array != null)
-                    {
-                        WriteArray(bw, array, collectionDataTypes);
-                        serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
-                    }
+                    if (serInfo.HasNullableBackingArray)
+                        bw.Write(array != null);
+                    if (array == null)
+                        return;
+
+                    if (serInfo.IsTuple)
+                        WriteTuple(bw, (object?[])array, type.GetGenericArguments(), collectionDataTypes);
+                    else
+                        WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
+                    serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
 
                     return;
                 }
@@ -1139,7 +1151,6 @@ namespace KGySoft.Serialization.Binary
                 // 2. Write specific properties
                 serInfo.WriteSpecificProperties(bw, collection, this);
 
-                Type type = obj.GetType();
                 Type elementType, dictionaryValueType;
 
                 // cannot be in GetCollectionToSerialize because the reverse iterator has no Count
@@ -1192,16 +1203,20 @@ namespace KGySoft.Serialization.Binary
                 Throw.InternalError("A supported collection expected here but other type found: " + collection.GetType());
             }
 
-            private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes)
+            [SecurityCritical]
+            private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes, bool writeSize)
             {
                 var type = array.GetType();
 
                 // 1. Dimensions
-                for (int i = 0; i < array.Rank; i++)
+                if (writeSize)
                 {
-                    if (i != 0 || !type.IsZeroBasedArray())
-                        Write7BitInt(bw, array.GetLowerBound(i));
-                    Write7BitInt(bw, array.GetLength(i));
+                    for (int i = 0; i < array.Rank; i++)
+                    {
+                        if (i != 0 || !type.IsZeroBasedArray())
+                            Write7BitInt(bw, array.GetLowerBound(i));
+                        Write7BitInt(bw, array.GetLength(i));
+                    }
                 }
 
                 // 2. Write elements
@@ -1226,6 +1241,14 @@ namespace KGySoft.Serialization.Binary
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                 collectionDataTypes.MoveNextExtracted();
                 WriteCollectionElements(bw, array, collectionDataTypes, elementType);
+            }
+
+            [SecurityCritical]
+            private void WriteTuple(BinaryWriter bw, object?[] items, Type[] itemTypes, DataTypesEnumerator itemDataTypes)
+            {
+                itemDataTypes.MoveNextExtracted();
+                for (int i = 0; i < items.Length; i++)
+                    WriteElement(bw, items[i], itemDataTypes.ReadToNextSegment(), itemTypes[i]);
             }
 
             [SecurityCritical]
@@ -1261,56 +1284,64 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void WriteElement(BinaryWriter bw, object? element, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
-                DataTypes collectionDataType = GetCollectionDataType(elementCollectionDataTypes.Current);
-
-                // Nested collection: recursion
-                if (collectionDataType != DataTypes.Null)
+                elementCollectionDataTypes.Save();
+                try
                 {
-                    // Nullable collections: writing if instance is null. Not as an id because nullables should not get an id.
-                    if (IsNullable(collectionDataType))
+                    DataTypes collectionDataType = GetCollectionDataType(elementCollectionDataTypes.Current);
+
+                    // Nested collection: recursion
+                    if (collectionDataType != DataTypes.Null)
                     {
+                        // Nullable collections: writing if instance is null. Not as an id because nullables should not get an id.
+                        if (IsNullable(collectionDataType))
+                        {
+                            bw.Write(element != null);
+                            if (element == null)
+                                return;
+                        }
+
+                        // full recursion because actual element can have a derived type
+                        WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
+                        return;
+                    }
+
+                    DataTypes elementDataType = GetElementDataType(elementCollectionDataTypes.Current);
+
+                    // Nullables: writing an IsNotNull value
+                    if (IsNullable(elementDataType))
+                    {
+                        // Here writing a boolean value instead of id; otherwise, nullables would get an id while non-nullables would not.
                         bw.Write(element != null);
                         if (element == null)
                             return;
                     }
 
-                    // full recursion because actual element can have a derived type
-                    WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
-                    return;
-                }
+                    elementDataType = GetUnderlyingSimpleType(elementDataType);
 
-                DataTypes elementDataType = GetElementDataType(elementCollectionDataTypes.Current);
-
-                // Nullables: writing an IsNotNull value
-                if (IsNullable(elementDataType))
-                {
-                    // Here writing a boolean value instead of id; otherwise, nullables would get an id while non-nullables would not.
-                    bw.Write(element != null);
-                    if (element == null)
+                    // As an element type, object means any type so treating along with impure types
+                    if (elementDataType == DataTypes.Object || IsImpureTypeButEnum(elementDataType))
+                    {
+                        WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
                         return;
+                    }
+
+                    // Pure simple types
+                    Debug.Assert(IsPureType(elementDataType), $"Pure types are expected here but {DataTypeToString(elementDataType)} found");
+
+                    // Writing Id for reference types. Nullables were already checked above.
+                    if (element == null || !element.GetType().IsValueType)
+                    {
+                        if (WriteId(bw, element))
+                            return;
+                        Debug.Assert(element != null, "When element is null, WriteId should return true");
+                    }
+
+                    WritePureObject(bw, element!, elementDataType);
                 }
-
-                elementDataType = GetUnderlyingSimpleType(elementDataType);
-
-                // As an element type, object means any type so treating along with impure types
-                if (elementDataType == DataTypes.Object || IsImpureTypeButEnum(elementDataType))
+                finally
                 {
-                    WriteNonRoot(bw, element, (elementCollectionDataTypes, collectionElementType));
-                    return;
+                    elementCollectionDataTypes.Restore();
                 }
-
-                // Pure simple types
-                Debug.Assert(IsPureType(elementDataType), $"Pure types are expected here but {DataTypeToString(elementDataType)} found");
-                
-                // Writing Id for reference types. Nullables were already checked above.
-                if (element == null || !element.GetType().IsValueType)
-                {
-                    if (WriteId(bw, element))
-                        return;
-                    Debug.Assert(element != null, "When element is null, WriteId should return true");
-                }
-
-                WritePureObject(bw, element!, elementDataType);
             }
 
             [SecurityCritical]

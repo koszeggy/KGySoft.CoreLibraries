@@ -436,7 +436,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Properties
                 
-                internal object ArrayProxy => (Array ?? builder)!;
+                internal IList ArrayProxy => (Array ?? builder)!;
 
                 #endregion
 
@@ -453,41 +453,49 @@ namespace KGySoft.Serialization.Binary
                     lengths = new int[rank];
                     lowerBounds = new int[rank];
                     TotalLength = 1;
-                    for (int i = 0; i < rank; i++)
+                    int fixLength = descriptor.FixedItemsSize;
+                    if (fixLength > 0)
+                        lengths[0] = TotalLength = fixLength;
+                    else
                     {
-                        if (descriptor.Rank != 0)
-                            lowerBounds[i] = Read7BitInt(br);
-                        int len = Read7BitInt(br);
-                        lengths[i] = len;
-                        TotalLength = safeMode
-                            ? checked(TotalLength * len)
-                            : unchecked(TotalLength * len);
+                        for (int i = 0; i < rank; i++)
+                        {
+                            if (descriptor.Rank != 0)
+                                lowerBounds[i] = Read7BitInt(br);
+                            int len = Read7BitInt(br);
+                            lengths[i] = len;
+                            TotalLength = safeMode
+                                ? checked(TotalLength * len)
+                                : unchecked(TotalLength * len);
+                        }
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.ElementDescriptor!.Type!;
+                    Type elementType = descriptor.IsTuple ? Reflector.ObjectType : descriptor.ElementDescriptor!.Type!;
 
-                    int elementSize;
-                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
-                    {
-                        Array = Array.CreateInstance(elementType, lengths, lowerBounds);
-                        if (rank > 1)
-                            arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
-                        return;
-                    }
+                    // TODO: restore
+                    //int elementSize;
+                    //if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
+                    //{
+                    //    Array = Array.CreateInstance(elementType, lengths, lowerBounds);
+                    //    if (rank > 1)
+                    //        arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                    //    return;
+                    //}
 
-                    // otherwise, allocating just a List with limited initial capacity
-                    int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
-                    if (elementType.IsPrimitive)
-                    {
-                        // for primitive types we can use a strictly typed list
-                        ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
-                        builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
-                        return;
-                    }
+                    //// otherwise, allocating just a List with limited initial capacity
+                    //int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
+                    //if (elementType.IsPrimitive)
+                    //{
+                    //    // for primitive types we can use a strictly typed list
+                    //    ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
+                    //    builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                    //    return;
+                    //}
 
-                    // for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
-                    builder = new List<object>(capacity);
+                    //// for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
+                    //builder = new List<object>(capacity);
+                    builder = new List<object>();
                 }
 
                 #endregion
@@ -498,7 +506,7 @@ namespace KGySoft.Serialization.Binary
                 
                 internal bool TryReadPrimitive()
                 {
-                    if (Array == null || !descriptor.ElementDescriptor!.Type!.IsPrimitive)
+                    if (Array == null || descriptor.IsTuple || !descriptor.ElementDescriptor!.Type!.IsPrimitive)
                         return false;
                     int length = Buffer.ByteLength(Array);
                     Buffer.BlockCopy(reader.ReadBytes(length), 0, Array, 0, length);
@@ -511,7 +519,7 @@ namespace KGySoft.Serialization.Binary
                         return Array;
 
                     Debug.Assert(builder!.Count == TotalLength);
-                    Array = Array.CreateInstance(descriptor.ElementDescriptor!.Type!, lengths, lowerBounds);
+                    Array = Array.CreateInstance(descriptor.IsTuple ? Reflector.ObjectType : descriptor.ElementDescriptor!.Type!, lengths, lowerBounds);
 
                     // 1D array
                     if (lengths.Length == 1)
@@ -832,7 +840,7 @@ namespace KGySoft.Serialization.Binary
 
                 // 3/b.) array-backed collection
                 if (descriptor.HasBackingArray)
-                    return CreateArrayBackingCollection(br, addToCache, descriptor);
+                    return CreateArrayBackedCollection(br, addToCache, descriptor);
 
                 // 3/c.) non-array collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
@@ -1057,7 +1065,7 @@ namespace KGySoft.Serialization.Binary
 
                 // 3/b.) array-backed collection
                 if (descriptor.HasBackingArray)
-                    return CreateArrayBackingCollection(br, addToCache, descriptor);
+                    return CreateArrayBackedCollection(br, addToCache, descriptor);
 
                 // 3/c.) non-array collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
@@ -1140,14 +1148,15 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object CreateArrayBackingCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private object CreateArrayBackedCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Type type = descriptor.GetTypeToCreate();
-                Debug.Assert(type.IsValueType);
                 object result;
 
+                // TODO bool trackUsages = descriptor.CanHaveRecursion;
+
                 // special case: backing array is null so creating a default instance
-                if (!br.ReadBoolean())
+                if (descriptor.HasNullableBackingArray && !br.ReadBoolean())
                 {
                     result = Activator.CreateInstance(type);
                     if (addToCache)
@@ -1155,9 +1164,8 @@ namespace KGySoft.Serialization.Binary
                     return result;
                 }
 
-                // using a builder to prevent possible OutOfMemoryException attacks in SafeMode
                 var builder = new ArrayBuilder(br, descriptor, SafeMode);
-                object resultProxy = builder.ArrayProxy;
+                IList resultProxy = builder.ArrayProxy;
 
                 // the references of the result must be tracked because it will be replaced in the end
                 var usages = new UsageReferences();
@@ -1176,9 +1184,10 @@ namespace KGySoft.Serialization.Binary
                 else
                 {
                     // non-primitive array or cannot read at once in safe mode
+                    bool isTuple = descriptor.IsTuple;
                     for (int i = 0; i < builder.TotalLength; i++)
                     {
-                        object? value = ReadElement(br, descriptor.ElementDescriptor!);
+                        object? value = ReadElement(br, isTuple ? descriptor.ItemDescriptors![i] : descriptor.ElementDescriptor!);
                         builder.Add(value);
                     }
 
@@ -1186,12 +1195,27 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // creating the actual result
-                result = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateInstanceFromArray is Func<BinaryReader, Array, object> callback
-                    ? callback.Invoke(br, backingArray)
-                    : CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!).CreateInstance(backingArray);
+                Func<BinaryReader, Type, Array, object>? callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateInstanceFromArray;
+                CreateInstanceAccessor? accessor = callback == null ? CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!) : null;
+                result = callback?.Invoke(br, type, backingArray) ?? accessor!.CreateInstance(backingArray);
 
                 // actualizing references to the actual result if needed
-                ApplyPendingUsages(usages, resultProxy, result);
+                if (usages.Count > 0)
+                {
+                    ApplyPendingUsages(usages, resultProxy, result);
+
+                    // The pending usage application above sets possible direct references in the backingArray instead of the result, which has to be fixed.
+                    // Only tuples are affected because other array backed known collections may contain themselves only indirectly (eg. ArraySegment in its array field, etc.)
+                    if (descriptor.IsTuple && !ReferenceEquals(resultProxy, backingArray))
+                    {
+                        FieldInfo[]? tupleFields = null;
+                        for (int i = 0; i < resultProxy.Count; i++)
+                        {
+                            if (ReferenceEquals(resultProxy[i], resultProxy))
+                                (tupleFields ??= SerializationHelper.GetSerializableFields(result.GetType()))[i].Set(result, result); //backingArray.SetValue(result, i);
+                        }
+                    }
+                }
 
                 if (addToCache)
                     ReplaceObjectInCache(id, result);
@@ -1419,6 +1443,13 @@ namespace KGySoft.Serialization.Binary
 #else
                         case DataTypes.BigInteger:
                         case DataTypes.Complex:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
+
+                        case DataTypes.ValueTuple0:
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                            return createdResult = new ValueTuple();
+#else
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 

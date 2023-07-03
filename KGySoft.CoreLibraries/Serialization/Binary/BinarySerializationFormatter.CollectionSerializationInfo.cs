@@ -55,6 +55,13 @@ namespace KGySoft.Serialization.Binary
 
             internal static readonly CollectionSerializationInfo Default = new CollectionSerializationInfo();
 
+            internal static readonly CollectionSerializationInfo Tuple = new CollectionSerializationInfo
+            {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple | CollectionInfo.BackingArrayHasKnownSize,
+                GetBackingArray = TupleToArray,
+                CreateInstanceFromArray = ArrayToTuple,
+            };
+
             #endregion
 
             #region Instance Fields
@@ -98,7 +105,7 @@ namespace KGySoft.Serialization.Binary
             /// If specified, <see cref="CtorArguments"/> should be null and <see cref="CreateInstanceFromArray"/> should also be specified.
             /// </summary>
             internal Action<BinaryWriter, object>? WriteSpecificParametersForBackingArray { get; set; }
-            internal Func<BinaryReader, Array, object>? CreateInstanceFromArray { get; set; }
+            internal Func<BinaryReader, Type, Array, object>? CreateInstanceFromArray { get; set; }
 
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
@@ -111,6 +118,9 @@ namespace KGySoft.Serialization.Binary
             internal bool IsDictionary => (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
             internal bool IsSingleElement => (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement;
             internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
+            internal bool HasNullableBackingArray => (Info & CollectionInfo.BackingArrayCanBeNull) == CollectionInfo.BackingArrayCanBeNull;
+            internal bool HasKnownSizedBackingArray => (Info & CollectionInfo.BackingArrayHasKnownSize) == CollectionInfo.BackingArrayHasKnownSize;
+            internal bool IsTuple => (Info & CollectionInfo.IsTuple) == CollectionInfo.IsTuple;
 
             #endregion
 

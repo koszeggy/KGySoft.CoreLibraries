@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
@@ -47,20 +48,14 @@ namespace KGySoft.Serialization.Binary
         {
             #region Fields
 
-            private bool? isDictionary;
-#if NET35
-            private bool? isGenericDictionary;
-            private bool? isGenericCollection;
-#endif
-            private bool? isSingleElement;
-            private bool? hasBackingArray;
-
             private DataTypes dataType;
+            private CollectionSerializationInfo? collectionSerializationInfo;
 
             #endregion
 
             #region Properties
 
+            #region Internal Properties
             internal DataTypeDescriptor? ParentDescriptor { get; }
             internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
@@ -68,15 +63,32 @@ namespace KGySoft.Serialization.Binary
             internal DataTypes UnderlyingCollectionDataType => GetUnderlyingCollectionDataType(dataType);
             internal bool IsCollection => IsCollectionType(dataType);
             internal bool IsArray => CollectionDataType == DataTypes.Array;
-            internal bool IsDictionary => isDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[UnderlyingCollectionDataType].IsDictionary;
+            internal bool IsDictionary => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsDictionary;
 #if NET35
-            internal bool IsGenericDictionary => isGenericDictionary ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
-            internal bool IsGenericCollection => isGenericCollection ??= CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGeneric;
+            internal bool IsGenericDictionary => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsGenericDictionary;
+            internal bool IsGenericCollection => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsGeneric;
 #endif
             internal bool IsReadOnly { get; set; }
-            internal bool IsSingleElement => isSingleElement ??= serializationInfo[UnderlyingCollectionDataType].IsSingleElement;
+            internal bool IsSingleElement => CollectionSerializationInfo.IsSingleElement;
             internal bool IsNullable { get; private set; }
-            internal bool HasBackingArray => hasBackingArray ??= serializationInfo[UnderlyingCollectionDataType].GetBackingArray != null;
+            internal bool HasBackingArray => CollectionSerializationInfo.GetBackingArray != null;
+            internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
+            internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+
+            internal int FixedItemsSize
+            {
+                get
+                {
+                    DataTypes dt = UnderlyingCollectionDataType;
+                    if (IsTuple(dt))
+                        return GetNumberOfTupleElements(dt);
+                    return dt switch
+                    {
+                        // TODO: VectorN, etc.
+                        _ => -1,
+                    };
+                }
+            }
 
             /// <summary>
             /// Decoded type of self descriptor
@@ -96,9 +108,14 @@ namespace KGySoft.Serialization.Binary
             internal DataTypeDescriptor? ElementDescriptor { get; private set; }
 
             /// <summary>
-            /// The value descriptor for dictionaries.
+            /// The value descriptor for dictionaries, KeyValuePairs.
             /// </summary>
             internal DataTypeDescriptor? ValueDescriptor { get; }
+
+            /// <summary>
+            /// The item descriptors for collections that have different item types (tuples).
+            /// </summary>
+            internal DataTypeDescriptor[]? ItemDescriptors { get; }
 
             internal bool CanHaveRecursion
             {
@@ -107,13 +124,25 @@ namespace KGySoft.Serialization.Binary
                     DataTypes dt = ElementDataType;
                     if (CanHaveRecursion(dt))
                         return true;
-                    if (ElementDescriptor != null && ElementDescriptor.CanHaveRecursion)
+                    if (ElementDescriptor is { CanHaveRecursion: true })
                         return true;
-                    if (ValueDescriptor != null && ValueDescriptor.CanHaveRecursion)
+                    if (ValueDescriptor is { CanHaveRecursion: true })
+                        return true;
+                    if (ItemDescriptors != null && Array.Exists(ItemDescriptors, i => i.CanHaveRecursion))
                         return true;
                     return false;
                 }
             }
+
+            #endregion
+
+            #region Private Properties
+
+            private CollectionSerializationInfo CollectionSerializationInfo => collectionSerializationInfo ??= CollectionDataType == DataTypes.Null
+                ? Throw.InvalidOperationException<CollectionSerializationInfo>(Res.InternalError($"Not a collection: {dataType}"))
+                : serializationInfo[UnderlyingCollectionDataType];
+
+            #endregion
 
             #endregion
 
@@ -140,6 +169,13 @@ namespace KGySoft.Serialization.Binary
                 // recursion 2: TValue in dictionaries
                 if (IsDictionary)
                     ValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+                else if (IsTuple)
+                {
+                    ItemDescriptors = new DataTypeDescriptor[FixedItemsSize];
+                    ItemDescriptors[0] = ElementDescriptor!; // First item is encoded together with the collection. Actual element type Will be clarified in DecodeType.
+                    for (int i = 1; i < ItemDescriptors.Length; i++)
+                        ItemDescriptors[i] = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+                }
             }
 
             /// <summary>
@@ -210,7 +246,7 @@ namespace KGySoft.Serialization.Binary
                     result = GetCollectionType(CollectionDataType);
                 else
                 {
-                    // simple collection element or dictionary key: Since in DataTypes the element is encoded together with the collection
+                    // simple collection element/dictionary key: Since in DataTypes the element is encoded together with the collection
                     // the element type descriptor was not created in the constructor. We create it now.
                     if (ElementDataType != DataTypes.Null)
                     {
@@ -224,6 +260,14 @@ namespace KGySoft.Serialization.Binary
                     // Dictionary TValue
                     if (IsDictionary)
                         ValueDescriptor!.DecodeType(br, manager, allowOpenTypes);
+                    // Tuple
+                    else if (IsTuple)
+                    {
+                        ItemDescriptors![0] = ElementDescriptor;
+                        ElementDescriptor = null;
+                        for (int i = 1; i < ItemDescriptors.Length; i++)
+                            ItemDescriptors[i].DecodeType(br, manager, allowOpenTypes);
+                    }
 
                     if (IsArray)
                     {
@@ -240,9 +284,9 @@ namespace KGySoft.Serialization.Binary
                         return Type = result;
 
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
-                    result = typeDef.GetGenericArguments().Length == 1
-                        ? typeDef.GetGenericType(ElementDescriptor.Type!)
-                        : typeDef.GetGenericType(ElementDescriptor.Type!, ValueDescriptor!.Type);
+                    result = IsTuple ? typeDef.GetGenericType(ItemDescriptors!.Select(d => d.Type!).ToArray())
+                        : !IsDictionary ? typeDef.GetGenericType(ElementDescriptor!.Type!)
+                        : typeDef.GetGenericType(ElementDescriptor!.Type!, ValueDescriptor!.Type);
                     result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
@@ -378,6 +422,13 @@ namespace KGySoft.Serialization.Binary
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
+                    case DataTypes.ValueTuple0:
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                        return typeof(ValueTuple);
+#else
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.Rune:
 #if NETCOREAPP3_0_OR_GREATER
                         return Reflector.RuneType;
@@ -495,6 +546,25 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.StringCollection:
                         return Reflector.StringCollectionType;
 
+#if !NET35
+                    case DataTypes.Tuple1:
+                        return typeof(Tuple<>);
+                    case DataTypes.Tuple2:
+                        return typeof(Tuple<,>);
+                    case DataTypes.Tuple3:
+                        return typeof(Tuple<,,>);
+                    case DataTypes.Tuple4:
+                        return typeof(Tuple<,,,>);
+                    case DataTypes.Tuple5:
+                        return typeof(Tuple<,,,,>);
+                    case DataTypes.Tuple6:
+                        return typeof(Tuple<,,,,,>);
+                    case DataTypes.Tuple7:
+                        return typeof(Tuple<,,,,,,>);
+                    case DataTypes.Tuple8:
+                        return typeof(Tuple<,,,,,,,>);
+#endif
+
                     case DataTypes.Dictionary:
                         return Reflector.DictionaryGenType;
                     case DataTypes.SortedList:
@@ -537,6 +607,43 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ConcurrentBag:
                     case DataTypes.ConcurrentQueue:
                     case DataTypes.ConcurrentStack:
+                    case DataTypes.Tuple1:
+                    case DataTypes.Tuple2:
+                    case DataTypes.Tuple3:
+                    case DataTypes.Tuple4:
+                    case DataTypes.Tuple5:
+                    case DataTypes.Tuple6:
+                    case DataTypes.Tuple7:
+                    case DataTypes.Tuple8:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                    case DataTypes.ValueTuple1:
+                        return typeof(ValueTuple<>);
+                    case DataTypes.ValueTuple2:
+                        return typeof(ValueTuple<,>);
+                    case DataTypes.ValueTuple3:
+                        return typeof(ValueTuple<,,>);
+                    case DataTypes.ValueTuple4:
+                        return typeof(ValueTuple<,,,>);
+                    case DataTypes.ValueTuple5:
+                        return typeof(ValueTuple<,,,,>);
+                    case DataTypes.ValueTuple6:
+                        return typeof(ValueTuple<,,,,,>);
+                    case DataTypes.ValueTuple7:
+                        return typeof(ValueTuple<,,,,,,>);
+                    case DataTypes.ValueTuple8:
+                        return typeof(ValueTuple<,,,,,,,>);
+#else
+                    case DataTypes.ValueTuple1:
+                    case DataTypes.ValueTuple2:
+                    case DataTypes.ValueTuple3:
+                    case DataTypes.ValueTuple4:
+                    case DataTypes.ValueTuple5:
+                    case DataTypes.ValueTuple6:
+                    case DataTypes.ValueTuple7:
+                    case DataTypes.ValueTuple8:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 
